@@ -32,6 +32,13 @@ function getSoftBg(score) {
   return '#fef2f2';
 }
 
+function getActionLabel(score) {
+  if (score >= 80) return 'BUY';
+  if (score >= 65) return 'WATCH';
+  if (score >= 50) return 'MAYBE';
+  return 'PASS';
+}
+
 function scoreStock(s) {
   const value = s.pe > 0 ? Math.max(15, 100 - s.pe * 2) : 35;
   const quality = s.quality;
@@ -70,97 +77,99 @@ function getTradePlan(stock) {
 }
 
 function getDrivers(stock) {
-  return {
-    fundamentals: [
-      {
-        label: 'P/E valuation',
-        value: stock.pe === 0 ? 'N/M' : stock.pe.toFixed(1),
-        detail:
-          stock.pe > 0 && stock.pe <= 12
-            ? 'cheap versus most growth names'
-            : stock.pe > 0 && stock.pe <= 25
-            ? 'reasonable but not screaming cheap'
-            : 'rich or not meaningful on earnings',
-        score: stock.scores.value,
-      },
-      {
-        label: 'ROIC',
-        value: `${stock.roic}%`,
-        detail:
-          stock.roic >= 20
-            ? 'strong capital efficiency'
-            : stock.roic >= 10
-            ? 'acceptable returns on capital'
-            : 'weaker capital efficiency',
-        score: stock.roic >= 20 ? 85 : stock.roic >= 10 ? 65 : 40,
-      },
-      {
-        label: 'Revenue growth',
-        value: `${stock.revGrowth}%`,
-        detail:
-          stock.revGrowth >= 15
-            ? 'healthy topline expansion'
-            : stock.revGrowth >= 5
-            ? 'modest growth'
-            : 'low growth profile',
-        score: stock.scores.growth,
-      },
-      {
-        label: 'Quality profile',
-        value: `${stock.quality}`,
-        detail:
-          stock.quality >= 80
-            ? 'high-quality operating profile'
-            : stock.quality >= 65
-            ? 'decent quality'
-            : 'lower-quality profile is a drag',
-        score: stock.scores.quality,
-      },
-      {
-        label: 'Public sentiment',
-        value: `${stock.sentiment}`,
-        detail:
-          stock.sentiment >= 70
-            ? 'brand and crowd sentiment are supportive'
-            : stock.sentiment >= 50
-            ? 'sentiment is mixed or neutral'
-            : 'public or brand sentiment is a headwind',
-        score: stock.scores.sentiment,
-      },
-    ],
-    technicals: [
-      {
-        label: '6M relative strength',
-        value: `${stock.rs6m}`,
-        detail:
-          stock.rs6m >= 85
-            ? 'institutional momentum is clearly present'
-            : stock.rs6m >= 65
-            ? 'constructive but not elite'
-            : 'momentum is not a major tailwind',
-        score: stock.scores.breakout,
-      },
-      {
-        label: 'Distance to breakout',
-        value: `${stock.breakoutDistance}%`,
-        detail:
-          stock.breakoutDistance <= 3
-            ? 'very close to trigger level'
-            : stock.breakoutDistance <= 6
-            ? 'within range but not immediate'
-            : 'still needs more setup time',
-        score: stock.breakoutDistance <= 3 ? 85 : stock.breakoutDistance <= 6 ? 65 : 40,
-      },
-    ],
-    topImpacts: [
-      { label: 'Value', score: stock.scores.value, impact: (stock.scores.value * AUTO_WEIGHTS.value) / 100 },
-      { label: 'Quality', score: stock.scores.quality, impact: (stock.scores.quality * AUTO_WEIGHTS.quality) / 100 },
-      { label: 'Growth', score: stock.scores.growth, impact: (stock.scores.growth * AUTO_WEIGHTS.growth) / 100 },
-      { label: 'Breakout', score: stock.scores.breakout, impact: (stock.scores.breakout * AUTO_WEIGHTS.breakout) / 100 },
-      { label: 'Risk', score: stock.scores.risk, impact: (stock.scores.risk * AUTO_WEIGHTS.risk) / 100 },
-      { label: 'Sentiment', score: stock.scores.sentiment, impact: (stock.scores.sentiment * AUTO_WEIGHTS.sentiment) / 100 },
-    ].sort((a, b) => b.impact - a.impact),
-  };
+  const fundamentals = [
+    {
+      label: 'P/E valuation',
+      value: stock.pe === 0 ? 'N/M' : stock.pe.toFixed(1),
+      detail:
+        stock.pe > 0 && stock.pe <= 12
+          ? 'cheap versus most growth names'
+          : stock.pe > 0 && stock.pe <= 25
+          ? 'reasonable but not screaming cheap'
+          : 'rich or not meaningful on earnings',
+      score: stock.scores.value,
+    },
+    {
+      label: 'ROIC',
+      value: `${stock.roic}%`,
+      detail:
+        stock.roic >= 20
+          ? 'strong capital efficiency'
+          : stock.roic >= 10
+          ? 'acceptable returns on capital'
+          : 'weaker capital efficiency',
+      score: stock.roic >= 20 ? 85 : stock.roic >= 10 ? 65 : 40,
+    },
+    {
+      label: 'Revenue growth',
+      value: `${stock.revGrowth}%`,
+      detail:
+        stock.revGrowth >= 15
+          ? 'healthy topline expansion'
+          : stock.revGrowth >= 5
+          ? 'modest growth'
+          : 'low growth profile',
+      score: stock.scores.growth,
+    },
+    {
+      label: 'Quality profile',
+      value: `${stock.quality}`,
+      detail:
+        stock.quality >= 80
+          ? 'high-quality operating profile'
+          : stock.quality >= 65
+          ? 'decent quality'
+          : 'lower-quality profile is a drag',
+      score: stock.scores.quality,
+    },
+    {
+      label: 'Public sentiment',
+      value: `${stock.sentiment}`,
+      detail:
+        stock.sentiment >= 70
+          ? 'brand and crowd sentiment are supportive'
+          : stock.sentiment >= 50
+          ? 'sentiment is mixed or neutral'
+          : 'public or brand sentiment is a headwind',
+      score: stock.scores.sentiment,
+    },
+  ];
+
+  const technicals = [
+    {
+      label: '6M relative strength',
+      value: `${stock.rs6m}`,
+      detail:
+        stock.rs6m >= 85
+          ? 'institutional momentum is clearly present'
+          : stock.rs6m >= 65
+          ? 'constructive but not elite'
+          : 'momentum is not a major tailwind',
+      score: stock.scores.breakout,
+    },
+    {
+      label: 'Distance to breakout',
+      value: `${stock.breakoutDistance}%`,
+      detail:
+        stock.breakoutDistance <= 3
+          ? 'very close to trigger level'
+          : stock.breakoutDistance <= 6
+          ? 'within range but not immediate'
+          : 'still needs more setup time',
+      score: stock.breakoutDistance <= 3 ? 85 : stock.breakoutDistance <= 6 ? 65 : 40,
+    },
+  ];
+
+  const topImpacts = [
+    { label: 'Value', score: stock.scores.value, impact: (stock.scores.value * AUTO_WEIGHTS.value) / 100, group: 'Fundamental' },
+    { label: 'Quality', score: stock.scores.quality, impact: (stock.scores.quality * AUTO_WEIGHTS.quality) / 100, group: 'Fundamental' },
+    { label: 'Growth', score: stock.scores.growth, impact: (stock.scores.growth * AUTO_WEIGHTS.growth) / 100, group: 'Fundamental' },
+    { label: 'Breakout', score: stock.scores.breakout, impact: (stock.scores.breakout * AUTO_WEIGHTS.breakout) / 100, group: 'Technical' },
+    { label: 'Risk', score: stock.scores.risk, impact: (stock.scores.risk * AUTO_WEIGHTS.risk) / 100, group: 'Risk' },
+    { label: 'Sentiment', score: stock.scores.sentiment, impact: (stock.scores.sentiment * AUTO_WEIGHTS.sentiment) / 100, group: 'Alternative' },
+  ].sort((a, b) => b.impact - a.impact);
+
+  return { fundamentals, technicals, topImpacts };
 }
 
 function metricCard(label, value, score, subtle) {
@@ -175,6 +184,21 @@ function metricCard(label, value, score, subtle) {
     >
       <div style={{ fontSize: 13, color: '#64748b' }}>{label}</div>
       <div style={{ marginTop: 6, fontSize: 24, fontWeight: 700, color: getColor(score) }}>{value}</div>
+    </div>
+  );
+}
+
+function shellCard(children) {
+  return (
+    <div
+      style={{
+        background: '#fff',
+        border: '1px solid #e5e7eb',
+        borderRadius: 20,
+        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+      }}
+    >
+      {children}
     </div>
   );
 }
@@ -208,14 +232,7 @@ export default function Home() {
       }}
     >
       <div style={{ maxWidth: 1150, margin: '0 auto', display: 'grid', gap: 24 }}>
-        <div
-          style={{
-            background: '#fff',
-            border: '1px solid #e5e7eb',
-            borderRadius: 20,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-          }}
-        >
+        {shellCard(
           <div style={{ padding: 24 }}>
             <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>🧠 Auto Quant Screener</div>
             <div style={{ color: '#64748b', fontSize: 15 }}>
@@ -236,9 +253,7 @@ export default function Home() {
             >
               <div>
                 <div style={{ fontWeight: 700 }}>Mode</div>
-                <div style={{ color: '#64748b', marginTop: 4 }}>
-                  Demo data for now. Live mode will come after data hookup.
-                </div>
+                <div style={{ color: '#64748b', marginTop: 4 }}>Demo data for now. Live mode will come after data hookup.</div>
               </div>
               <div
                 style={{
@@ -285,21 +300,11 @@ export default function Home() {
               </select>
             </div>
           </div>
-        </div>
+        )}
 
-        <div
-          style={{
-            background: '#fff',
-            border: '1px solid #e5e7eb',
-            borderRadius: 20,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-          }}
-        >
+        {shellCard(
           <div style={{ padding: 24 }}>
-            <div style={{ color: '#64748b', marginBottom: 16 }}>
-              🖱️ Single-click any row below to load the full explanation and trade plan.
-            </div>
-
+            <div style={{ color: '#64748b', marginBottom: 16 }}>🖱️ Single-click any row below to load the full explanation and trade plan.</div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -324,15 +329,7 @@ export default function Home() {
                       <td style={{ padding: '14px 0', fontWeight: 700 }}>{s.ticker}</td>
                       <td style={{ padding: '14px 0' }}>{s.name}</td>
                       <td style={{ padding: '14px 0', textAlign: 'right' }}>${s.price.toFixed(2)}</td>
-                      <td
-                        style={{
-                          padding: '14px 0',
-                          textAlign: 'right',
-                          fontSize: 28,
-                          fontWeight: 800,
-                          color: getColor(s.scores.composite),
-                        }}
-                      >
+                      <td style={{ padding: '14px 0', textAlign: 'right', fontSize: 28, fontWeight: 800, color: getColor(s.scores.composite) }}>
                         {Math.round(s.scores.composite)}
                       </td>
                     </tr>
@@ -341,7 +338,7 @@ export default function Home() {
               </table>
             </div>
           </div>
-        </div>
+        )}
 
         {selected && tradePlan && drivers && (
           <>
@@ -364,15 +361,9 @@ export default function Home() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                     <div>
-                      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: '#64748b' }}>
-                        Primary action score
-                      </div>
-                      <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, marginTop: 8 }}>
-                        {Math.round(selected.scores.composite)}
-                      </div>
-                      <div style={{ color: '#64748b', marginTop: 10 }}>
-                        This is the main take-action-or-not number.
-                      </div>
+                      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: '#64748b' }}>Primary action score</div>
+                      <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, marginTop: 8 }}>{Math.round(selected.scores.composite)}</div>
+                      <div style={{ color: '#64748b', marginTop: 10 }}>This is the main take-action-or-not number.</div>
                     </div>
                     <div
                       style={{
@@ -384,13 +375,7 @@ export default function Home() {
                         fontWeight: 700,
                       }}
                     >
-                      {selected.scores.composite >= 80
-                        ? 'Actionable'
-                        : selected.scores.composite >= 65
-                        ? 'Watch'
-                        : selected.scores.composite >= 50
-                        ? 'Average'
-                        : 'Avoid'}
+                      {getActionLabel(selected.scores.composite)}
                     </div>
                   </div>
                 </div>
@@ -420,9 +405,7 @@ export default function Home() {
               >
                 <div style={{ padding: 24 }}>
                   <div style={{ fontWeight: 800, marginBottom: 4 }}>📈 Entry / Exit Plan</div>
-                  <div style={{ color: '#64748b', marginBottom: 18 }}>
-                    Prototype trade plan based on price and breakout distance.
-                  </div>
+                  <div style={{ color: '#64748b', marginBottom: 18 }}>Prototype trade plan based on price and breakout distance.</div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     {metricCard('Entry zone', `$${tradePlan.entryLow} - $${tradePlan.entryHigh}`, 85, '#f0fdf4')}
@@ -432,26 +415,16 @@ export default function Home() {
                   </div>
 
                   <div style={{ color: '#64748b', marginTop: 16, fontSize: 14 }}>
-                    Entry is set just above the modeled breakout level. Stop is about 8% below entry. Targets are
-                    scaled at roughly 12% and 22% above entry.
+                    Entry is set just above the modeled breakout level. Stop is about 8% below entry. Targets are scaled at roughly 12% and 22% above entry.
                   </div>
                 </div>
               </div>
             </div>
 
-            <div
-              style={{
-                background: '#fff',
-                border: '1px solid #e5e7eb',
-                borderRadius: 20,
-                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-              }}
-            >
+            {shellCard(
               <div style={{ padding: 24 }}>
                 <div style={{ fontWeight: 800, marginBottom: 4 }}>Why this recommendation scored well</div>
-                <div style={{ color: '#64748b', marginBottom: 20 }}>
-                  The biggest fundamental and technical inputs driving the composite score.
-                </div>
+                <div style={{ color: '#64748b', marginBottom: 20 }}>The biggest fundamental and technical inputs driving the composite score.</div>
 
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Biggest score drivers</div>
@@ -467,14 +440,7 @@ export default function Home() {
                         }}
                       >
                         <div style={{ fontWeight: 700 }}>{item.label}</div>
-                        <div
-                          style={{
-                            fontSize: 24,
-                            fontWeight: 800,
-                            color: getColor(item.score),
-                            marginTop: 4,
-                          }}
-                        >
+                        <div style={{ fontSize: 24, fontWeight: 800, color: getColor(item.score), marginTop: 4 }}>
                           {Math.round(item.score)}
                         </div>
                         <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>
@@ -533,7 +499,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
