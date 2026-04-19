@@ -1,4 +1,3 @@
-'use client';
 import { useMemo, useState } from 'react';
 
 const AUTO_WEIGHTS = {
@@ -41,14 +40,15 @@ function scoreStock(s) {
   const risk = s.roic > 10 ? 80 : 45;
   const sentiment = s.sentiment ?? 50;
 
-  const composite = (
-    value * AUTO_WEIGHTS.value +
-    quality * AUTO_WEIGHTS.quality +
-    growth * AUTO_WEIGHTS.growth +
-    breakout * AUTO_WEIGHTS.breakout +
-    risk * AUTO_WEIGHTS.risk +
-    sentiment * AUTO_WEIGHTS.sentiment
-  ) / 100;
+  const composite =
+    (
+      value * AUTO_WEIGHTS.value +
+      quality * AUTO_WEIGHTS.quality +
+      growth * AUTO_WEIGHTS.growth +
+      breakout * AUTO_WEIGHTS.breakout +
+      risk * AUTO_WEIGHTS.risk +
+      sentiment * AUTO_WEIGHTS.sentiment
+    ) / 100;
 
   return { composite, value, quality, growth, breakout, risk, sentiment };
 }
@@ -370,7 +370,9 @@ export default function Home() {
                       <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, marginTop: 8 }}>
                         {Math.round(selected.scores.composite)}
                       </div>
-                      <div style={{ color: '#64748b', marginTop: 10 }}>This is the main take-action-or-not number.</div>
+                      <div style={{ color: '#64748b', marginTop: 10 }}>
+                        This is the main take-action-or-not number.
+                      </div>
                     </div>
                     <div
                       style={{
@@ -430,7 +432,8 @@ export default function Home() {
                   </div>
 
                   <div style={{ color: '#64748b', marginTop: 16, fontSize: 14 }}>
-                    Entry is set just above the modeled breakout level. Stop is about 8% below entry. Targets are scaled at roughly 12% and 22% above entry.
+                    Entry is set just above the modeled breakout level. Stop is about 8% below entry. Targets are
+                    scaled at roughly 12% and 22% above entry.
                   </div>
                 </div>
               </div>
@@ -533,6 +536,7 @@ export default function Home() {
             </div>
           </>
         )}
-      </main>
-    );
-  }
+      </div>
+    </main>
+  );
+}
