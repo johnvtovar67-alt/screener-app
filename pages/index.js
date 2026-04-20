@@ -1,4 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+const SYMBOL_NAMES = {
+  AAPL: "Apple",
+  ASO: "Academy Sports",
+  CROX: "Crocs",
+  FIX: "Comfort Systems",
+  GCT: "GigaCloud",
+  MSTR: "Strategy",
+  MSFT: "Microsoft",
+  NVDA: "NVIDIA",
+  PLTR: "Palantir",
+  QQQ: "Invesco QQQ Trust",
+  SHOP: "Shopify",
+  SPY: "SPDR S&P 500 ETF",
+  TSLA: "Tesla",
+  VIST: "Vista Energy",
+};
 
 const STARTING_ROWS = [
   { symbol: "ASO", name: "Academy Sports", price: null },
@@ -9,12 +26,72 @@ const STARTING_ROWS = [
   { symbol: "VIST", name: "Vista Energy", price: null },
 ];
 
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+const MARKET_TIMEZONE = "America/New_York";
+
+function getEasternParts() {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: MARKET_TIMEZONE,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(new Date());
+  const map = {};
+
+  for (const part of parts) {
+    if (part.type !== "literal") {
+      map[part.type] = part.value;
+    }
+  }
+
+  return {
+    weekday: map.weekday,
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    second: Number(map.second),
+  };
+}
+
+function isMarketOpenNow() {
+  const { weekday, hour, minute } = getEasternParts();
+
+  if (weekday === "Sat" || weekday === "Sun") {
+    return false;
+  }
+
+  const totalMinutes = hour * 60 + minute;
+  const openMinutes = 9 * 60 + 30; // 9:30 AM ET
+  const closeMinutes = 16 * 60; // 4:00 PM ET
+
+  return totalMinutes >= openMinutes && totalMinutes < closeMinutes;
+}
+
+function getMarketStatusLabel() {
+  return isMarketOpenNow() ? "OPEN" : "CLOSED";
+}
+
+function formatTimestamp(date = new Date()) {
+  return date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const [rows, setRows] = useState(STARTING_ROWS);
   const [error, setError] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState("");
+  const [marketStatus, setMarketStatus] = useState(getMarketStatusLabel());
+
+  const lastRefreshRef = useRef(0);
+  const refreshInFlightRef = useRef(false);
 
   async function fetchPrice(symbol) {
     const response = await fetch(
@@ -31,20 +108,32 @@ export default function HomePage() {
     return data;
   }
 
-  async function refreshAll() {
+  async function refreshAll(force = false) {
+    if (refreshInFlightRef.current) return;
+
+    const marketOpen = isMarketOpenNow();
+    setMarketStatus(marketOpen ? "OPEN" : "CLOSED");
+
+    if (!force && !marketOpen) {
+      return;
+    }
+
+    refreshInFlightRef.current = true;
     setIsRefreshing(true);
     setError("");
 
     try {
+      const currentRows = [...rows];
+
       const results = await Promise.allSettled(
-        rows.map((row) => fetchPrice(row.symbol))
+        currentRows.map((row) => fetchPrice(row.symbol))
       );
 
       setRows((prev) =>
         prev.map((row, index) => {
           const result = results[index];
 
-          if (result.status === "fulfilled") {
+          if (result && result.status === "fulfilled") {
             return {
               ...row,
               price: result.value.price,
@@ -55,16 +144,12 @@ export default function HomePage() {
         })
       );
 
-      setLastUpdated(
-        new Date().toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
+      lastRefreshRef.current = Date.now();
+      setLastUpdated(formatTimestamp());
     } catch (error) {
       setError("Refresh failed");
     } finally {
+      refreshInFlightRef.current = false;
       setIsRefreshing(false);
     }
   }
@@ -91,36 +176,50 @@ export default function HomePage() {
         }
 
         return [
-          { symbol: data.symbol, name: data.symbol, price: data.price },
+          {
+            symbol: data.symbol,
+            name: SYMBOL_NAMES[data.symbol] || "Added ticker",
+            price: data.price,
+          },
           ...prev,
         ];
       });
 
       setQuery("");
-
-      setLastUpdated(
-        new Date().toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
+      setLastUpdated(formatTimestamp());
     } catch (error) {
       setError(error.message || "No match found");
     }
   }
 
   useEffect(() => {
-    refreshAll();
+    refreshAll(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      refreshAll();
-    }, 15000);
+      const open = isMarketOpenNow();
+      setMarketStatus(open ? "OPEN" : "CLOSED");
+
+      if (!open) return;
+
+      const now = Date.now();
+      const enoughTimePassed =
+        now - lastRefreshRef.current >= AUTO_REFRESH_MS;
+
+      if (enoughTimePassed) {
+        refreshAll(false);
+      }
+    }, 60000); // check every minute
 
     return () => clearInterval(interval);
-  }, [rows.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
+
+  const statusColor = useMemo(() => {
+    return marketStatus === "OPEN" ? "#166534" : "#991b1b";
+  }, [marketStatus]);
 
   function formatPrice(price) {
     if (price === null || price === undefined || Number.isNaN(price)) {
@@ -196,7 +295,7 @@ export default function HomePage() {
         </button>
 
         <button
-          onClick={refreshAll}
+          onClick={() => refreshAll(true)}
           disabled={isRefreshing}
           style={{
             padding: "12px 16px",
@@ -224,8 +323,31 @@ export default function HomePage() {
           flexWrap: "wrap",
         }}
       >
-        <div>Live data refreshing every 15 seconds</div>
-        <div>Last updated: {lastUpdated || "—"}</div>
+        <div>
+          Auto-refresh every 5 minutes during market hours only
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            Market:{" "}
+            <span
+              style={{
+                fontWeight: 700,
+                color: statusColor,
+              }}
+            >
+              {marketStatus}
+            </span>
+          </div>
+          <div>Last updated: {lastUpdated || "—"}</div>
+        </div>
       </div>
 
       {error ? (
