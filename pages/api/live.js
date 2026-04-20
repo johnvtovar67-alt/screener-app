@@ -17,20 +17,32 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Missing FMP_API_KEY' })
     }
 
-    const url = `https://financialmodelingprep.com/stable/quote?symbol=${joined}&apikey=${apiKey}`
+    const url = `https://financialmodelingprep.com/stable/batch-quote?symbols=${joined}&apikey=${apiKey}`
 
     const response = await fetch(url, {
       method: 'GET',
       headers: { Accept: 'application/json' },
     })
 
+    const text = await response.text()
+
     if (!response.ok) {
       return res.status(response.status).json({
         error: 'Upstream request failed',
+        status: response.status,
+        body: text,
       })
     }
 
-    const data = await response.json()
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch (e) {
+      return res.status(500).json({
+        error: 'Invalid JSON from upstream',
+        body: text,
+      })
+    }
 
     const map = {}
     for (const item of data || []) {
@@ -48,7 +60,9 @@ export default async function handler(req, res) {
       updatedAt: Date.now(),
     })
   } catch (e) {
-    console.error(e)
-    return res.status(500).json({ error: 'failed' })
+    return res.status(500).json({
+      error: 'failed',
+      message: e?.message || 'Unknown error',
+    })
   }
 }
