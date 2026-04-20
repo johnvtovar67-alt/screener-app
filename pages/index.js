@@ -1,299 +1,339 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from "react";
 
-const BASE_STOCKS = [
-  { ticker: 'GCT', name: 'GigaCloud' },
-  { ticker: 'ASO', name: 'Academy Sports' },
-  { ticker: 'CROX', name: 'Crocs' },
-  { ticker: 'FIX', name: 'Comfort Systems' },
-  { ticker: 'VIST', name: 'Vista Energy' },
-  { ticker: 'MSTR', name: 'Strategy' },
-]
+const STARTING_ROWS = [
+  { symbol: "ASO", name: "Academy Sports", price: null },
+  { symbol: "CROX", name: "Crocs", price: null },
+  { symbol: "FIX", name: "Comfort Systems", price: null },
+  { symbol: "GCT", name: "GigaCloud", price: null },
+  { symbol: "MSTR", name: "Strategy", price: null },
+  { symbol: "VIST", name: "Vista Energy", price: null },
+];
 
-export default function Home() {
-  const [query, setQuery] = useState('')
-  const [quotes, setQuotes] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState('')
-  const [lastUpdated, setLastUpdated] = useState(null)
-  const [sortBy, setSortBy] = useState('ticker')
-  const [sortDir, setSortDir] = useState('asc')
+export default function HomePage() {
+  const [query, setQuery] = useState("");
+  const [rows, setRows] = useState(STARTING_ROWS);
+  const [error, setError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState("");
 
-  async function loadQuotes(isBackground = false) {
+  async function fetchPrice(symbol) {
+    const response = await fetch(
+      `/api/live?symbol=${encodeURIComponent(symbol)}`,
+      { cache: "no-store" }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || `Failed for ${symbol}`);
+    }
+
+    return data;
+  }
+
+  async function refreshAll() {
+    setIsRefreshing(true);
+    setError("");
+
     try {
-      if (isBackground) {
-        setRefreshing(true)
-      } else {
-        setLoading(true)
-      }
+      const results = await Promise.allSettled(
+        rows.map((row) => fetchPrice(row.symbol))
+      );
 
-      setError('')
+      setRows((prev) =>
+        prev.map((row, index) => {
+          const result = results[index];
 
-      const res = await fetch('/api/live', {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      })
+          if (result.status === "fulfilled") {
+            return {
+              ...row,
+              price: result.value.price,
+            };
+          }
 
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text || 'Failed to load quotes')
-      }
+          return row;
+        })
+      );
 
-      const data = await res.json()
-      setQuotes(data.quotes || {})
-      setLastUpdated(new Date())
-    } catch (err) {
-      console.error(err)
-      setError('Could not load market data')
+      setLastUpdated(
+        new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      );
+    } catch (error) {
+      setError("Refresh failed");
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setIsRefreshing(false);
+    }
+  }
+
+  async function handleSearch() {
+    setError("");
+
+    const symbol = query.trim().toUpperCase();
+
+    if (!symbol) return;
+
+    try {
+      const data = await fetchPrice(symbol);
+
+      setRows((prev) => {
+        const exists = prev.some((row) => row.symbol === data.symbol);
+
+        if (exists) {
+          return prev.map((row) =>
+            row.symbol === data.symbol
+              ? { ...row, price: data.price }
+              : row
+          );
+        }
+
+        return [
+          { symbol: data.symbol, name: data.symbol, price: data.price },
+          ...prev,
+        ];
+      });
+
+      setQuery("");
+
+      setLastUpdated(
+        new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      );
+    } catch (error) {
+      setError(error.message || "No match found");
     }
   }
 
   useEffect(() => {
-    loadQuotes()
+    refreshAll();
+  }, []);
 
+  useEffect(() => {
     const interval = setInterval(() => {
-      loadQuotes(true)
-    }, 15000) // refresh every 15 sec
+      refreshAll();
+    }, 15000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, [rows.length]);
 
-  function toggleSort(field) {
-    if (sortBy === field) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortBy(field)
-      setSortDir('asc')
+  function formatPrice(price) {
+    if (price === null || price === undefined || Number.isNaN(price)) {
+      return "—";
     }
+
+    return `$${Number(price).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 
-  const filteredStocks = useMemo(() => {
-    const q = query.trim().toLowerCase()
-
-    let rows = BASE_STOCKS.map((stock) => {
-      const live = quotes[stock.ticker] || {}
-      return {
-        ...stock,
-        price: live.price ?? null,
-      }
-    })
-
-    if (q) {
-      rows = rows.filter(
-        (row) =>
-          row.ticker.toLowerCase().includes(q) ||
-          row.name.toLowerCase().includes(q)
-      )
-    }
-
-    rows.sort((a, b) => {
-      let aVal = a[sortBy]
-      let bVal = b[sortBy]
-
-      if (sortBy === 'price') {
-        aVal = aVal ?? -1
-        bVal = bVal ?? -1
-      }
-
-      if (typeof aVal === 'string') aVal = aVal.toLowerCase()
-      if (typeof bVal === 'string') bVal = bVal.toLowerCase()
-
-      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1
-      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1
-      return 0
-    })
-
-    return rows
-  }, [query, quotes, sortBy, sortDir])
-
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>🧠 Auto Quant Screener</h1>
+    <main
+      style={{
+        maxWidth: 1100,
+        margin: "40px auto",
+        padding: "0 20px",
+        fontFamily:
+          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
+    >
+      <h1
+        style={{
+          fontSize: 40,
+          fontWeight: 700,
+          marginBottom: 24,
+        }}
+      >
+        Auto Quant Screener
+      </h1>
 
-        <div style={styles.topBar}>
-          <input
-            type="text"
-            placeholder="Search ticker or company..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            style={styles.search}
-          />
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          marginBottom: 10,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch();
+          }}
+          placeholder="Search ticker..."
+          style={{
+            flex: "1 1 320px",
+            minWidth: 260,
+            padding: "12px 14px",
+            border: "1px solid #d1d5db",
+            borderRadius: 10,
+            fontSize: 16,
+          }}
+        />
 
-          <button onClick={() => loadQuotes()} style={styles.button}>
-            Refresh
-          </button>
-        </div>
+        <button
+          onClick={handleSearch}
+          style={{
+            padding: "12px 16px",
+            borderRadius: 10,
+            border: "1px solid #111827",
+            background: "#111827",
+            color: "#ffffff",
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+        >
+          Search
+        </button>
 
-        <div style={styles.statusRow}>
-          <span>
-            {loading
-              ? 'Loading quotes...'
-              : refreshing
-              ? 'Refreshing...'
-              : 'Live data refreshing every 15 seconds'}
-          </span>
-
-          <span>
-            {lastUpdated
-              ? `Last updated: ${lastUpdated.toLocaleTimeString()}`
-              : ''}
-          </span>
-        </div>
-
-        {error ? <div style={styles.error}>{error}</div> : null}
-
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th} onClick={() => toggleSort('ticker')}>
-                  Ticker {sortBy === 'ticker' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                </th>
-                <th style={styles.th} onClick={() => toggleSort('name')}>
-                  Name {sortBy === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                </th>
-                <th style={styles.thRight} onClick={() => toggleSort('price')}>
-                  Price {sortBy === 'price' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStocks.map((stock) => (
-                <tr key={stock.ticker} style={styles.row}>
-                  <td style={styles.td}>{stock.ticker}</td>
-                  <td style={styles.td}>{stock.name}</td>
-                  <td style={styles.tdRight}>
-                    {stock.price != null ? `$${Number(stock.price).toFixed(2)}` : '—'}
-                  </td>
-                </tr>
-              ))}
-
-              {!loading && filteredStocks.length === 0 && (
-                <tr>
-                  <td colSpan="3" style={styles.empty}>
-                    No matches found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <button
+          onClick={refreshAll}
+          disabled={isRefreshing}
+          style={{
+            padding: "12px 16px",
+            borderRadius: 10,
+            border: "1px solid #d1d5db",
+            background: "#ffffff",
+            color: "#111827",
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+        >
+          {isRefreshing ? "Refreshing..." : "Refresh"}
+        </button>
       </div>
-    </div>
-  )
-}
 
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: '#f7f7f7',
-    padding: '24px',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  },
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-  },
-  title: {
-    fontSize: '48px',
-    fontWeight: 800,
-    marginBottom: '24px',
-    color: '#111',
-  },
-  topBar: {
-    display: 'flex',
-    gap: '12px',
-    marginBottom: '12px',
-    flexWrap: 'wrap',
-  },
-  search: {
-    flex: 1,
-    minWidth: '260px',
-    padding: '14px 16px',
-    fontSize: '18px',
-    borderRadius: '10px',
-    border: '1px solid #ccc',
-    background: '#fff',
-  },
-  button: {
-    padding: '14px 18px',
-    fontSize: '16px',
-    fontWeight: 600,
-    borderRadius: '10px',
-    border: '1px solid #ccc',
-    background: '#111',
-    color: '#fff',
-    cursor: 'pointer',
-  },
-  statusRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    gap: '12px',
-    flexWrap: 'wrap',
-    marginBottom: '16px',
-    fontSize: '14px',
-    color: '#555',
-  },
-  error: {
-    marginBottom: '16px',
-    padding: '12px 14px',
-    borderRadius: '10px',
-    background: '#ffe5e5',
-    color: '#a40000',
-    fontWeight: 600,
-  },
-  tableWrap: {
-    background: '#fff',
-    borderRadius: '14px',
-    overflow: 'hidden',
-    border: '1px solid #e5e5e5',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '16px',
-    fontSize: '15px',
-    fontWeight: 700,
-    borderBottom: '1px solid #eee',
-    background: '#fafafa',
-    cursor: 'pointer',
-  },
-  thRight: {
-    textAlign: 'right',
-    padding: '16px',
-    fontSize: '15px',
-    fontWeight: 700,
-    borderBottom: '1px solid #eee',
-    background: '#fafafa',
-    cursor: 'pointer',
-  },
-  row: {
-    borderBottom: '1px solid #f1f1f1',
-  },
-  td: {
-    padding: '16px',
-    fontSize: '16px',
-    color: '#111',
-  },
-  tdRight: {
-    padding: '16px',
-    fontSize: '16px',
-    color: '#111',
-    textAlign: 'right',
-    fontVariantNumeric: 'tabular-nums',
-  },
-  empty: {
-    padding: '24px',
-    textAlign: 'center',
-    color: '#777',
-  },
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 18,
+          color: "#6b7280",
+          fontSize: 13,
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>Live data refreshing every 15 seconds</div>
+        <div>Last updated: {lastUpdated || "—"}</div>
+      </div>
+
+      {error ? (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: "12px 14px",
+            borderRadius: 10,
+            background: "#fef2f2",
+            color: "#b91c1c",
+            border: "1px solid #fecaca",
+          }}
+        >
+          {error}
+        </div>
+      ) : null}
+
+      <div
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: 14,
+          overflow: "hidden",
+          background: "#ffffff",
+        }}
+      >
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+          }}
+        >
+          <thead
+            style={{
+              background: "#f9fafb",
+            }}
+          >
+            <tr>
+              <th
+                style={{
+                  textAlign: "left",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Ticker
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Name
+              </th>
+              <th
+                style={{
+                  textAlign: "right",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Price
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.symbol}>
+                <td
+                  style={{
+                    padding: "14px 16px",
+                    borderBottom: "1px solid #f3f4f6",
+                    fontWeight: 600,
+                  }}
+                >
+                  {row.symbol}
+                </td>
+                <td
+                  style={{
+                    padding: "14px 16px",
+                    borderBottom: "1px solid #f3f4f6",
+                  }}
+                >
+                  {row.name}
+                </td>
+                <td
+                  style={{
+                    padding: "14px 16px",
+                    borderBottom: "1px solid #f3f4f6",
+                    textAlign: "right",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {formatPrice(row.price)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  );
 }
