@@ -1,207 +1,87 @@
 import { useEffect, useMemo, useState } from "react";
-
-const STARTING_SYMBOLS = ["ASO", "CROX", "FIX", "GCT", "MSTR", "VIST", "SCHW"];
-
-function formatPrice(value) {
-  if (value === null || value === undefined || Number.isNaN(value)) return "—";
-  return `$${Number(value).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function formatPct(value) {
-  if (value === null || value === undefined || Number.isNaN(value)) return "—";
-  const sign = value > 0 ? "+" : "";
-  return `${sign}${Number(value).toFixed(2)}%`;
-}
-
-function scorePillStyle(color) {
-  if (color === "green") {
-    return {
-      background: "#dcfce7",
-      color: "#166534",
-      border: "1px solid #bbf7d0",
-    };
-  }
-
-  if (color === "red") {
-    return {
-      background: "#fee2e2",
-      color: "#b91c1c",
-      border: "1px solid #fecaca",
-    };
-  }
-
-  return {
-    background: "#fef3c7",
-    color: "#92400e",
-    border: "1px solid #fde68a",
-  };
-}
-
-function driverCardStyle(color) {
-  if (color === "green") {
-    return {
-      background: "#f0fdf4",
-      border: "1px solid #bbf7d0",
-    };
-  }
-
-  if (color === "red") {
-    return {
-      background: "#fef2f2",
-      border: "1px solid #fecaca",
-    };
-  }
-
-  return {
-    background: "#fffbeb",
-    border: "1px solid #fde68a",
-  };
-}
+import {
+  driverCardStyle,
+  formatPct,
+  formatPrice,
+  scorePillStyle,
+} from "../lib/formatters";
 
 export default function HomePage() {
-  const [rows, setRows] = useState(
-    STARTING_SYMBOLS.map((symbol) => ({
-      symbol,
-      name: "",
-      price: null,
-      dayChangePct: null,
-      compositeScore: null,
-      compositeColor: "yellow",
-      drivers: {
-        technical: [],
-        fundamental: [],
-        sentiment: [],
-      },
-    }))
-  );
-  const [selectedSymbol, setSelectedSymbol] = useState(STARTING_SYMBOLS[0]);
+  const [rows, setRows] = useState([]);
+  const [selectedSymbol, setSelectedSymbol] = useState("");
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState("");
+  const [isLoadingTop5, setIsLoadingTop5] = useState(true);
+  const [isLookingUp, setIsLookingUp] = useState(false);
 
-  async function fetchSymbol(symbol) {
-    const response = await fetch(`/api/live?symbol=${encodeURIComponent(symbol)}`, {
-      cache: "no-store",
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || `Failed for ${symbol}`);
-    }
-
-    return data;
-  }
-
-  async function refreshAll() {
-    setIsRefreshing(true);
+  async function loadTop5() {
+    setIsLoadingTop5(true);
     setError("");
 
     try {
-      const results = await Promise.allSettled(
-        rows.map((row) => fetchSymbol(row.symbol))
-      );
+      const response = await fetch("/api/top5");
+      const data = await response.json();
 
-      const nextRows = rows.map((row, index) => {
-        const result = results[index];
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load top 5");
+      }
 
-        if (result.status === "fulfilled") {
-          return {
-            symbol: result.value.symbol,
-            name: result.value.name || result.value.symbol,
-            price: result.value.price ?? null,
-            dayChangePct: result.value.dayChangePct ?? null,
-            compositeScore: result.value.compositeScore ?? null,
-            compositeColor: result.value.compositeColor || "yellow",
-            drivers: result.value.drivers || {
-              technical: [],
-              fundamental: [],
-              sentiment: [],
-            },
-          };
-        }
+      setRows(data.stocks || []);
 
-        return row;
-      });
-
-      setRows(nextRows);
-      setLastUpdated(
-        new Date().toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
+      if ((data.stocks || []).length) {
+        setSelectedSymbol((prev) => prev || data.stocks[0].symbol);
+      }
     } catch (err) {
-      setError("Refresh failed");
+      setError(err.message || "Failed to load top 5");
     } finally {
-      setIsRefreshing(false);
+      setIsLoadingTop5(false);
     }
   }
 
-  async function handleAddTicker() {
-    setError("");
-
+  async function handleLookup() {
     const symbol = query.trim().toUpperCase();
     if (!symbol) return;
 
-    try {
-      const existing = rows.some((row) => row.symbol === symbol);
+    setIsLookingUp(true);
+    setError("");
 
-      if (existing) {
-        setSelectedSymbol(symbol);
-        setQuery("");
-        return;
+    try {
+      const response = await fetch(
+        `/api/lookup?symbol=${encodeURIComponent(symbol)}`
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Lookup failed");
       }
 
-      const data = await fetchSymbol(symbol);
+      setRows((prev) => {
+        const exists = prev.some((row) => row.symbol === data.symbol);
 
-      setRows((prev) => [
-        {
-          symbol: data.symbol,
-          name: data.name || data.symbol,
-          price: data.price ?? null,
-          dayChangePct: data.dayChangePct ?? null,
-          compositeScore: data.compositeScore ?? null,
-          compositeColor: data.compositeColor || "yellow",
-          drivers: data.drivers || {
-            technical: [],
-            fundamental: [],
-            sentiment: [],
-          },
-        },
-        ...prev,
-      ]);
+        if (exists) {
+          return prev.map((row) => (row.symbol === data.symbol ? data : row));
+        }
+
+        return [data, ...prev];
+      });
 
       setSelectedSymbol(data.symbol);
       setQuery("");
-      setLastUpdated(
-        new Date().toLocaleTimeString([], {
-          hour: "numeric",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
     } catch (err) {
-      setError(err.message || "No match found");
+      setError(err.message || "Lookup failed");
+    } finally {
+      setIsLookingUp(false);
     }
   }
 
   useEffect(() => {
-    refreshAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadTop5();
   }, []);
 
   const sortedRows = useMemo(() => {
-    return [...rows].sort((a, b) => {
-      const aScore = a.compositeScore ?? -Infinity;
-      const bScore = b.compositeScore ?? -Infinity;
-      return bScore - aScore;
-    });
+    return [...rows].sort(
+      (a, b) => (b.compositeScore ?? 0) - (a.compositeScore ?? 0)
+    );
   }, [rows]);
 
   const selectedRow =
@@ -312,11 +192,22 @@ export default function HomePage() {
         style={{
           fontSize: 36,
           fontWeight: 700,
-          marginBottom: 20,
+          marginBottom: 10,
         }}
       >
         Auto Quant Screener
       </h1>
+
+      <div
+        style={{
+          color: "#6b7280",
+          fontSize: 14,
+          marginBottom: 20,
+        }}
+      >
+        Launch view shows the top 5 opportunities by composite score. Use the
+        ticker lookup to snap-score any company on demand.
+      </div>
 
       <div
         style={{
@@ -332,9 +223,9 @@ export default function HomePage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleAddTicker();
+            if (e.key === "Enter") handleLookup();
           }}
-          placeholder="Add ticker..."
+          placeholder="Lookup ticker..."
           style={{
             flex: "1 1 280px",
             minWidth: 240,
@@ -346,7 +237,8 @@ export default function HomePage() {
         />
 
         <button
-          onClick={handleAddTicker}
+          onClick={handleLookup}
+          disabled={isLookingUp}
           style={{
             padding: "12px 16px",
             borderRadius: 10,
@@ -357,12 +249,12 @@ export default function HomePage() {
             cursor: "pointer",
           }}
         >
-          Add Ticker
+          {isLookingUp ? "Looking up..." : "Snap Quote + Score"}
         </button>
 
         <button
-          onClick={refreshAll}
-          disabled={isRefreshing}
+          onClick={loadTop5}
+          disabled={isLoadingTop5}
           style={{
             padding: "12px 16px",
             borderRadius: 10,
@@ -373,24 +265,8 @@ export default function HomePage() {
             cursor: "pointer",
           }}
         >
-          {isRefreshing ? "Refreshing..." : "Refresh"}
+          {isLoadingTop5 ? "Loading..." : "Reload Top 5"}
         </button>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 18,
-          color: "#6b7280",
-          fontSize: 13,
-          gap: 10,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>Manual refresh only to protect API credits</div>
-        <div>Last updated: {lastUpdated || "—"}</div>
       </div>
 
       {error ? (
@@ -574,49 +450,75 @@ export default function HomePage() {
                 </tr>
               );
             })}
+
+            {!sortedRows.length && !isLoadingTop5 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  style={{
+                    padding: "20px 16px",
+                    textAlign: "center",
+                    color: "#6b7280",
+                  }}
+                >
+                  No data loaded.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
 
       {selectedRow ? (
-        <div
-          style={{
-            marginBottom: 14,
-          }}
-        >
+        <>
           <div
             style={{
-              fontSize: 24,
-              fontWeight: 700,
-              marginBottom: 6,
+              marginBottom: 14,
             }}
           >
-            {selectedRow.symbol} — {selectedRow.name || selectedRow.symbol}
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 700,
+                marginBottom: 6,
+              }}
+            >
+              {selectedRow.symbol} — {selectedRow.name || selectedRow.symbol}
+            </div>
+
+            <div
+              style={{
+                color: "#6b7280",
+                fontSize: 14,
+                marginBottom: 20,
+              }}
+            >
+              Driver view showing what is helping or hurting the composite score
+            </div>
           </div>
 
           <div
             style={{
-              color: "#6b7280",
-              fontSize: 14,
-              marginBottom: 20,
+              display: "grid",
+              gridTemplateColumns: "1fr",
+              gap: 16,
             }}
           >
-            Driver view showing what is helping or hurting the composite score
+            {renderDriverSection(
+              "Technical",
+              selectedRow.drivers?.technical || []
+            )}
+            {renderDriverSection(
+              "Fundamental",
+              selectedRow.drivers?.fundamental || []
+            )}
+            {renderDriverSection(
+              "Sentiment",
+              selectedRow.drivers?.sentiment || []
+            )}
           </div>
-        </div>
+        </>
       ) : null}
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: 16,
-        }}
-      >
-        {selectedRow ? renderDriverSection("Technical", selectedRow.drivers?.technical || []) : null}
-        {selectedRow ? renderDriverSection("Fundamental", selectedRow.drivers?.fundamental || []) : null}
-        {selectedRow ? renderDriverSection("Sentiment", selectedRow.drivers?.sentiment || []) : null}
-      </div>
     </main>
   );
 }
