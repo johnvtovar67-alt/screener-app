@@ -12,10 +12,12 @@ export default async function handler(req, res) {
 
     const apiKey = process.env.TWELVE_DATA_API_KEY
 
-    if (!apiKey) {
-      return res.status(500).json({ error: 'Missing TWELVE_DATA_API_KEY' })
-    }
-
+   if (!apiKey) {
+  return res.status(500).json({
+    error: 'Missing TWELVE_DATA_API_KEY',
+    projectCheck: 'new-code-is-live',
+  })
+}
     const results = await Promise.all(
       symbols.map(async (symbol) => {
         const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(
