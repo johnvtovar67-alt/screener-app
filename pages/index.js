@@ -1,56 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const STARTING_SYMBOLS = ["ASO", "CROX", "FIX", "GCT", "MSTR", "VIST", "SCHW"];
-
-const AUTO_REFRESH_MS = 5 * 60 * 1000;
-const MARKET_TIMEZONE = "America/New_York";
-
-function getEasternParts() {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: MARKET_TIMEZONE,
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-
-  const parts = formatter.formatToParts(new Date());
-  const map = {};
-
-  for (const part of parts) {
-    if (part.type !== "literal") {
-      map[part.type] = part.value;
-    }
-  }
-
-  return {
-    weekday: map.weekday,
-    hour: Number(map.hour),
-    minute: Number(map.minute),
-  };
-}
-
-function isMarketOpenNow() {
-  const { weekday, hour, minute } = getEasternParts();
-
-  if (weekday === "Sat" || weekday === "Sun") {
-    return false;
-  }
-
-  const totalMinutes = hour * 60 + minute;
-  const openMinutes = 9 * 60 + 30;
-  const closeMinutes = 16 * 60;
-
-  return totalMinutes >= openMinutes && totalMinutes < closeMinutes;
-}
-
-function formatTimestamp(date = new Date()) {
-  return date.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
 
 function formatPrice(value) {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";
@@ -66,65 +16,72 @@ function formatPct(value) {
   return `${sign}${Number(value).toFixed(2)}%`;
 }
 
-function formatRatio(value) {
-  if (value === null || value === undefined || Number.isNaN(value)) return "—";
-  return `${Number(value).toFixed(2)}x`;
-}
-
-function formatScore(value) {
-  if (value === null || value === undefined || Number.isNaN(value)) return "—";
-  return String(Math.round(value));
-}
-
-function scoreColor(score) {
-  if (score === null || score === undefined || Number.isNaN(score)) {
-    return "#6b7280";
+function scorePillStyle(color) {
+  if (color === "green") {
+    return {
+      background: "#dcfce7",
+      color: "#166534",
+      border: "1px solid #bbf7d0",
+    };
   }
-  if (score >= 75) return "#166534";
-  if (score >= 60) return "#1d4ed8";
-  if (score >= 45) return "#92400e";
-  return "#b91c1c";
+
+  if (color === "red") {
+    return {
+      background: "#fee2e2",
+      color: "#b91c1c",
+      border: "1px solid #fecaca",
+    };
+  }
+
+  return {
+    background: "#fef3c7",
+    color: "#92400e",
+    border: "1px solid #fde68a",
+  };
 }
 
-function pctColor(value) {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "#111827";
+function driverCardStyle(color) {
+  if (color === "green") {
+    return {
+      background: "#f0fdf4",
+      border: "1px solid #bbf7d0",
+    };
   }
-  if (value > 0) return "#166534";
-  if (value < 0) return "#b91c1c";
-  return "#111827";
+
+  if (color === "red") {
+    return {
+      background: "#fef2f2",
+      border: "1px solid #fecaca",
+    };
+  }
+
+  return {
+    background: "#fffbeb",
+    border: "1px solid #fde68a",
+  };
 }
 
 export default function HomePage() {
-  const [query, setQuery] = useState("");
   const [rows, setRows] = useState(
     STARTING_SYMBOLS.map((symbol) => ({
       symbol,
       name: "",
-      exchange: "",
       price: null,
-      analytics: {
-        oneDayPct: null,
-        oneMonthPct: null,
-        threeMonthPct: null,
-        vsSma20Pct: null,
-        relativeVolume: null,
-        volatility20: null,
-        technicalScore: null,
-        fundamentalScore: null,
-        compositeScore: null,
+      dayChangePct: null,
+      compositeScore: null,
+      compositeColor: "yellow",
+      drivers: {
+        technical: [],
+        fundamental: [],
+        sentiment: [],
       },
     }))
   );
+  const [selectedSymbol, setSelectedSymbol] = useState(STARTING_SYMBOLS[0]);
+  const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState("");
-  const [marketStatus, setMarketStatus] = useState(isMarketOpenNow() ? "OPEN" : "CLOSED");
-  const [sortKey, setSortKey] = useState("compositeScore");
-  const [sortDir, setSortDir] = useState("desc");
-
-  const lastRefreshRef = useRef(0);
-  const refreshInFlightRef = useRef(false);
 
   async function fetchSymbol(symbol) {
     const response = await fetch(`/api/live?symbol=${encodeURIComponent(symbol)}`, {
@@ -140,208 +97,211 @@ export default function HomePage() {
     return data;
   }
 
-  async function refreshSymbols(symbolsToRefresh, options = {}) {
-    const { force = false } = options;
-
-    if (refreshInFlightRef.current) return;
-
-    const marketOpen = isMarketOpenNow();
-    setMarketStatus(marketOpen ? "OPEN" : "CLOSED");
-
-    if (!force && !marketOpen) {
-      return;
-    }
-
-    refreshInFlightRef.current = true;
+  async function refreshAll() {
     setIsRefreshing(true);
     setError("");
 
     try {
       const results = await Promise.allSettled(
-        symbolsToRefresh.map((symbol) => fetchSymbol(symbol))
+        rows.map((row) => fetchSymbol(row.symbol))
       );
 
-      setRows((prev) => {
-        const bySymbol = new Map(prev.map((row) => [row.symbol, row]));
+      const nextRows = rows.map((row, index) => {
+        const result = results[index];
 
-        results.forEach((result, index) => {
-          const symbol = symbolsToRefresh[index];
+        if (result.status === "fulfilled") {
+          return {
+            symbol: result.value.symbol,
+            name: result.value.name || result.value.symbol,
+            price: result.value.price ?? null,
+            dayChangePct: result.value.dayChangePct ?? null,
+            compositeScore: result.value.compositeScore ?? null,
+            compositeColor: result.value.compositeColor || "yellow",
+            drivers: result.value.drivers || {
+              technical: [],
+              fundamental: [],
+              sentiment: [],
+            },
+          };
+        }
 
-          if (result.status === "fulfilled") {
-            const data = result.value;
-            bySymbol.set(symbol, {
-              symbol: data.symbol,
-              name: data.name || data.symbol,
-              exchange: data.exchange || "",
-              price: data.price,
-              analytics: {
-                oneDayPct: data.analytics?.oneDayPct ?? null,
-                oneMonthPct: data.analytics?.oneMonthPct ?? null,
-                threeMonthPct: data.analytics?.threeMonthPct ?? null,
-                vsSma20Pct: data.analytics?.vsSma20Pct ?? null,
-                relativeVolume: data.analytics?.relativeVolume ?? null,
-                volatility20: data.analytics?.volatility20 ?? null,
-                technicalScore: data.analytics?.technicalScore ?? null,
-                fundamentalScore: data.analytics?.fundamentalScore ?? null,
-                compositeScore: data.analytics?.compositeScore ?? null,
-              },
-            });
-          } else if (!bySymbol.has(symbol)) {
-            bySymbol.set(symbol, {
-              symbol,
-              name: symbol,
-              exchange: "",
-              price: null,
-              analytics: {},
-            });
-          }
-        });
-
-        return Array.from(bySymbol.values());
+        return row;
       });
 
-      lastRefreshRef.current = Date.now();
-      setLastUpdated(formatTimestamp());
+      setRows(nextRows);
+      setLastUpdated(
+        new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      );
     } catch (err) {
       setError("Refresh failed");
     } finally {
-      refreshInFlightRef.current = false;
       setIsRefreshing(false);
     }
   }
 
-  async function refreshAll(force = false) {
-    const symbols = rows.map((row) => row.symbol);
-    await refreshSymbols(symbols, { force });
-  }
-
-  async function handleSearch() {
+  async function handleAddTicker() {
     setError("");
 
     const symbol = query.trim().toUpperCase();
     if (!symbol) return;
 
     try {
-      const exists = rows.some((row) => row.symbol === symbol);
+      const existing = rows.some((row) => row.symbol === symbol);
 
-      if (exists) {
-        await refreshSymbols([symbol], { force: true });
-      } else {
-        const data = await fetchSymbol(symbol);
-
-        setRows((prev) => [
-          {
-            symbol: data.symbol,
-            name: data.name || data.symbol,
-            exchange: data.exchange || "",
-            price: data.price,
-            analytics: {
-              oneDayPct: data.analytics?.oneDayPct ?? null,
-              oneMonthPct: data.analytics?.oneMonthPct ?? null,
-              threeMonthPct: data.analytics?.threeMonthPct ?? null,
-              vsSma20Pct: data.analytics?.vsSma20Pct ?? null,
-              relativeVolume: data.analytics?.relativeVolume ?? null,
-              volatility20: data.analytics?.volatility20 ?? null,
-              technicalScore: data.analytics?.technicalScore ?? null,
-              fundamentalScore: data.analytics?.fundamentalScore ?? null,
-              compositeScore: data.analytics?.compositeScore ?? null,
-            },
-          },
-          ...prev,
-        ]);
-        setLastUpdated(formatTimestamp());
+      if (existing) {
+        setSelectedSymbol(symbol);
+        setQuery("");
+        return;
       }
 
+      const data = await fetchSymbol(symbol);
+
+      setRows((prev) => [
+        {
+          symbol: data.symbol,
+          name: data.name || data.symbol,
+          price: data.price ?? null,
+          dayChangePct: data.dayChangePct ?? null,
+          compositeScore: data.compositeScore ?? null,
+          compositeColor: data.compositeColor || "yellow",
+          drivers: data.drivers || {
+            technical: [],
+            fundamental: [],
+            sentiment: [],
+          },
+        },
+        ...prev,
+      ]);
+
+      setSelectedSymbol(data.symbol);
       setQuery("");
+      setLastUpdated(
+        new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      );
     } catch (err) {
       setError(err.message || "No match found");
     }
   }
 
   useEffect(() => {
-    refreshAll(true);
+    refreshAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const open = isMarketOpenNow();
-      setMarketStatus(open ? "OPEN" : "CLOSED");
-
-      if (!open) return;
-
-      const now = Date.now();
-      if (now - lastRefreshRef.current >= AUTO_REFRESH_MS) {
-        refreshAll(false);
-      }
-    }, 60000);
-
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const sortedRows = useMemo(() => {
+    return [...rows].sort((a, b) => {
+      const aScore = a.compositeScore ?? -Infinity;
+      const bScore = b.compositeScore ?? -Infinity;
+      return bScore - aScore;
+    });
   }, [rows]);
 
-  function handleSort(nextKey) {
-    if (sortKey === nextKey) {
-      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
-      return;
-    }
+  const selectedRow =
+    sortedRows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
 
-    setSortKey(nextKey);
-    setSortDir("desc");
+  function renderDriverSection(title, drivers) {
+    return (
+      <div
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: 14,
+          padding: 16,
+          background: "#ffffff",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 16,
+            fontWeight: 700,
+            marginBottom: 14,
+          }}
+        >
+          {title}
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 12,
+          }}
+        >
+          {drivers.map((driver) => {
+            const colors = driverCardStyle(driver.color);
+
+            return (
+              <div
+                key={`${title}-${driver.label}`}
+                style={{
+                  ...colors,
+                  borderRadius: 12,
+                  padding: 14,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "#6b7280",
+                    marginBottom: 6,
+                  }}
+                >
+                  {driver.label}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    marginBottom: 6,
+                    color:
+                      driver.color === "green"
+                        ? "#166534"
+                        : driver.color === "red"
+                        ? "#b91c1c"
+                        : "#92400e",
+                  }}
+                >
+                  {driver.display}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    marginBottom: 4,
+                  }}
+                >
+                  {driver.note}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#6b7280",
+                  }}
+                >
+                  Score: {driver.score}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   }
-
-  const sortedRows = useMemo(() => {
-    const list = [...rows];
-
-    list.sort((a, b) => {
-      const getValue = (row) => {
-        switch (sortKey) {
-          case "symbol":
-            return row.symbol || "";
-          case "name":
-            return row.name || "";
-          case "price":
-            return row.price ?? -Infinity;
-          case "oneDayPct":
-            return row.analytics?.oneDayPct ?? -Infinity;
-          case "oneMonthPct":
-            return row.analytics?.oneMonthPct ?? -Infinity;
-          case "threeMonthPct":
-            return row.analytics?.threeMonthPct ?? -Infinity;
-          case "vsSma20Pct":
-            return row.analytics?.vsSma20Pct ?? -Infinity;
-          case "relativeVolume":
-            return row.analytics?.relativeVolume ?? -Infinity;
-          case "technicalScore":
-            return row.analytics?.technicalScore ?? -Infinity;
-          case "compositeScore":
-            return row.analytics?.compositeScore ?? -Infinity;
-          default:
-            return row.analytics?.compositeScore ?? -Infinity;
-        }
-      };
-
-      const aVal = getValue(a);
-      const bVal = getValue(b);
-
-      if (typeof aVal === "string" || typeof bVal === "string") {
-        const compare = String(aVal).localeCompare(String(bVal));
-        return sortDir === "asc" ? compare : -compare;
-      }
-
-      const compare = (aVal ?? -Infinity) - (bVal ?? -Infinity);
-      return sortDir === "asc" ? compare : -compare;
-    });
-
-    return list;
-  }, [rows, sortKey, sortDir]);
-
-  const statusColor = marketStatus === "OPEN" ? "#166534" : "#991b1b";
 
   return (
     <main
       style={{
-        maxWidth: 1400,
+        maxWidth: 1280,
         margin: "32px auto",
         padding: "0 16px",
         fontFamily:
@@ -352,7 +312,7 @@ export default function HomePage() {
         style={{
           fontSize: 36,
           fontWeight: 700,
-          marginBottom: 8,
+          marginBottom: 20,
         }}
       >
         Auto Quant Screener
@@ -360,20 +320,9 @@ export default function HomePage() {
 
       <div
         style={{
-          color: "#4b5563",
-          fontSize: 14,
-          marginBottom: 20,
-        }}
-      >
-        Composite score is currently driven by technical factors: 1M momentum, 3M momentum,
-        trend vs 20-day average, relative volume, and a volatility penalty.
-      </div>
-
-      <div
-        style={{
           display: "flex",
           gap: 12,
-          marginBottom: 12,
+          marginBottom: 14,
           alignItems: "center",
           flexWrap: "wrap",
         }}
@@ -383,12 +332,12 @@ export default function HomePage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSearch();
+            if (e.key === "Enter") handleAddTicker();
           }}
           placeholder="Add ticker..."
           style={{
-            flex: "1 1 320px",
-            minWidth: 260,
+            flex: "1 1 280px",
+            minWidth: 240,
             padding: "12px 14px",
             border: "1px solid #d1d5db",
             borderRadius: 10,
@@ -397,7 +346,7 @@ export default function HomePage() {
         />
 
         <button
-          onClick={handleSearch}
+          onClick={handleAddTicker}
           style={{
             padding: "12px 16px",
             borderRadius: 10,
@@ -408,11 +357,11 @@ export default function HomePage() {
             cursor: "pointer",
           }}
         >
-          Add / Refresh Ticker
+          Add Ticker
         </button>
 
         <button
-          onClick={() => refreshAll(true)}
+          onClick={refreshAll}
           disabled={isRefreshing}
           style={{
             padding: "12px 16px",
@@ -424,7 +373,7 @@ export default function HomePage() {
             cursor: "pointer",
           }}
         >
-          {isRefreshing ? "Refreshing..." : "Refresh All"}
+          {isRefreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
@@ -440,29 +389,8 @@ export default function HomePage() {
           flexWrap: "wrap",
         }}
       >
-        <div>Auto-refresh every 5 minutes during market hours only</div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            Market:{" "}
-            <span
-              style={{
-                fontWeight: 700,
-                color: statusColor,
-              }}
-            >
-              {marketStatus}
-            </span>
-          </div>
-          <div>Last updated: {lastUpdated || "—"}</div>
-        </div>
+        <div>Manual refresh only to protect API credits</div>
+        <div>Last updated: {lastUpdated || "—"}</div>
       </div>
 
       {error ? (
@@ -486,12 +414,13 @@ export default function HomePage() {
           borderRadius: 14,
           overflowX: "auto",
           background: "#ffffff",
+          marginBottom: 24,
         }}
       >
         <table
           style={{
             width: "100%",
-            minWidth: 1200,
+            minWidth: 760,
             borderCollapse: "collapse",
           }}
         >
@@ -501,172 +430,192 @@ export default function HomePage() {
             }}
           >
             <tr>
-              {[
-                ["symbol", "Ticker"],
-                ["name", "Name"],
-                ["price", "Price"],
-                ["oneDayPct", "1D %"],
-                ["oneMonthPct", "1M %"],
-                ["threeMonthPct", "3M %"],
-                ["vsSma20Pct", "Vs SMA20"],
-                ["relativeVolume", "Rel Vol"],
-                ["technicalScore", "Tech"],
-                ["compositeScore", "Composite"],
-              ].map(([key, label]) => (
-                <th
-                  key={key}
-                  onClick={() => handleSort(key)}
-                  style={{
-                    textAlign: key === "price" || key.includes("Pct") || key.includes("Score") || key === "relativeVolume"
-                      ? "right"
-                      : "left",
-                    padding: "14px 16px",
-                    fontSize: 13,
-                    color: "#6b7280",
-                    borderBottom: "1px solid #e5e7eb",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {label}
-                  {sortKey === key ? (sortDir === "desc" ? " ↓" : " ↑") : ""}
-                </th>
-              ))}
+              <th
+                style={{
+                  textAlign: "left",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Symbol
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Name
+              </th>
+              <th
+                style={{
+                  textAlign: "right",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Price
+              </th>
+              <th
+                style={{
+                  textAlign: "right",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Chg %
+              </th>
+              <th
+                style={{
+                  textAlign: "right",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Composite
+              </th>
             </tr>
           </thead>
 
           <tbody>
-            {sortedRows.map((row) => (
-              <tr key={row.symbol}>
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {row.symbol}
-                </td>
+            {sortedRows.map((row) => {
+              const pill = scorePillStyle(row.compositeColor);
+              const isSelected = selectedRow?.symbol === row.symbol;
 
-                <td
+              return (
+                <tr
+                  key={row.symbol}
+                  onClick={() => setSelectedSymbol(row.symbol)}
                   style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    minWidth: 220,
+                    cursor: "pointer",
+                    background: isSelected ? "#f9fafb" : "#ffffff",
                   }}
                 >
-                  <div style={{ fontWeight: 500 }}>{row.name || row.symbol}</div>
-                  <div style={{ color: "#6b7280", fontSize: 12 }}>
-                    {row.exchange || "—"}
-                  </div>
-                </td>
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      borderBottom: "1px solid #f3f4f6",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {row.symbol}
+                  </td>
 
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    textAlign: "right",
-                    fontVariantNumeric: "tabular-nums",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatPrice(row.price)}
-                </td>
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      borderBottom: "1px solid #f3f4f6",
+                    }}
+                  >
+                    {row.name || row.symbol}
+                  </td>
 
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    textAlign: "right",
-                    color: pctColor(row.analytics?.oneDayPct),
-                    fontVariantNumeric: "tabular-nums",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatPct(row.analytics?.oneDayPct)}
-                </td>
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      borderBottom: "1px solid #f3f4f6",
+                      textAlign: "right",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {formatPrice(row.price)}
+                  </td>
 
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    textAlign: "right",
-                    color: pctColor(row.analytics?.oneMonthPct),
-                    fontVariantNumeric: "tabular-nums",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatPct(row.analytics?.oneMonthPct)}
-                </td>
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      borderBottom: "1px solid #f3f4f6",
+                      textAlign: "right",
+                      fontVariantNumeric: "tabular-nums",
+                      color:
+                        row.dayChangePct > 0
+                          ? "#166534"
+                          : row.dayChangePct < 0
+                          ? "#b91c1c"
+                          : "#111827",
+                    }}
+                  >
+                    {formatPct(row.dayChangePct)}
+                  </td>
 
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    textAlign: "right",
-                    color: pctColor(row.analytics?.threeMonthPct),
-                    fontVariantNumeric: "tabular-nums",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatPct(row.analytics?.threeMonthPct)}
-                </td>
-
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    textAlign: "right",
-                    color: pctColor(row.analytics?.vsSma20Pct),
-                    fontVariantNumeric: "tabular-nums",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatPct(row.analytics?.vsSma20Pct)}
-                </td>
-
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    textAlign: "right",
-                    fontVariantNumeric: "tabular-nums",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatRatio(row.analytics?.relativeVolume)}
-                </td>
-
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    textAlign: "right",
-                    color: scoreColor(row.analytics?.technicalScore),
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatScore(row.analytics?.technicalScore)}
-                </td>
-
-                <td
-                  style={{
-                    padding: "14px 16px",
-                    borderBottom: "1px solid #f3f4f6",
-                    textAlign: "right",
-                    color: scoreColor(row.analytics?.compositeScore),
-                    fontWeight: 800,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatScore(row.analytics?.compositeScore)}
-                </td>
-              </tr>
-            ))}
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      borderBottom: "1px solid #f3f4f6",
+                      textAlign: "right",
+                    }}
+                  >
+                    <span
+                      style={{
+                        ...pill,
+                        display: "inline-block",
+                        minWidth: 52,
+                        textAlign: "center",
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        fontWeight: 700,
+                        fontSize: 13,
+                      }}
+                    >
+                      {row.compositeScore ?? "—"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+      </div>
+
+      {selectedRow ? (
+        <div
+          style={{
+            marginBottom: 14,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              marginBottom: 6,
+            }}
+          >
+            {selectedRow.symbol} — {selectedRow.name || selectedRow.symbol}
+          </div>
+
+          <div
+            style={{
+              color: "#6b7280",
+              fontSize: 14,
+              marginBottom: 20,
+            }}
+          >
+            Driver view showing what is helping or hurting the composite score
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr",
+          gap: 16,
+        }}
+      >
+        {selectedRow ? renderDriverSection("Technical", selectedRow.drivers?.technical || []) : null}
+        {selectedRow ? renderDriverSection("Fundamental", selectedRow.drivers?.fundamental || []) : null}
+        {selectedRow ? renderDriverSection("Sentiment", selectedRow.drivers?.sentiment || []) : null}
       </div>
     </main>
   );
