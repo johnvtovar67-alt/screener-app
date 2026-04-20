@@ -10,53 +10,72 @@ export default async function handler(req, res) {
         'MSTR',
       ]
 
-    const joined = symbols.join(',')
-    const apiKey = process.env.FMP_API_KEY
+    const apiKey = process.env.TWELVE_DATA_API_KEY
 
     if (!apiKey) {
-      return res.status(500).json({ error: 'Missing FMP_API_KEY' })
+      return res.status(500).json({ error: 'Missing TWELVE_DATA_API_KEY' })
     }
 
-    const url = `https://financialmodelingprep.com/stable/batch-quote?symbols=${joined}&apikey=${apiKey}`
+    const results = await Promise.all(
+      symbols.map(async (symbol) => {
+        const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(
+          symbol
+        )}&apikey=${apiKey}`
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    })
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        })
 
-    const text = await response.text()
+        const text = await response.text()
 
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: 'Upstream request failed',
-        status: response.status,
-        body: text,
+        if (!response.ok) {
+          return {
+            symbol,
+            error: `HTTP ${response.status}`,
+            raw: text,
+          }
+        }
+
+        let data
+        try {
+          data = JSON.parse(text)
+        } catch {
+          return {
+            symbol,
+            error: 'Invalid JSON',
+            raw: text,
+          }
+        }
+
+        if (data.status === 'error') {
+          return {
+            symbol,
+            error: data.message || 'Vendor error',
+          }
+        }
+
+        return {
+          symbol,
+          price: data.close ? Number(data.close) : null,
+          open: data.open ? Number(data.open) : null,
+          high: data.high ? Number(data.high) : null,
+          low: data.low ? Number(data.low) : null,
+          prevClose: data.previous_close ? Number(data.previous_close) : null,
+          change: data.change ? Number(data.change) : null,
+          percentChange: data.percent_change ? Number(data.percent_change) : null,
+          volume: data.volume ? Number(data.volume) : null,
+        }
       })
-    }
+    )
 
-    let data
-    try {
-      data = JSON.parse(text)
-    } catch (e) {
-      return res.status(500).json({
-        error: 'Invalid JSON from upstream',
-        body: text,
-      })
-    }
-
-    const map = {}
-    for (const item of data || []) {
-      map[item.symbol] = {
-        price: item.price,
-        change: item.change,
-        changesPercentage: item.changesPercentage,
-        volume: item.volume,
-        marketCap: item.marketCap,
-      }
+    const quotes = {}
+    for (const item of results) {
+      quotes[item.symbol] = item
     }
 
     return res.status(200).json({
-      quotes: map,
+      quotes,
       updatedAt: Date.now(),
     })
   } catch (e) {
