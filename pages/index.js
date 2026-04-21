@@ -113,6 +113,9 @@ export default function HomePage() {
       if (sortMode === "fundamental") {
         return (b.fundamentalScore ?? 0) - (a.fundamentalScore ?? 0);
       }
+      if (sortMode === "institutional") {
+        return (b.institutionalScore ?? 0) - (a.institutionalScore ?? 0);
+      }
       if (sortMode === "action") {
         const rank = { Buy: 3, Watch: 2, Avoid: 1 };
         const actionDiff =
@@ -137,6 +140,8 @@ export default function HomePage() {
     if ((row.fundamentalScore ?? 0) >= 80)
       reasons.push("high-quality fundamentals");
     if ((row.sentimentScore ?? 0) >= 70) reasons.push("supportive sentiment");
+    if ((row.institutionalScore ?? 0) >= 75)
+      reasons.push("institutional-quality profile");
     if ((row.valuationScore ?? 0) >= 75) reasons.push("attractive valuation");
     if ((row.oneMonthPct ?? 0) >= 10) reasons.push("strong recent momentum");
     if ((row.epsGrowthPct ?? 0) >= 20) reasons.push("strong EPS growth");
@@ -408,6 +413,13 @@ export default function HomePage() {
           style={sortButtonStyle(sortMode === "fundamental")}
         >
           Sort: Fundamental
+        </button>
+
+        <button
+          onClick={() => setSortMode("institutional")}
+          style={sortButtonStyle(sortMode === "institutional")}
+        >
+          Sort: Institutional
         </button>
 
         <button
@@ -760,6 +772,17 @@ export default function HomePage() {
               }}
             >
               Why this is interesting: {getInterestingText(selectedRow)}
+            </div>
+
+            <div
+              style={{
+                fontSize: 14,
+                color: "#111827",
+                marginBottom: 10,
+                fontWeight: 600,
+              }}
+            >
+              Institutional score: {selectedRow.institutionalScore}/100
             </div>
 
             <div
