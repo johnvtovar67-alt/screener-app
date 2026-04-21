@@ -14,6 +14,9 @@ export default function HomePage() {
   const [isLoadingTop5, setIsLoadingTop5] = useState(true);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [sortMode, setSortMode] = useState("composite");
+  const [under25Only, setUnder25Only] = useState(false);
+  const [profitableOnly, setProfitableOnly] = useState(false);
+  const [minScore, setMinScore] = useState(60);
 
   async function loadTop5() {
     setIsLoadingTop5(true);
@@ -79,8 +82,17 @@ export default function HomePage() {
     loadTop5();
   }, []);
 
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      if (under25Only && (row.price ?? 0) >= 25) return false;
+      if (profitableOnly && (row.operatingMarginPct ?? 0) <= 0) return false;
+      if ((row.compositeScore ?? 0) < minScore) return false;
+      return true;
+    });
+  }, [rows, under25Only, profitableOnly, minScore]);
+
   const sortedRows = useMemo(() => {
-    const list = [...rows];
+    const list = [...filteredRows];
 
     list.sort((a, b) => {
       if (sortMode === "technical") {
@@ -93,7 +105,7 @@ export default function HomePage() {
     });
 
     return list.slice(0, 5);
-  }, [rows, sortMode]);
+  }, [filteredRows, sortMode]);
 
   const selectedRow =
     rows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
@@ -220,6 +232,18 @@ export default function HomePage() {
     };
   }
 
+  function filterButtonStyle(active) {
+    return {
+      padding: "10px 14px",
+      borderRadius: 999,
+      border: active ? "1px solid #0f766e" : "1px solid #d1d5db",
+      background: active ? "#0f766e" : "#ffffff",
+      color: active ? "#ffffff" : "#111827",
+      fontSize: 14,
+      cursor: "pointer",
+    };
+  }
+
   return (
     <main
       style={{
@@ -319,7 +343,7 @@ export default function HomePage() {
           display: "flex",
           gap: 10,
           flexWrap: "wrap",
-          marginBottom: 18,
+          marginBottom: 12,
         }}
       >
         <button
@@ -342,6 +366,58 @@ export default function HomePage() {
         >
           Sort: Fundamental
         </button>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          marginBottom: 18,
+          alignItems: "center",
+        }}
+      >
+        <button
+          onClick={() => setUnder25Only((prev) => !prev)}
+          style={filterButtonStyle(under25Only)}
+        >
+          Under $25
+        </button>
+
+        <button
+          onClick={() => setProfitableOnly((prev) => !prev)}
+          style={filterButtonStyle(profitableOnly)}
+        >
+          Profitable Only
+        </button>
+
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 14,
+            color: "#111827",
+          }}
+        >
+          Min Score
+          <select
+            value={minScore}
+            onChange={(e) => setMinScore(Number(e.target.value))}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "1px solid #d1d5db",
+              background: "#ffffff",
+              fontSize: 14,
+            }}
+          >
+            <option value={50}>50+</option>
+            <option value={60}>60+</option>
+            <option value={70}>70+</option>
+            <option value={80}>80+</option>
+          </select>
+        </label>
       </div>
 
       {error ? (
@@ -545,7 +621,7 @@ export default function HomePage() {
                     color: "#6b7280",
                   }}
                 >
-                  No data loaded.
+                  No stocks match your current filters.
                 </td>
               </tr>
             ) : null}
