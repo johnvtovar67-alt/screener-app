@@ -13,6 +13,7 @@ export default function HomePage() {
   const [error, setError] = useState("");
   const [isLoadingTop5, setIsLoadingTop5] = useState(true);
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [sortMode, setSortMode] = useState("composite");
 
   async function loadTop5() {
     setIsLoadingTop5(true);
@@ -79,13 +80,42 @@ export default function HomePage() {
   }, []);
 
   const sortedRows = useMemo(() => {
-    return [...rows].sort(
-      (a, b) => (b.compositeScore ?? 0) - (a.compositeScore ?? 0)
-    );
-  }, [rows]);
+    const list = [...rows];
+
+    list.sort((a, b) => {
+      if (sortMode === "technical") {
+        return (b.technicalScore ?? 0) - (a.technicalScore ?? 0);
+      }
+      if (sortMode === "fundamental") {
+        return (b.fundamentalScore ?? 0) - (a.fundamentalScore ?? 0);
+      }
+      return (b.compositeScore ?? 0) - (a.compositeScore ?? 0);
+    });
+
+    return list.slice(0, 5);
+  }, [rows, sortMode]);
 
   const selectedRow =
-    sortedRows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
+    rows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
+
+  function getInterestingText(row) {
+    if (!row) return "";
+
+    const reasons = [];
+
+    if ((row.technicalScore ?? 0) >= 80) reasons.push("strong technical trend");
+    if ((row.fundamentalScore ?? 0) >= 80) reasons.push("high-quality fundamentals");
+    if ((row.sentimentScore ?? 0) >= 70) reasons.push("supportive sentiment");
+    if ((row.valuationScore ?? 0) >= 75) reasons.push("attractive valuation");
+    if ((row.oneMonthPct ?? 0) >= 10) reasons.push("strong recent momentum");
+    if ((row.epsGrowthPct ?? 0) >= 20) reasons.push("strong EPS growth");
+
+    if (!reasons.length) {
+      return "Balanced setup with supportive technical and fundamental inputs.";
+    }
+
+    return reasons.slice(0, 2).join(" + ");
+  }
 
   function renderDriverSection(title, drivers) {
     return (
@@ -178,6 +208,18 @@ export default function HomePage() {
     );
   }
 
+  function sortButtonStyle(active) {
+    return {
+      padding: "10px 14px",
+      borderRadius: 999,
+      border: active ? "1px solid #111827" : "1px solid #d1d5db",
+      background: active ? "#111827" : "#ffffff",
+      color: active ? "#ffffff" : "#111827",
+      fontSize: 14,
+      cursor: "pointer",
+    };
+  }
+
   return (
     <main
       style={{
@@ -193,8 +235,12 @@ export default function HomePage() {
           fontSize: 36,
           fontWeight: 700,
           marginBottom: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
         }}
       >
+        <span>🧠</span>
         Auto Quant Screener
       </h1>
 
@@ -205,8 +251,7 @@ export default function HomePage() {
           marginBottom: 20,
         }}
       >
-        Launch view shows the top 5 opportunities by composite score. Use the
-        ticker lookup to snap-score any company on demand.
+        Launch view shows the top 5 opportunities by composite score from a broader scored universe. Use the ticker lookup to snap-score any company on demand.
       </div>
 
       <div
@@ -266,6 +311,36 @@ export default function HomePage() {
           }}
         >
           {isLoadingTop5 ? "Loading..." : "Reload Top 5"}
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          marginBottom: 18,
+        }}
+      >
+        <button
+          onClick={() => setSortMode("composite")}
+          style={sortButtonStyle(sortMode === "composite")}
+        >
+          Sort: Composite
+        </button>
+
+        <button
+          onClick={() => setSortMode("technical")}
+          style={sortButtonStyle(sortMode === "technical")}
+        >
+          Sort: Technical
+        </button>
+
+        <button
+          onClick={() => setSortMode("fundamental")}
+          style={sortButtonStyle(sortMode === "fundamental")}
+        >
+          Sort: Fundamental
         </button>
       </div>
 
@@ -394,7 +469,16 @@ export default function HomePage() {
                       borderBottom: "1px solid #f3f4f6",
                     }}
                   >
-                    {row.name || row.symbol}
+                    <div style={{ fontWeight: 500 }}>{row.name || row.symbol}</div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "#6b7280",
+                        marginTop: 4,
+                      }}
+                    >
+                      {getInterestingText(row)}
+                    </div>
                   </td>
 
                   <td
@@ -490,10 +574,21 @@ export default function HomePage() {
               style={{
                 color: "#6b7280",
                 fontSize: 14,
-                marginBottom: 20,
+                marginBottom: 10,
               }}
             >
               Driver view showing what is helping or hurting the composite score
+            </div>
+
+            <div
+              style={{
+                fontSize: 14,
+                color: "#374151",
+                marginBottom: 20,
+                fontWeight: 500,
+              }}
+            >
+              Why this is interesting: {getInterestingText(selectedRow)}
             </div>
           </div>
 
