@@ -1,9 +1,11 @@
 import { STOCK_UNIVERSE } from "../../data/top5";
 import { enrichStock } from "../../lib/scoring";
+import { buildStockFromBase } from "../../lib/universeBuilder";
 
 export default function handler(req, res) {
   try {
-    const ranked = STOCK_UNIVERSE.map(enrichStock)
+    const ranked = STOCK_UNIVERSE.map(buildStockFromBase)
+      .map(enrichStock)
       .filter((stock) => (stock.compositeScore ?? 0) >= 55)
       .sort((a, b) => {
         const aComposite = a.compositeScore ?? 0;
