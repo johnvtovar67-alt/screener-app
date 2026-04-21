@@ -27,7 +27,7 @@ export default function HomePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to load top 5");
+        throw new Error(data.error || "Failed to load top opportunities");
       }
 
       setRows(data.stocks || []);
@@ -36,7 +36,7 @@ export default function HomePage() {
         setSelectedSymbol((prev) => prev || data.stocks[0].symbol);
       }
     } catch (err) {
-      setError(err.message || "Failed to load top 5");
+      setError(err.message || "Failed to load top opportunities");
     } finally {
       setIsLoadingTop5(false);
     }
@@ -101,6 +101,12 @@ export default function HomePage() {
       if (sortMode === "fundamental") {
         return (b.fundamentalScore ?? 0) - (a.fundamentalScore ?? 0);
       }
+      if (sortMode === "action") {
+        const rank = { Buy: 3, Watch: 2, Avoid: 1 };
+        const actionDiff =
+          (rank[b.actionLabel] ?? 0) - (rank[a.actionLabel] ?? 0);
+        if (actionDiff !== 0) return actionDiff;
+      }
       return (b.compositeScore ?? 0) - (a.compositeScore ?? 0);
     });
 
@@ -116,7 +122,8 @@ export default function HomePage() {
     const reasons = [];
 
     if ((row.technicalScore ?? 0) >= 80) reasons.push("strong technical trend");
-    if ((row.fundamentalScore ?? 0) >= 80) reasons.push("high-quality fundamentals");
+    if ((row.fundamentalScore ?? 0) >= 80)
+      reasons.push("high-quality fundamentals");
     if ((row.sentimentScore ?? 0) >= 70) reasons.push("supportive sentiment");
     if ((row.valuationScore ?? 0) >= 75) reasons.push("attractive valuation");
     if ((row.oneMonthPct ?? 0) >= 10) reasons.push("strong recent momentum");
@@ -127,6 +134,30 @@ export default function HomePage() {
     }
 
     return reasons.slice(0, 2).join(" + ");
+  }
+
+  function actionPillStyle(color) {
+    if (color === "green") {
+      return {
+        background: "#dcfce7",
+        color: "#166534",
+        border: "1px solid #bbf7d0",
+      };
+    }
+
+    if (color === "red") {
+      return {
+        background: "#fee2e2",
+        color: "#b91c1c",
+        border: "1px solid #fecaca",
+      };
+    }
+
+    return {
+      background: "#fef3c7",
+      color: "#92400e",
+      border: "1px solid #fde68a",
+    };
   }
 
   function renderDriverSection(title, drivers) {
@@ -275,7 +306,8 @@ export default function HomePage() {
           marginBottom: 20,
         }}
       >
-        Launch view shows the top 5 opportunities by composite score from a broader scored universe. Use the ticker lookup to snap-score any company on demand.
+        V1 Final: broader opportunity engine + stronger scoring + Buy / Watch /
+        Avoid actions.
       </div>
 
       <div
@@ -366,6 +398,13 @@ export default function HomePage() {
         >
           Sort: Fundamental
         </button>
+
+        <button
+          onClick={() => setSortMode("action")}
+          style={sortButtonStyle(sortMode === "action")}
+        >
+          Sort: Action
+        </button>
       </div>
 
       <div
@@ -418,6 +457,16 @@ export default function HomePage() {
             <option value={80}>80+</option>
           </select>
         </label>
+
+        <div
+          style={{
+            fontSize: 13,
+            color: "#6b7280",
+            marginLeft: 4,
+          }}
+        >
+          Universe matches: {filteredRows.length}
+        </div>
       </div>
 
       {error ? (
@@ -447,7 +496,7 @@ export default function HomePage() {
         <table
           style={{
             width: "100%",
-            minWidth: 760,
+            minWidth: 900,
             borderCollapse: "collapse",
           }}
         >
@@ -512,12 +561,24 @@ export default function HomePage() {
               >
                 Composite
               </th>
+              <th
+                style={{
+                  textAlign: "center",
+                  padding: "14px 16px",
+                  fontSize: 13,
+                  color: "#6b7280",
+                  borderBottom: "1px solid #e5e7eb",
+                }}
+              >
+                Action
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {sortedRows.map((row) => {
-              const pill = scorePillStyle(row.compositeColor);
+              const scorePill = scorePillStyle(row.compositeColor);
+              const actionPill = actionPillStyle(row.actionColor);
               const isSelected = selectedRow?.symbol === row.symbol;
 
               return (
@@ -594,7 +655,7 @@ export default function HomePage() {
                   >
                     <span
                       style={{
-                        ...pill,
+                        ...scorePill,
                         display: "inline-block",
                         minWidth: 52,
                         textAlign: "center",
@@ -607,6 +668,29 @@ export default function HomePage() {
                       {row.compositeScore ?? "—"}
                     </span>
                   </td>
+
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      borderBottom: "1px solid #f3f4f6",
+                      textAlign: "center",
+                    }}
+                  >
+                    <span
+                      style={{
+                        ...actionPill,
+                        display: "inline-block",
+                        minWidth: 64,
+                        textAlign: "center",
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        fontWeight: 700,
+                        fontSize: 13,
+                      }}
+                    >
+                      {row.actionLabel}
+                    </span>
+                  </td>
                 </tr>
               );
             })}
@@ -614,7 +698,7 @@ export default function HomePage() {
             {!sortedRows.length && !isLoadingTop5 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   style={{
                     padding: "20px 16px",
                     textAlign: "center",
@@ -660,11 +744,27 @@ export default function HomePage() {
               style={{
                 fontSize: 14,
                 color: "#374151",
-                marginBottom: 20,
+                marginBottom: 10,
                 fontWeight: 500,
               }}
             >
               Why this is interesting: {getInterestingText(selectedRow)}
+            </div>
+
+            <div
+              style={{
+                fontSize: 14,
+                color:
+                  selectedRow.actionColor === "green"
+                    ? "#166534"
+                    : selectedRow.actionColor === "red"
+                    ? "#b91c1c"
+                    : "#92400e",
+                marginBottom: 20,
+                fontWeight: 700,
+              }}
+            >
+              Action: {selectedRow.actionLabel} — {selectedRow.actionReason}
             </div>
           </div>
 
