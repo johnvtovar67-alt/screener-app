@@ -17,6 +17,11 @@ export default function HomePage() {
   const [under25Only, setUnder25Only] = useState(false);
   const [profitableOnly, setProfitableOnly] = useState(false);
   const [minScore, setMinScore] = useState(60);
+  const [meta, setMeta] = useState({
+    totalUniverse: 0,
+    afterInstitutionalFilter: 0,
+    afterRankingThreshold: 0,
+  });
 
   async function loadTop5() {
     setIsLoadingTop5(true);
@@ -31,6 +36,13 @@ export default function HomePage() {
       }
 
       setRows(data.stocks || []);
+      setMeta(
+        data.meta || {
+          totalUniverse: 0,
+          afterInstitutionalFilter: 0,
+          afterRankingThreshold: 0,
+        }
+      );
 
       if ((data.stocks || []).length) {
         setSelectedSymbol((prev) => prev || data.stocks[0].symbol);
@@ -306,8 +318,7 @@ export default function HomePage() {
           marginBottom: 20,
         }}
       >
-        V1 Final: broader opportunity engine + stronger scoring + Buy / Watch /
-        Avoid actions.
+        V1 Final: broader opportunity engine + institutional filter layer + Buy / Watch / Avoid actions.
       </div>
 
       <div
@@ -465,7 +476,7 @@ export default function HomePage() {
             marginLeft: 4,
           }}
         >
-          Universe matches: {filteredRows.length}
+          Universe: {meta.totalUniverse} → Gate: {meta.afterInstitutionalFilter} → Ranked: {meta.afterRankingThreshold} → Showing: {filteredRows.length}
         </div>
       </div>
 
