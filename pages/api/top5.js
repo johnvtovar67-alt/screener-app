@@ -1,9 +1,9 @@
-import { TOP5_STOCKS } from "../../data/top5";
+import { STOCK_UNIVERSE } from "../../data/top5";
 import { enrichStock } from "../../lib/scoring";
 
 export default function handler(req, res) {
   try {
-    const ranked = TOP5_STOCKS.map(enrichStock).sort(
+    const ranked = STOCK_UNIVERSE.map(enrichStock).sort(
       (a, b) => (b.compositeScore ?? 0) - (a.compositeScore ?? 0)
     );
 
