@@ -7,21 +7,30 @@ function passesInstitutionalFilter(stock) {
   const volatility = stock.volatility ?? 99;
   const operatingMargin = stock.operatingMarginPct ?? -99;
   const revenueGrowth = stock.revenueGrowthPct ?? -99;
+  const epsGrowth = stock.epsGrowthPct ?? -99;
   const oneMonth = stock.oneMonthPct ?? -99;
+  const threeMonth = stock.threeMonthPct ?? -99;
   const relativeVolume = stock.relativeVolume ?? 0;
+  const debtToEquity = stock.debtToEquity ?? 99;
+  const institutionalScore = stock.institutionalScore ?? 0;
 
-  const tradable = price > 3;
-  const notTooWild = volatility < 8;
-  const notBroken = operatingMargin > -10;
-  const hasBusinessOrTapeSupport = revenueGrowth > 0 || oneMonth > 5;
-  const hasEnoughParticipation = relativeVolume >= 0.85;
+  const tradable = price > 5;
+  const notTooWild = volatility < 6;
+  const profitable = operatingMargin > 5;
+  const balanceSheetOK = debtToEquity < 2;
+  const hasGrowth = revenueGrowth > 5 || epsGrowth > 10;
+  const hasMomentum = oneMonth > 5 && threeMonth > 10;
+  const strongParticipation = relativeVolume >= 1.0;
+  const institutionalQuality = institutionalScore >= 60;
 
   return (
     tradable &&
     notTooWild &&
-    notBroken &&
-    hasBusinessOrTapeSupport &&
-    hasEnoughParticipation
+    profitable &&
+    balanceSheetOK &&
+    strongParticipation &&
+    institutionalQuality &&
+    (hasGrowth || hasMomentum)
   );
 }
 
@@ -39,15 +48,17 @@ export default function handler(req, res) {
 
         if (bComposite !== aComposite) return bComposite - aComposite;
 
+        const aInstitutional = a.institutionalScore ?? 0;
+        const bInstitutional = b.institutionalScore ?? 0;
+
+        if (bInstitutional !== aInstitutional) {
+          return bInstitutional - aInstitutional;
+        }
+
         const aTechnical = a.technicalScore ?? 0;
         const bTechnical = b.technicalScore ?? 0;
 
-        if (bTechnical !== aTechnical) return bTechnical - aTechnical;
-
-        const aFundamental = a.fundamentalScore ?? 0;
-        const bFundamental = b.fundamentalScore ?? 0;
-
-        return bFundamental - aFundamental;
+        return bTechnical - aTechnical;
       });
 
     return res.status(200).json({
