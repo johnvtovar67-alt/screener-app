@@ -11,8 +11,7 @@ export default function handler(req, res) {
     }
 
     const found =
-      STOCK_UNIVERSE.find((item) => item.symbol === symbol) ||
-      {
+      STOCK_UNIVERSE.find((item) => item.symbol === symbol) || {
         symbol,
         name: symbol,
         price: 50.0,
