@@ -7,32 +7,20 @@ function isUsable(stock) {
   return price > 1;
 }
 
-function rankScore(stock) {
-  if (stock?.asymmetryScore != null) return stock.asymmetryScore;
-  if (stock?.compositeScore != null) return stock.compositeScore;
-  return 0;
-}
-
 export default function handler(req, res) {
   try {
     const builtUniverse = STOCK_UNIVERSE.map((base) => buildStockFromBase(base));
-
     const enrichedUniverse = builtUniverse.map((stock) => enrichStock(stock));
-
     const filteredUniverse = enrichedUniverse.filter(isUsable);
 
     const ranked = [...filteredUniverse].sort((a, b) => {
-      const bRank = rankScore(b);
-      const aRank = rankScore(a);
-      if (bRank !== aRank) return bRank - aRank;
+      const triggerDiff = (b?.triggerScore ?? 0) - (a?.triggerScore ?? 0);
+      if (triggerDiff !== 0) return triggerDiff;
 
-      const bQuality = b?.qualityScore ?? 0;
-      const aQuality = a?.qualityScore ?? 0;
-      if (bQuality !== aQuality) return bQuality - aQuality;
+      const asymmetryDiff = (b?.asymmetryScore ?? 0) - (a?.asymmetryScore ?? 0);
+      if (asymmetryDiff !== 0) return asymmetryDiff;
 
-      const bTech = b?.technicalScore ?? 0;
-      const aTech = a?.technicalScore ?? 0;
-      return bTech - aTech;
+      return (b?.qualityScore ?? 0) - (a?.qualityScore ?? 0);
     });
 
     return res.status(200).json({
