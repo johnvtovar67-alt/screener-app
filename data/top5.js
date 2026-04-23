@@ -356,7 +356,6 @@ const NAME_OVERRIDES = {
   COMP: "Compass",
   LCID: "Lucid Group",
   FUBO: "fuboTV",
-  IREN: "IREN",
   EVGO: "EVgo",
   CHPT: "ChargePoint",
   ENVX: "Enovix",
