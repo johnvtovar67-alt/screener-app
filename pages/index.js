@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  driverCardStyle,
-  formatPct,
-  formatPrice,
-  scorePillStyle,
-} from "../lib/formatters";
+import { formatPct, formatPrice } from "../lib/formatters";
 import {
   calcQualityScore,
   calcAsymmetryScore,
   calcTriggerScore,
   getStage,
+  getRecommendation,
+  buildTechnicalSnapshot,
+  buildFundamentalSnapshot,
 } from "../lib/scoring";
 
 export default function HomePage() {
@@ -21,7 +19,6 @@ export default function HomePage() {
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [under25Only, setUnder25Only] = useState(true);
   const [profitableOnly, setProfitableOnly] = useState(false);
-  const [minScore, setMinScore] = useState(40);
   const [meta, setMeta] = useState({
     totalUniverse: 0,
     afterInstitutionalFilter: 0,
@@ -74,11 +71,9 @@ export default function HomePage() {
 
       setRows((prev) => {
         const exists = prev.some((row) => row.symbol === data.symbol);
-
         if (exists) {
           return prev.map((row) => (row.symbol === data.symbol ? data : row));
         }
-
         return [data, ...prev];
       });
 
@@ -104,23 +99,27 @@ export default function HomePage() {
       const triggerScore =
         row.triggerScore != null ? row.triggerScore : calcTriggerScore(row);
       const stage = row.stage || getStage(row);
-
-      let asymmetryColor = "yellow";
-      if (asymmetryScore >= 80) asymmetryColor = "green";
-      else if (asymmetryScore < 50) asymmetryColor = "red";
-
-      let triggerColor = "yellow";
-      if (triggerScore >= 70) triggerColor = "green";
-      else if (triggerScore < 50) triggerColor = "red";
+      const recommendation =
+        row.recommendation ||
+        getRecommendation({
+          ...row,
+          qualityScore,
+          asymmetryScore,
+          triggerScore,
+          stage,
+        });
 
       return {
         ...row,
         qualityScore,
         asymmetryScore,
         triggerScore,
-        asymmetryColor,
-        triggerColor,
         stage,
+        recommendation,
+        technicalSnapshot:
+          row.technicalSnapshot || buildTechnicalSnapshot(row),
+        fundamentalSnapshot:
+          row.fundamentalSnapshot || buildFundamentalSnapshot(row),
       };
     });
   }, [rows]);
@@ -129,10 +128,9 @@ export default function HomePage() {
     return enrichedRows.filter((row) => {
       if (under25Only && (row.price ?? 0) >= 25) return false;
       if (profitableOnly && (row.operatingMarginPct ?? 0) <= 0) return false;
-      if ((row.asymmetryScore ?? 0) < minScore) return false;
       return true;
     });
-  }, [enrichedRows, under25Only, profitableOnly, minScore]);
+  }, [enrichedRows, under25Only, profitableOnly]);
 
   const sortedRows = useMemo(() => {
     const list = [...filteredRows];
@@ -166,170 +164,33 @@ export default function HomePage() {
   const selectedRow =
     sortedRows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
 
-  function getInterestingText(row) {
-    if (!row) return "";
-
-    const reasons = [];
-
-    if ((row.triggerScore ?? 0) >= 70) reasons.push("trigger is active");
-    if ((row.asymmetryScore ?? 0) >= 60) reasons.push("good upside skew");
-    if ((row.qualityScore ?? 0) >= 60) reasons.push("solid quality floor");
-    if ((row.stage ?? "") === "Emerging") reasons.push("early breakout stage");
-    if ((row.stage ?? "") === "Extended") reasons.push("strong but extended");
-    if ((row.oneMonthPct ?? 0) >= 10) reasons.push("strong recent momentum");
-
-    if (!reasons.length) {
-      return "Setup is present, but timing is not confirmed yet.";
-    }
-
-    return reasons.slice(0, 2).join(" + ");
-  }
-
-  function actionPillStyle(color) {
-    if (color === "green") {
+  function recommendationPillStyle(label) {
+    if (label === "Buy Now") {
       return {
         background: "#dcfce7",
         color: "#166534",
         border: "1px solid #bbf7d0",
       };
     }
-
-    if (color === "red") {
-      return {
-        background: "#fee2e2",
-        color: "#b91c1c",
-        border: "1px solid #fecaca",
-      };
-    }
-
-    return {
-      background: "#fef3c7",
-      color: "#92400e",
-      border: "1px solid #fde68a",
-    };
-  }
-
-  function stagePillStyle(stage) {
-    if (stage === "Emerging") {
-      return {
-        background: "#dcfce7",
-        color: "#166534",
-        border: "1px solid #bbf7d0",
-      };
-    }
-
-    if (stage === "Extended") {
+    if (label === "Buy on Breakout") {
       return {
         background: "#fef3c7",
         color: "#92400e",
         border: "1px solid #fde68a",
       };
     }
-
-    if (stage === "Broken") {
+    if (label === "Watch") {
       return {
-        background: "#fee2e2",
-        color: "#b91c1c",
-        border: "1px solid #fecaca",
+        background: "#f3f4f6",
+        color: "#374151",
+        border: "1px solid #d1d5db",
       };
     }
-
     return {
-      background: "#e5e7eb",
-      color: "#374151",
-      border: "1px solid #d1d5db",
+      background: "#fee2e2",
+      color: "#b91c1c",
+      border: "1px solid #fecaca",
     };
-  }
-
-  function renderDriverSection(title, drivers) {
-    return (
-      <div
-        style={{
-          border: "1px solid #e5e7eb",
-          borderRadius: 14,
-          padding: 16,
-          background: "#ffffff",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 16,
-            fontWeight: 700,
-            marginBottom: 14,
-          }}
-        >
-          {title}
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 12,
-          }}
-        >
-          {drivers.map((driver) => {
-            const colors = driverCardStyle(driver.color);
-
-            return (
-              <div
-                key={`${title}-${driver.label}`}
-                style={{
-                  ...colors,
-                  borderRadius: 12,
-                  padding: 14,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: "#6b7280",
-                    marginBottom: 6,
-                  }}
-                >
-                  {driver.label}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    marginBottom: 6,
-                    color:
-                      driver.color === "green"
-                        ? "#166534"
-                        : driver.color === "red"
-                        ? "#b91c1c"
-                        : "#92400e",
-                  }}
-                >
-                  {driver.display}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    marginBottom: 4,
-                  }}
-                >
-                  {driver.note}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "#6b7280",
-                  }}
-                >
-                  Score: {driver.score}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
   }
 
   function filterButtonStyle(active) {
@@ -342,6 +203,17 @@ export default function HomePage() {
       fontSize: 14,
       cursor: "pointer",
     };
+  }
+
+  function yesNo(value) {
+    if (value == null) return "—";
+    return value ? "Yes" : "No";
+  }
+
+  function formatSignedPct(value) {
+    if (value == null || Number.isNaN(value)) return "—";
+    const sign = value > 0 ? "+" : "";
+    return `${sign}${value.toFixed(1)}%`;
   }
 
   return (
@@ -461,35 +333,6 @@ export default function HomePage() {
           Profitable Only
         </button>
 
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 14,
-            color: "#111827",
-          }}
-        >
-          Min Score
-          <select
-            value={minScore}
-            onChange={(e) => setMinScore(Number(e.target.value))}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 10,
-              border: "1px solid #d1d5db",
-              background: "#ffffff",
-              fontSize: 14,
-            }}
-          >
-            <option value={40}>40+</option>
-            <option value={50}>50+</option>
-            <option value={60}>60+</option>
-            <option value={70}>70+</option>
-            <option value={80}>80+</option>
-          </select>
-        </label>
-
         <div
           style={{
             fontSize: 13,
@@ -528,7 +371,7 @@ export default function HomePage() {
         <table
           style={{
             width: "100%",
-            minWidth: 1180,
+            minWidth: 980,
             borderCollapse: "collapse",
           }}
         >
@@ -538,20 +381,14 @@ export default function HomePage() {
               <th style={thStyle}>Name</th>
               <th style={thStyleRight}>Price</th>
               <th style={thStyleRight}>Chg %</th>
-              <th style={thStyleRight}>Trigger</th>
-              <th style={thStyleRight}>Asymmetry</th>
-              <th style={thStyleRight}>Quality</th>
-              <th style={thStyleCenter}>Stage</th>
-              <th style={thStyleCenter}>Action</th>
+              <th style={thStyle}>Recommendation</th>
+              <th style={thStyle}>Why</th>
             </tr>
           </thead>
 
           <tbody>
             {sortedRows.map((row) => {
-              const triggerPill = scorePillStyle(row.triggerColor);
-              const asymmetryPill = scorePillStyle(row.asymmetryColor);
-              const actionPill = actionPillStyle(row.actionColor);
-              const stagePill = stagePillStyle(row.stage);
+              const pill = recommendationPillStyle(row.recommendation?.label);
               const isSelected = selectedRow?.symbol === row.symbol;
 
               return (
@@ -567,15 +404,6 @@ export default function HomePage() {
 
                   <td style={tdStyle}>
                     <div style={{ fontWeight: 500 }}>{row.name || row.symbol}</div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "#6b7280",
-                        marginTop: 4,
-                      }}
-                    >
-                      {getInterestingText(row)}
-                    </div>
                   </td>
 
                   <td style={tdStyleRight}>{formatPrice(row.price)}</td>
@@ -594,12 +422,12 @@ export default function HomePage() {
                     {formatPct(row.dayChangePct)}
                   </td>
 
-                  <td style={tdStyleRight}>
+                  <td style={tdStyle}>
                     <span
                       style={{
-                        ...triggerPill,
+                        ...pill,
                         display: "inline-block",
-                        minWidth: 52,
+                        minWidth: 120,
                         textAlign: "center",
                         padding: "6px 10px",
                         borderRadius: 999,
@@ -607,60 +435,13 @@ export default function HomePage() {
                         fontSize: 13,
                       }}
                     >
-                      {row.triggerScore ?? "—"}
+                      {row.recommendation?.label}
                     </span>
                   </td>
 
-                  <td style={tdStyleRight}>
-                    <span
-                      style={{
-                        ...asymmetryPill,
-                        display: "inline-block",
-                        minWidth: 52,
-                        textAlign: "center",
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        fontWeight: 700,
-                        fontSize: 13,
-                      }}
-                    >
-                      {row.asymmetryScore ?? "—"}
-                    </span>
-                  </td>
-
-                  <td style={tdStyleRight}>{row.qualityScore ?? "—"}</td>
-
-                  <td style={tdStyleCenter}>
-                    <span
-                      style={{
-                        ...stagePill,
-                        display: "inline-block",
-                        minWidth: 74,
-                        textAlign: "center",
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        fontWeight: 700,
-                        fontSize: 13,
-                      }}
-                    >
-                      {row.stage}
-                    </span>
-                  </td>
-
-                  <td style={tdStyleCenter}>
-                    <span
-                      style={{
-                        ...actionPill,
-                        display: "inline-block",
-                        minWidth: 64,
-                        textAlign: "center",
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        fontWeight: 700,
-                        fontSize: 13,
-                      }}
-                    >
-                      {row.actionLabel}
+                  <td style={tdStyle}>
+                    <span style={{ color: "#6b7280", fontSize: 13 }}>
+                      {row.recommendation?.reason}
                     </span>
                   </td>
                 </tr>
@@ -670,7 +451,7 @@ export default function HomePage() {
             {!sortedRows.length && !isLoadingTop5 ? (
               <tr>
                 <td
-                  colSpan={9}
+                  colSpan={6}
                   style={{
                     padding: "20px 16px",
                     textAlign: "center",
@@ -687,7 +468,7 @@ export default function HomePage() {
 
       {selectedRow ? (
         <>
-          <div style={{ marginBottom: 14 }}>
+          <div style={{ marginBottom: 18 }}>
             <div
               style={{
                 fontSize: 24,
@@ -700,78 +481,115 @@ export default function HomePage() {
 
             <div
               style={{
-                color: "#6b7280",
-                fontSize: 14,
-                marginBottom: 10,
-              }}
-            >
-              Driver view showing what is helping or hurting the setup
-            </div>
-
-            <div
-              style={{
-                fontSize: 14,
+                fontSize: 15,
                 color: "#374151",
-                marginBottom: 10,
-                fontWeight: 500,
-              }}
-            >
-              Why this is interesting: {getInterestingText(selectedRow)}
-            </div>
-
-            <div
-              style={{
-                fontSize: 14,
-                color: "#111827",
                 marginBottom: 10,
                 fontWeight: 600,
               }}
             >
-              Trigger: {selectedRow.triggerScore}/100 • Asymmetry: {selectedRow.asymmetryScore}/100 • Quality: {selectedRow.qualityScore}/100 • Stage: {selectedRow.stage}
+              Recommendation: {selectedRow.recommendation?.label}
             </div>
 
             <div
               style={{
                 fontSize: 14,
-                color:
-                  selectedRow.actionColor === "green"
-                    ? "#166534"
-                    : selectedRow.actionColor === "red"
-                    ? "#b91c1c"
-                    : "#92400e",
-                marginBottom: 20,
-                fontWeight: 700,
+                color: "#6b7280",
+                marginBottom: 8,
               }}
             >
-              Action: {selectedRow.actionLabel} — {selectedRow.actionReason}
+              {selectedRow.recommendation?.reason}
+            </div>
+
+            <div
+              style={{
+                fontSize: 13,
+                color: "#9ca3af",
+              }}
+            >
+              Internal engine: trigger {selectedRow.triggerScore}/100, asymmetry {selectedRow.asymmetryScore}/100, quality {selectedRow.qualityScore}/100, stage {selectedRow.stage}
             </div>
           </div>
 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr",
+              gridTemplateColumns: "1fr 1fr",
               gap: 16,
+              marginBottom: 16,
             }}
           >
-            {renderDriverSection(
-              "Technical",
-              selectedRow.drivers?.technical || []
-            )}
-            {renderDriverSection(
-              "Fundamental Floor",
-              selectedRow.drivers?.fundamental || []
-            )}
-            {renderDriverSection(
-              "Trigger / Sentiment",
-              selectedRow.drivers?.sentiment || []
-            )}
+            <div style={cardStyle}>
+              <div style={cardTitleStyle}>Technical setup</div>
+              <div style={metricGridStyle}>
+                <Metric label="1M momentum" value={formatSignedPct(selectedRow.technicalSnapshot?.oneMonthPct)} />
+                <Metric label="3M momentum" value={formatSignedPct(selectedRow.technicalSnapshot?.threeMonthPct)} />
+                <Metric label="Relative volume" value={selectedRow.technicalSnapshot?.relativeVolume != null ? `${selectedRow.technicalSnapshot.relativeVolume.toFixed(2)}x` : "—"} />
+                <Metric label="Above 20DMA" value={yesNo(selectedRow.technicalSnapshot?.above20dma)} />
+                <Metric label="Above 50DMA" value={yesNo(selectedRow.technicalSnapshot?.above50dma)} />
+                <Metric label="Above 200DMA" value={yesNo(selectedRow.technicalSnapshot?.above200dma)} />
+                <Metric label="% from 20DMA" value={formatSignedPct(selectedRow.technicalSnapshot?.pctFrom20dma)} />
+                <Metric label="% from 50DMA" value={formatSignedPct(selectedRow.technicalSnapshot?.pctFrom50dma)} />
+                <Metric label="% from 200DMA" value={formatSignedPct(selectedRow.technicalSnapshot?.pctFrom200dma)} />
+                <Metric label="RSI" value={selectedRow.technicalSnapshot?.rsi != null ? selectedRow.technicalSnapshot.rsi.toFixed(1) : "—"} />
+                <Metric label="MACD" value={selectedRow.technicalSnapshot?.macd != null ? selectedRow.technicalSnapshot.macd.toFixed(2) : "—"} />
+                <Metric label="MACD signal" value={selectedRow.technicalSnapshot?.macdSignal != null ? selectedRow.technicalSnapshot.macdSignal.toFixed(2) : "—"} />
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <div style={cardTitleStyle}>Fundamental profile</div>
+              <div style={metricGridStyle}>
+                <Metric label="Revenue growth" value={`${selectedRow.fundamentalSnapshot?.revenueGrowthPct?.toFixed?.(1) ?? "0.0"}%`} />
+                <Metric label="EPS growth" value={`${selectedRow.fundamentalSnapshot?.epsGrowthPct?.toFixed?.(1) ?? "0.0"}%`} />
+                <Metric label="Operating margin" value={`${selectedRow.fundamentalSnapshot?.operatingMarginPct?.toFixed?.(1) ?? "0.0"}%`} />
+                <Metric label="Gross margin" value={selectedRow.fundamentalSnapshot?.grossMargin != null ? `${selectedRow.fundamentalSnapshot.grossMargin.toFixed(1)}%` : "—"} />
+                <Metric label="Debt / equity" value={selectedRow.fundamentalSnapshot?.debtToEquity != null ? selectedRow.fundamentalSnapshot.debtToEquity.toFixed(2) : "—"} />
+                <Metric label="Market cap" value={selectedRow.fundamentalSnapshot?.marketCap != null ? `$${Math.round(selectedRow.fundamentalSnapshot.marketCap / 1e9)}B` : "—"} />
+                <Metric label="Institutional" value={selectedRow.fundamentalSnapshot?.institutionalScore != null ? `${selectedRow.fundamentalSnapshot.institutionalScore}/100` : "—"} />
+                <Metric label="Bucket" value={selectedRow.bucket || "—"} />
+              </div>
+            </div>
           </div>
         </>
       ) : null}
     </main>
   );
 }
+
+function Metric({ label, value }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #e5e7eb",
+        borderRadius: 10,
+        padding: "10px 12px",
+        background: "#ffffff",
+      }}
+    >
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>{value}</div>
+    </div>
+  );
+}
+
+const cardStyle = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 14,
+  padding: 16,
+  background: "#ffffff",
+};
+
+const cardTitleStyle = {
+  fontSize: 16,
+  fontWeight: 700,
+  marginBottom: 12,
+};
+
+const metricGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 10,
+};
 
 const thStyle = {
   textAlign: "left",
@@ -784,11 +602,6 @@ const thStyle = {
 const thStyleRight = {
   ...thStyle,
   textAlign: "right",
-};
-
-const thStyleCenter = {
-  ...thStyle,
-  textAlign: "center",
 };
 
 const tdStyle = {
@@ -805,9 +618,4 @@ const tdStyleRight = {
   ...tdStyle,
   textAlign: "right",
   fontVariantNumeric: "tabular-nums",
-};
-
-const tdStyleCenter = {
-  ...tdStyle,
-  textAlign: "center",
 };
