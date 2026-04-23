@@ -19,7 +19,7 @@ export default function HomePage() {
   const [error, setError] = useState("");
   const [isLoadingTop5, setIsLoadingTop5] = useState(true);
   const [isLookingUp, setIsLookingUp] = useState(false);
-  const [under25Only, setUnder25Only] = useState(false);
+  const [under25Only, setUnder25Only] = useState(true);
   const [profitableOnly, setProfitableOnly] = useState(false);
   const [minScore, setMinScore] = useState(40);
   const [meta, setMeta] = useState({
