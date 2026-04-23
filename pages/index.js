@@ -100,9 +100,11 @@ export default function HomePage() {
 
   const enrichedRows = useMemo(() => {
     return rows.map((row) => {
-      const qualityScore = calcQualityScore(row);
-      const asymmetryScore = calcAsymmetryScore(row);
-      const stage = getStage(row);
+      const qualityScore =
+        row.qualityScore != null ? row.qualityScore : calcQualityScore(row);
+      const asymmetryScore =
+        row.asymmetryScore != null ? row.asymmetryScore : calcAsymmetryScore(row);
+      const stage = row.stage || getStage(row);
 
       let asymmetryColor = "yellow";
       if (asymmetryScore >= 80) asymmetryColor = "green";
@@ -122,9 +124,7 @@ export default function HomePage() {
     return enrichedRows.filter((row) => {
       if (under25Only && (row.price ?? 0) >= 25) return false;
       if (profitableOnly && (row.operatingMarginPct ?? 0) <= 0) return false;
-      if ((row.qualityScore ?? 0) < 45) return false;
       if ((row.asymmetryScore ?? 0) < minScore) return false;
-      if (row.stage === "Broken") return false;
       return true;
     });
   }, [enrichedRows, under25Only, profitableOnly, minScore]);
@@ -132,7 +132,7 @@ export default function HomePage() {
   const sortedRows = useMemo(() => {
     const list = [...filteredRows];
     list.sort((a, b) => (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0));
-    return list.slice(0, 5);
+    return list.slice(0, 25);
   }, [filteredRows]);
 
   const selectedRow =
@@ -145,10 +145,8 @@ export default function HomePage() {
 
     if ((row.asymmetryScore ?? 0) >= 80)
       reasons.push("high asymmetry upside profile");
-    if ((row.qualityScore ?? 0) >= 70)
-      reasons.push("solid quality floor");
-    if ((row.stage ?? "") === "Emerging")
-      reasons.push("early breakout stage");
+    if ((row.qualityScore ?? 0) >= 70) reasons.push("solid quality floor");
+    if ((row.stage ?? "") === "Emerging") reasons.push("early breakout stage");
     if ((row.stage ?? "") === "Extended")
       reasons.push("strong momentum, but extended");
     if ((row.institutionalScore ?? 0) >= 75)
@@ -461,6 +459,7 @@ export default function HomePage() {
               fontSize: 14,
             }}
           >
+            <option value={40}>40+</option>
             <option value={50}>50+</option>
             <option value={60}>60+</option>
             <option value={70}>70+</option>
@@ -516,94 +515,14 @@ export default function HomePage() {
             }}
           >
             <tr>
-              <th
-                style={{
-                  textAlign: "left",
-                  padding: "14px 16px",
-                  fontSize: 13,
-                  color: "#6b7280",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                Symbol
-              </th>
-              <th
-                style={{
-                  textAlign: "left",
-                  padding: "14px 16px",
-                  fontSize: 13,
-                  color: "#6b7280",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                Name
-              </th>
-              <th
-                style={{
-                  textAlign: "right",
-                  padding: "14px 16px",
-                  fontSize: 13,
-                  color: "#6b7280",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                Price
-              </th>
-              <th
-                style={{
-                  textAlign: "right",
-                  padding: "14px 16px",
-                  fontSize: 13,
-                  color: "#6b7280",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                Chg %
-              </th>
-              <th
-                style={{
-                  textAlign: "right",
-                  padding: "14px 16px",
-                  fontSize: 13,
-                  color: "#6b7280",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                Asymmetry
-              </th>
-              <th
-                style={{
-                  textAlign: "right",
-                  padding: "14px 16px",
-                  fontSize: 13,
-                  color: "#6b7280",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                Quality
-              </th>
-              <th
-                style={{
-                  textAlign: "center",
-                  padding: "14px 16px",
-                  fontSize: 13,
-                  color: "#6b7280",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                Stage
-              </th>
-              <th
-                style={{
-                  textAlign: "center",
-                  padding: "14px 16px",
-                  fontSize: 13,
-                  color: "#6b7280",
-                  borderBottom: "1px solid #e5e7eb",
-                }}
-              >
-                Action
-              </th>
+              <th style={thStyle}>Symbol</th>
+              <th style={thStyle}>Name</th>
+              <th style={thStyleRight}>Price</th>
+              <th style={thStyleRight}>Chg %</th>
+              <th style={thStyleRight}>Asymmetry</th>
+              <th style={thStyleRight}>Quality</th>
+              <th style={thStyleCenter}>Stage</th>
+              <th style={thStyleCenter}>Action</th>
             </tr>
           </thead>
 
@@ -623,22 +542,9 @@ export default function HomePage() {
                     background: isSelected ? "#f9fafb" : "#ffffff",
                   }}
                 >
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {row.symbol}
-                  </td>
+                  <td style={tdStyleBold}>{row.symbol}</td>
 
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                    }}
-                  >
+                  <td style={tdStyle}>
                     <div style={{ fontWeight: 500 }}>{row.name || row.symbol}</div>
                     <div
                       style={{
@@ -651,23 +557,11 @@ export default function HomePage() {
                     </div>
                   </td>
 
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                      textAlign: "right",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {formatPrice(row.price)}
-                  </td>
+                  <td style={tdStyleRight}>{formatPrice(row.price)}</td>
 
                   <td
                     style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                      textAlign: "right",
-                      fontVariantNumeric: "tabular-nums",
+                      ...tdStyleRight,
                       color:
                         row.dayChangePct > 0
                           ? "#166534"
@@ -679,13 +573,7 @@ export default function HomePage() {
                     {formatPct(row.dayChangePct)}
                   </td>
 
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                      textAlign: "right",
-                    }}
-                  >
+                  <td style={tdStyleRight}>
                     <span
                       style={{
                         ...asymmetryPill,
@@ -702,24 +590,9 @@ export default function HomePage() {
                     </span>
                   </td>
 
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                      textAlign: "right",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {row.qualityScore ?? "—"}
-                  </td>
+                  <td style={tdStyleRight}>{row.qualityScore ?? "—"}</td>
 
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                      textAlign: "center",
-                    }}
-                  >
+                  <td style={tdStyleCenter}>
                     <span
                       style={{
                         ...stagePill,
@@ -736,13 +609,7 @@ export default function HomePage() {
                     </span>
                   </td>
 
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #f3f4f6",
-                      textAlign: "center",
-                    }}
-                  >
+                  <td style={tdStyleCenter}>
                     <span
                       style={{
                         ...actionPill,
@@ -782,11 +649,7 @@ export default function HomePage() {
 
       {selectedRow ? (
         <>
-          <div
-            style={{
-              marginBottom: 14,
-            }}
-          >
+          <div style={{ marginBottom: 14 }}>
             <div
               style={{
                 fontSize: 24,
@@ -871,3 +734,42 @@ export default function HomePage() {
     </main>
   );
 }
+
+const thStyle = {
+  textAlign: "left",
+  padding: "14px 16px",
+  fontSize: 13,
+  color: "#6b7280",
+  borderBottom: "1px solid #e5e7eb",
+};
+
+const thStyleRight = {
+  ...thStyle,
+  textAlign: "right",
+};
+
+const thStyleCenter = {
+  ...thStyle,
+  textAlign: "center",
+};
+
+const tdStyle = {
+  padding: "14px 16px",
+  borderBottom: "1px solid #f3f4f6",
+};
+
+const tdStyleBold = {
+  ...tdStyle,
+  fontWeight: 700,
+};
+
+const tdStyleRight = {
+  ...tdStyle,
+  textAlign: "right",
+  fontVariantNumeric: "tabular-nums",
+};
+
+const tdStyleCenter = {
+  ...tdStyle,
+  textAlign: "center",
+};
