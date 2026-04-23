@@ -8,6 +8,7 @@ import {
 import {
   calcQualityScore,
   calcAsymmetryScore,
+  calcTriggerScore,
   getStage,
 } from "../lib/scoring";
 
@@ -20,7 +21,7 @@ export default function HomePage() {
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [under25Only, setUnder25Only] = useState(false);
   const [profitableOnly, setProfitableOnly] = useState(false);
-  const [minScore, setMinScore] = useState(60);
+  const [minScore, setMinScore] = useState(40);
   const [meta, setMeta] = useState({
     totalUniverse: 0,
     afterInstitutionalFilter: 0,
@@ -47,10 +48,6 @@ export default function HomePage() {
           afterRankingThreshold: 0,
         }
       );
-
-      if ((data.stocks || []).length) {
-        setSelectedSymbol((prev) => prev || data.stocks[0].symbol);
-      }
     } catch (err) {
       setError(err.message || "Failed to load top opportunities");
     } finally {
@@ -104,17 +101,25 @@ export default function HomePage() {
         row.qualityScore != null ? row.qualityScore : calcQualityScore(row);
       const asymmetryScore =
         row.asymmetryScore != null ? row.asymmetryScore : calcAsymmetryScore(row);
+      const triggerScore =
+        row.triggerScore != null ? row.triggerScore : calcTriggerScore(row);
       const stage = row.stage || getStage(row);
 
       let asymmetryColor = "yellow";
       if (asymmetryScore >= 80) asymmetryColor = "green";
-      else if (asymmetryScore < 60) asymmetryColor = "red";
+      else if (asymmetryScore < 50) asymmetryColor = "red";
+
+      let triggerColor = "yellow";
+      if (triggerScore >= 70) triggerColor = "green";
+      else if (triggerScore < 50) triggerColor = "red";
 
       return {
         ...row,
         qualityScore,
         asymmetryScore,
+        triggerScore,
         asymmetryColor,
+        triggerColor,
         stage,
       };
     });
@@ -131,32 +136,50 @@ export default function HomePage() {
 
   const sortedRows = useMemo(() => {
     const list = [...filteredRows];
-    list.sort((a, b) => (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0));
+    list.sort((a, b) => {
+      const triggerDiff = (b.triggerScore ?? 0) - (a.triggerScore ?? 0);
+      if (triggerDiff !== 0) return triggerDiff;
+
+      const asymmetryDiff = (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0);
+      if (asymmetryDiff !== 0) return asymmetryDiff;
+
+      return (b.qualityScore ?? 0) - (a.qualityScore ?? 0);
+    });
     return list.slice(0, 25);
   }, [filteredRows]);
 
+  useEffect(() => {
+    if (!sortedRows.length) {
+      setSelectedSymbol("");
+      return;
+    }
+
+    const currentStillVisible = sortedRows.some(
+      (row) => row.symbol === selectedSymbol
+    );
+
+    if (!currentStillVisible) {
+      setSelectedSymbol(sortedRows[0].symbol);
+    }
+  }, [sortedRows, selectedSymbol]);
+
   const selectedRow =
-    enrichedRows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
+    sortedRows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
 
   function getInterestingText(row) {
     if (!row) return "";
 
     const reasons = [];
 
-    if ((row.asymmetryScore ?? 0) >= 80)
-      reasons.push("high asymmetry upside profile");
-    if ((row.qualityScore ?? 0) >= 70) reasons.push("solid quality floor");
+    if ((row.triggerScore ?? 0) >= 70) reasons.push("trigger is active");
+    if ((row.asymmetryScore ?? 0) >= 60) reasons.push("good upside skew");
+    if ((row.qualityScore ?? 0) >= 60) reasons.push("solid quality floor");
     if ((row.stage ?? "") === "Emerging") reasons.push("early breakout stage");
-    if ((row.stage ?? "") === "Extended")
-      reasons.push("strong momentum, but extended");
-    if ((row.institutionalScore ?? 0) >= 75)
-      reasons.push("institutional-quality profile");
-    if ((row.sentimentScore ?? 0) >= 70) reasons.push("supportive sentiment");
+    if ((row.stage ?? "") === "Extended") reasons.push("strong but extended");
     if ((row.oneMonthPct ?? 0) >= 10) reasons.push("strong recent momentum");
-    if ((row.epsGrowthPct ?? 0) >= 20) reasons.push("strong EPS growth");
 
     if (!reasons.length) {
-      return "Asymmetry setup with enough quality to stay investable.";
+      return "Setup is present, but timing is not confirmed yet.";
     }
 
     return reasons.slice(0, 2).join(" + ");
@@ -505,20 +528,17 @@ export default function HomePage() {
         <table
           style={{
             width: "100%",
-            minWidth: 1100,
+            minWidth: 1180,
             borderCollapse: "collapse",
           }}
         >
-          <thead
-            style={{
-              background: "#f9fafb",
-            }}
-          >
+          <thead style={{ background: "#f9fafb" }}>
             <tr>
               <th style={thStyle}>Symbol</th>
               <th style={thStyle}>Name</th>
               <th style={thStyleRight}>Price</th>
               <th style={thStyleRight}>Chg %</th>
+              <th style={thStyleRight}>Trigger</th>
               <th style={thStyleRight}>Asymmetry</th>
               <th style={thStyleRight}>Quality</th>
               <th style={thStyleCenter}>Stage</th>
@@ -528,6 +548,7 @@ export default function HomePage() {
 
           <tbody>
             {sortedRows.map((row) => {
+              const triggerPill = scorePillStyle(row.triggerColor);
               const asymmetryPill = scorePillStyle(row.asymmetryColor);
               const actionPill = actionPillStyle(row.actionColor);
               const stagePill = stagePillStyle(row.stage);
@@ -571,6 +592,23 @@ export default function HomePage() {
                     }}
                   >
                     {formatPct(row.dayChangePct)}
+                  </td>
+
+                  <td style={tdStyleRight}>
+                    <span
+                      style={{
+                        ...triggerPill,
+                        display: "inline-block",
+                        minWidth: 52,
+                        textAlign: "center",
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        fontWeight: 700,
+                        fontSize: 13,
+                      }}
+                    >
+                      {row.triggerScore ?? "—"}
+                    </span>
                   </td>
 
                   <td style={tdStyleRight}>
@@ -632,7 +670,7 @@ export default function HomePage() {
             {!sortedRows.length && !isLoadingTop5 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   style={{
                     padding: "20px 16px",
                     textAlign: "center",
@@ -689,7 +727,7 @@ export default function HomePage() {
                 fontWeight: 600,
               }}
             >
-              Asymmetry: {selectedRow.asymmetryScore}/100 • Quality: {selectedRow.qualityScore}/100 • Stage: {selectedRow.stage}
+              Trigger: {selectedRow.triggerScore}/100 • Asymmetry: {selectedRow.asymmetryScore}/100 • Quality: {selectedRow.qualityScore}/100 • Stage: {selectedRow.stage}
             </div>
 
             <div
@@ -725,7 +763,7 @@ export default function HomePage() {
               selectedRow.drivers?.fundamental || []
             )}
             {renderDriverSection(
-              "Sentiment",
+              "Trigger / Sentiment",
               selectedRow.drivers?.sentiment || []
             )}
           </div>
