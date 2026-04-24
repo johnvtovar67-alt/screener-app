@@ -13,7 +13,7 @@ function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
-// ✅ FREE-TIER SAFE QUOTE PULL
+// ✅ CORRECT FMP ENDPOINT
 async function fetchFmpQuotes(symbols) {
   const apiKey = process.env.FMP_API_KEY;
 
@@ -24,17 +24,16 @@ async function fetchFmpQuotes(symbols) {
   const clean = [...new Set(symbols.filter(Boolean).map((s) => s.replace(".", "-")))];
   const chunks = [];
 
-  // smaller chunks for free plan
-  for (let i = 0; i < clean.length; i += 50) {
-    chunks.push(clean.slice(i, i + 50));
+  for (let i = 0; i < clean.length; i += 100) {
+    chunks.push(clean.slice(i, i + 100));
   }
 
   const results = [];
 
   async function fetchChunk(chunk) {
-    const url = `https://financialmodelingprep.com/api/v3/quote-short/${chunk.join(
+    const url = `https://financialmodelingprep.com/stable/batch-quote-short?symbols=${chunk.join(
       ","
-    )}?apikey=${apiKey}`;
+    )}&apikey=${apiKey}`;
 
     const response = await fetch(url);
 
@@ -75,7 +74,7 @@ function getCleanRecommendation(row) {
   if (trigger >= 78 && asymmetry >= 68 && quality >= 55) {
     return {
       label: "STRONG BUY",
-      reason: "Momentum, asymmetry, and quality are aligned.",
+      reason: "Momentum, asymmetry, and quality aligned.",
     };
   }
 
@@ -105,7 +104,7 @@ function buildEntryNote(row) {
   if (!price) return "No clean entry yet.";
 
   if (row.recommendation?.label === "STRONG BUY") {
-    return `Actionable now above $${price.toFixed(2)} with volume.`;
+    return `Actionable above $${price.toFixed(2)} with volume.`;
   }
 
   if (row.recommendation?.label === "BUY") {
@@ -129,7 +128,7 @@ export default async function handler(req, res) {
 
     if (!quotes.length) {
       throw new Error(
-        "FMP returned zero quotes. Key may not be active yet (can take a few minutes)."
+        "FMP returned zero quotes. Key likely not active OR free plan not enabled yet."
       );
     }
 
@@ -152,7 +151,6 @@ export default async function handler(req, res) {
         name: quote.name || row.name || row.symbol,
         price: quote.price ?? row.price,
         avgVolume: quote.avgVolume ?? row.avgVolume,
-        marketCap: quote.marketCap ?? row.marketCap,
       };
 
       const qualityScore = calcQualityScore(base);
@@ -189,9 +187,7 @@ export default async function handler(req, res) {
       return (
         (rank[b.recommendation?.label] || 0) -
           (rank[a.recommendation?.label] || 0) ||
-        (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
-        (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
-        (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
+        (b.triggerScore ?? 0) - (a.triggerScore ?? 0)
       );
     });
 
