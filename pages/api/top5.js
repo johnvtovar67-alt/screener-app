@@ -15,7 +15,7 @@ function normalizeSymbolForYahoo(symbol) {
   return String(symbol || "").replace(".", "-").toUpperCase();
 }
 
-function normalizeSymbolBack(symbol) {
+function normalizeSymbolForApp(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
@@ -34,7 +34,9 @@ async function getSnapshots(symbols) {
   const results = [];
 
   async function fetchChunk(chunk) {
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${chunk.join(",")}`;
+    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${chunk.join(
+      ","
+    )}`;
 
     try {
       const response = await fetch(url, {
@@ -50,7 +52,9 @@ async function getSnapshots(symbols) {
 
       return quotes
         .map((q) => ({
-          symbol: normalizeSymbolBack(q.symbol),
+          symbol: normalizeSymbolForApp(q.symbol),
+          yahooSymbol: q.symbol,
+          name: q.longName || q.shortName || q.displayName || q.symbol,
           price: q.regularMarketPrice ?? null,
           marketCap: q.marketCap ?? null,
           avgVolume:
@@ -60,7 +64,6 @@ async function getSnapshots(symbols) {
             null,
           volume: q.regularMarketVolume ?? null,
           dayChangePct: q.regularMarketChangePercent ?? null,
-          name: q.longName || q.shortName || q.displayName || q.symbol,
         }))
         .filter((x) => x.symbol && x.price != null);
     } catch (err) {
@@ -118,11 +121,15 @@ function buildEntryNote(row) {
   if (!price) return "No clean entry yet.";
 
   if (row.recommendation?.label === "STRONG BUY") {
-    return `Actionable now. Watch for strength above $${price.toFixed(2)} with volume.`;
+    return `Actionable now. Watch for strength above $${price.toFixed(
+      2
+    )} with volume.`;
   }
 
   if (row.recommendation?.label === "BUY") {
-    return `Buyable setup. Better entry on a pullback near $${price.toFixed(2)} or a strong-volume breakout.`;
+    return `Buyable setup. Better entry on a pullback near $${price.toFixed(
+      2
+    )} or a strong-volume breakout.`;
   }
 
   if (row.recommendation?.label === "WATCH") {
@@ -136,8 +143,13 @@ export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
 
-    const symbols = fullUniverse.map((x) => x.symbol);
-    const snapshots = await getSnapshots(symbols);
+    const universeSymbols = fullUniverse.map((x) => x.symbol);
+    const snapshots = await getSnapshots(universeSymbols);
+
+    const quoteMap = new Map();
+    for (const quote of snapshots) {
+      quoteMap.set(normalizeSymbolForApp(quote.symbol), quote);
+    }
 
     const tradable = applyLiquidityFilter(fullUniverse, snapshots, {
       minPrice: 5,
@@ -146,12 +158,17 @@ export default async function handler(req, res) {
     });
 
     const scored = tradable.map((row) => {
-      const quote = snapshots.find((s) => s.symbol === row.symbol) || {};
+      const quote = quoteMap.get(normalizeSymbolForApp(row.symbol)) || {};
 
       const base = {
         ...row,
         ...quote,
+        symbol: row.symbol,
         name: row.name || quote.name || row.symbol,
+        price: quote.price ?? row.price,
+        marketCap: quote.marketCap ?? row.marketCap,
+        avgVolume: quote.avgVolume ?? row.avgVolume,
+        dayChangePct: quote.dayChangePct ?? null,
       };
 
       const qualityScore = calcQualityScore(base);
