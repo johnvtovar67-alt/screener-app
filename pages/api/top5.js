@@ -5,6 +5,7 @@ import {
   calcAsymmetryScore,
   calcTriggerScore,
   getStage,
+  getRecommendation,
   buildTechnicalSnapshot,
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
@@ -24,7 +25,6 @@ function prioritizeUniverse(fullUniverse) {
     .filter((x) => !x.symbol.includes("."))
     .filter((x) => !x.symbol.includes("-"));
 
-  // Spread across the full list instead of only taking A/B/C tickers.
   const buckets = 12;
   const spread = [];
 
@@ -55,20 +55,17 @@ async function fetchFmpQuotes(symbols) {
     chunks.push(clean.slice(i, i + chunkSize));
   }
 
-  const targetQuotes = 900;
-  const maxRounds = 3;
+  const targetQuotes = 1000;
   const quoteMap = new Map();
 
   async function fetchChunk(chunk, useShort = false) {
     const endpoint = useShort ? "batch-quote-short" : "batch-quote";
-
     const url = `https://financialmodelingprep.com/stable/${endpoint}?symbols=${chunk.join(
       ","
     )}&apikey=${apiKey}`;
 
     try {
       const response = await fetch(url);
-
       if (!response.ok) return [];
 
       const data = await response.json();
@@ -96,94 +93,47 @@ async function fetchFmpQuotes(symbols) {
           pe: q.pe ?? null,
         }))
         .filter((x) => x.symbol && x.price != null);
-    } catch (err) {
-      console.error("FMP chunk failed:", err.message);
+    } catch {
       return [];
     }
   }
 
-  for (let round = 0; round < maxRounds; round++) {
-    for (const chunk of chunks) {
-      if (quoteMap.size >= targetQuotes) break;
-
-      let quotes = await fetchChunk(chunk, false);
-
-      // Fallback if the richer endpoint returns nothing for that chunk.
-      if (!quotes.length) {
-        quotes = await fetchChunk(chunk, true);
-      }
-
-      for (const quote of quotes) {
-        quoteMap.set(quote.symbol, quote);
-      }
-
-      // Keeps us comfortably under rate limits.
-      await sleep(120);
-    }
-
+  for (const chunk of chunks) {
     if (quoteMap.size >= targetQuotes) break;
 
-    // Small pause before another pass.
-    await sleep(500);
+    let quotes = await fetchChunk(chunk, false);
+    if (!quotes.length) quotes = await fetchChunk(chunk, true);
+
+    for (const quote of quotes) quoteMap.set(quote.symbol, quote);
+
+    await sleep(100);
   }
 
   return Array.from(quoteMap.values());
 }
 
-function getCleanRecommendation(row) {
-  const trigger = row.triggerScore ?? 0;
-  const asymmetry = row.asymmetryScore ?? 0;
-  const quality = row.qualityScore ?? 0;
-
-  if (trigger >= 78 && asymmetry >= 70 && quality >= 60) {
-    return {
-      label: "STRONG BUY",
-      reason: "High conviction: trend, upside, and quality aligned.",
-    };
-  }
-
-  if (trigger >= 66 && asymmetry >= 60 && quality >= 52) {
-    return {
-      label: "BUY",
-      reason: "Solid setup with confirmation.",
-    };
-  }
-
-  if (trigger >= 50 || asymmetry >= 55) {
-    return {
-      label: "WATCH",
-      reason: "Interesting, needs confirmation.",
-    };
-  }
-
-  return {
-    label: "AVOID",
-    reason: "Weak structure or poor risk/reward.",
-  };
-}
-
 function buildEntryNote(row) {
   const price = row.price;
   const ma50 = row.priceAvg50;
+  const signal = row.recommendation?.label;
 
   if (!price) return "No clean entry yet.";
 
-  if (row.recommendation?.label === "STRONG BUY") {
+  if (signal === "STRONG BUY") {
     return `Actionable above $${price.toFixed(2)} if volume confirms.`;
   }
 
-  if (row.recommendation?.label === "BUY") {
+  if (signal === "BUY") {
     if (ma50 && ma50 > 0) {
       return `Better entry near 50DMA around $${ma50.toFixed(
         2
       )} or breakout above $${price.toFixed(2)}.`;
     }
-
     return `Better entry near $${price.toFixed(2)} or breakout.`;
   }
 
-  if (row.recommendation?.label === "WATCH") {
-    return "Wait for trend or volume confirmation.";
+  if (signal === "WATCH") {
+    return "Wait for trend, volume, or fundamental confirmation.";
   }
 
   return "Avoid.";
@@ -238,10 +188,8 @@ export default async function handler(req, res) {
       const asymmetryScore = calcAsymmetryScore(base);
       const triggerScore = calcTriggerScore(base);
       const stage = getStage(base);
-      const technicalSnapshot = buildTechnicalSnapshot(base);
-      const fundamentalSnapshot = buildFundamentalSnapshot(base);
 
-      const recommendation = getCleanRecommendation({
+      const recommendation = getRecommendation({
         ...base,
         qualityScore,
         asymmetryScore,
@@ -256,8 +204,8 @@ export default async function handler(req, res) {
         stage,
         recommendation,
         entryNote: buildEntryNote({ ...base, recommendation }),
-        technicalSnapshot,
-        fundamentalSnapshot,
+        technicalSnapshot: buildTechnicalSnapshot(base),
+        fundamentalSnapshot: buildFundamentalSnapshot(base),
       };
     });
 
