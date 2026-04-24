@@ -19,12 +19,44 @@ function normalizeSymbolForApp(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
-async function getSnapshots(symbols) {
-  const cleanSymbols = symbols
-    .filter(Boolean)
-    .map(normalizeSymbolForYahoo);
+async function fetchYahooChunk(chunk, host) {
+  const symbols = chunk.map(encodeURIComponent).join(",");
+  const url = `https://${host}/v7/finance/quote?symbols=${symbols}`;
 
-  const chunkSize = 80;
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0",
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) return [];
+
+  const data = await response.json();
+  const quotes = data?.quoteResponse?.result || [];
+
+  return quotes
+    .map((q) => ({
+      symbol: normalizeSymbolForApp(q.symbol),
+      yahooSymbol: q.symbol,
+      name: q.longName || q.shortName || q.displayName || q.symbol,
+      price: q.regularMarketPrice ?? null,
+      marketCap: q.marketCap ?? null,
+      avgVolume:
+        q.averageDailyVolume3Month ??
+        q.averageDailyVolume10Day ??
+        q.regularMarketVolume ??
+        null,
+      volume: q.regularMarketVolume ?? null,
+      dayChangePct: q.regularMarketChangePercent ?? null,
+    }))
+    .filter((x) => x.symbol && x.price != null && Number.isFinite(x.price));
+}
+
+async function getSnapshots(symbols) {
+  const cleanSymbols = [...new Set(symbols.filter(Boolean).map(normalizeSymbolForYahoo))];
+
+  const chunkSize = 25;
   const chunks = [];
 
   for (let i = 0; i < cleanSymbols.length; i += chunkSize) {
@@ -32,55 +64,33 @@ async function getSnapshots(symbols) {
   }
 
   const results = [];
-
-  async function fetchChunk(chunk) {
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${chunk.join(
-      ","
-    )}`;
-
-    try {
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-        },
-      });
-
-      if (!response.ok) return [];
-
-      const data = await response.json();
-      const quotes = data?.quoteResponse?.result || [];
-
-      return quotes
-        .map((q) => ({
-          symbol: normalizeSymbolForApp(q.symbol),
-          yahooSymbol: q.symbol,
-          name: q.longName || q.shortName || q.displayName || q.symbol,
-          price: q.regularMarketPrice ?? null,
-          marketCap: q.marketCap ?? null,
-          avgVolume:
-            q.averageDailyVolume3Month ??
-            q.averageDailyVolume10Day ??
-            q.regularMarketVolume ??
-            null,
-          volume: q.regularMarketVolume ?? null,
-          dayChangePct: q.regularMarketChangePercent ?? null,
-        }))
-        .filter((x) => x.symbol && x.price != null);
-    } catch (err) {
-      console.error("Yahoo quote chunk failed:", err.message);
-      return [];
-    }
-  }
-
-  const concurrency = 6;
+  const concurrency = 4;
 
   for (let i = 0; i < chunks.length; i += concurrency) {
     const batch = chunks.slice(i, i + concurrency);
-    const batchResults = await Promise.all(batch.map(fetchChunk));
+
+    const batchResults = await Promise.all(
+      batch.map(async (chunk) => {
+        let quotes = await fetchYahooChunk(chunk, "query1.finance.yahoo.com");
+
+        if (!quotes.length) {
+          quotes = await fetchYahooChunk(chunk, "query2.finance.yahoo.com");
+        }
+
+        return quotes;
+      })
+    );
+
     results.push(...batchResults.flat());
   }
 
-  return results;
+  const deduped = new Map();
+
+  for (const quote of results) {
+    deduped.set(quote.symbol, quote);
+  }
+
+  return Array.from(deduped.values());
 }
 
 function getCleanRecommendation(row) {
@@ -121,15 +131,11 @@ function buildEntryNote(row) {
   if (!price) return "No clean entry yet.";
 
   if (row.recommendation?.label === "STRONG BUY") {
-    return `Actionable now. Watch for strength above $${price.toFixed(
-      2
-    )} with volume.`;
+    return `Actionable now. Watch for strength above $${price.toFixed(2)} with volume.`;
   }
 
   if (row.recommendation?.label === "BUY") {
-    return `Buyable setup. Better entry on a pullback near $${price.toFixed(
-      2
-    )} or a strong-volume breakout.`;
+    return `Buyable setup. Better entry on a pullback near $${price.toFixed(2)} or a strong-volume breakout.`;
   }
 
   if (row.recommendation?.label === "WATCH") {
@@ -142,11 +148,25 @@ function buildEntryNote(row) {
 export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
-
     const universeSymbols = fullUniverse.map((x) => x.symbol);
+
     const snapshots = await getSnapshots(universeSymbols);
 
+    if (!snapshots.length) {
+      return res.status(500).json({
+        error:
+          "Quote pull returned zero symbols. Universe is working, but Yahoo snap quotes are blocked or returning empty from Vercel.",
+        meta: {
+          totalUniverse: fullUniverse.length,
+          quoteSnapshots: 0,
+          afterInstitutionalFilter: 0,
+          afterRankingThreshold: 0,
+        },
+      });
+    }
+
     const quoteMap = new Map();
+
     for (const quote of snapshots) {
       quoteMap.set(normalizeSymbolForApp(quote.symbol), quote);
     }
@@ -225,12 +245,14 @@ export default async function handler(req, res) {
       stocks: top,
       meta: {
         totalUniverse: fullUniverse.length,
+        quoteSnapshots: snapshots.length,
         afterInstitutionalFilter: tradable.length,
         afterRankingThreshold: scored.length,
       },
     });
   } catch (err) {
     console.error("top5 error:", err);
+
     res.status(500).json({
       error: err.message || "Failed to build screener.",
     });
