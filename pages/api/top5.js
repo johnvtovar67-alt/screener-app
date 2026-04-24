@@ -9,78 +9,63 @@ import {
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
 
-function toStooq(symbol) {
-  return String(symbol || "").replace(".", "-").toLowerCase() + ".us";
+function normalizeSymbol(symbol) {
+  return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
-function fromStooq(symbol) {
-  return String(symbol || "")
-    .replace(".US", "")
-    .replace(".us", "")
-    .replace("-", ".")
-    .toUpperCase();
-}
+async function fetchFmpQuotes(symbols) {
+  const apiKey = process.env.FMP_API_KEY;
 
-function parseCsv(text) {
-  const lines = text.trim().split("\n");
-  const headers = lines[0].split(",").map((h) => h.trim());
+  if (!apiKey) {
+    throw new Error("Missing FMP_API_KEY in Vercel environment variables.");
+  }
 
-  return lines.slice(1).map((line) => {
-    const values = line.split(",");
-    const row = {};
-    headers.forEach((h, i) => {
-      row[h] = values[i];
-    });
-    return row;
-  });
-}
-
-async function getSnapshots(symbols) {
-  const clean = [...new Set(symbols.filter(Boolean))];
+  const clean = [...new Set(symbols.filter(Boolean).map((s) => s.replace(".", "-")))];
   const chunks = [];
 
-  for (let i = 0; i < clean.length; i += 75) {
-    chunks.push(clean.slice(i, i + 75));
+  for (let i = 0; i < clean.length; i += 250) {
+    chunks.push(clean.slice(i, i + 250));
   }
 
   const results = [];
 
-  for (const chunk of chunks) {
-    const stooqSymbols = chunk.map(toStooq).join(",");
-    const url = `https://stooq.com/q/l/?s=${stooqSymbols}&f=sd2t2ohlcv&h&e=csv`;
+  async function fetchChunk(chunk) {
+    const url = `https://financialmodelingprep.com/api/v3/quote/${chunk.join(
+      ","
+    )}?apikey=${apiKey}`;
 
-    try {
-      const response = await fetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0" },
-      });
+    const response = await fetch(url);
 
-      if (!response.ok) continue;
+    if (!response.ok) return [];
 
-      const text = await response.text();
-      const rows = parseCsv(text);
+    const data = await response.json();
+    if (!Array.isArray(data)) return [];
 
-      for (const r of rows) {
-        const close = Number(r.Close);
-        const open = Number(r.Open);
-        const volume = Number(r.Volume);
+    return data
+      .map((q) => ({
+        symbol: normalizeSymbol(q.symbol),
+        name: q.name || q.symbol,
+        price: q.price ?? null,
+        dayChangePct: q.changesPercentage ?? null,
+        marketCap: q.marketCap ?? null,
+        avgVolume: q.avgVolume ?? q.volume ?? null,
+        volume: q.volume ?? null,
+        priceAvg50: q.priceAvg50 ?? null,
+        priceAvg200: q.priceAvg200 ?? null,
+        yearHigh: q.yearHigh ?? null,
+        yearLow: q.yearLow ?? null,
+        eps: q.eps ?? null,
+        pe: q.pe ?? null,
+      }))
+      .filter((x) => x.symbol && x.price != null && Number.isFinite(x.price));
+  }
 
-        if (!Number.isFinite(close) || close <= 0) continue;
+  const concurrency = 4;
 
-        results.push({
-          symbol: fromStooq(r.Symbol),
-          price: close,
-          avgVolume: Number.isFinite(volume) ? volume : null,
-          volume: Number.isFinite(volume) ? volume : null,
-          marketCap: null,
-          dayChangePct:
-            Number.isFinite(open) && open > 0
-              ? ((close - open) / open) * 100
-              : null,
-        });
-      }
-    } catch (err) {
-      console.error("Stooq chunk failed:", err.message);
-    }
+  for (let i = 0; i < chunks.length; i += concurrency) {
+    const batch = chunks.slice(i, i + concurrency);
+    const batchResults = await Promise.all(batch.map(fetchChunk));
+    results.push(...batchResults.flat());
   }
 
   return results;
@@ -94,7 +79,7 @@ function getCleanRecommendation(row) {
   if (trigger >= 78 && asymmetry >= 68 && quality >= 55) {
     return {
       label: "STRONG BUY",
-      reason: "Best setup: momentum, asymmetry, and quality are aligned.",
+      reason: "Momentum, asymmetry, and quality are aligned.",
     };
   }
 
@@ -120,22 +105,19 @@ function getCleanRecommendation(row) {
 
 function buildEntryNote(row) {
   const price = row.price;
+
   if (!price) return "No clean entry yet.";
 
   if (row.recommendation?.label === "STRONG BUY") {
-    return `Actionable now. Watch for strength above $${price.toFixed(
-      2
-    )} with volume.`;
+    return `Actionable now. Watch for strength above $${price.toFixed(2)} with volume.`;
   }
 
   if (row.recommendation?.label === "BUY") {
-    return `Buyable setup. Better entry on a pullback near $${price.toFixed(
-      2
-    )} or a strong-volume breakout.`;
+    return `Buyable setup. Better on pullback near $${price.toFixed(2)} or strong-volume breakout.`;
   }
 
   if (row.recommendation?.label === "WATCH") {
-    return "Wait for better price/volume confirmation before buying.";
+    return "Wait for better price/volume confirmation.";
   }
 
   return "Avoid for now.";
@@ -144,34 +126,40 @@ function buildEntryNote(row) {
 export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
-    const snapshots = await getSnapshots(fullUniverse.map((x) => x.symbol));
+    const quotes = await fetchFmpQuotes(fullUniverse.map((x) => x.symbol));
 
-    if (!snapshots.length) {
-      return res.status(500).json({
-        error: "Quote pull failed from Stooq. No snap quote data returned.",
-      });
+    if (!quotes.length) {
+      throw new Error("FMP returned zero quotes. Check FMP_API_KEY or account access.");
     }
 
     const quoteMap = new Map();
-    snapshots.forEach((q) => quoteMap.set(q.symbol, q));
+    quotes.forEach((q) => quoteMap.set(q.symbol, q));
 
-    const tradable = applyLiquidityFilter(fullUniverse, snapshots, {
+    const tradable = applyLiquidityFilter(fullUniverse, quotes, {
       minPrice: 5,
       minMarketCap: 300_000_000,
       minAvgVolume: 250_000,
     });
 
     const scored = tradable.map((row) => {
-      const quote = quoteMap.get(row.symbol) || {};
+      const quote = quoteMap.get(normalizeSymbol(row.symbol)) || {};
 
       const base = {
         ...row,
         ...quote,
         symbol: row.symbol,
-        name: row.name || row.symbol,
+        name: quote.name || row.name || row.symbol,
         price: quote.price ?? row.price,
+        marketCap: quote.marketCap ?? row.marketCap,
         avgVolume: quote.avgVolume ?? row.avgVolume,
+        volume: quote.volume ?? null,
         dayChangePct: quote.dayChangePct ?? null,
+        priceAvg50: quote.priceAvg50 ?? null,
+        priceAvg200: quote.priceAvg200 ?? null,
+        yearHigh: quote.yearHigh ?? null,
+        yearLow: quote.yearLow ?? null,
+        eps: quote.eps ?? null,
+        pe: quote.pe ?? null,
       };
 
       const qualityScore = calcQualityScore(base);
@@ -217,7 +205,7 @@ export default async function handler(req, res) {
       stocks: scored.slice(0, 150),
       meta: {
         totalUniverse: fullUniverse.length,
-        quoteSnapshots: snapshots.length,
+        quoteSnapshots: quotes.length,
         afterInstitutionalFilter: tradable.length,
         afterRankingThreshold: scored.length,
       },
