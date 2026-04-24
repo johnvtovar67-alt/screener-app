@@ -26,14 +26,14 @@ async function fetchFmpQuotes(symbols) {
 
   const chunks = [];
 
-  for (let i = 0; i < clean.length; i += 100) {
-    chunks.push(clean.slice(i, i + 100));
+  for (let i = 0; i < clean.length; i += 250) {
+    chunks.push(clean.slice(i, i + 250));
   }
 
   const results = [];
 
   async function fetchChunk(chunk) {
-    const url = `https://financialmodelingprep.com/stable/batch-quote-short?symbols=${chunk.join(
+    const url = `https://financialmodelingprep.com/stable/batch-quote?symbols=${chunk.join(
       ","
     )}&apikey=${apiKey}`;
 
@@ -47,17 +47,28 @@ async function fetchFmpQuotes(symbols) {
     return data
       .map((q) => ({
         symbol: normalizeSymbol(q.symbol),
-        name: q.symbol,
+        name: q.name || q.symbol,
         price: q.price ?? null,
+        dayChangePct:
+          q.changesPercentage ??
+          q.changePercentage ??
+          q.changePercent ??
+          null,
+        change: q.change ?? null,
         volume: q.volume ?? null,
-        avgVolume: q.volume ?? null,
-        marketCap: null,
-        dayChangePct: null,
+        avgVolume: q.avgVolume ?? q.volume ?? null,
+        marketCap: q.marketCap ?? null,
+        priceAvg50: q.priceAvg50 ?? null,
+        priceAvg200: q.priceAvg200 ?? null,
+        yearHigh: q.yearHigh ?? null,
+        yearLow: q.yearLow ?? null,
+        eps: q.eps ?? null,
+        pe: q.pe ?? null,
       }))
       .filter((x) => x.symbol && x.price != null);
   }
 
-  const concurrency = 3;
+  const concurrency = 4;
 
   for (let i = 0; i < chunks.length; i += concurrency) {
     const batch = chunks.slice(i, i + concurrency);
@@ -73,17 +84,17 @@ function getCleanRecommendation(row) {
   const asymmetry = row.asymmetryScore ?? 0;
   const quality = row.qualityScore ?? 0;
 
-  if (trigger >= 75 && asymmetry >= 70 && quality >= 60) {
+  if (trigger >= 78 && asymmetry >= 70 && quality >= 60) {
     return {
       label: "STRONG BUY",
-      reason: "High conviction: strong structure + upside + quality.",
+      reason: "High conviction: trend, upside, and quality aligned.",
     };
   }
 
-  if (trigger >= 65 && asymmetry >= 60) {
+  if (trigger >= 66 && asymmetry >= 60 && quality >= 52) {
     return {
       label: "BUY",
-      reason: "Solid setup, but not elite.",
+      reason: "Solid setup with confirmation.",
     };
   }
 
@@ -102,19 +113,23 @@ function getCleanRecommendation(row) {
 
 function buildEntryNote(row) {
   const price = row.price;
+  const ma50 = row.priceAvg50;
 
   if (!price) return "No clean entry yet.";
 
   if (row.recommendation?.label === "STRONG BUY") {
-    return `Actionable above $${price.toFixed(2)} with volume.`;
+    return `Actionable above $${price.toFixed(2)} if volume confirms.`;
   }
 
   if (row.recommendation?.label === "BUY") {
+    if (ma50 && ma50 > 0) {
+      return `Better entry near 50DMA around $${ma50.toFixed(2)} or breakout above $${price.toFixed(2)}.`;
+    }
     return `Better entry near $${price.toFixed(2)} or breakout.`;
   }
 
   if (row.recommendation?.label === "WATCH") {
-    return "Wait for confirmation.";
+    return "Wait for trend or volume confirmation.";
   }
 
   return "Avoid.";
@@ -123,12 +138,11 @@ function buildEntryNote(row) {
 export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
-
     const quotes = await fetchFmpQuotes(fullUniverse.map((x) => x.symbol));
 
     if (!quotes.length) {
       throw new Error(
-        "FMP returned zero quotes. Key likely not active OR free plan not enabled yet."
+        "FMP returned zero quotes. Confirm paid plan access and FMP_API_KEY."
       );
     }
 
@@ -150,14 +164,22 @@ export default async function handler(req, res) {
         symbol: row.symbol,
         name: quote.name || row.name || row.symbol,
         price: quote.price ?? row.price,
+        dayChangePct: quote.dayChangePct ?? null,
+        volume: quote.volume ?? null,
         avgVolume: quote.avgVolume ?? row.avgVolume,
+        marketCap: quote.marketCap ?? row.marketCap,
+        priceAvg50: quote.priceAvg50 ?? null,
+        priceAvg200: quote.priceAvg200 ?? null,
+        yearHigh: quote.yearHigh ?? null,
+        yearLow: quote.yearLow ?? null,
+        eps: quote.eps ?? null,
+        pe: quote.pe ?? null,
       };
 
       const qualityScore = calcQualityScore(base);
       const asymmetryScore = calcAsymmetryScore(base);
       const triggerScore = calcTriggerScore(base);
       const stage = getStage(base);
-
       const technicalSnapshot = buildTechnicalSnapshot(base);
       const fundamentalSnapshot = buildFundamentalSnapshot(base);
 
