@@ -13,6 +13,15 @@ function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
+function prioritizeUniverse(fullUniverse) {
+  return fullUniverse
+    .filter((x) => x.symbol)
+    .filter((x) => x.symbol.length <= 5)
+    .filter((x) => !x.symbol.includes("."))
+    .filter((x) => !x.symbol.includes("-"))
+    .slice(0, 1200);
+}
+
 async function fetchFmpQuotes(symbols) {
   const apiKey = process.env.FMP_API_KEY;
 
@@ -26,9 +35,8 @@ async function fetchFmpQuotes(symbols) {
 
   const chunks = [];
 
-  // FMP often behaves better with smaller symbol batches.
-  for (let i = 0; i < clean.length; i += 100) {
-    chunks.push(clean.slice(i, i + 100));
+  for (let i = 0; i < clean.length; i += 75) {
+    chunks.push(clean.slice(i, i + 75));
   }
 
   const results = [];
@@ -74,7 +82,7 @@ async function fetchFmpQuotes(symbols) {
     }
   }
 
-  const concurrency = 8;
+  const concurrency = 6;
 
   for (let i = 0; i < chunks.length; i += concurrency) {
     const batch = chunks.slice(i, i + concurrency);
@@ -147,7 +155,11 @@ function buildEntryNote(row) {
 export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
-    const quotes = await fetchFmpQuotes(fullUniverse.map((x) => x.symbol));
+    const prioritizedUniverse = prioritizeUniverse(fullUniverse);
+
+    const quotes = await fetchFmpQuotes(
+      prioritizedUniverse.map((x) => x.symbol)
+    );
 
     if (!quotes.length) {
       throw new Error(
@@ -158,7 +170,7 @@ export default async function handler(req, res) {
     const quoteMap = new Map();
     quotes.forEach((q) => quoteMap.set(q.symbol, q));
 
-    const tradable = applyLiquidityFilter(fullUniverse, quotes, {
+    const tradable = applyLiquidityFilter(prioritizedUniverse, quotes, {
       minPrice: 5,
       minMarketCap: 300_000_000,
       minAvgVolume: 250_000,
@@ -233,6 +245,7 @@ export default async function handler(req, res) {
       stocks: scored.slice(0, 150),
       meta: {
         totalUniverse: fullUniverse.length,
+        prioritizedUniverse: prioritizedUniverse.length,
         quoteSnapshots: quotes.length,
         afterInstitutionalFilter: tradable.length,
         afterRankingThreshold: scored.length,
