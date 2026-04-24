@@ -1,3 +1,5 @@
+// pages/index.js
+
 import { useEffect, useMemo, useState } from "react";
 import { formatPct, formatPrice } from "../lib/formatters";
 import {
@@ -19,6 +21,7 @@ export default function HomePage() {
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [under25Only, setUnder25Only] = useState(true);
   const [profitableOnly, setProfitableOnly] = useState(false);
+
   const [meta, setMeta] = useState({
     totalUniverse: 0,
     afterInstitutionalFilter: 0,
@@ -34,7 +37,7 @@ export default function HomePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to load top opportunities");
+        throw new Error(data.error || "Failed to load opportunities");
       }
 
       setRows(data.stocks || []);
@@ -46,7 +49,7 @@ export default function HomePage() {
         }
       );
     } catch (err) {
-      setError(err.message || "Failed to load top opportunities");
+      setError(err.message || "Failed to load opportunities");
     } finally {
       setIsLoadingTop5(false);
     }
@@ -90,6 +93,43 @@ export default function HomePage() {
     loadTop5();
   }, []);
 
+  function cleanRecommendation(row) {
+    if (row.recommendation?.label) return row.recommendation;
+
+    const qualityScore =
+      row.qualityScore != null ? row.qualityScore : calcQualityScore(row);
+    const asymmetryScore =
+      row.asymmetryScore != null ? row.asymmetryScore : calcAsymmetryScore(row);
+    const triggerScore =
+      row.triggerScore != null ? row.triggerScore : calcTriggerScore(row);
+
+    if (triggerScore >= 78 && asymmetryScore >= 68 && qualityScore >= 55) {
+      return {
+        label: "STRONG BUY",
+        reason: "Best setup: momentum, asymmetry, and quality are aligned.",
+      };
+    }
+
+    if (triggerScore >= 63 && asymmetryScore >= 58) {
+      return {
+        label: "BUY",
+        reason: "Attractive setup with positive confirmation.",
+      };
+    }
+
+    if (triggerScore >= 48 || asymmetryScore >= 60) {
+      return {
+        label: "WATCH",
+        reason: "Interesting, but needs better confirmation.",
+      };
+    }
+
+    return {
+      label: "AVOID",
+      reason: "Weak setup or not enough confirmation.",
+    };
+  }
+
   const enrichedRows = useMemo(() => {
     return rows.map((row) => {
       const qualityScore =
@@ -99,15 +139,14 @@ export default function HomePage() {
       const triggerScore =
         row.triggerScore != null ? row.triggerScore : calcTriggerScore(row);
       const stage = row.stage || getStage(row);
-      const recommendation =
-        row.recommendation ||
-        getRecommendation({
-          ...row,
-          qualityScore,
-          asymmetryScore,
-          triggerScore,
-          stage,
-        });
+
+      const recommendation = cleanRecommendation({
+        ...row,
+        qualityScore,
+        asymmetryScore,
+        triggerScore,
+        stage,
+      });
 
       return {
         ...row,
@@ -116,8 +155,7 @@ export default function HomePage() {
         triggerScore,
         stage,
         recommendation,
-        technicalSnapshot:
-          row.technicalSnapshot || buildTechnicalSnapshot(row),
+        technicalSnapshot: row.technicalSnapshot || buildTechnicalSnapshot(row),
         fundamentalSnapshot:
           row.fundamentalSnapshot || buildFundamentalSnapshot(row),
       };
@@ -133,16 +171,25 @@ export default function HomePage() {
   }, [enrichedRows, under25Only, profitableOnly]);
 
   const sortedRows = useMemo(() => {
+    const actionRank = {
+      "STRONG BUY": 4,
+      BUY: 3,
+      WATCH: 2,
+      AVOID: 1,
+    };
+
     const list = [...filteredRows];
+
     list.sort((a, b) => {
-      const triggerDiff = (b.triggerScore ?? 0) - (a.triggerScore ?? 0);
-      if (triggerDiff !== 0) return triggerDiff;
-
-      const asymmetryDiff = (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0);
-      if (asymmetryDiff !== 0) return asymmetryDiff;
-
-      return (b.qualityScore ?? 0) - (a.qualityScore ?? 0);
+      return (
+        (actionRank[b.recommendation?.label] || 0) -
+          (actionRank[a.recommendation?.label] || 0) ||
+        (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
+        (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
+        (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
+      );
     });
+
     return list.slice(0, 25);
   }, [filteredRows]);
 
@@ -165,27 +212,30 @@ export default function HomePage() {
     sortedRows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
 
   function recommendationPillStyle(label) {
-    if (label === "Buy Now") {
+    if (label === "STRONG BUY") {
       return {
         background: "#dcfce7",
         color: "#166534",
         border: "1px solid #bbf7d0",
       };
     }
-    if (label === "Buy on Breakout") {
+
+    if (label === "BUY") {
+      return {
+        background: "#e0f2fe",
+        color: "#075985",
+        border: "1px solid #bae6fd",
+      };
+    }
+
+    if (label === "WATCH") {
       return {
         background: "#fef3c7",
         color: "#92400e",
         border: "1px solid #fde68a",
       };
     }
-    if (label === "Watch") {
-      return {
-        background: "#f3f4f6",
-        color: "#374151",
-        border: "1px solid #d1d5db",
-      };
-    }
+
     return {
       background: "#fee2e2",
       color: "#b91c1c",
@@ -214,6 +264,11 @@ export default function HomePage() {
     if (value == null || Number.isNaN(value)) return "—";
     const sign = value > 0 ? "+" : "";
     return `${sign}${value.toFixed(1)}%`;
+  }
+
+  function formatBillions(value) {
+    if (value == null || Number.isNaN(value)) return "—";
+    return `$${(value / 1_000_000_000).toFixed(1)}B`;
   }
 
   return (
@@ -247,7 +302,7 @@ export default function HomePage() {
           marginBottom: 20,
         }}
       >
-        Under-the-radar + high upside setups with a quality floor.
+        Broad-market snap quote screen for under-the-radar, high-upside setups.
       </div>
 
       <div
@@ -280,15 +335,7 @@ export default function HomePage() {
         <button
           onClick={handleLookup}
           disabled={isLookingUp}
-          style={{
-            padding: "12px 16px",
-            borderRadius: 10,
-            border: "1px solid #111827",
-            background: "#111827",
-            color: "#ffffff",
-            fontSize: 14,
-            cursor: "pointer",
-          }}
+          style={primaryButtonStyle}
         >
           {isLookingUp ? "Looking up..." : "Snap Quote + Score"}
         </button>
@@ -296,17 +343,9 @@ export default function HomePage() {
         <button
           onClick={loadTop5}
           disabled={isLoadingTop5}
-          style={{
-            padding: "12px 16px",
-            borderRadius: 10,
-            border: "1px solid #d1d5db",
-            background: "#ffffff",
-            color: "#111827",
-            fontSize: 14,
-            cursor: "pointer",
-          }}
+          style={secondaryButtonStyle}
         >
-          {isLoadingTop5 ? "Loading..." : "Reload Top 5"}
+          {isLoadingTop5 ? "Loading..." : "Reload Screener"}
         </button>
       </div>
 
@@ -340,38 +379,21 @@ export default function HomePage() {
             marginLeft: 4,
           }}
         >
-          Universe: {meta.totalUniverse} → Gate: {meta.afterInstitutionalFilter} → Ranked: {meta.afterRankingThreshold} → Showing: {filteredRows.length}
+          Universe: {meta.totalUniverse} → Tradable:{" "}
+          {meta.afterInstitutionalFilter} → Ranked:{" "}
+          {meta.afterRankingThreshold} → Showing: {filteredRows.length}
         </div>
       </div>
 
       {error ? (
-        <div
-          style={{
-            marginBottom: 16,
-            padding: "12px 14px",
-            borderRadius: 10,
-            background: "#fef2f2",
-            color: "#b91c1c",
-            border: "1px solid #fecaca",
-          }}
-        >
-          {error}
-        </div>
+        <div style={errorStyle}>{error}</div>
       ) : null}
 
-      <div
-        style={{
-          border: "1px solid #e5e7eb",
-          borderRadius: 14,
-          overflowX: "auto",
-          background: "#ffffff",
-          marginBottom: 24,
-        }}
-      >
+      <div style={tableWrapStyle}>
         <table
           style={{
             width: "100%",
-            minWidth: 980,
+            minWidth: 1040,
             borderCollapse: "collapse",
           }}
         >
@@ -381,8 +403,9 @@ export default function HomePage() {
               <th style={thStyle}>Name</th>
               <th style={thStyleRight}>Price</th>
               <th style={thStyleRight}>Chg %</th>
-              <th style={thStyle}>Recommendation</th>
+              <th style={thStyle}>Signal</th>
               <th style={thStyle}>Why</th>
+              <th style={thStyle}>Entry Note</th>
             </tr>
           </thead>
 
@@ -403,7 +426,9 @@ export default function HomePage() {
                   <td style={tdStyleBold}>{row.symbol}</td>
 
                   <td style={tdStyle}>
-                    <div style={{ fontWeight: 500 }}>{row.name || row.symbol}</div>
+                    <div style={{ fontWeight: 500 }}>
+                      {row.name || row.symbol}
+                    </div>
                   </td>
 
                   <td style={tdStyleRight}>{formatPrice(row.price)}</td>
@@ -431,8 +456,9 @@ export default function HomePage() {
                         textAlign: "center",
                         padding: "6px 10px",
                         borderRadius: 999,
-                        fontWeight: 700,
-                        fontSize: 13,
+                        fontWeight: 800,
+                        fontSize: 12,
+                        letterSpacing: 0.2,
                       }}
                     >
                       {row.recommendation?.label}
@@ -440,8 +466,14 @@ export default function HomePage() {
                   </td>
 
                   <td style={tdStyle}>
-                    <span style={{ color: "#6b7280", fontSize: 13 }}>
+                    <span style={{ color: "#4b5563", fontSize: 13 }}>
                       {row.recommendation?.reason}
+                    </span>
+                  </td>
+
+                  <td style={tdStyle}>
+                    <span style={{ color: "#6b7280", fontSize: 13 }}>
+                      {row.entryNote || "Use price/volume confirmation."}
                     </span>
                   </td>
                 </tr>
@@ -451,7 +483,7 @@ export default function HomePage() {
             {!sortedRows.length && !isLoadingTop5 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   style={{
                     padding: "20px 16px",
                     textAlign: "center",
@@ -484,10 +516,10 @@ export default function HomePage() {
                 fontSize: 15,
                 color: "#374151",
                 marginBottom: 10,
-                fontWeight: 600,
+                fontWeight: 700,
               }}
             >
-              Recommendation: {selectedRow.recommendation?.label}
+              Signal: {selectedRow.recommendation?.label}
             </div>
 
             <div
@@ -502,53 +534,153 @@ export default function HomePage() {
 
             <div
               style={{
-                fontSize: 13,
-                color: "#9ca3af",
+                fontSize: 14,
+                color: "#111827",
+                fontWeight: 600,
               }}
             >
-              Internal engine: trigger {selectedRow.triggerScore}/100, asymmetry {selectedRow.asymmetryScore}/100, quality {selectedRow.qualityScore}/100, stage {selectedRow.stage}
+              {selectedRow.entryNote || "Use price/volume confirmation."}
             </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-              marginBottom: 16,
-            }}
-          >
+          <div style={gridStyle}>
             <div style={cardStyle}>
               <div style={cardTitleStyle}>Technical setup</div>
               <div style={metricGridStyle}>
-                <Metric label="1M momentum" value={formatSignedPct(selectedRow.technicalSnapshot?.oneMonthPct)} />
-                <Metric label="3M momentum" value={formatSignedPct(selectedRow.technicalSnapshot?.threeMonthPct)} />
-                <Metric label="Relative volume" value={selectedRow.technicalSnapshot?.relativeVolume != null ? `${selectedRow.technicalSnapshot.relativeVolume.toFixed(2)}x` : "—"} />
-                <Metric label="Above 20DMA" value={yesNo(selectedRow.technicalSnapshot?.above20dma)} />
-                <Metric label="Above 50DMA" value={yesNo(selectedRow.technicalSnapshot?.above50dma)} />
-                <Metric label="Above 200DMA" value={yesNo(selectedRow.technicalSnapshot?.above200dma)} />
-                <Metric label="% from 20DMA" value={formatSignedPct(selectedRow.technicalSnapshot?.pctFrom20dma)} />
-                <Metric label="% from 50DMA" value={formatSignedPct(selectedRow.technicalSnapshot?.pctFrom50dma)} />
-                <Metric label="% from 200DMA" value={formatSignedPct(selectedRow.technicalSnapshot?.pctFrom200dma)} />
-                <Metric label="RSI" value={selectedRow.technicalSnapshot?.rsi != null ? selectedRow.technicalSnapshot.rsi.toFixed(1) : "—"} />
-                <Metric label="MACD" value={selectedRow.technicalSnapshot?.macd != null ? selectedRow.technicalSnapshot.macd.toFixed(2) : "—"} />
-                <Metric label="MACD signal" value={selectedRow.technicalSnapshot?.macdSignal != null ? selectedRow.technicalSnapshot.macdSignal.toFixed(2) : "—"} />
+                <Metric
+                  label="Day change"
+                  value={formatSignedPct(selectedRow.dayChangePct)}
+                />
+                <Metric
+                  label="Relative volume"
+                  value={
+                    selectedRow.technicalSnapshot?.relativeVolume != null
+                      ? `${selectedRow.technicalSnapshot.relativeVolume.toFixed(
+                          2
+                        )}x`
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="Above 20DMA"
+                  value={yesNo(selectedRow.technicalSnapshot?.above20dma)}
+                />
+                <Metric
+                  label="Above 50DMA"
+                  value={yesNo(selectedRow.technicalSnapshot?.above50dma)}
+                />
+                <Metric
+                  label="Above 200DMA"
+                  value={yesNo(selectedRow.technicalSnapshot?.above200dma)}
+                />
+                <Metric
+                  label="RSI"
+                  value={
+                    selectedRow.technicalSnapshot?.rsi != null
+                      ? selectedRow.technicalSnapshot.rsi.toFixed(1)
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="MACD"
+                  value={
+                    selectedRow.technicalSnapshot?.macd != null
+                      ? selectedRow.technicalSnapshot.macd.toFixed(2)
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="MACD signal"
+                  value={
+                    selectedRow.technicalSnapshot?.macdSignal != null
+                      ? selectedRow.technicalSnapshot.macdSignal.toFixed(2)
+                      : "—"
+                  }
+                />
               </div>
             </div>
 
             <div style={cardStyle}>
-              <div style={cardTitleStyle}>Fundamental profile</div>
+              <div style={cardTitleStyle}>Fundamental / liquidity profile</div>
               <div style={metricGridStyle}>
-                <Metric label="Revenue growth" value={`${selectedRow.fundamentalSnapshot?.revenueGrowthPct?.toFixed?.(1) ?? "0.0"}%`} />
-                <Metric label="EPS growth" value={`${selectedRow.fundamentalSnapshot?.epsGrowthPct?.toFixed?.(1) ?? "0.0"}%`} />
-                <Metric label="Operating margin" value={`${selectedRow.fundamentalSnapshot?.operatingMarginPct?.toFixed?.(1) ?? "0.0"}%`} />
-                <Metric label="Gross margin" value={selectedRow.fundamentalSnapshot?.grossMargin != null ? `${selectedRow.fundamentalSnapshot.grossMargin.toFixed(1)}%` : "—"} />
-                <Metric label="Debt / equity" value={selectedRow.fundamentalSnapshot?.debtToEquity != null ? selectedRow.fundamentalSnapshot.debtToEquity.toFixed(2) : "—"} />
-                <Metric label="Market cap" value={selectedRow.fundamentalSnapshot?.marketCap != null ? `$${Math.round(selectedRow.fundamentalSnapshot.marketCap / 1e9)}B` : "—"} />
-                <Metric label="Institutional" value={selectedRow.fundamentalSnapshot?.institutionalScore != null ? `${selectedRow.fundamentalSnapshot.institutionalScore}/100` : "—"} />
-                <Metric label="Bucket" value={selectedRow.bucket || "—"} />
+                <Metric
+                  label="Market cap"
+                  value={formatBillions(
+                    selectedRow.marketCap ??
+                      selectedRow.fundamentalSnapshot?.marketCap
+                  )}
+                />
+                <Metric
+                  label="Avg volume"
+                  value={
+                    selectedRow.avgVolume != null
+                      ? Math.round(selectedRow.avgVolume).toLocaleString()
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="Revenue growth"
+                  value={
+                    selectedRow.fundamentalSnapshot?.revenueGrowthPct != null
+                      ? `${selectedRow.fundamentalSnapshot.revenueGrowthPct.toFixed(
+                          1
+                        )}%`
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="EPS growth"
+                  value={
+                    selectedRow.fundamentalSnapshot?.epsGrowthPct != null
+                      ? `${selectedRow.fundamentalSnapshot.epsGrowthPct.toFixed(
+                          1
+                        )}%`
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="Operating margin"
+                  value={
+                    selectedRow.fundamentalSnapshot?.operatingMarginPct != null
+                      ? `${selectedRow.fundamentalSnapshot.operatingMarginPct.toFixed(
+                          1
+                        )}%`
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="Gross margin"
+                  value={
+                    selectedRow.fundamentalSnapshot?.grossMargin != null
+                      ? `${selectedRow.fundamentalSnapshot.grossMargin.toFixed(
+                          1
+                        )}%`
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="Debt / equity"
+                  value={
+                    selectedRow.fundamentalSnapshot?.debtToEquity != null
+                      ? selectedRow.fundamentalSnapshot.debtToEquity.toFixed(2)
+                      : "—"
+                  }
+                />
+                <Metric
+                  label="Institutional"
+                  value={
+                    selectedRow.fundamentalSnapshot?.institutionalScore != null
+                      ? `${selectedRow.fundamentalSnapshot.institutionalScore}/100`
+                      : "—"
+                  }
+                />
               </div>
             </div>
+          </div>
+
+          <div style={engineNoteStyle}>
+            Quant screens are still running behind the scenes: quality,
+            asymmetry, trigger, liquidity, valuation, momentum, and confirmation.
           </div>
         </>
       ) : null}
@@ -566,11 +698,59 @@ function Metric({ label, value }) {
         background: "#ffffff",
       }}
     >
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>{value}</div>
+      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>
+        {value}
+      </div>
     </div>
   );
 }
+
+const primaryButtonStyle = {
+  padding: "12px 16px",
+  borderRadius: 10,
+  border: "1px solid #111827",
+  background: "#111827",
+  color: "#ffffff",
+  fontSize: 14,
+  cursor: "pointer",
+};
+
+const secondaryButtonStyle = {
+  padding: "12px 16px",
+  borderRadius: 10,
+  border: "1px solid #d1d5db",
+  background: "#ffffff",
+  color: "#111827",
+  fontSize: 14,
+  cursor: "pointer",
+};
+
+const errorStyle = {
+  marginBottom: 16,
+  padding: "12px 14px",
+  borderRadius: 10,
+  background: "#fef2f2",
+  color: "#b91c1c",
+  border: "1px solid #fecaca",
+};
+
+const tableWrapStyle = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 14,
+  overflowX: "auto",
+  background: "#ffffff",
+  marginBottom: 24,
+};
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 16,
+  marginBottom: 16,
+};
 
 const cardStyle = {
   border: "1px solid #e5e7eb",
@@ -589,6 +769,13 @@ const metricGridStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 10,
+};
+
+const engineNoteStyle = {
+  fontSize: 13,
+  color: "#6b7280",
+  marginTop: 8,
+  marginBottom: 24,
 };
 
 const thStyle = {
