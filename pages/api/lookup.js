@@ -1,5 +1,3 @@
-// pages/api/lookup.js
-
 import {
   calcQualityScore,
   calcAsymmetryScore,
@@ -9,50 +7,53 @@ import {
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
 
-function normalizeSymbolForYahoo(symbol) {
-  return String(symbol || "").replace(".", "-").toUpperCase();
-}
-
-function normalizeSymbolBack(symbol) {
+function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
+function toFmpSymbol(symbol) {
+  return String(symbol || "").replace(".", "-").toUpperCase();
+}
+
 async function getQuote(symbol) {
-  const yahooSymbol = normalizeSymbolForYahoo(symbol);
+  const apiKey = process.env.FMP_API_KEY;
 
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(
-    yahooSymbol
-  )}`;
+  if (!apiKey) {
+    throw new Error("Missing FMP_API_KEY in Vercel environment variables.");
+  }
 
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-    },
-  });
+  const fmpSymbol = toFmpSymbol(symbol);
+  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(
+    fmpSymbol
+  )}?apikey=${apiKey}`;
+
+  const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error("Quote lookup failed.");
+    throw new Error("FMP quote lookup failed.");
   }
 
   const data = await response.json();
-  const q = data?.quoteResponse?.result?.[0];
+  const q = Array.isArray(data) ? data[0] : null;
 
   if (!q) {
     throw new Error("Ticker not found.");
   }
 
   return {
-    symbol: normalizeSymbolBack(q.symbol),
-    name: q.longName || q.shortName || q.displayName || q.symbol,
-    price: q.regularMarketPrice ?? null,
+    symbol: normalizeSymbol(q.symbol),
+    name: q.name || q.symbol,
+    price: q.price ?? null,
+    dayChangePct: q.changesPercentage ?? null,
     marketCap: q.marketCap ?? null,
-    avgVolume:
-      q.averageDailyVolume3Month ??
-      q.averageDailyVolume10Day ??
-      q.regularMarketVolume ??
-      null,
-    volume: q.regularMarketVolume ?? null,
-    dayChangePct: q.regularMarketChangePercent ?? null,
+    avgVolume: q.avgVolume ?? q.volume ?? null,
+    volume: q.volume ?? null,
+    priceAvg50: q.priceAvg50 ?? null,
+    priceAvg200: q.priceAvg200 ?? null,
+    yearHigh: q.yearHigh ?? null,
+    yearLow: q.yearLow ?? null,
+    eps: q.eps ?? null,
+    pe: q.pe ?? null,
   };
 }
 
@@ -64,7 +65,7 @@ function getCleanRecommendation(row) {
   if (trigger >= 78 && asymmetry >= 68 && quality >= 55) {
     return {
       label: "STRONG BUY",
-      reason: "Best setup: momentum, asymmetry, and quality are aligned.",
+      reason: "Momentum, asymmetry, and quality are aligned.",
     };
   }
 
@@ -98,11 +99,11 @@ function buildEntryNote(row) {
   }
 
   if (row.recommendation?.label === "BUY") {
-    return `Buyable setup. Better entry on a pullback near $${price.toFixed(2)} or a strong-volume breakout.`;
+    return `Buyable setup. Better on pullback near $${price.toFixed(2)} or strong-volume breakout.`;
   }
 
   if (row.recommendation?.label === "WATCH") {
-    return "Wait for better price/volume confirmation before buying.";
+    return "Wait for better price/volume confirmation.";
   }
 
   return "Avoid for now.";
@@ -122,7 +123,6 @@ export default async function handler(req, res) {
     const asymmetryScore = calcAsymmetryScore(base);
     const triggerScore = calcTriggerScore(base);
     const stage = getStage(base);
-
     const technicalSnapshot = buildTechnicalSnapshot(base);
     const fundamentalSnapshot = buildFundamentalSnapshot(base);
 
@@ -140,10 +140,7 @@ export default async function handler(req, res) {
       triggerScore,
       stage,
       recommendation,
-      entryNote: buildEntryNote({
-        ...base,
-        recommendation,
-      }),
+      entryNote: buildEntryNote({ ...base, recommendation }),
       technicalSnapshot,
       fundamentalSnapshot,
     });
