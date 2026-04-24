@@ -13,7 +13,6 @@ function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
-// ✅ CORRECT FMP ENDPOINT
 async function fetchFmpQuotes(symbols) {
   const apiKey = process.env.FMP_API_KEY;
 
@@ -21,7 +20,10 @@ async function fetchFmpQuotes(symbols) {
     throw new Error("Missing FMP_API_KEY in Vercel environment variables.");
   }
 
-  const clean = [...new Set(symbols.filter(Boolean).map((s) => s.replace(".", "-")))];
+  const clean = [
+    ...new Set(symbols.filter(Boolean).map((s) => s.replace(".", "-"))),
+  ];
+
   const chunks = [];
 
   for (let i = 0; i < clean.length; i += 100) {
@@ -71,30 +73,30 @@ function getCleanRecommendation(row) {
   const asymmetry = row.asymmetryScore ?? 0;
   const quality = row.qualityScore ?? 0;
 
-  if (trigger >= 78 && asymmetry >= 68 && quality >= 55) {
+  if (trigger >= 75 && asymmetry >= 70 && quality >= 60) {
     return {
       label: "STRONG BUY",
-      reason: "Momentum, asymmetry, and quality aligned.",
+      reason: "High conviction: strong structure + upside + quality.",
     };
   }
 
-  if (trigger >= 63 && asymmetry >= 58) {
+  if (trigger >= 65 && asymmetry >= 60) {
     return {
       label: "BUY",
-      reason: "Attractive setup with confirmation.",
+      reason: "Solid setup, but not elite.",
     };
   }
 
-  if (trigger >= 48 || asymmetry >= 60) {
+  if (trigger >= 50 || asymmetry >= 55) {
     return {
       label: "WATCH",
-      reason: "Needs confirmation.",
+      reason: "Interesting, needs confirmation.",
     };
   }
 
   return {
     label: "AVOID",
-    reason: "Weak setup.",
+    reason: "Weak structure or poor risk/reward.",
   };
 }
 
@@ -122,9 +124,7 @@ export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
 
-    const quotes = await fetchFmpQuotes(
-      fullUniverse.map((x) => x.symbol)
-    );
+    const quotes = await fetchFmpQuotes(fullUniverse.map((x) => x.symbol));
 
     if (!quotes.length) {
       throw new Error(
@@ -182,12 +182,19 @@ export default async function handler(req, res) {
     });
 
     scored.sort((a, b) => {
-      const rank = { "STRONG BUY": 4, BUY: 3, WATCH: 2, AVOID: 1 };
+      const rank = {
+        "STRONG BUY": 4,
+        BUY: 3,
+        WATCH: 2,
+        AVOID: 1,
+      };
 
       return (
         (rank[b.recommendation?.label] || 0) -
           (rank[a.recommendation?.label] || 0) ||
-        (b.triggerScore ?? 0) - (a.triggerScore ?? 0)
+        (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
+        (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
+        (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
       );
     });
 
