@@ -26,8 +26,9 @@ async function fetchFmpQuotes(symbols) {
 
   const chunks = [];
 
-  for (let i = 0; i < clean.length; i += 250) {
-    chunks.push(clean.slice(i, i + 250));
+  // FMP often behaves better with smaller symbol batches.
+  for (let i = 0; i < clean.length; i += 100) {
+    chunks.push(clean.slice(i, i + 100));
   }
 
   const results = [];
@@ -37,38 +38,43 @@ async function fetchFmpQuotes(symbols) {
       ","
     )}&apikey=${apiKey}`;
 
-    const response = await fetch(url);
+    try {
+      const response = await fetch(url);
 
-    if (!response.ok) return [];
+      if (!response.ok) return [];
 
-    const data = await response.json();
-    if (!Array.isArray(data)) return [];
+      const data = await response.json();
+      if (!Array.isArray(data)) return [];
 
-    return data
-      .map((q) => ({
-        symbol: normalizeSymbol(q.symbol),
-        name: q.name || q.symbol,
-        price: q.price ?? null,
-        dayChangePct:
-          q.changesPercentage ??
-          q.changePercentage ??
-          q.changePercent ??
-          null,
-        change: q.change ?? null,
-        volume: q.volume ?? null,
-        avgVolume: q.avgVolume ?? q.volume ?? null,
-        marketCap: q.marketCap ?? null,
-        priceAvg50: q.priceAvg50 ?? null,
-        priceAvg200: q.priceAvg200 ?? null,
-        yearHigh: q.yearHigh ?? null,
-        yearLow: q.yearLow ?? null,
-        eps: q.eps ?? null,
-        pe: q.pe ?? null,
-      }))
-      .filter((x) => x.symbol && x.price != null);
+      return data
+        .map((q) => ({
+          symbol: normalizeSymbol(q.symbol),
+          name: q.name || q.symbol,
+          price: q.price ?? null,
+          dayChangePct:
+            q.changesPercentage ??
+            q.changePercentage ??
+            q.changePercent ??
+            null,
+          change: q.change ?? null,
+          volume: q.volume ?? null,
+          avgVolume: q.avgVolume ?? q.volume ?? null,
+          marketCap: q.marketCap ?? null,
+          priceAvg50: q.priceAvg50 ?? null,
+          priceAvg200: q.priceAvg200 ?? null,
+          yearHigh: q.yearHigh ?? null,
+          yearLow: q.yearLow ?? null,
+          eps: q.eps ?? null,
+          pe: q.pe ?? null,
+        }))
+        .filter((x) => x.symbol && x.price != null);
+    } catch (err) {
+      console.error("FMP chunk failed:", err.message);
+      return [];
+    }
   }
 
-  const concurrency = 4;
+  const concurrency = 8;
 
   for (let i = 0; i < chunks.length; i += concurrency) {
     const batch = chunks.slice(i, i + concurrency);
@@ -123,8 +129,11 @@ function buildEntryNote(row) {
 
   if (row.recommendation?.label === "BUY") {
     if (ma50 && ma50 > 0) {
-      return `Better entry near 50DMA around $${ma50.toFixed(2)} or breakout above $${price.toFixed(2)}.`;
+      return `Better entry near 50DMA around $${ma50.toFixed(
+        2
+      )} or breakout above $${price.toFixed(2)}.`;
     }
+
     return `Better entry near $${price.toFixed(2)} or breakout.`;
   }
 
