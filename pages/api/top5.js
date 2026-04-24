@@ -13,13 +13,28 @@ function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function prioritizeUniverse(fullUniverse) {
-  return fullUniverse
+  const clean = fullUniverse
     .filter((x) => x.symbol)
     .filter((x) => x.symbol.length <= 5)
     .filter((x) => !x.symbol.includes("."))
-    .filter((x) => !x.symbol.includes("-"))
-    .slice(0, 1200);
+    .filter((x) => !x.symbol.includes("-"));
+
+  // Spread across the full list instead of only taking A/B/C tickers.
+  const buckets = 12;
+  const spread = [];
+
+  for (let b = 0; b < buckets; b++) {
+    for (let i = b; i < clean.length; i += buckets) {
+      spread.push(clean[i]);
+    }
+  }
+
+  return spread.slice(0, 1800);
 }
 
 async function fetchFmpQuotes(symbols) {
@@ -34,15 +49,20 @@ async function fetchFmpQuotes(symbols) {
   ];
 
   const chunks = [];
+  const chunkSize = 50;
 
-  for (let i = 0; i < clean.length; i += 75) {
-    chunks.push(clean.slice(i, i + 75));
+  for (let i = 0; i < clean.length; i += chunkSize) {
+    chunks.push(clean.slice(i, i + chunkSize));
   }
 
-  const results = [];
+  const targetQuotes = 900;
+  const maxRounds = 3;
+  const quoteMap = new Map();
 
-  async function fetchChunk(chunk) {
-    const url = `https://financialmodelingprep.com/stable/batch-quote?symbols=${chunk.join(
+  async function fetchChunk(chunk, useShort = false) {
+    const endpoint = useShort ? "batch-quote-short" : "batch-quote";
+
+    const url = `https://financialmodelingprep.com/stable/${endpoint}?symbols=${chunk.join(
       ","
     )}&apikey=${apiKey}`;
 
@@ -82,15 +102,32 @@ async function fetchFmpQuotes(symbols) {
     }
   }
 
-  const concurrency = 6;
+  for (let round = 0; round < maxRounds; round++) {
+    for (const chunk of chunks) {
+      if (quoteMap.size >= targetQuotes) break;
 
-  for (let i = 0; i < chunks.length; i += concurrency) {
-    const batch = chunks.slice(i, i + concurrency);
-    const batchResults = await Promise.all(batch.map(fetchChunk));
-    results.push(...batchResults.flat());
+      let quotes = await fetchChunk(chunk, false);
+
+      // Fallback if the richer endpoint returns nothing for that chunk.
+      if (!quotes.length) {
+        quotes = await fetchChunk(chunk, true);
+      }
+
+      for (const quote of quotes) {
+        quoteMap.set(quote.symbol, quote);
+      }
+
+      // Keeps us comfortably under rate limits.
+      await sleep(120);
+    }
+
+    if (quoteMap.size >= targetQuotes) break;
+
+    // Small pause before another pass.
+    await sleep(500);
   }
 
-  return results;
+  return Array.from(quoteMap.values());
 }
 
 function getCleanRecommendation(row) {
