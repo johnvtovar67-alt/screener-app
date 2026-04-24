@@ -1,5 +1,3 @@
-// pages/api/top5.js
-
 import { buildRawListedUniverse } from "../../src/lib/universe";
 import { applyLiquidityFilter } from "../../src/lib/liquidity-filter";
 import {
@@ -11,86 +9,81 @@ import {
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
 
-function normalizeSymbolForYahoo(symbol) {
-  return String(symbol || "").replace(".", "-").toUpperCase();
+function toStooq(symbol) {
+  return String(symbol || "").replace(".", "-").toLowerCase() + ".us";
 }
 
-function normalizeSymbolForApp(symbol) {
-  return String(symbol || "").replace("-", ".").toUpperCase();
+function fromStooq(symbol) {
+  return String(symbol || "")
+    .replace(".US", "")
+    .replace(".us", "")
+    .replace("-", ".")
+    .toUpperCase();
 }
 
-async function fetchYahooChunk(chunk, host) {
-  const symbols = chunk.map(encodeURIComponent).join(",");
-  const url = `https://${host}/v7/finance/quote?symbols=${symbols}`;
+function parseCsv(text) {
+  const lines = text.trim().split("\n");
+  const headers = lines[0].split(",").map((h) => h.trim());
 
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-      Accept: "application/json",
-    },
+  return lines.slice(1).map((line) => {
+    const values = line.split(",");
+    const row = {};
+    headers.forEach((h, i) => {
+      row[h] = values[i];
+    });
+    return row;
   });
-
-  if (!response.ok) return [];
-
-  const data = await response.json();
-  const quotes = data?.quoteResponse?.result || [];
-
-  return quotes
-    .map((q) => ({
-      symbol: normalizeSymbolForApp(q.symbol),
-      yahooSymbol: q.symbol,
-      name: q.longName || q.shortName || q.displayName || q.symbol,
-      price: q.regularMarketPrice ?? null,
-      marketCap: q.marketCap ?? null,
-      avgVolume:
-        q.averageDailyVolume3Month ??
-        q.averageDailyVolume10Day ??
-        q.regularMarketVolume ??
-        null,
-      volume: q.regularMarketVolume ?? null,
-      dayChangePct: q.regularMarketChangePercent ?? null,
-    }))
-    .filter((x) => x.symbol && x.price != null && Number.isFinite(x.price));
 }
 
 async function getSnapshots(symbols) {
-  const cleanSymbols = [...new Set(symbols.filter(Boolean).map(normalizeSymbolForYahoo))];
-
-  const chunkSize = 25;
+  const clean = [...new Set(symbols.filter(Boolean))];
   const chunks = [];
 
-  for (let i = 0; i < cleanSymbols.length; i += chunkSize) {
-    chunks.push(cleanSymbols.slice(i, i + chunkSize));
+  for (let i = 0; i < clean.length; i += 75) {
+    chunks.push(clean.slice(i, i + 75));
   }
 
   const results = [];
-  const concurrency = 4;
 
-  for (let i = 0; i < chunks.length; i += concurrency) {
-    const batch = chunks.slice(i, i + concurrency);
+  for (const chunk of chunks) {
+    const stooqSymbols = chunk.map(toStooq).join(",");
+    const url = `https://stooq.com/q/l/?s=${stooqSymbols}&f=sd2t2ohlcv&h&e=csv`;
 
-    const batchResults = await Promise.all(
-      batch.map(async (chunk) => {
-        let quotes = await fetchYahooChunk(chunk, "query1.finance.yahoo.com");
+    try {
+      const response = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+      });
 
-        if (!quotes.length) {
-          quotes = await fetchYahooChunk(chunk, "query2.finance.yahoo.com");
-        }
+      if (!response.ok) continue;
 
-        return quotes;
-      })
-    );
+      const text = await response.text();
+      const rows = parseCsv(text);
 
-    results.push(...batchResults.flat());
+      for (const r of rows) {
+        const close = Number(r.Close);
+        const open = Number(r.Open);
+        const volume = Number(r.Volume);
+
+        if (!Number.isFinite(close) || close <= 0) continue;
+
+        results.push({
+          symbol: fromStooq(r.Symbol),
+          price: close,
+          avgVolume: Number.isFinite(volume) ? volume : null,
+          volume: Number.isFinite(volume) ? volume : null,
+          marketCap: null,
+          dayChangePct:
+            Number.isFinite(open) && open > 0
+              ? ((close - open) / open) * 100
+              : null,
+        });
+      }
+    } catch (err) {
+      console.error("Stooq chunk failed:", err.message);
+    }
   }
 
-  const deduped = new Map();
-
-  for (const quote of results) {
-    deduped.set(quote.symbol, quote);
-  }
-
-  return Array.from(deduped.values());
+  return results;
 }
 
 function getCleanRecommendation(row) {
@@ -127,15 +120,18 @@ function getCleanRecommendation(row) {
 
 function buildEntryNote(row) {
   const price = row.price;
-
   if (!price) return "No clean entry yet.";
 
   if (row.recommendation?.label === "STRONG BUY") {
-    return `Actionable now. Watch for strength above $${price.toFixed(2)} with volume.`;
+    return `Actionable now. Watch for strength above $${price.toFixed(
+      2
+    )} with volume.`;
   }
 
   if (row.recommendation?.label === "BUY") {
-    return `Buyable setup. Better entry on a pullback near $${price.toFixed(2)} or a strong-volume breakout.`;
+    return `Buyable setup. Better entry on a pullback near $${price.toFixed(
+      2
+    )} or a strong-volume breakout.`;
   }
 
   if (row.recommendation?.label === "WATCH") {
@@ -148,45 +144,32 @@ function buildEntryNote(row) {
 export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
-    const universeSymbols = fullUniverse.map((x) => x.symbol);
-
-    const snapshots = await getSnapshots(universeSymbols);
+    const snapshots = await getSnapshots(fullUniverse.map((x) => x.symbol));
 
     if (!snapshots.length) {
       return res.status(500).json({
-        error:
-          "Quote pull returned zero symbols. Universe is working, but Yahoo snap quotes are blocked or returning empty from Vercel.",
-        meta: {
-          totalUniverse: fullUniverse.length,
-          quoteSnapshots: 0,
-          afterInstitutionalFilter: 0,
-          afterRankingThreshold: 0,
-        },
+        error: "Quote pull failed from Stooq. No snap quote data returned.",
       });
     }
 
     const quoteMap = new Map();
-
-    for (const quote of snapshots) {
-      quoteMap.set(normalizeSymbolForApp(quote.symbol), quote);
-    }
+    snapshots.forEach((q) => quoteMap.set(q.symbol, q));
 
     const tradable = applyLiquidityFilter(fullUniverse, snapshots, {
       minPrice: 5,
       minMarketCap: 300_000_000,
-      minAvgVolume: 500_000,
+      minAvgVolume: 250_000,
     });
 
     const scored = tradable.map((row) => {
-      const quote = quoteMap.get(normalizeSymbolForApp(row.symbol)) || {};
+      const quote = quoteMap.get(row.symbol) || {};
 
       const base = {
         ...row,
         ...quote,
         symbol: row.symbol,
-        name: row.name || quote.name || row.symbol,
+        name: row.name || row.symbol,
         price: quote.price ?? row.price,
-        marketCap: quote.marketCap ?? row.marketCap,
         avgVolume: quote.avgVolume ?? row.avgVolume,
         dayChangePct: quote.dayChangePct ?? null,
       };
@@ -195,7 +178,6 @@ export default async function handler(req, res) {
       const asymmetryScore = calcAsymmetryScore(base);
       const triggerScore = calcTriggerScore(base);
       const stage = getStage(base);
-
       const technicalSnapshot = buildTechnicalSnapshot(base);
       const fundamentalSnapshot = buildFundamentalSnapshot(base);
 
@@ -213,36 +195,26 @@ export default async function handler(req, res) {
         triggerScore,
         stage,
         recommendation,
-        entryNote: buildEntryNote({
-          ...base,
-          recommendation,
-        }),
+        entryNote: buildEntryNote({ ...base, recommendation }),
         technicalSnapshot,
         fundamentalSnapshot,
       };
     });
 
     scored.sort((a, b) => {
-      const actionRank = {
-        "STRONG BUY": 4,
-        BUY: 3,
-        WATCH: 2,
-        AVOID: 1,
-      };
+      const rank = { "STRONG BUY": 4, BUY: 3, WATCH: 2, AVOID: 1 };
 
       return (
-        (actionRank[b.recommendation?.label] || 0) -
-          (actionRank[a.recommendation?.label] || 0) ||
+        (rank[b.recommendation?.label] || 0) -
+          (rank[a.recommendation?.label] || 0) ||
         (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
         (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
         (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
       );
     });
 
-    const top = scored.slice(0, 150);
-
     res.status(200).json({
-      stocks: top,
+      stocks: scored.slice(0, 150),
       meta: {
         totalUniverse: fullUniverse.length,
         quoteSnapshots: snapshots.length,
@@ -252,7 +224,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("top5 error:", err);
-
     res.status(500).json({
       error: err.message || "Failed to build screener.",
     });
