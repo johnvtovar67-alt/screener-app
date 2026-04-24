@@ -15,8 +15,8 @@ export type UniverseCandidate = {
 
 export type FilteredUniverseItem = UniverseCandidate & {
   price: number
-  marketCap: number
-  avgVolume: number
+  marketCap?: number | null
+  avgVolume?: number | null
 }
 
 export type LiquidityRules = {
@@ -26,47 +26,57 @@ export type LiquidityRules = {
   maxPrice?: number
 }
 
-export const DEFAULT_LIQUIDITY_RULES: LiquidityRules = {
-  minPrice: 5,
-  minMarketCap: 300_000_000,
-  minAvgVolume: 750_000,
-  maxPrice: undefined, // leave off so you still catch quality higher-priced names
+function normalizeSymbol(symbol: string) {
+  return String(symbol || "").replace("-", ".").toUpperCase()
 }
 
 export function applyLiquidityFilter(
   universe: UniverseCandidate[],
   snapshots: MarketSnapshot[],
-  rules: LiquidityRules = DEFAULT_LIQUIDITY_RULES
+  rules: LiquidityRules
 ): FilteredUniverseItem[] {
-  const snapMap = new Map<string, MarketSnapshot>(
-    snapshots.map((s) => [s.symbol.toUpperCase(), s])
-  )
+  const snapMap = new Map<string, MarketSnapshot>()
+
+  for (const snap of snapshots) {
+    snapMap.set(normalizeSymbol(snap.symbol), snap)
+  }
 
   const out: FilteredUniverseItem[] = []
 
   for (const item of universe) {
-    const snap = snapMap.get(item.symbol.toUpperCase())
+    const key = normalizeSymbol(item.symbol)
+    const snap = snapMap.get(key)
+
     if (!snap) continue
 
     const price = snap.price ?? null
     const marketCap = snap.marketCap ?? null
     const avgVolume = snap.avgVolume ?? null
 
+    // Must have a valid price
+    if (price == null || !Number.isFinite(price)) continue
+
+    // Price rule
+    if (price < rules.minPrice) continue
+    if (rules.maxPrice != null && price > rules.maxPrice) continue
+
+    // These are only applied when Yahoo gives us the data.
+    // This prevents the entire screener from going to zero because of missing fields.
     if (
-      price == null ||
-      marketCap == null ||
-      avgVolume == null ||
-      !Number.isFinite(price) ||
-      !Number.isFinite(marketCap) ||
-      !Number.isFinite(avgVolume)
+      marketCap != null &&
+      Number.isFinite(marketCap) &&
+      marketCap < rules.minMarketCap
     ) {
       continue
     }
 
-    if (price < rules.minPrice) continue
-    if (rules.maxPrice != null && price > rules.maxPrice) continue
-    if (marketCap < rules.minMarketCap) continue
-    if (avgVolume < rules.minAvgVolume) continue
+    if (
+      avgVolume != null &&
+      Number.isFinite(avgVolume) &&
+      avgVolume < rules.minAvgVolume
+    ) {
+      continue
+    }
 
     out.push({
       ...item,
@@ -76,5 +86,9 @@ export function applyLiquidityFilter(
     })
   }
 
-  return out.sort((a, b) => b.avgVolume - a.avgVolume)
+  return out.sort((a, b) => {
+    const av = a.avgVolume ?? 0
+    const bv = b.avgVolume ?? 0
+    return bv - av
+  })
 }
