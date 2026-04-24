@@ -13,6 +13,7 @@ function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
+// ✅ FREE-TIER SAFE QUOTE PULL
 async function fetchFmpQuotes(symbols) {
   const apiKey = process.env.FMP_API_KEY;
 
@@ -23,14 +24,15 @@ async function fetchFmpQuotes(symbols) {
   const clean = [...new Set(symbols.filter(Boolean).map((s) => s.replace(".", "-")))];
   const chunks = [];
 
-  for (let i = 0; i < clean.length; i += 250) {
-    chunks.push(clean.slice(i, i + 250));
+  // smaller chunks for free plan
+  for (let i = 0; i < clean.length; i += 50) {
+    chunks.push(clean.slice(i, i + 50));
   }
 
   const results = [];
 
   async function fetchChunk(chunk) {
-    const url = `https://financialmodelingprep.com/api/v3/quote/${chunk.join(
+    const url = `https://financialmodelingprep.com/api/v3/quote-short/${chunk.join(
       ","
     )}?apikey=${apiKey}`;
 
@@ -44,23 +46,17 @@ async function fetchFmpQuotes(symbols) {
     return data
       .map((q) => ({
         symbol: normalizeSymbol(q.symbol),
-        name: q.name || q.symbol,
+        name: q.symbol,
         price: q.price ?? null,
-        dayChangePct: q.changesPercentage ?? null,
-        marketCap: q.marketCap ?? null,
-        avgVolume: q.avgVolume ?? q.volume ?? null,
         volume: q.volume ?? null,
-        priceAvg50: q.priceAvg50 ?? null,
-        priceAvg200: q.priceAvg200 ?? null,
-        yearHigh: q.yearHigh ?? null,
-        yearLow: q.yearLow ?? null,
-        eps: q.eps ?? null,
-        pe: q.pe ?? null,
+        avgVolume: q.volume ?? null,
+        marketCap: null,
+        dayChangePct: null,
       }))
-      .filter((x) => x.symbol && x.price != null && Number.isFinite(x.price));
+      .filter((x) => x.symbol && x.price != null);
   }
 
-  const concurrency = 4;
+  const concurrency = 3;
 
   for (let i = 0; i < chunks.length; i += concurrency) {
     const batch = chunks.slice(i, i + concurrency);
@@ -86,20 +82,20 @@ function getCleanRecommendation(row) {
   if (trigger >= 63 && asymmetry >= 58) {
     return {
       label: "BUY",
-      reason: "Attractive setup with positive confirmation.",
+      reason: "Attractive setup with confirmation.",
     };
   }
 
   if (trigger >= 48 || asymmetry >= 60) {
     return {
       label: "WATCH",
-      reason: "Interesting, but needs better confirmation.",
+      reason: "Needs confirmation.",
     };
   }
 
   return {
     label: "AVOID",
-    reason: "Weak setup or not enough confirmation.",
+    reason: "Weak setup.",
   };
 }
 
@@ -109,27 +105,32 @@ function buildEntryNote(row) {
   if (!price) return "No clean entry yet.";
 
   if (row.recommendation?.label === "STRONG BUY") {
-    return `Actionable now. Watch for strength above $${price.toFixed(2)} with volume.`;
+    return `Actionable now above $${price.toFixed(2)} with volume.`;
   }
 
   if (row.recommendation?.label === "BUY") {
-    return `Buyable setup. Better on pullback near $${price.toFixed(2)} or strong-volume breakout.`;
+    return `Better entry near $${price.toFixed(2)} or breakout.`;
   }
 
   if (row.recommendation?.label === "WATCH") {
-    return "Wait for better price/volume confirmation.";
+    return "Wait for confirmation.";
   }
 
-  return "Avoid for now.";
+  return "Avoid.";
 }
 
 export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
-    const quotes = await fetchFmpQuotes(fullUniverse.map((x) => x.symbol));
+
+    const quotes = await fetchFmpQuotes(
+      fullUniverse.map((x) => x.symbol)
+    );
 
     if (!quotes.length) {
-      throw new Error("FMP returned zero quotes. Check FMP_API_KEY or account access.");
+      throw new Error(
+        "FMP returned zero quotes. Key may not be active yet (can take a few minutes)."
+      );
     }
 
     const quoteMap = new Map();
@@ -150,22 +151,15 @@ export default async function handler(req, res) {
         symbol: row.symbol,
         name: quote.name || row.name || row.symbol,
         price: quote.price ?? row.price,
-        marketCap: quote.marketCap ?? row.marketCap,
         avgVolume: quote.avgVolume ?? row.avgVolume,
-        volume: quote.volume ?? null,
-        dayChangePct: quote.dayChangePct ?? null,
-        priceAvg50: quote.priceAvg50 ?? null,
-        priceAvg200: quote.priceAvg200 ?? null,
-        yearHigh: quote.yearHigh ?? null,
-        yearLow: quote.yearLow ?? null,
-        eps: quote.eps ?? null,
-        pe: quote.pe ?? null,
+        marketCap: quote.marketCap ?? row.marketCap,
       };
 
       const qualityScore = calcQualityScore(base);
       const asymmetryScore = calcAsymmetryScore(base);
       const triggerScore = calcTriggerScore(base);
       const stage = getStage(base);
+
       const technicalSnapshot = buildTechnicalSnapshot(base);
       const fundamentalSnapshot = buildFundamentalSnapshot(base);
 
@@ -212,6 +206,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("top5 error:", err);
+
     res.status(500).json({
       error: err.message || "Failed to build screener.",
     });
