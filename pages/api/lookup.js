@@ -3,6 +3,7 @@ import {
   calcAsymmetryScore,
   calcTriggerScore,
   getStage,
+  getRecommendation,
   buildTechnicalSnapshot,
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
@@ -23,9 +24,10 @@ async function getQuote(symbol) {
   }
 
   const fmpSymbol = toFmpSymbol(symbol);
-  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(
+
+  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
     fmpSymbol
-  )}?apikey=${apiKey}`;
+  )}&apikey=${apiKey}`;
 
   const response = await fetch(url);
 
@@ -34,9 +36,9 @@ async function getQuote(symbol) {
   }
 
   const data = await response.json();
-  const q = Array.isArray(data) ? data[0] : null;
+  const q = Array.isArray(data) ? data[0] : data;
 
-  if (!q) {
+  if (!q || !q.symbol) {
     throw new Error("Ticker not found.");
   }
 
@@ -44,69 +46,24 @@ async function getQuote(symbol) {
     symbol: normalizeSymbol(q.symbol),
     name: q.name || q.symbol,
     price: q.price ?? null,
-    dayChangePct: q.changesPercentage ?? null,
+    dayChangePct: q.changesPercentage ?? q.changePercentage ?? null,
     marketCap: q.marketCap ?? null,
     avgVolume: q.avgVolume ?? q.volume ?? null,
     volume: q.volume ?? null,
-    priceAvg50: q.priceAvg50 ?? null,
-    priceAvg200: q.priceAvg200 ?? null,
-    yearHigh: q.yearHigh ?? null,
-    yearLow: q.yearLow ?? null,
+    priceAvg50: q.priceAvg50 ?? q.priceAvg50d ?? null,
+    priceAvg200: q.priceAvg200 ?? q.priceAvg200d ?? null,
+    yearHigh: q.yearHigh ?? q.yearHighPrice ?? null,
+    yearLow: q.yearLow ?? q.yearLowPrice ?? null,
     eps: q.eps ?? null,
-    pe: q.pe ?? null,
-  };
-}
-
-function getCleanRecommendation(row) {
-  const trigger = row.triggerScore ?? 0;
-  const asymmetry = row.asymmetryScore ?? 0;
-  const quality = row.qualityScore ?? 0;
-
-  if (trigger >= 78 && asymmetry >= 68 && quality >= 55) {
-    return {
-      label: "STRONG BUY",
-      reason: "Momentum, asymmetry, and quality are aligned.",
-    };
-  }
-
-  if (trigger >= 63 && asymmetry >= 58) {
-    return {
-      label: "BUY",
-      reason: "Attractive setup with positive confirmation.",
-    };
-  }
-
-  if (trigger >= 48 || asymmetry >= 60) {
-    return {
-      label: "WATCH",
-      reason: "Interesting, but needs better confirmation.",
-    };
-  }
-
-  return {
-    label: "AVOID",
-    reason: "Weak setup or not enough confirmation.",
+    pe: q.pe ?? q.peRatio ?? null,
   };
 }
 
 function buildEntryNote(row) {
-  const price = row.price;
-
-  if (!price) return "No clean entry yet.";
-
-  if (row.recommendation?.label === "STRONG BUY") {
-    return `Actionable now. Watch for strength above $${price.toFixed(2)} with volume.`;
-  }
-
-  if (row.recommendation?.label === "BUY") {
-    return `Buyable setup. Better on pullback near $${price.toFixed(2)} or strong-volume breakout.`;
-  }
-
-  if (row.recommendation?.label === "WATCH") {
-    return "Wait for better price/volume confirmation.";
-  }
-
-  return "Avoid for now.";
+  return (
+    row.recommendation?.entryNote ||
+    "Wait for stronger price and volume confirmation."
+  );
 }
 
 export default async function handler(req, res) {
@@ -122,25 +79,24 @@ export default async function handler(req, res) {
     const qualityScore = calcQualityScore(base);
     const asymmetryScore = calcAsymmetryScore(base);
     const triggerScore = calcTriggerScore(base);
-    const stage = getStage(base);
-    const technicalSnapshot = buildTechnicalSnapshot(base);
-    const fundamentalSnapshot = buildFundamentalSnapshot(base);
 
-    const recommendation = getCleanRecommendation({
+    const scoredRow = {
       ...base,
       qualityScore,
       asymmetryScore,
       triggerScore,
-    });
+    };
+
+    const stage = getStage(scoredRow);
+    const recommendation = getRecommendation(scoredRow);
+    const technicalSnapshot = buildTechnicalSnapshot(scoredRow);
+    const fundamentalSnapshot = buildFundamentalSnapshot(scoredRow);
 
     res.status(200).json({
-      ...base,
-      qualityScore,
-      asymmetryScore,
-      triggerScore,
+      ...scoredRow,
       stage,
       recommendation,
-      entryNote: buildEntryNote({ ...base, recommendation }),
+      entryNote: buildEntryNote({ ...scoredRow, recommendation }),
       technicalSnapshot,
       fundamentalSnapshot,
     });
