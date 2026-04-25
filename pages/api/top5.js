@@ -55,24 +55,22 @@ async function fetchFmpQuotes(symbols) {
     chunks.push(clean.slice(i, i + chunkSize));
   }
 
-  const targetQuotes = 1000;
   const quoteMap = new Map();
 
-  async function fetchChunk(chunk, useShort = false) {
-    const endpoint = useShort ? "batch-quote-short" : "batch-quote";
-    const url = `https://financialmodelingprep.com/stable/${endpoint}?symbols=${chunk.join(
+  for (const chunk of chunks) {
+    const url = `https://financialmodelingprep.com/stable/batch-quote?symbols=${chunk.join(
       ","
     )}&apikey=${apiKey}`;
 
     try {
       const response = await fetch(url);
-      if (!response.ok) return [];
+      if (!response.ok) continue;
 
       const data = await response.json();
-      if (!Array.isArray(data)) return [];
+      if (!Array.isArray(data)) continue;
 
-      return data
-        .map((q) => ({
+      for (const q of data) {
+        quoteMap.set(normalizeSymbol(q.symbol), {
           symbol: normalizeSymbol(q.symbol),
           name: q.name || q.symbol,
           price: q.price ?? null,
@@ -81,7 +79,6 @@ async function fetchFmpQuotes(symbols) {
             q.changePercentage ??
             q.changePercent ??
             null,
-          change: q.change ?? null,
           volume: q.volume ?? null,
           avgVolume: q.avgVolume ?? q.volume ?? null,
           marketCap: q.marketCap ?? null,
@@ -91,20 +88,9 @@ async function fetchFmpQuotes(symbols) {
           yearLow: q.yearLow ?? null,
           eps: q.eps ?? null,
           pe: q.pe ?? null,
-        }))
-        .filter((x) => x.symbol && x.price != null);
-    } catch {
-      return [];
-    }
-  }
-
-  for (const chunk of chunks) {
-    if (quoteMap.size >= targetQuotes) break;
-
-    let quotes = await fetchChunk(chunk, false);
-    if (!quotes.length) quotes = await fetchChunk(chunk, true);
-
-    for (const quote of quotes) quoteMap.set(quote.symbol, quote);
+        });
+      }
+    } catch {}
 
     await sleep(100);
   }
@@ -112,28 +98,40 @@ async function fetchFmpQuotes(symbols) {
   return Array.from(quoteMap.values());
 }
 
+//
+// 🔥 REAL ENTRY LOGIC (FIXED)
+//
 function buildEntryNote(row) {
   const price = row.price;
   const ma50 = row.priceAvg50;
+  const high = row.yearHigh;
   const signal = row.recommendation?.label;
 
   if (!price) return "No clean entry yet.";
 
+  // STRONG BUY = ONLY WHEN ACTIONABLE
   if (signal === "STRONG BUY") {
-    return `Actionable above $${price.toFixed(2)} if volume confirms.`;
+    return `BUY NOW near $${price.toFixed(2)} (momentum confirmed)`;
   }
 
+  // BUY = WAIT FOR TRIGGER
   if (signal === "BUY") {
-    if (ma50 && ma50 > 0) {
-      return `Better entry near 50DMA around $${ma50.toFixed(
-        2
-      )} or breakout above $${price.toFixed(2)}.`;
+    // Prefer breakout near recent highs (real level)
+    if (high && high > price) {
+      const breakout = (price + (high - price) * 0.15); // early breakout zone
+      return `Wait for breakout above ~$${breakout.toFixed(2)}`;
     }
-    return `Better entry near $${price.toFixed(2)} or breakout.`;
+
+    // fallback to 50DMA pullback
+    if (ma50 && ma50 > 0) {
+      return `Better entry on pullback near $${ma50.toFixed(2)}`;
+    }
+
+    return `Wait for confirmation above $${price.toFixed(2)}`;
   }
 
   if (signal === "WATCH") {
-    return "Wait for trend, volume, or fundamental confirmation.";
+    return "Wait for stronger trend and volume.";
   }
 
   return "Avoid.";
@@ -149,9 +147,7 @@ export default async function handler(req, res) {
     );
 
     if (!quotes.length) {
-      throw new Error(
-        "FMP returned zero quotes. Confirm paid plan access and FMP_API_KEY."
-      );
+      throw new Error("No quotes returned from FMP.");
     }
 
     const quoteMap = new Map();
@@ -169,25 +165,11 @@ export default async function handler(req, res) {
       const base = {
         ...row,
         ...quote,
-        symbol: row.symbol,
-        name: quote.name || row.name || row.symbol,
-        price: quote.price ?? row.price,
-        dayChangePct: quote.dayChangePct ?? null,
-        volume: quote.volume ?? null,
-        avgVolume: quote.avgVolume ?? row.avgVolume,
-        marketCap: quote.marketCap ?? row.marketCap,
-        priceAvg50: quote.priceAvg50 ?? null,
-        priceAvg200: quote.priceAvg200 ?? null,
-        yearHigh: quote.yearHigh ?? null,
-        yearLow: quote.yearLow ?? null,
-        eps: quote.eps ?? null,
-        pe: quote.pe ?? null,
       };
 
       const qualityScore = calcQualityScore(base);
       const asymmetryScore = calcAsymmetryScore(base);
       const triggerScore = calcTriggerScore(base);
-      const stage = getStage(base);
 
       const recommendation = getRecommendation({
         ...base,
@@ -201,7 +183,7 @@ export default async function handler(req, res) {
         qualityScore,
         asymmetryScore,
         triggerScore,
-        stage,
+        stage: getStage(base),
         recommendation,
         entryNote: buildEntryNote({ ...base, recommendation }),
         technicalSnapshot: buildTechnicalSnapshot(base),
@@ -220,21 +202,12 @@ export default async function handler(req, res) {
       return (
         (rank[b.recommendation?.label] || 0) -
           (rank[a.recommendation?.label] || 0) ||
-        (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
-        (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
-        (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
+        b.triggerScore - a.triggerScore
       );
     });
 
     res.status(200).json({
       stocks: scored.slice(0, 150),
-      meta: {
-        totalUniverse: fullUniverse.length,
-        prioritizedUniverse: prioritizedUniverse.length,
-        quoteSnapshots: quotes.length,
-        afterInstitutionalFilter: tradable.length,
-        afterRankingThreshold: scored.length,
-      },
     });
   } catch (err) {
     console.error("top5 error:", err);
