@@ -2,15 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatPct, formatPrice } from "../lib/formatters";
-import {
-  calcQualityScore,
-  calcAsymmetryScore,
-  calcTriggerScore,
-  getStage,
-  getRecommendation,
-  buildTechnicalSnapshot,
-  buildFundamentalSnapshot,
-} from "../lib/scoring";
 
 export default function HomePage() {
   const [rows, setRows] = useState([]);
@@ -24,6 +15,7 @@ export default function HomePage() {
 
   const [meta, setMeta] = useState({
     totalUniverse: 0,
+    quoteSnapshots: 0,
     afterInstitutionalFilter: 0,
     afterRankingThreshold: 0,
   });
@@ -44,6 +36,7 @@ export default function HomePage() {
       setMeta(
         data.meta || {
           totalUniverse: 0,
+          quoteSnapshots: 0,
           afterInstitutionalFilter: 0,
           afterRankingThreshold: 0,
         }
@@ -72,6 +65,15 @@ export default function HomePage() {
         throw new Error(data.error || "Lookup failed");
       }
 
+      if (!data?.symbol) {
+        throw new Error("Lookup returned no usable stock data.");
+      }
+
+      // If user looks up MSTR or anything above $25, do not let the filter hide it.
+      if ((data.price ?? 0) >= 25) {
+        setUnder25Only(false);
+      }
+
       setRows((prev) => {
         const exists = prev.some((row) => row.symbol === data.symbol);
         if (exists) {
@@ -93,82 +95,13 @@ export default function HomePage() {
     loadTop5();
   }, []);
 
-  function cleanRecommendation(row) {
-    if (row.recommendation?.label) return row.recommendation;
-
-    const qualityScore =
-      row.qualityScore != null ? row.qualityScore : calcQualityScore(row);
-    const asymmetryScore =
-      row.asymmetryScore != null ? row.asymmetryScore : calcAsymmetryScore(row);
-    const triggerScore =
-      row.triggerScore != null ? row.triggerScore : calcTriggerScore(row);
-
-    if (triggerScore >= 78 && asymmetryScore >= 68 && qualityScore >= 55) {
-      return {
-        label: "STRONG BUY",
-        reason: "Best setup: momentum, asymmetry, and quality are aligned.",
-      };
-    }
-
-    if (triggerScore >= 63 && asymmetryScore >= 58) {
-      return {
-        label: "BUY",
-        reason: "Attractive setup with positive confirmation.",
-      };
-    }
-
-    if (triggerScore >= 48 || asymmetryScore >= 60) {
-      return {
-        label: "WATCH",
-        reason: "Interesting, but needs better confirmation.",
-      };
-    }
-
-    return {
-      label: "AVOID",
-      reason: "Weak setup or not enough confirmation.",
-    };
-  }
-
-  const enrichedRows = useMemo(() => {
-    return rows.map((row) => {
-      const qualityScore =
-        row.qualityScore != null ? row.qualityScore : calcQualityScore(row);
-      const asymmetryScore =
-        row.asymmetryScore != null ? row.asymmetryScore : calcAsymmetryScore(row);
-      const triggerScore =
-        row.triggerScore != null ? row.triggerScore : calcTriggerScore(row);
-      const stage = row.stage || getStage(row);
-
-      const recommendation = cleanRecommendation({
-        ...row,
-        qualityScore,
-        asymmetryScore,
-        triggerScore,
-        stage,
-      });
-
-      return {
-        ...row,
-        qualityScore,
-        asymmetryScore,
-        triggerScore,
-        stage,
-        recommendation,
-        technicalSnapshot: row.technicalSnapshot || buildTechnicalSnapshot(row),
-        fundamentalSnapshot:
-          row.fundamentalSnapshot || buildFundamentalSnapshot(row),
-      };
-    });
-  }, [rows]);
-
   const filteredRows = useMemo(() => {
-    return enrichedRows.filter((row) => {
+    return rows.filter((row) => {
       if (under25Only && (row.price ?? 0) >= 25) return false;
       if (profitableOnly && (row.operatingMarginPct ?? 0) <= 0) return false;
       return true;
     });
-  }, [enrichedRows, under25Only, profitableOnly]);
+  }, [rows, under25Only, profitableOnly]);
 
   const sortedRows = useMemo(() => {
     const actionRank = {
@@ -178,20 +111,23 @@ export default function HomePage() {
       AVOID: 1,
     };
 
-    const list = [...filteredRows];
-
-    list.sort((a, b) => {
-      return (
-        (actionRank[b.recommendation?.label] || 0) -
-          (actionRank[a.recommendation?.label] || 0) ||
-        (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
-        (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
-        (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
-      );
-    });
-
-    return list.slice(0, 25);
+    return [...filteredRows]
+      .sort((a, b) => {
+        return (
+          (b.recommendation?.score ?? 0) - (a.recommendation?.score ?? 0) ||
+          (actionRank[b.recommendation?.label] || 0) -
+            (actionRank[a.recommendation?.label] || 0) ||
+          (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
+          (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
+          (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
+        );
+      })
+      .slice(0, 25);
   }, [filteredRows]);
+
+  const top10Rows = useMemo(() => {
+    return sortedRows.slice(0, 10);
+  }, [sortedRows]);
 
   useEffect(() => {
     if (!sortedRows.length) {
@@ -199,13 +135,8 @@ export default function HomePage() {
       return;
     }
 
-    const currentStillVisible = sortedRows.some(
-      (row) => row.symbol === selectedSymbol
-    );
-
-    if (!currentStillVisible) {
-      setSelectedSymbol(sortedRows[0].symbol);
-    }
+    const stillVisible = sortedRows.some((row) => row.symbol === selectedSymbol);
+    if (!stillVisible) setSelectedSymbol(sortedRows[0].symbol);
   }, [sortedRows, selectedSymbol]);
 
   const selectedRow =
@@ -271,49 +202,26 @@ export default function HomePage() {
     return `$${(value / 1_000_000_000).toFixed(1)}B`;
   }
 
+  function getEntryNote(row) {
+    return (
+      row?.recommendation?.entryNote ||
+      row?.entryNote ||
+      "Use price/volume confirmation."
+    );
+  }
+
   return (
-    <main
-      style={{
-        maxWidth: 1280,
-        margin: "32px auto",
-        padding: "0 16px",
-        fontFamily:
-          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      }}
-    >
-      <h1
-        style={{
-          fontSize: 36,
-          fontWeight: 700,
-          marginBottom: 10,
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
+    <main style={mainStyle}>
+      <h1 style={titleStyle}>
         <span>🧠</span>
         Asymmetry Screener
       </h1>
 
-      <div
-        style={{
-          color: "#6b7280",
-          fontSize: 14,
-          marginBottom: 20,
-        }}
-      >
+      <div style={subtitleStyle}>
         Broad-market snap quote screen for under-the-radar, high-upside setups.
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          marginBottom: 14,
-          alignItems: "center",
-          flexWrap: "wrap",
-        }}
-      >
+      <div style={toolbarStyle}>
         <input
           type="text"
           value={query}
@@ -322,14 +230,7 @@ export default function HomePage() {
             if (e.key === "Enter") handleLookup();
           }}
           placeholder="Lookup ticker..."
-          style={{
-            flex: "1 1 280px",
-            minWidth: 240,
-            padding: "12px 14px",
-            border: "1px solid #d1d5db",
-            borderRadius: 10,
-            fontSize: 16,
-          }}
+          style={inputStyle}
         />
 
         <button
@@ -349,15 +250,7 @@ export default function HomePage() {
         </button>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          marginBottom: 18,
-          alignItems: "center",
-        }}
-      >
+      <div style={filterRowStyle}>
         <button
           onClick={() => setUnder25Only((prev) => !prev)}
           style={filterButtonStyle(under25Only)}
@@ -372,31 +265,50 @@ export default function HomePage() {
           Profitable Only
         </button>
 
-        <div
-          style={{
-            fontSize: 13,
-            color: "#6b7280",
-            marginLeft: 4,
-          }}
-        >
-          Universe: {meta.totalUniverse} → Tradable:{" "}
-          {meta.afterInstitutionalFilter} → Ranked:{" "}
-          {meta.afterRankingThreshold} → Showing: {filteredRows.length}
+        <div style={metaStyle}>
+          Universe: {meta.totalUniverse} → Quotes: {meta.quoteSnapshots || 0} → Tradable:{" "}
+          {meta.afterInstitutionalFilter} → Ranked: {meta.afterRankingThreshold} → Showing:{" "}
+          {filteredRows.length}
         </div>
       </div>
 
-      {error ? (
-        <div style={errorStyle}>{error}</div>
+      {error ? <div style={errorStyle}>{error}</div> : null}
+
+      {top10Rows.length ? (
+        <div style={top10WrapStyle}>
+          <div style={top10TitleStyle}>🔥 Top 10 of the Day</div>
+
+          <div style={top10GridStyle}>
+            {top10Rows.map((row) => {
+              const pill = recommendationPillStyle(row.recommendation?.label);
+
+              return (
+                <button
+                  key={row.symbol}
+                  onClick={() => setSelectedSymbol(row.symbol)}
+                  style={top10CardStyle}
+                >
+                  <div style={top10SymbolStyle}>{row.symbol}</div>
+                  <div style={top10PriceStyle}>{formatPrice(row.price)}</div>
+
+                  <div style={{ marginTop: 8 }}>
+                    <span style={{ ...pill, ...top10PillStyle }}>
+                      {row.recommendation?.label}
+                    </span>
+                  </div>
+
+                  <div style={top10ScoreStyle}>
+                    Score: {row.recommendation?.score ?? "—"}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       ) : null}
 
       <div style={tableWrapStyle}>
-        <table
-          style={{
-            width: "100%",
-            minWidth: 1040,
-            borderCollapse: "collapse",
-          }}
-        >
+        <table style={tableStyle}>
           <thead style={{ background: "#f9fafb" }}>
             <tr>
               <th style={thStyle}>Symbol</th>
@@ -424,15 +336,8 @@ export default function HomePage() {
                   }}
                 >
                   <td style={tdStyleBold}>{row.symbol}</td>
-
-                  <td style={tdStyle}>
-                    <div style={{ fontWeight: 500 }}>
-                      {row.name || row.symbol}
-                    </div>
-                  </td>
-
+                  <td style={tdStyle}>{row.name || row.symbol}</td>
                   <td style={tdStyleRight}>{formatPrice(row.price)}</td>
-
                   <td
                     style={{
                       ...tdStyleRight,
@@ -446,34 +351,19 @@ export default function HomePage() {
                   >
                     {formatPct(row.dayChangePct)}
                   </td>
-
                   <td style={tdStyle}>
-                    <span
-                      style={{
-                        ...pill,
-                        display: "inline-block",
-                        minWidth: 120,
-                        textAlign: "center",
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        fontWeight: 800,
-                        fontSize: 12,
-                        letterSpacing: 0.2,
-                      }}
-                    >
+                    <span style={{ ...pill, ...pillBaseStyle }}>
                       {row.recommendation?.label}
                     </span>
                   </td>
-
                   <td style={tdStyle}>
                     <span style={{ color: "#4b5563", fontSize: 13 }}>
                       {row.recommendation?.reason}
                     </span>
                   </td>
-
                   <td style={tdStyle}>
                     <span style={{ color: "#6b7280", fontSize: 13 }}>
-                      {row.entryNote || "Use price/volume confirmation."}
+                      {getEntryNote(row)}
                     </span>
                   </td>
                 </tr>
@@ -482,14 +372,7 @@ export default function HomePage() {
 
             {!sortedRows.length && !isLoadingTop5 ? (
               <tr>
-                <td
-                  colSpan={7}
-                  style={{
-                    padding: "20px 16px",
-                    textAlign: "center",
-                    color: "#6b7280",
-                  }}
-                >
+                <td colSpan={7} style={emptyStyle}>
                   No stocks match your current filters.
                 </td>
               </tr>
@@ -501,78 +384,37 @@ export default function HomePage() {
       {selectedRow ? (
         <>
           <div style={{ marginBottom: 18 }}>
-            <div
-              style={{
-                fontSize: 24,
-                fontWeight: 700,
-                marginBottom: 6,
-              }}
-            >
+            <div style={selectedTitleStyle}>
               {selectedRow.symbol} — {selectedRow.name || selectedRow.symbol}
             </div>
 
-            <div
-              style={{
-                fontSize: 15,
-                color: "#374151",
-                marginBottom: 10,
-                fontWeight: 700,
-              }}
-            >
+            <div style={selectedSignalStyle}>
               Signal: {selectedRow.recommendation?.label}
             </div>
 
-            <div
-              style={{
-                fontSize: 14,
-                color: "#6b7280",
-                marginBottom: 8,
-              }}
-            >
+            <div style={selectedReasonStyle}>
               {selectedRow.recommendation?.reason}
             </div>
 
-            <div
-              style={{
-                fontSize: 14,
-                color: "#111827",
-                fontWeight: 600,
-              }}
-            >
-              {selectedRow.entryNote || "Use price/volume confirmation."}
-            </div>
+            <div style={selectedEntryStyle}>{getEntryNote(selectedRow)}</div>
           </div>
 
           <div style={gridStyle}>
             <div style={cardStyle}>
               <div style={cardTitleStyle}>Technical setup</div>
               <div style={metricGridStyle}>
-                <Metric
-                  label="Day change"
-                  value={formatSignedPct(selectedRow.dayChangePct)}
-                />
+                <Metric label="Day change" value={formatSignedPct(selectedRow.dayChangePct)} />
                 <Metric
                   label="Relative volume"
                   value={
                     selectedRow.technicalSnapshot?.relativeVolume != null
-                      ? `${selectedRow.technicalSnapshot.relativeVolume.toFixed(
-                          2
-                        )}x`
+                      ? `${selectedRow.technicalSnapshot.relativeVolume.toFixed(2)}x`
                       : "—"
                   }
                 />
-                <Metric
-                  label="Above 20DMA"
-                  value={yesNo(selectedRow.technicalSnapshot?.above20dma)}
-                />
-                <Metric
-                  label="Above 50DMA"
-                  value={yesNo(selectedRow.technicalSnapshot?.above50dma)}
-                />
-                <Metric
-                  label="Above 200DMA"
-                  value={yesNo(selectedRow.technicalSnapshot?.above200dma)}
-                />
+                <Metric label="Above 20DMA" value={yesNo(selectedRow.technicalSnapshot?.above20dma)} />
+                <Metric label="Above 50DMA" value={yesNo(selectedRow.technicalSnapshot?.above50dma)} />
+                <Metric label="Above 200DMA" value={yesNo(selectedRow.technicalSnapshot?.above200dma)} />
                 <Metric
                   label="RSI"
                   value={
@@ -606,8 +448,7 @@ export default function HomePage() {
                 <Metric
                   label="Market cap"
                   value={formatBillions(
-                    selectedRow.marketCap ??
-                      selectedRow.fundamentalSnapshot?.marketCap
+                    selectedRow.marketCap ?? selectedRow.fundamentalSnapshot?.marketCap
                   )}
                 />
                 <Metric
@@ -622,9 +463,7 @@ export default function HomePage() {
                   label="Revenue growth"
                   value={
                     selectedRow.fundamentalSnapshot?.revenueGrowthPct != null
-                      ? `${selectedRow.fundamentalSnapshot.revenueGrowthPct.toFixed(
-                          1
-                        )}%`
+                      ? `${selectedRow.fundamentalSnapshot.revenueGrowthPct.toFixed(1)}%`
                       : "—"
                   }
                 />
@@ -632,9 +471,7 @@ export default function HomePage() {
                   label="EPS growth"
                   value={
                     selectedRow.fundamentalSnapshot?.epsGrowthPct != null
-                      ? `${selectedRow.fundamentalSnapshot.epsGrowthPct.toFixed(
-                          1
-                        )}%`
+                      ? `${selectedRow.fundamentalSnapshot.epsGrowthPct.toFixed(1)}%`
                       : "—"
                   }
                 />
@@ -642,27 +479,7 @@ export default function HomePage() {
                   label="Operating margin"
                   value={
                     selectedRow.fundamentalSnapshot?.operatingMarginPct != null
-                      ? `${selectedRow.fundamentalSnapshot.operatingMarginPct.toFixed(
-                          1
-                        )}%`
-                      : "—"
-                  }
-                />
-                <Metric
-                  label="Gross margin"
-                  value={
-                    selectedRow.fundamentalSnapshot?.grossMargin != null
-                      ? `${selectedRow.fundamentalSnapshot.grossMargin.toFixed(
-                          1
-                        )}%`
-                      : "—"
-                  }
-                />
-                <Metric
-                  label="Debt / equity"
-                  value={
-                    selectedRow.fundamentalSnapshot?.debtToEquity != null
-                      ? selectedRow.fundamentalSnapshot.debtToEquity.toFixed(2)
+                      ? `${selectedRow.fundamentalSnapshot.operatingMarginPct.toFixed(1)}%`
                       : "—"
                   }
                 />
@@ -679,8 +496,8 @@ export default function HomePage() {
           </div>
 
           <div style={engineNoteStyle}>
-            Quant screens are still running behind the scenes: quality,
-            asymmetry, trigger, liquidity, valuation, momentum, and confirmation.
+            Quant screens are still running behind the scenes: quality, asymmetry,
+            trigger, liquidity, valuation, momentum, and confirmation.
           </div>
         </>
       ) : null}
@@ -690,23 +507,52 @@ export default function HomePage() {
 
 function Metric({ label, value }) {
   return (
-    <div
-      style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: 10,
-        padding: "10px 12px",
-        background: "#ffffff",
-      }}
-    >
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>
-        {value}
-      </div>
+    <div style={metricStyle}>
+      <div style={metricLabelStyle}>{label}</div>
+      <div style={metricValueStyle}>{value}</div>
     </div>
   );
 }
+
+const mainStyle = {
+  maxWidth: 1280,
+  margin: "32px auto",
+  padding: "0 16px",
+  fontFamily:
+    'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+};
+
+const titleStyle = {
+  fontSize: 36,
+  fontWeight: 700,
+  marginBottom: 10,
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+};
+
+const subtitleStyle = {
+  color: "#6b7280",
+  fontSize: 14,
+  marginBottom: 20,
+};
+
+const toolbarStyle = {
+  display: "flex",
+  gap: 12,
+  marginBottom: 14,
+  alignItems: "center",
+  flexWrap: "wrap",
+};
+
+const inputStyle = {
+  flex: "1 1 280px",
+  minWidth: 240,
+  padding: "12px 14px",
+  border: "1px solid #d1d5db",
+  borderRadius: 10,
+  fontSize: 16,
+};
 
 const primaryButtonStyle = {
   padding: "12px 16px",
@@ -728,6 +574,20 @@ const secondaryButtonStyle = {
   cursor: "pointer",
 };
 
+const filterRowStyle = {
+  display: "flex",
+  gap: 10,
+  flexWrap: "wrap",
+  marginBottom: 18,
+  alignItems: "center",
+};
+
+const metaStyle = {
+  fontSize: 13,
+  color: "#6b7280",
+  marginLeft: 4,
+};
+
 const errorStyle = {
   marginBottom: 16,
   padding: "12px 14px",
@@ -735,6 +595,64 @@ const errorStyle = {
   background: "#fef2f2",
   color: "#b91c1c",
   border: "1px solid #fecaca",
+};
+
+const top10WrapStyle = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 14,
+  padding: 16,
+  background: "#ffffff",
+  marginBottom: 20,
+};
+
+const top10TitleStyle = {
+  fontSize: 18,
+  fontWeight: 800,
+  marginBottom: 12,
+};
+
+const top10GridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
+  gap: 12,
+};
+
+const top10CardStyle = {
+  textAlign: "left",
+  border: "1px solid #e5e7eb",
+  borderRadius: 12,
+  padding: 12,
+  background: "#f9fafb",
+  cursor: "pointer",
+};
+
+const top10SymbolStyle = {
+  fontWeight: 800,
+  fontSize: 16,
+  color: "#111827",
+};
+
+const top10PriceStyle = {
+  fontSize: 14,
+  marginTop: 2,
+  color: "#111827",
+};
+
+const top10PillStyle = {
+  display: "inline-block",
+  minWidth: 90,
+  textAlign: "center",
+  padding: "4px 8px",
+  borderRadius: 999,
+  fontWeight: 800,
+  fontSize: 11,
+  letterSpacing: 0.2,
+};
+
+const top10ScoreStyle = {
+  fontSize: 12,
+  color: "#6b7280",
+  marginTop: 6,
 };
 
 const tableWrapStyle = {
@@ -745,37 +663,10 @@ const tableWrapStyle = {
   marginBottom: 24,
 };
 
-const gridStyle = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 16,
-  marginBottom: 16,
-};
-
-const cardStyle = {
-  border: "1px solid #e5e7eb",
-  borderRadius: 14,
-  padding: 16,
-  background: "#ffffff",
-};
-
-const cardTitleStyle = {
-  fontSize: 16,
-  fontWeight: 700,
-  marginBottom: 12,
-};
-
-const metricGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: 10,
-};
-
-const engineNoteStyle = {
-  fontSize: 13,
-  color: "#6b7280",
-  marginTop: 8,
-  marginBottom: 24,
+const tableStyle = {
+  width: "100%",
+  minWidth: 1040,
+  borderCollapse: "collapse",
 };
 
 const thStyle = {
@@ -805,4 +696,98 @@ const tdStyleRight = {
   ...tdStyle,
   textAlign: "right",
   fontVariantNumeric: "tabular-nums",
+};
+
+const pillBaseStyle = {
+  display: "inline-block",
+  minWidth: 120,
+  textAlign: "center",
+  padding: "6px 10px",
+  borderRadius: 999,
+  fontWeight: 800,
+  fontSize: 12,
+  letterSpacing: 0.2,
+};
+
+const emptyStyle = {
+  padding: "20px 16px",
+  textAlign: "center",
+  color: "#6b7280",
+};
+
+const selectedTitleStyle = {
+  fontSize: 24,
+  fontWeight: 700,
+  marginBottom: 6,
+};
+
+const selectedSignalStyle = {
+  fontSize: 15,
+  color: "#374151",
+  marginBottom: 10,
+  fontWeight: 700,
+};
+
+const selectedReasonStyle = {
+  fontSize: 14,
+  color: "#6b7280",
+  marginBottom: 8,
+};
+
+const selectedEntryStyle = {
+  fontSize: 14,
+  color: "#111827",
+  fontWeight: 600,
+};
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 16,
+  marginBottom: 16,
+};
+
+const cardStyle = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 14,
+  padding: 16,
+  background: "#ffffff",
+};
+
+const cardTitleStyle = {
+  fontSize: 16,
+  fontWeight: 700,
+  marginBottom: 12,
+};
+
+const metricGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gap: 10,
+};
+
+const metricStyle = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 10,
+  padding: "10px 12px",
+  background: "#ffffff",
+};
+
+const metricLabelStyle = {
+  fontSize: 12,
+  color: "#6b7280",
+  marginBottom: 4,
+};
+
+const metricValueStyle = {
+  fontSize: 16,
+  fontWeight: 700,
+  color: "#111827",
+};
+
+const engineNoteStyle = {
+  fontSize: 13,
+  color: "#6b7280",
+  marginTop: 8,
+  marginBottom: 24,
 };
