@@ -5,6 +5,7 @@ import { formatPct, formatPrice } from "../lib/formatters";
 
 export default function HomePage() {
   const [rows, setRows] = useState([]);
+  const [lookupSymbols, setLookupSymbols] = useState([]);
   const [selectedSymbol, setSelectedSymbol] = useState("");
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
@@ -32,6 +33,7 @@ export default function HomePage() {
         throw new Error(data.error || "Failed to load opportunities");
       }
 
+      setLookupSymbols([]);
       setRows(data.stocks || []);
       setMeta(
         data.meta || {
@@ -69,10 +71,14 @@ export default function HomePage() {
         throw new Error("Lookup returned no usable stock data.");
       }
 
-      // If user looks up MSTR or anything above $25, do not let the filter hide it.
       if ((data.price ?? 0) >= 25) {
         setUnder25Only(false);
       }
+
+      setLookupSymbols((prev) => {
+        const clean = prev.filter((x) => x !== data.symbol);
+        return [data.symbol, ...clean].slice(0, 5);
+      });
 
       setRows((prev) => {
         const exists = prev.some((row) => row.symbol === data.symbol);
@@ -97,11 +103,16 @@ export default function HomePage() {
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
-      if (under25Only && (row.price ?? 0) >= 25) return false;
-      if (profitableOnly && (row.operatingMarginPct ?? 0) <= 0) return false;
+      const isLookup = lookupSymbols.includes(row.symbol);
+
+      if (!isLookup && under25Only && (row.price ?? 0) >= 25) return false;
+      if (!isLookup && profitableOnly && (row.operatingMarginPct ?? 0) <= 0) {
+        return false;
+      }
+
       return true;
     });
-  }, [rows, under25Only, profitableOnly]);
+  }, [rows, lookupSymbols, under25Only, profitableOnly]);
 
   const sortedRows = useMemo(() => {
     const actionRank = {
@@ -113,7 +124,11 @@ export default function HomePage() {
 
     return [...filteredRows]
       .sort((a, b) => {
+        const aLookup = lookupSymbols.includes(a.symbol) ? 1 : 0;
+        const bLookup = lookupSymbols.includes(b.symbol) ? 1 : 0;
+
         return (
+          bLookup - aLookup ||
           (b.recommendation?.score ?? 0) - (a.recommendation?.score ?? 0) ||
           (actionRank[b.recommendation?.label] || 0) -
             (actionRank[a.recommendation?.label] || 0) ||
@@ -123,7 +138,7 @@ export default function HomePage() {
         );
       })
       .slice(0, 25);
-  }, [filteredRows]);
+  }, [filteredRows, lookupSymbols]);
 
   const top10Rows = useMemo(() => {
     return sortedRows.slice(0, 10);
