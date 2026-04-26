@@ -22,18 +22,6 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function average(values) {
-  const clean = values.filter((x) => Number.isFinite(Number(x))).map(Number);
-  if (!clean.length) return null;
-  return clean.reduce((a, b) => a + b, 0) / clean.length;
-}
-
-function max(values) {
-  const clean = values.filter((x) => Number.isFinite(Number(x))).map(Number);
-  if (!clean.length) return null;
-  return Math.max(...clean);
-}
-
 function prioritizeUniverse(fullUniverse) {
   const clean = fullUniverse
     .filter((x) => x.symbol)
@@ -109,7 +97,9 @@ async function fetchFmpQuotes(symbols) {
           pe: q.pe ?? q.peRatio ?? null,
         });
       }
-    } catch {}
+    } catch (err) {
+      console.error("FMP batch quote error:", err);
+    }
 
     await sleep(75);
   }
@@ -117,127 +107,23 @@ async function fetchFmpQuotes(symbols) {
   return Array.from(quoteMap.values());
 }
 
-async function fetchHistory(symbol) {
-  const apiKey = process.env.FMP_API_KEY;
-  const fmpSymbol = toFmpSymbol(symbol);
-
-  const url = `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${encodeURIComponent(
-    fmpSymbol
-  )}&apikey=${apiKey}`;
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return [];
-
-    const data = await response.json();
-    const raw = Array.isArray(data) ? data : data?.historical || [];
-
-    return raw
-      .map((x) => ({
-        date: x.date,
-        open: Number(x.open),
-        high: Number(x.high),
-        low: Number(x.low),
-        close: Number(x.close),
-        volume: Number(x.volume),
-      }))
-      .filter((x) => Number.isFinite(x.close))
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
-  } catch {
-    return [];
-  }
-}
-
-async function mapLimit(items, limit, mapper) {
-  const results = [];
-  let index = 0;
-
-  async function worker() {
-    while (index < items.length) {
-      const current = items[index++];
-      results.push(await mapper(current));
-    }
-  }
-
-  await Promise.all(Array.from({ length: limit }, worker));
-  return results;
-}
-
-function enrichWithHistory(row, history) {
-  if (!history.length) return row;
-
-  const price = Number(row.price);
-  const closes = history.map((x) => x.close);
-  const highs = history.map((x) => x.high);
-  const volumes = history.map((x) => x.volume);
-
-  const ma20 = average(closes.slice(0, 20));
-  const ma50 = average(closes.slice(0, 50));
-  const ma200 = average(closes.slice(0, 200));
-
-  const prev20High = max(highs.slice(1, 21));
-  const prev60High = max(highs.slice(1, 61));
-  const avgVol20 = average(volumes.slice(1, 21));
-
-  const pct5 = closes[5] ? ((price - closes[5]) / closes[5]) * 100 : null;
-  const pct20 = closes[20] ? ((price - closes[20]) / closes[20]) * 100 : null;
-  const pct60 = closes[60] ? ((price - closes[60]) / closes[60]) * 100 : null;
-
-  const relativeVolume =
-    row.volume && avgVol20 && avgVol20 > 0 ? row.volume / avgVol20 : null;
-
-  const breakout20 =
-    price && prev20High && relativeVolume != null
-      ? price >= prev20High && relativeVolume >= 1.05
-      : false;
-
-  const pullback50 =
-    price && ma50
-      ? price > ma50 && (price - ma50) / ma50 <= 0.06
-      : false;
-
-  return {
-    ...row,
-    ma20,
-    ma50,
-    ma200,
-    priceAvg50: ma50 ?? row.priceAvg50,
-    priceAvg200: ma200 ?? row.priceAvg200,
-    pct5,
-    pct20,
-    pct60,
-    relativeVolume,
-    breakout20,
-    breakout60:
-      price && prev60High && relativeVolume != null
-        ? price >= prev60High && relativeVolume >= 1.05
-        : false,
-    pullback50,
-    historicalBars: history.length,
-  };
-}
-
 function buildEntryNote(row) {
-  const price = row.price;
-  const ma50 = row.ma50 ?? row.priceAvg50;
   const signal = row.recommendation?.label;
+  const price = row.price;
+  const ma50 = row.priceAvg50;
 
   if (!price) return "No clean entry yet.";
 
   if (signal === "STRONG BUY") {
-    return row.breakout20
-      ? `BUY NOW near $${price.toFixed(2)}. Breakout is confirming.`
-      : `BUY NOW starter near $${price.toFixed(2)}. Add only if volume follows.`;
+    return `BUY NOW starter near $${price.toFixed(2)}. Add only if strength holds.`;
   }
 
   if (signal === "BUY") {
-    if (row.pullback50 && ma50) {
-      return `Starter acceptable near $${price.toFixed(
-        2
-      )}. Add if it holds above 50DMA near $${ma50.toFixed(2)}.`;
+    if (ma50 && ma50 > 0 && ma50 < price) {
+      return `Starter acceptable. Add on pullback near $${ma50.toFixed(2)} or volume confirmation.`;
     }
 
-    return "Starter acceptable only if chart confirms. Add on breakout or volume.";
+    return "Starter acceptable. Add only on confirmation.";
   }
 
   if (signal === "WATCH") {
@@ -245,23 +131,6 @@ function buildEntryNote(row) {
   }
 
   return "Avoid.";
-}
-
-function preliminaryRank(row) {
-  const price = Number(row.price) || 0;
-  const day = Number(row.dayChangePct) || 0;
-  const vol = Number(row.volume || row.avgVolume) || 0;
-  const marketCap = Number(row.marketCap) || 0;
-
-  let score = 0;
-
-  if (price >= 5 && price <= 25) score += 30;
-  if (day > 0) score += Math.min(day * 2, 20);
-  if (vol > 1000000) score += 15;
-  else if (vol > 500000) score += 10;
-  if (marketCap > 300000000) score += 10;
-
-  return score;
 }
 
 export default async function handler(req, res) {
@@ -288,10 +157,10 @@ export default async function handler(req, res) {
       minAvgVolume: 250000,
     });
 
-    const baseRows = tradable.map((row) => {
+    const scored = tradable.map((row) => {
       const quote = quoteMap.get(normalizeSymbol(row.symbol)) || {};
 
-      return {
+      const base = {
         ...row,
         ...quote,
         symbol: normalizeSymbol(row.symbol),
@@ -308,28 +177,13 @@ export default async function handler(req, res) {
         eps: quote.eps ?? null,
         pe: quote.pe ?? null,
       };
-    });
 
-    const historyCandidates = [...baseRows]
-      .sort((a, b) => preliminaryRank(b) - preliminaryRank(a))
-      .slice(0, 120);
-
-    const historyPairs = await mapLimit(historyCandidates, 6, async (row) => {
-      const history = await fetchHistory(row.symbol);
-      return [row.symbol, history];
-    });
-
-    const historyMap = new Map(historyPairs);
-
-    const scored = baseRows.map((row) => {
-      const enriched = enrichWithHistory(row, historyMap.get(row.symbol) || []);
-
-      const qualityScore = calcQualityScore(enriched);
-      const asymmetryScore = calcAsymmetryScore(enriched);
-      const triggerScore = calcTriggerScore(enriched);
+      const qualityScore = calcQualityScore(base);
+      const asymmetryScore = calcAsymmetryScore(base);
+      const triggerScore = calcTriggerScore(base);
 
       const scoredRow = {
-        ...enriched,
+        ...base,
         qualityScore,
         asymmetryScore,
         triggerScore,
@@ -371,7 +225,6 @@ export default async function handler(req, res) {
         totalUniverse: fullUniverse.length,
         prioritizedUniverse: prioritizedUniverse.length,
         quoteSnapshots: quotes.length,
-        historicalSnapshots: historyPairs.filter(([, h]) => h.length).length,
         afterInstitutionalFilter: tradable.length,
         afterRankingThreshold: scored.length,
       },
