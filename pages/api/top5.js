@@ -57,51 +57,43 @@ async function fetchFmpQuotes(symbols) {
 
   const quoteMap = new Map();
 
-  async function fetchChunk(chunk) {
+  for (const chunk of chunks) {
     const url = `https://financialmodelingprep.com/stable/batch-quote?symbols=${chunk.join(
       ","
     )}&apikey=${apiKey}`;
 
     try {
       const response = await fetch(url);
-      if (!response.ok) return [];
+      if (!response.ok) continue;
 
       const data = await response.json();
-      if (!Array.isArray(data)) return [];
+      if (!Array.isArray(data)) continue;
 
-      return data;
-    } catch {
-      return [];
-    }
-  }
+      for (const q of data) {
+        if (!q?.symbol || q.price == null) continue;
 
-  for (const chunk of chunks) {
-    const data = await fetchChunk(chunk);
-
-    for (const q of data) {
-      if (!q?.symbol || q.price == null) continue;
-
-      quoteMap.set(normalizeSymbol(q.symbol), {
-        symbol: normalizeSymbol(q.symbol),
-        name: q.name || q.symbol,
-        price: q.price ?? null,
-        dayChangePct:
-          q.changesPercentage ??
-          q.changePercentage ??
-          q.changePercent ??
-          null,
-        change: q.change ?? null,
-        volume: q.volume ?? null,
-        avgVolume: q.avgVolume ?? q.volume ?? null,
-        marketCap: q.marketCap ?? null,
-        priceAvg50: q.priceAvg50 ?? q.priceAvg50d ?? null,
-        priceAvg200: q.priceAvg200 ?? q.priceAvg200d ?? null,
-        yearHigh: q.yearHigh ?? q.yearHighPrice ?? null,
-        yearLow: q.yearLow ?? q.yearLowPrice ?? null,
-        eps: q.eps ?? null,
-        pe: q.pe ?? q.peRatio ?? null,
-      });
-    }
+        quoteMap.set(normalizeSymbol(q.symbol), {
+          symbol: normalizeSymbol(q.symbol),
+          name: q.name || q.symbol,
+          price: q.price ?? null,
+          dayChangePct:
+            q.changesPercentage ??
+            q.changePercentage ??
+            q.changePercent ??
+            null,
+          change: q.change ?? null,
+          volume: q.volume ?? null,
+          avgVolume: q.avgVolume ?? q.volume ?? null,
+          marketCap: q.marketCap ?? null,
+          priceAvg50: q.priceAvg50 ?? q.priceAvg50d ?? null,
+          priceAvg200: q.priceAvg200 ?? q.priceAvg200d ?? null,
+          yearHigh: q.yearHigh ?? q.yearHighPrice ?? null,
+          yearLow: q.yearLow ?? q.yearLowPrice ?? null,
+          eps: q.eps ?? null,
+          pe: q.pe ?? q.peRatio ?? null,
+        });
+      }
+    } catch {}
 
     await sleep(100);
   }
@@ -118,26 +110,26 @@ function buildEntryNote(row) {
   if (!price) return "No clean entry yet.";
 
   if (signal === "STRONG BUY") {
-    return `BUY NOW near $${price.toFixed(2)}. Momentum confirmed.`;
+    return `BUY NOW near $${price.toFixed(2)}. Add only if momentum holds.`;
   }
 
   if (signal === "BUY") {
     if (high && high > price) {
-      const breakout = price + (high - price) * 0.15;
-      return `WAIT: buy only after breakout above ~$${breakout.toFixed(
+      const breakout = price * 1.02;
+      return `Starter acceptable. Add on breakout above $${breakout.toFixed(
         2
       )} with volume.`;
     }
 
-    if (ma50 && ma50 > 0 && ma50 < price) {
-      return `WAIT: better entry on pullback near $${ma50.toFixed(2)}.`;
+    if (ma50 && ma50 < price) {
+      return `Starter acceptable. Add on pullback near $${ma50.toFixed(2)}.`;
     }
 
-    return "WAIT: buy only after price and volume confirm.";
+    return "Starter acceptable. Add only on confirmation.";
   }
 
   if (signal === "WATCH") {
-    return "Wait for stronger trend and volume.";
+    return "Wait for breakout or strong volume expansion.";
   }
 
   return "Avoid.";
@@ -163,8 +155,8 @@ export default async function handler(req, res) {
 
     const tradable = applyLiquidityFilter(prioritizedUniverse, quotes, {
       minPrice: 5,
-      minMarketCap: 300_000_000,
-      minAvgVolume: 250_000,
+      minMarketCap: 300000000,
+      minAvgVolume: 250000,
     });
 
     const scored = tradable.map((row) => {
