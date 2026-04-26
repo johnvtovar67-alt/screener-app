@@ -57,40 +57,51 @@ async function fetchFmpQuotes(symbols) {
 
   const quoteMap = new Map();
 
-  for (const chunk of chunks) {
+  async function fetchChunk(chunk) {
     const url = `https://financialmodelingprep.com/stable/batch-quote?symbols=${chunk.join(
       ","
     )}&apikey=${apiKey}`;
 
     try {
       const response = await fetch(url);
-      if (!response.ok) continue;
+      if (!response.ok) return [];
 
       const data = await response.json();
-      if (!Array.isArray(data)) continue;
+      if (!Array.isArray(data)) return [];
 
-      for (const q of data) {
-        quoteMap.set(normalizeSymbol(q.symbol), {
-          symbol: normalizeSymbol(q.symbol),
-          name: q.name || q.symbol,
-          price: q.price ?? null,
-          dayChangePct:
-            q.changesPercentage ??
-            q.changePercentage ??
-            q.changePercent ??
-            null,
-          volume: q.volume ?? null,
-          avgVolume: q.avgVolume ?? q.volume ?? null,
-          marketCap: q.marketCap ?? null,
-          priceAvg50: q.priceAvg50 ?? null,
-          priceAvg200: q.priceAvg200 ?? null,
-          yearHigh: q.yearHigh ?? null,
-          yearLow: q.yearLow ?? null,
-          eps: q.eps ?? null,
-          pe: q.pe ?? null,
-        });
-      }
-    } catch {}
+      return data;
+    } catch {
+      return [];
+    }
+  }
+
+  for (const chunk of chunks) {
+    const data = await fetchChunk(chunk);
+
+    for (const q of data) {
+      if (!q?.symbol || q.price == null) continue;
+
+      quoteMap.set(normalizeSymbol(q.symbol), {
+        symbol: normalizeSymbol(q.symbol),
+        name: q.name || q.symbol,
+        price: q.price ?? null,
+        dayChangePct:
+          q.changesPercentage ??
+          q.changePercentage ??
+          q.changePercent ??
+          null,
+        change: q.change ?? null,
+        volume: q.volume ?? null,
+        avgVolume: q.avgVolume ?? q.volume ?? null,
+        marketCap: q.marketCap ?? null,
+        priceAvg50: q.priceAvg50 ?? q.priceAvg50d ?? null,
+        priceAvg200: q.priceAvg200 ?? q.priceAvg200d ?? null,
+        yearHigh: q.yearHigh ?? q.yearHighPrice ?? null,
+        yearLow: q.yearLow ?? q.yearLowPrice ?? null,
+        eps: q.eps ?? null,
+        pe: q.pe ?? q.peRatio ?? null,
+      });
+    }
 
     await sleep(100);
   }
@@ -98,9 +109,6 @@ async function fetchFmpQuotes(symbols) {
   return Array.from(quoteMap.values());
 }
 
-//
-// 🔥 REAL ENTRY LOGIC (FIXED)
-//
 function buildEntryNote(row) {
   const price = row.price;
   const ma50 = row.priceAvg50;
@@ -109,25 +117,23 @@ function buildEntryNote(row) {
 
   if (!price) return "No clean entry yet.";
 
-  // STRONG BUY = ONLY WHEN ACTIONABLE
   if (signal === "STRONG BUY") {
-    return `BUY NOW near $${price.toFixed(2)} (momentum confirmed)`;
+    return `BUY NOW near $${price.toFixed(2)}. Momentum confirmed.`;
   }
 
-  // BUY = WAIT FOR TRIGGER
   if (signal === "BUY") {
-    // Prefer breakout near recent highs (real level)
     if (high && high > price) {
-      const breakout = (price + (high - price) * 0.15); // early breakout zone
-      return `Wait for breakout above ~$${breakout.toFixed(2)}`;
+      const breakout = price + (high - price) * 0.15;
+      return `WAIT: buy only after breakout above ~$${breakout.toFixed(
+        2
+      )} with volume.`;
     }
 
-    // fallback to 50DMA pullback
-    if (ma50 && ma50 > 0) {
-      return `Better entry on pullback near $${ma50.toFixed(2)}`;
+    if (ma50 && ma50 > 0 && ma50 < price) {
+      return `WAIT: better entry on pullback near $${ma50.toFixed(2)}.`;
     }
 
-    return `Wait for confirmation above $${price.toFixed(2)}`;
+    return "WAIT: buy only after price and volume confirm.";
   }
 
   if (signal === "WATCH") {
@@ -147,7 +153,9 @@ export default async function handler(req, res) {
     );
 
     if (!quotes.length) {
-      throw new Error("No quotes returned from FMP.");
+      throw new Error(
+        "No quotes returned from FMP. Confirm FMP_API_KEY and endpoint access."
+      );
     }
 
     const quoteMap = new Map();
@@ -165,29 +173,41 @@ export default async function handler(req, res) {
       const base = {
         ...row,
         ...quote,
+        symbol: normalizeSymbol(row.symbol),
+        name: quote.name || row.name || row.symbol,
+        price: quote.price ?? row.price,
+        dayChangePct: quote.dayChangePct ?? null,
+        volume: quote.volume ?? null,
+        avgVolume: quote.avgVolume ?? row.avgVolume,
+        marketCap: quote.marketCap ?? row.marketCap,
+        priceAvg50: quote.priceAvg50 ?? null,
+        priceAvg200: quote.priceAvg200 ?? null,
+        yearHigh: quote.yearHigh ?? null,
+        yearLow: quote.yearLow ?? null,
+        eps: quote.eps ?? null,
+        pe: quote.pe ?? null,
       };
 
       const qualityScore = calcQualityScore(base);
       const asymmetryScore = calcAsymmetryScore(base);
       const triggerScore = calcTriggerScore(base);
 
-      const recommendation = getRecommendation({
+      const scoredRow = {
         ...base,
         qualityScore,
         asymmetryScore,
         triggerScore,
-      });
+      };
+
+      const recommendation = getRecommendation(scoredRow);
 
       return {
-        ...base,
-        qualityScore,
-        asymmetryScore,
-        triggerScore,
-        stage: getStage(base),
+        ...scoredRow,
+        stage: getStage(scoredRow),
         recommendation,
-        entryNote: buildEntryNote({ ...base, recommendation }),
-        technicalSnapshot: buildTechnicalSnapshot(base),
-        fundamentalSnapshot: buildFundamentalSnapshot(base),
+        entryNote: buildEntryNote({ ...scoredRow, recommendation }),
+        technicalSnapshot: buildTechnicalSnapshot(scoredRow),
+        fundamentalSnapshot: buildFundamentalSnapshot(scoredRow),
       };
     });
 
@@ -202,12 +222,22 @@ export default async function handler(req, res) {
       return (
         (rank[b.recommendation?.label] || 0) -
           (rank[a.recommendation?.label] || 0) ||
-        b.triggerScore - a.triggerScore
+        (b.recommendation?.score ?? 0) - (a.recommendation?.score ?? 0) ||
+        (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
+        (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
+        (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
       );
     });
 
     res.status(200).json({
       stocks: scored.slice(0, 150),
+      meta: {
+        totalUniverse: fullUniverse.length,
+        prioritizedUniverse: prioritizedUniverse.length,
+        quoteSnapshots: quotes.length,
+        afterInstitutionalFilter: tradable.length,
+        afterRankingThreshold: scored.length,
+      },
     });
   } catch (err) {
     console.error("top5 error:", err);
