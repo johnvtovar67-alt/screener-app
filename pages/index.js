@@ -138,75 +138,42 @@ export default function HomePage() {
   }
 
   function getPortfolioDecision(label, gainLossPct) {
-    if (label === "STRONG BUY") {
-      if (gainLossPct >= 18) {
-        return {
-          action: "TRIM WINNER",
-          why: "Strong setup, but you have a good gain. Lock in some profit and let the rest run.",
-        };
-      }
-      return {
-        action: "ADD",
-        why: "Strong setup. Momentum and risk/reward are aligned.",
-      };
+  if (label === "STRONG BUY") {
+    if (gainLossPct >= 18) {
+      return { action: "TRIM", why: "Up strong — lock in some gains." };
     }
-
-    if (label === "BUY") {
-      if (gainLossPct >= 12) {
-        return {
-          action: "TRIM WINNER",
-          why: "Good setup, but gains are extended. Take some profit instead of chasing.",
-        };
-      }
-      return {
-        action: "ADD SMALL",
-        why: "Positive setup, but not full conviction. Add only in smaller size.",
-      };
-    }
-
-    if (label === "WATCH") {
-      if (gainLossPct <= -8) {
-        return {
-          action: "CUT LOSER",
-          why: "You are down and the signal is not strong enough. Protect capital.",
-        };
-      }
-      if (gainLossPct >= 10) {
-        return {
-          action: "TRIM WINNER",
-          why: "You are up, but the signal is only watch. Protect gains.",
-        };
-      }
-      return {
-        action: "HOLD",
-        why: "Setup is not bad, but it has not earned more capital yet.",
-      };
-    }
-
-    if (label === "AVOID") {
-      if (gainLossPct <= -5) {
-        return {
-          action: "CUT LOSER",
-          why: "Weak signal and losing position. Trader logic says free up capital.",
-        };
-      }
-      if (gainLossPct >= 8) {
-        return {
-          action: "TRIM WINNER",
-          why: "You are up, but the current signal is weak. Protect the profit.",
-        };
-      }
-      return {
-        action: "AVOID NEW",
-        why: "Weak current setup. Do not add fresh money here.",
-      };
-    }
-
-    return {
-      action: "HOLD",
-      why: "No clear trader signal.",
-    };
+    return { action: "ADD", why: "Strong setup — keep pressing." };
   }
+
+  if (label === "BUY") {
+    if (gainLossPct >= 12) {
+      return { action: "TRIM", why: "Good gain — don’t get greedy." };
+    }
+    return { action: "ADD", why: "Improving setup — add, but controlled." };
+  }
+
+  if (label === "WATCH") {
+    if (gainLossPct <= -8) {
+      return { action: "SELL", why: "Down and weak — cut it." };
+    }
+    if (gainLossPct >= 10) {
+      return { action: "TRIM", why: "Up nicely — protect gains." };
+    }
+    return { action: "HOLD", why: "No edge right now." };
+  }
+
+  if (label === "AVOID") {
+    if (gainLossPct <= -5) {
+      return { action: "SELL", why: "Weak + losing — free capital." };
+    }
+    if (gainLossPct >= 8) {
+      return { action: "TRIM", why: "Up, but weak signal — take some off." };
+    }
+    return { action: "HOLD", why: "Weak setup — don’t add." };
+  }
+
+  return { action: "HOLD", why: "No clear signal." };
+}
 
   async function analyzePortfolio() {
     setIsAnalyzingPortfolio(true);
