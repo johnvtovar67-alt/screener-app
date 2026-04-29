@@ -137,43 +137,50 @@ export default function HomePage() {
     setPortfolioRows((prev) => prev.filter((p) => p.symbol !== symbol));
   }
 
+  function getSetupLabel(label) {
+    if (label === "STRONG BUY") return "STRONG";
+    if (label === "BUY") return "GOOD";
+    if (label === "WATCH") return "NEUTRAL";
+    return "WEAK";
+  }
+
   function getPortfolioDecision(label, gainLossPct) {
-  if (label === "STRONG BUY") {
-    if (gainLossPct >= 18) {
-      return { action: "TRIM", why: "Up strong — lock in some gains." };
+    if (label === "STRONG BUY") {
+      if (gainLossPct >= 18) {
+        return { action: "TRIM", why: "Up strong — lock in some gains." };
+      }
+      return { action: "ADD", why: "Strong setup — keep pressing." };
     }
-    return { action: "ADD", why: "Strong setup — keep pressing." };
-  }
 
-  if (label === "BUY") {
-    if (gainLossPct >= 12) {
-      return { action: "TRIM", why: "Good gain — don’t get greedy." };
+    if (label === "BUY") {
+      if (gainLossPct >= 12) {
+        return { action: "TRIM", why: "Good gain — don’t get greedy." };
+      }
+      return { action: "ADD", why: "Improving setup — add, but controlled." };
     }
-    return { action: "ADD", why: "Improving setup — add, but controlled." };
-  }
 
-  if (label === "WATCH") {
-    if (gainLossPct <= -8) {
-      return { action: "SELL", why: "Down and weak — cut it." };
+    if (label === "WATCH") {
+      if (gainLossPct <= -8) {
+        return { action: "SELL", why: "Down and weak — cut it." };
+      }
+      if (gainLossPct >= 10) {
+        return { action: "TRIM", why: "Up nicely — protect gains." };
+      }
+      return { action: "HOLD", why: "No edge right now." };
     }
-    if (gainLossPct >= 10) {
-      return { action: "TRIM", why: "Up nicely — protect gains." };
-    }
-    return { action: "HOLD", why: "No edge right now." };
-  }
 
-  if (label === "AVOID") {
-    if (gainLossPct <= -5) {
-      return { action: "SELL", why: "Weak + losing — free capital." };
+    if (label === "AVOID") {
+      if (gainLossPct <= -5) {
+        return { action: "SELL", why: "Weak + losing — free capital." };
+      }
+      if (gainLossPct >= 8) {
+        return { action: "TRIM", why: "Up, but weak signal — take some off." };
+      }
+      return { action: "HOLD", why: "Weak setup — don’t add." };
     }
-    if (gainLossPct >= 8) {
-      return { action: "TRIM", why: "Up, but weak signal — take some off." };
-    }
-    return { action: "HOLD", why: "Weak setup — don’t add." };
-  }
 
-  return { action: "HOLD", why: "No clear signal." };
-}
+    return { action: "HOLD", why: "No clear signal." };
+  }
 
   async function analyzePortfolio() {
     setIsAnalyzingPortfolio(true);
@@ -212,6 +219,7 @@ export default function HomePage() {
           costBasis,
           gainLoss,
           gainLossPct,
+          setupLabel: getSetupLabel(data.recommendation?.label),
           action: decision.action,
           portfolioWhy: decision.why,
         });
@@ -309,6 +317,42 @@ export default function HomePage() {
       background: "#fee2e2",
       color: "#b91c1c",
       border: "1px solid #fecaca",
+    };
+  }
+
+  function actionPillStyle(action) {
+    if (action === "ADD") {
+      return {
+        background: "#dcfce7",
+        color: "#166534",
+        border: "1px solid #bbf7d0",
+      };
+    }
+    if (action === "HOLD") {
+      return {
+        background: "#fef3c7",
+        color: "#92400e",
+        border: "1px solid #fde68a",
+      };
+    }
+    if (action === "TRIM") {
+      return {
+        background: "#ffedd5",
+        color: "#9a3412",
+        border: "1px solid #fed7aa",
+      };
+    }
+    if (action === "SELL") {
+      return {
+        background: "#fee2e2",
+        color: "#b91c1c",
+        border: "1px solid #fecaca",
+      };
+    }
+    return {
+      background: "#f3f4f6",
+      color: "#374151",
+      border: "1px solid #e5e7eb",
     };
   }
 
@@ -470,16 +514,18 @@ export default function HomePage() {
                   <th style={thStyleRight}>Price</th>
                   <th style={thStyleRight}>Value</th>
                   <th style={thStyleRight}>Gain/Loss</th>
-                  <th style={thStyle}>Signal</th>
+                  <th style={thStyle}>Setup</th>
                   <th style={thStyle}>Action</th>
                   <th style={thStyle}>Why</th>
                 </tr>
               </thead>
               <tbody>
                 {portfolioRows.map((row) => {
-                  const pill = recommendationPillStyle(
+                  const setupPill = recommendationPillStyle(
                     row.recommendation?.label
                   );
+                  const actionPill = actionPillStyle(row.action);
+
                   return (
                     <tr key={row.symbol}>
                       <td style={tdStyleBold}>{row.symbol}</td>
@@ -496,11 +542,15 @@ export default function HomePage() {
                         {row.gainLossPct.toFixed(1)}%
                       </td>
                       <td style={tdStyle}>
-                        <span style={{ ...pill, ...pillBaseStyle }}>
-                          {row.recommendation?.label}
+                        <span style={{ ...setupPill, ...pillBaseStyle }}>
+                          {row.setupLabel}
                         </span>
                       </td>
-                      <td style={tdStyleBold}>{row.action}</td>
+                      <td style={tdStyle}>
+                        <span style={{ ...actionPill, ...actionPillBaseStyle }}>
+                          {row.action}
+                        </span>
+                      </td>
                       <td style={tdStyle}>
                         <span style={{ color: "#4b5563", fontSize: 13 }}>
                           {row.portfolioWhy || row.recommendation?.reason}
@@ -707,11 +757,19 @@ export default function HomePage() {
                 />
                 <Metric
                   label="EPS"
-                  value={selectedRow.fundamentalSnapshot?.eps ?? selectedRow.eps ?? "—"}
+                  value={
+                    selectedRow.fundamentalSnapshot?.eps ??
+                    selectedRow.eps ??
+                    "—"
+                  }
                 />
                 <Metric
                   label="P/E"
-                  value={selectedRow.fundamentalSnapshot?.pe ?? selectedRow.pe ?? "—"}
+                  value={
+                    selectedRow.fundamentalSnapshot?.pe ??
+                    selectedRow.pe ??
+                    "—"
+                  }
                 />
               </div>
             </div>
@@ -752,7 +810,9 @@ const titleStyle = {
   alignItems: "center",
   gap: 10,
 };
+
 const subtitleStyle = { color: "#6b7280", fontSize: 14, marginBottom: 20 };
+
 const toolbarStyle = {
   display: "flex",
   gap: 12,
@@ -760,6 +820,7 @@ const toolbarStyle = {
   alignItems: "center",
   flexWrap: "wrap",
 };
+
 const inputStyle = {
   flex: "1 1 280px",
   minWidth: 240,
@@ -768,6 +829,7 @@ const inputStyle = {
   borderRadius: 10,
   fontSize: 16,
 };
+
 const smallInputStyle = {
   width: 120,
   padding: "10px 12px",
@@ -775,6 +837,7 @@ const smallInputStyle = {
   borderRadius: 10,
   fontSize: 14,
 };
+
 const primaryButtonStyle = {
   padding: "12px 16px",
   borderRadius: 10,
@@ -784,6 +847,7 @@ const primaryButtonStyle = {
   fontSize: 14,
   cursor: "pointer",
 };
+
 const secondaryButtonStyle = {
   padding: "12px 16px",
   borderRadius: 10,
@@ -793,6 +857,7 @@ const secondaryButtonStyle = {
   fontSize: 14,
   cursor: "pointer",
 };
+
 const filterRowStyle = {
   display: "flex",
   gap: 10,
@@ -800,7 +865,9 @@ const filterRowStyle = {
   marginBottom: 18,
   alignItems: "center",
 };
+
 const metaStyle = { fontSize: 13, color: "#6b7280", marginLeft: 4 };
+
 const errorStyle = {
   marginBottom: 16,
   padding: "12px 14px",
@@ -817,19 +884,27 @@ const portfolioWrapStyle = {
   background: "#ffffff",
   marginBottom: 20,
 };
-const portfolioHeaderStyle = { fontSize: 18, fontWeight: 800, marginBottom: 12 };
+
+const portfolioHeaderStyle = {
+  fontSize: 18,
+  fontWeight: 800,
+  marginBottom: 12,
+};
+
 const portfolioInputRowStyle = {
   display: "flex",
   gap: 10,
   flexWrap: "wrap",
   marginBottom: 12,
 };
+
 const miniPositionStyle = {
   display: "flex",
   gap: 8,
   flexWrap: "wrap",
   marginBottom: 12,
 };
+
 const positionChipStyle = {
   display: "inline-flex",
   alignItems: "center",
@@ -839,6 +914,7 @@ const positionChipStyle = {
   border: "1px solid #d1d5db",
   fontSize: 13,
 };
+
 const chipButtonStyle = {
   border: "none",
   background: "transparent",
@@ -854,12 +930,19 @@ const top10WrapStyle = {
   background: "#ffffff",
   marginBottom: 20,
 };
-const top10TitleStyle = { fontSize: 18, fontWeight: 800, marginBottom: 12 };
+
+const top10TitleStyle = {
+  fontSize: 18,
+  fontWeight: 800,
+  marginBottom: 12,
+};
+
 const top10GridStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
   gap: 12,
 };
+
 const top10CardStyle = {
   textAlign: "left",
   border: "1px solid #e5e7eb",
@@ -868,8 +951,10 @@ const top10CardStyle = {
   background: "#f9fafb",
   cursor: "pointer",
 };
+
 const top10SymbolStyle = { fontWeight: 800, fontSize: 16, color: "#111827" };
 const top10PriceStyle = { fontSize: 14, marginTop: 2, color: "#111827" };
+
 const top10PillStyle = {
   display: "inline-block",
   minWidth: 90,
@@ -880,7 +965,12 @@ const top10PillStyle = {
   fontSize: 11,
   letterSpacing: 0.2,
 };
-const top10ScoreStyle = { fontSize: 12, color: "#6b7280", marginTop: 6 };
+
+const top10ScoreStyle = {
+  fontSize: 12,
+  color: "#6b7280",
+  marginTop: 6,
+};
 
 const tableWrapStyle = {
   border: "1px solid #e5e7eb",
@@ -889,7 +979,13 @@ const tableWrapStyle = {
   background: "#ffffff",
   marginBottom: 24,
 };
-const tableStyle = { width: "100%", minWidth: 1040, borderCollapse: "collapse" };
+
+const tableStyle = {
+  width: "100%",
+  minWidth: 1040,
+  borderCollapse: "collapse",
+};
+
 const thStyle = {
   textAlign: "left",
   padding: "14px 16px",
@@ -897,14 +993,22 @@ const thStyle = {
   color: "#6b7280",
   borderBottom: "1px solid #e5e7eb",
 };
+
 const thStyleRight = { ...thStyle, textAlign: "right" };
-const tdStyle = { padding: "14px 16px", borderBottom: "1px solid #f3f4f6" };
+
+const tdStyle = {
+  padding: "14px 16px",
+  borderBottom: "1px solid #f3f4f6",
+};
+
 const tdStyleBold = { ...tdStyle, fontWeight: 700 };
+
 const tdStyleRight = {
   ...tdStyle,
   textAlign: "right",
   fontVariantNumeric: "tabular-nums",
 };
+
 const pillBaseStyle = {
   display: "inline-block",
   minWidth: 120,
@@ -915,42 +1019,94 @@ const pillBaseStyle = {
   fontSize: 12,
   letterSpacing: 0.2,
 };
-const emptyStyle = { padding: "20px 16px", textAlign: "center", color: "#6b7280" };
-const selectedTitleStyle = { fontSize: 24, fontWeight: 700, marginBottom: 6 };
+
+const actionPillBaseStyle = {
+  display: "inline-block",
+  minWidth: 82,
+  textAlign: "center",
+  padding: "6px 10px",
+  borderRadius: 999,
+  fontWeight: 900,
+  fontSize: 12,
+  letterSpacing: 0.2,
+};
+
+const emptyStyle = {
+  padding: "20px 16px",
+  textAlign: "center",
+  color: "#6b7280",
+};
+
+const selectedTitleStyle = {
+  fontSize: 24,
+  fontWeight: 700,
+  marginBottom: 6,
+};
+
 const selectedSignalStyle = {
   fontSize: 15,
   color: "#374151",
   marginBottom: 10,
   fontWeight: 700,
 };
-const selectedReasonStyle = { fontSize: 14, color: "#6b7280", marginBottom: 8 };
-const selectedEntryStyle = { fontSize: 14, color: "#111827", fontWeight: 600 };
+
+const selectedReasonStyle = {
+  fontSize: 14,
+  color: "#6b7280",
+  marginBottom: 8,
+};
+
+const selectedEntryStyle = {
+  fontSize: 14,
+  color: "#111827",
+  fontWeight: 600,
+};
+
 const gridStyle = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
   gap: 16,
   marginBottom: 16,
 };
+
 const cardStyle = {
   border: "1px solid #e5e7eb",
   borderRadius: 14,
   padding: 16,
   background: "#ffffff",
 };
-const cardTitleStyle = { fontSize: 16, fontWeight: 700, marginBottom: 12 };
+
+const cardTitleStyle = {
+  fontSize: 16,
+  fontWeight: 700,
+  marginBottom: 12,
+};
+
 const metricGridStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   gap: 10,
 };
+
 const metricStyle = {
   border: "1px solid #e5e7eb",
   borderRadius: 10,
   padding: "10px 12px",
   background: "#ffffff",
 };
-const metricLabelStyle = { fontSize: 12, color: "#6b7280", marginBottom: 4 };
-const metricValueStyle = { fontSize: 16, fontWeight: 700, color: "#111827" };
+
+const metricLabelStyle = {
+  fontSize: 12,
+  color: "#6b7280",
+  marginBottom: 4,
+};
+
+const metricValueStyle = {
+  fontSize: 16,
+  fontWeight: 700,
+  color: "#111827",
+};
+
 const engineNoteStyle = {
   fontSize: 13,
   color: "#6b7280",
