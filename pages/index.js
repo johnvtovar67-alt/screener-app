@@ -209,7 +209,7 @@ export default function Home() {
     const avgCost = Number(newCost);
 
     if (!cleanSymbol || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(avgCost) || avgCost < 0) {
-      alert("Please enter symbol, shares, and average cost.");
+      alert("Please enter symbol, shares, and cost per share.");
       return;
     }
 
@@ -486,24 +486,21 @@ export default function Home() {
         <div className="portfolioForm">
           <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
           <input value={newShares} onChange={(e) => setNewShares(e.target.value)} placeholder="Shares" type="number" step="any" />
-          <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Avg cost" type="number" step="any" />
+          <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Cost/share" type="number" step="any" />
           <button onClick={addPosition} className="button">
             Add / Update
           </button>
         </div>
 
         {portfolio.length > 0 && (
-          <div className="miniList">
+          <div className="positionChips">
             {portfolio.map((p) => (
-              <div className="miniPosition" key={p.symbol}>
-                <div>
-                  <strong>{p.symbol}</strong>
-                  <span>
-                    {number(p.shares, 2)} shares @ {money(p.avgCost)}
-                  </span>
-                </div>
-                <button onClick={() => removePosition(p.symbol)} className="linkButton">
-                  Remove
+              <div className="positionChip" key={p.symbol}>
+                <span>
+                  <strong>{p.symbol}</strong> · {number(p.shares, 2)} @ {money(p.avgCost)}
+                </span>
+                <button onClick={() => removePosition(p.symbol)} className="chipRemove" aria-label={`Remove ${p.symbol}`}>
+                  ×
                 </button>
               </div>
             ))}
@@ -538,7 +535,7 @@ export default function Home() {
                 <tr>
                   <th>Symbol</th>
                   <th>Shares</th>
-                  <th>Avg Cost</th>
+                  <th>Cost/share</th>
                   <th>Price</th>
                   <th>Value</th>
                   <th>Cost Basis</th>
@@ -888,37 +885,50 @@ export default function Home() {
           font-weight: 700;
         }
 
-        .miniList {
+        .positionChips {
           display: flex;
-          flex-direction: column;
+          flex-wrap: wrap;
           gap: 8px;
           margin-top: 14px;
         }
 
-        .miniPosition {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
+        .positionChip {
+          display: inline-flex;
           align-items: center;
+          gap: 8px;
           border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 10px 12px;
+          border-radius: 999px;
+          padding: 7px 9px 7px 12px;
           background: #f8fafc;
-        }
-
-        .miniPosition span {
-          display: block;
-          color: #64748b;
           font-size: 13px;
-          margin-top: 2px;
+          color: #334155;
+          white-space: nowrap;
         }
 
-        .linkButton {
-          background: none;
-          border: none;
-          color: #b91c1c;
+        .positionChip strong {
+          color: #0f172a;
+          letter-spacing: 0.03em;
+        }
+
+        .chipRemove {
+          width: 20px;
+          height: 20px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 0;
+          border-radius: 999px;
+          background: #e2e8f0;
+          color: #991b1b;
+          font-size: 15px;
           font-weight: 900;
+          line-height: 1;
           cursor: pointer;
+          padding: 0;
+        }
+
+        .chipRemove:hover {
+          background: #fecaca;
         }
 
         .totals {
