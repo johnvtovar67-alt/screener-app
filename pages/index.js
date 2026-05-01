@@ -110,7 +110,7 @@ function tradeActionForStock(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Buy Now" || action === "Hold / Add") return "green";
-  if (action.includes("Buy Setup") || action === "Hold") return "yellow";
+  if (action === "Buy Setup" || action === "Hold") return "yellow";
   if (action === "Trim") return "orange";
   return "red";
 }
@@ -312,7 +312,7 @@ export default function Home() {
       <section className="card">
         <div className="sectionTitle">
           <h2>🔥 Top 10 Ideas</h2>
-          <p>Cards are the quick scan. Table gives the reason and entry note.</p>
+          <p>Cards are the quick scan. Table adds the reason and entry note.</p>
         </div>
 
         {loadingTop && <p className="muted">Loading top ideas...</p>}
@@ -377,111 +377,109 @@ export default function Home() {
         )}
       </section>
 
-      <section className="lowerGrid">
-        <section className="card">
-          <h2>Snap Quote + Score</h2>
-          <p className="muted">Uses the same non-owned logic: Buy Now, Buy Setup, Avoid.</p>
+      <section className="card">
+        <h2>Snap Quote + Score</h2>
+        <p className="muted">Uses the same non-owned logic: Buy Now, Buy Setup, Avoid.</p>
 
-          <form onSubmit={analyzeSymbol} className="formRow">
-            <input
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              placeholder="Lookup ticker..."
-            />
-            <button className="button" disabled={snapLoading}>
-              {snapLoading ? "Analyzing..." : "Snap Quote + Score"}
-            </button>
-          </form>
-
-          {snapError && <p className="error">{snapError}</p>}
-
-          {snapStock && (
-            <div className="resultBox">
-              <div className="resultTop">
-                <div>
-                  <h3>{getSymbol(snapStock)}</h3>
-                  <p>{getName(snapStock)}</p>
-                </div>
-
-                <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
-                  {tradeActionForStock(snapStock, false)}
-                </span>
-              </div>
-
-              <div className="metricGrid">
-                <div>
-                  <span>Price</span>
-                  <strong>{money(getPrice(snapStock))}</strong>
-                </div>
-                <div>
-                  <span>Change</span>
-                  <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
-                    {percent(getChangePct(snapStock))}
-                  </strong>
-                </div>
-                <div>
-                  <span>Score</span>
-                  <strong>{getScore(snapStock)}</strong>
-                </div>
-                <div>
-                  <span>Momentum</span>
-                  <strong>{getMomentumText(snapStock)}</strong>
-                </div>
-                <div>
-                  <span>Trade Action</span>
-                  <strong>{tradeActionForStock(snapStock, false)}</strong>
-                </div>
-              </div>
-
-              <div className="snapNotes">
-                <div>
-                  <span>Why</span>
-                  <p>{getWhy(snapStock)}</p>
-                </div>
-                <div>
-                  <span>Entry Note</span>
-                  <p>{getEntryNote(snapStock)}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section className="card">
-          <h2>Portfolio Screener</h2>
-          <p className="muted">Uses ownership logic: Hold / Add, Hold, Trim, Exit / Avoid.</p>
-
-          <div className="portfolioForm">
-            <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
-            <input value={newShares} onChange={(e) => setNewShares(e.target.value)} placeholder="Shares" type="number" step="any" />
-            <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Avg cost" type="number" step="any" />
-            <button onClick={addPosition} className="button">
-              Add / Update
-            </button>
-          </div>
-
-          {portfolio.length > 0 && (
-            <div className="miniList">
-              {portfolio.map((p) => (
-                <div className="miniPosition" key={p.symbol}>
-                  <div>
-                    <strong>{p.symbol}</strong>
-                    <span>
-                      {number(p.shares, 2)} shares @ {money(p.avgCost)}
-                    </span>
-                  </div>
-                  <button onClick={() => removePosition(p.symbol)} className="linkButton">
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <button onClick={analyzePortfolio} disabled={!portfolio.length || portfolioLoading} className="button full">
-            {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
+        <form onSubmit={analyzeSymbol} className="formRow">
+          <input
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+            placeholder="Lookup ticker..."
+          />
+          <button className="button" disabled={snapLoading}>
+            {snapLoading ? "Analyzing..." : "Snap Quote + Score"}
           </button>
-        </section>
+        </form>
+
+        {snapError && <p className="error">{snapError}</p>}
+
+        {snapStock && (
+          <div className="resultBox">
+            <div className="resultTop">
+              <div>
+                <h3>{getSymbol(snapStock)}</h3>
+                <p>{getName(snapStock)}</p>
+              </div>
+
+              <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
+                {tradeActionForStock(snapStock, false)}
+              </span>
+            </div>
+
+            <div className="metricGrid">
+              <div>
+                <span>Price</span>
+                <strong>{money(getPrice(snapStock))}</strong>
+              </div>
+              <div>
+                <span>Change</span>
+                <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
+                  {percent(getChangePct(snapStock))}
+                </strong>
+              </div>
+              <div>
+                <span>Score</span>
+                <strong>{getScore(snapStock)}</strong>
+              </div>
+              <div>
+                <span>Momentum</span>
+                <strong>{getMomentumText(snapStock)}</strong>
+              </div>
+              <div>
+                <span>Trade Action</span>
+                <strong>{tradeActionForStock(snapStock, false)}</strong>
+              </div>
+            </div>
+
+            <div className="snapNotes">
+              <div>
+                <span>Why</span>
+                <p>{getWhy(snapStock)}</p>
+              </div>
+              <div>
+                <span>Entry Note</span>
+                <p>{getEntryNote(snapStock)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Portfolio Screener</h2>
+        <p className="muted">Uses ownership logic: Hold / Add, Hold, Trim, Exit / Avoid.</p>
+
+        <div className="portfolioForm">
+          <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
+          <input value={newShares} onChange={(e) => setNewShares(e.target.value)} placeholder="Shares" type="number" step="any" />
+          <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Avg cost" type="number" step="any" />
+          <button onClick={addPosition} className="button">
+            Add / Update
+          </button>
+        </div>
+
+        {portfolio.length > 0 && (
+          <div className="miniList">
+            {portfolio.map((p) => (
+              <div className="miniPosition" key={p.symbol}>
+                <div>
+                  <strong>{p.symbol}</strong>
+                  <span>
+                    {number(p.shares, 2)} shares @ {money(p.avgCost)}
+                  </span>
+                </div>
+                <button onClick={() => removePosition(p.symbol)} className="linkButton">
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button onClick={analyzePortfolio} disabled={!portfolio.length || portfolioLoading} className="button full">
+          {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
+        </button>
       </section>
 
       {portfolioResults.length > 0 && (
@@ -643,13 +641,6 @@ export default function Home() {
           margin-top: 5px;
         }
 
-        .lowerGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-          align-items: start;
-        }
-
         .tableWrap {
           overflow-x: auto;
         }
@@ -682,7 +673,7 @@ export default function Home() {
         }
 
         .textCell {
-          max-width: 320px;
+          max-width: 360px;
           white-space: normal;
           line-height: 1.35;
           color: #334155;
@@ -912,10 +903,6 @@ export default function Home() {
         }
 
         @media (max-width: 1100px) {
-          .lowerGrid {
-            grid-template-columns: 1fr;
-          }
-
           .portfolioForm {
             grid-template-columns: 1fr 1fr;
           }
