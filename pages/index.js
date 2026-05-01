@@ -104,13 +104,13 @@ function tradeActionForStock(stock, owned = false) {
   }
 
   if (score >= 78 && momentum === "Strong") return "Buy Now";
-  if (score >= 58) return "Buy Setup";
+  if (score >= 58) return "Watch for Entry";
   return "Avoid";
 }
 
 function actionClass(action) {
   if (action === "Buy Now" || action === "Hold / Add") return "green";
-  if (action === "Buy Setup" || action === "Hold") return "yellow";
+  if (action === "Watch for Entry" || action === "Hold") return "yellow";
   if (action === "Trim") return "orange";
   return "red";
 }
@@ -379,7 +379,7 @@ export default function Home() {
 
       <section className="card">
         <h2>Snap Quote + Score</h2>
-        <p className="muted">Uses the same non-owned logic: Buy Now, Buy Setup, Avoid.</p>
+        <p className="muted">Uses the same non-owned logic: Buy Now, Watch for Entry, Avoid.</p>
 
         <form onSubmit={analyzeSymbol} className="formRow">
           <input
