@@ -7,13 +7,12 @@ const READINESS_ORDER = {
 };
 
 const ACTION_COLORS = {
-  "Add / Buy": "#16a34a",
-  "Hold": "#2563eb",
+  "Consider Buy": "#16a34a",
+  Watch: "#d97706",
+  Hold: "#2563eb",
   "Hold / Add": "#16a34a",
-  "Trim": "#d97706",
+  Trim: "#d97706",
   "Exit / Avoid": "#dc2626",
-  "Watch": "#d97706",
-  "Setup Only": "#64748b",
   "Not analyzed": "#64748b",
 };
 
@@ -96,7 +95,7 @@ function getComposite(row) {
   );
 }
 
-function getHeat(row) {
+function getMomentum(row) {
   if (row?.heatScore !== undefined && row?.heatScore !== null) {
     return row.heatScore;
   }
@@ -125,9 +124,9 @@ function getHeat(row) {
   return 0;
 }
 
-function getHeatForDecision(row) {
-  const heat = safeNumber(getHeat(row), 0);
-  return heat <= 5 ? heat * 20 : heat;
+function getMomentumForDecision(row) {
+  const momentum = safeNumber(getMomentum(row), 0);
+  return momentum <= 5 ? momentum * 20 : momentum;
 }
 
 function getReadiness(row) {
@@ -142,28 +141,18 @@ function getReadiness(row) {
   );
 }
 
-function getRecommendation(row) {
-  return titleCaseLabel(
-    row?.rating ||
-      row?.recommendation?.rating ||
-      row?.recommendation?.label ||
-      row?.action ||
-      "Watch"
-  );
-}
-
-function getPortfolioAction(row, owned = false) {
+function getAction(row, owned = false) {
   const readiness = getReadiness(row);
   const composite = getComposite(row);
-  const heat = getHeatForDecision(row);
+  const momentum = getMomentumForDecision(row);
 
   if (!owned) {
-    if (readiness === "Trade Ready" && composite >= 70) return "Add / Buy";
+    if (readiness === "Trade Ready" && composite >= 70) return "Consider Buy";
     if (readiness === "Watch Closely") return "Watch";
-    return "Setup Only";
+    return "Watch";
   }
 
-  if (composite < 45 || heat < 35) return "Exit / Avoid";
+  if (composite < 45 || momentum < 35) return "Exit / Avoid";
   if (composite < 58) return "Trim";
   if (readiness === "Trade Ready" && composite >= 70) return "Hold / Add";
   return "Hold";
@@ -175,14 +164,18 @@ function readinessBadgeColor(readiness) {
   return "#64748b";
 }
 
+function actionColor(action) {
+  return ACTION_COLORS[action] || "#334155";
+}
+
 function sortIdeas(a, b) {
   const ar = READINESS_ORDER[getReadiness(a)] || 99;
   const br = READINESS_ORDER[getReadiness(b)] || 99;
 
   if (ar !== br) return ar - br;
 
-  const heatDiff = getHeatForDecision(b) - getHeatForDecision(a);
-  if (heatDiff !== 0) return heatDiff;
+  const momentumDiff = getMomentumForDecision(b) - getMomentumForDecision(a);
+  if (momentumDiff !== 0) return momentumDiff;
 
   return getComposite(b) - getComposite(a);
 }
@@ -403,7 +396,7 @@ export default function Home() {
         <div>
           <h1 style={styles.title}>Stock Screener</h1>
           <p style={styles.subtitle}>
-            Top ideas ranked by trade readiness, heat score, and overall setup
+            Top ideas ranked by trade readiness, momentum, and overall setup
             quality.
           </p>
         </div>
@@ -434,9 +427,9 @@ export default function Home() {
             {top10.map((row, index) => {
               const symbol = getSymbol(row);
               const readiness = getReadiness(row);
-              const heat = getHeat(row);
+              const momentum = getMomentum(row);
               const composite = getComposite(row);
-              const action = getPortfolioAction(row, false);
+              const action = getAction(row, false);
 
               return (
                 <div key={`${symbol}-${index}`} style={styles.ideaCard}>
@@ -467,8 +460,8 @@ export default function Home() {
                       <strong>{percent(getChange(row))}</strong>
                     </div>
                     <div>
-                      <span style={styles.metricLabel}>Heat</span>
-                      <strong>{heat}</strong>
+                      <span style={styles.metricLabel}>Momentum</span>
+                      <strong>{momentum}</strong>
                     </div>
                     <div>
                       <span style={styles.metricLabel}>Score</span>
@@ -477,10 +470,15 @@ export default function Home() {
                   </div>
 
                   <div style={styles.bottomRow}>
-                    <span style={styles.recommendation}>
-                      {getRecommendation(row)}
+                    <span style={styles.actionLabel}>Action</span>
+                    <span
+                      style={{
+                        ...styles.action,
+                        color: actionColor(action),
+                      }}
+                    >
+                      {action}
                     </span>
-                    <span style={styles.action}>{action}</span>
                   </div>
                 </div>
               );
@@ -540,13 +538,25 @@ export default function Home() {
                     <strong>{percent(getChange(snapResult))}</strong>
                   </div>
                   <div>
-                    <span style={styles.metricLabel}>Heat</span>
-                    <strong>{getHeat(snapResult)}</strong>
+                    <span style={styles.metricLabel}>Momentum</span>
+                    <strong>{getMomentum(snapResult)}</strong>
                   </div>
                   <div>
                     <span style={styles.metricLabel}>Score</span>
                     <strong>{getComposite(snapResult)}</strong>
                   </div>
+                </div>
+
+                <div style={styles.bottomRow}>
+                  <span style={styles.actionLabel}>Action</span>
+                  <span
+                    style={{
+                      ...styles.action,
+                      color: actionColor(getAction(snapResult, false)),
+                    }}
+                  >
+                    {getAction(snapResult, false)}
+                  </span>
                 </div>
               </>
             )}
@@ -611,7 +621,7 @@ export default function Home() {
                   <th style={styles.th}>Gain/Loss</th>
                   <th style={styles.th}>Action</th>
                   <th style={styles.th}>Readiness</th>
-                  <th style={styles.th}>Heat</th>
+                  <th style={styles.th}>Momentum</th>
                   <th style={styles.th}>Score</th>
                   <th style={styles.th}></th>
                 </tr>
@@ -636,7 +646,7 @@ export default function Home() {
                       : null;
 
                   const action = analysis
-                    ? getPortfolioAction(analysis, true)
+                    ? getAction(analysis, true)
                     : "Not analyzed";
 
                   return (
@@ -661,7 +671,7 @@ export default function Home() {
                         <span
                           style={{
                             ...styles.portfolioAction,
-                            color: ACTION_COLORS[action] || "#334155",
+                            color: actionColor(action),
                           }}
                         >
                           {action}
@@ -671,7 +681,7 @@ export default function Home() {
                         {analysis ? getReadiness(analysis) : "—"}
                       </td>
                       <td style={styles.td}>
-                        {analysis ? getHeat(analysis) : "—"}
+                        {analysis ? getMomentum(analysis) : "—"}
                       </td>
                       <td style={styles.td}>
                         {analysis ? getComposite(analysis) : "—"}
@@ -812,13 +822,12 @@ const styles = {
     paddingTop: 14,
     borderTop: "1px solid #e2e8f0",
   },
-  recommendation: {
+  actionLabel: {
     fontWeight: 800,
-    color: "#0f172a",
+    color: "#64748b",
   },
   action: {
-    fontWeight: 800,
-    color: "#16a34a",
+    fontWeight: 900,
   },
   primaryButton: {
     border: "none",
