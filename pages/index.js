@@ -323,7 +323,7 @@ export default function Home() {
         <Card className="wide">
           <div className="sectionHeader">
             <div>
-              <h2>Top Ideas</h2>
+              <h2>Top 10 Ideas</h2>
               <p>For stocks you do not currently own.</p>
             </div>
           </div>
