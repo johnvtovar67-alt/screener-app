@@ -156,7 +156,7 @@ export default function Home() {
       }
 
       const list = Array.isArray(data) ? data : data?.stocks || data?.results || data?.data || [];
-      setStocks(list);
+      setStocks(list.slice(0, 10));
     } catch (err) {
       setTopError(err.message || "Failed to load top ideas.");
     } finally {
