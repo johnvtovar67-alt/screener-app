@@ -104,13 +104,12 @@ function tradeActionForStock(stock, owned = false) {
     return "Exit / Avoid";
   }
 
-  const momentum = getMomentumText(stock);
-
-if (label === "STRONG BUY" && momentum === "Strong") return "Buy Now";
-if (label === "STRONG BUY") return "Watch for Entry";
-if (label === "BUY") return "Watch for Entry";
-if (label === "WATCH") return "Watch for Entry";
-return "Avoid for Now";
+  if (label === "STRONG BUY" && momentum === "Strong") return "Buy Now";
+  if (label === "STRONG BUY") return "Watch for Entry";
+  if (label === "BUY") return "Watch for Entry";
+  if (label === "WATCH") return "Watch for Entry";
+  return "Avoid for Now";
+}
 
 function actionClass(action) {
   if (action === "Buy Now" || action === "Hold / Add") return "green";
