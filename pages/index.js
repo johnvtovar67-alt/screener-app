@@ -39,23 +39,11 @@ function getName(stock) {
 }
 
 function getPrice(stock) {
-  return Number(
-    stock?.price ??
-      stock?.quote?.price ??
-      stock?.regularMarketPrice ??
-      stock?.currentPrice ??
-      stock?.lastPrice
-  );
+  return Number(stock?.price ?? stock?.currentPrice ?? stock?.quote?.price ?? stock?.lastPrice);
 }
 
 function getChangePct(stock) {
-  return Number(
-    stock?.dayChangePct ??
-      stock?.changesPercentage ??
-      stock?.changePercent ??
-      stock?.percentChange ??
-      stock?.quote?.changesPercentage
-  );
+  return Number(stock?.dayChangePct ?? stock?.changesPercentage ?? stock?.changePercent ?? stock?.percentChange);
 }
 
 function getScore(stock) {
@@ -83,7 +71,6 @@ function getMomentumText(stock) {
   if (Number.isFinite(pctFrom20) && pctFrom20 >= 5 && above50) return "Strong";
   if (above50 && above200) return "Building";
   if (Number.isFinite(oneMonth) && oneMonth > 0) return "Building";
-
   return "Weak";
 }
 
@@ -104,20 +91,16 @@ function tradeActionForStock(stock, owned = false) {
 }
 
 function actionClass(action) {
-  if (action === "Buy Now" || action === "Hold / Add") return "actionGreen";
-  if (action === "Watch for Entry" || action === "Hold") return "actionYellow";
-  if (action === "Trim") return "actionOrange";
-  return "actionRed";
+  if (action === "Buy Now" || action === "Hold / Add") return "green";
+  if (action === "Watch for Entry" || action === "Hold") return "yellow";
+  if (action === "Trim") return "orange";
+  return "red";
 }
 
 function scoreClass(score) {
-  if (score >= 75) return "scoreGreen";
-  if (score >= 55) return "scoreYellow";
-  return "scoreRed";
-}
-
-function Card({ children, className = "" }) {
-  return <div className={`card ${className}`}>{children}</div>;
+  if (score >= 75) return "green";
+  if (score >= 55) return "yellow";
+  return "red";
 }
 
 export default function Home() {
@@ -151,9 +134,7 @@ export default function Home() {
       const res = await fetch("/api/top5");
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
-      }
+      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
 
       const list = Array.isArray(data) ? data : data?.stocks || data?.results || data?.data || [];
       setStocks(list.slice(0, 10));
@@ -168,7 +149,6 @@ export default function Home() {
     try {
       const raw = window.localStorage.getItem(PORTFOLIO_KEY);
       if (!raw) return;
-
       const saved = JSON.parse(raw);
       if (Array.isArray(saved)) setPortfolio(saved);
     } catch {
@@ -187,18 +167,15 @@ export default function Home() {
     const avgCost = Number(newCost);
 
     if (!cleanSymbol || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(avgCost) || avgCost < 0) {
-      alert("Please enter a symbol, shares, and average cost.");
+      alert("Please enter symbol, shares, and average cost.");
       return;
     }
 
     const next = [...portfolio];
-    const existingIndex = next.findIndex((p) => p.symbol === cleanSymbol);
+    const index = next.findIndex((p) => p.symbol === cleanSymbol);
 
-    if (existingIndex >= 0) {
-      next[existingIndex] = { symbol: cleanSymbol, shares, avgCost };
-    } else {
-      next.push({ symbol: cleanSymbol, shares, avgCost });
-    }
+    if (index >= 0) next[index] = { symbol: cleanSymbol, shares, avgCost };
+    else next.push({ symbol: cleanSymbol, shares, avgCost });
 
     savePortfolio(next);
     setNewSymbol("");
@@ -207,8 +184,7 @@ export default function Home() {
   }
 
   function removePosition(symbolToRemove) {
-    const next = portfolio.filter((p) => p.symbol !== symbolToRemove);
-    savePortfolio(next);
+    savePortfolio(portfolio.filter((p) => p.symbol !== symbolToRemove));
     setPortfolioResults((prev) => prev.filter((p) => p.symbol !== symbolToRemove));
   }
 
@@ -226,9 +202,7 @@ export default function Home() {
       const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
-      }
+      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
 
       setSnapStock(data?.stock || data?.result || data);
     } catch (err) {
@@ -257,8 +231,7 @@ export default function Home() {
           const value = Number.isFinite(price) ? price * Number(position.shares) : null;
           const costBasis = Number(position.avgCost) * Number(position.shares);
           const gainLoss = Number.isFinite(value) ? value - costBasis : null;
-          const gainLossPct =
-            Number.isFinite(value) && costBasis > 0 ? ((value - costBasis) / costBasis) * 100 : null;
+          const gainLossPct = Number.isFinite(value) && costBasis > 0 ? ((value - costBasis) / costBasis) * 100 : null;
 
           results.push({
             ...stock,
@@ -306,7 +279,7 @@ export default function Home() {
 
   return (
     <main className="page">
-      <section className="hero">
+      <section className="hero card">
         <div>
           <h1>Stock Screener</h1>
           <p>
@@ -319,8 +292,8 @@ export default function Home() {
         </button>
       </section>
 
-      <section className="grid">
-        <Card className="wide">
+      <section className="dashboard">
+        <section className="card topIdeas">
           <div className="sectionHeader">
             <div>
               <h2>Top 10 Ideas</h2>
@@ -355,15 +328,13 @@ export default function Home() {
                         <td className="symbol">{getSymbol(stock)}</td>
                         <td>{getName(stock)}</td>
                         <td>{money(getPrice(stock))}</td>
-                        <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
-                          {percent(getChangePct(stock))}
-                        </td>
+                        <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>{percent(getChangePct(stock))}</td>
                         <td>
-                          <span className={`scorePill ${scoreClass(score)}`}>{score}</span>
+                          <span className={`pill ${scoreClass(score)}`}>{score}</span>
                         </td>
                         <td>{getMomentumText(stock)}</td>
                         <td>
-                          <span className={`actionPill ${actionClass(action)}`}>{action}</span>
+                          <span className={`pill ${actionClass(action)}`}>{action}</span>
                         </td>
                       </tr>
                     );
@@ -372,196 +343,182 @@ export default function Home() {
               </table>
             </div>
           )}
-        </Card>
+        </section>
 
-        <Card>
-          <h2>Snap Quote + Score</h2>
-          <p className="muted">Check one stock without adding it to your portfolio.</p>
+        <section className="rightColumn">
+          <section className="card">
+            <h2>Snap Quote + Score</h2>
+            <p className="muted">Check one stock without adding it to your portfolio.</p>
 
-          <form onSubmit={analyzeSymbol} className="formRow">
-            <input
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              placeholder="Enter symbol"
-            />
-            <button className="button" disabled={snapLoading}>
-              {snapLoading ? "Analyzing..." : "Analyze"}
-            </button>
-          </form>
+            <form onSubmit={analyzeSymbol} className="formRow">
+              <input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="Enter symbol" />
+              <button className="button" disabled={snapLoading}>
+                {snapLoading ? "Analyzing..." : "Analyze"}
+              </button>
+            </form>
 
-          {snapError && <p className="error">{snapError}</p>}
+            {snapError && <p className="error">{snapError}</p>}
 
-          {snapStock && (
-            <div className="snapBox">
-              <div className="snapTop">
-                <div>
-                  <h3>{getSymbol(snapStock)}</h3>
-                  <p>{getName(snapStock)}</p>
+            {snapStock && (
+              <div className="resultBox">
+                <div className="resultTop">
+                  <div>
+                    <h3>{getSymbol(snapStock)}</h3>
+                    <p>{getName(snapStock)}</p>
+                  </div>
+                  <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
+                    {tradeActionForStock(snapStock, false)}
+                  </span>
                 </div>
-                <span className={`actionPill ${actionClass(tradeActionForStock(snapStock, false))}`}>
-                  {tradeActionForStock(snapStock, false)}
-                </span>
-              </div>
 
-              <div className="metricGrid">
-                <div>
-                  <span>Price</span>
-                  <strong>{money(getPrice(snapStock))}</strong>
-                </div>
-                <div>
-                  <span>Change</span>
-                  <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
-                    {percent(getChangePct(snapStock))}
-                  </strong>
-                </div>
-                <div>
-                  <span>Score</span>
-                  <strong>{getScore(snapStock)}</strong>
-                </div>
-                <div>
-                  <span>Momentum</span>
-                  <strong>{getMomentumText(snapStock)}</strong>
+                <div className="metricGrid">
+                  <div>
+                    <span>Price</span>
+                    <strong>{money(getPrice(snapStock))}</strong>
+                  </div>
+                  <div>
+                    <span>Change</span>
+                    <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
+                      {percent(getChangePct(snapStock))}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Score</span>
+                    <strong>{getScore(snapStock)}</strong>
+                  </div>
+                  <div>
+                    <span>Momentum</span>
+                    <strong>{getMomentumText(snapStock)}</strong>
+                  </div>
                 </div>
               </div>
+            )}
+          </section>
+
+          <section className="card">
+            <h2>Portfolio</h2>
+            <p className="muted">For stocks you already own.</p>
+
+            <div className="portfolioForm">
+              <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
+              <input value={newShares} onChange={(e) => setNewShares(e.target.value)} placeholder="Shares" type="number" step="any" />
+              <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Avg cost" type="number" step="any" />
+              <button onClick={addPosition} className="button">
+                Add / Update
+              </button>
             </div>
-          )}
-        </Card>
 
-        <Card>
-          <h2>Portfolio</h2>
-          <p className="muted">For stocks you already own.</p>
+            {portfolio.length > 0 && (
+              <div className="miniList">
+                {portfolio.map((p) => (
+                  <div className="miniPosition" key={p.symbol}>
+                    <div>
+                      <strong>{p.symbol}</strong>
+                      <span>
+                        {number(p.shares, 2)} shares @ {money(p.avgCost)}
+                      </span>
+                    </div>
+                    <button onClick={() => removePosition(p.symbol)} className="linkButton">
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-          <div className="portfolioForm">
-            <input
-              value={newSymbol}
-              onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
-              placeholder="Symbol"
-            />
-            <input
-              value={newShares}
-              onChange={(e) => setNewShares(e.target.value)}
-              placeholder="Shares"
-              type="number"
-              step="any"
-            />
-            <input
-              value={newCost}
-              onChange={(e) => setNewCost(e.target.value)}
-              placeholder="Avg cost"
-              type="number"
-              step="any"
-            />
-            <button onClick={addPosition} className="button">
-              Add / Update
+            <button onClick={analyzePortfolio} disabled={!portfolio.length || portfolioLoading} className="button full">
+              {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
             </button>
+          </section>
+        </section>
+      </section>
+
+      {portfolioResults.length > 0 && (
+        <section className="card portfolioAnalysis">
+          <div className="sectionHeader">
+            <div>
+              <h2>Portfolio Analysis</h2>
+              <p>Trade Action is based on ownership context.</p>
+            </div>
+
+            <div className="totals">
+              <span>Total Value</span>
+              <strong>{money(portfolioTotals.value)}</strong>
+              <span className={portfolioTotals.gainLoss >= 0 ? "positive" : "negative"}>
+                {money(portfolioTotals.gainLoss)} / {percent(portfolioTotals.gainLossPct)}
+              </span>
+            </div>
           </div>
 
-          {portfolio.length > 0 && (
-            <div className="miniList">
-              {portfolio.map((p) => (
-                <div className="miniPosition" key={p.symbol}>
-                  <div>
-                    <strong>{p.symbol}</strong>
-                    <span>
-                      {number(p.shares, 2)} shares @ {money(p.avgCost)}
-                    </span>
-                  </div>
-                  <button onClick={() => removePosition(p.symbol)} className="linkButton">
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Shares</th>
+                  <th>Avg Cost</th>
+                  <th>Price</th>
+                  <th>Value</th>
+                  <th>Gain / Loss</th>
+                  <th>Score</th>
+                  <th>Momentum</th>
+                  <th>Trade Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {portfolioResults.map((stock) => {
+                  const score = getScore(stock);
+                  const action = stock.error ? "Exit / Avoid" : tradeActionForStock(stock, true);
 
-          <button
-            onClick={analyzePortfolio}
-            disabled={!portfolio.length || portfolioLoading}
-            className="button full"
-          >
-            {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
-          </button>
-        </Card>
-
-        {portfolioResults.length > 0 && (
-          <Card className="wide">
-            <div className="sectionHeader">
-              <div>
-                <h2>Portfolio Analysis</h2>
-                <p>Trade Action is based on ownership context.</p>
-              </div>
-
-              <div className="totals">
-                <span>Total Value</span>
-                <strong>{money(portfolioTotals.value)}</strong>
-                <span className={portfolioTotals.gainLoss >= 0 ? "positive" : "negative"}>
-                  {money(portfolioTotals.gainLoss)} / {percent(portfolioTotals.gainLossPct)}
-                </span>
-              </div>
-            </div>
-
-            <div className="tableWrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Shares</th>
-                    <th>Avg Cost</th>
-                    <th>Price</th>
-                    <th>Value</th>
-                    <th>Gain / Loss</th>
-                    <th>Score</th>
-                    <th>Momentum</th>
-                    <th>Trade Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {portfolioResults.map((stock) => {
-                    const score = getScore(stock);
-                    const action = stock.error ? "Exit / Avoid" : tradeActionForStock(stock, true);
-
-                    return (
-                      <tr key={stock.symbol}>
-                        <td className="symbol">{stock.symbol}</td>
-                        <td>{number(stock.shares, 2)}</td>
-                        <td>{money(stock.avgCost)}</td>
-                        <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
-                        <td>{stock.error ? "—" : money(stock.value)}</td>
-                        <td className={stock.gainLoss >= 0 ? "positive" : "negative"}>
-                          {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
-                        </td>
-                        <td>
-                          <span className={`scorePill ${scoreClass(score)}`}>{score}</span>
-                        </td>
-                        <td>{stock.error ? "—" : getMomentumText(stock)}</td>
-                        <td>
-                          <span className={`actionPill ${actionClass(action)}`}>{action}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
-      </section>
+                  return (
+                    <tr key={stock.symbol}>
+                      <td className="symbol">{stock.symbol}</td>
+                      <td>{number(stock.shares, 2)}</td>
+                      <td>{money(stock.avgCost)}</td>
+                      <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
+                      <td>{stock.error ? "—" : money(stock.value)}</td>
+                      <td className={stock.gainLoss >= 0 ? "positive" : "negative"}>
+                        {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
+                      </td>
+                      <td>
+                        <span className={`pill ${scoreClass(score)}`}>{score}</span>
+                      </td>
+                      <td>{stock.error ? "—" : getMomentumText(stock)}</td>
+                      <td>
+                        <span className={`pill ${actionClass(action)}`}>{action}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <style jsx>{`
         .page {
           min-height: 100vh;
-          background: #f6f7f9;
+          background: #f3f5f8;
           color: #101828;
-          padding: 28px;
+          padding: 24px;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .card {
+          background: white;
+          border: 1px solid #e4e7ec;
+          border-radius: 18px;
+          padding: 18px;
+          box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
         }
 
         .hero {
           display: flex;
           justify-content: space-between;
-          gap: 20px;
           align-items: center;
-          margin-bottom: 24px;
+          gap: 18px;
+          margin-bottom: 18px;
         }
 
         h1 {
@@ -571,7 +528,7 @@ export default function Home() {
         }
 
         h2 {
-          margin: 0 0 6px;
+          margin: 0 0 5px;
           font-size: 20px;
         }
 
@@ -589,22 +546,16 @@ export default function Home() {
           font-size: 14px;
         }
 
-        .grid {
+        .dashboard {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: minmax(640px, 1.35fr) minmax(360px, 0.9fr);
           gap: 18px;
+          align-items: start;
         }
 
-        .card {
-          background: #ffffff;
-          border: 1px solid #e4e7ec;
-          border-radius: 18px;
-          padding: 18px;
-          box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
-        }
-
-        .wide {
-          grid-column: 1 / -1;
+        .rightColumn {
+          display: grid;
+          gap: 18px;
         }
 
         .sectionHeader {
@@ -612,7 +563,7 @@ export default function Home() {
           justify-content: space-between;
           gap: 16px;
           align-items: flex-start;
-          margin-bottom: 16px;
+          margin-bottom: 14px;
         }
 
         .tableWrap {
@@ -628,7 +579,7 @@ export default function Home() {
         th {
           text-align: left;
           color: #667085;
-          font-weight: 600;
+          font-weight: 700;
           padding: 10px;
           border-bottom: 1px solid #e4e7ec;
           white-space: nowrap;
@@ -652,23 +603,20 @@ export default function Home() {
           border: 0;
           border-radius: 12px;
           padding: 11px 14px;
-          font-weight: 700;
+          font-weight: 800;
           cursor: pointer;
-        }
-
-        .button:hover {
-          opacity: 0.92;
-        }
-
-        .button:disabled {
-          opacity: 0.45;
-          cursor: not-allowed;
+          white-space: nowrap;
         }
 
         .button.secondary {
           background: white;
           color: #101828;
           border: 1px solid #d0d5dd;
+        }
+
+        .button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
         }
 
         .button.full {
@@ -685,10 +633,6 @@ export default function Home() {
           outline: none;
         }
 
-        input:focus {
-          border-color: #101828;
-        }
-
         .formRow {
           display: flex;
           gap: 10px;
@@ -697,12 +641,16 @@ export default function Home() {
 
         .portfolioForm {
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr auto;
+          grid-template-columns: 1fr 1fr;
           gap: 10px;
           margin-top: 14px;
         }
 
-        .snapBox {
+        .portfolioForm button {
+          grid-column: span 2;
+        }
+
+        .resultBox {
           margin-top: 16px;
           border: 1px solid #e4e7ec;
           border-radius: 16px;
@@ -710,7 +658,7 @@ export default function Home() {
           background: #fcfcfd;
         }
 
-        .snapTop {
+        .resultTop {
           display: flex;
           justify-content: space-between;
           gap: 12px;
@@ -720,7 +668,7 @@ export default function Home() {
 
         .metricGrid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(2, 1fr);
           gap: 10px;
         }
 
@@ -742,8 +690,7 @@ export default function Home() {
           font-size: 16px;
         }
 
-        .scorePill,
-        .actionPill {
+        .pill {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -753,37 +700,34 @@ export default function Home() {
           font-size: 12px;
         }
 
-        .scoreGreen,
-        .actionGreen {
+        .green {
           background: #dcfae6;
           color: #067647;
         }
 
-        .scoreYellow,
-        .actionYellow {
+        .yellow {
           background: #fef7c3;
           color: #a15c07;
         }
 
-        .scoreRed,
-        .actionRed {
-          background: #fee4e2;
-          color: #b42318;
-        }
-
-        .actionOrange {
+        .orange {
           background: #ffead5;
           color: #b54708;
         }
 
+        .red {
+          background: #fee4e2;
+          color: #b42318;
+        }
+
         .positive {
           color: #067647;
-          font-weight: 700;
+          font-weight: 800;
         }
 
         .negative {
           color: #b42318;
-          font-weight: 700;
+          font-weight: 800;
         }
 
         .error {
@@ -793,7 +737,7 @@ export default function Home() {
           padding: 10px 12px;
           margin-top: 12px;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .miniList {
@@ -825,8 +769,12 @@ export default function Home() {
           background: none;
           border: none;
           color: #b42318;
-          font-weight: 700;
+          font-weight: 800;
           cursor: pointer;
+        }
+
+        .portfolioAnalysis {
+          margin-top: 18px;
         }
 
         .totals {
@@ -845,9 +793,15 @@ export default function Home() {
           font-size: 20px;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
+          .dashboard {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 700px) {
           .page {
-            padding: 16px;
+            padding: 14px;
           }
 
           .hero {
@@ -855,16 +809,20 @@ export default function Home() {
             align-items: stretch;
           }
 
-          .grid {
-            grid-template-columns: 1fr;
+          .formRow {
+            flex-direction: column;
           }
 
           .portfolioForm {
             grid-template-columns: 1fr;
           }
 
+          .portfolioForm button {
+            grid-column: auto;
+          }
+
           .metricGrid {
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
           }
 
           .sectionHeader {
