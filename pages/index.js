@@ -86,7 +86,7 @@ function tradeActionForStock(stock, owned = false) {
   }
 
   if (score >= 78 && momentum === "Strong") return "Buy Now";
-  if (score >= 58) return "Buy Setup";
+  if (score >= 58) return "Buy Setup (Wait)";
   return "Avoid";
 }
 
