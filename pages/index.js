@@ -1,380 +1,787 @@
-// pages/index.js
-
 import { useEffect, useMemo, useState } from "react";
-import { formatPct, formatPrice } from "../lib/formatters";
 
-export default function HomePage() {
-  const [rows, setRows] = useState([]);
-  const [lookupSymbols, setLookupSymbols] = useState([]);
-  const [selectedSymbol, setSelectedSymbol] = useState("");
-  const [query, setQuery] = useState("");
+const READINESS_ORDER = {
+  "Trade Ready": 1,
+  "Watch Closely": 2,
+  "Setup Only": 3,
+};
+
+const ACTION_COLORS = {
+  "Add / Buy": "#16a34a",
+  "Hold": "#2563eb",
+  "Trim": "#d97706",
+  "Exit / Avoid": "#dc2626",
+};
+
+function safeNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function money(value) {
+  const n = safeNumber(value, null);
+  if (n === null) return "—";
+  return `$${n.toFixed(2)}`;
+}
+
+function percent(value) {
+  const n = safeNumber(value, null);
+  if (n === null) return "—";
+  return `${n.toFixed(1)}%`;
+}
+
+function getSymbol(row) {
+  return row?.symbol || row?.ticker || row?.profile?.symbol || "";
+}
+
+function getName(row) {
+  return (
+    row?.name ||
+    row?.companyName ||
+    row?.profile?.companyName ||
+    row?.profile?.name ||
+    getSymbol(row)
+  );
+}
+
+function getPrice(row) {
+  return (
+    row?.price ??
+    row?.quote?.price ??
+    row?.quote?.c ??
+    row?.technicalSnapshot?.price ??
+    row?.profile?.price
+  );
+}
+
+function getChange(row) {
+  return (
+    row?.changePercent ??
+    row?.changesPercentage ??
+    row?.quote?.changesPercentage ??
+    row?.quote?.dp ??
+    row?.technicalSnapshot?.changePercent
+  );
+}
+
+function getComposite(row) {
+  return safeNumber(
+    row?.compositeScore ??
+      row?.score ??
+      row?.overallScore ??
+      row?.recommendation?.score,
+    0
+  );
+}
+
+function getHeat(row) {
+  return safeNumber(
+    row?.heatScore ??
+      row?.technicalSnapshot?.heatScore ??
+      row?.recommendation?.heatScore,
+    0
+  );
+}
+
+function getReadiness(row) {
+  return (
+    row?.tradeReadiness ||
+    row?.recommendation?.tradeReadiness ||
+    row?.technicalSnapshot?.tradeReadiness ||
+    "Setup Only"
+  );
+}
+
+function getRecommendation(row) {
+  return (
+    row?.rating ||
+    row?.recommendation?.rating ||
+    row?.recommendation?.label ||
+    row?.action ||
+    "Watch"
+  );
+}
+
+function cleanPortfolioAction(row, owned = false) {
+  const readiness = getReadiness(row);
+  const composite = getComposite(row);
+  const heat = getHeat(row);
+
+  if (!owned) {
+    if (readiness === "Trade Ready" && composite >= 70) return "Add / Buy";
+    if (readiness === "Watch Closely") return "Watch";
+    return "Setup Only";
+  }
+
+  if (composite < 45 || heat < 35) return "Exit / Avoid";
+  if (composite < 58) return "Trim";
+  if (readiness === "Trade Ready" && composite >= 70) return "Hold / Add";
+  return "Hold";
+}
+
+function readinessBadgeColor(readiness) {
+  if (readiness === "Trade Ready") return "#16a34a";
+  if (readiness === "Watch Closely") return "#d97706";
+  return "#64748b";
+}
+
+function sortIdeas(a, b) {
+  const ar = READINESS_ORDER[getReadiness(a)] || 99;
+  const br = READINESS_ORDER[getReadiness(b)] || 99;
+
+  if (ar !== br) return ar - br;
+
+  const heatDiff = getHeat(b) - getHeat(a);
+  if (heatDiff !== 0) return heatDiff;
+
+  return getComposite(b) - getComposite(a);
+}
+
+export default function Home() {
+  const [ideas, setIdeas] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isLoadingTop5, setIsLoadingTop5] = useState(true);
-  const [isLookingUp, setIsLookingUp] = useState(false);
-  const [under25Only, setUnder25Only] = useState(true);
-  const [profitableOnly, setProfitableOnly] = useState(false);
-  const [tradeReadyOnly, setTradeReadyOnly] = useState(false);
+  const [symbolInput, setSymbolInput] = useState("");
+  const [sharesInput, setSharesInput] = useState("");
+  const [snapInput, setSnapInput] = useState("");
+  const [snapResult, setSnapResult] = useState(null);
+  const [snapLoading, setSnapLoading] = useState(false);
 
-  const [portfolioSymbol, setPortfolioSymbol] = useState("");
-  const [portfolioQty, setPortfolioQty] = useState("");
-  const [portfolioCost, setPortfolioCost] = useState("");
-  const [portfolioPositions, setPortfolioPositions] = useState([
-    { symbol: "MSTR", qty: 100, cost: 140.39 },
-    { symbol: "MARA", qty: 400, cost: 11.94 },
-    { symbol: "BBAI", qty: 260, cost: 3.88 },
-    { symbol: "SOUN", qty: 325, cost: 7.95 },
-    { symbol: "BCRX", qty: 125, cost: 8.95 },
-  ]);
+  const [portfolio, setPortfolio] = useState([]);
+  const [portfolioAnalysis, setPortfolioAnalysis] = useState([]);
 
-  const [portfolioRows, setPortfolioRows] = useState([]);
-  const [isAnalyzingPortfolio, setIsAnalyzingPortfolio] = useState(false);
+  useEffect(() => {
+    const saved = localStorage.getItem("stockScreenerPortfolio");
+    if (saved) {
+      try {
+        setPortfolio(JSON.parse(saved));
+      } catch {
+        setPortfolio([]);
+      }
+    }
 
-  const [meta, setMeta] = useState({
-    totalUniverse: 0,
-    quoteSnapshots: 0,
-    afterInstitutionalFilter: 0,
-    afterRankingThreshold: 0,
-  });
+    loadTopIdeas();
+  }, []);
 
-  async function loadTop5() {
-    setIsLoadingTop5(true);
+  useEffect(() => {
+    localStorage.setItem("stockScreenerPortfolio", JSON.stringify(portfolio));
+  }, [portfolio]);
+
+  async function loadTopIdeas() {
+    setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/top5");
-      const data = await response.json();
+      const res = await fetch("/api/top5");
+      const data = await res.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to load opportunities");
-      }
+      const rows = Array.isArray(data)
+        ? data
+        : data?.results ||
+          data?.ideas ||
+          data?.top5 ||
+          data?.top10 ||
+          data?.data ||
+          [];
 
-      setLookupSymbols([]);
-      setRows(data.stocks || []);
-      setMeta(
-        data.meta || {
-          totalUniverse: 0,
-          quoteSnapshots: 0,
-          afterInstitutionalFilter: 0,
-          afterRankingThreshold: 0,
-        }
-      );
+      setIdeas(rows.sort(sortIdeas).slice(0, 10));
     } catch (err) {
-      setError(err.message || "Failed to load opportunities");
+      console.error(err);
+      setError("Could not load Top 10 ideas.");
     } finally {
-      setIsLoadingTop5(false);
+      setLoading(false);
     }
   }
 
-  async function handleLookup() {
-    const symbol = query.trim().toUpperCase();
-    if (!symbol) return;
+  async function fetchOneSymbol(symbol) {
+    const clean = symbol.trim().toUpperCase();
+    if (!clean) return null;
 
-    setIsLookingUp(true);
-    setError("");
+    const urls = [
+      `/api/index?symbol=${encodeURIComponent(clean)}`,
+      `/api/index?ticker=${encodeURIComponent(clean)}`,
+      `/api/top5?symbol=${encodeURIComponent(clean)}`,
+    ];
+
+    for (const url of urls) {
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          const found = data.find(
+            (x) => getSymbol(x).toUpperCase() === clean
+          );
+          if (found) return found;
+        }
+
+        if (data?.symbol || data?.ticker || data?.recommendation) return data;
+
+        const rows =
+          data?.results || data?.ideas || data?.top5 || data?.top10 || [];
+
+        const found = rows.find((x) => getSymbol(x).toUpperCase() === clean);
+        if (found) return found;
+      } catch {
+        // try next URL
+      }
+    }
+
+    const foundExisting = ideas.find(
+      (x) => getSymbol(x).toUpperCase() === clean
+    );
+
+    return foundExisting || null;
+  }
+
+  async function runSnapQuote() {
+    const clean = snapInput.trim().toUpperCase();
+    if (!clean) return;
+
+    setSnapLoading(true);
+    setSnapResult(null);
 
     try {
-      const response = await fetch(
-        `/api/lookup?symbol=${encodeURIComponent(symbol)}`
-      );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Lookup failed");
-      }
-
-      if (!data?.symbol) {
-        throw new Error("Lookup returned no usable stock data.");
-      }
-
-      if ((data.price ?? 0) >= 25) {
-        setUnder25Only(false);
-      }
-
-      setLookupSymbols((prev) => {
-        const clean = prev.filter((x) => x !== data.symbol);
-        return [data.symbol, ...clean].slice(0, 5);
-      });
-
-      setRows((prev) => {
-        const exists = prev.some((row) => row.symbol === data.symbol);
-        if (exists) {
-          return prev.map((row) => (row.symbol === data.symbol ? data : row));
-        }
-        return [data, ...prev];
-      });
-
-      setSelectedSymbol(data.symbol);
-      setQuery("");
-    } catch (err) {
-      setError(err.message || "Lookup failed");
+      const result = await fetchOneSymbol(clean);
+      setSnapResult(result || { symbol: clean, error: true });
     } finally {
-      setIsLookingUp(false);
+      setSnapLoading(false);
     }
   }
 
   function addPortfolioPosition() {
-    const symbol = portfolioSymbol.trim().toUpperCase();
-    const qty = Number(portfolioQty);
-    const cost = Number(portfolioCost);
+    const symbol = symbolInput.trim().toUpperCase();
+    const shares = safeNumber(sharesInput, 0);
 
-    if (!symbol || !qty || qty <= 0) {
-      setError("Enter a symbol and quantity.");
-      return;
-    }
+    if (!symbol || shares <= 0) return;
 
-    setPortfolioPositions((prev) => {
-      const without = prev.filter((p) => p.symbol !== symbol);
-      return [...without, { symbol, qty, cost: cost || 0 }];
+    setPortfolio((prev) => {
+      const existing = prev.find((p) => p.symbol === symbol);
+
+      if (existing) {
+        return prev.map((p) =>
+          p.symbol === symbol
+            ? { ...p, shares: safeNumber(p.shares) + shares }
+            : p
+        );
+      }
+
+      return [...prev, { symbol, shares }];
     });
 
-    setPortfolioSymbol("");
-    setPortfolioQty("");
-    setPortfolioCost("");
-    setError("");
+    setSymbolInput("");
+    setSharesInput("");
   }
 
   function removePortfolioPosition(symbol) {
-    setPortfolioPositions((prev) => prev.filter((p) => p.symbol !== symbol));
-    setPortfolioRows((prev) => prev.filter((p) => p.symbol !== symbol));
-  }
-
-  function getSetupLabel(label) {
-    if (label === "STRONG BUY") return "STRONG";
-    if (label === "BUY") return "GOOD";
-    if (label === "WATCH") return "NEUTRAL";
-    return "WEAK";
-  }
-
-  function getPortfolioDecision(row, gainLossPct) {
-    const label = row.recommendation?.label;
-    const readiness = row.tradeReadiness?.label;
-
-    if (readiness === "TRADE READY") {
-      if (gainLossPct >= 15) {
-        return { action: "TRIM", why: "Trade ready, but up strong. Lock some." };
-      }
-      return { action: "ADD", why: "Trade-ready setup with active trigger." };
-    }
-
-    if (label === "STRONG BUY") {
-      if (gainLossPct >= 18) {
-        return { action: "TRIM", why: "Up strong. Lock in some gains." };
-      }
-      return { action: "HOLD", why: "Strong setup, but wait for trigger." };
-    }
-
-    if (label === "BUY") {
-      if (gainLossPct >= 12) {
-        return { action: "TRIM", why: "Good gain. Don’t get greedy." };
-      }
-      return { action: "HOLD", why: "Improving setup. Needs confirmation." };
-    }
-
-    if (label === "WATCH") {
-      if (gainLossPct <= -8) {
-        return { action: "SELL", why: "Down and weak. Cut it." };
-      }
-      if (gainLossPct >= 10) {
-        return { action: "TRIM", why: "Up nicely. Protect gains." };
-      }
-      return { action: "HOLD", why: "No edge right now." };
-    }
-
-    if (label === "AVOID") {
-      if (gainLossPct <= -5) {
-        return { action: "SELL", why: "Weak and losing. Free capital." };
-      }
-      if (gainLossPct >= 8) {
-        return { action: "TRIM", why: "Up, but weak signal. Take some off." };
-      }
-      return { action: "HOLD", why: "Weak setup. Don’t add." };
-    }
-
-    return { action: "HOLD", why: "No clear signal." };
+    setPortfolio((prev) => prev.filter((p) => p.symbol !== symbol));
+    setPortfolioAnalysis((prev) =>
+      prev.filter((p) => getSymbol(p).toUpperCase() !== symbol)
+    );
   }
 
   async function analyzePortfolio() {
-    setIsAnalyzingPortfolio(true);
-    setError("");
+    if (portfolio.length === 0) return;
+
+    setPortfolioLoading(true);
 
     try {
       const results = [];
 
-      for (const position of portfolioPositions) {
-        const response = await fetch(
-          `/api/lookup?symbol=${encodeURIComponent(position.symbol)}`
-        );
-        const data = await response.json();
+      for (const position of portfolio) {
+        const analysis = await fetchOneSymbol(position.symbol);
 
-        if (!response.ok) {
-          throw new Error(data.error || `Lookup failed for ${position.symbol}`);
+        if (analysis) {
+          results.push({
+            ...analysis,
+            ownedShares: position.shares,
+          });
+        } else {
+          results.push({
+            symbol: position.symbol,
+            ownedShares: position.shares,
+            missing: true,
+          });
         }
-
-        const price = Number(data.price || 0);
-        const qty = Number(position.qty || 0);
-        const cost = Number(position.cost || 0);
-        const value = price * qty;
-        const costBasis = cost * qty;
-        const gainLoss = costBasis ? value - costBasis : 0;
-        const gainLossPct = costBasis ? (gainLoss / costBasis) * 100 : 0;
-        const decision = getPortfolioDecision(data, gainLossPct);
-
-        results.push({
-          ...data,
-          qty,
-          cost,
-          value,
-          costBasis,
-          gainLoss,
-          gainLossPct,
-          setupLabel: getSetupLabel(data.recommendation?.label),
-          action: decision.action,
-          portfolioWhy: decision.why,
-        });
       }
 
-      setPortfolioRows(results);
-    } catch (err) {
-      setError(err.message || "Portfolio analysis failed.");
+      setPortfolioAnalysis(results.sort(sortIdeas));
     } finally {
-      setIsAnalyzingPortfolio(false);
+      setPortfolioLoading(false);
     }
   }
 
-  useEffect(() => {
-    loadTop5();
-  }, []);
+  const top10 = useMemo(() => {
+    return [...ideas].sort(sortIdeas).slice(0, 10);
+  }, [ideas]);
 
-  const filteredRows = useMemo(() => {
-    return rows.filter((row) => {
-      const isLookup = lookupSymbols.includes(row.symbol);
+  return (
+    <main style={styles.page}>
+      <section style={styles.header}>
+        <div>
+          <h1 style={styles.title}>Stock Screener</h1>
+          <p style={styles.subtitle}>
+            Top ideas ranked by trade readiness, heat score, and overall setup
+            quality.
+          </p>
+        </div>
 
-      if (!isLookup && under25Only && (row.price ?? 0) >= 25) return false;
-      if (!isLookup && profitableOnly && (row.operatingMarginPct ?? 0) <= 0) return false;
-      if (!isLookup && tradeReadyOnly && row.tradeReadiness?.label !== "TRADE READY") return false;
+        <button onClick={loadTopIdeas} style={styles.primaryButton}>
+          Refresh Top 10
+        </button>
+      </section>
 
-      return true;
-    });
-  }, [rows, lookupSymbols, under25Only, profitableOnly, tradeReadyOnly]);
+      {error && <div style={styles.error}>{error}</div>}
 
-  const sortedRows = useMemo(() => {
-    const actionRank = {
-      "STRONG BUY": 4,
-      BUY: 3,
-      WATCH: 2,
-      AVOID: 1,
-    };
+      <section style={styles.card}>
+        <div style={styles.sectionHeader}>
+          <div>
+            <h2 style={styles.sectionTitle}>Top 10 Ideas</h2>
+            <p style={styles.sectionSub}>
+              Trade Ready names are prioritized first.
+            </p>
+          </div>
+        </div>
 
-    const readinessRank = {
-      "TRADE READY": 3,
-      "WATCH CLOSELY": 2,
-      "SETUP ONLY": 1,
-    };
+        {loading ? (
+          <p style={styles.muted}>Loading ideas...</p>
+        ) : (
+          <div style={styles.grid}>
+            {top10.map((row, index) => {
+              const symbol = getSymbol(row);
+              const readiness = getReadiness(row);
+              const heat = getHeat(row);
+              const composite = getComposite(row);
+              const action = cleanPortfolioAction(row, false);
 
-    return [...filteredRows]
-      .sort((a, b) => {
-        const aLookup = lookupSymbols.includes(a.symbol) ? 1 : 0;
-        const bLookup = lookupSymbols.includes(b.symbol) ? 1 : 0;
+              return (
+                <div key={`${symbol}-${index}`} style={styles.ideaCard}>
+                  <div style={styles.cardTop}>
+                    <div>
+                      <div style={styles.rank}>#{index + 1}</div>
+                      <h3 style={styles.symbol}>{symbol}</h3>
+                      <p style={styles.name}>{getName(row)}</p>
+                    </div>
 
-        return (
-          bLookup - aLookup ||
-          (readinessRank[b.tradeReadiness?.label] || 0) -
-            (readinessRank[a.tradeReadiness?.label] || 0) ||
-          (b.recommendation?.score ?? 0) - (a.recommendation?.score ?? 0) ||
-          (actionRank[b.recommendation?.label] || 0) -
-            (actionRank[a.recommendation?.label] || 0) ||
-          (b.heatScore ?? 0) - (a.heatScore ?? 0) ||
-          (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
-          (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
-          (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
-        );
-      })
-      .slice(0, 25);
-  }, [filteredRows, lookupSymbols]);
+                    <span
+                      style={{
+                        ...styles.badge,
+                        background: readinessBadgeColor(readiness),
+                      }}
+                    >
+                      {readiness}
+                    </span>
+                  </div>
 
-  const top10Rows = useMemo(() => sortedRows.slice(0, 10), [sortedRows]);
+                  <div style={styles.metrics}>
+                    <div>
+                      <span style={styles.metricLabel}>Price</span>
+                      <strong>{money(getPrice(row))}</strong>
+                    </div>
+                    <div>
+                      <span style={styles.metricLabel}>Change</span>
+                      <strong>{percent(getChange(row))}</strong>
+                    </div>
+                    <div>
+                      <span style={styles.metricLabel}>Heat</span>
+                      <strong>{heat}</strong>
+                    </div>
+                    <div>
+                      <span style={styles.metricLabel}>Score</span>
+                      <strong>{composite}</strong>
+                    </div>
+                  </div>
 
-  useEffect(() => {
-    if (!sortedRows.length) {
-      setSelectedSymbol("");
-      return;
-    }
+                  <div style={styles.bottomRow}>
+                    <span style={styles.recommendation}>
+                      {getRecommendation(row)}
+                    </span>
+                    <span style={styles.action}>{action}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-    const stillVisible = sortedRows.some((row) => row.symbol === selectedSymbol);
-    if (!stillVisible) setSelectedSymbol(sortedRows[0].symbol);
-  }, [sortedRows, selectedSymbol]);
+      <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>Snap Quote + Score</h2>
+        <p style={styles.sectionSub}>
+          Enter a symbol to check its current setup.
+        </p>
 
-  const selectedRow =
-    sortedRows.find((row) => row.symbol === selectedSymbol) || sortedRows[0];
+        <div style={styles.inputRow}>
+          <input
+            value={snapInput}
+            onChange={(e) => setSnapInput(e.target.value.toUpperCase())}
+            placeholder="Example: MARA"
+            style={styles.input}
+          />
+          <button onClick={runSnapQuote} style={styles.primaryButton}>
+            {snapLoading ? "Checking..." : "Analyze"}
+          </button>
+        </div>
 
-  function recommendationPillStyle(label) {
-    if (label === "STRONG BUY") {
-      return {
-        background: "#dcfce7",
-        color: "#166534",
-        border: "1px solid #bbf7d0",
-      };
-    }
-    if (label === "BUY") {
-      return {
-        background: "#e0f2fe",
-        color: "#075985",
-        border: "1px solid #bae6fd",
-      };
-    }
-    if (label === "WATCH") {
-      return {
-        background: "#fef3c7",
-        color: "#92400e",
-        border: "1px solid #fde68a",
-      };
-    }
-    return {
-      background: "#fee2e2",
-      color: "#b91c1c",
-      border: "1px solid #fecaca",
-    };
-  }
+        {snapResult && (
+          <div style={styles.snapBox}>
+            {snapResult.error ? (
+              <p style={styles.muted}>No result found for {snapResult.symbol}.</p>
+            ) : (
+              <>
+                <div style={styles.cardTop}>
+                  <div>
+                    <h3 style={styles.symbol}>{getSymbol(snapResult)}</h3>
+                    <p style={styles.name}>{getName(snapResult)}</p>
+                  </div>
+                  <span
+                    style={{
+                      ...styles.badge,
+                      background: readinessBadgeColor(getReadiness(snapResult)),
+                    }}
+                  >
+                    {getReadiness(snapResult)}
+                  </span>
+                </div>
 
-  function readinessPillStyle(label) {
-    if (label === "TRADE READY") {
-      return {
-        background: "#111827",
-        color: "#ffffff",
-        border: "1px solid #111827",
-      };
-    }
-    if (label === "WATCH CLOSELY") {
-      return {
-        background: "#fef3c7",
-        color: "#92400e",
-        border: "1px solid #fde68a",
-      };
-    }
-    return {
-      background: "#f3f4f6",
-      color: "#374151",
-      border: "1px solid #e5e7eb",
-    };
-  }
+                <div style={styles.metrics}>
+                  <div>
+                    <span style={styles.metricLabel}>Price</span>
+                    <strong>{money(getPrice(snapResult))}</strong>
+                  </div>
+                  <div>
+                    <span style={styles.metricLabel}>Change</span>
+                    <strong>{percent(getChange(snapResult))}</strong>
+                  </div>
+                  <div>
+                    <span style={styles.metricLabel}>Heat</span>
+                    <strong>{getHeat(snapResult)}</strong>
+                  </div>
+                  <div>
+                    <span style={styles.metricLabel}>Score</span>
+                    <strong>{getComposite(snapResult)}</strong>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </section>
 
-  function actionPillStyle(action) {
-    if (action === "ADD") {
-      return {
-        background: "#dcfce7",
-        color: "#166534",
-        border: "1px solid #bbf7d0",
-      };
-    }
-    if (action === "HOLD") {
-      return {
-        background: "#fef3c7",
-        color: "#92400e",
-        border: "1px solid #fde68a",
-      };
-    }
-    if (action === "TRIM") {
-      return {
-        background: "#ffedd5",
-        color: "#9a3412",
-        border: "1px solid #fed
+      <section style={styles.card}>
+        <div style={styles.sectionHeader}>
+          <div>
+            <h2 style={styles.sectionTitle}>Portfolio</h2>
+            <p style={styles.sectionSub}>
+              Add your positions, then analyze whether each one is a hold, add,
+              trim, or exit.
+            </p>
+          </div>
+
+          <button onClick={analyzePortfolio} style={styles.primaryButton}>
+            {portfolioLoading ? "Analyzing..." : "Analyze Portfolio"}
+          </button>
+        </div>
+
+        <div style={styles.inputRow}>
+          <input
+            value={symbolInput}
+            onChange={(e) => setSymbolInput(e.target.value.toUpperCase())}
+            placeholder="Symbol"
+            style={styles.input}
+          />
+          <input
+            value={sharesInput}
+            onChange={(e) => setSharesInput(e.target.value)}
+            placeholder="Shares"
+            type="number"
+            style={styles.input}
+          />
+          <button onClick={addPortfolioPosition} style={styles.secondaryButton}>
+            Add Position
+          </button>
+        </div>
+
+        {portfolio.length === 0 ? (
+          <p style={styles.muted}>No portfolio positions added yet.</p>
+        ) : (
+          <div style={styles.tableWrap}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Symbol</th>
+                  <th style={styles.th}>Shares</th>
+                  <th style={styles.th}>Action</th>
+                  <th style={styles.th}>Readiness</th>
+                  <th style={styles.th}>Heat</th>
+                  <th style={styles.th}>Score</th>
+                  <th style={styles.th}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {portfolio.map((position) => {
+                  const analysis = portfolioAnalysis.find(
+                    (x) =>
+                      getSymbol(x).toUpperCase() ===
+                      position.symbol.toUpperCase()
+                  );
+
+                  const action = analysis
+                    ? cleanPortfolioAction(analysis, true)
+                    : "Not analyzed";
+
+                  return (
+                    <tr key={position.symbol}>
+                      <td style={styles.td}>
+                        <strong>{position.symbol}</strong>
+                      </td>
+                      <td style={styles.td}>{position.shares}</td>
+                      <td style={styles.td}>
+                        <span
+                          style={{
+                            ...styles.portfolioAction,
+                            color: ACTION_COLORS[action] || "#334155",
+                          }}
+                        >
+                          {action}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        {analysis ? getReadiness(analysis) : "—"}
+                      </td>
+                      <td style={styles.td}>
+                        {analysis ? getHeat(analysis) : "—"}
+                      </td>
+                      <td style={styles.td}>
+                        {analysis ? getComposite(analysis) : "—"}
+                      </td>
+                      <td style={styles.td}>
+                        <button
+                          onClick={() =>
+                            removePortfolioPosition(position.symbol)
+                          }
+                          style={styles.removeButton}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+const styles = {
+  page: {
+    maxWidth: 1180,
+    margin: "0 auto",
+    padding: "28px 18px 60px",
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+    color: "#0f172a",
+    background: "#f8fafc",
+    minHeight: "100vh",
+  },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 16,
+    alignItems: "center",
+    marginBottom: 22,
+  },
+  title: {
+    fontSize: 34,
+    margin: 0,
+    letterSpacing: "-0.03em",
+  },
+  subtitle: {
+    margin: "6px 0 0",
+    color: "#475569",
+    fontSize: 15,
+  },
+  card: {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: 20,
+    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
+  },
+  sectionHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 16,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    margin: 0,
+  },
+  sectionSub: {
+    margin: "5px 0 0",
+    color: "#64748b",
+    fontSize: 14,
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(245px, 1fr))",
+    gap: 14,
+  },
+  ideaCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: 16,
+    padding: 16,
+    background: "#ffffff",
+  },
+  cardTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    alignItems: "flex-start",
+  },
+  rank: {
+    fontSize: 12,
+    color: "#64748b",
+    fontWeight: 700,
+  },
+  symbol: {
+    fontSize: 24,
+    margin: "2px 0",
+    letterSpacing: "-0.03em",
+  },
+  name: {
+    margin: 0,
+    color: "#64748b",
+    fontSize: 13,
+    minHeight: 34,
+  },
+  badge: {
+    color: "#fff",
+    borderRadius: 999,
+    padding: "6px 10px",
+    fontSize: 12,
+    fontWeight: 800,
+    whiteSpace: "nowrap",
+  },
+  metrics: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 8,
+    marginTop: 16,
+  },
+  metricLabel: {
+    display: "block",
+    fontSize: 11,
+    color: "#64748b",
+    marginBottom: 3,
+  },
+  bottomRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    alignItems: "center",
+    marginTop: 16,
+    paddingTop: 14,
+    borderTop: "1px solid #e2e8f0",
+  },
+  recommendation: {
+    fontWeight: 800,
+    color: "#0f172a",
+  },
+  action: {
+    fontWeight: 800,
+    color: "#16a34a",
+  },
+  primaryButton: {
+    border: "none",
+    background: "#0f172a",
+    color: "#fff",
+    padding: "11px 15px",
+    borderRadius: 12,
+    fontWeight: 800,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
+  secondaryButton: {
+    border: "1px solid #cbd5e1",
+    background: "#ffffff",
+    color: "#0f172a",
+    padding: "11px 15px",
+    borderRadius: 12,
+    fontWeight: 800,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
+  removeButton: {
+    border: "none",
+    background: "#fee2e2",
+    color: "#991b1b",
+    padding: "7px 10px",
+    borderRadius: 10,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  inputRow: {
+    display: "flex",
+    gap: 10,
+    margin: "16px 0",
+    flexWrap: "wrap",
+  },
+  input: {
+    border: "1px solid #cbd5e1",
+    borderRadius: 12,
+    padding: "11px 12px",
+    fontSize: 15,
+    minWidth: 140,
+  },
+  snapBox: {
+    border: "1px solid #e2e8f0",
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 12,
+  },
+  tableWrap: {
+    overflowX: "auto",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    fontSize: 14,
+  },
+  th: {
+    textAlign: "left",
+    padding: "12px 10px",
+    borderBottom: "1px solid #e2e8f0",
+    color: "#64748b",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+  },
+  td: {
+    padding: "13px 10px",
+    borderBottom: "1px solid #e2e8f0",
+  },
+  portfolioAction: {
+    fontWeight: 900,
+  },
+  muted: {
+    color: "#64748b",
+  },
+  error: {
+    background: "#fee2e2",
+    color: "#991b1b",
+    border: "1px solid #fecaca",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    fontWeight: 700,
+  },
+};
