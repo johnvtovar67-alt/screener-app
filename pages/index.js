@@ -86,13 +86,13 @@ function tradeActionForStock(stock, owned = false) {
   }
 
   if (score >= 78 && momentum === "Strong") return "Buy Now";
-  if (score >= 58) return "Watch for Entry";
-  return "Avoid for Now";
+  if (score >= 58) return "Buy Setup";
+  return "Avoid";
 }
 
 function actionClass(action) {
   if (action === "Buy Now" || action === "Hold / Add") return "green";
-  if (action === "Watch for Entry" || action === "Hold") return "yellow";
+  if (action === "Buy Setup" || action === "Hold") return "yellow";
   if (action === "Trim") return "orange";
   return "red";
 }
@@ -134,9 +134,7 @@ export default function Home() {
       const res = await fetch("/api/top5");
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
-      }
+      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
 
       const list = Array.isArray(data) ? data : data?.stocks || data?.results || data?.data || [];
       setStocks(list.slice(0, 10));
@@ -151,7 +149,6 @@ export default function Home() {
     try {
       const raw = window.localStorage.getItem(PORTFOLIO_KEY);
       if (!raw) return;
-
       const saved = JSON.parse(raw);
       if (Array.isArray(saved)) setPortfolio(saved);
     } catch {
@@ -177,11 +174,8 @@ export default function Home() {
     const next = [...portfolio];
     const index = next.findIndex((p) => p.symbol === cleanSymbol);
 
-    if (index >= 0) {
-      next[index] = { symbol: cleanSymbol, shares, avgCost };
-    } else {
-      next.push({ symbol: cleanSymbol, shares, avgCost });
-    }
+    if (index >= 0) next[index] = { symbol: cleanSymbol, shares, avgCost };
+    else next.push({ symbol: cleanSymbol, shares, avgCost });
 
     savePortfolio(next);
     setNewSymbol("");
@@ -208,9 +202,7 @@ export default function Home() {
       const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
-      }
+      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
 
       setSnapStock(data?.stock || data?.result || data);
     } catch (err) {
@@ -288,86 +280,100 @@ export default function Home() {
 
   return (
     <main className="page">
-      <section className="hero">
+      <header className="header">
         <div>
-          <h1>Stock Screener</h1>
-          <p>
-            One clean decision label: <strong>Trade Action</strong>. Score and momentum support the decision.
-          </p>
+          <h1>🧠 Asymmetry Screener</h1>
+          <p>Broad-market screen for under-the-radar, high-upside setups.</p>
         </div>
-
         <button onClick={loadTopIdeas} className="button secondary">
-          Refresh Ideas
+          Reload Screener
         </button>
-      </section>
+      </header>
 
       <section className="card">
-        <div className="sectionHeader">
-          <div>
-            <h2>Top 10 Ideas</h2>
-            <p>For stocks you do not currently own.</p>
-          </div>
+        <div className="sectionTitle">
+          <h2>🔥 Top 10 Ideas</h2>
+          <p>Quick scan first. Details below.</p>
         </div>
 
         {loadingTop && <p className="muted">Loading top ideas...</p>}
         {topError && <p className="error">{topError}</p>}
 
         {!loadingTop && !topError && (
-          <div className="tableWrap compactTable">
-            <table>
-              <thead>
-                <tr>
-                  <th>Symbol</th>
-                  <th>Company</th>
-                  <th>Price</th>
-                  <th>Change</th>
-                  <th>Score</th>
-                  <th>Momentum</th>
-                  <th>Trade Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stocks.map((stock, idx) => {
-                  const score = getScore(stock);
-                  const action = tradeActionForStock(stock, false);
+          <>
+            <div className="ideaGrid">
+              {stocks.map((stock, idx) => {
+                const score = getScore(stock);
+                const action = tradeActionForStock(stock, false);
 
-                  return (
-                    <tr key={`${getSymbol(stock)}-${idx}`}>
-                      <td className="symbol">{getSymbol(stock)}</td>
-                      <td>{getName(stock)}</td>
-                      <td>{money(getPrice(stock))}</td>
-                      <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
-                        {percent(getChangePct(stock))}
-                      </td>
-                      <td>
-                        <span className={`pill ${scoreClass(score)}`}>{score}</span>
-                      </td>
-                      <td>{getMomentumText(stock)}</td>
-                      <td>
-                        <span className={`pill ${actionClass(action)}`}>{action}</span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                return (
+                  <div className="ideaCard" key={`${getSymbol(stock)}-card-${idx}`}>
+                    <div className="ideaSymbol">{getSymbol(stock)}</div>
+                    <div className="ideaPrice">{money(getPrice(stock))}</div>
+                    <span className={`pill widePill ${actionClass(action)}`}>{action}</span>
+                    <div className="ideaMeta">Score: {score}</div>
+                    <div className="ideaMeta">Momentum: {getMomentumText(stock)}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Chg %</th>
+                    <th>Score</th>
+                    <th>Momentum</th>
+                    <th>Trade Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stocks.map((stock, idx) => {
+                    const score = getScore(stock);
+                    const action = tradeActionForStock(stock, false);
+
+                    return (
+                      <tr key={`${getSymbol(stock)}-row-${idx}`}>
+                        <td className="symbol">{getSymbol(stock)}</td>
+                        <td>{getName(stock)}</td>
+                        <td>{money(getPrice(stock))}</td>
+                        <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
+                          {percent(getChangePct(stock))}
+                        </td>
+                        <td>
+                          <span className={`pill ${scoreClass(score)}`}>{score}</span>
+                        </td>
+                        <td>{getMomentumText(stock)}</td>
+                        <td>
+                          <span className={`pill ${actionClass(action)}`}>{action}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
 
       <section className="lowerGrid">
         <section className="card">
           <h2>Snap Quote + Score</h2>
-          <p className="muted">Check one stock without adding it to your portfolio.</p>
+          <p className="muted">Uses the same non-owned Trade Action logic as Top Ideas.</p>
 
           <form onSubmit={analyzeSymbol} className="formRow">
             <input
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              placeholder="Enter symbol"
+              placeholder="Lookup ticker..."
             />
             <button className="button" disabled={snapLoading}>
-              {snapLoading ? "Analyzing..." : "Analyze"}
+              {snapLoading ? "Analyzing..." : "Snap Quote + Score"}
             </button>
           </form>
 
@@ -380,7 +386,6 @@ export default function Home() {
                   <h3>{getSymbol(snapStock)}</h3>
                   <p>{getName(snapStock)}</p>
                 </div>
-
                 <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
                   {tradeActionForStock(snapStock, false)}
                 </span>
@@ -405,35 +410,23 @@ export default function Home() {
                   <span>Momentum</span>
                   <strong>{getMomentumText(snapStock)}</strong>
                 </div>
+                <div>
+                  <span>Trade Action</span>
+                  <strong>{tradeActionForStock(snapStock, false)}</strong>
+                </div>
               </div>
             </div>
           )}
         </section>
 
         <section className="card">
-          <h2>Portfolio</h2>
-          <p className="muted">For stocks you already own.</p>
+          <h2>Portfolio Screener</h2>
+          <p className="muted">Uses ownership logic: Hold / Add, Hold, Trim, Exit / Avoid.</p>
 
           <div className="portfolioForm">
-            <input
-              value={newSymbol}
-              onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
-              placeholder="Symbol"
-            />
-            <input
-              value={newShares}
-              onChange={(e) => setNewShares(e.target.value)}
-              placeholder="Shares"
-              type="number"
-              step="any"
-            />
-            <input
-              value={newCost}
-              onChange={(e) => setNewCost(e.target.value)}
-              placeholder="Avg cost"
-              type="number"
-              step="any"
-            />
+            <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
+            <input value={newShares} onChange={(e) => setNewShares(e.target.value)} placeholder="Shares" type="number" step="any" />
+            <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Avg cost" type="number" step="any" />
             <button onClick={addPosition} className="button">
               Add / Update
             </button>
@@ -457,24 +450,19 @@ export default function Home() {
             </div>
           )}
 
-          <button
-            onClick={analyzePortfolio}
-            disabled={!portfolio.length || portfolioLoading}
-            className="button full"
-          >
+          <button onClick={analyzePortfolio} disabled={!portfolio.length || portfolioLoading} className="button full">
             {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
           </button>
         </section>
       </section>
 
       {portfolioResults.length > 0 && (
-        <section className="card portfolioAnalysis">
+        <section className="card">
           <div className="sectionHeader">
             <div>
               <h2>Portfolio Analysis</h2>
-              <p>Trade Action is based on ownership context.</p>
+              <p>Trade Action is based on stocks you already own.</p>
             </div>
-
             <div className="totals">
               <span>Total Value</span>
               <strong>{money(portfolioTotals.value)}</strong>
@@ -533,25 +521,25 @@ export default function Home() {
       <style jsx>{`
         .page {
           min-height: 100vh;
-          background: #f3f5f8;
-          color: #101828;
-          padding: 22px;
+          background: #f8fafc;
+          color: #0f172a;
+          padding: 28px;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        .hero {
+        .header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-start;
           gap: 18px;
-          margin-bottom: 16px;
+          margin-bottom: 22px;
         }
 
         h1 {
           margin: 0;
           font-size: 34px;
+          line-height: 1.05;
           letter-spacing: -0.04em;
-          line-height: 1;
         }
 
         h2 {
@@ -568,18 +556,23 @@ export default function Home() {
           margin: 0;
         }
 
+        .header p,
         .muted {
-          color: #667085;
+          color: #64748b;
           font-size: 14px;
         }
 
         .card {
           background: white;
-          border: 1px solid #e4e7ec;
-          border-radius: 18px;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
           padding: 18px;
-          box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
-          margin-bottom: 16px;
+          margin-bottom: 20px;
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        }
+
+        .sectionTitle {
+          margin-bottom: 14px;
         }
 
         .sectionHeader {
@@ -587,13 +580,44 @@ export default function Home() {
           justify-content: space-between;
           gap: 16px;
           align-items: flex-start;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
+        }
+
+        .ideaGrid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+          gap: 12px;
+          margin-bottom: 18px;
+        }
+
+        .ideaCard {
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          background: #f8fafc;
+          padding: 12px;
+        }
+
+        .ideaSymbol {
+          font-size: 17px;
+          font-weight: 900;
+          letter-spacing: 0.02em;
+        }
+
+        .ideaPrice {
+          font-size: 15px;
+          margin: 2px 0 8px;
+        }
+
+        .ideaMeta {
+          color: #64748b;
+          font-size: 12px;
+          margin-top: 5px;
         }
 
         .lowerGrid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 16px;
+          gap: 20px;
           align-items: start;
         }
 
@@ -609,36 +633,31 @@ export default function Home() {
 
         th {
           text-align: left;
-          color: #667085;
-          font-weight: 700;
-          padding: 9px 10px;
-          border-bottom: 1px solid #e4e7ec;
+          color: #64748b;
+          font-weight: 800;
+          padding: 10px;
+          border-bottom: 1px solid #e2e8f0;
           white-space: nowrap;
         }
 
         td {
-          padding: 10px;
-          border-bottom: 1px solid #f0f2f5;
+          padding: 11px 10px;
+          border-bottom: 1px solid #f1f5f9;
           vertical-align: middle;
           white-space: nowrap;
         }
 
-        .compactTable td {
-          padding-top: 8px;
-          padding-bottom: 8px;
-        }
-
         .symbol {
-          font-weight: 800;
+          font-weight: 900;
           letter-spacing: 0.03em;
         }
 
         .button {
-          background: #101828;
+          background: #0f172a;
           color: white;
           border: 0;
-          border-radius: 12px;
-          padding: 11px 14px;
+          border-radius: 11px;
+          padding: 11px 16px;
           font-weight: 800;
           cursor: pointer;
           white-space: nowrap;
@@ -646,8 +665,8 @@ export default function Home() {
 
         .button.secondary {
           background: white;
-          color: #101828;
-          border: 1px solid #d0d5dd;
+          color: #0f172a;
+          border: 1px solid #cbd5e1;
         }
 
         .button:disabled {
@@ -657,13 +676,13 @@ export default function Home() {
 
         .button.full {
           width: 100%;
-          margin-top: 12px;
+          margin-top: 14px;
         }
 
         input {
           width: 100%;
-          border: 1px solid #d0d5dd;
-          border-radius: 12px;
+          border: 1px solid #cbd5e1;
+          border-radius: 11px;
           padding: 11px 12px;
           font-size: 15px;
           outline: none;
@@ -687,10 +706,10 @@ export default function Home() {
 
         .resultBox {
           margin-top: 16px;
-          border: 1px solid #e4e7ec;
-          border-radius: 16px;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
           padding: 16px;
-          background: #fcfcfd;
+          background: #f8fafc;
         }
 
         .resultTop {
@@ -703,26 +722,26 @@ export default function Home() {
 
         .metricGrid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(5, 1fr);
           gap: 10px;
         }
 
         .metricGrid div {
           background: white;
-          border: 1px solid #eef0f3;
-          border-radius: 14px;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
           padding: 12px;
         }
 
         .metricGrid span {
           display: block;
-          color: #667085;
+          color: #64748b;
           font-size: 12px;
           margin-bottom: 4px;
         }
 
         .metricGrid strong {
-          font-size: 16px;
+          font-size: 15px;
         }
 
         .pill {
@@ -730,44 +749,53 @@ export default function Home() {
           align-items: center;
           justify-content: center;
           border-radius: 999px;
-          padding: 6px 10px;
-          font-weight: 800;
+          padding: 6px 12px;
+          font-weight: 900;
           font-size: 12px;
         }
 
+        .widePill {
+          width: 100%;
+          box-sizing: border-box;
+        }
+
         .green {
-          background: #dcfae6;
-          color: #067647;
+          background: #dcfce7;
+          color: #166534;
+          border: 1px solid #bbf7d0;
         }
 
         .yellow {
-          background: #fef7c3;
-          color: #a15c07;
+          background: #fef9c3;
+          color: #854d0e;
+          border: 1px solid #fde68a;
         }
 
         .orange {
-          background: #ffead5;
-          color: #b54708;
+          background: #ffedd5;
+          color: #9a3412;
+          border: 1px solid #fed7aa;
         }
 
         .red {
-          background: #fee4e2;
-          color: #b42318;
+          background: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #fecaca;
         }
 
         .positive {
-          color: #067647;
-          font-weight: 800;
+          color: #047857;
+          font-weight: 900;
         }
 
         .negative {
-          color: #b42318;
-          font-weight: 800;
+          color: #b91c1c;
+          font-weight: 900;
         }
 
         .error {
-          color: #b42318;
-          background: #fee4e2;
+          color: #991b1b;
+          background: #fee2e2;
           border-radius: 12px;
           padding: 10px 12px;
           margin-top: 12px;
@@ -787,15 +815,15 @@ export default function Home() {
           justify-content: space-between;
           gap: 12px;
           align-items: center;
-          border: 1px solid #eef0f3;
-          border-radius: 14px;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
           padding: 10px 12px;
-          background: #fcfcfd;
+          background: #f8fafc;
         }
 
         .miniPosition span {
           display: block;
-          color: #667085;
+          color: #64748b;
           font-size: 13px;
           margin-top: 2px;
         }
@@ -803,13 +831,9 @@ export default function Home() {
         .linkButton {
           background: none;
           border: none;
-          color: #b42318;
-          font-weight: 800;
+          color: #b91c1c;
+          font-weight: 900;
           cursor: pointer;
-        }
-
-        .portfolioAnalysis {
-          margin-top: 0;
         }
 
         .totals {
@@ -820,12 +844,12 @@ export default function Home() {
         }
 
         .totals span:first-child {
-          color: #667085;
+          color: #64748b;
           font-size: 12px;
         }
 
         .totals strong {
-          font-size: 20px;
+          font-size: 22px;
         }
 
         @media (max-width: 1100px) {
@@ -851,9 +875,8 @@ export default function Home() {
             padding: 14px;
           }
 
-          .hero {
+          .header {
             flex-direction: column;
-            align-items: stretch;
           }
 
           .formRow {
