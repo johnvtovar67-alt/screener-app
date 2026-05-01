@@ -134,7 +134,9 @@ export default function Home() {
       const res = await fetch("/api/top5");
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
+      if (!res.ok) {
+        throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
+      }
 
       const list = Array.isArray(data) ? data : data?.stocks || data?.results || data?.data || [];
       setStocks(list.slice(0, 10));
@@ -149,6 +151,7 @@ export default function Home() {
     try {
       const raw = window.localStorage.getItem(PORTFOLIO_KEY);
       if (!raw) return;
+
       const saved = JSON.parse(raw);
       if (Array.isArray(saved)) setPortfolio(saved);
     } catch {
@@ -174,8 +177,11 @@ export default function Home() {
     const next = [...portfolio];
     const index = next.findIndex((p) => p.symbol === cleanSymbol);
 
-    if (index >= 0) next[index] = { symbol: cleanSymbol, shares, avgCost };
-    else next.push({ symbol: cleanSymbol, shares, avgCost });
+    if (index >= 0) {
+      next[index] = { symbol: cleanSymbol, shares, avgCost };
+    } else {
+      next.push({ symbol: cleanSymbol, shares, avgCost });
+    }
 
     savePortfolio(next);
     setNewSymbol("");
@@ -202,7 +208,9 @@ export default function Home() {
       const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
+      if (!res.ok) {
+        throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
+      }
 
       setSnapStock(data?.stock || data?.result || data);
     } catch (err) {
@@ -231,7 +239,8 @@ export default function Home() {
           const value = Number.isFinite(price) ? price * Number(position.shares) : null;
           const costBasis = Number(position.avgCost) * Number(position.shares);
           const gainLoss = Number.isFinite(value) ? value - costBasis : null;
-          const gainLossPct = Number.isFinite(value) && costBasis > 0 ? ((value - costBasis) / costBasis) * 100 : null;
+          const gainLossPct =
+            Number.isFinite(value) && costBasis > 0 ? ((value - costBasis) / costBasis) * 100 : null;
 
           results.push({
             ...stock,
@@ -279,7 +288,7 @@ export default function Home() {
 
   return (
     <main className="page">
-      <section className="hero card">
+      <section className="hero">
         <div>
           <h1>Stock Screener</h1>
           <p>
@@ -292,144 +301,169 @@ export default function Home() {
         </button>
       </section>
 
-      <section className="dashboard">
-        <section className="card topIdeas">
-          <div className="sectionHeader">
-            <div>
-              <h2>Top 10 Ideas</h2>
-              <p>For stocks you do not currently own.</p>
-            </div>
+      <section className="card">
+        <div className="sectionHeader">
+          <div>
+            <h2>Top 10 Ideas</h2>
+            <p>For stocks you do not currently own.</p>
           </div>
+        </div>
 
-          {loadingTop && <p className="muted">Loading top ideas...</p>}
-          {topError && <p className="error">{topError}</p>}
+        {loadingTop && <p className="muted">Loading top ideas...</p>}
+        {topError && <p className="error">{topError}</p>}
 
-          {!loadingTop && !topError && (
-            <div className="tableWrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Company</th>
-                    <th>Price</th>
-                    <th>Change</th>
-                    <th>Score</th>
-                    <th>Momentum</th>
-                    <th>Trade Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stocks.map((stock, idx) => {
-                    const score = getScore(stock);
-                    const action = tradeActionForStock(stock, false);
+        {!loadingTop && !topError && (
+          <div className="tableWrap compactTable">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Company</th>
+                  <th>Price</th>
+                  <th>Change</th>
+                  <th>Score</th>
+                  <th>Momentum</th>
+                  <th>Trade Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stocks.map((stock, idx) => {
+                  const score = getScore(stock);
+                  const action = tradeActionForStock(stock, false);
 
-                    return (
-                      <tr key={`${getSymbol(stock)}-${idx}`}>
-                        <td className="symbol">{getSymbol(stock)}</td>
-                        <td>{getName(stock)}</td>
-                        <td>{money(getPrice(stock))}</td>
-                        <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>{percent(getChangePct(stock))}</td>
-                        <td>
-                          <span className={`pill ${scoreClass(score)}`}>{score}</span>
-                        </td>
-                        <td>{getMomentumText(stock)}</td>
-                        <td>
-                          <span className={`pill ${actionClass(action)}`}>{action}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                  return (
+                    <tr key={`${getSymbol(stock)}-${idx}`}>
+                      <td className="symbol">{getSymbol(stock)}</td>
+                      <td>{getName(stock)}</td>
+                      <td>{money(getPrice(stock))}</td>
+                      <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
+                        {percent(getChangePct(stock))}
+                      </td>
+                      <td>
+                        <span className={`pill ${scoreClass(score)}`}>{score}</span>
+                      </td>
+                      <td>{getMomentumText(stock)}</td>
+                      <td>
+                        <span className={`pill ${actionClass(action)}`}>{action}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="lowerGrid">
+        <section className="card">
+          <h2>Snap Quote + Score</h2>
+          <p className="muted">Check one stock without adding it to your portfolio.</p>
+
+          <form onSubmit={analyzeSymbol} className="formRow">
+            <input
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              placeholder="Enter symbol"
+            />
+            <button className="button" disabled={snapLoading}>
+              {snapLoading ? "Analyzing..." : "Analyze"}
+            </button>
+          </form>
+
+          {snapError && <p className="error">{snapError}</p>}
+
+          {snapStock && (
+            <div className="resultBox">
+              <div className="resultTop">
+                <div>
+                  <h3>{getSymbol(snapStock)}</h3>
+                  <p>{getName(snapStock)}</p>
+                </div>
+
+                <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
+                  {tradeActionForStock(snapStock, false)}
+                </span>
+              </div>
+
+              <div className="metricGrid">
+                <div>
+                  <span>Price</span>
+                  <strong>{money(getPrice(snapStock))}</strong>
+                </div>
+                <div>
+                  <span>Change</span>
+                  <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
+                    {percent(getChangePct(snapStock))}
+                  </strong>
+                </div>
+                <div>
+                  <span>Score</span>
+                  <strong>{getScore(snapStock)}</strong>
+                </div>
+                <div>
+                  <span>Momentum</span>
+                  <strong>{getMomentumText(snapStock)}</strong>
+                </div>
+              </div>
             </div>
           )}
         </section>
 
-        <section className="rightColumn">
-          <section className="card">
-            <h2>Snap Quote + Score</h2>
-            <p className="muted">Check one stock without adding it to your portfolio.</p>
+        <section className="card">
+          <h2>Portfolio</h2>
+          <p className="muted">For stocks you already own.</p>
 
-            <form onSubmit={analyzeSymbol} className="formRow">
-              <input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="Enter symbol" />
-              <button className="button" disabled={snapLoading}>
-                {snapLoading ? "Analyzing..." : "Analyze"}
-              </button>
-            </form>
-
-            {snapError && <p className="error">{snapError}</p>}
-
-            {snapStock && (
-              <div className="resultBox">
-                <div className="resultTop">
-                  <div>
-                    <h3>{getSymbol(snapStock)}</h3>
-                    <p>{getName(snapStock)}</p>
-                  </div>
-                  <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
-                    {tradeActionForStock(snapStock, false)}
-                  </span>
-                </div>
-
-                <div className="metricGrid">
-                  <div>
-                    <span>Price</span>
-                    <strong>{money(getPrice(snapStock))}</strong>
-                  </div>
-                  <div>
-                    <span>Change</span>
-                    <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
-                      {percent(getChangePct(snapStock))}
-                    </strong>
-                  </div>
-                  <div>
-                    <span>Score</span>
-                    <strong>{getScore(snapStock)}</strong>
-                  </div>
-                  <div>
-                    <span>Momentum</span>
-                    <strong>{getMomentumText(snapStock)}</strong>
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
-
-          <section className="card">
-            <h2>Portfolio</h2>
-            <p className="muted">For stocks you already own.</p>
-
-            <div className="portfolioForm">
-              <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
-              <input value={newShares} onChange={(e) => setNewShares(e.target.value)} placeholder="Shares" type="number" step="any" />
-              <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Avg cost" type="number" step="any" />
-              <button onClick={addPosition} className="button">
-                Add / Update
-              </button>
-            </div>
-
-            {portfolio.length > 0 && (
-              <div className="miniList">
-                {portfolio.map((p) => (
-                  <div className="miniPosition" key={p.symbol}>
-                    <div>
-                      <strong>{p.symbol}</strong>
-                      <span>
-                        {number(p.shares, 2)} shares @ {money(p.avgCost)}
-                      </span>
-                    </div>
-                    <button onClick={() => removePosition(p.symbol)} className="linkButton">
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <button onClick={analyzePortfolio} disabled={!portfolio.length || portfolioLoading} className="button full">
-              {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
+          <div className="portfolioForm">
+            <input
+              value={newSymbol}
+              onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
+              placeholder="Symbol"
+            />
+            <input
+              value={newShares}
+              onChange={(e) => setNewShares(e.target.value)}
+              placeholder="Shares"
+              type="number"
+              step="any"
+            />
+            <input
+              value={newCost}
+              onChange={(e) => setNewCost(e.target.value)}
+              placeholder="Avg cost"
+              type="number"
+              step="any"
+            />
+            <button onClick={addPosition} className="button">
+              Add / Update
             </button>
-          </section>
+          </div>
+
+          {portfolio.length > 0 && (
+            <div className="miniList">
+              {portfolio.map((p) => (
+                <div className="miniPosition" key={p.symbol}>
+                  <div>
+                    <strong>{p.symbol}</strong>
+                    <span>
+                      {number(p.shares, 2)} shares @ {money(p.avgCost)}
+                    </span>
+                  </div>
+                  <button onClick={() => removePosition(p.symbol)} className="linkButton">
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={analyzePortfolio}
+            disabled={!portfolio.length || portfolioLoading}
+            className="button full"
+          >
+            {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
+          </button>
         </section>
       </section>
 
@@ -501,16 +535,8 @@ export default function Home() {
           min-height: 100vh;
           background: #f3f5f8;
           color: #101828;
-          padding: 24px;
+          padding: 22px;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        }
-
-        .card {
-          background: white;
-          border: 1px solid #e4e7ec;
-          border-radius: 18px;
-          padding: 18px;
-          box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
         }
 
         .hero {
@@ -518,13 +544,14 @@ export default function Home() {
           justify-content: space-between;
           align-items: center;
           gap: 18px;
-          margin-bottom: 18px;
+          margin-bottom: 16px;
         }
 
         h1 {
           margin: 0;
           font-size: 34px;
           letter-spacing: -0.04em;
+          line-height: 1;
         }
 
         h2 {
@@ -546,16 +573,13 @@ export default function Home() {
           font-size: 14px;
         }
 
-        .dashboard {
-          display: grid;
-          grid-template-columns: minmax(640px, 1.35fr) minmax(360px, 0.9fr);
-          gap: 18px;
-          align-items: start;
-        }
-
-        .rightColumn {
-          display: grid;
-          gap: 18px;
+        .card {
+          background: white;
+          border: 1px solid #e4e7ec;
+          border-radius: 18px;
+          padding: 18px;
+          box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+          margin-bottom: 16px;
         }
 
         .sectionHeader {
@@ -563,7 +587,14 @@ export default function Home() {
           justify-content: space-between;
           gap: 16px;
           align-items: flex-start;
-          margin-bottom: 14px;
+          margin-bottom: 12px;
+        }
+
+        .lowerGrid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          align-items: start;
         }
 
         .tableWrap {
@@ -580,16 +611,21 @@ export default function Home() {
           text-align: left;
           color: #667085;
           font-weight: 700;
-          padding: 10px;
+          padding: 9px 10px;
           border-bottom: 1px solid #e4e7ec;
           white-space: nowrap;
         }
 
         td {
-          padding: 12px 10px;
+          padding: 10px;
           border-bottom: 1px solid #f0f2f5;
           vertical-align: middle;
           white-space: nowrap;
+        }
+
+        .compactTable td {
+          padding-top: 8px;
+          padding-bottom: 8px;
         }
 
         .symbol {
@@ -621,7 +657,7 @@ export default function Home() {
 
         .button.full {
           width: 100%;
-          margin-top: 14px;
+          margin-top: 12px;
         }
 
         input {
@@ -631,23 +667,22 @@ export default function Home() {
           padding: 11px 12px;
           font-size: 15px;
           outline: none;
+          box-sizing: border-box;
         }
 
         .formRow {
-          display: flex;
+          display: grid;
+          grid-template-columns: 1fr auto;
           gap: 10px;
           margin-top: 14px;
         }
 
         .portfolioForm {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 1fr 1fr 1fr auto;
           gap: 10px;
           margin-top: 14px;
-        }
-
-        .portfolioForm button {
-          grid-column: span 2;
+          align-items: center;
         }
 
         .resultBox {
@@ -668,7 +703,7 @@ export default function Home() {
 
         .metricGrid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(4, 1fr);
           gap: 10px;
         }
 
@@ -774,7 +809,7 @@ export default function Home() {
         }
 
         .portfolioAnalysis {
-          margin-top: 18px;
+          margin-top: 0;
         }
 
         .totals {
@@ -794,8 +829,20 @@ export default function Home() {
         }
 
         @media (max-width: 1100px) {
-          .dashboard {
+          .lowerGrid {
             grid-template-columns: 1fr;
+          }
+
+          .portfolioForm {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .portfolioForm button {
+            grid-column: span 2;
+          }
+
+          .metricGrid {
+            grid-template-columns: repeat(2, 1fr);
           }
         }
 
@@ -810,7 +857,7 @@ export default function Home() {
           }
 
           .formRow {
-            flex-direction: column;
+            grid-template-columns: 1fr;
           }
 
           .portfolioForm {
