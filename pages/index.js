@@ -30,26 +30,6 @@ function clampScore(value) {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-function normalizeMomentum(value) {
-  const n = Number(value);
-
-  if (!Number.isFinite(n)) return "Building";
-  if (n >= 70 || n >= 1.5) return "Strong";
-  if (n >= 45 || n >= 0.5) return "Building";
-  return "Weak";
-}
-
-function getScore(stock) {
-  return clampScore(
-    stock?.score ??
-      stock?.compositeScore ??
-      stock?.overallScore ??
-      stock?.totalScore ??
-      stock?.ratingScore ??
-      0
-  );
-}
-
 function getSymbol(stock) {
   return String(stock?.symbol ?? stock?.ticker ?? "").toUpperCase();
 }
@@ -70,28 +50,46 @@ function getPrice(stock) {
 
 function getChangePct(stock) {
   return Number(
-    stock?.changesPercentage ??
+    stock?.dayChangePct ??
+      stock?.changesPercentage ??
       stock?.changePercent ??
       stock?.percentChange ??
       stock?.quote?.changesPercentage
   );
 }
 
-function getMomentumText(stock) {
-  if (stock?.momentumText) return stock.momentumText;
-  if (stock?.momentumLabel) return stock.momentumLabel;
-  return normalizeMomentum(
-    stock?.momentum ??
-      stock?.momentumScore ??
-      stock?.technicalScore ??
-      stock?.technicalMomentum
+function getScore(stock) {
+  return clampScore(
+    stock?.recommendation?.score ??
+      stock?.score ??
+      stock?.compositeScore ??
+      stock?.overallScore ??
+      stock?.totalScore ??
+      stock?.ratingScore ??
+      stock?.asymmetryScore ??
+      0
   );
+}
+
+function getMomentumText(stock) {
+  const stage = String(stock?.stage ?? "").toUpperCase();
+  const oneMonth = Number(stock?.technicalSnapshot?.oneMonthPct ?? stock?.oneMonthPct);
+  const pctFrom20 = Number(stock?.pctFrom20dma);
+  const above50 = stock?.above50dma === true;
+  const above200 = stock?.above200dma === true;
+
+  if (stage.includes("STRONG")) return "Strong";
+  if (Number.isFinite(oneMonth) && oneMonth >= 8) return "Strong";
+  if (Number.isFinite(pctFrom20) && pctFrom20 >= 5 && above50) return "Strong";
+  if (above50 && above200) return "Building";
+  if (Number.isFinite(oneMonth) && oneMonth > 0) return "Building";
+
+  return "Weak";
 }
 
 function tradeActionForStock(stock, owned = false) {
   const score = getScore(stock);
   const momentum = getMomentumText(stock);
-  const changePct = getChangePct(stock);
 
   if (owned) {
     if (score >= 78 && momentum !== "Weak") return "Hold / Add";
@@ -170,6 +168,7 @@ export default function Home() {
     try {
       const raw = window.localStorage.getItem(PORTFOLIO_KEY);
       if (!raw) return;
+
       const saved = JSON.parse(raw);
       if (Array.isArray(saved)) setPortfolio(saved);
     } catch {
@@ -252,8 +251,8 @@ export default function Home() {
         try {
           const res = await fetch(`/api?symbol=${encodeURIComponent(position.symbol)}`);
           const data = await res.json();
-
           const stock = data?.stock || data?.result || data;
+
           const price = getPrice(stock);
           const value = Number.isFinite(price) ? price * Number(position.shares) : null;
           const costBasis = Number(position.avgCost) * Number(position.shares);
