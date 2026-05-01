@@ -92,6 +92,27 @@ function getEntryNote(stock) {
   );
 }
 
+function calculatePosition(position, livePrice) {
+  const shares = Number(position?.shares ?? 0);
+  const avgCost = Number(position?.avgCost ?? 0);
+  const price = Number(livePrice ?? 0);
+
+  const value = shares * price;
+  const costBasis = shares * avgCost;
+  const gainLoss = value - costBasis;
+  const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+
+  return {
+    shares,
+    avgCost,
+    price,
+    value,
+    costBasis,
+    gainLoss,
+    gainLossPct,
+  };
+}
+
 function tradeActionForStock(stock, owned = false) {
   const label = stock?.recommendation?.label;
   const score = getScore(stock);
@@ -248,28 +269,32 @@ export default function Home() {
           const data = await res.json();
           const stock = data?.stock || data?.result || data;
 
-          const price = getPrice(stock);
-          const value = Number.isFinite(price) ? price * Number(position.shares) : null;
-          const costBasis = Number(position.avgCost) * Number(position.shares);
-          const gainLoss = Number.isFinite(value) ? value - costBasis : null;
-          const gainLossPct =
-            Number.isFinite(value) && costBasis > 0 ? ((value - costBasis) / costBasis) * 100 : null;
+          const livePrice = getPrice(stock);
+          const calculated = calculatePosition(position, livePrice);
 
           results.push({
             ...stock,
             symbol: position.symbol,
-            shares: Number(position.shares),
-            avgCost: Number(position.avgCost),
-            currentPrice: price,
-            value,
-            gainLoss,
-            gainLossPct,
+            shares: calculated.shares,
+            avgCost: calculated.avgCost,
+            currentPrice: calculated.price,
+            value: calculated.value,
+            costBasis: calculated.costBasis,
+            gainLoss: calculated.gainLoss,
+            gainLossPct: calculated.gainLossPct,
           });
         } catch {
+          const calculated = calculatePosition(position, 0);
+
           results.push({
             symbol: position.symbol,
-            shares: Number(position.shares),
-            avgCost: Number(position.avgCost),
+            shares: calculated.shares,
+            avgCost: calculated.avgCost,
+            currentPrice: null,
+            value: null,
+            costBasis: calculated.costBasis,
+            gainLoss: null,
+            gainLossPct: null,
             error: "Could not analyze",
           });
         }
@@ -282,20 +307,25 @@ export default function Home() {
   }
 
   const portfolioTotals = useMemo(() => {
-    let value = 0;
-    let cost = 0;
+    let totalValue = 0;
+    let totalCost = 0;
 
     for (const p of portfolioResults) {
-      if (Number.isFinite(Number(p.value))) value += Number(p.value);
-      if (Number.isFinite(Number(p.avgCost)) && Number.isFinite(Number(p.shares))) {
-        cost += Number(p.avgCost) * Number(p.shares);
-      }
+      const value = Number(p.value);
+      const costBasis = Number(p.costBasis);
+
+      if (Number.isFinite(value)) totalValue += value;
+      if (Number.isFinite(costBasis)) totalCost += costBasis;
     }
 
+    const totalGainLoss = totalValue - totalCost;
+    const totalGainLossPct = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
+
     return {
-      value,
-      gainLoss: value - cost,
-      gainLossPct: cost > 0 ? ((value - cost) / cost) * 100 : null,
+      value: totalValue,
+      costBasis: totalCost,
+      gainLoss: totalGainLoss,
+      gainLossPct: totalGainLossPct,
     };
   }, [portfolioResults]);
 
@@ -511,6 +541,7 @@ export default function Home() {
                   <th>Avg Cost</th>
                   <th>Price</th>
                   <th>Value</th>
+                  <th>Cost Basis</th>
                   <th>Gain / Loss</th>
                   <th>Score</th>
                   <th>Momentum</th>
@@ -529,6 +560,7 @@ export default function Home() {
                       <td>{money(stock.avgCost)}</td>
                       <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
                       <td>{stock.error ? "—" : money(stock.value)}</td>
+                      <td>{money(stock.costBasis)}</td>
                       <td className={stock.gainLoss >= 0 ? "positive" : "negative"}>
                         {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
                       </td>
