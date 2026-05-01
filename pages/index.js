@@ -74,6 +74,24 @@ function getMomentumText(stock) {
   return "Weak";
 }
 
+function getWhy(stock) {
+  return (
+    stock?.recommendation?.reason ??
+    stock?.reason ??
+    stock?.why ??
+    "Constructive setup, but wait for stronger confirmation."
+  );
+}
+
+function getEntryNote(stock) {
+  return (
+    stock?.entryNote ??
+    stock?.recommendation?.entryNote ??
+    stock?.note ??
+    "Wait for stronger price or volume confirmation before adding."
+  );
+}
+
 function tradeActionForStock(stock, owned = false) {
   const score = getScore(stock);
   const momentum = getMomentumText(stock);
@@ -86,13 +104,13 @@ function tradeActionForStock(stock, owned = false) {
   }
 
   if (score >= 78 && momentum === "Strong") return "Buy Now";
-  if (score >= 58) return "Buy Setup (Wait)";
+  if (score >= 58) return "Buy Setup";
   return "Avoid";
 }
 
 function actionClass(action) {
   if (action === "Buy Now" || action === "Hold / Add") return "green";
-  if (action === "Buy Setup" || action === "Hold") return "yellow";
+  if (action.includes("Buy Setup") || action === "Hold") return "yellow";
   if (action === "Trim") return "orange";
   return "red";
 }
@@ -285,6 +303,7 @@ export default function Home() {
           <h1>🧠 Asymmetry Screener</h1>
           <p>Broad-market screen for under-the-radar, high-upside setups.</p>
         </div>
+
         <button onClick={loadTopIdeas} className="button secondary">
           Reload Screener
         </button>
@@ -293,7 +312,7 @@ export default function Home() {
       <section className="card">
         <div className="sectionTitle">
           <h2>🔥 Top 10 Ideas</h2>
-          <p>Quick scan first. Details below.</p>
+          <p>Cards are the quick scan. Table gives the reason and entry note.</p>
         </div>
 
         {loadingTop && <p className="muted">Loading top ideas...</p>}
@@ -326,14 +345,13 @@ export default function Home() {
                     <th>Name</th>
                     <th>Price</th>
                     <th>Chg %</th>
-                    <th>Score</th>
-                    <th>Momentum</th>
                     <th>Trade Action</th>
+                    <th>Why</th>
+                    <th>Entry Note</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stocks.map((stock, idx) => {
-                    const score = getScore(stock);
                     const action = tradeActionForStock(stock, false);
 
                     return (
@@ -345,12 +363,10 @@ export default function Home() {
                           {percent(getChangePct(stock))}
                         </td>
                         <td>
-                          <span className={`pill ${scoreClass(score)}`}>{score}</span>
-                        </td>
-                        <td>{getMomentumText(stock)}</td>
-                        <td>
                           <span className={`pill ${actionClass(action)}`}>{action}</span>
                         </td>
+                        <td className="textCell">{getWhy(stock)}</td>
+                        <td className="textCell mutedText">{getEntryNote(stock)}</td>
                       </tr>
                     );
                   })}
@@ -364,7 +380,7 @@ export default function Home() {
       <section className="lowerGrid">
         <section className="card">
           <h2>Snap Quote + Score</h2>
-          <p className="muted">Uses the same non-owned Trade Action logic as Top Ideas.</p>
+          <p className="muted">Uses the same non-owned logic: Buy Now, Buy Setup, Avoid.</p>
 
           <form onSubmit={analyzeSymbol} className="formRow">
             <input
@@ -386,6 +402,7 @@ export default function Home() {
                   <h3>{getSymbol(snapStock)}</h3>
                   <p>{getName(snapStock)}</p>
                 </div>
+
                 <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
                   {tradeActionForStock(snapStock, false)}
                 </span>
@@ -413,6 +430,17 @@ export default function Home() {
                 <div>
                   <span>Trade Action</span>
                   <strong>{tradeActionForStock(snapStock, false)}</strong>
+                </div>
+              </div>
+
+              <div className="snapNotes">
+                <div>
+                  <span>Why</span>
+                  <p>{getWhy(snapStock)}</p>
+                </div>
+                <div>
+                  <span>Entry Note</span>
+                  <p>{getEntryNote(snapStock)}</p>
                 </div>
               </div>
             </div>
@@ -463,6 +491,7 @@ export default function Home() {
               <h2>Portfolio Analysis</h2>
               <p>Trade Action is based on stocks you already own.</p>
             </div>
+
             <div className="totals">
               <span>Total Value</span>
               <strong>{money(portfolioTotals.value)}</strong>
@@ -593,7 +622,7 @@ export default function Home() {
         .ideaCard {
           border: 1px solid #e2e8f0;
           border-radius: 12px;
-          background: #f8fafc;
+          background: white;
           padding: 12px;
         }
 
@@ -643,13 +672,24 @@ export default function Home() {
         td {
           padding: 11px 10px;
           border-bottom: 1px solid #f1f5f9;
-          vertical-align: middle;
-          white-space: nowrap;
+          vertical-align: top;
         }
 
         .symbol {
           font-weight: 900;
           letter-spacing: 0.03em;
+          white-space: nowrap;
+        }
+
+        .textCell {
+          max-width: 320px;
+          white-space: normal;
+          line-height: 1.35;
+          color: #334155;
+        }
+
+        .mutedText {
+          color: #64748b;
         }
 
         .button {
@@ -726,22 +766,38 @@ export default function Home() {
           gap: 10px;
         }
 
-        .metricGrid div {
+        .metricGrid div,
+        .snapNotes div {
           background: white;
           border: 1px solid #e2e8f0;
           border-radius: 12px;
           padding: 12px;
         }
 
-        .metricGrid span {
+        .metricGrid span,
+        .snapNotes span {
           display: block;
           color: #64748b;
           font-size: 12px;
           margin-bottom: 4px;
+          font-weight: 700;
         }
 
         .metricGrid strong {
           font-size: 15px;
+        }
+
+        .snapNotes {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 10px;
+        }
+
+        .snapNotes p {
+          color: #334155;
+          line-height: 1.35;
+          font-size: 14px;
         }
 
         .pill {
@@ -752,6 +808,7 @@ export default function Home() {
           padding: 6px 12px;
           font-weight: 900;
           font-size: 12px;
+          white-space: nowrap;
         }
 
         .widePill {
@@ -786,11 +843,13 @@ export default function Home() {
         .positive {
           color: #047857;
           font-weight: 900;
+          white-space: nowrap;
         }
 
         .negative {
           color: #b91c1c;
           font-weight: 900;
+          white-space: nowrap;
         }
 
         .error {
@@ -867,6 +926,10 @@ export default function Home() {
 
           .metricGrid {
             grid-template-columns: repeat(2, 1fr);
+          }
+
+          .snapNotes {
+            grid-template-columns: 1fr;
           }
         }
 
