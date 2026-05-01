@@ -12,6 +12,9 @@ const ACTION_COLORS = {
   "Hold / Add": "#16a34a",
   "Trim": "#d97706",
   "Exit / Avoid": "#dc2626",
+  "Watch": "#d97706",
+  "Setup Only": "#64748b",
+  "Not analyzed": "#64748b",
 };
 
 function safeNumber(value, fallback = 0) {
@@ -29,6 +32,23 @@ function percent(value) {
   const n = safeNumber(value, null);
   if (n === null) return "—";
   return `${n.toFixed(1)}%`;
+}
+
+function titleCaseLabel(value) {
+  const raw =
+    typeof value === "object" && value !== null ? value.label : value;
+
+  const text = String(raw || "").trim().toUpperCase();
+
+  if (text === "TRADE READY") return "Trade Ready";
+  if (text === "WATCH CLOSELY") return "Watch Closely";
+  if (text === "SETUP ONLY") return "Setup Only";
+  if (text === "STRONG BUY") return "Strong Buy";
+  if (text === "BUY") return "Buy";
+  if (text === "WATCH") return "Watch";
+  if (text === "AVOID") return "Avoid";
+
+  return raw || "—";
 }
 
 function getSymbol(row) {
@@ -77,41 +97,65 @@ function getComposite(row) {
 }
 
 function getHeat(row) {
-  return safeNumber(
-    row?.heatScore ??
-      row?.technicalSnapshot?.heatScore ??
-      row?.recommendation?.heatScore ??
-      row?.tradeReadiness?.heatScore,
-    0
-  );
+  if (row?.heatScore !== undefined && row?.heatScore !== null) {
+    return row.heatScore;
+  }
+
+  if (
+    row?.technicalSnapshot?.heatScore !== undefined &&
+    row?.technicalSnapshot?.heatScore !== null
+  ) {
+    return row.technicalSnapshot.heatScore;
+  }
+
+  if (
+    row?.recommendation?.heatScore !== undefined &&
+    row?.recommendation?.heatScore !== null
+  ) {
+    return row.recommendation.heatScore;
+  }
+
+  if (
+    row?.tradeReadiness?.heatScore !== undefined &&
+    row?.tradeReadiness?.heatScore !== null
+  ) {
+    return row.tradeReadiness.heatScore;
+  }
+
+  return 0;
+}
+
+function getHeatForDecision(row) {
+  const heat = safeNumber(getHeat(row), 0);
+  return heat <= 5 ? heat * 20 : heat;
 }
 
 function getReadiness(row) {
-  return (
+  return titleCaseLabel(
     row?.tradeReadiness?.label ||
-    row?.tradeReadiness ||
-    row?.recommendation?.tradeReadiness?.label ||
-    row?.recommendation?.tradeReadiness ||
-    row?.technicalSnapshot?.tradeReadiness?.label ||
-    row?.technicalSnapshot?.tradeReadiness ||
-    "Setup Only"
+      row?.tradeReadiness ||
+      row?.recommendation?.tradeReadiness?.label ||
+      row?.recommendation?.tradeReadiness ||
+      row?.technicalSnapshot?.tradeReadiness?.label ||
+      row?.technicalSnapshot?.tradeReadiness ||
+      "Setup Only"
   );
 }
 
 function getRecommendation(row) {
-  return (
+  return titleCaseLabel(
     row?.rating ||
-    row?.recommendation?.rating ||
-    row?.recommendation?.label ||
-    row?.action ||
-    "Watch"
+      row?.recommendation?.rating ||
+      row?.recommendation?.label ||
+      row?.action ||
+      "Watch"
   );
 }
 
-function cleanPortfolioAction(row, owned = false) {
+function getPortfolioAction(row, owned = false) {
   const readiness = getReadiness(row);
   const composite = getComposite(row);
-  const heat = getHeat(row);
+  const heat = getHeatForDecision(row);
 
   if (!owned) {
     if (readiness === "Trade Ready" && composite >= 70) return "Add / Buy";
@@ -137,7 +181,7 @@ function sortIdeas(a, b) {
 
   if (ar !== br) return ar - br;
 
-  const heatDiff = getHeat(b) - getHeat(a);
+  const heatDiff = getHeatForDecision(b) - getHeatForDecision(a);
   if (heatDiff !== 0) return heatDiff;
 
   return getComposite(b) - getComposite(a);
@@ -162,8 +206,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [error, setError] = useState("");
+
   const [symbolInput, setSymbolInput] = useState("");
   const [sharesInput, setSharesInput] = useState("");
+  const [avgCostInput, setAvgCostInput] = useState("");
+
   const [snapInput, setSnapInput] = useState("");
   const [snapResult, setSnapResult] = useState(null);
   const [snapLoading, setSnapLoading] = useState(false);
@@ -173,6 +220,7 @@ export default function Home() {
 
   useEffect(() => {
     const saved = localStorage.getItem("stockScreenerPortfolio");
+
     if (saved) {
       try {
         setPortfolio(JSON.parse(saved));
@@ -221,9 +269,7 @@ export default function Home() {
         const res = await fetch(url);
         const data = await res.json();
 
-        if (data?.error) {
-          continue;
-        }
+        if (data?.error) continue;
 
         if (Array.isArray(data)) {
           const found = data.find(
@@ -239,7 +285,7 @@ export default function Home() {
         const found = rows.find((x) => getSymbol(x).toUpperCase() === clean);
         if (found) return found;
       } catch {
-        // try next URL
+        // Try next endpoint
       }
     }
 
@@ -268,6 +314,7 @@ export default function Home() {
   function addPortfolioPosition() {
     const symbol = symbolInput.trim().toUpperCase();
     const shares = safeNumber(sharesInput, 0);
+    const avgCost = safeNumber(avgCostInput, 0);
 
     if (!symbol || shares <= 0) return;
 
@@ -275,18 +322,35 @@ export default function Home() {
       const existing = prev.find((p) => p.symbol === symbol);
 
       if (existing) {
+        const existingShares = safeNumber(existing.shares, 0);
+        const existingCost = safeNumber(existing.avgCost, 0);
+        const newTotalShares = existingShares + shares;
+
+        const blendedCost =
+          existingCost > 0 && avgCost > 0
+            ? (existingShares * existingCost + shares * avgCost) /
+              newTotalShares
+            : avgCost > 0
+            ? avgCost
+            : existingCost;
+
         return prev.map((p) =>
           p.symbol === symbol
-            ? { ...p, shares: safeNumber(p.shares) + shares }
+            ? {
+                ...p,
+                shares: newTotalShares,
+                avgCost: blendedCost,
+              }
             : p
         );
       }
 
-      return [...prev, { symbol, shares }];
+      return [...prev, { symbol, shares, avgCost }];
     });
 
     setSymbolInput("");
     setSharesInput("");
+    setAvgCostInput("");
   }
 
   function removePortfolioPosition(symbol) {
@@ -311,11 +375,13 @@ export default function Home() {
           results.push({
             ...analysis,
             ownedShares: position.shares,
+            avgCost: position.avgCost,
           });
         } else {
           results.push({
             symbol: position.symbol,
             ownedShares: position.shares,
+            avgCost: position.avgCost,
             missing: true,
           });
         }
@@ -370,7 +436,7 @@ export default function Home() {
               const readiness = getReadiness(row);
               const heat = getHeat(row);
               const composite = getComposite(row);
-              const action = cleanPortfolioAction(row, false);
+              const action = getPortfolioAction(row, false);
 
               return (
                 <div key={`${symbol}-${index}`} style={styles.ideaCard}>
@@ -444,7 +510,9 @@ export default function Home() {
         {snapResult && (
           <div style={styles.snapBox}>
             {snapResult.error ? (
-              <p style={styles.muted}>No result found for {snapResult.symbol}.</p>
+              <p style={styles.muted}>
+                No result found for {snapResult.symbol}.
+              </p>
             ) : (
               <>
                 <div style={styles.cardTop}>
@@ -491,8 +559,8 @@ export default function Home() {
           <div>
             <h2 style={styles.sectionTitle}>Portfolio</h2>
             <p style={styles.sectionSub}>
-              Add your positions, then analyze whether each one is a hold, add,
-              trim, or exit.
+              Add your symbol, shares, and average cost. Then analyze whether to
+              hold, add, trim, or exit.
             </p>
           </div>
 
@@ -515,6 +583,14 @@ export default function Home() {
             type="number"
             style={styles.input}
           />
+          <input
+            value={avgCostInput}
+            onChange={(e) => setAvgCostInput(e.target.value)}
+            placeholder="Avg Cost"
+            type="number"
+            step="0.01"
+            style={styles.input}
+          />
           <button onClick={addPortfolioPosition} style={styles.secondaryButton}>
             Add Position
           </button>
@@ -529,6 +605,10 @@ export default function Home() {
                 <tr>
                   <th style={styles.th}>Symbol</th>
                   <th style={styles.th}>Shares</th>
+                  <th style={styles.th}>Avg Cost</th>
+                  <th style={styles.th}>Price</th>
+                  <th style={styles.th}>Value</th>
+                  <th style={styles.th}>Gain/Loss</th>
                   <th style={styles.th}>Action</th>
                   <th style={styles.th}>Readiness</th>
                   <th style={styles.th}>Heat</th>
@@ -544,8 +624,19 @@ export default function Home() {
                       position.symbol.toUpperCase()
                   );
 
+                  const price = analysis ? safeNumber(getPrice(analysis), 0) : 0;
+                  const shares = safeNumber(position.shares, 0);
+                  const avgCost = safeNumber(position.avgCost, 0);
+                  const value = price > 0 ? shares * price : null;
+                  const costBasis =
+                    avgCost > 0 && shares > 0 ? shares * avgCost : null;
+                  const gainLossPct =
+                    value !== null && costBasis
+                      ? ((value - costBasis) / costBasis) * 100
+                      : null;
+
                   const action = analysis
-                    ? cleanPortfolioAction(analysis, true)
+                    ? getPortfolioAction(analysis, true)
                     : "Not analyzed";
 
                   return (
@@ -553,7 +644,19 @@ export default function Home() {
                       <td style={styles.td}>
                         <strong>{position.symbol}</strong>
                       </td>
-                      <td style={styles.td}>{position.shares}</td>
+                      <td style={styles.td}>{shares}</td>
+                      <td style={styles.td}>
+                        {avgCost > 0 ? money(avgCost) : "—"}
+                      </td>
+                      <td style={styles.td}>
+                        {analysis ? money(price) : "—"}
+                      </td>
+                      <td style={styles.td}>
+                        {value !== null ? money(value) : "—"}
+                      </td>
+                      <td style={styles.td}>
+                        {gainLossPct !== null ? percent(gainLossPct) : "—"}
+                      </td>
                       <td style={styles.td}>
                         <span
                           style={{
@@ -781,10 +884,12 @@ const styles = {
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: "0.04em",
+    whiteSpace: "nowrap",
   },
   td: {
     padding: "13px 10px",
     borderBottom: "1px solid #e2e8f0",
+    whiteSpace: "nowrap",
   },
   portfolioAction: {
     fontWeight: 900,
