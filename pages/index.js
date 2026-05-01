@@ -1,918 +1,882 @@
 import { useEffect, useMemo, useState } from "react";
 
-const READINESS_ORDER = {
-  "Trade Ready": 1,
-  "Watch Closely": 2,
-  "Setup Only": 3,
-};
-
-const ACTION_COLORS = {
-  "Consider Buy": "#16a34a",
-  Watch: "#d97706",
-  Hold: "#2563eb",
-  "Hold / Add": "#16a34a",
-  Trim: "#d97706",
-  "Exit / Avoid": "#dc2626",
-  "Not analyzed": "#64748b",
-};
-
-function safeNumber(value, fallback = 0) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-}
+const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
 
 function money(value) {
-  const n = safeNumber(value, null);
-  if (n === null) return "—";
-  return `$${n.toFixed(2)}`;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return n.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  });
 }
 
 function percent(value) {
-  const n = safeNumber(value, null);
-  if (n === null) return "—";
-  return `${n.toFixed(1)}%`;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 
-function titleCaseLabel(value) {
-  const raw =
-    typeof value === "object" && value !== null ? value.label : value;
-
-  const text = String(raw || "").trim().toUpperCase();
-
-  if (text === "TRADE READY") return "Trade Ready";
-  if (text === "WATCH CLOSELY") return "Watch Closely";
-  if (text === "SETUP ONLY") return "Setup Only";
-  if (text === "STRONG BUY") return "Strong Buy";
-  if (text === "BUY") return "Buy";
-  if (text === "WATCH") return "Watch";
-  if (text === "AVOID") return "Avoid";
-
-  return raw || "—";
+function number(value, digits = 2) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return n.toFixed(digits);
 }
 
-function getSymbol(row) {
-  return row?.symbol || row?.ticker || row?.profile?.symbol || "";
+function clampScore(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-function getName(row) {
-  return (
-    row?.name ||
-    row?.companyName ||
-    row?.profile?.companyName ||
-    row?.profile?.name ||
-    getSymbol(row)
+function normalizeMomentum(value) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n)) return "Building";
+  if (n >= 70 || n >= 1.5) return "Strong";
+  if (n >= 45 || n >= 0.5) return "Building";
+  return "Weak";
+}
+
+function getScore(stock) {
+  return clampScore(
+    stock?.score ??
+      stock?.compositeScore ??
+      stock?.overallScore ??
+      stock?.totalScore ??
+      stock?.ratingScore ??
+      0
   );
 }
 
-function getPrice(row) {
-  return (
-    row?.price ??
-    row?.quote?.price ??
-    row?.quote?.c ??
-    row?.technicalSnapshot?.price ??
-    row?.profile?.price
+function getSymbol(stock) {
+  return String(stock?.symbol ?? stock?.ticker ?? "").toUpperCase();
+}
+
+function getName(stock) {
+  return stock?.name ?? stock?.companyName ?? stock?.company ?? "—";
+}
+
+function getPrice(stock) {
+  return Number(
+    stock?.price ??
+      stock?.quote?.price ??
+      stock?.regularMarketPrice ??
+      stock?.currentPrice ??
+      stock?.lastPrice
   );
 }
 
-function getChange(row) {
-  return (
-    row?.changePercent ??
-    row?.changesPercentage ??
-    row?.quote?.changesPercentage ??
-    row?.quote?.dp ??
-    row?.technicalSnapshot?.changePercent ??
-    row?.dayChangePct
+function getChangePct(stock) {
+  return Number(
+    stock?.changesPercentage ??
+      stock?.changePercent ??
+      stock?.percentChange ??
+      stock?.quote?.changesPercentage
   );
 }
 
-function getComposite(row) {
-  return safeNumber(
-    row?.compositeScore ??
-      row?.score ??
-      row?.overallScore ??
-      row?.recommendation?.score,
-    0
+function getMomentumText(stock) {
+  if (stock?.momentumText) return stock.momentumText;
+  if (stock?.momentumLabel) return stock.momentumLabel;
+  return normalizeMomentum(
+    stock?.momentum ??
+      stock?.momentumScore ??
+      stock?.technicalScore ??
+      stock?.technicalMomentum
   );
 }
 
-function getMomentum(row) {
-  if (row?.heatScore !== undefined && row?.heatScore !== null) {
-    return row.heatScore;
+function tradeActionForStock(stock, owned = false) {
+  const score = getScore(stock);
+  const momentum = getMomentumText(stock);
+  const changePct = getChangePct(stock);
+
+  if (owned) {
+    if (score >= 78 && momentum !== "Weak") return "Hold / Add";
+    if (score >= 58) return "Hold";
+    if (score >= 42) return "Trim";
+    return "Exit / Avoid";
   }
 
-  if (
-    row?.technicalSnapshot?.heatScore !== undefined &&
-    row?.technicalSnapshot?.heatScore !== null
-  ) {
-    return row.technicalSnapshot.heatScore;
-  }
-
-  if (
-    row?.recommendation?.heatScore !== undefined &&
-    row?.recommendation?.heatScore !== null
-  ) {
-    return row.recommendation.heatScore;
-  }
-
-  if (
-    row?.tradeReadiness?.heatScore !== undefined &&
-    row?.tradeReadiness?.heatScore !== null
-  ) {
-    return row.tradeReadiness.heatScore;
-  }
-
-  return 0;
+  if (score >= 78 && momentum === "Strong") return "Buy Now";
+  if (score >= 58) return "Watch for Entry";
+  return "Avoid for Now";
 }
 
-function getMomentumForDecision(row) {
-  const momentum = safeNumber(getMomentum(row), 0);
-  return momentum <= 5 ? momentum * 20 : momentum;
+function actionClass(action) {
+  if (action === "Buy Now" || action === "Hold / Add") return "actionGreen";
+  if (action === "Watch for Entry" || action === "Hold") return "actionYellow";
+  if (action === "Trim") return "actionOrange";
+  return "actionRed";
 }
 
-function getReadiness(row) {
-  return titleCaseLabel(
-    row?.tradeReadiness?.label ||
-      row?.tradeReadiness ||
-      row?.recommendation?.tradeReadiness?.label ||
-      row?.recommendation?.tradeReadiness ||
-      row?.technicalSnapshot?.tradeReadiness?.label ||
-      row?.technicalSnapshot?.tradeReadiness ||
-      "Setup Only"
-  );
+function scoreClass(score) {
+  if (score >= 75) return "scoreGreen";
+  if (score >= 55) return "scoreYellow";
+  return "scoreRed";
 }
 
-function getAction(row, owned = false) {
-  const readiness = getReadiness(row);
-  const composite = getComposite(row);
-  const momentum = getMomentumForDecision(row);
-
-  if (!owned) {
-    if (readiness === "Trade Ready" && composite >= 70) return "Consider Buy";
-    if (readiness === "Watch Closely") return "Watch";
-    return "Watch";
-  }
-
-  if (composite < 45 || momentum < 35) return "Exit / Avoid";
-  if (composite < 58) return "Trim";
-  if (readiness === "Trade Ready" && composite >= 70) return "Hold / Add";
-  return "Hold";
-}
-
-function readinessBadgeColor(readiness) {
-  if (readiness === "Trade Ready") return "#16a34a";
-  if (readiness === "Watch Closely") return "#d97706";
-  return "#64748b";
-}
-
-function actionColor(action) {
-  return ACTION_COLORS[action] || "#334155";
-}
-
-function sortIdeas(a, b) {
-  const ar = READINESS_ORDER[getReadiness(a)] || 99;
-  const br = READINESS_ORDER[getReadiness(b)] || 99;
-
-  if (ar !== br) return ar - br;
-
-  const momentumDiff = getMomentumForDecision(b) - getMomentumForDecision(a);
-  if (momentumDiff !== 0) return momentumDiff;
-
-  return getComposite(b) - getComposite(a);
-}
-
-function extractRows(data) {
-  if (Array.isArray(data)) return data;
-
-  return (
-    data?.stocks ||
-    data?.results ||
-    data?.ideas ||
-    data?.top5 ||
-    data?.top10 ||
-    data?.data ||
-    []
-  );
+function Card({ children, className = "" }) {
+  return <div className={`card ${className}`}>{children}</div>;
 }
 
 export default function Home() {
-  const [ideas, setIdeas] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [portfolioLoading, setPortfolioLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [stocks, setStocks] = useState([]);
+  const [loadingTop, setLoadingTop] = useState(true);
+  const [topError, setTopError] = useState("");
 
-  const [symbolInput, setSymbolInput] = useState("");
-  const [sharesInput, setSharesInput] = useState("");
-  const [avgCostInput, setAvgCostInput] = useState("");
-
-  const [snapInput, setSnapInput] = useState("");
-  const [snapResult, setSnapResult] = useState(null);
+  const [symbol, setSymbol] = useState("");
   const [snapLoading, setSnapLoading] = useState(false);
+  const [snapError, setSnapError] = useState("");
+  const [snapStock, setSnapStock] = useState(null);
 
   const [portfolio, setPortfolio] = useState([]);
-  const [portfolioAnalysis, setPortfolioAnalysis] = useState([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioResults, setPortfolioResults] = useState([]);
+
+  const [newSymbol, setNewSymbol] = useState("");
+  const [newShares, setNewShares] = useState("");
+  const [newCost, setNewCost] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("stockScreenerPortfolio");
-
-    if (saved) {
-      try {
-        setPortfolio(JSON.parse(saved));
-      } catch {
-        setPortfolio([]);
-      }
-    }
-
     loadTopIdeas();
+    loadPortfolio();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("stockScreenerPortfolio", JSON.stringify(portfolio));
-  }, [portfolio]);
-
   async function loadTopIdeas() {
-    setLoading(true);
-    setError("");
+    setLoadingTop(true);
+    setTopError("");
 
     try {
       const res = await fetch("/api/top5");
       const data = await res.json();
-      const rows = extractRows(data);
 
-      setIdeas(rows.sort(sortIdeas).slice(0, 10));
-    } catch (err) {
-      console.error(err);
-      setError("Could not load Top 10 ideas.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchOneSymbol(symbol) {
-    const clean = symbol.trim().toUpperCase();
-    if (!clean) return null;
-
-    const urls = [
-      `/api?symbol=${encodeURIComponent(clean)}`,
-      `/api?ticker=${encodeURIComponent(clean)}`,
-      `/api/top5?symbol=${encodeURIComponent(clean)}`,
-    ];
-
-    for (const url of urls) {
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data?.error) continue;
-
-        if (Array.isArray(data)) {
-          const found = data.find(
-            (x) => getSymbol(x).toUpperCase() === clean
-          );
-          if (found) return found;
-        }
-
-        if (data?.symbol || data?.ticker || data?.recommendation) return data;
-
-        const rows = extractRows(data);
-
-        const found = rows.find((x) => getSymbol(x).toUpperCase() === clean);
-        if (found) return found;
-      } catch {
-        // Try next endpoint
+      if (!res.ok) {
+        throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
       }
+
+      const list = Array.isArray(data) ? data : data?.stocks || data?.results || data?.data || [];
+      setStocks(list);
+    } catch (err) {
+      setTopError(err.message || "Failed to load top ideas.");
+    } finally {
+      setLoadingTop(false);
     }
-
-    const foundExisting = ideas.find(
-      (x) => getSymbol(x).toUpperCase() === clean
-    );
-
-    return foundExisting || null;
   }
 
-  async function runSnapQuote() {
-    const clean = snapInput.trim().toUpperCase();
-    if (!clean) return;
+  function loadPortfolio() {
+    try {
+      const raw = window.localStorage.getItem(PORTFOLIO_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (Array.isArray(saved)) setPortfolio(saved);
+    } catch {
+      setPortfolio([]);
+    }
+  }
+
+  function savePortfolio(next) {
+    setPortfolio(next);
+    window.localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(next));
+  }
+
+  function addPosition() {
+    const cleanSymbol = newSymbol.trim().toUpperCase();
+    const shares = Number(newShares);
+    const avgCost = Number(newCost);
+
+    if (!cleanSymbol || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(avgCost) || avgCost < 0) {
+      alert("Please enter a symbol, shares, and average cost.");
+      return;
+    }
+
+    const next = [...portfolio];
+    const existingIndex = next.findIndex((p) => p.symbol === cleanSymbol);
+
+    if (existingIndex >= 0) {
+      next[existingIndex] = { symbol: cleanSymbol, shares, avgCost };
+    } else {
+      next.push({ symbol: cleanSymbol, shares, avgCost });
+    }
+
+    savePortfolio(next);
+    setNewSymbol("");
+    setNewShares("");
+    setNewCost("");
+  }
+
+  function removePosition(symbolToRemove) {
+    const next = portfolio.filter((p) => p.symbol !== symbolToRemove);
+    savePortfolio(next);
+    setPortfolioResults((prev) => prev.filter((p) => p.symbol !== symbolToRemove));
+  }
+
+  async function analyzeSymbol(e) {
+    e?.preventDefault();
+
+    const cleanSymbol = symbol.trim().toUpperCase();
+    if (!cleanSymbol) return;
 
     setSnapLoading(true);
-    setSnapResult(null);
+    setSnapError("");
+    setSnapStock(null);
 
     try {
-      const result = await fetchOneSymbol(clean);
-      setSnapResult(result || { symbol: clean, error: true });
+      const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
+      }
+
+      setSnapStock(data?.stock || data?.result || data);
+    } catch (err) {
+      setSnapError(err.message || "Failed to analyze symbol.");
     } finally {
       setSnapLoading(false);
     }
   }
 
-  function addPortfolioPosition() {
-    const symbol = symbolInput.trim().toUpperCase();
-    const shares = safeNumber(sharesInput, 0);
-    const avgCost = safeNumber(avgCostInput, 0);
-
-    if (!symbol || shares <= 0) return;
-
-    setPortfolio((prev) => {
-      const existing = prev.find((p) => p.symbol === symbol);
-
-      if (existing) {
-        const existingShares = safeNumber(existing.shares, 0);
-        const existingCost = safeNumber(existing.avgCost, 0);
-        const newTotalShares = existingShares + shares;
-
-        const blendedCost =
-          existingCost > 0 && avgCost > 0
-            ? (existingShares * existingCost + shares * avgCost) /
-              newTotalShares
-            : avgCost > 0
-            ? avgCost
-            : existingCost;
-
-        return prev.map((p) =>
-          p.symbol === symbol
-            ? {
-                ...p,
-                shares: newTotalShares,
-                avgCost: blendedCost,
-              }
-            : p
-        );
-      }
-
-      return [...prev, { symbol, shares, avgCost }];
-    });
-
-    setSymbolInput("");
-    setSharesInput("");
-    setAvgCostInput("");
-  }
-
-  function removePortfolioPosition(symbol) {
-    setPortfolio((prev) => prev.filter((p) => p.symbol !== symbol));
-    setPortfolioAnalysis((prev) =>
-      prev.filter((p) => getSymbol(p).toUpperCase() !== symbol)
-    );
-  }
-
   async function analyzePortfolio() {
-    if (portfolio.length === 0) return;
+    if (!portfolio.length) return;
 
     setPortfolioLoading(true);
+    setPortfolioResults([]);
 
     try {
       const results = [];
 
       for (const position of portfolio) {
-        const analysis = await fetchOneSymbol(position.symbol);
+        try {
+          const res = await fetch(`/api?symbol=${encodeURIComponent(position.symbol)}`);
+          const data = await res.json();
 
-        if (analysis) {
+          const stock = data?.stock || data?.result || data;
+          const price = getPrice(stock);
+          const value = Number.isFinite(price) ? price * Number(position.shares) : null;
+          const costBasis = Number(position.avgCost) * Number(position.shares);
+          const gainLoss = Number.isFinite(value) ? value - costBasis : null;
+          const gainLossPct =
+            Number.isFinite(value) && costBasis > 0 ? ((value - costBasis) / costBasis) * 100 : null;
+
           results.push({
-            ...analysis,
-            ownedShares: position.shares,
-            avgCost: position.avgCost,
+            ...stock,
+            symbol: position.symbol,
+            shares: Number(position.shares),
+            avgCost: Number(position.avgCost),
+            currentPrice: price,
+            value,
+            gainLoss,
+            gainLossPct,
           });
-        } else {
+        } catch {
           results.push({
             symbol: position.symbol,
-            ownedShares: position.shares,
-            avgCost: position.avgCost,
-            missing: true,
+            shares: Number(position.shares),
+            avgCost: Number(position.avgCost),
+            error: "Could not analyze",
           });
         }
       }
 
-      setPortfolioAnalysis(results.sort(sortIdeas));
+      setPortfolioResults(results);
     } finally {
       setPortfolioLoading(false);
     }
   }
 
-  const top10 = useMemo(() => {
-    return [...ideas].sort(sortIdeas).slice(0, 10);
-  }, [ideas]);
+  const portfolioTotals = useMemo(() => {
+    let value = 0;
+    let cost = 0;
+
+    for (const p of portfolioResults) {
+      if (Number.isFinite(Number(p.value))) value += Number(p.value);
+      if (Number.isFinite(Number(p.avgCost)) && Number.isFinite(Number(p.shares))) {
+        cost += Number(p.avgCost) * Number(p.shares);
+      }
+    }
+
+    return {
+      value,
+      gainLoss: value - cost,
+      gainLossPct: cost > 0 ? ((value - cost) / cost) * 100 : null,
+    };
+  }, [portfolioResults]);
 
   return (
-    <main style={styles.page}>
-      <section style={styles.header}>
+    <main className="page">
+      <section className="hero">
         <div>
-          <h1 style={styles.title}>Stock Screener</h1>
-          <p style={styles.subtitle}>
-            Top ideas ranked by trade readiness, momentum, and overall setup
-            quality.
+          <h1>Stock Screener</h1>
+          <p>
+            One clean decision label: <strong>Trade Action</strong>. Score and momentum support the decision.
           </p>
         </div>
 
-        <button onClick={loadTopIdeas} style={styles.primaryButton}>
-          Refresh Top 10
+        <button onClick={loadTopIdeas} className="button secondary">
+          Refresh Ideas
         </button>
       </section>
 
-      {error && <div style={styles.error}>{error}</div>}
-
-      <section style={styles.card}>
-        <div style={styles.sectionHeader}>
-          <div>
-            <h2 style={styles.sectionTitle}>Top 10 Ideas</h2>
-            <p style={styles.sectionSub}>
-              Trade Ready names are prioritized first.
-            </p>
+      <section className="grid">
+        <Card className="wide">
+          <div className="sectionHeader">
+            <div>
+              <h2>Top Ideas</h2>
+              <p>For stocks you do not currently own.</p>
+            </div>
           </div>
-        </div>
 
-        {loading ? (
-          <p style={styles.muted}>Loading ideas...</p>
-        ) : top10.length === 0 ? (
-          <p style={styles.muted}>No Top 10 ideas loaded yet.</p>
-        ) : (
-          <div style={styles.grid}>
-            {top10.map((row, index) => {
-              const symbol = getSymbol(row);
-              const readiness = getReadiness(row);
-              const momentum = getMomentum(row);
-              const composite = getComposite(row);
-              const action = getAction(row, false);
+          {loadingTop && <p className="muted">Loading top ideas...</p>}
+          {topError && <p className="error">{topError}</p>}
 
-              return (
-                <div key={`${symbol}-${index}`} style={styles.ideaCard}>
-                  <div style={styles.cardTop}>
-                    <div>
-                      <div style={styles.rank}>#{index + 1}</div>
-                      <h3 style={styles.symbol}>{symbol}</h3>
-                      <p style={styles.name}>{getName(row)}</p>
-                    </div>
+          {!loadingTop && !topError && (
+            <div className="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Company</th>
+                    <th>Price</th>
+                    <th>Change</th>
+                    <th>Score</th>
+                    <th>Momentum</th>
+                    <th>Trade Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stocks.map((stock, idx) => {
+                    const score = getScore(stock);
+                    const action = tradeActionForStock(stock, false);
 
-                    <span
-                      style={{
-                        ...styles.badge,
-                        background: readinessBadgeColor(readiness),
-                      }}
-                    >
-                      {readiness}
+                    return (
+                      <tr key={`${getSymbol(stock)}-${idx}`}>
+                        <td className="symbol">{getSymbol(stock)}</td>
+                        <td>{getName(stock)}</td>
+                        <td>{money(getPrice(stock))}</td>
+                        <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
+                          {percent(getChangePct(stock))}
+                        </td>
+                        <td>
+                          <span className={`scorePill ${scoreClass(score)}`}>{score}</span>
+                        </td>
+                        <td>{getMomentumText(stock)}</td>
+                        <td>
+                          <span className={`actionPill ${actionClass(action)}`}>{action}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <h2>Snap Quote + Score</h2>
+          <p className="muted">Check one stock without adding it to your portfolio.</p>
+
+          <form onSubmit={analyzeSymbol} className="formRow">
+            <input
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              placeholder="Enter symbol"
+            />
+            <button className="button" disabled={snapLoading}>
+              {snapLoading ? "Analyzing..." : "Analyze"}
+            </button>
+          </form>
+
+          {snapError && <p className="error">{snapError}</p>}
+
+          {snapStock && (
+            <div className="snapBox">
+              <div className="snapTop">
+                <div>
+                  <h3>{getSymbol(snapStock)}</h3>
+                  <p>{getName(snapStock)}</p>
+                </div>
+                <span className={`actionPill ${actionClass(tradeActionForStock(snapStock, false))}`}>
+                  {tradeActionForStock(snapStock, false)}
+                </span>
+              </div>
+
+              <div className="metricGrid">
+                <div>
+                  <span>Price</span>
+                  <strong>{money(getPrice(snapStock))}</strong>
+                </div>
+                <div>
+                  <span>Change</span>
+                  <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
+                    {percent(getChangePct(snapStock))}
+                  </strong>
+                </div>
+                <div>
+                  <span>Score</span>
+                  <strong>{getScore(snapStock)}</strong>
+                </div>
+                <div>
+                  <span>Momentum</span>
+                  <strong>{getMomentumText(snapStock)}</strong>
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <h2>Portfolio</h2>
+          <p className="muted">For stocks you already own.</p>
+
+          <div className="portfolioForm">
+            <input
+              value={newSymbol}
+              onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
+              placeholder="Symbol"
+            />
+            <input
+              value={newShares}
+              onChange={(e) => setNewShares(e.target.value)}
+              placeholder="Shares"
+              type="number"
+              step="any"
+            />
+            <input
+              value={newCost}
+              onChange={(e) => setNewCost(e.target.value)}
+              placeholder="Avg cost"
+              type="number"
+              step="any"
+            />
+            <button onClick={addPosition} className="button">
+              Add / Update
+            </button>
+          </div>
+
+          {portfolio.length > 0 && (
+            <div className="miniList">
+              {portfolio.map((p) => (
+                <div className="miniPosition" key={p.symbol}>
+                  <div>
+                    <strong>{p.symbol}</strong>
+                    <span>
+                      {number(p.shares, 2)} shares @ {money(p.avgCost)}
                     </span>
                   </div>
-
-                  <div style={styles.metrics}>
-                    <div>
-                      <span style={styles.metricLabel}>Price</span>
-                      <strong>{money(getPrice(row))}</strong>
-                    </div>
-                    <div>
-                      <span style={styles.metricLabel}>Change</span>
-                      <strong>{percent(getChange(row))}</strong>
-                    </div>
-                    <div>
-                      <span style={styles.metricLabel}>Momentum</span>
-                      <strong>{momentum}</strong>
-                    </div>
-                    <div>
-                      <span style={styles.metricLabel}>Score</span>
-                      <strong>{composite}</strong>
-                    </div>
-                  </div>
-
-                  <div style={styles.bottomRow}>
-                    <span style={styles.actionLabel}>Action</span>
-                    <span
-                      style={{
-                        ...styles.action,
-                        color: actionColor(action),
-                      }}
-                    >
-                      {action}
-                    </span>
-                  </div>
+                  <button onClick={() => removePosition(p.symbol)} className="linkButton">
+                    Remove
+                  </button>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={analyzePortfolio}
+            disabled={!portfolio.length || portfolioLoading}
+            className="button full"
+          >
+            {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
+          </button>
+        </Card>
+
+        {portfolioResults.length > 0 && (
+          <Card className="wide">
+            <div className="sectionHeader">
+              <div>
+                <h2>Portfolio Analysis</h2>
+                <p>Trade Action is based on ownership context.</p>
+              </div>
+
+              <div className="totals">
+                <span>Total Value</span>
+                <strong>{money(portfolioTotals.value)}</strong>
+                <span className={portfolioTotals.gainLoss >= 0 ? "positive" : "negative"}>
+                  {money(portfolioTotals.gainLoss)} / {percent(portfolioTotals.gainLossPct)}
+                </span>
+              </div>
+            </div>
+
+            <div className="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Shares</th>
+                    <th>Avg Cost</th>
+                    <th>Price</th>
+                    <th>Value</th>
+                    <th>Gain / Loss</th>
+                    <th>Score</th>
+                    <th>Momentum</th>
+                    <th>Trade Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {portfolioResults.map((stock) => {
+                    const score = getScore(stock);
+                    const action = stock.error ? "Exit / Avoid" : tradeActionForStock(stock, true);
+
+                    return (
+                      <tr key={stock.symbol}>
+                        <td className="symbol">{stock.symbol}</td>
+                        <td>{number(stock.shares, 2)}</td>
+                        <td>{money(stock.avgCost)}</td>
+                        <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
+                        <td>{stock.error ? "—" : money(stock.value)}</td>
+                        <td className={stock.gainLoss >= 0 ? "positive" : "negative"}>
+                          {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
+                        </td>
+                        <td>
+                          <span className={`scorePill ${scoreClass(score)}`}>{score}</span>
+                        </td>
+                        <td>{stock.error ? "—" : getMomentumText(stock)}</td>
+                        <td>
+                          <span className={`actionPill ${actionClass(action)}`}>{action}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         )}
       </section>
 
-      <section style={styles.card}>
-        <h2 style={styles.sectionTitle}>Snap Quote + Score</h2>
-        <p style={styles.sectionSub}>
-          Enter a symbol to check its current setup.
-        </p>
+      <style jsx>{`
+        .page {
+          min-height: 100vh;
+          background: #f6f7f9;
+          color: #101828;
+          padding: 28px;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
 
-        <div style={styles.inputRow}>
-          <input
-            value={snapInput}
-            onChange={(e) => setSnapInput(e.target.value.toUpperCase())}
-            placeholder="Example: MARA"
-            style={styles.input}
-          />
-          <button onClick={runSnapQuote} style={styles.primaryButton}>
-            {snapLoading ? "Checking..." : "Analyze"}
-          </button>
-        </div>
+        .hero {
+          display: flex;
+          justify-content: space-between;
+          gap: 20px;
+          align-items: center;
+          margin-bottom: 24px;
+        }
 
-        {snapResult && (
-          <div style={styles.snapBox}>
-            {snapResult.error ? (
-              <p style={styles.muted}>
-                No result found for {snapResult.symbol}.
-              </p>
-            ) : (
-              <>
-                <div style={styles.cardTop}>
-                  <div>
-                    <h3 style={styles.symbol}>{getSymbol(snapResult)}</h3>
-                    <p style={styles.name}>{getName(snapResult)}</p>
-                  </div>
-                  <span
-                    style={{
-                      ...styles.badge,
-                      background: readinessBadgeColor(getReadiness(snapResult)),
-                    }}
-                  >
-                    {getReadiness(snapResult)}
-                  </span>
-                </div>
+        h1 {
+          margin: 0;
+          font-size: 34px;
+          letter-spacing: -0.04em;
+        }
 
-                <div style={styles.metrics}>
-                  <div>
-                    <span style={styles.metricLabel}>Price</span>
-                    <strong>{money(getPrice(snapResult))}</strong>
-                  </div>
-                  <div>
-                    <span style={styles.metricLabel}>Change</span>
-                    <strong>{percent(getChange(snapResult))}</strong>
-                  </div>
-                  <div>
-                    <span style={styles.metricLabel}>Momentum</span>
-                    <strong>{getMomentum(snapResult)}</strong>
-                  </div>
-                  <div>
-                    <span style={styles.metricLabel}>Score</span>
-                    <strong>{getComposite(snapResult)}</strong>
-                  </div>
-                </div>
+        h2 {
+          margin: 0 0 6px;
+          font-size: 20px;
+        }
 
-                <div style={styles.bottomRow}>
-                  <span style={styles.actionLabel}>Action</span>
-                  <span
-                    style={{
-                      ...styles.action,
-                      color: actionColor(getAction(snapResult, false)),
-                    }}
-                  >
-                    {getAction(snapResult, false)}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </section>
+        h3 {
+          margin: 0;
+          font-size: 24px;
+        }
 
-      <section style={styles.card}>
-        <div style={styles.sectionHeader}>
-          <div>
-            <h2 style={styles.sectionTitle}>Portfolio</h2>
-            <p style={styles.sectionSub}>
-              Add your symbol, shares, and average cost. Then analyze whether to
-              hold, add, trim, or exit.
-            </p>
-          </div>
+        p {
+          margin: 0;
+        }
 
-          <button onClick={analyzePortfolio} style={styles.primaryButton}>
-            {portfolioLoading ? "Analyzing..." : "Analyze Portfolio"}
-          </button>
-        </div>
+        .muted {
+          color: #667085;
+          font-size: 14px;
+        }
 
-        <div style={styles.inputRow}>
-          <input
-            value={symbolInput}
-            onChange={(e) => setSymbolInput(e.target.value.toUpperCase())}
-            placeholder="Symbol"
-            style={styles.input}
-          />
-          <input
-            value={sharesInput}
-            onChange={(e) => setSharesInput(e.target.value)}
-            placeholder="Shares"
-            type="number"
-            style={styles.input}
-          />
-          <input
-            value={avgCostInput}
-            onChange={(e) => setAvgCostInput(e.target.value)}
-            placeholder="Avg Cost"
-            type="number"
-            step="0.01"
-            style={styles.input}
-          />
-          <button onClick={addPortfolioPosition} style={styles.secondaryButton}>
-            Add Position
-          </button>
-        </div>
+        .grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+        }
 
-        {portfolio.length === 0 ? (
-          <p style={styles.muted}>No portfolio positions added yet.</p>
-        ) : (
-          <div style={styles.tableWrap}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={styles.th}>Symbol</th>
-                  <th style={styles.th}>Shares</th>
-                  <th style={styles.th}>Avg Cost</th>
-                  <th style={styles.th}>Price</th>
-                  <th style={styles.th}>Value</th>
-                  <th style={styles.th}>Gain/Loss</th>
-                  <th style={styles.th}>Action</th>
-                  <th style={styles.th}>Readiness</th>
-                  <th style={styles.th}>Momentum</th>
-                  <th style={styles.th}>Score</th>
-                  <th style={styles.th}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {portfolio.map((position) => {
-                  const analysis = portfolioAnalysis.find(
-                    (x) =>
-                      getSymbol(x).toUpperCase() ===
-                      position.symbol.toUpperCase()
-                  );
+        .card {
+          background: #ffffff;
+          border: 1px solid #e4e7ec;
+          border-radius: 18px;
+          padding: 18px;
+          box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+        }
 
-                  const price = analysis ? safeNumber(getPrice(analysis), 0) : 0;
-                  const shares = safeNumber(position.shares, 0);
-                  const avgCost = safeNumber(position.avgCost, 0);
-                  const value = price > 0 ? shares * price : null;
-                  const costBasis =
-                    avgCost > 0 && shares > 0 ? shares * avgCost : null;
-                  const gainLossPct =
-                    value !== null && costBasis
-                      ? ((value - costBasis) / costBasis) * 100
-                      : null;
+        .wide {
+          grid-column: 1 / -1;
+        }
 
-                  const action = analysis
-                    ? getAction(analysis, true)
-                    : "Not analyzed";
+        .sectionHeader {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+          margin-bottom: 16px;
+        }
 
-                  return (
-                    <tr key={position.symbol}>
-                      <td style={styles.td}>
-                        <strong>{position.symbol}</strong>
-                      </td>
-                      <td style={styles.td}>{shares}</td>
-                      <td style={styles.td}>
-                        {avgCost > 0 ? money(avgCost) : "—"}
-                      </td>
-                      <td style={styles.td}>
-                        {analysis ? money(price) : "—"}
-                      </td>
-                      <td style={styles.td}>
-                        {value !== null ? money(value) : "—"}
-                      </td>
-                      <td style={styles.td}>
-                        {gainLossPct !== null ? percent(gainLossPct) : "—"}
-                      </td>
-                      <td style={styles.td}>
-                        <span
-                          style={{
-                            ...styles.portfolioAction,
-                            color: actionColor(action),
-                          }}
-                        >
-                          {action}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        {analysis ? getReadiness(analysis) : "—"}
-                      </td>
-                      <td style={styles.td}>
-                        {analysis ? getMomentum(analysis) : "—"}
-                      </td>
-                      <td style={styles.td}>
-                        {analysis ? getComposite(analysis) : "—"}
-                      </td>
-                      <td style={styles.td}>
-                        <button
-                          onClick={() =>
-                            removePortfolioPosition(position.symbol)
-                          }
-                          style={styles.removeButton}
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+        .tableWrap {
+          overflow-x: auto;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 14px;
+        }
+
+        th {
+          text-align: left;
+          color: #667085;
+          font-weight: 600;
+          padding: 10px;
+          border-bottom: 1px solid #e4e7ec;
+          white-space: nowrap;
+        }
+
+        td {
+          padding: 12px 10px;
+          border-bottom: 1px solid #f0f2f5;
+          vertical-align: middle;
+          white-space: nowrap;
+        }
+
+        .symbol {
+          font-weight: 800;
+          letter-spacing: 0.03em;
+        }
+
+        .button {
+          background: #101828;
+          color: white;
+          border: 0;
+          border-radius: 12px;
+          padding: 11px 14px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .button:hover {
+          opacity: 0.92;
+        }
+
+        .button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        .button.secondary {
+          background: white;
+          color: #101828;
+          border: 1px solid #d0d5dd;
+        }
+
+        .button.full {
+          width: 100%;
+          margin-top: 14px;
+        }
+
+        input {
+          width: 100%;
+          border: 1px solid #d0d5dd;
+          border-radius: 12px;
+          padding: 11px 12px;
+          font-size: 15px;
+          outline: none;
+        }
+
+        input:focus {
+          border-color: #101828;
+        }
+
+        .formRow {
+          display: flex;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .portfolioForm {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr auto;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .snapBox {
+          margin-top: 16px;
+          border: 1px solid #e4e7ec;
+          border-radius: 16px;
+          padding: 16px;
+          background: #fcfcfd;
+        }
+
+        .snapTop {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          align-items: flex-start;
+          margin-bottom: 14px;
+        }
+
+        .metricGrid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 10px;
+        }
+
+        .metricGrid div {
+          background: white;
+          border: 1px solid #eef0f3;
+          border-radius: 14px;
+          padding: 12px;
+        }
+
+        .metricGrid span {
+          display: block;
+          color: #667085;
+          font-size: 12px;
+          margin-bottom: 4px;
+        }
+
+        .metricGrid strong {
+          font-size: 16px;
+        }
+
+        .scorePill,
+        .actionPill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          padding: 6px 10px;
+          font-weight: 800;
+          font-size: 12px;
+        }
+
+        .scoreGreen,
+        .actionGreen {
+          background: #dcfae6;
+          color: #067647;
+        }
+
+        .scoreYellow,
+        .actionYellow {
+          background: #fef7c3;
+          color: #a15c07;
+        }
+
+        .scoreRed,
+        .actionRed {
+          background: #fee4e2;
+          color: #b42318;
+        }
+
+        .actionOrange {
+          background: #ffead5;
+          color: #b54708;
+        }
+
+        .positive {
+          color: #067647;
+          font-weight: 700;
+        }
+
+        .negative {
+          color: #b42318;
+          font-weight: 700;
+        }
+
+        .error {
+          color: #b42318;
+          background: #fee4e2;
+          border-radius: 12px;
+          padding: 10px 12px;
+          margin-top: 12px;
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .miniList {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 14px;
+        }
+
+        .miniPosition {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          align-items: center;
+          border: 1px solid #eef0f3;
+          border-radius: 14px;
+          padding: 10px 12px;
+          background: #fcfcfd;
+        }
+
+        .miniPosition span {
+          display: block;
+          color: #667085;
+          font-size: 13px;
+          margin-top: 2px;
+        }
+
+        .linkButton {
+          background: none;
+          border: none;
+          color: #b42318;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .totals {
+          text-align: right;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .totals span:first-child {
+          color: #667085;
+          font-size: 12px;
+        }
+
+        .totals strong {
+          font-size: 20px;
+        }
+
+        @media (max-width: 900px) {
+          .page {
+            padding: 16px;
+          }
+
+          .hero {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .grid {
+            grid-template-columns: 1fr;
+          }
+
+          .portfolioForm {
+            grid-template-columns: 1fr;
+          }
+
+          .metricGrid {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .sectionHeader {
+            flex-direction: column;
+          }
+
+          .totals {
+            text-align: left;
+          }
+        }
+      `}</style>
     </main>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: 1180,
-    margin: "0 auto",
-    padding: "28px 18px 60px",
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
-    color: "#0f172a",
-    background: "#f8fafc",
-    minHeight: "100vh",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 16,
-    alignItems: "center",
-    marginBottom: 22,
-  },
-  title: {
-    fontSize: 34,
-    margin: 0,
-    letterSpacing: "-0.03em",
-  },
-  subtitle: {
-    margin: "6px 0 0",
-    color: "#475569",
-    fontSize: 15,
-  },
-  card: {
-    background: "#ffffff",
-    border: "1px solid #e2e8f0",
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 20,
-    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-  },
-  sectionHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 16,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    margin: 0,
-  },
-  sectionSub: {
-    margin: "5px 0 0",
-    color: "#64748b",
-    fontSize: 14,
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(245px, 1fr))",
-    gap: 14,
-  },
-  ideaCard: {
-    border: "1px solid #e2e8f0",
-    borderRadius: 16,
-    padding: 16,
-    background: "#ffffff",
-  },
-  cardTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 12,
-    alignItems: "flex-start",
-  },
-  rank: {
-    fontSize: 12,
-    color: "#64748b",
-    fontWeight: 700,
-  },
-  symbol: {
-    fontSize: 24,
-    margin: "2px 0",
-    letterSpacing: "-0.03em",
-  },
-  name: {
-    margin: 0,
-    color: "#64748b",
-    fontSize: 13,
-    minHeight: 34,
-  },
-  badge: {
-    color: "#fff",
-    borderRadius: 999,
-    padding: "6px 10px",
-    fontSize: 12,
-    fontWeight: 800,
-    whiteSpace: "nowrap",
-  },
-  metrics: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: 8,
-    marginTop: 16,
-  },
-  metricLabel: {
-    display: "block",
-    fontSize: 11,
-    color: "#64748b",
-    marginBottom: 3,
-  },
-  bottomRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 12,
-    alignItems: "center",
-    marginTop: 16,
-    paddingTop: 14,
-    borderTop: "1px solid #e2e8f0",
-  },
-  actionLabel: {
-    fontWeight: 800,
-    color: "#64748b",
-  },
-  action: {
-    fontWeight: 900,
-  },
-  primaryButton: {
-    border: "none",
-    background: "#0f172a",
-    color: "#fff",
-    padding: "11px 15px",
-    borderRadius: 12,
-    fontWeight: 800,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-  secondaryButton: {
-    border: "1px solid #cbd5e1",
-    background: "#ffffff",
-    color: "#0f172a",
-    padding: "11px 15px",
-    borderRadius: 12,
-    fontWeight: 800,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-  removeButton: {
-    border: "none",
-    background: "#fee2e2",
-    color: "#991b1b",
-    padding: "7px 10px",
-    borderRadius: 10,
-    fontWeight: 700,
-    cursor: "pointer",
-  },
-  inputRow: {
-    display: "flex",
-    gap: 10,
-    margin: "16px 0",
-    flexWrap: "wrap",
-  },
-  input: {
-    border: "1px solid #cbd5e1",
-    borderRadius: 12,
-    padding: "11px 12px",
-    fontSize: 15,
-    minWidth: 140,
-  },
-  snapBox: {
-    border: "1px solid #e2e8f0",
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 12,
-  },
-  tableWrap: {
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: 14,
-  },
-  th: {
-    textAlign: "left",
-    padding: "12px 10px",
-    borderBottom: "1px solid #e2e8f0",
-    color: "#64748b",
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-    whiteSpace: "nowrap",
-  },
-  td: {
-    padding: "13px 10px",
-    borderBottom: "1px solid #e2e8f0",
-    whiteSpace: "nowrap",
-  },
-  portfolioAction: {
-    fontWeight: 900,
-  },
-  muted: {
-    color: "#64748b",
-  },
-  error: {
-    background: "#fee2e2",
-    color: "#991b1b",
-    border: "1px solid #fecaca",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    fontWeight: 700,
-  },
-};
