@@ -8,6 +8,8 @@ import {
   getRecommendation,
   buildTechnicalSnapshot,
   buildFundamentalSnapshot,
+  calcHeatScore,
+  getTradeReadiness,
 } from "../../lib/scoring";
 
 function normalizeSymbol(symbol) {
@@ -48,9 +50,7 @@ async function fetchFmpQuotes(symbols) {
     throw new Error("Missing FMP_API_KEY in Vercel environment variables.");
   }
 
-  const clean = [
-    ...new Set(symbols.filter(Boolean).map((s) => toFmpSymbol(s))),
-  ];
+  const clean = [...new Set(symbols.filter(Boolean).map((s) => toFmpSymbol(s)))];
 
   const chunks = [];
   const chunkSize = 50;
@@ -108,29 +108,45 @@ async function fetchFmpQuotes(symbols) {
 }
 
 function buildEntryNote(row) {
-  const signal = row.recommendation?.label;
+  const readiness = row.tradeReadiness?.label;
   const price = row.price;
   const ma50 = row.priceAvg50;
 
   if (!price) return "No clean entry yet.";
 
-  if (signal === "STRONG BUY") {
-    return `BUY NOW starter near $${price.toFixed(2)}. Add only if strength holds.`;
+  if (readiness === "TRADE READY") {
+    return `TRADE READY near $${price.toFixed(
+      2
+    )}. Starter acceptable now; add only if volume confirms.`;
   }
 
-  if (signal === "BUY") {
+  if (readiness === "WATCH CLOSELY") {
+    return `Watch closely near $${price.toFixed(
+      2
+    )}. Wait for stronger price/volume confirmation.`;
+  }
+
+  if (row.recommendation?.label === "STRONG BUY") {
+    return `Strong setup near $${price.toFixed(
+      2
+    )}, but wait for trigger confirmation before sizing up.`;
+  }
+
+  if (row.recommendation?.label === "BUY") {
     if (ma50 && ma50 > 0 && ma50 < price) {
-      return `Starter acceptable. Add on pullback near $${ma50.toFixed(2)} or volume confirmation.`;
+      return `Starter acceptable. Better add point is pullback near $${ma50.toFixed(
+        2
+      )} or a volume breakout.`;
     }
 
-    return "Starter acceptable. Add only on confirmation.";
+    return "Starter acceptable only if chart keeps improving.";
   }
 
-  if (signal === "WATCH") {
-    return "Wait for breakout, pullback, or volume confirmation.";
+  if (row.recommendation?.label === "WATCH") {
+    return "Watch only. Wait for breakout, pullback, or volume confirmation.";
   }
 
-  return "Avoid.";
+  return "Avoid for now.";
 }
 
 export default async function handler(req, res) {
@@ -138,9 +154,7 @@ export default async function handler(req, res) {
     const fullUniverse = await buildRawListedUniverse();
     const prioritizedUniverse = prioritizeUniverse(fullUniverse);
 
-    const quotes = await fetchFmpQuotes(
-      prioritizedUniverse.map((x) => x.symbol)
-    );
+    const quotes = await fetchFmpQuotes(prioritizedUniverse.map((x) => x.symbol));
 
     if (!quotes.length) {
       throw new Error(
@@ -181,27 +195,41 @@ export default async function handler(req, res) {
       const qualityScore = calcQualityScore(base);
       const asymmetryScore = calcAsymmetryScore(base);
       const triggerScore = calcTriggerScore(base);
+      const heatScore = calcHeatScore(base);
 
       const scoredRow = {
         ...base,
         qualityScore,
         asymmetryScore,
         triggerScore,
+        heatScore,
       };
 
+      const tradeReadiness = getTradeReadiness(scoredRow);
       const recommendation = getRecommendation(scoredRow);
 
-      return {
+      const finalRow = {
         ...scoredRow,
-        stage: getStage(scoredRow),
+        tradeReadiness,
         recommendation,
-        entryNote: buildEntryNote({ ...scoredRow, recommendation }),
-        technicalSnapshot: buildTechnicalSnapshot(scoredRow),
-        fundamentalSnapshot: buildFundamentalSnapshot(scoredRow),
+      };
+
+      return {
+        ...finalRow,
+        stage: getStage(finalRow),
+        entryNote: buildEntryNote(finalRow),
+        technicalSnapshot: buildTechnicalSnapshot(finalRow),
+        fundamentalSnapshot: buildFundamentalSnapshot(finalRow),
       };
     });
 
     scored.sort((a, b) => {
+      const readinessRank = {
+        "TRADE READY": 3,
+        "WATCH CLOSELY": 2,
+        "SETUP ONLY": 1,
+      };
+
       const rank = {
         "STRONG BUY": 4,
         BUY: 3,
@@ -210,8 +238,11 @@ export default async function handler(req, res) {
       };
 
       return (
+        (readinessRank[b.tradeReadiness?.label] || 0) -
+          (readinessRank[a.tradeReadiness?.label] || 0) ||
         (rank[b.recommendation?.label] || 0) -
           (rank[a.recommendation?.label] || 0) ||
+        (b.heatScore ?? 0) - (a.heatScore ?? 0) ||
         (b.recommendation?.score ?? 0) - (a.recommendation?.score ?? 0) ||
         (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
         (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
