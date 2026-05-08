@@ -1,23 +1,32 @@
+// pages/api/top5.js
+
 import { buildRawListedUniverse } from "../../src/lib/universe";
 import { applyLiquidityFilter } from "../../src/lib/liquidity-filter";
+
 import {
-  calcQualityScore,
+  passesInstitutionalFilter,
+  calcFundamentalScore,
+  calcTechnicalScore,
+  calcMomentumScore,
   calcAsymmetryScore,
   calcTriggerScore,
-  getStage,
+  compositeScore,
   getRecommendation,
+  getStage,
   buildTechnicalSnapshot,
   buildFundamentalSnapshot,
-  calcHeatScore,
-  getTradeReadiness,
 } from "../../lib/scoring";
 
 function normalizeSymbol(symbol) {
-  return String(symbol || "").replace("-", ".").toUpperCase();
+  return String(symbol || "")
+    .replace("-", ".")
+    .toUpperCase();
 }
 
 function toFmpSymbol(symbol) {
-  return String(symbol || "").replace(".", "-").toUpperCase();
+  return String(symbol || "")
+    .replace(".", "-")
+    .toUpperCase();
 }
 
 function sleep(ms) {
@@ -47,10 +56,18 @@ async function fetchFmpQuotes(symbols) {
   const apiKey = process.env.FMP_API_KEY;
 
   if (!apiKey) {
-    throw new Error("Missing FMP_API_KEY in Vercel environment variables.");
+    throw new Error(
+      "Missing FMP_API_KEY in Vercel environment variables."
+    );
   }
 
-  const clean = [...new Set(symbols.filter(Boolean).map((s) => toFmpSymbol(s)))];
+  const clean = [
+    ...new Set(
+      symbols
+        .filter(Boolean)
+        .map((s) => toFmpSymbol(s))
+    ),
+  ];
 
   const chunks = [];
   const chunkSize = 50;
@@ -62,39 +79,81 @@ async function fetchFmpQuotes(symbols) {
   const quoteMap = new Map();
 
   for (const chunk of chunks) {
-    const url = `https://financialmodelingprep.com/stable/batch-quote?symbols=${chunk.join(
-      ","
-    )}&apikey=${apiKey}`;
+    const url =
+      `https://financialmodelingprep.com/stable/batch-quote?symbols=${chunk.join(",")}&apikey=${apiKey}`;
 
     try {
       const response = await fetch(url);
-      if (!response.ok) continue;
+
+      if (!response.ok) {
+        continue;
+      }
 
       const data = await response.json();
-      if (!Array.isArray(data)) continue;
+
+      if (!Array.isArray(data)) {
+        continue;
+      }
 
       for (const q of data) {
-        if (!q?.symbol || q.price == null) continue;
+        if (!q?.symbol || q.price == null) {
+          continue;
+        }
 
         quoteMap.set(normalizeSymbol(q.symbol), {
           symbol: normalizeSymbol(q.symbol),
+
           name: q.name || q.symbol,
+
           price: q.price ?? null,
+
           dayChangePct:
             q.changesPercentage ??
             q.changePercentage ??
             q.changePercent ??
             null,
+
           change: q.change ?? null,
+
           volume: q.volume ?? null,
-          avgVolume: q.avgVolume ?? q.volume ?? null,
-          marketCap: q.marketCap ?? null,
-          priceAvg50: q.priceAvg50 ?? q.priceAvg50d ?? null,
-          priceAvg200: q.priceAvg200 ?? q.priceAvg200d ?? null,
-          yearHigh: q.yearHigh ?? q.yearHighPrice ?? null,
-          yearLow: q.yearLow ?? q.yearLowPrice ?? null,
-          eps: q.eps ?? null,
-          pe: q.pe ?? q.peRatio ?? null,
+
+          avgVolume:
+            q.avgVolume ??
+            q.volume ??
+            null,
+
+          marketCap:
+            q.marketCap ??
+            null,
+
+          priceAvg50:
+            q.priceAvg50 ??
+            q.priceAvg50d ??
+            null,
+
+          priceAvg200:
+            q.priceAvg200 ??
+            q.priceAvg200d ??
+            null,
+
+          yearHigh:
+            q.yearHigh ??
+            q.yearHighPrice ??
+            null,
+
+          yearLow:
+            q.yearLow ??
+            q.yearLowPrice ??
+            null,
+
+          eps:
+            q.eps ??
+            null,
+
+          pe:
+            q.pe ??
+            q.peRatio ??
+            null,
         });
       }
     } catch (err) {
@@ -107,164 +166,211 @@ async function fetchFmpQuotes(symbols) {
   return Array.from(quoteMap.values());
 }
 
-function buildEntryNote(row) {
-  const readiness = row.tradeReadiness?.label;
-  const price = row.price;
-  const ma50 = row.priceAvg50;
-
-  if (!price) return "No clean entry yet.";
-
-  if (readiness === "TRADE READY") {
-    return `TRADE READY near $${price.toFixed(
-      2
-    )}. Starter acceptable now; add only if volume confirms.`;
-  }
-
-  if (readiness === "WATCH CLOSELY") {
-    return `Watch closely near $${price.toFixed(
-      2
-    )}. Wait for stronger price/volume confirmation.`;
-  }
-
-  if (row.recommendation?.label === "STRONG BUY") {
-    return `Strong setup near $${price.toFixed(
-      2
-    )}, but wait for trigger confirmation before sizing up.`;
-  }
-
-  if (row.recommendation?.label === "BUY") {
-    if (ma50 && ma50 > 0 && ma50 < price) {
-      return `Starter acceptable. Better add point is pullback near $${ma50.toFixed(
-        2
-      )} or a volume breakout.`;
-    }
-
-    return "Starter acceptable only if chart keeps improving.";
-  }
-
-  if (row.recommendation?.label === "WATCH") {
-    return "Watch only. Wait for breakout, pullback, or volume confirmation.";
-  }
-
-  return "Avoid for now.";
-}
-
 export default async function handler(req, res) {
   try {
-    const fullUniverse = await buildRawListedUniverse();
-    const prioritizedUniverse = prioritizeUniverse(fullUniverse);
+    const fullUniverse =
+      await buildRawListedUniverse();
 
-    const quotes = await fetchFmpQuotes(prioritizedUniverse.map((x) => x.symbol));
+    const prioritizedUniverse =
+      prioritizeUniverse(fullUniverse);
+
+    const quotes =
+      await fetchFmpQuotes(
+        prioritizedUniverse.map((x) => x.symbol)
+      );
 
     if (!quotes.length) {
       throw new Error(
-        "No quotes returned from FMP. Confirm FMP_API_KEY and endpoint access."
+        "No quotes returned from FMP."
       );
     }
 
     const quoteMap = new Map();
-    quotes.forEach((q) => quoteMap.set(q.symbol, q));
 
-    const tradable = applyLiquidityFilter(prioritizedUniverse, quotes, {
-      minPrice: 5,
-      minMarketCap: 300000000,
-      minAvgVolume: 250000,
+    quotes.forEach((q) => {
+      quoteMap.set(q.symbol, q);
     });
 
-    const scored = tradable.map((row) => {
-      const quote = quoteMap.get(normalizeSymbol(row.symbol)) || {};
+    const tradable =
+      applyLiquidityFilter(
+        prioritizedUniverse,
+        quotes,
+        {
+          minPrice: 5,
+          minMarketCap: 300000000,
+          minAvgVolume: 500000,
+        }
+      );
 
-      const base = {
-        ...row,
-        ...quote,
-        symbol: normalizeSymbol(row.symbol),
-        name: quote.name || row.name || row.symbol,
-        price: quote.price ?? row.price,
-        dayChangePct: quote.dayChangePct ?? null,
-        volume: quote.volume ?? null,
-        avgVolume: quote.avgVolume ?? row.avgVolume,
-        marketCap: quote.marketCap ?? row.marketCap,
-        priceAvg50: quote.priceAvg50 ?? null,
-        priceAvg200: quote.priceAvg200 ?? null,
-        yearHigh: quote.yearHigh ?? null,
-        yearLow: quote.yearLow ?? null,
-        eps: quote.eps ?? null,
-        pe: quote.pe ?? null,
-      };
+    const scored = tradable
+      .map((row) => {
+        const quote =
+          quoteMap.get(
+            normalizeSymbol(row.symbol)
+          ) || {};
 
-      const qualityScore = calcQualityScore(base);
-      const asymmetryScore = calcAsymmetryScore(base);
-      const triggerScore = calcTriggerScore(base);
-      const heatScore = calcHeatScore(base);
+        const base = {
+          ...row,
+          ...quote,
 
-      const scoredRow = {
-        ...base,
-        qualityScore,
-        asymmetryScore,
-        triggerScore,
-        heatScore,
-      };
+          symbol:
+            normalizeSymbol(row.symbol),
 
-      const tradeReadiness = getTradeReadiness(scoredRow);
-      const recommendation = getRecommendation(scoredRow);
+          name:
+            quote.name ||
+            row.name ||
+            row.symbol,
 
-      const finalRow = {
-        ...scoredRow,
-        tradeReadiness,
-        recommendation,
-      };
+          price:
+            quote.price ??
+            row.price,
 
-      return {
-        ...finalRow,
-        stage: getStage(finalRow),
-        entryNote: buildEntryNote(finalRow),
-        technicalSnapshot: buildTechnicalSnapshot(finalRow),
-        fundamentalSnapshot: buildFundamentalSnapshot(finalRow),
-      };
-    });
+          dayChangePct:
+            quote.dayChangePct ??
+            null,
+
+          volume:
+            quote.volume ??
+            null,
+
+          avgVolume:
+            quote.avgVolume ??
+            row.avgVolume,
+
+          marketCap:
+            quote.marketCap ??
+            row.marketCap,
+
+          priceAvg50:
+            quote.priceAvg50 ??
+            null,
+
+          priceAvg200:
+            quote.priceAvg200 ??
+            null,
+
+          yearHigh:
+            quote.yearHigh ??
+            null,
+
+          yearLow:
+            quote.yearLow ??
+            null,
+
+          eps:
+            quote.eps ??
+            null,
+
+          pe:
+            quote.pe ??
+            null,
+        };
+
+        if (
+          !passesInstitutionalFilter(base)
+        ) {
+          return null;
+        }
+
+        const fundamentalScore =
+          calcFundamentalScore(base);
+
+        const technicalScore =
+          calcTechnicalScore(base);
+
+        const momentumScore =
+          calcMomentumScore(base);
+
+        const asymmetryScore =
+          calcAsymmetryScore(base);
+
+        const triggerScore =
+          calcTriggerScore(base);
+
+        const score =
+          compositeScore(base);
+
+        const recommendation =
+          getRecommendation(base);
+
+        const finalRow = {
+          ...base,
+
+          fundamentalScore,
+          technicalScore,
+          momentumScore,
+          asymmetryScore,
+          triggerScore,
+          score,
+
+          recommendation,
+
+          stage:
+            getStage(base),
+
+          technicalSnapshot:
+            buildTechnicalSnapshot(base),
+
+          fundamentalSnapshot:
+            buildFundamentalSnapshot(base),
+        };
+
+        return finalRow;
+      })
+      .filter(Boolean);
 
     scored.sort((a, b) => {
-      const readinessRank = {
-        "TRADE READY": 3,
-        "WATCH CLOSELY": 2,
-        "SETUP ONLY": 1,
-      };
-
-      const rank = {
-        "STRONG BUY": 4,
-        BUY: 3,
-        WATCH: 2,
-        AVOID: 1,
-      };
-
       return (
-        (readinessRank[b.tradeReadiness?.label] || 0) -
-          (readinessRank[a.tradeReadiness?.label] || 0) ||
-        (rank[b.recommendation?.label] || 0) -
-          (rank[a.recommendation?.label] || 0) ||
-        (b.heatScore ?? 0) - (a.heatScore ?? 0) ||
-        (b.recommendation?.score ?? 0) - (a.recommendation?.score ?? 0) ||
-        (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
-        (b.asymmetryScore ?? 0) - (a.asymmetryScore ?? 0) ||
-        (b.qualityScore ?? 0) - (a.qualityScore ?? 0)
+        (b.recommendation?.triggerScore ?? 0) -
+          (a.recommendation?.triggerScore ?? 0) ||
+
+        (b.recommendation?.score ?? 0) -
+          (a.recommendation?.score ?? 0) ||
+
+        (b.momentumScore ?? 0) -
+          (a.momentumScore ?? 0)
       );
     });
 
+    const topIdeas = scored
+      .filter((x) => {
+        const label =
+          x?.recommendation?.label;
+
+        return (
+          label === "BUY NOW" ||
+          label === "WATCH FOR ENTRY"
+        );
+      })
+      .slice(0, 150);
+
     res.status(200).json({
-      stocks: scored.slice(0, 150),
+      stocks: topIdeas,
+
       meta: {
-        totalUniverse: fullUniverse.length,
-        prioritizedUniverse: prioritizedUniverse.length,
-        quoteSnapshots: quotes.length,
-        afterInstitutionalFilter: tradable.length,
-        afterRankingThreshold: scored.length,
+        totalUniverse:
+          fullUniverse.length,
+
+        prioritizedUniverse:
+          prioritizedUniverse.length,
+
+        quoteSnapshots:
+          quotes.length,
+
+        afterInstitutionalFilter:
+          scored.length,
+
+        finalResults:
+          topIdeas.length,
       },
     });
   } catch (err) {
     console.error("top5 error:", err);
 
     res.status(500).json({
-      error: err.message || "Failed to build screener.",
+      error:
+        err.message ||
+        "Failed to build screener.",
     });
   }
 }
