@@ -66,10 +66,7 @@ async function fetchSingleQuote(symbol, apiKey) {
     const data = await response.json();
     const q = Array.isArray(data) ? data[0] : data;
 
-    if (!q?.symbol || q.price == null) {
-      console.error("FMP empty quote", clean, JSON.stringify(data));
-      return null;
-    }
+    if (!q?.symbol || q.price == null) return null;
 
     return {
       symbol: normalizeSymbol(q.symbol),
@@ -109,9 +106,7 @@ async function fetchQuotes(symbols) {
   for (const symbol of symbols) {
     const quote = await fetchSingleQuote(symbol, apiKey);
 
-    if (quote) {
-      results.push(quote);
-    }
+    if (quote) results.push(quote);
 
     await sleep(50);
   }
@@ -193,12 +188,7 @@ export default async function handler(req, res) {
       );
     });
 
-    const topIdeas = scored
-      .filter((x) => {
-        const label = x?.recommendation?.label;
-        return label === "BUY NOW" || label === "WATCH FOR ENTRY";
-      })
-      .slice(0, 150);
+    const topIdeas = scored.slice(0, 150);
 
     return res.status(200).json({
       stocks: topIdeas,
