@@ -1,315 +1,146 @@
-// pages/index.js
-
 import { useEffect, useMemo, useState } from "react";
 
 const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
 
 function money(value) {
   const n = Number(value);
-
-  if (!Number.isFinite(n)) {
-    return "—";
-  }
-
-  return n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  });
+  if (!Number.isFinite(n)) return "—";
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 }
 
 function percent(value) {
   const n = Number(value);
-
-  if (!Number.isFinite(n)) {
-    return "—";
-  }
-
+  if (!Number.isFinite(n)) return "—";
   return `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 
 function number(value, digits = 2) {
   const n = Number(value);
-
-  if (!Number.isFinite(n)) {
-    return "—";
-  }
-
+  if (!Number.isFinite(n)) return "—";
   return n.toFixed(digits);
 }
 
 function clampScore(value) {
   const n = Number(value);
-
-  if (!Number.isFinite(n)) {
-    return 0;
-  }
-
-  return Math.max(
-    0,
-    Math.min(100, Math.round(n))
-  );
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
 }
 
 function getSymbol(stock) {
-  return String(
-    stock?.symbol ??
-      stock?.ticker ??
-      ""
-  ).toUpperCase();
+  return String(stock?.symbol ?? stock?.ticker ?? "").toUpperCase();
 }
 
 function getName(stock) {
-  return (
-    stock?.name ??
-    stock?.companyName ??
-    stock?.company ??
-    "—"
-  );
+  return stock?.name ?? stock?.companyName ?? stock?.company ?? "—";
 }
 
 function getPrice(stock) {
-  return Number(
-    stock?.price ??
-      stock?.currentPrice ??
-      stock?.quote?.price ??
-      stock?.lastPrice
-  );
+  return Number(stock?.price ?? stock?.currentPrice ?? stock?.quote?.price ?? stock?.lastPrice);
 }
 
 function getChangePct(stock) {
-  return Number(
-    stock?.dayChangePct ??
-      stock?.changesPercentage ??
-      stock?.changePercent ??
-      stock?.percentChange
-  );
+  return Number(stock?.dayChangePct ?? stock?.changesPercentage ?? stock?.changePercent ?? stock?.percentChange);
 }
 
 function getScore(stock) {
-  return clampScore(
-    stock?.recommendation?.score ??
-      stock?.score ??
-      0
-  );
+  return clampScore(stock?.recommendation?.score ?? stock?.score ?? stock?.compositeScore ?? stock?.overallScore ?? 0);
 }
 
 function getTrigger(stock) {
-  return clampScore(
-    stock?.recommendation
-      ?.triggerScore ??
-      stock?.triggerScore ??
-      0
-  );
+  return clampScore(stock?.recommendation?.triggerScore ?? stock?.triggerScore ?? stock?.technicalSnapshot?.triggerScore ?? 0);
 }
 
 function getMomentumText(stock) {
-  const momentum =
-    Number(
-      stock?.momentumScore
-    );
+  const momentumScore = Number(stock?.momentumScore ?? stock?.technicalSnapshot?.momentumScore);
+  const stage = String(stock?.stage ?? stock?.recommendation?.label ?? "").toUpperCase();
+  const oneMonth = Number(stock?.technicalSnapshot?.oneMonthPct ?? stock?.oneMonthPct);
+  const above50 = stock?.technicalSnapshot?.above50dma === true || stock?.above50dma === true;
+  const above200 = stock?.technicalSnapshot?.above200dma === true || stock?.above200dma === true;
 
-  if (momentum >= 80) {
-    return "Strong";
+  if (Number.isFinite(momentumScore)) {
+    if (momentumScore >= 80) return "Strong";
+    if (momentumScore >= 60) return "Building";
+    return "Weak";
   }
 
-  if (momentum >= 60) {
-    return "Building";
-  }
-
+  if (stage.includes("BUY NOW") || stage.includes("STRONG")) return "Strong";
+  if (Number.isFinite(oneMonth) && oneMonth >= 8) return "Strong";
+  if (above50 && above200) return "Building";
+  if (Number.isFinite(oneMonth) && oneMonth > 0) return "Building";
   return "Weak";
 }
 
 function getWhy(stock) {
-  return (
-    stock?.recommendation
-      ?.reason ??
-    "No analysis available."
-  );
+  return stock?.recommendation?.reason ?? stock?.reason ?? stock?.why ?? "Constructive setup, but wait for stronger confirmation.";
 }
 
 function getEntryNote(stock) {
-  return (
-    stock?.recommendation
-      ?.entryNote ??
-    "Wait for better confirmation."
-  );
+  return stock?.recommendation?.entryNote ?? stock?.entryNote ?? stock?.note ?? "Wait for stronger price or volume confirmation.";
 }
 
-function calculatePosition(
-  position,
-  livePrice
-) {
-  const shares = Number(
-    position?.shares ?? 0
-  );
+function calculatePosition(position, livePrice) {
+  const shares = Number(position?.shares ?? 0);
+  const avgCost = Number(position?.avgCost ?? 0);
+  const price = Number(livePrice ?? 0);
 
-  const avgCost = Number(
-    position?.avgCost ?? 0
-  );
+  const value = shares * price;
+  const costBasis = shares * avgCost;
+  const gainLoss = value - costBasis;
+  const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
 
-  const price = Number(
-    livePrice ?? 0
-  );
-
-  const value =
-    shares * price;
-
-  const costBasis =
-    shares * avgCost;
-
-  const gainLoss =
-    value - costBasis;
-
-  const gainLossPct =
-    costBasis > 0
-      ? (gainLoss /
-          costBasis) *
-        100
-      : 0;
-
-  return {
-    shares,
-    avgCost,
-    price,
-    value,
-    costBasis,
-    gainLoss,
-    gainLossPct,
-  };
+  return { shares, avgCost, price, value, costBasis, gainLoss, gainLossPct };
 }
 
-function tradeActionForStock(
-  stock,
-  owned = false
-) {
-  const label =
-    stock?.recommendation
-      ?.label;
-
-  const score =
-    getScore(stock);
-
-  const trigger =
-    getTrigger(stock);
+function tradeActionForStock(stock, owned = false) {
+  const label = String(stock?.recommendation?.label ?? "").toUpperCase();
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumText(stock);
 
   if (owned) {
-    if (
-      score >= 90 &&
-      trigger >= 85
-    ) {
-      return "Add";
-    }
-
-    if (score >= 75) {
-      return "Hold";
-    }
-
-    if (score >= 55) {
-      return "Trim";
-    }
-
-    return "Exit";
+    if ((label === "BUY NOW" || score >= 90) && trigger >= 85) return "Hold / Add";
+    if (score >= 75) return "Hold";
+    if (score >= 55) return "Trim";
+    return "Exit / Avoid";
   }
 
-  if (label === "BUY NOW") {
-    return "Buy Now";
-  }
-
-  if (
-    label ===
-    "WATCH FOR ENTRY"
-  ) {
-    return "Watch for Entry";
-  }
-
-  if (label === "WATCH") {
-    return "Watch";
-  }
-
-  return "Avoid";
+  if (label === "BUY NOW") return "Buy Now";
+  if (label === "WATCH FOR ENTRY") return "Watch for Entry";
+  if (label === "STRONG BUY" && momentum === "Strong") return "Buy Now";
+  if (label === "STRONG BUY" || label === "BUY" || label === "WATCH") return "Watch for Entry";
+  return "Avoid for Now";
 }
 
 function actionClass(action) {
-  if (
-    action === "Buy Now" ||
-    action === "Add"
-  ) {
-    return "green";
-  }
-
-  if (
-    action === "Watch for Entry" ||
-    action === "Hold"
-  ) {
-    return "yellow";
-  }
-
-  if (
-    action === "Trim" ||
-    action === "Watch"
-  ) {
-    return "orange";
-  }
-
+  if (action === "Buy Now" || action === "Hold / Add") return "green";
+  if (action === "Watch for Entry" || action === "Hold") return "yellow";
+  if (action === "Trim") return "orange";
   return "red";
 }
 
 function scoreClass(score) {
-  if (score >= 85) {
-    return "green";
-  }
-
-  if (score >= 65) {
-    return "yellow";
-  }
-
+  if (score >= 75) return "green";
+  if (score >= 55) return "yellow";
   return "red";
 }
 
 export default function Home() {
-  const [stocks, setStocks] =
-    useState([]);
+  const [stocks, setStocks] = useState([]);
+  const [loadingTop, setLoadingTop] = useState(true);
+  const [topError, setTopError] = useState("");
 
-  const [loadingTop, setLoadingTop] =
-    useState(true);
+  const [symbol, setSymbol] = useState("");
+  const [snapLoading, setSnapLoading] = useState(false);
+  const [snapError, setSnapError] = useState("");
+  const [snapStock, setSnapStock] = useState(null);
 
-  const [topError, setTopError] =
-    useState("");
+  const [portfolio, setPortfolio] = useState([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioResults, setPortfolioResults] = useState([]);
 
-  const [symbol, setSymbol] =
-    useState("");
-
-  const [snapLoading, setSnapLoading] =
-    useState(false);
-
-  const [snapError, setSnapError] =
-    useState("");
-
-  const [snapStock, setSnapStock] =
-    useState(null);
-
-  const [portfolio, setPortfolio] =
-    useState([]);
-
-  const [
-    portfolioLoading,
-    setPortfolioLoading,
-  ] = useState(false);
-
-  const [
-    portfolioResults,
-    setPortfolioResults,
-  ] = useState([]);
-
-  const [newSymbol, setNewSymbol] =
-    useState("");
-
-  const [newShares, setNewShares] =
-    useState("");
-
-  const [newCost, setNewCost] =
-    useState("");
+  const [newSymbol, setNewSymbol] = useState("");
+  const [newShares, setNewShares] = useState("");
+  const [newCost, setNewCost] = useState("");
 
   useEffect(() => {
     loadTopIdeas();
@@ -318,38 +149,18 @@ export default function Home() {
 
   async function loadTopIdeas() {
     setLoadingTop(true);
-
     setTopError("");
 
     try {
-      const res =
-        await fetch("/api/top5");
+      const res = await fetch("/api/top5");
+      const data = await res.json();
 
-      const data =
-        await res.json();
+      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
 
-      if (!res.ok) {
-        throw new Error(
-          data?.detail ||
-            data?.error ||
-            "Failed to load top ideas."
-        );
-      }
-
-      const list =
-        Array.isArray(data)
-          ? data
-          : data?.stocks ||
-            [];
-
-      setStocks(
-        list.slice(0, 10)
-      );
+      const list = Array.isArray(data) ? data : data?.stocks || data?.results || data?.data || [];
+      setStocks(list.slice(0, 10));
     } catch (err) {
-      setTopError(
-        err.message ||
-          "Failed to load top ideas."
-      );
+      setTopError(err.message || "Failed to load top ideas.");
     } finally {
       setLoadingTop(false);
     }
@@ -357,21 +168,10 @@ export default function Home() {
 
   function loadPortfolio() {
     try {
-      const raw =
-        window.localStorage.getItem(
-          PORTFOLIO_KEY
-        );
-
-      if (!raw) {
-        return;
-      }
-
-      const saved =
-        JSON.parse(raw);
-
-      if (Array.isArray(saved)) {
-        setPortfolio(saved);
-      }
+      const raw = window.localStorage.getItem(PORTFOLIO_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (Array.isArray(saved)) setPortfolio(saved);
     } catch {
       setPortfolio([]);
     }
@@ -379,136 +179,64 @@ export default function Home() {
 
   function savePortfolio(next) {
     setPortfolio(next);
-
-    window.localStorage.setItem(
-      PORTFOLIO_KEY,
-      JSON.stringify(next)
-    );
+    window.localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(next));
   }
 
   function addPosition() {
-    const cleanSymbol =
-      newSymbol
-        .trim()
-        .toUpperCase();
+    const cleanSymbol = newSymbol.trim().toUpperCase();
+    const shares = Number(newShares);
+    const avgCost = Number(newCost);
 
-    const shares =
-      Number(newShares);
-
-    const avgCost =
-      Number(newCost);
-
-    if (
-      !cleanSymbol ||
-      !Number.isFinite(shares) ||
-      shares <= 0 ||
-      !Number.isFinite(avgCost)
-    ) {
-      alert(
-        "Please enter valid position details."
-      );
-
+    if (!cleanSymbol || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(avgCost) || avgCost < 0) {
+      alert("Please enter symbol, shares, and cost per share.");
       return;
     }
 
     const next = [...portfolio];
+    const index = next.findIndex((p) => p.symbol === cleanSymbol);
 
-    const index =
-      next.findIndex(
-        (p) =>
-          p.symbol ===
-          cleanSymbol
-      );
-
-    if (index >= 0) {
-      next[index] = {
-        symbol: cleanSymbol,
-        shares,
-        avgCost,
-      };
-    } else {
-      next.push({
-        symbol: cleanSymbol,
-        shares,
-        avgCost,
-      });
-    }
+    if (index >= 0) next[index] = { symbol: cleanSymbol, shares, avgCost };
+    else next.push({ symbol: cleanSymbol, shares, avgCost });
 
     savePortfolio(next);
-
     setNewSymbol("");
     setNewShares("");
     setNewCost("");
   }
 
   function removePosition(symbolToRemove) {
-    savePortfolio(
-      portfolio.filter(
-        (p) =>
-          p.symbol !==
-          symbolToRemove
-      )
-    );
+    savePortfolio(portfolio.filter((p) => p.symbol !== symbolToRemove));
+    setPortfolioResults((prev) => prev.filter((p) => p.symbol !== symbolToRemove));
   }
 
   async function analyzeSymbol(e) {
     e?.preventDefault();
 
-    const cleanSymbol =
-      symbol
-        .trim()
-        .toUpperCase();
-
-    if (!cleanSymbol) {
-      return;
-    }
+    const cleanSymbol = symbol.trim().toUpperCase();
+    if (!cleanSymbol) return;
 
     setSnapLoading(true);
-
     setSnapError("");
-
     setSnapStock(null);
 
     try {
-      const res =
-        await fetch(
-          `/api?symbol=${encodeURIComponent(
-            cleanSymbol
-          )}`
-        );
+      const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
+      const data = await res.json();
 
-      const data =
-        await res.json();
+      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
 
-      if (!res.ok) {
-        throw new Error(
-          data?.detail ||
-            data?.error ||
-            "Failed to analyze symbol."
-        );
-      }
-
-      setSnapStock(
-        data?.stock ||
-          data
-      );
+      setSnapStock(data?.stock || data?.result || data);
     } catch (err) {
-      setSnapError(
-        err.message ||
-          "Failed to analyze symbol."
-      );
+      setSnapError(err.message || "Failed to analyze symbol.");
     } finally {
       setSnapLoading(false);
     }
   }
 
   async function analyzePortfolio() {
-    if (!portfolio.length) {
-      return;
-    }
+    if (!portfolio.length) return;
 
     setPortfolioLoading(true);
-
     setPortfolioResults([]);
 
     try {
@@ -516,321 +244,743 @@ export default function Home() {
 
       for (const position of portfolio) {
         try {
-          const res =
-            await fetch(
-              `/api?symbol=${encodeURIComponent(
-                position.symbol
-              )}`
-            );
+          const res = await fetch(`/api?symbol=${encodeURIComponent(position.symbol)}`);
+          const data = await res.json();
 
-          const data =
-            await res.json();
+          if (!res.ok) throw new Error(data?.detail || data?.error || "Could not analyze");
 
-          const stock =
-            data?.stock ||
-            data;
-
-          const livePrice =
-            getPrice(stock);
-
-          const calculated =
-            calculatePosition(
-              position,
-              livePrice
-            );
+          const stock = data?.stock || data?.result || data;
+          const livePrice = getPrice(stock);
+          const calculated = calculatePosition(position, livePrice);
 
           results.push({
             ...stock,
-            ...calculated,
-            symbol:
-              position.symbol,
+            symbol: position.symbol,
+            shares: calculated.shares,
+            avgCost: calculated.avgCost,
+            currentPrice: calculated.price,
+            value: calculated.value,
+            costBasis: calculated.costBasis,
+            gainLoss: calculated.gainLoss,
+            gainLossPct: calculated.gainLossPct,
           });
         } catch {
+          const calculated = calculatePosition(position, 0);
+
           results.push({
-            symbol:
-              position.symbol,
-            error:
-              "Could not analyze",
+            symbol: position.symbol,
+            shares: calculated.shares,
+            avgCost: calculated.avgCost,
+            currentPrice: null,
+            value: null,
+            costBasis: calculated.costBasis,
+            gainLoss: null,
+            gainLossPct: null,
+            error: "Could not analyze",
           });
         }
       }
 
-      setPortfolioResults(
-        results
-      );
+      setPortfolioResults(results);
     } finally {
       setPortfolioLoading(false);
     }
   }
 
-  const portfolioTotals =
-    useMemo(() => {
-      let totalValue = 0;
+  const portfolioTotals = useMemo(() => {
+    let totalValue = 0;
+    let totalCost = 0;
 
-      let totalCost = 0;
+    for (const p of portfolioResults) {
+      const value = Number(p.value);
+      const costBasis = Number(p.costBasis);
 
-      for (const p of portfolioResults) {
-        const value =
-          Number(p.value);
+      if (Number.isFinite(value)) totalValue += value;
+      if (Number.isFinite(costBasis)) totalCost += costBasis;
+    }
 
-        const costBasis =
-          Number(p.costBasis);
+    const totalGainLoss = totalValue - totalCost;
+    const totalGainLossPct = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
-        if (
-          Number.isFinite(value)
-        ) {
-          totalValue += value;
-        }
-
-        if (
-          Number.isFinite(
-            costBasis
-          )
-        ) {
-          totalCost += costBasis;
-        }
-      }
-
-      const totalGainLoss =
-        totalValue -
-        totalCost;
-
-      const totalGainLossPct =
-        totalCost > 0
-          ? (totalGainLoss /
-              totalCost) *
-            100
-          : 0;
-
-      return {
-        value: totalValue,
-        gainLoss:
-          totalGainLoss,
-        gainLossPct:
-          totalGainLossPct,
-      };
-    }, [portfolioResults]);
+    return {
+      value: totalValue,
+      costBasis: totalCost,
+      gainLoss: totalGainLoss,
+      gainLossPct: totalGainLossPct,
+    };
+  }, [portfolioResults]);
 
   return (
     <main className="page">
       <header className="header">
         <div>
-          <h1>
-            🧠 Asymmetry Screener
-          </h1>
-
-          <p>
-            Institutional-grade
-            trade engine.
-          </p>
+          <h1>🧠 Asymmetry Screener</h1>
+          <p>Broad-market screen for under-the-radar, high-upside setups.</p>
         </div>
 
-        <button
-          onClick={
-            loadTopIdeas
-          }
-          className="button secondary"
-        >
+        <button onClick={loadTopIdeas} className="button secondary">
           Reload Screener
         </button>
       </header>
 
       <section className="card">
         <div className="sectionTitle">
-          <h2>
-            🔥 Top 10 Ideas
-          </h2>
+          <h2>🔥 Top 10 Ideas</h2>
+          <p>Cards are the quick scan. Table adds the reason and entry note.</p>
         </div>
 
-        {loadingTop && (
-          <p className="muted">
-            Loading...
-          </p>
-        )}
+        {loadingTop && <p className="muted">Loading top ideas...</p>}
+        {topError && <p className="error">{topError}</p>}
 
-        {topError && (
-          <p className="error">
-            {topError}
-          </p>
-        )}
+        {!loadingTop && !topError && (
+          <>
+            <div className="ideaGrid">
+              {stocks.map((stock, idx) => {
+                const score = getScore(stock);
+                const action = tradeActionForStock(stock, false);
 
-        {!loadingTop &&
-          !topError && (
-            <>
-              <div className="ideaGrid">
-                {stocks.map(
-                  (
-                    stock,
-                    idx
-                  ) => {
-                    const score =
-                      getScore(
-                        stock
-                      );
+                return (
+                  <div className="ideaCard" key={`${getSymbol(stock)}-card-${idx}`}>
+                    <div className="ideaSymbol">{getSymbol(stock)}</div>
+                    <div className="ideaPrice">{money(getPrice(stock))}</div>
+                    <span className={`pill widePill ${actionClass(action)}`}>{action}</span>
+                    <div className="ideaMeta">Score: {score}</div>
+                    <div className="ideaMeta">Trigger: {getTrigger(stock)}</div>
+                    <div className="ideaMeta">Momentum: {getMomentumText(stock)}</div>
+                  </div>
+                );
+              })}
+            </div>
 
-                    const action =
-                      tradeActionForStock(
-                        stock,
-                        false
-                      );
+            <div className="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Chg %</th>
+                    <th>Trade Action</th>
+                    <th>Why</th>
+                    <th>Entry Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stocks.map((stock, idx) => {
+                    const action = tradeActionForStock(stock, false);
 
                     return (
-                      <div
-                        className="ideaCard"
-                        key={`${getSymbol(
-                          stock
-                        )}-${idx}`}
-                      >
-                        <div className="ideaSymbol">
-                          {getSymbol(
-                            stock
-                          )}
-                        </div>
-
-                        <div className="ideaPrice">
-                          {money(
-                            getPrice(
-                              stock
-                            )
-                          )}
-                        </div>
-
-                        <span
-                          className={`pill ${actionClass(
-                            action
-                          )}`}
-                        >
-                          {action}
-                        </span>
-
-                        <div className="ideaMeta">
-                          Score:{" "}
-                          {score}
-                        </div>
-
-                        <div className="ideaMeta">
-                          Trigger:{" "}
-                          {getTrigger(
-                            stock
-                          )}
-                        </div>
-
-                        <div className="ideaMeta">
-                          Momentum:{" "}
-                          {getMomentumText(
-                            stock
-                          )}
-                        </div>
-                      </div>
+                      <tr key={`${getSymbol(stock)}-row-${idx}`}>
+                        <td className="symbol">{getSymbol(stock)}</td>
+                        <td>{getName(stock)}</td>
+                        <td>{money(getPrice(stock))}</td>
+                        <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
+                          {percent(getChangePct(stock))}
+                        </td>
+                        <td>
+                          <span className={`pill ${actionClass(action)}`}>{action}</span>
+                        </td>
+                        <td className="textCell">{getWhy(stock)}</td>
+                        <td className="textCell mutedText">{getEntryNote(stock)}</td>
+                      </tr>
                     );
-                  }
-                )}
-              </div>
-
-              <div className="tableWrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>
-                        Symbol
-                      </th>
-                      <th>
-                        Price
-                      </th>
-                      <th>
-                        Change
-                      </th>
-                      <th>
-                        Score
-                      </th>
-                      <th>
-                        Trigger
-                      </th>
-                      <th>
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {stocks.map(
-                      (
-                        stock,
-                        idx
-                      ) => {
-                        const action =
-                          tradeActionForStock(
-                            stock,
-                            false
-                          );
-
-                        return (
-                          <tr
-                            key={`${getSymbol(
-                              stock
-                            )}-table-${idx}`}
-                          >
-                            <td className="symbol">
-                              {getSymbol(
-                                stock
-                              )}
-                            </td>
-
-                            <td>
-                              {money(
-                                getPrice(
-                                  stock
-                                )
-                              )}
-                            </td>
-
-                            <td
-                              className={
-                                getChangePct(
-                                  stock
-                                ) >= 0
-                                  ? "positive"
-                                  : "negative"
-                              }
-                            >
-                              {percent(
-                                getChangePct(
-                                  stock
-                                )
-                              )}
-                            </td>
-
-                            <td>
-                              {getScore(
-                                stock
-                              )}
-                            </td>
-
-                            <td>
-                              {getTrigger(
-                                stock
-                              )}
-                            </td>
-
-                            <td>
-                              <span
-                                className={`pill ${actionClass(
-                                  action
-                                )}`}
-                              >
-                                {action}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      }
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </section>
+
+      <section className="card">
+        <h2>Snap Quote + Score</h2>
+        <p className="muted">Uses the same non-owned logic: Buy Now, Watch for Entry, Avoid for Now.</p>
+
+        <form onSubmit={analyzeSymbol} className="formRow">
+          <input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="Lookup ticker..." />
+          <button className="button" disabled={snapLoading}>
+            {snapLoading ? "Analyzing..." : "Snap Quote + Score"}
+          </button>
+        </form>
+
+        {snapError && <p className="error">{snapError}</p>}
+
+        {snapStock && (
+          <div className="resultBox">
+            <div className="resultTop">
+              <div>
+                <h3>{getSymbol(snapStock)}</h3>
+                <p>{getName(snapStock)}</p>
+              </div>
+
+              <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
+                {tradeActionForStock(snapStock, false)}
+              </span>
+            </div>
+
+            <div className="metricGrid">
+              <div>
+                <span>Price</span>
+                <strong>{money(getPrice(snapStock))}</strong>
+              </div>
+              <div>
+                <span>Change</span>
+                <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
+                  {percent(getChangePct(snapStock))}
+                </strong>
+              </div>
+              <div>
+                <span>Score</span>
+                <strong>{getScore(snapStock)}</strong>
+              </div>
+              <div>
+                <span>Trigger</span>
+                <strong>{getTrigger(snapStock)}</strong>
+              </div>
+              <div>
+                <span>Momentum</span>
+                <strong>{getMomentumText(snapStock)}</strong>
+              </div>
+            </div>
+
+            <div className="snapNotes">
+              <div>
+                <span>Why</span>
+                <p>{getWhy(snapStock)}</p>
+              </div>
+              <div>
+                <span>Entry Note</span>
+                <p>{getEntryNote(snapStock)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Portfolio Screener</h2>
+        <p className="muted">Uses ownership logic: Hold / Add, Hold, Trim, Exit / Avoid.</p>
+
+        <div className="portfolioForm">
+          <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
+          <input value={newShares} onChange={(e) => setNewShares(e.target.value)} placeholder="Shares" type="number" step="any" />
+          <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Cost/share" type="number" step="any" />
+          <button onClick={addPosition} className="button">
+            Add / Update
+          </button>
+        </div>
+
+        {portfolio.length > 0 && (
+          <div className="positionChips">
+            {portfolio.map((p) => (
+              <div className="positionChip" key={p.symbol}>
+                <span>
+                  <strong>{p.symbol}</strong> · {number(p.shares, 2)} @ {money(p.avgCost)}
+                </span>
+                <button onClick={() => removePosition(p.symbol)} className="chipRemove" aria-label={`Remove ${p.symbol}`}>
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button onClick={analyzePortfolio} disabled={!portfolio.length || portfolioLoading} className="button full">
+          {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
+        </button>
+      </section>
+
+      {portfolioResults.length > 0 && (
+        <section className="card">
+          <div className="sectionHeader">
+            <div>
+              <h2>Portfolio Analysis</h2>
+              <p>Trade Action is based on stocks you already own.</p>
+            </div>
+
+            <div className="totals">
+              <span>Total Value</span>
+              <strong>{money(portfolioTotals.value)}</strong>
+              <span className={portfolioTotals.gainLoss >= 0 ? "positive" : "negative"}>
+                {money(portfolioTotals.gainLoss)} / {percent(portfolioTotals.gainLossPct)}
+              </span>
+            </div>
+          </div>
+
+          <div className="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Shares</th>
+                  <th>Cost/share</th>
+                  <th>Price</th>
+                  <th>Value</th>
+                  <th>Cost Basis</th>
+                  <th>Gain / Loss</th>
+                  <th>Score</th>
+                  <th>Trigger</th>
+                  <th>Momentum</th>
+                  <th>Trade Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {portfolioResults.map((stock) => {
+                  const score = getScore(stock);
+                  const action = stock.error ? "Exit / Avoid" : tradeActionForStock(stock, true);
+
+                  return (
+                    <tr key={stock.symbol}>
+                      <td className="symbol">{stock.symbol}</td>
+                      <td>{number(stock.shares, 2)}</td>
+                      <td>{money(stock.avgCost)}</td>
+                      <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
+                      <td>{stock.error ? "—" : money(stock.value)}</td>
+                      <td>{money(stock.costBasis)}</td>
+                      <td className={stock.gainLoss >= 0 ? "positive" : "negative"}>
+                        {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
+                      </td>
+                      <td>
+                        <span className={`pill ${scoreClass(score)}`}>{score}</span>
+                      </td>
+                      <td>
+                        <span className={`pill ${scoreClass(getTrigger(stock))}`}>{getTrigger(stock)}</span>
+                      </td>
+                      <td>{stock.error ? "—" : getMomentumText(stock)}</td>
+                      <td>
+                        <span className={`pill ${actionClass(action)}`}>{action}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      <style jsx>{`
+        .page {
+          min-height: 100vh;
+          background: #f8fafc;
+          color: #0f172a;
+          padding: 28px;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 18px;
+          margin-bottom: 22px;
+        }
+
+        h1 {
+          margin: 0;
+          font-size: 34px;
+          line-height: 1.05;
+          letter-spacing: -0.04em;
+        }
+
+        h2 {
+          margin: 0 0 5px;
+          font-size: 20px;
+        }
+
+        h3 {
+          margin: 0;
+          font-size: 24px;
+        }
+
+        p {
+          margin: 0;
+        }
+
+        .header p,
+        .muted {
+          color: #64748b;
+          font-size: 14px;
+        }
+
+        .card {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 18px;
+          margin-bottom: 20px;
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        }
+
+        .sectionTitle {
+          margin-bottom: 14px;
+        }
+
+        .sectionHeader {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+          margin-bottom: 14px;
+        }
+
+        .ideaGrid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+          gap: 12px;
+          margin-bottom: 18px;
+        }
+
+        .ideaCard {
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          background: white;
+          padding: 12px;
+        }
+
+        .ideaSymbol {
+          font-size: 17px;
+          font-weight: 900;
+          letter-spacing: 0.02em;
+        }
+
+        .ideaPrice {
+          font-size: 15px;
+          margin: 2px 0 8px;
+        }
+
+        .ideaMeta {
+          color: #64748b;
+          font-size: 12px;
+          margin-top: 5px;
+        }
+
+        .tableWrap {
+          overflow-x: auto;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 14px;
+        }
+
+        th {
+          text-align: left;
+          color: #64748b;
+          font-weight: 800;
+          padding: 10px;
+          border-bottom: 1px solid #e2e8f0;
+          white-space: nowrap;
+        }
+
+        td {
+          padding: 11px 10px;
+          border-bottom: 1px solid #f1f5f9;
+          vertical-align: top;
+        }
+
+        .symbol {
+          font-weight: 900;
+          letter-spacing: 0.03em;
+          white-space: nowrap;
+        }
+
+        .textCell {
+          max-width: 360px;
+          white-space: normal;
+          line-height: 1.35;
+          color: #334155;
+        }
+
+        .mutedText {
+          color: #64748b;
+        }
+
+        .button {
+          background: #0f172a;
+          color: white;
+          border: 0;
+          border-radius: 11px;
+          padding: 11px 16px;
+          font-weight: 800;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .button.secondary {
+          background: white;
+          color: #0f172a;
+          border: 1px solid #cbd5e1;
+        }
+
+        .button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        .button.full {
+          width: 100%;
+          margin-top: 14px;
+        }
+
+        input {
+          width: 100%;
+          border: 1px solid #cbd5e1;
+          border-radius: 11px;
+          padding: 11px 12px;
+          font-size: 15px;
+          outline: none;
+          box-sizing: border-box;
+        }
+
+        .formRow {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .portfolioForm {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr auto;
+          gap: 10px;
+          margin-top: 14px;
+          align-items: center;
+        }
+
+        .resultBox {
+          margin-top: 16px;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 16px;
+          background: #f8fafc;
+        }
+
+        .resultTop {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          align-items: flex-start;
+          margin-bottom: 14px;
+        }
+
+        .metricGrid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 10px;
+        }
+
+        .metricGrid div,
+        .snapNotes div {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 12px;
+        }
+
+        .metricGrid span,
+        .snapNotes span {
+          display: block;
+          color: #64748b;
+          font-size: 12px;
+          margin-bottom: 4px;
+          font-weight: 700;
+        }
+
+        .metricGrid strong {
+          font-size: 15px;
+        }
+
+        .snapNotes {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 10px;
+        }
+
+        .snapNotes p {
+          color: #334155;
+          line-height: 1.35;
+          font-size: 14px;
+        }
+
+        .pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          padding: 6px 12px;
+          font-weight: 900;
+          font-size: 12px;
+          white-space: nowrap;
+        }
+
+        .widePill {
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .green {
+          background: #dcfce7;
+          color: #166534;
+          border: 1px solid #bbf7d0;
+        }
+
+        .yellow {
+          background: #fef9c3;
+          color: #854d0e;
+          border: 1px solid #fde68a;
+        }
+
+        .orange {
+          background: #ffedd5;
+          color: #9a3412;
+          border: 1px solid #fed7aa;
+        }
+
+        .red {
+          background: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #fecaca;
+        }
+
+        .positive {
+          color: #047857;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .negative {
+          color: #b91c1c;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .error {
+          color: #991b1b;
+          background: #fee2e2;
+          border-radius: 12px;
+          padding: 10px 12px;
+          margin-top: 12px;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .positionChips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 14px;
+        }
+
+        .positionChip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          border: 1px solid #e2e8f0;
+          border-radius: 999px;
+          padding: 7px 9px 7px 12px;
+          background: #f8fafc;
+          font-size: 13px;
+          color: #334155;
+          white-space: nowrap;
+        }
+
+        .positionChip strong {
+          color: #0f172a;
+          letter-spacing: 0.03em;
+        }
+
+        .chipRemove {
+          width: 20px;
+          height: 20px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: 0;
+          border-radius: 999px;
+          background: #e2e8f0;
+          color: #991b1b;
+          font-size: 15px;
+          font-weight: 900;
+          line-height: 1;
+          cursor: pointer;
+          padding: 0;
+        }
+
+        .chipRemove:hover {
+          background: #fecaca;
+        }
+
+        .totals {
+          text-align: right;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .totals span:first-child {
+          color: #64748b;
+          font-size: 12px;
+        }
+
+        .totals strong {
+          font-size: 22px;
+        }
+
+        @media (max-width: 1100px) {
+          .portfolioForm {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .portfolioForm button {
+            grid-column: span 2;
+          }
+
+          .metricGrid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .snapNotes {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .page {
+            padding: 14px;
+          }
+
+          .header {
+            flex-direction: column;
+          }
+
+          .formRow {
+            grid-template-columns: 1fr;
+          }
+
+          .portfolioForm {
+            grid-template-columns: 1fr;
+          }
+
+          .portfolioForm button {
+            grid-column: auto;
+          }
+
+          .metricGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .sectionHeader {
+            flex-direction: column;
+          }
+
+          .totals {
+            text-align: left;
+          }
+        }
+      `}</style>
     </main>
   );
 }
