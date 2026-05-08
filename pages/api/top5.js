@@ -8,6 +8,7 @@ import {
   calcFundamentalScore,
   calcTechnicalScore,
   calcMomentumScore,
+  calcRelativeStrengthScore,
   calcAsymmetryScore,
   calcTriggerScore,
   compositeScore,
@@ -34,7 +35,8 @@ const SEED_SYMBOLS = [
   "COIN", "HOOD", "MSTR", "MARA", "RIOT", "CLSK", "HIMS", "SOFI", "PLTR", "SOUN",
   "BBAI", "BGC", "BCRX", "FLYW", "CROX", "CELH", "UPST", "AFRM", "RKT", "DKNG",
   "SHOP", "NET", "CRWD", "DDOG", "SNOW", "ROKU", "UBER", "LYFT", "SQ", "PYPL",
-  "SCHW", "JPM", "BAC", "C", "WFC", "GS", "MS", "BX", "KKR", "APO"
+  "SCHW", "JPM", "BAC", "C", "WFC", "GS", "MS", "BX", "KKR", "APO",
+  "AAOI", "AAL", "UAL", "DAL", "RCL", "CCL", "NCLH", "SMCI", "MU", "ARM"
 ];
 
 function prioritizeUniverse(fullUniverse) {
@@ -66,7 +68,9 @@ async function fetchSingleQuote(symbol, apiKey) {
     const data = await response.json();
     const q = Array.isArray(data) ? data[0] : data;
 
-    if (!q?.symbol || q.price == null) return null;
+    if (!q?.symbol || q.price == null) {
+      return null;
+    }
 
     return {
       symbol: normalizeSymbol(q.symbol),
@@ -106,7 +110,9 @@ async function fetchQuotes(symbols) {
   for (const symbol of symbols) {
     const quote = await fetchSingleQuote(symbol, apiKey);
 
-    if (quote) results.push(quote);
+    if (quote) {
+      results.push(quote);
+    }
 
     await sleep(50);
   }
@@ -114,12 +120,23 @@ async function fetchQuotes(symbols) {
   return results;
 }
 
+function attachMarketRelativeData(row, market) {
+  return {
+    ...row,
+    spyDayChangePct: market?.SPY?.dayChangePct ?? null,
+    qqqDayChangePct: market?.QQQ?.dayChangePct ?? null,
+  };
+}
+
 export default async function handler(req, res) {
   try {
     const fullUniverse = await buildRawListedUniverse();
     const prioritizedUniverse = prioritizeUniverse(fullUniverse);
 
-    const quotes = await fetchQuotes(prioritizedUniverse.map((x) => x.symbol));
+    const symbols = prioritizedUniverse.map((x) => x.symbol);
+    const allSymbols = [...new Set(["SPY", "QQQ", ...symbols])];
+
+    const quotes = await fetchQuotes(allSymbols);
 
     if (!quotes.length) {
       throw new Error("No quotes returned from FMP.");
@@ -128,7 +145,16 @@ export default async function handler(req, res) {
     const quoteMap = new Map();
     quotes.forEach((q) => quoteMap.set(q.symbol, q));
 
-    const tradable = applyLiquidityFilter(prioritizedUniverse, quotes, {
+    const market = {
+      SPY: quoteMap.get("SPY"),
+      QQQ: quoteMap.get("QQQ"),
+    };
+
+    const tradableQuotes = quotes.filter(
+      (q) => q.symbol !== "SPY" && q.symbol !== "QQQ"
+    );
+
+    const tradable = applyLiquidityFilter(prioritizedUniverse, tradableQuotes, {
       minPrice: 5,
       minMarketCap: 300000000,
       minAvgVolume: 500000,
@@ -138,18 +164,22 @@ export default async function handler(req, res) {
       .map((row) => {
         const quote = quoteMap.get(normalizeSymbol(row.symbol)) || {};
 
-        const base = {
-          ...row,
-          ...quote,
-          symbol: normalizeSymbol(row.symbol),
-          name: quote.name || row.name || row.symbol,
-        };
+        const base = attachMarketRelativeData(
+          {
+            ...row,
+            ...quote,
+            symbol: normalizeSymbol(row.symbol),
+            name: quote.name || row.name || row.symbol,
+          },
+          market
+        );
 
         if (!passesInstitutionalFilter(base)) return null;
 
         const fundamentalScore = calcFundamentalScore(base);
         const technicalScore = calcTechnicalScore(base);
         const momentumScore = calcMomentumScore(base);
+        const relativeStrengthScore = calcRelativeStrengthScore(base);
         const asymmetryScore = calcAsymmetryScore(base);
         const triggerScore = calcTriggerScore(base);
         const score = compositeScore(base);
@@ -160,6 +190,7 @@ export default async function handler(req, res) {
           fundamentalScore,
           technicalScore,
           momentumScore,
+          relativeStrengthScore,
           asymmetryScore,
           triggerScore,
           score,
@@ -173,18 +204,19 @@ export default async function handler(req, res) {
 
     scored.sort((a, b) => {
       const actionRank = {
-        "BUY NOW": 3,
-        "WATCH FOR ENTRY": 2,
-        WATCH: 1,
-        AVOID: 0,
+        "BUY NOW": 4,
+        "WATCH FOR ENTRY": 3,
+        WATCH: 2,
+        AVOID: 1,
       };
 
       return (
         (actionRank[b.recommendation?.label] || 0) -
           (actionRank[a.recommendation?.label] || 0) ||
         (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
-        (b.score ?? 0) - (a.score ?? 0) ||
-        (b.momentumScore ?? 0) - (a.momentumScore ?? 0)
+        (b.relativeStrengthScore ?? 0) - (a.relativeStrengthScore ?? 0) ||
+        (b.momentumScore ?? 0) - (a.momentumScore ?? 0) ||
+        (b.score ?? 0) - (a.score ?? 0)
       );
     });
 
@@ -196,6 +228,8 @@ export default async function handler(req, res) {
         totalUniverse: fullUniverse.length,
         prioritizedUniverse: prioritizedUniverse.length,
         quotes: quotes.length,
+        spyChange: market?.SPY?.dayChangePct ?? null,
+        qqqChange: market?.QQQ?.dayChangePct ?? null,
         scored: scored.length,
         finalResults: topIdeas.length,
       },
