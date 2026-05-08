@@ -5,6 +5,7 @@ import {
   calcFundamentalScore,
   calcTechnicalScore,
   calcMomentumScore,
+  calcRelativeStrengthScore,
   calcAsymmetryScore,
   calcTriggerScore,
   compositeScore,
@@ -30,53 +31,30 @@ async function fetchQuote(symbol) {
   const apiKey = process.env.FMP_API_KEY;
 
   if (!apiKey) {
-    throw new Error(
-      "Missing FMP_API_KEY in environment variables."
-    );
+    throw new Error("Missing FMP_API_KEY in environment variables.");
   }
 
-  const clean =
-    toFmpSymbol(symbol);
+  const clean = toFmpSymbol(symbol);
+  const url = `https://financialmodelingprep.com/stable/quote?symbol=${clean}&apikey=${apiKey}`;
 
-  const url =
-    `https://financialmodelingprep.com/stable/quote?symbol=${clean}&apikey=${apiKey}`;
-
-  const response =
-    await fetch(url);
+  const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(
-      "Failed to fetch quote from FMP."
-    );
+    throw new Error("Failed to fetch quote from FMP.");
   }
 
-  const data =
-    await response.json();
-
-  const quote =
-    Array.isArray(data)
-      ? data[0]
-      : data;
+  const data = await response.json();
+  const quote = Array.isArray(data) ? data[0] : data;
 
   if (!quote?.symbol) {
-    throw new Error(
-      "No quote data returned."
-    );
+    throw new Error("No quote data returned.");
   }
 
   return {
-    symbol:
-      normalizeSymbol(
-        quote.symbol
-      ),
+    symbol: normalizeSymbol(quote.symbol),
+    name: quote.name || quote.symbol,
 
-    name:
-      quote.name ||
-      quote.symbol,
-
-    price:
-      quote.price ??
-      null,
+    price: quote.price ?? null,
 
     dayChangePct:
       quote.changesPercentage ??
@@ -84,22 +62,12 @@ async function fetchQuote(symbol) {
       quote.changePercent ??
       null,
 
-    change:
-      quote.change ??
-      null,
+    change: quote.change ?? null,
 
-    volume:
-      quote.volume ??
-      null,
+    volume: quote.volume ?? null,
+    avgVolume: quote.avgVolume ?? quote.volume ?? null,
 
-    avgVolume:
-      quote.avgVolume ??
-      quote.volume ??
-      null,
-
-    marketCap:
-      quote.marketCap ??
-      null,
+    marketCap: quote.marketCap ?? null,
 
     priceAvg50:
       quote.priceAvg50 ??
@@ -121,110 +89,89 @@ async function fetchQuote(symbol) {
       quote.yearLowPrice ??
       null,
 
-    eps:
-      quote.eps ??
-      null,
-
-    pe:
-      quote.pe ??
-      quote.peRatio ??
-      null,
+    eps: quote.eps ?? null,
+    pe: quote.pe ?? quote.peRatio ?? null,
   };
 }
 
-export default async function handler(
-  req,
-  res
-) {
+function attachMarketRelativeData(row, spyQuote, qqqQuote) {
+  return {
+    ...row,
+    spyDayChangePct: spyQuote?.dayChangePct ?? null,
+    qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
+  };
+}
+
+function buildScoredResult(base) {
+  const institutionalPass = passesInstitutionalFilter(base);
+
+  const fundamentalScore = calcFundamentalScore(base);
+  const technicalScore = calcTechnicalScore(base);
+  const momentumScore = calcMomentumScore(base);
+  const relativeStrengthScore = calcRelativeStrengthScore(base);
+  const asymmetryScore = calcAsymmetryScore(base);
+  const triggerScore = calcTriggerScore(base);
+  const score = compositeScore(base);
+  const recommendation = getRecommendation(base);
+
+  return {
+    ...base,
+
+    institutionalPass,
+
+    score,
+
+    fundamentalScore,
+    technicalScore,
+    momentumScore,
+    relativeStrengthScore,
+    asymmetryScore,
+    triggerScore,
+
+    recommendation,
+
+    stage: getStage(base),
+
+    technicalSnapshot: buildTechnicalSnapshot(base),
+    fundamentalSnapshot: buildFundamentalSnapshot(base),
+  };
+}
+
+export default async function handler(req, res) {
   try {
-    const symbol =
-      String(
-        req.query.symbol || ""
-      )
-        .trim()
-        .toUpperCase();
+    const symbol = String(req.query.symbol || "")
+      .trim()
+      .toUpperCase();
 
     if (!symbol) {
       return res.status(400).json({
-        error:
-          "Missing symbol.",
+        error: "Missing symbol.",
       });
     }
 
-    const base =
-      await fetchQuote(symbol);
+    const [quote, spyQuote, qqqQuote] = await Promise.all([
+      fetchQuote(symbol),
+      fetchQuote("SPY"),
+      fetchQuote("QQQ"),
+    ]);
 
-    const institutionalPass =
-      passesInstitutionalFilter(
-        base
-      );
+    const base = attachMarketRelativeData(quote, spyQuote, qqqQuote);
 
-    const fundamentalScore =
-      calcFundamentalScore(base);
-
-    const technicalScore =
-      calcTechnicalScore(base);
-
-    const momentumScore =
-      calcMomentumScore(base);
-
-    const asymmetryScore =
-      calcAsymmetryScore(base);
-
-    const triggerScore =
-      calcTriggerScore(base);
-
-    const score =
-      compositeScore(base);
-
-    const recommendation =
-      getRecommendation(base);
-
-    const result = {
-      ...base,
-
-      institutionalPass,
-
-      score,
-
-      fundamentalScore,
-      technicalScore,
-      momentumScore,
-      asymmetryScore,
-      triggerScore,
-
-      recommendation,
-
-      stage:
-        getStage(base),
-
-      technicalSnapshot:
-        buildTechnicalSnapshot(
-          base
-        ),
-
-      fundamentalSnapshot:
-        buildFundamentalSnapshot(
-          base
-        ),
-    };
+    const result = buildScoredResult(base);
 
     return res.status(200).json({
       stock: result,
+      meta: {
+        spyChange: spyQuote?.dayChangePct ?? null,
+        qqqChange: qqqQuote?.dayChangePct ?? null,
+      },
     });
   } catch (err) {
-    console.error(
-      "api/index error:",
-      err
-    );
+    console.error("api/index error:", err);
 
     return res.status(500).json({
-      error:
-        "Failed to analyze symbol.",
-
-      detail:
-        err.message ||
-        "Unknown error.",
+      error: "Failed to analyze symbol.",
+      detail: err.message || "Unknown error.",
     });
   }
 }
