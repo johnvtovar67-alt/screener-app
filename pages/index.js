@@ -5,7 +5,11 @@ const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
 function money(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return "—";
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+  return n.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  });
 }
 
 function percent(value) {
@@ -51,23 +55,49 @@ function getTrigger(stock) {
 }
 
 function getMomentumText(stock) {
-  const momentumScore = Number(stock?.momentumScore ?? stock?.technicalSnapshot?.momentumScore);
-  const stage = String(stock?.stage ?? stock?.recommendation?.label ?? "").toUpperCase();
-  const oneMonth = Number(stock?.technicalSnapshot?.oneMonthPct ?? stock?.oneMonthPct);
-  const above50 = stock?.technicalSnapshot?.above50dma === true || stock?.above50dma === true;
-  const above200 = stock?.technicalSnapshot?.above200dma === true || stock?.above200dma === true;
+  return (
+    stock?.recommendation?.momentumLabel ??
+    stock?.momentumLabel ??
+    stock?.technicalSnapshot?.momentumLabel ??
+    (() => {
+      const momentumScore = Number(stock?.momentumScore ?? stock?.technicalSnapshot?.momentumScore);
 
-  if (Number.isFinite(momentumScore)) {
-    if (momentumScore >= 80) return "Strong";
-    if (momentumScore >= 60) return "Building";
-    return "Weak";
-  }
+      if (Number.isFinite(momentumScore)) {
+        if (momentumScore >= 75) return "Strong";
+        if (momentumScore >= 55) return "Building";
+        return "Weak";
+      }
 
-  if (stage.includes("BUY NOW") || stage.includes("STRONG")) return "Strong";
-  if (Number.isFinite(oneMonth) && oneMonth >= 8) return "Strong";
-  if (above50 && above200) return "Building";
-  if (Number.isFinite(oneMonth) && oneMonth > 0) return "Building";
-  return "Weak";
+      return "Weak";
+    })()
+  );
+}
+
+function getScoreTone(stock) {
+  const tone = stock?.recommendation?.scoreTone;
+  if (tone) return tone;
+  const score = getScore(stock);
+  if (score >= 75) return "green";
+  if (score >= 60) return "yellow";
+  return "red";
+}
+
+function getTriggerTone(stock) {
+  const tone = stock?.recommendation?.triggerTone;
+  if (tone) return tone;
+  const trigger = getTrigger(stock);
+  if (trigger >= 80) return "green";
+  if (trigger >= 65) return "yellow";
+  return "red";
+}
+
+function getMomentumTone(stock) {
+  const tone = stock?.recommendation?.momentumTone;
+  if (tone) return tone;
+  const momentum = getMomentumText(stock);
+  if (momentum === "Strong") return "green";
+  if (momentum === "Building") return "yellow";
+  return "red";
 }
 
 function getWhy(stock) {
@@ -88,14 +118,21 @@ function calculatePosition(position, livePrice) {
   const gainLoss = value - costBasis;
   const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
 
-  return { shares, avgCost, price, value, costBasis, gainLoss, gainLossPct };
+  return {
+    shares,
+    avgCost,
+    price,
+    value,
+    costBasis,
+    gainLoss,
+    gainLossPct,
+  };
 }
 
 function tradeActionForStock(stock, owned = false) {
   const label = String(stock?.recommendation?.label ?? "").toUpperCase();
   const score = getScore(stock);
   const trigger = getTrigger(stock);
-  const momentum = getMomentumText(stock);
 
   if (owned) {
     if ((label === "BUY NOW" || score >= 90) && trigger >= 85) return "Hold / Add";
@@ -106,8 +143,7 @@ function tradeActionForStock(stock, owned = false) {
 
   if (label === "BUY NOW") return "Buy Now";
   if (label === "WATCH FOR ENTRY") return "Watch for Entry";
-  if (label === "STRONG BUY" && momentum === "Strong") return "Buy Now";
-  if (label === "STRONG BUY" || label === "BUY" || label === "WATCH") return "Watch for Entry";
+  if (label === "WATCH") return "Watch";
   return "Avoid for Now";
 }
 
@@ -337,6 +373,8 @@ export default function Home() {
             <div className="ideaGrid">
               {stocks.map((stock, idx) => {
                 const score = getScore(stock);
+                const trigger = getTrigger(stock);
+                const momentum = getMomentumText(stock);
                 const action = tradeActionForStock(stock, false);
 
                 return (
@@ -344,9 +382,21 @@ export default function Home() {
                     <div className="ideaSymbol">{getSymbol(stock)}</div>
                     <div className="ideaPrice">{money(getPrice(stock))}</div>
                     <span className={`pill widePill ${actionClass(action)}`}>{action}</span>
-                    <div className="ideaMeta">Score: {score}</div>
-                    <div className="ideaMeta">Trigger: {getTrigger(stock)}</div>
-                    <div className="ideaMeta">Momentum: {getMomentumText(stock)}</div>
+
+                    <div className="miniMetricRow">
+                      <span>Score</span>
+                      <strong className={`miniMetric ${getScoreTone(stock)}`}>{score}</strong>
+                    </div>
+
+                    <div className="miniMetricRow">
+                      <span>Trigger</span>
+                      <strong className={`miniMetric ${getTriggerTone(stock)}`}>{trigger}</strong>
+                    </div>
+
+                    <div className="miniMetricRow">
+                      <span>Momentum</span>
+                      <strong className={`miniMetric ${getMomentumTone(stock)}`}>{momentum}</strong>
+                    </div>
                   </div>
                 );
               })}
@@ -360,6 +410,9 @@ export default function Home() {
                     <th>Name</th>
                     <th>Price</th>
                     <th>Chg %</th>
+                    <th>Score</th>
+                    <th>Trigger</th>
+                    <th>Momentum</th>
                     <th>Trade Action</th>
                     <th>Why</th>
                     <th>Entry Note</th>
@@ -376,6 +429,15 @@ export default function Home() {
                         <td>{money(getPrice(stock))}</td>
                         <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
                           {percent(getChangePct(stock))}
+                        </td>
+                        <td>
+                          <span className={`pill ${getScoreTone(stock)}`}>{getScore(stock)}</span>
+                        </td>
+                        <td>
+                          <span className={`pill ${getTriggerTone(stock)}`}>{getTrigger(stock)}</span>
+                        </td>
+                        <td>
+                          <span className={`pill ${getMomentumTone(stock)}`}>{getMomentumText(stock)}</span>
                         </td>
                         <td>
                           <span className={`pill ${actionClass(action)}`}>{action}</span>
@@ -431,15 +493,15 @@ export default function Home() {
               </div>
               <div>
                 <span>Score</span>
-                <strong>{getScore(snapStock)}</strong>
+                <strong className={`boxedValue ${getScoreTone(snapStock)}`}>{getScore(snapStock)}</strong>
               </div>
               <div>
                 <span>Trigger</span>
-                <strong>{getTrigger(snapStock)}</strong>
+                <strong className={`boxedValue ${getTriggerTone(snapStock)}`}>{getTrigger(snapStock)}</strong>
               </div>
               <div>
                 <span>Momentum</span>
-                <strong>{getMomentumText(snapStock)}</strong>
+                <strong className={`boxedValue ${getMomentumTone(snapStock)}`}>{getMomentumText(snapStock)}</strong>
               </div>
             </div>
 
@@ -526,7 +588,6 @@ export default function Home() {
               </thead>
               <tbody>
                 {portfolioResults.map((stock) => {
-                  const score = getScore(stock);
                   const action = stock.error ? "Exit / Avoid" : tradeActionForStock(stock, true);
 
                   return (
@@ -541,12 +602,14 @@ export default function Home() {
                         {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
                       </td>
                       <td>
-                        <span className={`pill ${scoreClass(score)}`}>{score}</span>
+                        <span className={`pill ${getScoreTone(stock)}`}>{getScore(stock)}</span>
                       </td>
                       <td>
-                        <span className={`pill ${scoreClass(getTrigger(stock))}`}>{getTrigger(stock)}</span>
+                        <span className={`pill ${getTriggerTone(stock)}`}>{getTrigger(stock)}</span>
                       </td>
-                      <td>{stock.error ? "—" : getMomentumText(stock)}</td>
+                      <td>
+                        <span className={`pill ${getMomentumTone(stock)}`}>{getMomentumText(stock)}</span>
+                      </td>
                       <td>
                         <span className={`pill ${actionClass(action)}`}>{action}</span>
                       </td>
@@ -649,10 +712,22 @@ export default function Home() {
           margin: 2px 0 8px;
         }
 
-        .ideaMeta {
+        .miniMetricRow {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
           color: #64748b;
           font-size: 12px;
-          margin-top: 5px;
+          margin-top: 6px;
+        }
+
+        .miniMetric {
+          border-radius: 999px;
+          padding: 2px 7px;
+          font-size: 11px;
+          font-weight: 900;
+          white-space: nowrap;
         }
 
         .tableWrap {
@@ -792,6 +867,15 @@ export default function Home() {
           font-size: 15px;
         }
 
+        .boxedValue {
+          display: inline-flex;
+          width: fit-content;
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-size: 13px;
+          font-weight: 900;
+        }
+
         .snapNotes {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -843,6 +927,12 @@ export default function Home() {
           background: #fee2e2;
           color: #991b1b;
           border: 1px solid #fecaca;
+        }
+
+        .gray {
+          background: #f1f5f9;
+          color: #475569;
+          border: 1px solid #cbd5e1;
         }
 
         .positive {
