@@ -133,12 +133,36 @@ function tradeActionForStock(stock, owned = false) {
   const label = String(stock?.recommendation?.label ?? "").toUpperCase();
   const score = getScore(stock);
   const trigger = getTrigger(stock);
+  const momentum = getMomentumText(stock);
 
   if (owned) {
-    if ((label === "BUY NOW" || score >= 90) && trigger >= 85) return "Hold / Add";
-    if (score >= 75) return "Hold";
-    if (score >= 55) return "Trim";
-    return "Exit / Avoid";
+    if (label === "BUY NOW") return "Hold / Add";
+
+    if (label === "WATCH FOR ENTRY" && trigger >= 80 && momentum !== "Weak") {
+      return "Hold";
+    }
+
+    if (trigger >= 85 && momentum === "Strong") {
+      return "Hold / Add";
+    }
+
+    if (trigger >= 80 && momentum === "Building") {
+      return "Hold";
+    }
+
+    if (score >= 75 && momentum !== "Weak") {
+      return "Hold";
+    }
+
+    if (momentum === "Weak" && trigger < 65) {
+      return "Exit / Avoid";
+    }
+
+    if (momentum === "Weak" || score < 60) {
+      return "Trim";
+    }
+
+    return "Hold";
   }
 
   if (label === "BUY NOW") return "Buy Now";
@@ -166,12 +190,6 @@ function actionClass(action) {
   if (action === "Buy Now — Extended") return "redExtended";
   if (action === "Watch for Entry" || action === "Hold") return "yellow";
   if (action === "Trim") return "orange";
-  return "red";
-}
-
-function scoreClass(score) {
-  if (score >= 75) return "green";
-  if (score >= 55) return "yellow";
   return "red";
 }
 
