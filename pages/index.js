@@ -147,8 +147,23 @@ function tradeActionForStock(stock, owned = false) {
   return "Avoid for Now";
 }
 
+function displayAction(stock, owned = false) {
+  const action = tradeActionForStock(stock, owned);
+
+  if (!owned && action === "Buy Now") {
+    const dayMove = Number(getChangePct(stock));
+
+    if (Number.isFinite(dayMove) && dayMove >= 12) {
+      return "Buy Now — Extended";
+    }
+  }
+
+  return action;
+}
+
 function actionClass(action) {
   if (action === "Buy Now" || action === "Hold / Add") return "green";
+  if (action === "Buy Now — Extended") return "redExtended";
   if (action === "Watch for Entry" || action === "Hold") return "yellow";
   if (action === "Trim") return "orange";
   return "red";
@@ -216,6 +231,53 @@ export default function Home() {
   function savePortfolio(next) {
     setPortfolio(next);
     window.localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(next));
+  }
+
+  async function exportPortfolio() {
+    try {
+      const json = JSON.stringify(portfolio, null, 2);
+
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(json);
+        alert("Portfolio copied. Paste it into Import Portfolio on another device.");
+      } else {
+        window.prompt("Copy this portfolio data:", json);
+      }
+    } catch {
+      alert("Could not export portfolio.");
+    }
+  }
+
+  function importPortfolio() {
+    const raw = window.prompt("Paste exported portfolio JSON:");
+
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw);
+
+      if (!Array.isArray(parsed)) {
+        throw new Error("Invalid portfolio.");
+      }
+
+      const cleaned = parsed
+        .map((p) => ({
+          symbol: String(p?.symbol || "").trim().toUpperCase(),
+          shares: Number(p?.shares),
+          avgCost: Number(p?.avgCost),
+        }))
+        .filter((p) => p.symbol && Number.isFinite(p.shares) && p.shares > 0 && Number.isFinite(p.avgCost) && p.avgCost >= 0);
+
+      if (!cleaned.length) {
+        throw new Error("No valid positions.");
+      }
+
+      savePortfolio(cleaned);
+      setPortfolioResults([]);
+      alert("Portfolio imported successfully.");
+    } catch {
+      alert("Invalid portfolio data.");
+    }
   }
 
   function addPosition() {
@@ -375,7 +437,7 @@ export default function Home() {
                 const score = getScore(stock);
                 const trigger = getTrigger(stock);
                 const momentum = getMomentumText(stock);
-                const action = tradeActionForStock(stock, false);
+                const action = displayAction(stock, false);
 
                 return (
                   <div className="ideaCard" key={`${getSymbol(stock)}-card-${idx}`}>
@@ -406,7 +468,7 @@ export default function Home() {
               <table>
                 <thead>
                   <tr>
-                    <th>Symbol</th>
+                    <th className="stickyCol">Symbol</th>
                     <th>Name</th>
                     <th>Price</th>
                     <th>Chg %</th>
@@ -420,11 +482,11 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {stocks.map((stock, idx) => {
-                    const action = tradeActionForStock(stock, false);
+                    const action = displayAction(stock, false);
 
                     return (
                       <tr key={`${getSymbol(stock)}-row-${idx}`}>
-                        <td className="symbol">{getSymbol(stock)}</td>
+                        <td className="symbol stickyCol">{getSymbol(stock)}</td>
                         <td>{getName(stock)}</td>
                         <td>{money(getPrice(stock))}</td>
                         <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
@@ -475,8 +537,8 @@ export default function Home() {
                 <p>{getName(snapStock)}</p>
               </div>
 
-              <span className={`pill ${actionClass(tradeActionForStock(snapStock, false))}`}>
-                {tradeActionForStock(snapStock, false)}
+              <span className={`pill ${actionClass(displayAction(snapStock, false))}`}>
+                {displayAction(snapStock, false)}
               </span>
             </div>
 
@@ -522,6 +584,15 @@ export default function Home() {
       <section className="card">
         <h2>Portfolio Screener</h2>
         <p className="muted">Uses ownership logic: Hold / Add, Hold, Trim, Exit / Avoid.</p>
+
+        <div className="portfolioTools">
+          <button onClick={exportPortfolio} className="button secondary">
+            Export Portfolio
+          </button>
+          <button onClick={importPortfolio} className="button secondary">
+            Import Portfolio
+          </button>
+        </div>
 
         <div className="portfolioForm">
           <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
@@ -573,7 +644,7 @@ export default function Home() {
             <table>
               <thead>
                 <tr>
-                  <th>Symbol</th>
+                  <th className="stickyCol">Symbol</th>
                   <th>Shares</th>
                   <th>Cost/share</th>
                   <th>Price</th>
@@ -588,11 +659,11 @@ export default function Home() {
               </thead>
               <tbody>
                 {portfolioResults.map((stock) => {
-                  const action = stock.error ? "Exit / Avoid" : tradeActionForStock(stock, true);
+                  const action = stock.error ? "Exit / Avoid" : displayAction(stock, true);
 
                   return (
                     <tr key={stock.symbol}>
-                      <td className="symbol">{stock.symbol}</td>
+                      <td className="symbol stickyCol">{stock.symbol}</td>
                       <td>{number(stock.shares, 2)}</td>
                       <td>{money(stock.avgCost)}</td>
                       <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
@@ -732,6 +803,8 @@ export default function Home() {
 
         .tableWrap {
           overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          position: relative;
         }
 
         table {
@@ -747,12 +820,26 @@ export default function Home() {
           padding: 10px;
           border-bottom: 1px solid #e2e8f0;
           white-space: nowrap;
+          background: white;
         }
 
         td {
           padding: 11px 10px;
           border-bottom: 1px solid #f1f5f9;
           vertical-align: top;
+          background: white;
+        }
+
+        .stickyCol {
+          position: sticky;
+          left: 0;
+          z-index: 3;
+          background: white;
+          box-shadow: 8px 0 10px rgba(15, 23, 42, 0.04);
+        }
+
+        th.stickyCol {
+          z-index: 4;
         }
 
         .symbol {
@@ -812,6 +899,13 @@ export default function Home() {
         .formRow {
           display: grid;
           grid-template-columns: 1fr auto;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .portfolioTools {
+          display: flex;
+          flex-wrap: wrap;
           gap: 10px;
           margin-top: 14px;
         }
@@ -926,6 +1020,12 @@ export default function Home() {
         .red {
           background: #fee2e2;
           color: #991b1b;
+          border: 1px solid #fecaca;
+        }
+
+        .redExtended {
+          background: linear-gradient(135deg, #dcfce7 0%, #fee2e2 100%);
+          color: #7f1d1d;
           border: 1px solid #fecaca;
         }
 
@@ -1050,6 +1150,11 @@ export default function Home() {
             grid-template-columns: 1fr;
           }
 
+          .portfolioTools {
+            display: grid;
+            grid-template-columns: 1fr;
+          }
+
           .portfolioForm {
             grid-template-columns: 1fr;
           }
@@ -1068,6 +1173,10 @@ export default function Home() {
 
           .totals {
             text-align: left;
+          }
+
+          table {
+            min-width: 980px;
           }
         }
       `}</style>
