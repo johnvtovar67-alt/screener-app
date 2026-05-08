@@ -18,15 +18,11 @@ import {
 } from "../../lib/scoring";
 
 function normalizeSymbol(symbol) {
-  return String(symbol || "")
-    .replace("-", ".")
-    .toUpperCase();
+  return String(symbol || "").replace("-", ".").toUpperCase();
 }
 
 function toFmpSymbol(symbol) {
-  return String(symbol || "")
-    .replace(".", "-")
-    .toUpperCase();
+  return String(symbol || "").replace(".", "-").toUpperCase();
 }
 
 function sleep(ms) {
@@ -80,14 +76,23 @@ async function fetchFmpQuotes(symbols) {
 
       if (!response.ok) {
         const text = await response.text();
-        console.error("FMP batch quote failed:", response.status, text);
+
+        console.error(
+          "FMP batch quote failed",
+          JSON.stringify({
+            status: response.status,
+            url,
+            body: text,
+          })
+        );
+
         continue;
       }
 
       const data = await response.json();
 
       if (!Array.isArray(data)) {
-        console.error("FMP batch quote returned non-array:", data);
+        console.error("FMP batch quote non-array response", JSON.stringify(data));
         continue;
       }
 
@@ -116,7 +121,7 @@ async function fetchFmpQuotes(symbols) {
         });
       }
     } catch (err) {
-      console.error("FMP batch quote error:", err);
+      console.error("FMP batch quote error", err);
     }
 
     await sleep(75);
