@@ -340,8 +340,6 @@ export default function Home() {
         Array.isArray(data)
           ? data
           : data?.stocks ||
-            data?.results ||
-            data?.data ||
             [];
 
       setStocks(
@@ -404,11 +402,10 @@ export default function Home() {
       !cleanSymbol ||
       !Number.isFinite(shares) ||
       shares <= 0 ||
-      !Number.isFinite(avgCost) ||
-      avgCost < 0
+      !Number.isFinite(avgCost)
     ) {
       alert(
-        "Please enter symbol, shares, and cost/share."
+        "Please enter valid position details."
       );
 
       return;
@@ -444,9 +441,7 @@ export default function Home() {
     setNewCost("");
   }
 
-  function removePosition(
-    symbolToRemove
-  ) {
+  function removePosition(symbolToRemove) {
     savePortfolio(
       portfolio.filter(
         (p) =>
@@ -454,20 +449,9 @@ export default function Home() {
           symbolToRemove
       )
     );
-
-    setPortfolioResults(
-      (prev) =>
-        prev.filter(
-          (p) =>
-            p.symbol !==
-            symbolToRemove
-        )
-    );
   }
 
-  async function analyzeSymbol(
-    e
-  ) {
+  async function analyzeSymbol(e) {
     e?.preventDefault();
 
     const cleanSymbol =
@@ -506,7 +490,6 @@ export default function Home() {
 
       setSnapStock(
         data?.stock ||
-          data?.result ||
           data
       );
     } catch (err) {
@@ -545,7 +528,6 @@ export default function Home() {
 
           const stock =
             data?.stock ||
-            data?.result ||
             data;
 
           const livePrice =
@@ -559,63 +541,14 @@ export default function Home() {
 
           results.push({
             ...stock,
-
+            ...calculated,
             symbol:
               position.symbol,
-
-            shares:
-              calculated.shares,
-
-            avgCost:
-              calculated.avgCost,
-
-            currentPrice:
-              calculated.price,
-
-            value:
-              calculated.value,
-
-            costBasis:
-              calculated.costBasis,
-
-            gainLoss:
-              calculated.gainLoss,
-
-            gainLossPct:
-              calculated.gainLossPct,
           });
         } catch {
-          const calculated =
-            calculatePosition(
-              position,
-              0
-            );
-
           results.push({
             symbol:
               position.symbol,
-
-            shares:
-              calculated.shares,
-
-            avgCost:
-              calculated.avgCost,
-
-            currentPrice:
-              null,
-
-            value:
-              null,
-
-            costBasis:
-              calculated.costBasis,
-
-            gainLoss:
-              null,
-
-            gainLossPct:
-              null,
-
             error:
               "Could not analyze",
           });
@@ -671,8 +604,8 @@ export default function Home() {
 
       return {
         value: totalValue,
-        costBasis: totalCost,
-        gainLoss: totalGainLoss,
+        gainLoss:
+          totalGainLoss,
         gainLossPct:
           totalGainLossPct,
       };
@@ -688,8 +621,7 @@ export default function Home() {
 
           <p>
             Institutional-grade
-            trade engine for
-            actionable setups.
+            trade engine.
           </p>
         </div>
 
@@ -708,18 +640,11 @@ export default function Home() {
           <h2>
             🔥 Top 10 Ideas
           </h2>
-
-          <p>
-            Focused on
-            institutional-quality
-            setups with timing
-            confirmation.
-          </p>
         </div>
 
         {loadingTop && (
           <p className="muted">
-            Loading top ideas...
+            Loading...
           </p>
         )}
 
@@ -754,7 +679,7 @@ export default function Home() {
                         className="ideaCard"
                         key={`${getSymbol(
                           stock
-                        )}-card-${idx}`}
+                        )}-${idx}`}
                       >
                         <div className="ideaSymbol">
                           {getSymbol(
@@ -771,7 +696,7 @@ export default function Home() {
                         </div>
 
                         <span
-                          className={`pill widePill ${actionClass(
+                          className={`pill ${actionClass(
                             action
                           )}`}
                         >
@@ -801,3 +726,111 @@ export default function Home() {
                   }
                 )}
               </div>
+
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>
+                        Symbol
+                      </th>
+                      <th>
+                        Price
+                      </th>
+                      <th>
+                        Change
+                      </th>
+                      <th>
+                        Score
+                      </th>
+                      <th>
+                        Trigger
+                      </th>
+                      <th>
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {stocks.map(
+                      (
+                        stock,
+                        idx
+                      ) => {
+                        const action =
+                          tradeActionForStock(
+                            stock,
+                            false
+                          );
+
+                        return (
+                          <tr
+                            key={`${getSymbol(
+                              stock
+                            )}-table-${idx}`}
+                          >
+                            <td className="symbol">
+                              {getSymbol(
+                                stock
+                              )}
+                            </td>
+
+                            <td>
+                              {money(
+                                getPrice(
+                                  stock
+                                )
+                              )}
+                            </td>
+
+                            <td
+                              className={
+                                getChangePct(
+                                  stock
+                                ) >= 0
+                                  ? "positive"
+                                  : "negative"
+                              }
+                            >
+                              {percent(
+                                getChangePct(
+                                  stock
+                                )
+                              )}
+                            </td>
+
+                            <td>
+                              {getScore(
+                                stock
+                              )}
+                            </td>
+
+                            <td>
+                              {getTrigger(
+                                stock
+                              )}
+                            </td>
+
+                            <td>
+                              <span
+                                className={`pill ${actionClass(
+                                  action
+                                )}`}
+                              >
+                                {action}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      }
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+      </section>
+    </main>
+  );
+}
