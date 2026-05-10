@@ -11,9 +11,12 @@ import {
   calcRelativeStrengthScore,
   calcAsymmetryScore,
   calcTriggerScore,
+  calcExpectationRisk,
   compositeScore,
   getRecommendation,
   getStage,
+  getThemeMaturity,
+  getSetupGrade,
   buildTechnicalSnapshot,
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
@@ -30,16 +33,76 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export const THEMES = {
+  broad: {
+    name: "Broad Market",
+    description: "Full broad-market screen using your standard asymmetric setup rules.",
+    symbols: [],
+  },
+  btc: {
+    name: "BTC / Digital Assets",
+    description: "BTC, digital collateral, custody, exchanges, miners, and crypto infrastructure.",
+    symbols: [
+      "MSTR", "COIN", "HOOD", "MARA", "RIOT", "CLSK", "HUT", "BTDR", "IREN",
+      "WULF", "BITF", "CIFR",
+    ],
+  },
+  ai_power: {
+    name: "AI Power & Energy",
+    description: "Electricity demand, power systems, grid, datacenter energy, and industrial electrification.",
+    symbols: [
+      "ETN", "PWR", "NVT", "HUBB", "GEV", "VRT", "CEG", "VST", "NRG",
+      "KMI", "WMB", "TRGP", "LNG",
+    ],
+  },
+  cooling_water: {
+    name: "Cooling & Water",
+    description: "Datacenter cooling, liquid cooling, thermal management, water systems, and flow control.",
+    symbols: [
+      "CARR", "XYL", "ECL", "FLS", "MOD", "TT", "JCI", "WTS", "AOS",
+    ],
+  },
+  nuclear: {
+    name: "Nuclear / Baseload",
+    description: "Uranium, nuclear generation, SMRs, and stable baseload power for AI demand.",
+    symbols: [
+      "CCJ", "CEG", "OKLO", "SMR", "BWXT", "LEU", "UEC", "UUUU",
+    ],
+  },
+  quantum: {
+    name: "Quantum Computing",
+    description: "Early-stage quantum compute and next-generation processing.",
+    symbols: [
+      "IONQ", "QBTS", "RGTI", "ARQQ", "QUBT",
+    ],
+  },
+  ai_infra: {
+    name: "AI Infrastructure",
+    description: "Networking, optics, memory, packaging, and AI compute infrastructure.",
+    symbols: [
+      "MRVL", "MU", "COHR", "LITE", "AMKR", "FORM", "AEIS", "AAOI", "CIEN",
+      "SMCI", "ARM", "AMD", "AVGO",
+    ],
+  },
+};
+
 const SEED_SYMBOLS = [
   "AAPL", "MSFT", "NVDA", "AMZN", "META", "GOOGL", "TSLA", "AVGO", "AMD", "NFLX",
   "COIN", "HOOD", "MSTR", "MARA", "RIOT", "CLSK", "HIMS", "SOFI", "PLTR", "SOUN",
   "BBAI", "BGC", "BCRX", "FLYW", "CROX", "CELH", "UPST", "AFRM", "RKT", "DKNG",
   "SHOP", "NET", "CRWD", "DDOG", "SNOW", "ROKU", "UBER", "LYFT", "SQ", "PYPL",
   "SCHW", "JPM", "BAC", "C", "WFC", "GS", "MS", "BX", "KKR", "APO",
-  "AAOI", "AAL", "UAL", "DAL", "RCL", "CCL", "NCLH", "SMCI", "MU", "ARM"
+  "AAOI", "AAL", "UAL", "DAL", "RCL", "CCL", "NCLH", "SMCI", "MU", "ARM",
+  ...Object.values(THEMES).flatMap((theme) => theme.symbols),
 ];
 
-function prioritizeUniverse(fullUniverse) {
+function prioritizeUniverse(fullUniverse, themeKey = "broad") {
+  const selectedTheme = THEMES[themeKey] || THEMES.broad;
+
+  if (themeKey !== "broad" && selectedTheme.symbols?.length) {
+    return [...new Set(selectedTheme.symbols.map(normalizeSymbol))].map((symbol) => ({ symbol }));
+  }
+
   const raw = fullUniverse
     .filter((x) => x.symbol)
     .map((x) => normalizeSymbol(x.symbol))
@@ -49,7 +112,7 @@ function prioritizeUniverse(fullUniverse) {
 
   const combined = [...new Set([...SEED_SYMBOLS, ...raw])];
 
-  return combined.slice(0, 250).map((symbol) => ({ symbol }));
+  return combined.slice(0, 300).map((symbol) => ({ symbol }));
 }
 
 async function fetchSingleQuote(symbol, apiKey) {
@@ -128,10 +191,76 @@ function attachMarketRelativeData(row, market) {
   };
 }
 
+function scoreRow(base) {
+  const fundamentalScore = calcFundamentalScore(base);
+  const technicalScore = calcTechnicalScore(base);
+  const momentumScore = calcMomentumScore(base);
+  const relativeStrengthScore = calcRelativeStrengthScore(base);
+  const asymmetryScore = calcAsymmetryScore(base);
+  const triggerScore = calcTriggerScore(base);
+  const expectationRisk = calcExpectationRisk(base);
+  const score = compositeScore(base);
+  const recommendation = getRecommendation(base);
+  const themeMaturity = getThemeMaturity(base);
+  const setupGrade = getSetupGrade(base);
+
+  return {
+    ...base,
+    fundamentalScore,
+    technicalScore,
+    momentumScore,
+    relativeStrengthScore,
+    asymmetryScore,
+    triggerScore,
+    expectationRisk,
+    score,
+    recommendation,
+    themeMaturity,
+    setupGrade,
+    stage: getStage(base),
+    technicalSnapshot: buildTechnicalSnapshot(base),
+    fundamentalSnapshot: buildFundamentalSnapshot(base),
+  };
+}
+
+function sortScored(scored) {
+  const actionRank = {
+    "BUY NOW": 4,
+    "WATCH FOR ENTRY": 3,
+    WATCH: 2,
+    AVOID: 1,
+  };
+
+  const setupRank = {
+    A: 4,
+    B: 3,
+    "B-": 2,
+    C: 1,
+  };
+
+  scored.sort((a, b) => {
+    return (
+      (actionRank[b.recommendation?.label] || 0) -
+        (actionRank[a.recommendation?.label] || 0) ||
+      (setupRank[b.setupGrade] || 0) - (setupRank[a.setupGrade] || 0) ||
+      (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
+      (b.relativeStrengthScore ?? 0) - (a.relativeStrengthScore ?? 0) ||
+      (b.momentumScore ?? 0) - (a.momentumScore ?? 0) ||
+      (a.expectationRisk ?? 100) - (b.expectationRisk ?? 100) ||
+      (b.score ?? 0) - (a.score ?? 0)
+    );
+  });
+
+  return scored;
+}
+
 export default async function handler(req, res) {
   try {
+    const themeKey = String(req.query.theme || "broad").toLowerCase();
+    const selectedTheme = THEMES[themeKey] || THEMES.broad;
+
     const fullUniverse = await buildRawListedUniverse();
-    const prioritizedUniverse = prioritizeUniverse(fullUniverse);
+    const prioritizedUniverse = prioritizeUniverse(fullUniverse, themeKey);
 
     const symbols = prioritizedUniverse.map((x) => x.symbol);
     const allSymbols = [...new Set(["SPY", "QQQ", ...symbols])];
@@ -154,11 +283,20 @@ export default async function handler(req, res) {
       (q) => q.symbol !== "SPY" && q.symbol !== "QQQ"
     );
 
-    const tradable = applyLiquidityFilter(prioritizedUniverse, tradableQuotes, {
-      minPrice: 5,
-      minMarketCap: 300000000,
-      minAvgVolume: 500000,
-    });
+    const liquidityMinimums =
+      themeKey === "quantum"
+        ? {
+            minPrice: 3,
+            minMarketCap: 150000000,
+            minAvgVolume: 300000,
+          }
+        : {
+            minPrice: 5,
+            minMarketCap: 300000000,
+            minAvgVolume: 500000,
+          };
+
+    const tradable = applyLiquidityFilter(prioritizedUniverse, tradableQuotes, liquidityMinimums);
 
     const scored = tradable
       .map((row) => {
@@ -170,60 +308,29 @@ export default async function handler(req, res) {
             ...quote,
             symbol: normalizeSymbol(row.symbol),
             name: quote.name || row.name || row.symbol,
+            themeKey,
+            themeName: selectedTheme.name,
           },
           market
         );
 
-        if (!passesInstitutionalFilter(base)) return null;
+        if (!passesInstitutionalFilter(base) && themeKey !== "quantum") return null;
 
-        const fundamentalScore = calcFundamentalScore(base);
-        const technicalScore = calcTechnicalScore(base);
-        const momentumScore = calcMomentumScore(base);
-        const relativeStrengthScore = calcRelativeStrengthScore(base);
-        const asymmetryScore = calcAsymmetryScore(base);
-        const triggerScore = calcTriggerScore(base);
-        const score = compositeScore(base);
-        const recommendation = getRecommendation(base);
-
-        return {
-          ...base,
-          fundamentalScore,
-          technicalScore,
-          momentumScore,
-          relativeStrengthScore,
-          asymmetryScore,
-          triggerScore,
-          score,
-          recommendation,
-          stage: getStage(base),
-          technicalSnapshot: buildTechnicalSnapshot(base),
-          fundamentalSnapshot: buildFundamentalSnapshot(base),
-        };
+        return scoreRow(base);
       })
       .filter(Boolean);
 
-    scored.sort((a, b) => {
-      const actionRank = {
-        "BUY NOW": 4,
-        "WATCH FOR ENTRY": 3,
-        WATCH: 2,
-        AVOID: 1,
-      };
+    sortScored(scored);
 
-      return (
-        (actionRank[b.recommendation?.label] || 0) -
-          (actionRank[a.recommendation?.label] || 0) ||
-        (b.triggerScore ?? 0) - (a.triggerScore ?? 0) ||
-        (b.relativeStrengthScore ?? 0) - (a.relativeStrengthScore ?? 0) ||
-        (b.momentumScore ?? 0) - (a.momentumScore ?? 0) ||
-        (b.score ?? 0) - (a.score ?? 0)
-      );
-    });
-
-    const topIdeas = scored.slice(0, 150);
+    const topIdeas = scored.slice(0, themeKey === "broad" ? 150 : 50);
 
     return res.status(200).json({
       stocks: topIdeas,
+      themes: THEMES,
+      selectedTheme: {
+        key: themeKey,
+        ...selectedTheme,
+      },
       meta: {
         totalUniverse: fullUniverse.length,
         prioritizedUniverse: prioritizedUniverse.length,
@@ -232,6 +339,8 @@ export default async function handler(req, res) {
         qqqChange: market?.QQQ?.dayChangePct ?? null,
         scored: scored.length,
         finalResults: topIdeas.length,
+        themeKey,
+        themeName: selectedTheme.name,
       },
     });
   } catch (err) {
