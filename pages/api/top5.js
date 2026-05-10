@@ -33,7 +33,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export const THEMES = {
+const THEMES = {
   broad: {
     name: "Broad Market",
     description: "Full broad-market screen using your standard asymmetric setup rules.",
@@ -42,47 +42,32 @@ export const THEMES = {
   btc: {
     name: "BTC / Digital Assets",
     description: "BTC, digital collateral, custody, exchanges, miners, and crypto infrastructure.",
-    symbols: [
-      "MSTR", "COIN", "HOOD", "MARA", "RIOT", "CLSK", "HUT", "BTDR", "IREN",
-      "WULF", "BITF", "CIFR",
-    ],
+    symbols: ["MSTR", "COIN", "HOOD", "MARA", "RIOT", "CLSK", "HUT", "BTDR", "IREN", "WULF", "BITF", "CIFR"],
   },
   ai_power: {
     name: "AI Power & Energy",
     description: "Electricity demand, power systems, grid, datacenter energy, and industrial electrification.",
-    symbols: [
-      "ETN", "PWR", "NVT", "HUBB", "GEV", "VRT", "CEG", "VST", "NRG",
-      "KMI", "WMB", "TRGP", "LNG",
-    ],
+    symbols: ["ETN", "PWR", "NVT", "HUBB", "GEV", "VRT", "CEG", "VST", "NRG", "KMI", "WMB", "TRGP", "LNG"],
   },
   cooling_water: {
     name: "Cooling & Water",
     description: "Datacenter cooling, liquid cooling, thermal management, water systems, and flow control.",
-    symbols: [
-      "CARR", "XYL", "ECL", "FLS", "MOD", "TT", "JCI", "WTS", "AOS",
-    ],
+    symbols: ["CARR", "XYL", "ECL", "FLS", "MOD", "TT", "JCI", "WTS", "AOS"],
   },
   nuclear: {
     name: "Nuclear / Baseload",
     description: "Uranium, nuclear generation, SMRs, and stable baseload power for AI demand.",
-    symbols: [
-      "CCJ", "CEG", "OKLO", "SMR", "BWXT", "LEU", "UEC", "UUUU",
-    ],
+    symbols: ["CCJ", "CEG", "OKLO", "SMR", "BWXT", "LEU", "UEC", "UUUU"],
   },
   quantum: {
     name: "Quantum Computing",
     description: "Early-stage quantum compute and next-generation processing.",
-    symbols: [
-      "IONQ", "QBTS", "RGTI", "ARQQ", "QUBT",
-    ],
+    symbols: ["IONQ", "QBTS", "RGTI", "ARQQ", "QUBT"],
   },
   ai_infra: {
     name: "AI Infrastructure",
     description: "Networking, optics, memory, packaging, and AI compute infrastructure.",
-    symbols: [
-      "MRVL", "MU", "COHR", "LITE", "AMKR", "FORM", "AEIS", "AAOI", "CIEN",
-      "SMCI", "ARM", "AMD", "AVGO",
-    ],
+    symbols: ["MRVL", "MU", "COHR", "LITE", "AMKR", "FORM", "AEIS", "AAOI", "CIEN", "SMCI", "ARM", "AMD", "AVGO"],
   },
 };
 
@@ -115,50 +100,84 @@ function prioritizeUniverse(fullUniverse, themeKey = "broad") {
   return combined.slice(0, 300).map((symbol) => ({ symbol }));
 }
 
+function normalizeQuote(q = {}) {
+  if (!q?.symbol || q.price == null) return null;
+
+  return {
+    symbol: normalizeSymbol(q.symbol),
+    name: q.name || q.companyName || q.symbol,
+    price: q.price ?? null,
+    dayChangePct:
+      q.changesPercentage ??
+      q.changePercentage ??
+      q.changePercent ??
+      q.percentChange ??
+      null,
+    change: q.change ?? null,
+    volume: q.volume ?? null,
+    avgVolume: q.avgVolume ?? q.volume ?? null,
+    marketCap: q.marketCap ?? null,
+    priceAvg50: q.priceAvg50 ?? q.priceAvg50d ?? null,
+    priceAvg200: q.priceAvg200 ?? q.priceAvg200d ?? null,
+    yearHigh: q.yearHigh ?? q.yearHighPrice ?? null,
+    yearLow: q.yearLow ?? q.yearLowPrice ?? null,
+    eps: q.eps ?? null,
+    pe: q.pe ?? q.peRatio ?? null,
+  };
+}
+
+async function fetchBatchQuotes(symbols, apiKey) {
+  const cleanSymbols = [...new Set(symbols.map(toFmpSymbol))].join(",");
+  const urls = [
+    `https://financialmodelingprep.com/stable/batch-quote?symbols=${cleanSymbols}&apikey=${apiKey}`,
+    `https://financialmodelingprep.com/api/v3/quote/${cleanSymbols}?apikey=${apiKey}`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) continue;
+
+      const data = await response.json();
+      const list = Array.isArray(data) ? data : data?.data || data?.quotes || [];
+
+      const normalized = list.map(normalizeQuote).filter(Boolean);
+
+      if (normalized.length) return normalized;
+    } catch {
+      // Try next quote endpoint.
+    }
+  }
+
+  return [];
+}
+
 async function fetchSingleQuote(symbol, apiKey) {
   const clean = toFmpSymbol(symbol);
-  const url = `https://financialmodelingprep.com/stable/quote?symbol=${clean}&apikey=${apiKey}`;
 
-  try {
-    const response = await fetch(url);
+  const urls = [
+    `https://financialmodelingprep.com/stable/quote?symbol=${clean}&apikey=${apiKey}`,
+    `https://financialmodelingprep.com/api/v3/quote/${clean}?apikey=${apiKey}`,
+  ];
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("FMP single quote failed", response.status, clean, text);
-      return null;
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) continue;
+
+      const data = await response.json();
+      const q = Array.isArray(data) ? data[0] : data;
+      const normalized = normalizeQuote(q);
+
+      if (normalized) return normalized;
+    } catch {
+      // Try next endpoint.
     }
-
-    const data = await response.json();
-    const q = Array.isArray(data) ? data[0] : data;
-
-    if (!q?.symbol || q.price == null) {
-      return null;
-    }
-
-    return {
-      symbol: normalizeSymbol(q.symbol),
-      name: q.name || q.symbol,
-      price: q.price ?? null,
-      dayChangePct:
-        q.changesPercentage ??
-        q.changePercentage ??
-        q.changePercent ??
-        null,
-      change: q.change ?? null,
-      volume: q.volume ?? null,
-      avgVolume: q.avgVolume ?? q.volume ?? null,
-      marketCap: q.marketCap ?? null,
-      priceAvg50: q.priceAvg50 ?? q.priceAvg50d ?? null,
-      priceAvg200: q.priceAvg200 ?? q.priceAvg200d ?? null,
-      yearHigh: q.yearHigh ?? q.yearHighPrice ?? null,
-      yearLow: q.yearLow ?? q.yearLowPrice ?? null,
-      eps: q.eps ?? null,
-      pe: q.pe ?? q.peRatio ?? null,
-    };
-  } catch (err) {
-    console.error("FMP quote fetch error", clean, err);
-    return null;
   }
+
+  return null;
 }
 
 async function fetchQuotes(symbols) {
@@ -168,15 +187,30 @@ async function fetchQuotes(symbols) {
     throw new Error("Missing FMP_API_KEY.");
   }
 
-  const results = [];
+  const uniqueSymbols = [...new Set(symbols.map(normalizeSymbol))];
 
-  for (const symbol of symbols) {
-    const quote = await fetchSingleQuote(symbol, apiKey);
+  const batchQuotes = await fetchBatchQuotes(uniqueSymbols, apiKey);
 
-    if (quote) {
-      results.push(quote);
+  if (batchQuotes.length) {
+    const quoteMap = new Map();
+    batchQuotes.forEach((q) => quoteMap.set(q.symbol, q));
+
+    const missing = uniqueSymbols.filter((s) => !quoteMap.has(s));
+
+    for (const symbol of missing) {
+      const quote = await fetchSingleQuote(symbol, apiKey);
+      if (quote) quoteMap.set(quote.symbol, quote);
+      await sleep(35);
     }
 
+    return Array.from(quoteMap.values());
+  }
+
+  const results = [];
+
+  for (const symbol of uniqueSymbols) {
+    const quote = await fetchSingleQuote(symbol, apiKey);
+    if (quote) results.push(quote);
     await sleep(50);
   }
 
@@ -259,7 +293,7 @@ export default async function handler(req, res) {
     const themeKey = String(req.query.theme || "broad").toLowerCase();
     const selectedTheme = THEMES[themeKey] || THEMES.broad;
 
-    const fullUniverse = await buildRawListedUniverse();
+    const fullUniverse = themeKey === "broad" ? await buildRawListedUniverse() : [];
     const prioritizedUniverse = prioritizeUniverse(fullUniverse, themeKey);
 
     const symbols = prioritizedUniverse.map((x) => x.symbol);
@@ -326,7 +360,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       stocks: topIdeas,
-      themes: THEMES,
       selectedTheme: {
         key: themeKey,
         ...selectedTheme,
