@@ -2,6 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 
 const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
 
+const THEME_OPTIONS = [
+  { key: "broad", name: "Broad Market" },
+  { key: "btc", name: "BTC / Digital Assets" },
+  { key: "ai_power", name: "AI Power & Energy" },
+  { key: "cooling_water", name: "Cooling & Water" },
+  { key: "nuclear", name: "Nuclear / Baseload" },
+  { key: "quantum", name: "Quantum Computing" },
+  { key: "ai_infra", name: "AI Infrastructure" },
+];
+
 function money(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return "—";
@@ -54,6 +64,33 @@ function getTrigger(stock) {
   return clampScore(stock?.recommendation?.triggerScore ?? stock?.triggerScore ?? stock?.technicalSnapshot?.triggerScore ?? 0);
 }
 
+function getExpectationRisk(stock) {
+  return clampScore(
+    stock?.recommendation?.expectationRisk ??
+      stock?.expectationRisk ??
+      stock?.technicalSnapshot?.expectationRisk ??
+      0
+  );
+}
+
+function getThemeMaturity(stock) {
+  return (
+    stock?.recommendation?.themeMaturity ??
+    stock?.themeMaturity ??
+    stock?.technicalSnapshot?.themeMaturity ??
+    "Neutral"
+  );
+}
+
+function getSetupGrade(stock) {
+  return (
+    stock?.recommendation?.setupGrade ??
+    stock?.setupGrade ??
+    stock?.technicalSnapshot?.setupGrade ??
+    "C"
+  );
+}
+
 function getMomentumText(stock) {
   return (
     stock?.recommendation?.momentumLabel ??
@@ -100,6 +137,24 @@ function getMomentumTone(stock) {
   return "red";
 }
 
+function getExpectationTone(stock) {
+  const tone = stock?.recommendation?.expectationTone;
+  if (tone) return tone;
+  const risk = getExpectationRisk(stock);
+  if (risk <= 25) return "green";
+  if (risk <= 45) return "yellow";
+  return "red";
+}
+
+function getSetupTone(stock) {
+  const tone = stock?.recommendation?.setupTone;
+  if (tone) return tone;
+  const grade = getSetupGrade(stock);
+  if (grade === "A") return "green";
+  if (grade === "B" || grade === "B-") return "yellow";
+  return "red";
+}
+
 function getWhy(stock) {
   return stock?.recommendation?.reason ?? stock?.reason ?? stock?.why ?? "Constructive setup, but wait for stronger confirmation.";
 }
@@ -134,15 +189,18 @@ function tradeActionForStock(stock, owned = false) {
   const score = getScore(stock);
   const trigger = getTrigger(stock);
   const momentum = getMomentumText(stock);
+  const expectationRisk = getExpectationRisk(stock);
 
   if (owned) {
+    if (expectationRisk >= 60 && momentum !== "Strong") return "Trim";
+
     if (label === "BUY NOW") return "Hold / Add";
 
     if (label === "WATCH FOR ENTRY" && trigger >= 80 && momentum !== "Weak") {
       return "Hold";
     }
 
-    if (trigger >= 85 && momentum === "Strong") {
+    if (trigger >= 85 && momentum === "Strong" && expectationRisk <= 45) {
       return "Hold / Add";
     }
 
@@ -165,6 +223,7 @@ function tradeActionForStock(stock, owned = false) {
     return "Hold";
   }
 
+  if (expectationRisk >= 60) return "Avoid for Now";
   if (label === "BUY NOW") return "Buy Now";
   if (label === "WATCH FOR ENTRY") return "Watch for Entry";
   if (label === "WATCH") return "Watch";
@@ -176,8 +235,9 @@ function displayAction(stock, owned = false) {
 
   if (!owned && action === "Buy Now") {
     const dayMove = Number(getChangePct(stock));
+    const expectationRisk = getExpectationRisk(stock);
 
-    if (Number.isFinite(dayMove) && dayMove >= 12) {
+    if ((Number.isFinite(dayMove) && dayMove >= 12) || expectationRisk >= 50) {
       return "Buy Now — Extended";
     }
   }
@@ -197,6 +257,8 @@ export default function Home() {
   const [stocks, setStocks] = useState([]);
   const [loadingTop, setLoadingTop] = useState(true);
   const [topError, setTopError] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState("broad");
+  const [themeMeta, setThemeMeta] = useState(null);
 
   const [symbol, setSymbol] = useState("");
   const [snapLoading, setSnapLoading] = useState(false);
@@ -212,27 +274,33 @@ export default function Home() {
   const [newCost, setNewCost] = useState("");
 
   useEffect(() => {
-    loadTopIdeas();
+    loadTopIdeas(selectedTheme);
     loadPortfolio();
   }, []);
 
-  async function loadTopIdeas() {
+  async function loadTopIdeas(theme = selectedTheme) {
     setLoadingTop(true);
     setTopError("");
 
     try {
-      const res = await fetch("/api/top5");
+      const res = await fetch(`/api/top5?theme=${encodeURIComponent(theme)}`);
       const data = await res.json();
 
       if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
 
       const list = Array.isArray(data) ? data : data?.stocks || data?.results || data?.data || [];
       setStocks(list.slice(0, 10));
+      setThemeMeta(data?.selectedTheme || null);
     } catch (err) {
       setTopError(err.message || "Failed to load top ideas.");
     } finally {
       setLoadingTop(false);
     }
+  }
+
+  function changeTheme(nextTheme) {
+    setSelectedTheme(nextTheme);
+    loadTopIdeas(nextTheme);
   }
 
   function loadPortfolio() {
@@ -426,23 +494,64 @@ export default function Home() {
     };
   }, [portfolioResults]);
 
+  const selectedThemeName =
+    THEME_OPTIONS.find((theme) => theme.key === selectedTheme)?.name || "Broad Market";
+
   return (
     <main className="page">
       <header className="header">
         <div>
           <h1>🧠 Asymmetry Screener</h1>
-          <p>Broad-market screen for under-the-radar, high-upside setups.</p>
+          <p>Broad-market screen plus theme-aware sub-screeners for disciplined entries.</p>
         </div>
 
-        <button onClick={loadTopIdeas} className="button secondary">
+        <button onClick={() => loadTopIdeas(selectedTheme)} className="button secondary">
           Reload Screener
         </button>
       </header>
 
+      <section className="card themeCard">
+        <div className="sectionHeader">
+          <div>
+            <h2>Theme Focus</h2>
+            <p className="muted">
+              Keep Broad Market for discovery, or select a macro theme to rank only that watchlist.
+            </p>
+          </div>
+
+          <select
+            value={selectedTheme}
+            onChange={(e) => changeTheme(e.target.value)}
+            className="themeSelect"
+          >
+            {THEME_OPTIONS.map((theme) => (
+              <option key={theme.key} value={theme.key}>
+                {theme.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="themeSummary">
+          <div>
+            <span>Current Mode</span>
+            <strong>{themeMeta?.name || selectedThemeName}</strong>
+          </div>
+          <div>
+            <span>Purpose</span>
+            <p>{themeMeta?.description || "Full broad-market screen using your standard asymmetric setup rules."}</p>
+          </div>
+        </div>
+      </section>
+
       <section className="card">
         <div className="sectionTitle">
           <h2>🔥 Top 10 Ideas</h2>
-          <p>Cards are the quick scan. Table adds the reason and entry note.</p>
+          <p>
+            {selectedTheme === "broad"
+              ? "Broad-market discovery mode."
+              : `Theme sub-screener: ${selectedThemeName}. Same discipline, narrower universe.`}
+          </p>
         </div>
 
         {loadingTop && <p className="muted">Loading top ideas...</p>}
@@ -455,6 +564,8 @@ export default function Home() {
                 const score = getScore(stock);
                 const trigger = getTrigger(stock);
                 const momentum = getMomentumText(stock);
+                const expectationRisk = getExpectationRisk(stock);
+                const setupGrade = getSetupGrade(stock);
                 const action = displayAction(stock, false);
 
                 return (
@@ -477,6 +588,16 @@ export default function Home() {
                       <span>Momentum</span>
                       <strong className={`miniMetric ${getMomentumTone(stock)}`}>{momentum}</strong>
                     </div>
+
+                    <div className="miniMetricRow">
+                      <span>Expect Risk</span>
+                      <strong className={`miniMetric ${getExpectationTone(stock)}`}>{expectationRisk}</strong>
+                    </div>
+
+                    <div className="miniMetricRow">
+                      <span>Setup</span>
+                      <strong className={`miniMetric ${getSetupTone(stock)}`}>{setupGrade}</strong>
+                    </div>
                   </div>
                 );
               })}
@@ -493,6 +614,9 @@ export default function Home() {
                     <th>Score</th>
                     <th>Trigger</th>
                     <th>Momentum</th>
+                    <th>Expectation Risk</th>
+                    <th>Theme Maturity</th>
+                    <th>Setup</th>
                     <th>Trade Action</th>
                     <th>Why</th>
                     <th>Entry Note</th>
@@ -518,6 +642,15 @@ export default function Home() {
                         </td>
                         <td>
                           <span className={`pill ${getMomentumTone(stock)}`}>{getMomentumText(stock)}</span>
+                        </td>
+                        <td>
+                          <span className={`pill ${getExpectationTone(stock)}`}>{getExpectationRisk(stock)}</span>
+                        </td>
+                        <td>
+                          <span className={`pill ${getExpectationTone(stock)}`}>{getThemeMaturity(stock)}</span>
+                        </td>
+                        <td>
+                          <span className={`pill ${getSetupTone(stock)}`}>{getSetupGrade(stock)}</span>
                         </td>
                         <td>
                           <span className={`pill ${actionClass(action)}`}>{action}</span>
@@ -583,9 +716,21 @@ export default function Home() {
                 <span>Momentum</span>
                 <strong className={`boxedValue ${getMomentumTone(snapStock)}`}>{getMomentumText(snapStock)}</strong>
               </div>
+              <div>
+                <span>Expectation Risk</span>
+                <strong className={`boxedValue ${getExpectationTone(snapStock)}`}>{getExpectationRisk(snapStock)}</strong>
+              </div>
+              <div>
+                <span>Setup</span>
+                <strong className={`boxedValue ${getSetupTone(snapStock)}`}>{getSetupGrade(snapStock)}</strong>
+              </div>
             </div>
 
             <div className="snapNotes">
+              <div>
+                <span>Theme Maturity</span>
+                <p>{getThemeMaturity(snapStock)}</p>
+              </div>
               <div>
                 <span>Why</span>
                 <p>{getWhy(snapStock)}</p>
@@ -672,6 +817,8 @@ export default function Home() {
                   <th>Score</th>
                   <th>Trigger</th>
                   <th>Momentum</th>
+                  <th>Expectation Risk</th>
+                  <th>Setup</th>
                   <th>Trade Action</th>
                 </tr>
               </thead>
@@ -698,6 +845,12 @@ export default function Home() {
                       </td>
                       <td>
                         <span className={`pill ${getMomentumTone(stock)}`}>{getMomentumText(stock)}</span>
+                      </td>
+                      <td>
+                        <span className={`pill ${getExpectationTone(stock)}`}>{getExpectationRisk(stock)}</span>
+                      </td>
+                      <td>
+                        <span className={`pill ${getSetupTone(stock)}`}>{getSetupGrade(stock)}</span>
                       </td>
                       <td>
                         <span className={`pill ${actionClass(action)}`}>{action}</span>
@@ -764,6 +917,57 @@ export default function Home() {
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
         }
 
+        .themeCard {
+          border-color: #cbd5e1;
+        }
+
+        .themeSelect {
+          border: 1px solid #cbd5e1;
+          border-radius: 11px;
+          padding: 11px 12px;
+          font-size: 15px;
+          font-weight: 800;
+          background: white;
+          min-width: 245px;
+        }
+
+        .themeSummary {
+          display: grid;
+          grid-template-columns: 260px 1fr;
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        .themeSummary div {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 12px;
+        }
+
+        .themeSummary span {
+          display: block;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 800;
+          margin-bottom: 4px;
+        }
+
+        .themeSummary strong {
+          font-size: 16px;
+        }
+
+        .themeSummary p {
+          color: #334155;
+          font-size: 14px;
+        }
+
+        .card > p,
+        .sectionTitle p {
+          color: #64748b;
+          font-size: 14px;
+        }
+
         .sectionTitle {
           margin-bottom: 14px;
         }
@@ -778,7 +982,7 @@ export default function Home() {
 
         .ideaGrid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
           gap: 12px;
           margin-bottom: 18px;
         }
@@ -954,7 +1158,7 @@ export default function Home() {
 
         .metricGrid {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(4, 1fr);
           gap: 10px;
         }
 
@@ -990,7 +1194,7 @@ export default function Home() {
 
         .snapNotes {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 1fr 1fr 1fr;
           gap: 10px;
           margin-top: 10px;
         }
@@ -1153,6 +1357,10 @@ export default function Home() {
           .snapNotes {
             grid-template-columns: 1fr;
           }
+
+          .themeSummary {
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-width: 700px) {
@@ -1162,6 +1370,15 @@ export default function Home() {
 
           .header {
             flex-direction: column;
+          }
+
+          .sectionHeader {
+            flex-direction: column;
+          }
+
+          .themeSelect {
+            width: 100%;
+            min-width: 0;
           }
 
           .formRow {
@@ -1185,16 +1402,12 @@ export default function Home() {
             grid-template-columns: 1fr;
           }
 
-          .sectionHeader {
-            flex-direction: column;
-          }
-
           .totals {
             text-align: left;
           }
 
           table {
-            min-width: 980px;
+            min-width: 1200px;
           }
         }
       `}</style>
