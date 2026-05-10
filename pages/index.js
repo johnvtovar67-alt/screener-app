@@ -982,16 +982,19 @@ export default function Home() {
 
         .ideaGrid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(10, minmax(135px, 1fr));
+          gap: 10px;
           margin-bottom: 18px;
+          overflow-x: auto;
+          padding-bottom: 4px;
         }
 
         .ideaCard {
           border: 1px solid #e2e8f0;
           border-radius: 12px;
           background: white;
-          padding: 12px;
+          padding: 10px;
+          min-width: 135px;
         }
 
         .ideaSymbol {
