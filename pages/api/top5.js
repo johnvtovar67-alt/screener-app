@@ -43,6 +43,22 @@ function chunkArray(array, size) {
   return chunks;
 }
 
+function evenlySample(array, maxCount) {
+  if (array.length <= maxCount) return array;
+
+  const result = [];
+  const step = array.length / maxCount;
+
+  for (let i = 0; i < maxCount; i += 1) {
+    result.push(array[Math.floor(i * step)]);
+  }
+
+  return result;
+}
+
+const MAX_BROAD_UNIVERSE = 750;
+const QUOTE_BATCH_SIZE = 40;
+
 const THEMES = {
   broad: {
     name: "Broad Market",
@@ -209,7 +225,15 @@ function prioritizeUniverse(fullUniverse, themeKey = "broad") {
     .filter((s) => !s.includes("."))
     .filter((s) => !s.includes("-"));
 
-  const combined = [...new Set([...SEED_SYMBOLS.map(normalizeSymbol), ...raw])];
+  const seedSet = new Set(SEED_SYMBOLS.map(normalizeSymbol));
+  const cleanRaw = [...new Set(raw)].filter((symbol) => !seedSet.has(symbol));
+
+  const sampledRaw = evenlySample(
+    cleanRaw,
+    Math.max(0, MAX_BROAD_UNIVERSE - seedSet.size)
+  );
+
+  const combined = [...new Set([...seedSet, ...sampledRaw])];
 
   return combined.map((symbol) => ({ symbol }));
 }
@@ -256,7 +280,6 @@ async function fetchBatchQuotes(symbols, apiKey) {
 
       const data = await response.json();
       const list = Array.isArray(data) ? data : data?.data || data?.quotes || [];
-
       const normalized = list.map(normalizeQuote).filter(Boolean);
 
       if (normalized.length) return normalized;
@@ -303,10 +326,9 @@ async function fetchQuotes(symbols) {
   }
 
   const uniqueSymbols = [...new Set(symbols.map(normalizeSymbol))];
-
   const quoteMap = new Map();
 
-  const chunks = chunkArray(uniqueSymbols, 75);
+  const chunks = chunkArray(uniqueSymbols, QUOTE_BATCH_SIZE);
 
   for (const chunk of chunks) {
     const batchQuotes = await fetchBatchQuotes(chunk, apiKey);
@@ -315,15 +337,17 @@ async function fetchQuotes(symbols) {
       quoteMap.set(q.symbol, q);
     });
 
-    const missing = chunk.filter((s) => !quoteMap.has(s));
+    if (chunk.length <= 25) {
+      const missing = chunk.filter((s) => !quoteMap.has(s));
 
-    for (const symbol of missing) {
-      const quote = await fetchSingleQuote(symbol, apiKey);
-      if (quote) quoteMap.set(quote.symbol, quote);
-      await sleep(20);
+      for (const symbol of missing) {
+        const quote = await fetchSingleQuote(symbol, apiKey);
+        if (quote) quoteMap.set(quote.symbol, quote);
+        await sleep(25);
+      }
     }
 
-    await sleep(50);
+    await sleep(35);
   }
 
   return Array.from(quoteMap.values());
