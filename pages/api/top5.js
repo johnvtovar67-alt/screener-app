@@ -33,16 +33,6 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function chunkArray(array, size) {
-  const chunks = [];
-
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-
-  return chunks;
-}
-
 function evenlySample(array, maxCount) {
   if (array.length <= maxCount) return array;
 
@@ -55,9 +45,6 @@ function evenlySample(array, maxCount) {
 
   return result;
 }
-
-const MAX_BROAD_UNIVERSE = 750;
-const QUOTE_BATCH_SIZE = 40;
 
 const THEMES = {
   broad: {
@@ -225,15 +212,18 @@ function prioritizeUniverse(fullUniverse, themeKey = "broad") {
     .filter((s) => !s.includes("."))
     .filter((s) => !s.includes("-"));
 
-  const seedSet = new Set(SEED_SYMBOLS.map(normalizeSymbol));
-  const cleanRaw = [...new Set(raw)].filter((symbol) => !seedSet.has(symbol));
+  const cleanSeeds = [...new Set(SEED_SYMBOLS.map(normalizeSymbol))];
+  const seedSet = new Set(cleanSeeds);
 
+  const rawOnly = [...new Set(raw)].filter((symbol) => !seedSet.has(symbol));
+
+  const maxUniverse = 300;
   const sampledRaw = evenlySample(
-    cleanRaw,
-    Math.max(0, MAX_BROAD_UNIVERSE - seedSet.size)
+    rawOnly,
+    Math.max(0, maxUniverse - cleanSeeds.length)
   );
 
-  const combined = [...new Set([...seedSet, ...sampledRaw])];
+  const combined = [...new Set([...cleanSeeds, ...sampledRaw])];
 
   return combined.map((symbol) => ({ symbol }));
 }
@@ -280,6 +270,7 @@ async function fetchBatchQuotes(symbols, apiKey) {
 
       const data = await response.json();
       const list = Array.isArray(data) ? data : data?.data || data?.quotes || [];
+
       const normalized = list.map(normalizeQuote).filter(Boolean);
 
       if (normalized.length) return normalized;
@@ -326,31 +317,33 @@ async function fetchQuotes(symbols) {
   }
 
   const uniqueSymbols = [...new Set(symbols.map(normalizeSymbol))];
-  const quoteMap = new Map();
 
-  const chunks = chunkArray(uniqueSymbols, QUOTE_BATCH_SIZE);
+  const batchQuotes = await fetchBatchQuotes(uniqueSymbols, apiKey);
 
-  for (const chunk of chunks) {
-    const batchQuotes = await fetchBatchQuotes(chunk, apiKey);
+  if (batchQuotes.length) {
+    const quoteMap = new Map();
+    batchQuotes.forEach((q) => quoteMap.set(q.symbol, q));
 
-    batchQuotes.forEach((q) => {
-      quoteMap.set(q.symbol, q);
-    });
+    const missing = uniqueSymbols.filter((s) => !quoteMap.has(s));
 
-    if (chunk.length <= 25) {
-      const missing = chunk.filter((s) => !quoteMap.has(s));
-
-      for (const symbol of missing) {
-        const quote = await fetchSingleQuote(symbol, apiKey);
-        if (quote) quoteMap.set(quote.symbol, quote);
-        await sleep(25);
-      }
+    for (const symbol of missing) {
+      const quote = await fetchSingleQuote(symbol, apiKey);
+      if (quote) quoteMap.set(quote.symbol, quote);
+      await sleep(35);
     }
 
-    await sleep(35);
+    return Array.from(quoteMap.values());
   }
 
-  return Array.from(quoteMap.values());
+  const results = [];
+
+  for (const symbol of uniqueSymbols) {
+    const quote = await fetchSingleQuote(symbol, apiKey);
+    if (quote) results.push(quote);
+    await sleep(50);
+  }
+
+  return results;
 }
 
 function attachMarketRelativeData(row, market) {
