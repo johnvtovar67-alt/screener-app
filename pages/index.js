@@ -73,6 +73,24 @@ function getExpectationRisk(stock) {
   );
 }
 
+function getExtensionRisk(stock) {
+  return clampScore(
+    stock?.recommendation?.extensionRisk ??
+      stock?.extensionRisk ??
+      stock?.technicalSnapshot?.extensionRisk ??
+      0
+  );
+}
+
+function getFreshBreakoutScore(stock) {
+  return clampScore(
+    stock?.recommendation?.freshBreakoutScore ??
+      stock?.freshBreakoutScore ??
+      stock?.technicalSnapshot?.freshBreakoutScore ??
+      0
+  );
+}
+
 function getThemeMaturity(stock) {
   return (
     stock?.recommendation?.themeMaturity ??
@@ -190,40 +208,82 @@ function tradeActionForStock(stock, owned = false) {
   const trigger = getTrigger(stock);
   const momentum = getMomentumText(stock);
   const expectationRisk = getExpectationRisk(stock);
+  const extensionRisk = getExtensionRisk(stock);
+  const freshBreakoutScore = getFreshBreakoutScore(stock);
+  const gainLossPct = Number(stock?.gainLossPct);
 
   if (owned) {
-    if (expectationRisk >= 60 && momentum !== "Strong") return "Trim";
+    const hasGainPct = Number.isFinite(gainLossPct);
 
-    if (label === "BUY NOW") return "Hold / Add";
+    const largeGain = hasGainPct && gainLossPct >= 25;
+    const solidGain = hasGainPct && gainLossPct >= 10;
+    const meaningfulLoss = hasGainPct && gainLossPct <= -8;
+    const deepLoss = hasGainPct && gainLossPct <= -15;
 
-    if (label === "WATCH FOR ENTRY" && trigger >= 80 && momentum !== "Weak") {
-      return "Hold";
+    const trendStrong =
+      trigger >= 80 &&
+      momentum !== "Weak" &&
+      score >= 65 &&
+      expectationRisk <= 55;
+
+    const trendFailing =
+      momentum === "Weak" &&
+      trigger < 65 &&
+      score < 60;
+
+    const extendedWinner =
+      solidGain &&
+      extensionRisk >= 55 &&
+      momentum !== "Weak";
+
+    const stretchedRisk =
+      expectationRisk >= 60 ||
+      extensionRisk >= 65;
+
+    if (deepLoss && trendFailing) {
+      return "Exit — Trend Failure";
     }
 
-    if (trigger >= 85 && momentum === "Strong" && expectationRisk <= 45) {
+    if (trendFailing) {
+      return "Exit — Trend Failure";
+    }
+
+    if (largeGain && stretchedRisk) {
+      return "Trim Into Strength";
+    }
+
+    if (extendedWinner) {
+      return "Hold but Extended";
+    }
+
+    if (label === "BUY NOW" && trendStrong && freshBreakoutScore >= 70 && !largeGain) {
       return "Hold / Add";
     }
 
-    if (trigger >= 80 && momentum === "Building") {
-      return "Hold";
+    if (label === "BUY NOW" && trendStrong) {
+      return "Hold Trend";
     }
 
-    if (score >= 75 && momentum !== "Weak") {
-      return "Hold";
+    if (trigger >= 85 && momentum === "Strong" && expectationRisk <= 45 && extensionRisk <= 45) {
+      return "Hold / Add";
     }
 
-    if (momentum === "Weak" && trigger < 65) {
-      return "Exit / Avoid";
+    if (meaningfulLoss && trigger >= 80 && momentum !== "Weak" && expectationRisk <= 50) {
+      return "Hold — Prove It";
     }
 
-    if (momentum === "Weak" || score < 60) {
-      return "Trim";
+    if (trigger >= 75 && momentum !== "Weak" && score >= 60) {
+      return "Hold Trend";
     }
 
-    return "Hold";
+    if (momentum === "Weak" || score < 58) {
+      return "Trim / Watch Closely";
+    }
+
+    return "Hold Trend";
   }
 
-  if (expectationRisk >= 60) return "Avoid for Now";
+  if (expectationRisk >= 60 || extensionRisk >= 65) return "Avoid for Now";
   if (label === "BUY NOW") return "Buy Now";
   if (label === "WATCH FOR ENTRY") return "Watch for Entry";
   if (label === "WATCH") return "Watch";
@@ -236,8 +296,9 @@ function displayAction(stock, owned = false) {
   if (!owned && action === "Buy Now") {
     const dayMove = Number(getChangePct(stock));
     const expectationRisk = getExpectationRisk(stock);
+    const extensionRisk = getExtensionRisk(stock);
 
-    if ((Number.isFinite(dayMove) && dayMove >= 12) || expectationRisk >= 50) {
+    if ((Number.isFinite(dayMove) && dayMove >= 12) || expectationRisk >= 50 || extensionRisk >= 55) {
       return "Buy Now — Extended";
     }
   }
@@ -247,9 +308,11 @@ function displayAction(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Buy Now" || action === "Hold / Add") return "green";
+  if (action === "Hold Trend") return "green";
   if (action === "Buy Now — Extended") return "redExtended";
-  if (action === "Watch for Entry" || action === "Hold") return "yellow";
-  if (action === "Trim") return "orange";
+  if (action === "Watch for Entry" || action === "Hold" || action === "Hold — Prove It") return "yellow";
+  if (action === "Hold but Extended") return "yellow";
+  if (action === "Trim Into Strength" || action === "Trim / Watch Closely") return "orange";
   return "red";
 }
 
@@ -746,7 +809,9 @@ export default function Home() {
 
       <section className="card">
         <h2>Portfolio Screener</h2>
-        <p className="muted">Uses ownership logic: Hold / Add, Hold, Trim, Exit / Avoid.</p>
+        <p className="muted">
+          Uses ownership logic: Hold Trend, Hold / Add, Hold but Extended, Trim Into Strength, Exit — Trend Failure.
+        </p>
 
         <div className="portfolioTools">
           <button onClick={exportPortfolio} className="button secondary">
@@ -824,7 +889,7 @@ export default function Home() {
               </thead>
               <tbody>
                 {portfolioResults.map((stock) => {
-                  const action = stock.error ? "Exit / Avoid" : displayAction(stock, true);
+                  const action = stock.error ? "Exit — Trend Failure" : displayAction(stock, true);
 
                   return (
                     <tr key={stock.symbol}>
