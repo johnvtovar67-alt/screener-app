@@ -33,51 +33,163 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function chunkArray(array, size) {
+  const chunks = [];
+
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+
+  return chunks;
+}
+
 const THEMES = {
   broad: {
     name: "Broad Market",
-    description: "Full broad-market screen using your standard asymmetric setup rules.",
+    description:
+      "Full broad-market screen using your standard asymmetric setup rules.",
     symbols: [],
   },
   btc: {
     name: "BTC / Digital Assets",
-    description: "BTC, digital collateral, custody, exchanges, miners, and crypto infrastructure.",
-    symbols: ["MSTR", "COIN", "HOOD", "MARA", "RIOT", "CLSK", "HUT", "BTDR", "IREN", "WULF", "BITF", "CIFR"],
+    description:
+      "BTC, digital collateral, custody, exchanges, miners, and crypto infrastructure.",
+    symbols: [
+      "MSTR",
+      "COIN",
+      "HOOD",
+      "MARA",
+      "RIOT",
+      "CLSK",
+      "HUT",
+      "BTDR",
+      "IREN",
+      "WULF",
+      "BITF",
+      "CIFR",
+    ],
   },
   ai_power: {
     name: "AI Power & Energy",
-    description: "Electricity demand, power systems, grid, datacenter energy, and industrial electrification.",
-    symbols: ["ETN", "PWR", "NVT", "HUBB", "GEV", "VRT", "CEG", "VST", "NRG", "KMI", "WMB", "TRGP", "LNG"],
+    description:
+      "Electricity demand, power systems, grid, datacenter energy, and industrial electrification.",
+    symbols: [
+      "ETN",
+      "PWR",
+      "NVT",
+      "HUBB",
+      "GEV",
+      "VRT",
+      "CEG",
+      "VST",
+      "NRG",
+      "KMI",
+      "WMB",
+      "TRGP",
+      "LNG",
+    ],
   },
   cooling_water: {
     name: "Cooling & Water",
-    description: "Datacenter cooling, liquid cooling, thermal management, water systems, and flow control.",
+    description:
+      "Datacenter cooling, liquid cooling, thermal management, water systems, and flow control.",
     symbols: ["CARR", "XYL", "ECL", "FLS", "MOD", "TT", "JCI", "WTS", "AOS"],
   },
   nuclear: {
     name: "Nuclear / Baseload",
-    description: "Uranium, nuclear generation, SMRs, and stable baseload power for AI demand.",
+    description:
+      "Uranium, nuclear generation, SMRs, and stable baseload power for AI demand.",
     symbols: ["CCJ", "CEG", "OKLO", "SMR", "BWXT", "LEU", "UEC", "UUUU"],
   },
   quantum: {
     name: "Quantum Computing",
-    description: "Early-stage quantum compute and next-generation processing.",
+    description:
+      "Early-stage quantum compute and next-generation processing.",
     symbols: ["IONQ", "QBTS", "RGTI", "ARQQ", "QUBT"],
   },
   ai_infra: {
     name: "AI Infrastructure",
-    description: "Networking, optics, memory, packaging, and AI compute infrastructure.",
-    symbols: ["MRVL", "MU", "COHR", "LITE", "AMKR", "FORM", "AEIS", "AAOI", "CIEN", "SMCI", "ARM", "AMD", "AVGO"],
+    description:
+      "Networking, optics, memory, packaging, and AI compute infrastructure.",
+    symbols: [
+      "MRVL",
+      "MU",
+      "COHR",
+      "LITE",
+      "AMKR",
+      "FORM",
+      "AEIS",
+      "AAOI",
+      "CIEN",
+      "SMCI",
+      "ARM",
+      "AMD",
+      "AVGO",
+    ],
   },
 };
 
 const SEED_SYMBOLS = [
-  "AAPL", "MSFT", "NVDA", "AMZN", "META", "GOOGL", "TSLA", "AVGO", "AMD", "NFLX",
-  "COIN", "HOOD", "MSTR", "MARA", "RIOT", "CLSK", "HIMS", "SOFI", "PLTR", "SOUN",
-  "BBAI", "BGC", "BCRX", "FLYW", "CROX", "CELH", "UPST", "AFRM", "RKT", "DKNG",
-  "SHOP", "NET", "CRWD", "DDOG", "SNOW", "ROKU", "UBER", "LYFT", "SQ", "PYPL",
-  "SCHW", "JPM", "BAC", "C", "WFC", "GS", "MS", "BX", "KKR", "APO",
-  "AAOI", "AAL", "UAL", "DAL", "RCL", "CCL", "NCLH", "SMCI", "MU", "ARM",
+  "AAPL",
+  "MSFT",
+  "NVDA",
+  "AMZN",
+  "META",
+  "GOOGL",
+  "TSLA",
+  "AVGO",
+  "AMD",
+  "NFLX",
+  "COIN",
+  "HOOD",
+  "MSTR",
+  "MARA",
+  "RIOT",
+  "CLSK",
+  "HIMS",
+  "SOFI",
+  "PLTR",
+  "SOUN",
+  "BBAI",
+  "BGC",
+  "BCRX",
+  "FLYW",
+  "CROX",
+  "CELH",
+  "UPST",
+  "AFRM",
+  "RKT",
+  "DKNG",
+  "SHOP",
+  "NET",
+  "CRWD",
+  "DDOG",
+  "SNOW",
+  "ROKU",
+  "UBER",
+  "LYFT",
+  "SQ",
+  "PYPL",
+  "SCHW",
+  "JPM",
+  "BAC",
+  "C",
+  "WFC",
+  "GS",
+  "MS",
+  "BX",
+  "KKR",
+  "APO",
+  "AAOI",
+  "AAL",
+  "UAL",
+  "DAL",
+  "RCL",
+  "CCL",
+  "NCLH",
+  "SMCI",
+  "MU",
+  "ARM",
   ...Object.values(THEMES).flatMap((theme) => theme.symbols),
 ];
 
@@ -85,7 +197,9 @@ function prioritizeUniverse(fullUniverse, themeKey = "broad") {
   const selectedTheme = THEMES[themeKey] || THEMES.broad;
 
   if (themeKey !== "broad" && selectedTheme.symbols?.length) {
-    return [...new Set(selectedTheme.symbols.map(normalizeSymbol))].map((symbol) => ({ symbol }));
+    return [...new Set(selectedTheme.symbols.map(normalizeSymbol))].map(
+      (symbol) => ({ symbol })
+    );
   }
 
   const raw = fullUniverse
@@ -95,9 +209,9 @@ function prioritizeUniverse(fullUniverse, themeKey = "broad") {
     .filter((s) => !s.includes("."))
     .filter((s) => !s.includes("-"));
 
-  const combined = [...new Set([...SEED_SYMBOLS, ...raw])];
+  const combined = [...new Set([...SEED_SYMBOLS.map(normalizeSymbol), ...raw])];
 
-  return combined.slice(0, 300).map((symbol) => ({ symbol }));
+  return combined.map((symbol) => ({ symbol }));
 }
 
 function normalizeQuote(q = {}) {
@@ -128,6 +242,7 @@ function normalizeQuote(q = {}) {
 
 async function fetchBatchQuotes(symbols, apiKey) {
   const cleanSymbols = [...new Set(symbols.map(toFmpSymbol))].join(",");
+
   const urls = [
     `https://financialmodelingprep.com/stable/batch-quote?symbols=${cleanSymbols}&apikey=${apiKey}`,
     `https://financialmodelingprep.com/api/v3/quote/${cleanSymbols}?apikey=${apiKey}`,
@@ -189,32 +304,29 @@ async function fetchQuotes(symbols) {
 
   const uniqueSymbols = [...new Set(symbols.map(normalizeSymbol))];
 
-  const batchQuotes = await fetchBatchQuotes(uniqueSymbols, apiKey);
+  const quoteMap = new Map();
 
-  if (batchQuotes.length) {
-    const quoteMap = new Map();
-    batchQuotes.forEach((q) => quoteMap.set(q.symbol, q));
+  const chunks = chunkArray(uniqueSymbols, 75);
 
-    const missing = uniqueSymbols.filter((s) => !quoteMap.has(s));
+  for (const chunk of chunks) {
+    const batchQuotes = await fetchBatchQuotes(chunk, apiKey);
+
+    batchQuotes.forEach((q) => {
+      quoteMap.set(q.symbol, q);
+    });
+
+    const missing = chunk.filter((s) => !quoteMap.has(s));
 
     for (const symbol of missing) {
       const quote = await fetchSingleQuote(symbol, apiKey);
       if (quote) quoteMap.set(quote.symbol, quote);
-      await sleep(35);
+      await sleep(20);
     }
 
-    return Array.from(quoteMap.values());
-  }
-
-  const results = [];
-
-  for (const symbol of uniqueSymbols) {
-    const quote = await fetchSingleQuote(symbol, apiKey);
-    if (quote) results.push(quote);
     await sleep(50);
   }
 
-  return results;
+  return Array.from(quoteMap.values());
 }
 
 function attachMarketRelativeData(row, market) {
@@ -293,7 +405,9 @@ export default async function handler(req, res) {
     const themeKey = String(req.query.theme || "broad").toLowerCase();
     const selectedTheme = THEMES[themeKey] || THEMES.broad;
 
-    const fullUniverse = themeKey === "broad" ? await buildRawListedUniverse() : [];
+    const fullUniverse =
+      themeKey === "broad" ? await buildRawListedUniverse() : [];
+
     const prioritizedUniverse = prioritizeUniverse(fullUniverse, themeKey);
 
     const symbols = prioritizedUniverse.map((x) => x.symbol);
@@ -330,7 +444,11 @@ export default async function handler(req, res) {
             minAvgVolume: 500000,
           };
 
-    const tradable = applyLiquidityFilter(prioritizedUniverse, tradableQuotes, liquidityMinimums);
+    const tradable = applyLiquidityFilter(
+      prioritizedUniverse,
+      tradableQuotes,
+      liquidityMinimums
+    );
 
     const scored = tradable
       .map((row) => {
@@ -348,7 +466,9 @@ export default async function handler(req, res) {
           market
         );
 
-        if (!passesInstitutionalFilter(base) && themeKey !== "quantum") return null;
+        if (!passesInstitutionalFilter(base) && themeKey !== "quantum") {
+          return null;
+        }
 
         return scoreRow(base);
       })
