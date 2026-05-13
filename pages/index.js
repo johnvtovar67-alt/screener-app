@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 
 const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
 
+const CASH_SYMBOLS = ["CASH", "SWVXX", "VMFXX", "SPAXX", "FDRXX", "MMF"];
+
 const THEME_OPTIONS = [
   { key: "broad", name: "Broad Market" },
   { key: "btc", name: "BTC / Digital Assets" },
@@ -42,6 +44,15 @@ function clampScore(value) {
 
 function getSymbol(stock) {
   return String(stock?.symbol ?? stock?.ticker ?? "").toUpperCase();
+}
+
+function isCashLikeSymbol(symbolOrStock) {
+  const symbol =
+    typeof symbolOrStock === "string"
+      ? symbolOrStock.toUpperCase()
+      : getSymbol(symbolOrStock);
+
+  return CASH_SYMBOLS.includes(symbol);
 }
 
 function getName(stock) {
@@ -101,6 +112,8 @@ function getThemeMaturity(stock) {
 }
 
 function getSetupGrade(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash";
+
   return (
     stock?.recommendation?.setupGrade ??
     stock?.setupGrade ??
@@ -110,6 +123,8 @@ function getSetupGrade(stock) {
 }
 
 function getMomentumText(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash";
+
   return (
     stock?.recommendation?.momentumLabel ??
     stock?.momentumLabel ??
@@ -129,6 +144,7 @@ function getMomentumText(stock) {
 }
 
 function getScoreTone(stock) {
+  if (isCashLikeSymbol(stock)) return "gray";
   const tone = stock?.recommendation?.scoreTone;
   if (tone) return tone;
   const score = getScore(stock);
@@ -138,6 +154,7 @@ function getScoreTone(stock) {
 }
 
 function getTriggerTone(stock) {
+  if (isCashLikeSymbol(stock)) return "gray";
   const tone = stock?.recommendation?.triggerTone;
   if (tone) return tone;
   const trigger = getTrigger(stock);
@@ -147,6 +164,7 @@ function getTriggerTone(stock) {
 }
 
 function getMomentumTone(stock) {
+  if (isCashLikeSymbol(stock)) return "gray";
   const tone = stock?.recommendation?.momentumTone;
   if (tone) return tone;
   const momentum = getMomentumText(stock);
@@ -156,6 +174,7 @@ function getMomentumTone(stock) {
 }
 
 function getExpectationTone(stock) {
+  if (isCashLikeSymbol(stock)) return "gray";
   const tone = stock?.recommendation?.expectationTone;
   if (tone) return tone;
   const risk = getExpectationRisk(stock);
@@ -165,6 +184,7 @@ function getExpectationTone(stock) {
 }
 
 function getSetupTone(stock) {
+  if (isCashLikeSymbol(stock)) return "gray";
   const tone = stock?.recommendation?.setupTone;
   if (tone) return tone;
   const grade = getSetupGrade(stock);
@@ -203,6 +223,10 @@ function calculatePosition(position, livePrice) {
 }
 
 function tradeActionForStock(stock, owned = false) {
+  if (isCashLikeSymbol(stock)) {
+    return "Cash / Hold";
+  }
+
   const label = String(stock?.recommendation?.label ?? "").toUpperCase();
   const score = getScore(stock);
   const trigger = getTrigger(stock);
@@ -226,6 +250,11 @@ function tradeActionForStock(stock, owned = false) {
       score >= 65 &&
       expectationRisk <= 55;
 
+    const trendWeak =
+      momentum === "Weak" ||
+      trigger < 65 ||
+      score < 60;
+
     const trendFailing =
       momentum === "Weak" &&
       trigger < 65 &&
@@ -240,11 +269,19 @@ function tradeActionForStock(stock, owned = false) {
       expectationRisk >= 60 ||
       extensionRisk >= 65;
 
+    if (largeGain && trendFailing) {
+      return "Hold — Watch Closely";
+    }
+
+    if (solidGain && trendFailing) {
+      return "Trim / Watch Closely";
+    }
+
     if (deepLoss && trendFailing) {
       return "Exit — Trend Failure";
     }
 
-    if (trendFailing) {
+    if (meaningfulLoss && trendFailing) {
       return "Exit — Trend Failure";
     }
 
@@ -274,6 +311,14 @@ function tradeActionForStock(stock, owned = false) {
 
     if (trigger >= 75 && momentum !== "Weak" && score >= 60) {
       return "Hold Trend";
+    }
+
+    if (largeGain && trendWeak) {
+      return "Hold — Watch Closely";
+    }
+
+    if (solidGain && trendWeak) {
+      return "Trim / Watch Closely";
     }
 
     if (momentum === "Weak" || score < 58) {
@@ -307,11 +352,12 @@ function displayAction(stock, owned = false) {
 }
 
 function actionClass(action) {
+  if (action === "Cash / Hold") return "gray";
   if (action === "Buy Now" || action === "Hold / Add") return "green";
   if (action === "Hold Trend") return "green";
   if (action === "Buy Now — Extended") return "redExtended";
   if (action === "Watch for Entry" || action === "Hold" || action === "Hold — Prove It") return "yellow";
-  if (action === "Hold but Extended") return "yellow";
+  if (action === "Hold but Extended" || action === "Hold — Watch Closely") return "yellow";
   if (action === "Trim Into Strength" || action === "Trim / Watch Closely") return "orange";
   return "red";
 }
@@ -491,6 +537,25 @@ export default function Home() {
 
       for (const position of portfolio) {
         try {
+          if (isCashLikeSymbol(position.symbol)) {
+            const calculated = calculatePosition(position, position.avgCost || 1);
+
+            results.push({
+              symbol: position.symbol,
+              name: "Cash / Money Market",
+              shares: calculated.shares,
+              avgCost: calculated.avgCost,
+              currentPrice: calculated.price,
+              value: calculated.value,
+              costBasis: calculated.costBasis,
+              gainLoss: calculated.gainLoss,
+              gainLossPct: calculated.gainLossPct,
+              isCash: true,
+            });
+
+            continue;
+          }
+
           const res = await fetch(`/api?symbol=${encodeURIComponent(position.symbol)}`);
           const data = await res.json();
 
@@ -903,16 +968,22 @@ export default function Home() {
                         {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
                       </td>
                       <td>
-                        <span className={`pill ${getScoreTone(stock)}`}>{getScore(stock)}</span>
+                        <span className={`pill ${getScoreTone(stock)}`}>
+                          {isCashLikeSymbol(stock) ? "—" : getScore(stock)}
+                        </span>
                       </td>
                       <td>
-                        <span className={`pill ${getTriggerTone(stock)}`}>{getTrigger(stock)}</span>
+                        <span className={`pill ${getTriggerTone(stock)}`}>
+                          {isCashLikeSymbol(stock) ? "—" : getTrigger(stock)}
+                        </span>
                       </td>
                       <td>
                         <span className={`pill ${getMomentumTone(stock)}`}>{getMomentumText(stock)}</span>
                       </td>
                       <td>
-                        <span className={`pill ${getExpectationTone(stock)}`}>{getExpectationRisk(stock)}</span>
+                        <span className={`pill ${getExpectationTone(stock)}`}>
+                          {isCashLikeSymbol(stock) ? "—" : getExpectationRisk(stock)}
+                        </span>
                       </td>
                       <td>
                         <span className={`pill ${getSetupTone(stock)}`}>{getSetupGrade(stock)}</span>
