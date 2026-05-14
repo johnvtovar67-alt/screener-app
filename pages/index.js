@@ -144,6 +144,15 @@ function getFreshBreakoutScore(stock) {
   );
 }
 
+function getHistoricalScore(stock) {
+  return clampScore(
+    getRecommendation(stock)?.historicalConfirmationScore ??
+      stock?.historicalConfirmationScore ??
+      stock?.technicalSnapshot?.historicalConfirmationScore ??
+      0
+  );
+}
+
 function getMomentumText(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
@@ -179,16 +188,18 @@ function shortContext(stock) {
   const lower = text.toLowerCase();
 
   if (text.length <= 22) return text;
+  if (lower.includes("confirmed")) return "Confirmed";
+  if (lower.includes("clean")) return "Clean entry";
+  if (lower.includes("improving")) return "Improving";
   if (lower.includes("fresh")) return "Fresh breakout";
   if (lower.includes("early")) return "Early breakout";
   if (lower.includes("extended")) return "Extended";
   if (lower.includes("trigger")) return "Strong trigger";
   if (lower.includes("momentum")) return "Building";
   if (lower.includes("binary")) return "Binary risk";
+  if (lower.includes("resistance")) return "Resistance";
   if (lower.includes("lagging")) return "Lagging";
   if (lower.includes("trend")) return "Trend issue";
-  if (lower.includes("clean")) return "Clean setup";
-  if (lower.includes("constructive")) return "Constructive";
 
   return "Setup";
 }
@@ -210,9 +221,15 @@ function getContextTone(stock) {
     context.includes("extended") ||
     context.includes("lagging") ||
     context.includes("not aligned") ||
-    context.includes("risk")
+    context.includes("risk") ||
+    context.includes("resistance") ||
+    context.includes("fading")
   ) {
     return "red";
+  }
+
+  if (context.includes("improving") || context.includes("building")) {
+    return "yellow";
   }
 
   if (action === "Buy Now" || action === "Buy") return "green";
@@ -451,6 +468,8 @@ export default function Home() {
   const [snapError, setSnapError] = useState("");
   const [snapStock, setSnapStock] = useState(null);
 
+  const [deepChecks, setDeepChecks] = useState({});
+
   const [portfolio, setPortfolio] = useState([]);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [portfolioResults, setPortfolioResults] = useState([]);
@@ -467,6 +486,7 @@ export default function Home() {
   async function loadTopIdeas(theme = selectedTheme) {
     setLoadingTop(true);
     setTopError("");
+    setDeepChecks({});
 
     try {
       const res = await fetch(`/api/top5?theme=${encodeURIComponent(theme)}`);
@@ -617,6 +637,57 @@ export default function Home() {
     );
   }
 
+  async function runDeepCheck(symbolOrStock) {
+    const cleanSymbol =
+      typeof symbolOrStock === "string"
+        ? symbolOrStock.trim().toUpperCase()
+        : getSymbol(symbolOrStock);
+
+    if (!cleanSymbol) return;
+
+    setDeepChecks((prev) => ({
+      ...prev,
+      [cleanSymbol]: {
+        loading: true,
+        error: "",
+        stock: prev[cleanSymbol]?.stock || null,
+      },
+    }));
+
+    try {
+      const res = await fetch(
+        `/api/deepcheck?symbol=${encodeURIComponent(cleanSymbol)}`
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.detail || data?.error || "Failed to run deep check."
+        );
+      }
+
+      setDeepChecks((prev) => ({
+        ...prev,
+        [cleanSymbol]: {
+          loading: false,
+          error: "",
+          stock: data?.stock || data?.result || data,
+          meta: data?.meta || null,
+        },
+      }));
+    } catch (err) {
+      setDeepChecks((prev) => ({
+        ...prev,
+        [cleanSymbol]: {
+          loading: false,
+          error: err.message || "Failed to run deep check.",
+          stock: null,
+        },
+      }));
+    }
+  }
+
   async function analyzeSymbol(e) {
     e?.preventDefault();
 
@@ -629,7 +700,9 @@ export default function Home() {
     setSnapStock(null);
 
     try {
-      const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
+      const res = await fetch(
+        `/api/deepcheck?symbol=${encodeURIComponent(cleanSymbol)}`
+      );
       const data = await res.json();
 
       if (!res.ok) {
@@ -677,7 +750,7 @@ export default function Home() {
           }
 
           const res = await fetch(
-            `/api?symbol=${encodeURIComponent(position.symbol)}`
+            `/api/deepcheck?symbol=${encodeURIComponent(position.symbol)}`
           );
 
           const data = await res.json();
@@ -758,8 +831,8 @@ export default function Home() {
         <div>
           <h1>🧠 Asymmetry Screener</h1>
           <p>
-            Institutional-style scoring with action labels for entries,
-            watchlist ideas, and portfolio decisions.
+            Fast candidate discovery with deep action checks for cleaner Buy /
+            Watch / Avoid decisions.
           </p>
         </div>
 
@@ -803,7 +876,7 @@ export default function Home() {
             <span>Purpose</span>
             <p>
               {themeMeta?.description ||
-                "Full broad-market screen using your standard asymmetric setup rules."}
+                "Fast broad-market screen. Use Deep Check before treating any idea as actionable."}
             </p>
           </div>
         </div>
@@ -813,9 +886,7 @@ export default function Home() {
         <div className="sectionTitle">
           <h2>🔥 Top 10 Ideas</h2>
           <p>
-            {selectedTheme === "broad"
-              ? "Broad-market discovery mode."
-              : `Theme sub-screener: ${selectedThemeName}. Same discipline, narrower universe.`}
+            Candidate list only. Use Deep Check for the true action call.
           </p>
         </div>
 
@@ -826,18 +897,20 @@ export default function Home() {
           <>
             <div className="ideaGrid">
               {stocks.map((stock, idx) => {
+                const symbol = getSymbol(stock);
                 const action = displayAction(stock, false);
                 const confidence = getConfidence(stock);
                 const risk = getRisk(stock);
+                const deep = deepChecks[symbol];
 
                 return (
                   <div
                     className="ideaCard"
-                    key={`${getSymbol(stock)}-card-${idx}`}
+                    key={`${symbol}-card-${idx}`}
                   >
                     <div className="ideaTop">
                       <div>
-                        <div className="ideaSymbol">{getSymbol(stock)}</div>
+                        <div className="ideaSymbol">{symbol}</div>
                         <div className="ideaPrice">{money(getPrice(stock))}</div>
                       </div>
 
@@ -847,7 +920,7 @@ export default function Home() {
                     </div>
 
                     <div className="cardField">
-                      <span>Context</span>
+                      <span>Fast Context</span>
                       <strong className={`contextPill ${getContextTone(stock)}`}>
                         {shortContext(stock)}
                       </strong>
@@ -870,6 +943,78 @@ export default function Home() {
                         </strong>
                       </div>
                     </div>
+
+                    <button
+                      type="button"
+                      className="deepButton"
+                      disabled={deep?.loading}
+                      onClick={() => runDeepCheck(symbol)}
+                    >
+                      {deep?.loading ? "Checking..." : "Deep Check"}
+                    </button>
+
+                    {deep?.error && (
+                      <p className="deepError">{deep.error}</p>
+                    )}
+
+                    {deep?.stock && (
+                      <div className="deepResult">
+                        <div className="deepHeader">
+                          <span>Deep Action</span>
+                          <strong
+                            className={`pill ${actionClass(
+                              displayAction(deep.stock, false)
+                            )}`}
+                          >
+                            {displayAction(deep.stock, false)}
+                          </strong>
+                        </div>
+
+                        <div className="deepMiniGrid">
+                          <div>
+                            <span>Context</span>
+                            <strong
+                              className={`miniMetric ${getContextTone(
+                                deep.stock
+                              )}`}
+                            >
+                              {shortContext(deep.stock)}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Hist</span>
+                            <strong className="miniMetric gray">
+                              {getHistoricalScore(deep.stock) || "—"}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Conf</span>
+                            <strong
+                              className={`miniMetric ${confidenceClass(
+                                getConfidence(deep.stock)
+                              )}`}
+                            >
+                              {getConfidence(deep.stock)}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Risk</span>
+                            <strong
+                              className={`miniMetric ${riskClass(
+                                getRisk(deep.stock)
+                              )}`}
+                            >
+                              {getRisk(deep.stock)}
+                            </strong>
+                          </div>
+                        </div>
+
+                        <p className="deepNote">{getEntryNote(deep.stock)}</p>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -883,10 +1028,11 @@ export default function Home() {
                     <th>Name</th>
                     <th>Price</th>
                     <th>Chg %</th>
-                    <th>Action</th>
+                    <th>Fast Action</th>
                     <th>Context</th>
                     <th>Confidence</th>
                     <th>Risk</th>
+                    <th>Deep Check</th>
                     <th>Why</th>
                     <th>Entry Note</th>
                   </tr>
@@ -894,13 +1040,15 @@ export default function Home() {
 
                 <tbody>
                   {stocks.map((stock, idx) => {
+                    const symbol = getSymbol(stock);
                     const action = displayAction(stock, false);
                     const confidence = getConfidence(stock);
                     const risk = getRisk(stock);
+                    const deep = deepChecks[symbol];
 
                     return (
-                      <tr key={`${getSymbol(stock)}-row-${idx}`}>
-                        <td className="symbol stickyCol">{getSymbol(stock)}</td>
+                      <tr key={`${symbol}-row-${idx}`}>
+                        <td className="symbol stickyCol">{symbol}</td>
                         <td>{getName(stock)}</td>
                         <td>{money(getPrice(stock))}</td>
                         <td
@@ -930,6 +1078,26 @@ export default function Home() {
                             {risk}
                           </span>
                         </td>
+                        <td>
+                          {deep?.stock ? (
+                            <span
+                              className={`pill ${actionClass(
+                                displayAction(deep.stock, false)
+                              )}`}
+                            >
+                              {displayAction(deep.stock, false)}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="smallButton"
+                              disabled={deep?.loading}
+                              onClick={() => runDeepCheck(symbol)}
+                            >
+                              {deep?.loading ? "Checking..." : "Run"}
+                            </button>
+                          )}
+                        </td>
                         <td className="textCell">{getWhy(stock)}</td>
                         <td className="textCell mutedText">
                           {getEntryNote(stock)}
@@ -945,9 +1113,9 @@ export default function Home() {
       </section>
 
       <section className="card">
-        <h2>Snap Quote + Score</h2>
+        <h2>Deep Symbol Check</h2>
         <p className="muted">
-          Uses non-owned logic: Buy Now, Buy, Watch for Entry, Avoid for Now.
+          Uses historical confirmation. This is the action check.
         </p>
 
         <form onSubmit={analyzeSymbol} className="formRow">
@@ -958,7 +1126,7 @@ export default function Home() {
           />
 
           <button className="button" disabled={snapLoading}>
-            {snapLoading ? "Analyzing..." : "Snap Quote + Score"}
+            {snapLoading ? "Analyzing..." : "Deep Check"}
           </button>
         </form>
 
@@ -993,6 +1161,13 @@ export default function Home() {
                   }
                 >
                   {percent(getChangePct(snapStock))}
+                </strong>
+              </div>
+
+              <div>
+                <span>Historical Score</span>
+                <strong className="boxedValue gray">
+                  {getHistoricalScore(snapStock) || "—"}
                 </strong>
               </div>
 
@@ -1416,6 +1591,71 @@ export default function Home() {
           white-space: nowrap;
         }
 
+        .deepButton {
+          width: 100%;
+          margin-top: 12px;
+          border: 1px solid #0f172a;
+          background: #0f172a;
+          color: white;
+          border-radius: 10px;
+          padding: 9px 10px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .deepButton:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .deepResult {
+          margin-top: 12px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 10px;
+        }
+
+        .deepHeader {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 9px;
+        }
+
+        .deepHeader span,
+        .deepMiniGrid span {
+          color: #64748b;
+          font-size: 11px;
+          font-weight: 900;
+        }
+
+        .deepMiniGrid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+
+        .deepMiniGrid span {
+          display: block;
+          margin-bottom: 3px;
+        }
+
+        .deepNote {
+          margin-top: 9px;
+          color: #334155;
+          font-size: 12px;
+          line-height: 1.3;
+        }
+
+        .deepError {
+          margin-top: 8px;
+          color: #b91c1c;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
         .tableWrap {
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
@@ -1474,7 +1714,8 @@ export default function Home() {
           color: #64748b;
         }
 
-        .button {
+        .button,
+        .smallButton {
           background: #0f172a;
           color: white;
           border: 0;
@@ -1485,13 +1726,20 @@ export default function Home() {
           white-space: nowrap;
         }
 
+        .smallButton {
+          padding: 6px 10px;
+          font-size: 12px;
+          border-radius: 999px;
+        }
+
         .button.secondary {
           background: white;
           color: #0f172a;
           border: 1px solid #cbd5e1;
         }
 
-        .button:disabled {
+        .button:disabled,
+        .smallButton:disabled {
           opacity: 0.45;
           cursor: not-allowed;
         }
@@ -1635,7 +1883,7 @@ export default function Home() {
 
         .metricGrid {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(6, 1fr);
           gap: 10px;
         }
 
