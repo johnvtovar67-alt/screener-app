@@ -367,51 +367,6 @@ function toPositiveNumber(value, fallback = null) {
   return n;
 }
 
-function avg(values = []) {
-  const clean = values
-    .map((v) => Number(v))
-    .filter((v) => Number.isFinite(v));
-
-  if (!clean.length) return null;
-
-  return clean.reduce((sum, v) => sum + v, 0) / clean.length;
-}
-
-function max(values = []) {
-  const clean = values
-    .map((v) => Number(v))
-    .filter((v) => Number.isFinite(v));
-
-  if (!clean.length) return null;
-
-  return Math.max(...clean);
-}
-
-function min(values = []) {
-  const clean = values
-    .map((v) => Number(v))
-    .filter((v) => Number.isFinite(v));
-
-  if (!clean.length) return null;
-
-  return Math.min(...clean);
-}
-
-function pctChange(current, base) {
-  const c = Number(current);
-  const b = Number(base);
-
-  if (!Number.isFinite(c) || !Number.isFinite(b) || b <= 0) return null;
-
-  return ((c - b) / b) * 100;
-}
-
-function sortHistoricalRows(rows = []) {
-  return rows
-    .filter((row) => row && row.date)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-}
-
 async function fetchJson(url) {
   const response = await fetch(url);
 
@@ -447,7 +402,7 @@ async function fetchFmpBatch(symbols = [], apiKey) {
 async function fetchFmpIndividual(symbols = [], apiKey) {
   const cleanSymbols = uniqueSymbols(symbols);
   const all = [];
-  const batchSize = 12;
+  const batchSize = 8;
 
   for (let i = 0; i < cleanSymbols.length; i += batchSize) {
     const batch = cleanSymbols.slice(i, i + batchSize);
@@ -503,60 +458,6 @@ async function fetchFmpQuotes(symbols = []) {
   return fetchFmpIndividual(cleanSymbols, apiKey);
 }
 
-async function fetchHistorical(symbol, apiKey) {
-  const clean = toFmpSymbol(symbol);
-
-  const url = `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${encodeURIComponent(
-    clean
-  )}&apikey=${apiKey}`;
-
-  const data = await fetchJson(url);
-
-  const rows = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.historical)
-      ? data.historical
-      : Array.isArray(data?.data)
-        ? data.data
-        : [];
-
-  return sortHistoricalRows(rows).slice(0, 90);
-}
-
-async function fetchHistoricalForSymbols(symbols = []) {
-  const apiKey = process.env.FMP_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("Missing FMP_API_KEY in environment variables.");
-  }
-
-  const cleanSymbols = uniqueSymbols(symbols);
-  const results = {};
-  const batchSize = 6;
-
-  for (let i = 0; i < cleanSymbols.length; i += batchSize) {
-    const batch = cleanSymbols.slice(i, i + batchSize);
-
-    const settled = await Promise.allSettled(
-      batch.map(async (symbol) => {
-        const rows = await fetchHistorical(symbol, apiKey);
-        return {
-          symbol,
-          rows,
-        };
-      })
-    );
-
-    for (const item of settled) {
-      if (item.status === "fulfilled") {
-        results[item.value.symbol] = item.value.rows;
-      }
-    }
-  }
-
-  return results;
-}
-
 function normalizeQuote(row = {}) {
   const symbol = normalizeSymbol(row.symbol);
 
@@ -601,174 +502,6 @@ function normalizeQuote(row = {}) {
   };
 }
 
-function buildHistoricalSignals(history = [], quote = {}) {
-  const rows = sortHistoricalRows(history);
-
-  if (rows.length < 20) {
-    return {
-      historicalDataAvailable: false,
-    };
-  }
-
-  const price = toPositiveNumber(quote.price);
-
-  if (price == null) {
-    return {
-      historicalDataAvailable: false,
-    };
-  }
-
-  const closes = rows.map((row) => toPositiveNumber(row.close));
-  const highs = rows.map((row) => toPositiveNumber(row.high));
-  const lows = rows.map((row) => toPositiveNumber(row.low));
-  const volumes = rows.map((row) => toPositiveNumber(row.volume));
-
-  const close5 = closes[4] ?? null;
-  const close10 = closes[9] ?? null;
-  const close20 = closes[19] ?? null;
-
-  const sma5 = avg(closes.slice(0, 5));
-  const sma10 = avg(closes.slice(0, 10));
-  const sma20 = avg(closes.slice(0, 20));
-
-  const recentHigh10 = max(highs.slice(0, 10));
-  const recentHigh20 = max(highs.slice(0, 20));
-  const recentHigh50 = max(highs.slice(0, 50));
-
-  const recentLow20 = min(lows.slice(0, 20));
-  const avgVolume20 = avg(volumes.slice(0, 20));
-
-  const momentum5Pct = pctChange(price, close5);
-  const momentum10Pct = pctChange(price, close10);
-  const momentum20Pct = pctChange(price, close20);
-
-  const shortTrendSlopePct = pctChange(sma5, sma20);
-  const resistanceOverheadPct =
-    recentHigh20 != null ? ((recentHigh20 - price) / price) * 100 : null;
-
-  const breakoutAbove20High =
-    recentHigh20 != null ? price >= recentHigh20 * 1.0025 : false;
-
-  const nearResistance =
-    resistanceOverheadPct != null &&
-    resistanceOverheadPct > 0 &&
-    resistanceOverheadPct <= 3;
-
-  const closeLocation20 =
-    recentHigh20 != null && recentLow20 != null && recentHigh20 > recentLow20
-      ? ((price - recentLow20) / (recentHigh20 - recentLow20)) * 100
-      : null;
-
-  const volumeRatio20 =
-    avgVolume20 != null && avgVolume20 > 0 && quote.volume != null
-      ? quote.volume / avgVolume20
-      : null;
-
-  let confirmation = 50;
-
-  if (sma5 != null) confirmation += price > sma5 ? 10 : -10;
-  if (sma10 != null) confirmation += price > sma10 ? 10 : -10;
-  if (sma20 != null) confirmation += price > sma20 ? 12 : -12;
-
-  if (shortTrendSlopePct != null) {
-    if (shortTrendSlopePct > 1.5) confirmation += 12;
-    else if (shortTrendSlopePct > 0) confirmation += 6;
-    else if (shortTrendSlopePct < -1.5) confirmation -= 14;
-    else if (shortTrendSlopePct < 0) confirmation -= 7;
-  }
-
-  if (momentum5Pct != null) {
-    if (momentum5Pct > 2) confirmation += 10;
-    else if (momentum5Pct > 0) confirmation += 5;
-    else if (momentum5Pct < -2) confirmation -= 12;
-    else if (momentum5Pct < 0) confirmation -= 6;
-  }
-
-  if (momentum10Pct != null) {
-    if (momentum10Pct > 4) confirmation += 10;
-    else if (momentum10Pct > 0) confirmation += 5;
-    else if (momentum10Pct < -4) confirmation -= 12;
-    else if (momentum10Pct < 0) confirmation -= 6;
-  }
-
-  if (breakoutAbove20High) confirmation += 18;
-  else if (nearResistance) confirmation += 5;
-  else if (resistanceOverheadPct != null && resistanceOverheadPct > 6) {
-    confirmation -= 18;
-  } else if (resistanceOverheadPct != null && resistanceOverheadPct > 3) {
-    confirmation -= 9;
-  }
-
-  if (closeLocation20 != null) {
-    if (closeLocation20 >= 75) confirmation += 8;
-    else if (closeLocation20 <= 35) confirmation -= 8;
-  }
-
-  if (volumeRatio20 != null) {
-    if (volumeRatio20 >= 1.2 && volumeRatio20 <= 3.5) confirmation += 8;
-    else if (volumeRatio20 < 0.7) confirmation -= 5;
-  }
-
-  const historicalConfirmationScore = Math.round(
-    Math.max(0, Math.min(100, confirmation))
-  );
-
-  return {
-    historicalDataAvailable: true,
-    historicalConfirmationScore,
-
-    recentHigh10,
-    recentHigh20,
-    recentHigh50,
-    recentLow20,
-
-    sma5,
-    sma10,
-    sma20,
-
-    momentum5Pct,
-    momentum10Pct,
-    momentum20Pct,
-    shortTrendSlopePct,
-
-    resistanceOverheadPct,
-    breakoutAbove20High,
-    closeLocation20,
-    volumeRatio20,
-    avgVolume20,
-
-    historicalNotes: {
-      recentHigh20,
-      resistanceOverheadPct,
-      breakoutAbove20High,
-      shortTrendSlopePct,
-      momentum5Pct,
-      momentum10Pct,
-      volumeRatio20,
-    },
-  };
-}
-
-function confidenceRank(confidence) {
-  const clean = String(confidence || "").toUpperCase();
-
-  if (clean === "HIGH") return 3;
-  if (clean === "MEDIUM") return 2;
-  if (clean === "LOW") return 1;
-
-  return 0;
-}
-
-function riskRank(risk) {
-  const clean = String(risk || "").toUpperCase();
-
-  if (clean === "LOW") return 3;
-  if (clean === "MEDIUM") return 2;
-  if (clean === "HIGH") return 1;
-
-  return 0;
-}
-
 function actionRank(label) {
   const clean = String(label || "").toUpperCase();
 
@@ -793,6 +526,26 @@ function readinessRank(label) {
   return 0;
 }
 
+function confidenceRank(confidence) {
+  const clean = String(confidence || "").toUpperCase();
+
+  if (clean === "HIGH") return 3;
+  if (clean === "MEDIUM") return 2;
+  if (clean === "LOW") return 1;
+
+  return 0;
+}
+
+function riskRank(risk) {
+  const clean = String(risk || "").toUpperCase();
+
+  if (clean === "LOW") return 3;
+  if (clean === "MEDIUM") return 2;
+  if (clean === "HIGH") return 1;
+
+  return 0;
+}
+
 function institutionalRank(stock = {}) {
   const rec = stock.recommendation || {};
   const tradeReadiness = stock.tradeReadiness || {};
@@ -804,7 +557,6 @@ function institutionalRank(stock = {}) {
   const momentum = Number(rec.momentumScore || stock.momentumScore || 0);
   const relative = Number(rec.relativeStrengthScore || 0);
   const freshBreakout = Number(rec.freshBreakoutScore || 0);
-  const historicalScore = Number(rec.historicalConfirmationScore || 50);
 
   const expectationRisk = Number(rec.expectationRisk || 0);
   const extensionRisk = Number(rec.extensionRisk || 0);
@@ -832,8 +584,7 @@ function institutionalRank(stock = {}) {
             institutionalScore * 2.2 -
             trigger * 1.9 -
             momentum * 1.5 -
-            freshBreakout * 1.2 -
-            historicalScore * 1.4
+            freshBreakout * 1.2
         )
       : 0;
 
@@ -852,8 +603,7 @@ function institutionalRank(stock = {}) {
     trigger * 3.2 +
     momentum * 2.2 +
     relative * 1.2 +
-    freshBreakout * 1.3 +
-    historicalScore * 2.2;
+    freshBreakout * 1.3;
 
   const riskDrag =
     expectationRisk * 1.15 +
@@ -874,28 +624,21 @@ function institutionalRank(stock = {}) {
   );
 }
 
-function enrichQuote(row = {}, historyRows = []) {
+function enrichQuote(row = {}) {
   const normalized = normalizeQuote(row);
 
   if (!normalized.symbol || normalized.price == null) {
     return null;
   }
 
-  const historicalSignals = buildHistoricalSignals(historyRows, normalized);
-
-  const base = {
-    ...normalized,
-    ...historicalSignals,
-  };
-
-  const recommendation = getRecommendation(base);
-  const tradeReadiness = getTradeReadiness(base);
-  const technicalSnapshot = buildTechnicalSnapshot(base);
-  const fundamentalSnapshot = buildFundamentalSnapshot(base);
-  const score = compositeScore(base);
+  const recommendation = getRecommendation(normalized);
+  const tradeReadiness = getTradeReadiness(normalized);
+  const technicalSnapshot = buildTechnicalSnapshot(normalized);
+  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
+  const score = compositeScore(normalized);
 
   const stock = {
-    ...base,
+    ...normalized,
 
     score,
     compositeScore: score,
@@ -981,25 +724,8 @@ export default async function handler(req, res) {
       });
     }
 
-    const preliminary = quotes
-      .map((quote) => enrichQuote(quote, []))
-      .filter(Boolean)
-      .filter((stock) => Number.isFinite(Number(stock.price)))
-      .sort(sortTopIdeas)
-      .slice(0, 35);
-
-    const historicalMap = await fetchHistoricalForSymbols(
-      preliminary.map((stock) => stock.symbol)
-    ).catch(() => ({}));
-
-    const enriched = preliminary
-      .map((stock) => {
-        const rawQuote = quotes.find(
-          (quote) => normalizeSymbol(quote.symbol) === stock.symbol
-        );
-
-        return enrichQuote(rawQuote || stock, historicalMap[stock.symbol] || []);
-      })
+    const enriched = quotes
+      .map(enrichQuote)
       .filter(Boolean)
       .filter((stock) => Number.isFinite(Number(stock.price)));
 
@@ -1018,8 +744,8 @@ export default async function handler(req, res) {
       count: sorted.length,
       stocks: sorted,
       meta: {
-        historicalConfirmation: true,
-        historicalCandidatesChecked: preliminary.length,
+        historicalConfirmation: false,
+        mode: "fast_quote_screen",
       },
     });
   } catch (error) {
