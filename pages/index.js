@@ -16,7 +16,9 @@ const THEME_OPTIONS = [
 
 function money(value) {
   const n = Number(value);
+
   if (!Number.isFinite(n)) return "—";
+
   return n.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
@@ -26,19 +28,25 @@ function money(value) {
 
 function percent(value) {
   const n = Number(value);
+
   if (!Number.isFinite(n)) return "—";
+
   return `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 
 function number(value, digits = 2) {
   const n = Number(value);
+
   if (!Number.isFinite(n)) return "—";
+
   return n.toFixed(digits);
 }
 
 function clampScore(value) {
   const n = Number(value);
+
   if (!Number.isFinite(n)) return 0;
+
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
@@ -60,24 +68,58 @@ function getName(stock) {
 }
 
 function getPrice(stock) {
-  return Number(stock?.price ?? stock?.currentPrice ?? stock?.quote?.price ?? stock?.lastPrice);
+  return Number(
+    stock?.price ??
+      stock?.currentPrice ??
+      stock?.quote?.price ??
+      stock?.lastPrice
+  );
 }
 
 function getChangePct(stock) {
-  return Number(stock?.dayChangePct ?? stock?.changesPercentage ?? stock?.changePercent ?? stock?.percentChange);
+  return Number(
+    stock?.dayChangePct ??
+      stock?.changesPercentage ??
+      stock?.changePercent ??
+      stock?.percentChange
+  );
+}
+
+function getRecommendation(stock) {
+  return stock?.recommendation ?? {};
 }
 
 function getScore(stock) {
-  return clampScore(stock?.recommendation?.score ?? stock?.score ?? stock?.compositeScore ?? stock?.overallScore ?? 0);
+  return clampScore(
+    getRecommendation(stock)?.score ??
+      stock?.score ??
+      stock?.compositeScore ??
+      stock?.overallScore ??
+      0
+  );
 }
 
 function getTrigger(stock) {
-  return clampScore(stock?.recommendation?.triggerScore ?? stock?.triggerScore ?? stock?.technicalSnapshot?.triggerScore ?? 0);
+  return clampScore(
+    getRecommendation(stock)?.triggerScore ??
+      stock?.triggerScore ??
+      stock?.technicalSnapshot?.triggerScore ??
+      0
+  );
+}
+
+function getMomentumScore(stock) {
+  return clampScore(
+    getRecommendation(stock)?.momentumScore ??
+      stock?.momentumScore ??
+      stock?.technicalSnapshot?.momentumScore ??
+      0
+  );
 }
 
 function getExpectationRisk(stock) {
   return clampScore(
-    stock?.recommendation?.expectationRisk ??
+    getRecommendation(stock)?.expectationRisk ??
       stock?.expectationRisk ??
       stock?.technicalSnapshot?.expectationRisk ??
       0
@@ -86,7 +128,7 @@ function getExpectationRisk(stock) {
 
 function getExtensionRisk(stock) {
   return clampScore(
-    stock?.recommendation?.extensionRisk ??
+    getRecommendation(stock)?.extensionRisk ??
       stock?.extensionRisk ??
       stock?.technicalSnapshot?.extensionRisk ??
       0
@@ -95,110 +137,109 @@ function getExtensionRisk(stock) {
 
 function getFreshBreakoutScore(stock) {
   return clampScore(
-    stock?.recommendation?.freshBreakoutScore ??
+    getRecommendation(stock)?.freshBreakoutScore ??
       stock?.freshBreakoutScore ??
       stock?.technicalSnapshot?.freshBreakoutScore ??
       0
   );
 }
 
-function getThemeMaturity(stock) {
-  return (
-    stock?.recommendation?.themeMaturity ??
-    stock?.themeMaturity ??
-    stock?.technicalSnapshot?.themeMaturity ??
-    "Neutral"
-  );
-}
-
-function getSetupGrade(stock) {
-  if (isCashLikeSymbol(stock)) return "Cash";
-
-  return (
-    stock?.recommendation?.setupGrade ??
-    stock?.setupGrade ??
-    stock?.technicalSnapshot?.setupGrade ??
-    "C"
-  );
-}
-
 function getMomentumText(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
+  const rec = getRecommendation(stock);
+
+  if (rec?.momentumLabel) return rec.momentumLabel;
+  if (stock?.momentumLabel) return stock.momentumLabel;
+  if (stock?.technicalSnapshot?.momentumLabel) {
+    return stock.technicalSnapshot.momentumLabel;
+  }
+
+  const momentumScore = getMomentumScore(stock);
+
+  if (momentumScore >= 75) return "Strong";
+  if (momentumScore >= 55) return "Building";
+
+  return "Weak";
+}
+
+function getContext(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash position";
+
   return (
-    stock?.recommendation?.momentumLabel ??
-    stock?.momentumLabel ??
-    stock?.technicalSnapshot?.momentumLabel ??
-    (() => {
-      const momentumScore = Number(stock?.momentumScore ?? stock?.technicalSnapshot?.momentumScore);
-
-      if (Number.isFinite(momentumScore)) {
-        if (momentumScore >= 75) return "Strong";
-        if (momentumScore >= 55) return "Building";
-        return "Weak";
-      }
-
-      return "Weak";
-    })()
+    getRecommendation(stock)?.context ??
+    stock?.context ??
+    stock?.technicalSnapshot?.context ??
+    "Setup not fully aligned"
   );
 }
 
-function getScoreTone(stock) {
-  if (isCashLikeSymbol(stock)) return "gray";
-  const tone = stock?.recommendation?.scoreTone;
-  if (tone) return tone;
-  const score = getScore(stock);
-  if (score >= 75) return "green";
-  if (score >= 60) return "yellow";
-  return "red";
+function getConfidence(stock) {
+  if (isCashLikeSymbol(stock)) return "High";
+
+  return (
+    getRecommendation(stock)?.confidence ??
+    stock?.confidence ??
+    stock?.technicalSnapshot?.confidence ??
+    "Low"
+  );
 }
 
-function getTriggerTone(stock) {
-  if (isCashLikeSymbol(stock)) return "gray";
-  const tone = stock?.recommendation?.triggerTone;
-  if (tone) return tone;
-  const trigger = getTrigger(stock);
-  if (trigger >= 80) return "green";
-  if (trigger >= 65) return "yellow";
-  return "red";
-}
+function getRisk(stock) {
+  if (isCashLikeSymbol(stock)) return "Low";
 
-function getMomentumTone(stock) {
-  if (isCashLikeSymbol(stock)) return "gray";
-  const tone = stock?.recommendation?.momentumTone;
-  if (tone) return tone;
-  const momentum = getMomentumText(stock);
-  if (momentum === "Strong") return "green";
-  if (momentum === "Building") return "yellow";
-  return "red";
-}
-
-function getExpectationTone(stock) {
-  if (isCashLikeSymbol(stock)) return "gray";
-  const tone = stock?.recommendation?.expectationTone;
-  if (tone) return tone;
-  const risk = getExpectationRisk(stock);
-  if (risk <= 25) return "green";
-  if (risk <= 45) return "yellow";
-  return "red";
-}
-
-function getSetupTone(stock) {
-  if (isCashLikeSymbol(stock)) return "gray";
-  const tone = stock?.recommendation?.setupTone;
-  if (tone) return tone;
-  const grade = getSetupGrade(stock);
-  if (grade === "A") return "green";
-  if (grade === "B" || grade === "B-") return "yellow";
-  return "red";
+  return (
+    getRecommendation(stock)?.risk ??
+    stock?.risk ??
+    stock?.technicalSnapshot?.risk ??
+    fallbackRisk(stock)
+  );
 }
 
 function getWhy(stock) {
-  return stock?.recommendation?.reason ?? stock?.reason ?? stock?.why ?? "Constructive setup, but wait for stronger confirmation.";
+  return (
+    getRecommendation(stock)?.reason ??
+    stock?.reason ??
+    stock?.why ??
+    "Constructive setup, but wait for stronger confirmation."
+  );
 }
 
 function getEntryNote(stock) {
-  return stock?.recommendation?.entryNote ?? stock?.entryNote ?? stock?.note ?? "Wait for stronger price or volume confirmation.";
+  return (
+    getRecommendation(stock)?.entryNote ??
+    stock?.entryNote ??
+    stock?.note ??
+    "Wait for stronger price or volume confirmation."
+  );
+}
+
+function fallbackRisk(stock) {
+  const expectationRisk = getExpectationRisk(stock);
+  const extensionRisk = getExtensionRisk(stock);
+
+  if (expectationRisk >= 60 || extensionRisk >= 60) return "High";
+  if (expectationRisk >= 35 || extensionRisk >= 35) return "Medium";
+
+  return "Low";
+}
+
+function confidenceClass(confidence) {
+  const clean = String(confidence || "").toLowerCase();
+
+  if (clean === "high") return "green";
+  if (clean === "medium") return "yellow";
+
+  return "red";
+}
+
+function riskClass(risk) {
+  const clean = String(risk || "").toLowerCase();
+
+  if (clean === "low") return "green";
+  if (clean === "medium") return "yellow";
+
+  return "red";
 }
 
 function calculatePosition(position, livePrice) {
@@ -222,12 +263,35 @@ function calculatePosition(position, livePrice) {
   };
 }
 
-function tradeActionForStock(stock, owned = false) {
-  if (isCashLikeSymbol(stock)) {
-    return "Cash / Hold";
+function nonOwnedAction(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash / Hold";
+
+  const rec = getRecommendation(stock);
+  const label = String(rec?.displayLabel ?? rec?.label ?? "").toUpperCase();
+
+  if (label === "BUY NOW") return "Buy Now";
+  if (label === "BUY") return "Buy";
+  if (label === "WATCH FOR ENTRY") return "Watch for Entry";
+
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumText(stock);
+  const expectationRisk = getExpectationRisk(stock);
+  const extensionRisk = getExtensionRisk(stock);
+
+  if (expectationRisk >= 60 || extensionRisk >= 65) return "Avoid for Now";
+  if (score >= 75 && trigger >= 80 && momentum === "Strong") return "Buy Now";
+  if (score >= 65 && trigger >= 70 && momentum !== "Weak") return "Buy";
+  if (score >= 60 || trigger >= 70 || momentum === "Building") {
+    return "Watch for Entry";
   }
 
-  const label = String(stock?.recommendation?.label ?? "").toUpperCase();
+  return "Avoid for Now";
+}
+
+function portfolioAction(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash / Hold";
+
   const score = getScore(stock);
   const trigger = getTrigger(stock);
   const momentum = getMomentumText(stock);
@@ -235,115 +299,94 @@ function tradeActionForStock(stock, owned = false) {
   const extensionRisk = getExtensionRisk(stock);
   const freshBreakoutScore = getFreshBreakoutScore(stock);
   const gainLossPct = Number(stock?.gainLossPct);
+  const buyAction = nonOwnedAction(stock);
 
-  if (owned) {
-    const hasGainPct = Number.isFinite(gainLossPct);
+  const hasGainPct = Number.isFinite(gainLossPct);
 
-    const largeGain = hasGainPct && gainLossPct >= 25;
-    const solidGain = hasGainPct && gainLossPct >= 10;
-    const meaningfulLoss = hasGainPct && gainLossPct <= -8;
-    const deepLoss = hasGainPct && gainLossPct <= -15;
+  const largeGain = hasGainPct && gainLossPct >= 25;
+  const solidGain = hasGainPct && gainLossPct >= 10;
+  const meaningfulLoss = hasGainPct && gainLossPct <= -8;
+  const deepLoss = hasGainPct && gainLossPct <= -15;
 
-    const trendStrong =
-      trigger >= 80 &&
-      momentum !== "Weak" &&
-      score >= 65 &&
-      expectationRisk <= 55;
+  const trendStrong =
+    trigger >= 80 &&
+    momentum !== "Weak" &&
+    score >= 65 &&
+    expectationRisk <= 55;
 
-    const trendWeak =
-      momentum === "Weak" ||
-      trigger < 65 ||
-      score < 60;
+  const trendWeak = momentum === "Weak" || trigger < 65 || score < 60;
 
-    const trendFailing =
-      momentum === "Weak" &&
-      trigger < 65 &&
-      score < 60;
+  const trendFailing =
+    momentum === "Weak" && trigger < 65 && score < 60;
 
-    const extendedWinner =
-      solidGain &&
-      extensionRisk >= 55 &&
-      momentum !== "Weak";
+  const stretchedRisk = expectationRisk >= 60 || extensionRisk >= 65;
 
-    const stretchedRisk =
-      expectationRisk >= 60 ||
-      extensionRisk >= 65;
+  const extendedWinner = solidGain && extensionRisk >= 55 && momentum !== "Weak";
 
-    if (largeGain && trendFailing) {
-      return "Hold — Watch Closely";
-    }
+  if (largeGain && trendFailing) return "Hold — Watch Closely";
+  if (solidGain && trendFailing) return "Trim / Watch Closely";
+  if (deepLoss && trendFailing) return "Exit — Trend Failure";
+  if (meaningfulLoss && trendFailing) return "Exit — Trend Failure";
 
-    if (solidGain && trendFailing) {
-      return "Trim / Watch Closely";
-    }
+  if (largeGain && stretchedRisk) return "Trim Into Strength";
+  if (extendedWinner) return "Hold but Extended";
 
-    if (deepLoss && trendFailing) {
-      return "Exit — Trend Failure";
-    }
+  if (
+    buyAction === "Buy Now" &&
+    trendStrong &&
+    freshBreakoutScore >= 70 &&
+    !largeGain
+  ) {
+    return "Hold / Add";
+  }
 
-    if (meaningfulLoss && trendFailing) {
-      return "Exit — Trend Failure";
-    }
+  if (buyAction === "Buy Now" && trendStrong) return "Hold Trend";
 
-    if (largeGain && stretchedRisk) {
-      return "Trim Into Strength";
-    }
+  if (
+    trigger >= 85 &&
+    momentum === "Strong" &&
+    expectationRisk <= 45 &&
+    extensionRisk <= 45
+  ) {
+    return "Hold / Add";
+  }
 
-    if (extendedWinner) {
-      return "Hold but Extended";
-    }
+  if (
+    meaningfulLoss &&
+    trigger >= 80 &&
+    momentum !== "Weak" &&
+    expectationRisk <= 50
+  ) {
+    return "Hold — Prove It";
+  }
 
-    if (label === "BUY NOW" && trendStrong && freshBreakoutScore >= 70 && !largeGain) {
-      return "Hold / Add";
-    }
-
-    if (label === "BUY NOW" && trendStrong) {
-      return "Hold Trend";
-    }
-
-    if (trigger >= 85 && momentum === "Strong" && expectationRisk <= 45 && extensionRisk <= 45) {
-      return "Hold / Add";
-    }
-
-    if (meaningfulLoss && trigger >= 80 && momentum !== "Weak" && expectationRisk <= 50) {
-      return "Hold — Prove It";
-    }
-
-    if (trigger >= 75 && momentum !== "Weak" && score >= 60) {
-      return "Hold Trend";
-    }
-
-    if (largeGain && trendWeak) {
-      return "Hold — Watch Closely";
-    }
-
-    if (solidGain && trendWeak) {
-      return "Trim / Watch Closely";
-    }
-
-    if (momentum === "Weak" || score < 58) {
-      return "Trim / Watch Closely";
-    }
-
+  if (trigger >= 75 && momentum !== "Weak" && score >= 60) {
     return "Hold Trend";
   }
 
-  if (expectationRisk >= 60 || extensionRisk >= 65) return "Avoid for Now";
-  if (label === "BUY NOW") return "Buy Now";
-  if (label === "WATCH FOR ENTRY") return "Watch for Entry";
-  if (label === "WATCH") return "Watch";
-  return "Avoid for Now";
+  if (largeGain && trendWeak) return "Hold — Watch Closely";
+  if (solidGain && trendWeak) return "Trim / Watch Closely";
+
+  if (momentum === "Weak" || score < 58) return "Trim / Watch Closely";
+
+  return "Hold Trend";
 }
 
 function displayAction(stock, owned = false) {
-  const action = tradeActionForStock(stock, owned);
+  if (owned) return portfolioAction(stock);
 
-  if (!owned && action === "Buy Now") {
+  const action = nonOwnedAction(stock);
+
+  if (action === "Buy Now") {
     const dayMove = Number(getChangePct(stock));
     const expectationRisk = getExpectationRisk(stock);
     const extensionRisk = getExtensionRisk(stock);
 
-    if ((Number.isFinite(dayMove) && dayMove >= 12) || expectationRisk >= 50 || extensionRisk >= 55) {
+    if (
+      (Number.isFinite(dayMove) && dayMove >= 12) ||
+      expectationRisk >= 50 ||
+      extensionRisk >= 55
+    ) {
       return "Buy Now — Extended";
     }
   }
@@ -353,12 +396,27 @@ function displayAction(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Cash / Hold") return "gray";
-  if (action === "Buy Now" || action === "Hold / Add") return "green";
+  if (action === "Buy Now" || action === "Buy" || action === "Hold / Add") {
+    return "green";
+  }
+
   if (action === "Hold Trend") return "green";
   if (action === "Buy Now — Extended") return "redExtended";
-  if (action === "Watch for Entry" || action === "Hold" || action === "Hold — Prove It") return "yellow";
-  if (action === "Hold but Extended" || action === "Hold — Watch Closely") return "yellow";
-  if (action === "Trim Into Strength" || action === "Trim / Watch Closely") return "orange";
+
+  if (
+    action === "Watch for Entry" ||
+    action === "Hold" ||
+    action === "Hold — Prove It" ||
+    action === "Hold but Extended" ||
+    action === "Hold — Watch Closely"
+  ) {
+    return "yellow";
+  }
+
+  if (action === "Trim Into Strength" || action === "Trim / Watch Closely") {
+    return "orange";
+  }
+
   return "red";
 }
 
@@ -395,9 +453,16 @@ export default function Home() {
       const res = await fetch(`/api/top5?theme=${encodeURIComponent(theme)}`);
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to load top ideas.");
+      if (!res.ok) {
+        throw new Error(
+          data?.detail || data?.error || "Failed to load top ideas."
+        );
+      }
 
-      const list = Array.isArray(data) ? data : data?.stocks || data?.results || data?.data || [];
+      const list = Array.isArray(data)
+        ? data
+        : data?.stocks || data?.results || data?.data || [];
+
       setStocks(list.slice(0, 10));
       setThemeMeta(data?.selectedTheme || null);
     } catch (err) {
@@ -415,8 +480,11 @@ export default function Home() {
   function loadPortfolio() {
     try {
       const raw = window.localStorage.getItem(PORTFOLIO_KEY);
+
       if (!raw) return;
+
       const saved = JSON.parse(raw);
+
       if (Array.isArray(saved)) setPortfolio(saved);
     } catch {
       setPortfolio([]);
@@ -461,7 +529,14 @@ export default function Home() {
           shares: Number(p?.shares),
           avgCost: Number(p?.avgCost),
         }))
-        .filter((p) => p.symbol && Number.isFinite(p.shares) && p.shares > 0 && Number.isFinite(p.avgCost) && p.avgCost >= 0);
+        .filter(
+          (p) =>
+            p.symbol &&
+            Number.isFinite(p.shares) &&
+            p.shares > 0 &&
+            Number.isFinite(p.avgCost) &&
+            p.avgCost >= 0
+        );
 
       if (!cleaned.length) {
         throw new Error("No valid positions.");
@@ -480,7 +555,13 @@ export default function Home() {
     const shares = Number(newShares);
     const avgCost = Number(newCost);
 
-    if (!cleanSymbol || !Number.isFinite(shares) || shares <= 0 || !Number.isFinite(avgCost) || avgCost < 0) {
+    if (
+      !cleanSymbol ||
+      !Number.isFinite(shares) ||
+      shares <= 0 ||
+      !Number.isFinite(avgCost) ||
+      avgCost < 0
+    ) {
       alert("Please enter symbol, shares, and cost per share.");
       return;
     }
@@ -488,8 +569,19 @@ export default function Home() {
     const next = [...portfolio];
     const index = next.findIndex((p) => p.symbol === cleanSymbol);
 
-    if (index >= 0) next[index] = { symbol: cleanSymbol, shares, avgCost };
-    else next.push({ symbol: cleanSymbol, shares, avgCost });
+    if (index >= 0) {
+      next[index] = {
+        symbol: cleanSymbol,
+        shares,
+        avgCost,
+      };
+    } else {
+      next.push({
+        symbol: cleanSymbol,
+        shares,
+        avgCost,
+      });
+    }
 
     savePortfolio(next);
     setNewSymbol("");
@@ -499,13 +591,16 @@ export default function Home() {
 
   function removePosition(symbolToRemove) {
     savePortfolio(portfolio.filter((p) => p.symbol !== symbolToRemove));
-    setPortfolioResults((prev) => prev.filter((p) => p.symbol !== symbolToRemove));
+    setPortfolioResults((prev) =>
+      prev.filter((p) => p.symbol !== symbolToRemove)
+    );
   }
 
   async function analyzeSymbol(e) {
     e?.preventDefault();
 
     const cleanSymbol = symbol.trim().toUpperCase();
+
     if (!cleanSymbol) return;
 
     setSnapLoading(true);
@@ -516,7 +611,11 @@ export default function Home() {
       const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
+      if (!res.ok) {
+        throw new Error(
+          data?.detail || data?.error || "Failed to analyze symbol."
+        );
+      }
 
       setSnapStock(data?.stock || data?.result || data);
     } catch (err) {
@@ -556,10 +655,15 @@ export default function Home() {
             continue;
           }
 
-          const res = await fetch(`/api?symbol=${encodeURIComponent(position.symbol)}`);
+          const res = await fetch(
+            `/api?symbol=${encodeURIComponent(position.symbol)}`
+          );
+
           const data = await res.json();
 
-          if (!res.ok) throw new Error(data?.detail || data?.error || "Could not analyze");
+          if (!res.ok) {
+            throw new Error(data?.detail || data?.error || "Could not analyze");
+          }
 
           const stock = data?.stock || data?.result || data;
           const livePrice = getPrice(stock);
@@ -612,7 +716,8 @@ export default function Home() {
     }
 
     const totalGainLoss = totalValue - totalCost;
-    const totalGainLossPct = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
+    const totalGainLossPct =
+      totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
     return {
       value: totalValue,
@@ -623,17 +728,24 @@ export default function Home() {
   }, [portfolioResults]);
 
   const selectedThemeName =
-    THEME_OPTIONS.find((theme) => theme.key === selectedTheme)?.name || "Broad Market";
+    THEME_OPTIONS.find((theme) => theme.key === selectedTheme)?.name ||
+    "Broad Market";
 
   return (
     <main className="page">
       <header className="header">
         <div>
           <h1>🧠 Asymmetry Screener</h1>
-          <p>Broad-market screen plus theme-aware sub-screeners for disciplined entries.</p>
+          <p>
+            Cleaner institutional-style action labels for entries, watchlist
+            ideas, and portfolio decisions.
+          </p>
         </div>
 
-        <button onClick={() => loadTopIdeas(selectedTheme)} className="button secondary">
+        <button
+          onClick={() => loadTopIdeas(selectedTheme)}
+          className="button secondary"
+        >
           Reload Screener
         </button>
       </header>
@@ -643,7 +755,7 @@ export default function Home() {
           <div>
             <h2>Theme Focus</h2>
             <p className="muted">
-              Keep Broad Market for discovery, or select a macro theme to rank only that watchlist.
+              Use Broad Market for discovery, or select a focused macro theme.
             </p>
           </div>
 
@@ -665,9 +777,13 @@ export default function Home() {
             <span>Current Mode</span>
             <strong>{themeMeta?.name || selectedThemeName}</strong>
           </div>
+
           <div>
             <span>Purpose</span>
-            <p>{themeMeta?.description || "Full broad-market screen using your standard asymmetric setup rules."}</p>
+            <p>
+              {themeMeta?.description ||
+                "Full broad-market screen using your standard asymmetric setup rules."}
+            </p>
           </div>
         </div>
       </section>
@@ -689,42 +805,46 @@ export default function Home() {
           <>
             <div className="ideaGrid">
               {stocks.map((stock, idx) => {
-                const score = getScore(stock);
-                const trigger = getTrigger(stock);
-                const momentum = getMomentumText(stock);
-                const expectationRisk = getExpectationRisk(stock);
-                const setupGrade = getSetupGrade(stock);
                 const action = displayAction(stock, false);
+                const context = getContext(stock);
+                const confidence = getConfidence(stock);
+                const risk = getRisk(stock);
 
                 return (
-                  <div className="ideaCard" key={`${getSymbol(stock)}-card-${idx}`}>
-                    <div className="ideaSymbol">{getSymbol(stock)}</div>
-                    <div className="ideaPrice">{money(getPrice(stock))}</div>
-                    <span className={`pill widePill ${actionClass(action)}`}>{action}</span>
+                  <div
+                    className="ideaCard"
+                    key={`${getSymbol(stock)}-card-${idx}`}
+                  >
+                    <div className="ideaTop">
+                      <div>
+                        <div className="ideaSymbol">{getSymbol(stock)}</div>
+                        <div className="ideaPrice">{money(getPrice(stock))}</div>
+                      </div>
 
-                    <div className="miniMetricRow">
-                      <span>Score</span>
-                      <strong className={`miniMetric ${getScoreTone(stock)}`}>{score}</strong>
+                      <span className={`pill ${actionClass(action)}`}>
+                        {action}
+                      </span>
                     </div>
 
-                    <div className="miniMetricRow">
-                      <span>Trigger</span>
-                      <strong className={`miniMetric ${getTriggerTone(stock)}`}>{trigger}</strong>
+                    <div className="cardField">
+                      <span>Context</span>
+                      <strong>{context}</strong>
                     </div>
 
-                    <div className="miniMetricRow">
-                      <span>Momentum</span>
-                      <strong className={`miniMetric ${getMomentumTone(stock)}`}>{momentum}</strong>
-                    </div>
+                    <div className="cardSplit">
+                      <div>
+                        <span>Confidence</span>
+                        <strong className={`miniMetric ${confidenceClass(confidence)}`}>
+                          {confidence}
+                        </strong>
+                      </div>
 
-                    <div className="miniMetricRow">
-                      <span>Expect Risk</span>
-                      <strong className={`miniMetric ${getExpectationTone(stock)}`}>{expectationRisk}</strong>
-                    </div>
-
-                    <div className="miniMetricRow">
-                      <span>Setup</span>
-                      <strong className={`miniMetric ${getSetupTone(stock)}`}>{setupGrade}</strong>
+                      <div>
+                        <span>Risk</span>
+                        <strong className={`miniMetric ${riskClass(risk)}`}>
+                          {risk}
+                        </strong>
+                      </div>
                     </div>
                   </div>
                 );
@@ -739,52 +859,53 @@ export default function Home() {
                     <th>Name</th>
                     <th>Price</th>
                     <th>Chg %</th>
-                    <th>Score</th>
-                    <th>Trigger</th>
-                    <th>Momentum</th>
-                    <th>Expectation Risk</th>
-                    <th>Theme Maturity</th>
-                    <th>Setup</th>
-                    <th>Trade Action</th>
+                    <th>Action</th>
+                    <th>Context</th>
+                    <th>Confidence</th>
+                    <th>Risk</th>
                     <th>Why</th>
                     <th>Entry Note</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {stocks.map((stock, idx) => {
                     const action = displayAction(stock, false);
+                    const confidence = getConfidence(stock);
+                    const risk = getRisk(stock);
 
                     return (
                       <tr key={`${getSymbol(stock)}-row-${idx}`}>
                         <td className="symbol stickyCol">{getSymbol(stock)}</td>
                         <td>{getName(stock)}</td>
                         <td>{money(getPrice(stock))}</td>
-                        <td className={getChangePct(stock) >= 0 ? "positive" : "negative"}>
+                        <td
+                          className={
+                            getChangePct(stock) >= 0 ? "positive" : "negative"
+                          }
+                        >
                           {percent(getChangePct(stock))}
                         </td>
                         <td>
-                          <span className={`pill ${getScoreTone(stock)}`}>{getScore(stock)}</span>
+                          <span className={`pill ${actionClass(action)}`}>
+                            {action}
+                          </span>
+                        </td>
+                        <td>{getContext(stock)}</td>
+                        <td>
+                          <span className={`pill ${confidenceClass(confidence)}`}>
+                            {confidence}
+                          </span>
                         </td>
                         <td>
-                          <span className={`pill ${getTriggerTone(stock)}`}>{getTrigger(stock)}</span>
-                        </td>
-                        <td>
-                          <span className={`pill ${getMomentumTone(stock)}`}>{getMomentumText(stock)}</span>
-                        </td>
-                        <td>
-                          <span className={`pill ${getExpectationTone(stock)}`}>{getExpectationRisk(stock)}</span>
-                        </td>
-                        <td>
-                          <span className={`pill ${getExpectationTone(stock)}`}>{getThemeMaturity(stock)}</span>
-                        </td>
-                        <td>
-                          <span className={`pill ${getSetupTone(stock)}`}>{getSetupGrade(stock)}</span>
-                        </td>
-                        <td>
-                          <span className={`pill ${actionClass(action)}`}>{action}</span>
+                          <span className={`pill ${riskClass(risk)}`}>
+                            {risk}
+                          </span>
                         </td>
                         <td className="textCell">{getWhy(stock)}</td>
-                        <td className="textCell mutedText">{getEntryNote(stock)}</td>
+                        <td className="textCell mutedText">
+                          {getEntryNote(stock)}
+                        </td>
                       </tr>
                     );
                   })}
@@ -797,10 +918,17 @@ export default function Home() {
 
       <section className="card">
         <h2>Snap Quote + Score</h2>
-        <p className="muted">Uses the same non-owned logic: Buy Now, Watch for Entry, Avoid for Now.</p>
+        <p className="muted">
+          Uses non-owned logic: Buy Now, Buy, Watch for Entry, Avoid for Now.
+        </p>
 
         <form onSubmit={analyzeSymbol} className="formRow">
-          <input value={symbol} onChange={(e) => setSymbol(e.target.value.toUpperCase())} placeholder="Lookup ticker..." />
+          <input
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+            placeholder="Lookup ticker..."
+          />
+
           <button className="button" disabled={snapLoading}>
             {snapLoading ? "Analyzing..." : "Snap Quote + Score"}
           </button>
@@ -816,53 +944,60 @@ export default function Home() {
                 <p>{getName(snapStock)}</p>
               </div>
 
-              <span className={`pill ${actionClass(displayAction(snapStock, false))}`}>
+              <span
+                className={`pill ${actionClass(displayAction(snapStock, false))}`}
+              >
                 {displayAction(snapStock, false)}
               </span>
             </div>
 
-            <div className="metricGrid">
+            <div className="metricGrid simpleMetricGrid">
               <div>
                 <span>Price</span>
                 <strong>{money(getPrice(snapStock))}</strong>
               </div>
+
               <div>
                 <span>Change</span>
-                <strong className={getChangePct(snapStock) >= 0 ? "positive" : "negative"}>
+                <strong
+                  className={
+                    getChangePct(snapStock) >= 0 ? "positive" : "negative"
+                  }
+                >
                   {percent(getChangePct(snapStock))}
                 </strong>
               </div>
+
               <div>
-                <span>Score</span>
-                <strong className={`boxedValue ${getScoreTone(snapStock)}`}>{getScore(snapStock)}</strong>
+                <span>Context</span>
+                <strong>{getContext(snapStock)}</strong>
               </div>
+
               <div>
-                <span>Trigger</span>
-                <strong className={`boxedValue ${getTriggerTone(snapStock)}`}>{getTrigger(snapStock)}</strong>
+                <span>Confidence</span>
+                <strong
+                  className={`boxedValue ${confidenceClass(
+                    getConfidence(snapStock)
+                  )}`}
+                >
+                  {getConfidence(snapStock)}
+                </strong>
               </div>
+
               <div>
-                <span>Momentum</span>
-                <strong className={`boxedValue ${getMomentumTone(snapStock)}`}>{getMomentumText(snapStock)}</strong>
-              </div>
-              <div>
-                <span>Expectation Risk</span>
-                <strong className={`boxedValue ${getExpectationTone(snapStock)}`}>{getExpectationRisk(snapStock)}</strong>
-              </div>
-              <div>
-                <span>Setup</span>
-                <strong className={`boxedValue ${getSetupTone(snapStock)}`}>{getSetupGrade(snapStock)}</strong>
+                <span>Risk</span>
+                <strong className={`boxedValue ${riskClass(getRisk(snapStock))}`}>
+                  {getRisk(snapStock)}
+                </strong>
               </div>
             </div>
 
             <div className="snapNotes">
               <div>
-                <span>Theme Maturity</span>
-                <p>{getThemeMaturity(snapStock)}</p>
-              </div>
-              <div>
                 <span>Why</span>
                 <p>{getWhy(snapStock)}</p>
               </div>
+
               <div>
                 <span>Entry Note</span>
                 <p>{getEntryNote(snapStock)}</p>
@@ -875,22 +1010,43 @@ export default function Home() {
       <section className="card">
         <h2>Portfolio Screener</h2>
         <p className="muted">
-          Uses ownership logic: Hold Trend, Hold / Add, Hold but Extended, Trim Into Strength, Exit — Trend Failure.
+          Uses ownership logic: Hold / Add, Hold Trend, Trim, Cash / Hold, or
+          Exit.
         </p>
 
         <div className="portfolioTools">
           <button onClick={exportPortfolio} className="button secondary">
             Export Portfolio
           </button>
+
           <button onClick={importPortfolio} className="button secondary">
             Import Portfolio
           </button>
         </div>
 
         <div className="portfolioForm">
-          <input value={newSymbol} onChange={(e) => setNewSymbol(e.target.value.toUpperCase())} placeholder="Symbol" />
-          <input value={newShares} onChange={(e) => setNewShares(e.target.value)} placeholder="Shares" type="number" step="any" />
-          <input value={newCost} onChange={(e) => setNewCost(e.target.value)} placeholder="Cost/share" type="number" step="any" />
+          <input
+            value={newSymbol}
+            onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
+            placeholder="Symbol"
+          />
+
+          <input
+            value={newShares}
+            onChange={(e) => setNewShares(e.target.value)}
+            placeholder="Shares"
+            type="number"
+            step="any"
+          />
+
+          <input
+            value={newCost}
+            onChange={(e) => setNewCost(e.target.value)}
+            placeholder="Cost/share"
+            type="number"
+            step="any"
+          />
+
           <button onClick={addPosition} className="button">
             Add / Update
           </button>
@@ -901,9 +1057,15 @@ export default function Home() {
             {portfolio.map((p) => (
               <div className="positionChip" key={p.symbol}>
                 <span>
-                  <strong>{p.symbol}</strong> · {number(p.shares, 2)} @ {money(p.avgCost)}
+                  <strong>{p.symbol}</strong> · {number(p.shares, 2)} @{" "}
+                  {money(p.avgCost)}
                 </span>
-                <button onClick={() => removePosition(p.symbol)} className="chipRemove" aria-label={`Remove ${p.symbol}`}>
+
+                <button
+                  onClick={() => removePosition(p.symbol)}
+                  className="chipRemove"
+                  aria-label={`Remove ${p.symbol}`}
+                >
                   ×
                 </button>
               </div>
@@ -911,7 +1073,11 @@ export default function Home() {
           </div>
         )}
 
-        <button onClick={analyzePortfolio} disabled={!portfolio.length || portfolioLoading} className="button full">
+        <button
+          onClick={analyzePortfolio}
+          disabled={!portfolio.length || portfolioLoading}
+          className="button full"
+        >
           {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
         </button>
       </section>
@@ -927,8 +1093,13 @@ export default function Home() {
             <div className="totals">
               <span>Total Value</span>
               <strong>{money(portfolioTotals.value)}</strong>
-              <span className={portfolioTotals.gainLoss >= 0 ? "positive" : "negative"}>
-                {money(portfolioTotals.gainLoss)} / {percent(portfolioTotals.gainLossPct)}
+              <span
+                className={
+                  portfolioTotals.gainLoss >= 0 ? "positive" : "negative"
+                }
+              >
+                {money(portfolioTotals.gainLoss)} /{" "}
+                {percent(portfolioTotals.gainLossPct)}
               </span>
             </div>
           </div>
@@ -944,17 +1115,21 @@ export default function Home() {
                   <th>Value</th>
                   <th>Cost Basis</th>
                   <th>Gain / Loss</th>
-                  <th>Score</th>
-                  <th>Trigger</th>
-                  <th>Momentum</th>
-                  <th>Expectation Risk</th>
-                  <th>Setup</th>
-                  <th>Trade Action</th>
+                  <th>Action</th>
+                  <th>Context</th>
+                  <th>Confidence</th>
+                  <th>Risk</th>
                 </tr>
               </thead>
+
               <tbody>
                 {portfolioResults.map((stock) => {
-                  const action = stock.error ? "Exit — Trend Failure" : displayAction(stock, true);
+                  const action = stock.error
+                    ? "Exit — Trend Failure"
+                    : displayAction(stock, true);
+
+                  const confidence = getConfidence(stock);
+                  const risk = getRisk(stock);
 
                   return (
                     <tr key={stock.symbol}>
@@ -964,32 +1139,32 @@ export default function Home() {
                       <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
                       <td>{stock.error ? "—" : money(stock.value)}</td>
                       <td>{money(stock.costBasis)}</td>
-                      <td className={stock.gainLoss >= 0 ? "positive" : "negative"}>
-                        {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
+                      <td
+                        className={
+                          stock.gainLoss >= 0 ? "positive" : "negative"
+                        }
+                      >
+                        {stock.error
+                          ? "—"
+                          : `${money(stock.gainLoss)} / ${percent(
+                              stock.gainLossPct
+                            )}`}
                       </td>
                       <td>
-                        <span className={`pill ${getScoreTone(stock)}`}>
-                          {isCashLikeSymbol(stock) ? "—" : getScore(stock)}
+                        <span className={`pill ${actionClass(action)}`}>
+                          {action}
+                        </span>
+                      </td>
+                      <td>{isCashLikeSymbol(stock) ? "Cash position" : getContext(stock)}</td>
+                      <td>
+                        <span className={`pill ${confidenceClass(confidence)}`}>
+                          {confidence}
                         </span>
                       </td>
                       <td>
-                        <span className={`pill ${getTriggerTone(stock)}`}>
-                          {isCashLikeSymbol(stock) ? "—" : getTrigger(stock)}
+                        <span className={`pill ${riskClass(risk)}`}>
+                          {risk}
                         </span>
-                      </td>
-                      <td>
-                        <span className={`pill ${getMomentumTone(stock)}`}>{getMomentumText(stock)}</span>
-                      </td>
-                      <td>
-                        <span className={`pill ${getExpectationTone(stock)}`}>
-                          {isCashLikeSymbol(stock) ? "—" : getExpectationRisk(stock)}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`pill ${getSetupTone(stock)}`}>{getSetupGrade(stock)}</span>
-                      </td>
-                      <td>
-                        <span className={`pill ${actionClass(action)}`}>{action}</span>
                       </td>
                     </tr>
                   );
@@ -1118,46 +1293,70 @@ export default function Home() {
 
         .ideaGrid {
           display: grid;
-          grid-template-columns: repeat(10, minmax(135px, 1fr));
-          gap: 10px;
+          grid-template-columns: repeat(5, minmax(180px, 1fr));
+          gap: 12px;
           margin-bottom: 18px;
-          overflow-x: auto;
-          padding-bottom: 4px;
         }
 
         .ideaCard {
           border: 1px solid #e2e8f0;
-          border-radius: 12px;
+          border-radius: 14px;
           background: white;
-          padding: 10px;
-          min-width: 135px;
+          padding: 12px;
+        }
+
+        .ideaTop {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 8px;
+          margin-bottom: 10px;
         }
 
         .ideaSymbol {
-          font-size: 17px;
+          font-size: 19px;
           font-weight: 900;
           letter-spacing: 0.02em;
         }
 
         .ideaPrice {
           font-size: 15px;
-          margin: 2px 0 8px;
+          margin-top: 2px;
         }
 
-        .miniMetricRow {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 6px;
+        .cardField {
+          border-top: 1px solid #f1f5f9;
+          padding-top: 9px;
+          margin-top: 8px;
+        }
+
+        .cardField span,
+        .cardSplit span {
+          display: block;
           color: #64748b;
           font-size: 12px;
-          margin-top: 6px;
+          font-weight: 800;
+          margin-bottom: 4px;
+        }
+
+        .cardField strong {
+          color: #0f172a;
+          font-size: 13px;
+          line-height: 1.3;
+        }
+
+        .cardSplit {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-top: 12px;
         }
 
         .miniMetric {
+          display: inline-flex;
           border-radius: 999px;
-          padding: 2px 7px;
-          font-size: 11px;
+          padding: 4px 9px;
+          font-size: 12px;
           font-weight: 900;
           white-space: nowrap;
         }
@@ -1253,8 +1452,6 @@ export default function Home() {
           border-radius: 11px;
           padding: 11px 12px;
           font-size: 15px;
-          outline: none;
-          box-sizing: border-box;
         }
 
         .formRow {
@@ -1266,9 +1463,9 @@ export default function Home() {
 
         .portfolioTools {
           display: flex;
-          flex-wrap: wrap;
           gap: 10px;
-          margin-top: 14px;
+          margin: 14px 0;
+          flex-wrap: wrap;
         }
 
         .portfolioForm {
@@ -1276,146 +1473,6 @@ export default function Home() {
           grid-template-columns: 1fr 1fr 1fr auto;
           gap: 10px;
           margin-top: 14px;
-          align-items: center;
-        }
-
-        .resultBox {
-          margin-top: 16px;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 16px;
-          background: #f8fafc;
-        }
-
-        .resultTop {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
-          align-items: flex-start;
-          margin-bottom: 14px;
-        }
-
-        .metricGrid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 10px;
-        }
-
-        .metricGrid div,
-        .snapNotes div {
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 12px;
-        }
-
-        .metricGrid span,
-        .snapNotes span {
-          display: block;
-          color: #64748b;
-          font-size: 12px;
-          margin-bottom: 4px;
-          font-weight: 700;
-        }
-
-        .metricGrid strong {
-          font-size: 15px;
-        }
-
-        .boxedValue {
-          display: inline-flex;
-          width: fit-content;
-          border-radius: 999px;
-          padding: 5px 10px;
-          font-size: 13px;
-          font-weight: 900;
-        }
-
-        .snapNotes {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 10px;
-          margin-top: 10px;
-        }
-
-        .snapNotes p {
-          color: #334155;
-          line-height: 1.35;
-          font-size: 14px;
-        }
-
-        .pill {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 999px;
-          padding: 6px 12px;
-          font-weight: 900;
-          font-size: 12px;
-          white-space: nowrap;
-        }
-
-        .widePill {
-          width: 100%;
-          box-sizing: border-box;
-        }
-
-        .green {
-          background: #dcfce7;
-          color: #166534;
-          border: 1px solid #bbf7d0;
-        }
-
-        .yellow {
-          background: #fef9c3;
-          color: #854d0e;
-          border: 1px solid #fde68a;
-        }
-
-        .orange {
-          background: #ffedd5;
-          color: #9a3412;
-          border: 1px solid #fed7aa;
-        }
-
-        .red {
-          background: #fee2e2;
-          color: #991b1b;
-          border: 1px solid #fecaca;
-        }
-
-        .redExtended {
-          background: linear-gradient(135deg, #dcfce7 0%, #fee2e2 100%);
-          color: #7f1d1d;
-          border: 1px solid #fecaca;
-        }
-
-        .gray {
-          background: #f1f5f9;
-          color: #475569;
-          border: 1px solid #cbd5e1;
-        }
-
-        .positive {
-          color: #047857;
-          font-weight: 900;
-          white-space: nowrap;
-        }
-
-        .negative {
-          color: #b91c1c;
-          font-weight: 900;
-          white-space: nowrap;
-        }
-
-        .error {
-          color: #991b1b;
-          background: #fee2e2;
-          border-radius: 12px;
-          padding: 10px 12px;
-          margin-top: 12px;
-          font-size: 14px;
-          font-weight: 700;
         }
 
         .positionChips {
@@ -1429,72 +1486,193 @@ export default function Home() {
           display: inline-flex;
           align-items: center;
           gap: 8px;
+          background: #f8fafc;
           border: 1px solid #e2e8f0;
           border-radius: 999px;
-          padding: 7px 9px 7px 12px;
-          background: #f8fafc;
+          padding: 7px 10px;
           font-size: 13px;
-          color: #334155;
-          white-space: nowrap;
-        }
-
-        .positionChip strong {
-          color: #0f172a;
-          letter-spacing: 0.03em;
         }
 
         .chipRemove {
-          width: 20px;
-          height: 20px;
+          border: 0;
+          background: #e2e8f0;
+          border-radius: 999px;
+          width: 22px;
+          height: 22px;
+          cursor: pointer;
+          font-weight: 900;
+          color: #334155;
+        }
+
+        .pill {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          border: 0;
           border-radius: 999px;
-          background: #e2e8f0;
-          color: #991b1b;
-          font-size: 15px;
+          padding: 5px 10px;
+          font-size: 12px;
           font-weight: 900;
-          line-height: 1;
-          cursor: pointer;
-          padding: 0;
+          white-space: nowrap;
         }
 
-        .chipRemove:hover {
+        .green {
+          background: #dcfce7;
+          color: #166534;
+        }
+
+        .yellow {
+          background: #fef9c3;
+          color: #854d0e;
+        }
+
+        .orange {
+          background: #ffedd5;
+          color: #9a3412;
+        }
+
+        .red {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+
+        .redExtended {
           background: #fecaca;
+          color: #7f1d1d;
+        }
+
+        .gray {
+          background: #e2e8f0;
+          color: #334155;
+        }
+
+        .positive {
+          color: #15803d;
+          font-weight: 800;
+        }
+
+        .negative {
+          color: #b91c1c;
+          font-weight: 800;
+        }
+
+        .error {
+          color: #b91c1c;
+          font-weight: 800;
+          margin-top: 10px;
+        }
+
+        .resultBox {
+          margin-top: 16px;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 14px;
+          background: #f8fafc;
+        }
+
+        .resultTop {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 14px;
+        }
+
+        .resultTop p {
+          color: #64748b;
+          font-size: 14px;
+          margin-top: 3px;
+        }
+
+        .metricGrid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 10px;
+        }
+
+        .metricGrid div {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 10px;
+        }
+
+        .metricGrid span {
+          display: block;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 800;
+          margin-bottom: 5px;
+        }
+
+        .metricGrid strong {
+          font-size: 15px;
+        }
+
+        .boxedValue {
+          display: inline-flex;
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-size: 12px !important;
+          font-weight: 900;
+        }
+
+        .snapNotes {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 12px;
+        }
+
+        .snapNotes div {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 12px;
+        }
+
+        .snapNotes span {
+          display: block;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 900;
+          margin-bottom: 5px;
+        }
+
+        .snapNotes p {
+          color: #334155;
+          line-height: 1.35;
+          font-size: 14px;
         }
 
         .totals {
+          min-width: 180px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 10px;
           text-align: right;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
         }
 
-        .totals span:first-child {
-          color: #64748b;
+        .totals span {
+          display: block;
           font-size: 12px;
+          color: #64748b;
+          font-weight: 800;
         }
 
         .totals strong {
-          font-size: 22px;
+          display: block;
+          font-size: 18px;
+          margin: 3px 0;
         }
 
         @media (max-width: 1100px) {
-          .portfolioForm {
-            grid-template-columns: 1fr 1fr;
-          }
-
-          .portfolioForm button {
-            grid-column: span 2;
+          .ideaGrid {
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
           }
 
           .metricGrid {
             grid-template-columns: repeat(2, 1fr);
-          }
-
-          .snapNotes {
-            grid-template-columns: 1fr;
           }
 
           .themeSummary {
@@ -1502,51 +1680,31 @@ export default function Home() {
           }
         }
 
-        @media (max-width: 700px) {
+        @media (max-width: 760px) {
           .page {
-            padding: 14px;
+            padding: 18px;
           }
 
-          .header {
-            flex-direction: column;
-          }
-
+          .header,
           .sectionHeader {
             flex-direction: column;
           }
 
-          .themeSelect {
-            width: 100%;
-            min-width: 0;
-          }
-
-          .formRow {
+          .ideaGrid {
             grid-template-columns: 1fr;
           }
 
-          .portfolioTools {
-            display: grid;
-            grid-template-columns: 1fr;
-          }
-
+          .formRow,
           .portfolioForm {
             grid-template-columns: 1fr;
           }
 
-          .portfolioForm button {
-            grid-column: auto;
-          }
-
-          .metricGrid {
+          .snapNotes {
             grid-template-columns: 1fr;
           }
 
-          .totals {
-            text-align: left;
-          }
-
-          table {
-            min-width: 1200px;
+          .themeSelect {
+            min-width: 100%;
           }
         }
       `}</style>
