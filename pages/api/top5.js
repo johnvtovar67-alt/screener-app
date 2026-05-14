@@ -343,6 +343,8 @@ function getThemeConfig(themeKey) {
 }
 
 function toNumber(value, fallback = null) {
+  if (value == null || value === "") return fallback;
+
   if (typeof value === "string") {
     const cleaned = value.replace("%", "").replace(/,/g, "").trim();
     const n = Number(cleaned);
@@ -353,6 +355,16 @@ function toNumber(value, fallback = null) {
   const n = Number(value);
 
   return Number.isFinite(n) ? n : fallback;
+}
+
+function toPositiveNumber(value, fallback = null) {
+  const n = toNumber(value, fallback);
+
+  if (n == null) return fallback;
+  if (!Number.isFinite(n)) return fallback;
+  if (n <= 0) return fallback;
+
+  return n;
 }
 
 async function fetchJson(url) {
@@ -449,8 +461,8 @@ async function fetchFmpQuotes(symbols = []) {
 function normalizeQuote(row = {}) {
   const symbol = normalizeSymbol(row.symbol);
 
-  const price = toNumber(row.price);
-  const previousClose = toNumber(row.previousClose);
+  const price = toPositiveNumber(row.price);
+  const previousClose = toPositiveNumber(row.previousClose);
   const change = toNumber(row.change);
 
   let dayChangePct = toNumber(row.changesPercentage);
@@ -475,12 +487,12 @@ function normalizeQuote(row = {}) {
     dayChangePct,
     changesPercentage: dayChangePct,
 
-    marketCap: toNumber(row.marketCap),
-    volume: toNumber(row.volume),
-    avgVolume: toNumber(row.avgVolume),
+    marketCap: toPositiveNumber(row.marketCap),
+    volume: toPositiveNumber(row.volume),
+    avgVolume: toPositiveNumber(row.avgVolume),
 
-    priceAvg50: toNumber(row.priceAvg50),
-    priceAvg200: toNumber(row.priceAvg200),
+    priceAvg50: toPositiveNumber(row.priceAvg50),
+    priceAvg200: toPositiveNumber(row.priceAvg200),
 
     eps: toNumber(row.eps),
     pe: toNumber(row.pe),
