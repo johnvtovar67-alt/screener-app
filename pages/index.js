@@ -16,7 +16,9 @@ const THEME_OPTIONS = [
 
 function money(value) {
   const n = Number(value);
+
   if (!Number.isFinite(n)) return "—";
+
   return n.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
@@ -26,19 +28,25 @@ function money(value) {
 
 function percent(value) {
   const n = Number(value);
+
   if (!Number.isFinite(n)) return "—";
+
   return `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 
 function number(value, digits = 2) {
   const n = Number(value);
+
   if (!Number.isFinite(n)) return "—";
+
   return n.toFixed(digits);
 }
 
 function clampScore(value) {
   const n = Number(value);
+
   if (!Number.isFinite(n)) return 0;
+
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
@@ -171,12 +179,14 @@ function shortContext(stock) {
 
   if (text.length <= 18) return text;
   if (text.toLowerCase().includes("fresh")) return "Fresh breakout";
+  if (text.toLowerCase().includes("early")) return "Early breakout";
   if (text.toLowerCase().includes("extended")) return "Extended";
   if (text.toLowerCase().includes("trigger")) return "Strong trigger";
   if (text.toLowerCase().includes("momentum")) return "Building";
   if (text.toLowerCase().includes("binary")) return "Binary risk";
   if (text.toLowerCase().includes("lagging")) return "Lagging";
   if (text.toLowerCase().includes("trend")) return "Trend issue";
+  if (text.toLowerCase().includes("clean")) return "Clean setup";
 
   return "Setup";
 }
@@ -185,12 +195,15 @@ function getContextTone(stock) {
   if (isCashLikeSymbol(stock)) return "gray";
 
   const rec = getRecommendation(stock);
+
   if (rec?.contextTone) return rec.contextTone;
 
   const context = String(getContext(stock)).toLowerCase();
   const action = nonOwnedAction(stock);
 
-  if (context.includes("biotech") || context.includes("binary")) return "yellow";
+  if (context.includes("biotech") || context.includes("binary")) {
+    return "yellow";
+  }
 
   if (
     context.includes("fails") ||
@@ -260,15 +273,19 @@ function fallbackRisk(stock) {
 
 function confidenceClass(confidence) {
   const clean = String(confidence || "").toLowerCase();
+
   if (clean === "high") return "green";
   if (clean === "medium") return "yellow";
+
   return "red";
 }
 
 function riskClass(risk) {
   const clean = String(risk || "").toLowerCase();
+
   if (clean === "low") return "green";
   if (clean === "medium") return "yellow";
+
   return "red";
 }
 
@@ -311,7 +328,9 @@ function nonOwnedAction(stock) {
 
   if (expectationRisk >= 60 || extensionRisk >= 65) return "Avoid for Now";
   if (score >= 75 && trigger >= 85 && momentum === "Strong") return "Buy Now";
-  if (trigger >= 74 && expectationRisk <= 62 && extensionRisk <= 64) return "Buy";
+  if (trigger >= 74 && expectationRisk <= 62 && extensionRisk <= 64) {
+    return "Buy";
+  }
   if (score >= 55 || trigger >= 62 || momentum === "Building") {
     return "Watch for Entry";
   }
@@ -345,8 +364,12 @@ function portfolioAction(stock) {
     expectationRisk <= 55;
 
   const trendWeak = momentum === "Weak" || trigger < 65 || score < 60;
-  const trendFailing = momentum === "Weak" && trigger < 65 && score < 60;
+
+  const trendFailing =
+    momentum === "Weak" && trigger < 65 && score < 60;
+
   const stretchedRisk = expectationRisk >= 60 || extensionRisk >= 65;
+
   const extendedWinner = solidGain && extensionRisk >= 55 && momentum !== "Weak";
 
   if (largeGain && trendFailing) return "Hold — Watch Closely";
@@ -386,9 +409,13 @@ function portfolioAction(stock) {
     return "Hold — Prove It";
   }
 
-  if (trigger >= 75 && momentum !== "Weak" && score >= 60) return "Hold Trend";
+  if (trigger >= 75 && momentum !== "Weak" && score >= 60) {
+    return "Hold Trend";
+  }
+
   if (largeGain && trendWeak) return "Hold — Watch Closely";
   if (solidGain && trendWeak) return "Trim / Watch Closely";
+
   if (momentum === "Weak" || score < 58) return "Trim / Watch Closely";
 
   return "Hold Trend";
@@ -418,6 +445,7 @@ function displayAction(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Cash / Hold") return "gray";
+
   if (action === "Buy Now" || action === "Buy" || action === "Hold / Add") {
     return "green";
   }
@@ -502,9 +530,11 @@ export default function Home() {
   function loadPortfolio() {
     try {
       const raw = window.localStorage.getItem(PORTFOLIO_KEY);
+
       if (!raw) return;
 
       const saved = JSON.parse(raw);
+
       if (Array.isArray(saved)) setPortfolio(saved);
     } catch {
       setPortfolio([]);
@@ -522,7 +552,9 @@ export default function Home() {
 
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(json);
-        alert("Portfolio copied. Paste it into Import Portfolio on another device.");
+        alert(
+          "Portfolio copied. Paste it into Import Portfolio on another device."
+        );
       } else {
         window.prompt("Copy this portfolio data:", json);
       }
@@ -533,11 +565,15 @@ export default function Home() {
 
   function importPortfolio() {
     const raw = window.prompt("Paste exported portfolio JSON:");
+
     if (!raw) return;
 
     try {
       const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) throw new Error("Invalid portfolio.");
+
+      if (!Array.isArray(parsed)) {
+        throw new Error("Invalid portfolio.");
+      }
 
       const cleaned = parsed
         .map((p) => ({
@@ -554,7 +590,9 @@ export default function Home() {
             p.avgCost >= 0
         );
 
-      if (!cleaned.length) throw new Error("No valid positions.");
+      if (!cleaned.length) {
+        throw new Error("No valid positions.");
+      }
 
       savePortfolio(cleaned);
       setPortfolioResults([]);
@@ -583,8 +621,19 @@ export default function Home() {
     const next = [...portfolio];
     const index = next.findIndex((p) => p.symbol === cleanSymbol);
 
-    if (index >= 0) next[index] = { symbol: cleanSymbol, shares, avgCost };
-    else next.push({ symbol: cleanSymbol, shares, avgCost });
+    if (index >= 0) {
+      next[index] = {
+        symbol: cleanSymbol,
+        shares,
+        avgCost,
+      };
+    } else {
+      next.push({
+        symbol: cleanSymbol,
+        shares,
+        avgCost,
+      });
+    }
 
     savePortfolio(next);
     setNewSymbol("");
@@ -603,6 +652,7 @@ export default function Home() {
     e?.preventDefault();
 
     const cleanSymbol = symbol.trim().toUpperCase();
+
     if (!cleanSymbol) return;
 
     setSnapLoading(true);
@@ -739,8 +789,8 @@ export default function Home() {
         <div>
           <h1>🧠 Asymmetry Screener</h1>
           <p>
-            Cleaner institutional-style action labels for entries, watchlist
-            ideas, and portfolio decisions.
+            Institutional-style scoring with action labels for entries,
+            watchlist ideas, and portfolio decisions.
           </p>
         </div>
 
@@ -1346,6 +1396,10 @@ export default function Home() {
         .actionPill {
           font-size: 10px;
           padding: 4px 7px;
+          max-width: 76px;
+          white-space: normal;
+          line-height: 1.05;
+          text-align: center;
         }
 
         .cardField {
