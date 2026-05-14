@@ -42,7 +42,6 @@ const THEME_CONFIG = {
     description:
       "Full broad-market discovery list using the institutional scoring model.",
     symbols: [
-      // AI / Software / Semis
       "NVDA",
       "AMD",
       "AVGO",
@@ -75,7 +74,6 @@ const THEME_CONFIG = {
       "AI",
       "AAOI",
 
-      // Financials / Capital Markets / Fintech
       "SCHW",
       "BGC",
       "JPM",
@@ -97,7 +95,6 @@ const THEME_CONFIG = {
       "RKT",
       "UPST",
 
-      // Energy / Infrastructure / Industrials
       "ETN",
       "PWR",
       "VRT",
@@ -126,7 +123,6 @@ const THEME_CONFIG = {
       "NUE",
       "STLD",
 
-      // Nuclear / Uranium
       "CCJ",
       "UEC",
       "UUUU",
@@ -136,7 +132,6 @@ const THEME_CONFIG = {
       "OKLO",
       "NNE",
 
-      // Crypto / Bitcoin proxies
       "MSTR",
       "MARA",
       "RIOT",
@@ -148,7 +143,6 @@ const THEME_CONFIG = {
       "CIFR",
       "BITF",
 
-      // Healthcare / Biotech / Spec growth
       "HIMS",
       "BCRX",
       "ALMS",
@@ -164,7 +158,6 @@ const THEME_CONFIG = {
       "GERN",
       "ALT",
 
-      // Consumer / Travel / Cyclical / Other growth
       "CELH",
       "CROX",
       "DKNG",
@@ -183,7 +176,6 @@ const THEME_CONFIG = {
       "WMT",
       "COST",
 
-      // REIT / Income names retained, but capped by scoring logic
       "AHR",
       "VICI",
       "O",
@@ -349,25 +341,13 @@ function getThemeConfig(themeKey) {
   return THEME_CONFIG[clean] || THEME_CONFIG.broad;
 }
 
-async function fetchFmpQuotes(symbols = []) {
-  const apiKey = process.env.FMP_API_KEY;
+function toNumber(value, fallback = null) {
+  const n = Number(value);
 
-  if (!apiKey) {
-    throw new Error("Missing FMP_API_KEY in environment variables.");
-  }
+  return Number.isFinite(n) ? n : fallback;
+}
 
-  const cleanSymbols = uniqueSymbols(symbols);
-
-  if (!cleanSymbols.length) {
-    return [];
-  }
-
-  const fmpSymbols = cleanSymbols.map(toFmpSymbol).join(",");
-
-  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
-    fmpSymbols
-  )}&apikey=${apiKey}`;
-
+async function fetchJson(url) {
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -377,19 +357,93 @@ async function fetchFmpQuotes(symbols = []) {
     );
   }
 
-  const data = await response.json();
-
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  return data;
+  return response.json();
 }
 
-function toNumber(value, fallback = null) {
-  const n = Number(value);
+async function fetchFmpBatch(symbols = [], apiKey) {
+  const cleanSymbols = uniqueSymbols(symbols);
 
-  return Number.isFinite(n) ? n : fallback;
+  if (!cleanSymbols.length) return [];
+
+  const fmpSymbols = cleanSymbols.map(toFmpSymbol).join(",");
+
+  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
+    fmpSymbols
+  )}&apikey=${apiKey}`;
+
+  const data = await fetchJson(url);
+
+  if (Array.isArray(data)) return data;
+
+  if (data && typeof data === "object") return [data];
+
+  return [];
+}
+
+async function fetchFmpIndividual(symbols = [], apiKey) {
+  const cleanSymbols = uniqueSymbols(symbols);
+
+  const batches = [];
+  const batchSize = 12;
+
+  for (let i = 0; i < cleanSymbols.length; i += batchSize) {
+    batches.push(cleanSymbols.slice(i, i + batchSize));
+  }
+
+  const all = [];
+
+  for (const batch of batches) {
+    const results = await Promise.allSettled(
+      batch.map(async (symbol) => {
+        const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
+          toFmpSymbol(symbol)
+        )}&apikey=${apiKey}`;
+
+        const data = await fetchJson(url);
+
+        if (Array.isArray(data)) return data[0] || null;
+        if (data && typeof data === "object") return data;
+
+        return null;
+      })
+    );
+
+    for (const result of results) {
+      if (result.status === "fulfilled" && result.value) {
+        all.push(result.value);
+      }
+    }
+  }
+
+  return all;
+}
+
+async function fetchFmpQuotes(symbols = []) {
+  const apiKey = process.env.FMP_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Missing FMP_API_KEY in environment variables.");
+  }
+
+  const cleanSymbols = uniqueSymbols(symbols);
+
+  if (!cleanSymbols.length) return [];
+
+  let batchQuotes = [];
+
+  try {
+    batchQuotes = await fetchFmpBatch(cleanSymbols, apiKey);
+  } catch {
+    batchQuotes = [];
+  }
+
+  if (Array.isArray(batchQuotes) && batchQuotes.length > 0) {
+    return batchQuotes;
+  }
+
+  const individualQuotes = await fetchFmpIndividual(cleanSymbols, apiKey);
+
+  return individualQuotes;
 }
 
 function normalizeQuote(row = {}) {
@@ -400,6 +454,14 @@ function normalizeQuote(row = {}) {
   const change = toNumber(row.change);
 
   let dayChangePct = toNumber(row.changesPercentage);
+
+  if (dayChangePct == null) {
+    dayChangePct = toNumber(row.changePercentage);
+  }
+
+  if (dayChangePct == null) {
+    dayChangePct = toNumber(row.changesPercentage?.replace?.("%", ""));
+  }
 
   if (dayChangePct == null && price != null && previousClose) {
     dayChangePct = ((price - previousClose) / previousClose) * 100;
@@ -473,9 +535,8 @@ function institutionalRank(stock = {}) {
   const confidenceBoost =
     rec.confidence === "High" ? 120 : rec.confidence === "Medium" ? 55 : 0;
 
-  const buyMiddleTierBoost = String(rec.label || "").toUpperCase() === "BUY"
-    ? 220
-    : 0;
+  const buyMiddleTierBoost =
+    String(rec.label || "").toUpperCase() === "BUY" ? 220 : 0;
 
   const setupStrength =
     score * 2.4 +
@@ -565,16 +626,33 @@ export default async function handler(req, res) {
     if (!symbols.length) {
       return res.status(200).json({
         selectedTheme,
+        count: 0,
         stocks: [],
       });
     }
 
     const quotes = await fetchFmpQuotes(symbols);
 
+    if (!Array.isArray(quotes) || quotes.length === 0) {
+      return res.status(500).json({
+        error: "No quotes returned from FMP.",
+        detail:
+          "The screener could not retrieve quote data. Check FMP_API_KEY, FMP plan access, or FMP quote endpoint availability.",
+      });
+    }
+
     const enriched = quotes
       .map(enrichQuote)
       .filter(Boolean)
       .filter((stock) => Number.isFinite(Number(stock.price)));
+
+    if (!enriched.length) {
+      return res.status(500).json({
+        error: "Quotes returned but could not be scored.",
+        detail:
+          "FMP returned data, but the quote rows did not include usable price fields.",
+      });
+    }
 
     const sorted = enriched.sort(sortTopIdeas).slice(0, 10);
 
