@@ -1325,7 +1325,7 @@ export default function Home() {
       {!loadingTop && !topError && nearMisses.length > 0 && (
         <section className="card compactCard">
           <div className="sectionTitle">
-            <h2>⚠️ Near Misses</h2>
+            <h2>⚠️ Near Misses TEST</h2>
             <p>
               Not trades yet. These are the closest candidates and what is
               missing.
