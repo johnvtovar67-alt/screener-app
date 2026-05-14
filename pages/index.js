@@ -153,6 +153,62 @@ function getHistoricalScore(stock) {
   );
 }
 
+function getRecentHigh20(stock) {
+  return Number(
+    stock?.recentHigh20 ??
+      stock?.technicalSnapshot?.recentHigh20 ??
+      stock?.historicalNotes?.recentHigh20
+  );
+}
+
+function getResistanceOverheadPct(stock) {
+  return Number(
+    stock?.resistanceOverheadPct ??
+      stock?.technicalSnapshot?.resistanceOverheadPct ??
+      stock?.historicalNotes?.resistanceOverheadPct
+  );
+}
+
+function getBreakoutAbove20High(stock) {
+  return Boolean(
+    stock?.breakoutAbove20High ??
+      stock?.technicalSnapshot?.breakoutAbove20High ??
+      stock?.historicalNotes?.breakoutAbove20High
+  );
+}
+
+function getMomentum5Pct(stock) {
+  return Number(
+    stock?.momentum5Pct ??
+      stock?.technicalSnapshot?.momentum5Pct ??
+      stock?.historicalNotes?.momentum5Pct
+  );
+}
+
+function getMomentum10Pct(stock) {
+  return Number(
+    stock?.momentum10Pct ??
+      stock?.technicalSnapshot?.momentum10Pct ??
+      stock?.historicalNotes?.momentum10Pct
+  );
+}
+
+function getShortTrendSlopePct(stock) {
+  return Number(
+    stock?.shortTrendSlopePct ??
+      stock?.technicalSnapshot?.shortTrendSlopePct ??
+      stock?.historicalNotes?.shortTrendSlopePct
+  );
+}
+
+function getVolumeRatio20(stock) {
+  return Number(
+    stock?.volumeRatio20 ??
+      stock?.technicalSnapshot?.volumeRatio20 ??
+      stock?.historicalNotes?.volumeRatio20
+  );
+}
+
 function getMomentumText(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
@@ -353,11 +409,71 @@ function isNearMiss(stock) {
   return action === "Watch for Entry";
 }
 
+function getEstimatedTriggerPrice(stock) {
+  const price = getPrice(stock);
+  const recentHigh20 = getRecentHigh20(stock);
+  const resistanceOverheadPct = getResistanceOverheadPct(stock);
+  const priceAvg50 = Number(stock?.priceAvg50 ?? stock?.technicalSnapshot?.priceAvg50);
+  const yearHigh = Number(stock?.yearHigh);
+
+  if (Number.isFinite(recentHigh20) && recentHigh20 > 0) {
+    return recentHigh20 * 1.005;
+  }
+
+  if (
+    Number.isFinite(price) &&
+    Number.isFinite(resistanceOverheadPct) &&
+    resistanceOverheadPct > 0
+  ) {
+    return price * (1 + resistanceOverheadPct / 100) * 1.005;
+  }
+
+  if (Number.isFinite(yearHigh) && yearHigh > price && yearHigh / price < 1.25) {
+    return yearHigh * 1.005;
+  }
+
+  if (Number.isFinite(priceAvg50) && priceAvg50 > price) {
+    return priceAvg50 * 1.005;
+  }
+
+  if (Number.isFinite(price)) {
+    return price * 1.025;
+  }
+
+  return null;
+}
+
+function getInvalidationPrice(stock) {
+  const price = getPrice(stock);
+  const priceAvg50 = Number(stock?.priceAvg50);
+  const recentLow20 = Number(stock?.recentLow20 ?? stock?.technicalSnapshot?.recentLow20);
+
+  if (Number.isFinite(recentLow20) && recentLow20 > 0 && recentLow20 < price) {
+    return recentLow20 * 0.995;
+  }
+
+  if (Number.isFinite(priceAvg50) && priceAvg50 > 0 && priceAvg50 < price) {
+    return priceAvg50 * 0.99;
+  }
+
+  if (Number.isFinite(price)) {
+    return price * 0.965;
+  }
+
+  return null;
+}
+
 function getActionWhy(stock) {
   const action = nonOwnedAction(stock);
   const context = shortContext(stock);
   const confidence = getConfidence(stock);
   const risk = getRisk(stock);
+  const contextLower = String(getContext(stock)).toLowerCase();
+  const momentum5 = getMomentum5Pct(stock);
+  const momentum10 = getMomentum10Pct(stock);
+  const slope = getShortTrendSlopePct(stock);
+  const resistance = getResistanceOverheadPct(stock);
+  const volumeRatio = getVolumeRatio20(stock);
 
   if (action === "Buy Now") {
     return `Actionable now: ${context}. Confidence ${confidence}; risk ${risk}.`;
@@ -368,22 +484,48 @@ function getActionWhy(stock) {
   }
 
   if (action === "Watch for Entry") {
-    const contextLower = String(getContext(stock)).toLowerCase();
-
     if (contextLower.includes("extended")) {
-      return "Not actionable: extended. Wait for a pullback or reset.";
+      return "Not actionable: extended after a strong move. Needs a reset or pullback.";
     }
 
-    if (contextLower.includes("resistance")) {
-      return "Not actionable: resistance overhead. Needs breakout confirmation.";
+    if (Number.isFinite(resistance) && resistance > 3) {
+      return `Not actionable: resistance is still about ${number(resistance, 1)}% overhead.`;
+    }
+
+    if (Number.isFinite(momentum5) && momentum5 < 0) {
+      return `Not actionable: short-term momentum is still negative over 5 days (${number(
+        momentum5,
+        1
+      )}%).`;
+    }
+
+    if (Number.isFinite(momentum10) && momentum10 < 0) {
+      return `Not actionable: 10-day momentum has not fully confirmed yet (${number(
+        momentum10,
+        1
+      )}%).`;
+    }
+
+    if (Number.isFinite(slope) && slope < 0) {
+      return `Not actionable: short trend slope is still slightly negative (${number(
+        slope,
+        1
+      )}%).`;
+    }
+
+    if (Number.isFinite(volumeRatio) && volumeRatio < 1) {
+      return `Not actionable: volume confirmation is light (${number(
+        volumeRatio,
+        2
+      )}x normal).`;
     }
 
     if (contextLower.includes("momentum")) {
-      return "Not actionable yet: momentum is building but not confirmed.";
+      return "Not actionable yet: momentum is building, but entry confirmation is incomplete.";
     }
 
     if (contextLower.includes("trigger")) {
-      return "Not actionable yet: trigger is strong, but entry confirmation is incomplete.";
+      return "Not actionable yet: trigger is strong, but breakout confirmation is incomplete.";
     }
 
     return "Not actionable yet: setup is interesting but not clean enough.";
@@ -395,44 +537,84 @@ function getActionWhy(stock) {
 function getTriggerNeeded(stock) {
   const action = nonOwnedAction(stock);
   const context = String(getContext(stock)).toLowerCase();
-  const price = getPrice(stock);
-  const breakoutScore = getFreshBreakoutScore(stock);
-  const trigger = getTrigger(stock);
+  const triggerPrice = getEstimatedTriggerPrice(stock);
+  const invalidationPrice = getInvalidationPrice(stock);
+  const breakoutAbove20High = getBreakoutAbove20High(stock);
+  const volumeRatio = getVolumeRatio20(stock);
+  const momentum5 = getMomentum5Pct(stock);
+  const momentum10 = getMomentum10Pct(stock);
   const momentum = getMomentumScore(stock);
 
+  const triggerText = Number.isFinite(triggerPrice)
+    ? `Needs close above roughly ${money(triggerPrice)}`
+    : "Needs clean breakout/close confirmation";
+
+  const invalidationText = Number.isFinite(invalidationPrice)
+    ? `Avoid if it loses roughly ${money(invalidationPrice)}.`
+    : "Avoid if the setup reverses or loses support.";
+
   if (action === "Buy Now") {
-    return "Buyable now under normal position sizing. Do not chase oversized.";
+    return Number.isFinite(invalidationPrice)
+      ? `Buyable now under normal sizing. ${invalidationText}`
+      : "Buyable now under normal sizing. Do not chase oversized.";
   }
 
   if (action === "Buy") {
-    return "Starter position only. Add only if price holds and confirmation improves.";
+    return Number.isFinite(invalidationPrice)
+      ? `Starter position only. Add only if it holds. ${invalidationText}`
+      : "Starter position only. Add only if price holds and confirmation improves.";
   }
 
   if (context.includes("extended")) {
-    return "Needs a pullback, sideways reset, or lower-risk re-entry.";
+    return Number.isFinite(triggerPrice)
+      ? `Do not chase. Needs pullback/reset first, then reclaim near ${money(
+          triggerPrice
+        )}.`
+      : "Do not chase. Needs a pullback, sideways reset, or lower-risk re-entry.";
   }
 
   if (context.includes("resistance")) {
-    return "Needs a close above resistance with volume confirmation.";
+    return Number.isFinite(triggerPrice)
+      ? `${triggerText} with better volume confirmation.`
+      : "Needs a close above resistance with volume confirmation.";
+  }
+
+  if (Number.isFinite(volumeRatio) && volumeRatio < 1) {
+    return Number.isFinite(triggerPrice)
+      ? `${triggerText} with volume above normal.`
+      : "Needs stronger volume confirmation before buying.";
+  }
+
+  if (
+    Number.isFinite(momentum5) &&
+    momentum5 < 0 &&
+    Number.isFinite(momentum10) &&
+    momentum10 < 0
+  ) {
+    return Number.isFinite(triggerPrice)
+      ? `Needs momentum to turn positive and close above roughly ${money(
+          triggerPrice
+        )}.`
+      : "Needs 5-day and 10-day momentum to turn positive.";
   }
 
   if (context.includes("momentum") || momentum < 55) {
-    return "Needs momentum confirmation before acting.";
+    return Number.isFinite(triggerPrice)
+      ? `Needs momentum confirmation and close above roughly ${money(
+          triggerPrice
+        )}.`
+      : "Needs momentum confirmation before acting.";
   }
 
-  if (context.includes("trigger") || trigger >= 70) {
-    return "Needs clean breakout/close confirmation before buying.";
+  if (context.includes("trigger") || breakoutAbove20High === false) {
+    return Number.isFinite(triggerPrice)
+      ? `${triggerText} before buying.`
+      : "Needs clean breakout/close confirmation before buying.";
   }
 
-  if (breakoutScore < 65) {
-    return "Needs stronger breakout quality.";
-  }
-
-  if (Number.isFinite(price)) {
-    return "Needs cleaner entry confirmation before buying.";
-  }
-
-  return "Needs better confirmation before buying.";
+  return Number.isFinite(triggerPrice)
+    ? `${triggerText} before buying.`
+    : "Needs cleaner entry confirmation before buying.";
 }
 
 function portfolioAction(stock) {
@@ -948,7 +1130,7 @@ export default function Home() {
             <span>Discipline</span>
             <p>
               Main grid only shows Buy Now or Buy. Watch names are demoted to
-              Near Misses.
+              Near Misses with specific trigger guidance.
             </p>
           </div>
         </div>
@@ -1010,7 +1192,9 @@ export default function Home() {
                   <div className="tradeMetrics">
                     <div>
                       <span>Confidence</span>
-                      <strong className={`miniMetric ${confidenceClass(confidence)}`}>
+                      <strong
+                        className={`miniMetric ${confidenceClass(confidence)}`}
+                      >
                         {confidence}
                       </strong>
                     </div>
@@ -1065,7 +1249,7 @@ export default function Home() {
                   <th className="stickyCol">Symbol</th>
                   <th>Price</th>
                   <th>Chg %</th>
-                  <th>Current Status</th>
+                  <th>Status</th>
                   <th>What Is Missing</th>
                   <th>Trigger Needed</th>
                   <th>Confidence</th>
@@ -1138,8 +1322,8 @@ export default function Home() {
       <section className="card">
         <h2>Single Symbol Action Check</h2>
         <p className="muted">
-          Use this when you want to check one ticker directly with the deeper
-          symbol analysis endpoint.
+          Use this when you want to check one ticker directly with deeper symbol
+          analysis.
         </p>
 
         <form onSubmit={analyzeSymbol} className="formRow">
@@ -1692,7 +1876,7 @@ export default function Home() {
         }
 
         .textCell {
-          max-width: 420px;
+          max-width: 460px;
           white-space: normal;
           line-height: 1.35;
           color: #334155;
