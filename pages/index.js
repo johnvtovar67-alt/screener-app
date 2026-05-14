@@ -16,9 +16,7 @@ const THEME_OPTIONS = [
 
 function money(value) {
   const n = Number(value);
-
   if (!Number.isFinite(n)) return "—";
-
   return n.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
@@ -28,25 +26,19 @@ function money(value) {
 
 function percent(value) {
   const n = Number(value);
-
   if (!Number.isFinite(n)) return "—";
-
   return `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 
 function number(value, digits = 2) {
   const n = Number(value);
-
   if (!Number.isFinite(n)) return "—";
-
   return n.toFixed(digits);
 }
 
 function clampScore(value) {
   const n = Number(value);
-
   if (!Number.isFinite(n)) return 0;
-
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
@@ -164,37 +156,48 @@ function getMomentumText(stock) {
 }
 
 function getContext(stock) {
-  if (isCashLikeSymbol(stock)) return "Cash position";
+  if (isCashLikeSymbol(stock)) return "Cash";
 
   return (
     getRecommendation(stock)?.context ??
     stock?.context ??
     stock?.technicalSnapshot?.context ??
-    "Setup not fully aligned"
+    "Setup"
   );
+}
+
+function shortContext(stock) {
+  const text = String(getContext(stock));
+
+  if (text.length <= 18) return text;
+  if (text.toLowerCase().includes("fresh")) return "Fresh breakout";
+  if (text.toLowerCase().includes("extended")) return "Extended";
+  if (text.toLowerCase().includes("trigger")) return "Strong trigger";
+  if (text.toLowerCase().includes("momentum")) return "Building";
+  if (text.toLowerCase().includes("binary")) return "Binary risk";
+  if (text.toLowerCase().includes("lagging")) return "Lagging";
+  if (text.toLowerCase().includes("trend")) return "Trend issue";
+
+  return "Setup";
 }
 
 function getContextTone(stock) {
   if (isCashLikeSymbol(stock)) return "gray";
 
   const rec = getRecommendation(stock);
-
   if (rec?.contextTone) return rec.contextTone;
 
   const context = String(getContext(stock)).toLowerCase();
   const action = nonOwnedAction(stock);
 
-  if (context.includes("biotech") || context.includes("binary")) {
-    return "yellow";
-  }
+  if (context.includes("biotech") || context.includes("binary")) return "yellow";
 
   if (
     context.includes("fails") ||
     context.includes("extended") ||
-    context.includes("high expectation") ||
-    context.includes("not enough") ||
     context.includes("lagging") ||
-    context.includes("risk controls")
+    context.includes("not aligned") ||
+    context.includes("risk")
   ) {
     return "red";
   }
@@ -257,19 +260,15 @@ function fallbackRisk(stock) {
 
 function confidenceClass(confidence) {
   const clean = String(confidence || "").toLowerCase();
-
   if (clean === "high") return "green";
   if (clean === "medium") return "yellow";
-
   return "red";
 }
 
 function riskClass(risk) {
   const clean = String(risk || "").toLowerCase();
-
   if (clean === "low") return "green";
   if (clean === "medium") return "yellow";
-
   return "red";
 }
 
@@ -312,8 +311,8 @@ function nonOwnedAction(stock) {
 
   if (expectationRisk >= 60 || extensionRisk >= 65) return "Avoid for Now";
   if (score >= 75 && trigger >= 85 && momentum === "Strong") return "Buy Now";
-  if (trigger >= 78 && expectationRisk <= 60 && extensionRisk <= 62) return "Buy";
-  if (score >= 60 || trigger >= 70 || momentum === "Building") {
+  if (trigger >= 74 && expectationRisk <= 62 && extensionRisk <= 64) return "Buy";
+  if (score >= 55 || trigger >= 62 || momentum === "Building") {
     return "Watch for Entry";
   }
 
@@ -346,12 +345,8 @@ function portfolioAction(stock) {
     expectationRisk <= 55;
 
   const trendWeak = momentum === "Weak" || trigger < 65 || score < 60;
-
-  const trendFailing =
-    momentum === "Weak" && trigger < 65 && score < 60;
-
+  const trendFailing = momentum === "Weak" && trigger < 65 && score < 60;
   const stretchedRisk = expectationRisk >= 60 || extensionRisk >= 65;
-
   const extendedWinner = solidGain && extensionRisk >= 55 && momentum !== "Weak";
 
   if (largeGain && trendFailing) return "Hold — Watch Closely";
@@ -391,13 +386,9 @@ function portfolioAction(stock) {
     return "Hold — Prove It";
   }
 
-  if (trigger >= 75 && momentum !== "Weak" && score >= 60) {
-    return "Hold Trend";
-  }
-
+  if (trigger >= 75 && momentum !== "Weak" && score >= 60) return "Hold Trend";
   if (largeGain && trendWeak) return "Hold — Watch Closely";
   if (solidGain && trendWeak) return "Trim / Watch Closely";
-
   if (momentum === "Weak" || score < 58) return "Trim / Watch Closely";
 
   return "Hold Trend";
@@ -511,11 +502,9 @@ export default function Home() {
   function loadPortfolio() {
     try {
       const raw = window.localStorage.getItem(PORTFOLIO_KEY);
-
       if (!raw) return;
 
       const saved = JSON.parse(raw);
-
       if (Array.isArray(saved)) setPortfolio(saved);
     } catch {
       setPortfolio([]);
@@ -544,15 +533,11 @@ export default function Home() {
 
   function importPortfolio() {
     const raw = window.prompt("Paste exported portfolio JSON:");
-
     if (!raw) return;
 
     try {
       const parsed = JSON.parse(raw);
-
-      if (!Array.isArray(parsed)) {
-        throw new Error("Invalid portfolio.");
-      }
+      if (!Array.isArray(parsed)) throw new Error("Invalid portfolio.");
 
       const cleaned = parsed
         .map((p) => ({
@@ -569,9 +554,7 @@ export default function Home() {
             p.avgCost >= 0
         );
 
-      if (!cleaned.length) {
-        throw new Error("No valid positions.");
-      }
+      if (!cleaned.length) throw new Error("No valid positions.");
 
       savePortfolio(cleaned);
       setPortfolioResults([]);
@@ -600,19 +583,8 @@ export default function Home() {
     const next = [...portfolio];
     const index = next.findIndex((p) => p.symbol === cleanSymbol);
 
-    if (index >= 0) {
-      next[index] = {
-        symbol: cleanSymbol,
-        shares,
-        avgCost,
-      };
-    } else {
-      next.push({
-        symbol: cleanSymbol,
-        shares,
-        avgCost,
-      });
-    }
+    if (index >= 0) next[index] = { symbol: cleanSymbol, shares, avgCost };
+    else next.push({ symbol: cleanSymbol, shares, avgCost });
 
     savePortfolio(next);
     setNewSymbol("");
@@ -631,7 +603,6 @@ export default function Home() {
     e?.preventDefault();
 
     const cleanSymbol = symbol.trim().toUpperCase();
-
     if (!cleanSymbol) return;
 
     setSnapLoading(true);
@@ -837,8 +808,6 @@ export default function Home() {
             <div className="ideaGrid">
               {stocks.map((stock, idx) => {
                 const action = displayAction(stock, false);
-                const context = getContext(stock);
-                const contextTone = getContextTone(stock);
                 const confidence = getConfidence(stock);
                 const risk = getRisk(stock);
 
@@ -853,21 +822,21 @@ export default function Home() {
                         <div className="ideaPrice">{money(getPrice(stock))}</div>
                       </div>
 
-                      <span className={`pill ${actionClass(action)}`}>
+                      <span className={`pill actionPill ${actionClass(action)}`}>
                         {action}
                       </span>
                     </div>
 
                     <div className="cardField">
                       <span>Context</span>
-                      <strong className={`contextPill ${contextTone}`}>
-                        {context}
+                      <strong className={`contextPill ${getContextTone(stock)}`}>
+                        {shortContext(stock)}
                       </strong>
                     </div>
 
                     <div className="cardSplit">
                       <div>
-                        <span>Confidence</span>
+                        <span>Conf</span>
                         <strong
                           className={`miniMetric ${confidenceClass(confidence)}`}
                         >
@@ -1341,78 +1310,85 @@ export default function Home() {
 
         .ideaGrid {
           display: grid;
-          grid-template-columns: repeat(10, minmax(175px, 1fr));
-          gap: 10px;
+          grid-template-columns: repeat(10, minmax(0, 1fr));
+          gap: 8px;
           margin-bottom: 18px;
-          overflow-x: auto;
-          padding-bottom: 4px;
         }
 
         .ideaCard {
           border: 1px solid #e2e8f0;
           border-radius: 14px;
           background: white;
-          padding: 12px;
-          min-width: 175px;
+          padding: 9px;
+          min-width: 0;
+          overflow: hidden;
         }
 
         .ideaTop {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          gap: 8px;
-          margin-bottom: 10px;
+          gap: 5px;
+          margin-bottom: 8px;
         }
 
         .ideaSymbol {
-          font-size: 19px;
+          font-size: 17px;
           font-weight: 900;
           letter-spacing: 0.02em;
         }
 
         .ideaPrice {
-          font-size: 15px;
-          margin-top: 2px;
+          font-size: 13px;
+          margin-top: 1px;
+        }
+
+        .actionPill {
+          font-size: 10px;
+          padding: 4px 7px;
         }
 
         .cardField {
           border-top: 1px solid #f1f5f9;
-          padding-top: 9px;
-          margin-top: 8px;
+          padding-top: 7px;
+          margin-top: 6px;
         }
 
         .cardField span,
         .cardSplit span {
           display: block;
           color: #64748b;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 800;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
         }
 
         .contextPill {
           display: inline-flex;
           align-items: center;
           border-radius: 999px;
-          padding: 5px 10px;
-          font-size: 12px;
+          padding: 4px 8px;
+          font-size: 11px;
           font-weight: 900;
-          line-height: 1.2;
-          white-space: normal;
+          line-height: 1.15;
+          max-width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .cardSplit {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 8px;
-          margin-top: 12px;
+          gap: 5px;
+          margin-top: 9px;
         }
 
         .miniMetric {
           display: inline-flex;
           border-radius: 999px;
-          padding: 4px 9px;
-          font-size: 12px;
+          padding: 3px 7px;
+          font-size: 11px;
           font-weight: 900;
           white-space: nowrap;
         }
@@ -1724,7 +1700,7 @@ export default function Home() {
 
         @media (max-width: 1100px) {
           .ideaGrid {
-            grid-template-columns: repeat(10, minmax(175px, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
           }
 
           .metricGrid {
@@ -1747,7 +1723,7 @@ export default function Home() {
           }
 
           .ideaGrid {
-            grid-template-columns: repeat(10, minmax(175px, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .formRow,
