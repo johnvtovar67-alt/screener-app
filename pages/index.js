@@ -187,17 +187,17 @@ function shortContext(stock) {
   const text = String(getContext(stock));
   const lower = text.toLowerCase();
 
-  if (text.length <= 22) return text;
-  if (lower.includes("confirmed")) return "Confirmed";
+  if (text.length <= 26) return text;
+  if (lower.includes("confirmed")) return "Confirmed breakout";
   if (lower.includes("clean")) return "Clean entry";
-  if (lower.includes("improving")) return "Improving";
+  if (lower.includes("improving")) return "Improving setup";
   if (lower.includes("fresh")) return "Fresh breakout";
   if (lower.includes("early")) return "Early breakout";
   if (lower.includes("extended")) return "Extended";
   if (lower.includes("trigger")) return "Strong trigger";
-  if (lower.includes("momentum")) return "Building";
+  if (lower.includes("momentum")) return "Momentum building";
   if (lower.includes("binary")) return "Binary risk";
-  if (lower.includes("resistance")) return "Resistance";
+  if (lower.includes("resistance")) return "Resistance overhead";
   if (lower.includes("lagging")) return "Lagging";
   if (lower.includes("trend")) return "Trend issue";
 
@@ -341,6 +341,100 @@ function nonOwnedAction(stock) {
   return "Avoid for Now";
 }
 
+function isActionableTrade(stock) {
+  const action = nonOwnedAction(stock);
+
+  return action === "Buy Now" || action === "Buy";
+}
+
+function isNearMiss(stock) {
+  const action = nonOwnedAction(stock);
+
+  return action === "Watch for Entry";
+}
+
+function getActionWhy(stock) {
+  const action = nonOwnedAction(stock);
+  const context = shortContext(stock);
+  const confidence = getConfidence(stock);
+  const risk = getRisk(stock);
+
+  if (action === "Buy Now") {
+    return `Actionable now: ${context}. Confidence ${confidence}; risk ${risk}.`;
+  }
+
+  if (action === "Buy") {
+    return `Starter trade only: ${context}. Confidence ${confidence}; risk ${risk}.`;
+  }
+
+  if (action === "Watch for Entry") {
+    const contextLower = String(getContext(stock)).toLowerCase();
+
+    if (contextLower.includes("extended")) {
+      return "Not actionable: extended. Wait for a pullback or reset.";
+    }
+
+    if (contextLower.includes("resistance")) {
+      return "Not actionable: resistance overhead. Needs breakout confirmation.";
+    }
+
+    if (contextLower.includes("momentum")) {
+      return "Not actionable yet: momentum is building but not confirmed.";
+    }
+
+    if (contextLower.includes("trigger")) {
+      return "Not actionable yet: trigger is strong, but entry confirmation is incomplete.";
+    }
+
+    return "Not actionable yet: setup is interesting but not clean enough.";
+  }
+
+  return "No trade: setup does not meet action standards.";
+}
+
+function getTriggerNeeded(stock) {
+  const action = nonOwnedAction(stock);
+  const context = String(getContext(stock)).toLowerCase();
+  const price = getPrice(stock);
+  const breakoutScore = getFreshBreakoutScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumScore(stock);
+
+  if (action === "Buy Now") {
+    return "Buyable now under normal position sizing. Do not chase oversized.";
+  }
+
+  if (action === "Buy") {
+    return "Starter position only. Add only if price holds and confirmation improves.";
+  }
+
+  if (context.includes("extended")) {
+    return "Needs a pullback, sideways reset, or lower-risk re-entry.";
+  }
+
+  if (context.includes("resistance")) {
+    return "Needs a close above resistance with volume confirmation.";
+  }
+
+  if (context.includes("momentum") || momentum < 55) {
+    return "Needs momentum confirmation before acting.";
+  }
+
+  if (context.includes("trigger") || trigger >= 70) {
+    return "Needs clean breakout/close confirmation before buying.";
+  }
+
+  if (breakoutScore < 65) {
+    return "Needs stronger breakout quality.";
+  }
+
+  if (Number.isFinite(price)) {
+    return "Needs cleaner entry confirmation before buying.";
+  }
+
+  return "Needs better confirmation before buying.";
+}
+
 function portfolioAction(stock) {
   if (isCashLikeSymbol(stock)) return "Cash / Hold";
 
@@ -456,6 +550,23 @@ function actionClass(action) {
   return "red";
 }
 
+function rankNearMiss(a, b) {
+  const triggerA = getTrigger(a);
+  const triggerB = getTrigger(b);
+
+  if (triggerB !== triggerA) return triggerB - triggerA;
+
+  const momentumA = getMomentumScore(a);
+  const momentumB = getMomentumScore(b);
+
+  if (momentumB !== momentumA) return momentumB - momentumA;
+
+  const scoreA = getScore(a);
+  const scoreB = getScore(b);
+
+  return scoreB - scoreA;
+}
+
 export default function Home() {
   const [stocks, setStocks] = useState([]);
   const [loadingTop, setLoadingTop] = useState(true);
@@ -467,8 +578,6 @@ export default function Home() {
   const [snapLoading, setSnapLoading] = useState(false);
   const [snapError, setSnapError] = useState("");
   const [snapStock, setSnapStock] = useState(null);
-
-  const [deepChecks, setDeepChecks] = useState({});
 
   const [portfolio, setPortfolio] = useState([]);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
@@ -486,7 +595,6 @@ export default function Home() {
   async function loadTopIdeas(theme = selectedTheme) {
     setLoadingTop(true);
     setTopError("");
-    setDeepChecks({});
 
     try {
       const res = await fetch(`/api/top5?theme=${encodeURIComponent(theme)}`);
@@ -494,7 +602,7 @@ export default function Home() {
 
       if (!res.ok) {
         throw new Error(
-          data?.detail || data?.error || "Failed to load top ideas."
+          data?.detail || data?.error || "Failed to load trade screen."
         );
       }
 
@@ -505,7 +613,7 @@ export default function Home() {
       setStocks(list.slice(0, 10));
       setThemeMeta(data?.selectedTheme || null);
     } catch (err) {
-      setTopError(err.message || "Failed to load top ideas.");
+      setTopError(err.message || "Failed to load trade screen.");
     } finally {
       setLoadingTop(false);
     }
@@ -637,57 +745,6 @@ export default function Home() {
     );
   }
 
-  async function runDeepCheck(symbolOrStock) {
-    const cleanSymbol =
-      typeof symbolOrStock === "string"
-        ? symbolOrStock.trim().toUpperCase()
-        : getSymbol(symbolOrStock);
-
-    if (!cleanSymbol) return;
-
-    setDeepChecks((prev) => ({
-      ...prev,
-      [cleanSymbol]: {
-        loading: true,
-        error: "",
-        stock: prev[cleanSymbol]?.stock || null,
-      },
-    }));
-
-    try {
-      const res = await fetch(
-        `/api/deepcheck?symbol=${encodeURIComponent(cleanSymbol)}`
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(
-          data?.detail || data?.error || "Failed to run deep check."
-        );
-      }
-
-      setDeepChecks((prev) => ({
-        ...prev,
-        [cleanSymbol]: {
-          loading: false,
-          error: "",
-          stock: data?.stock || data?.result || data,
-          meta: data?.meta || null,
-        },
-      }));
-    } catch (err) {
-      setDeepChecks((prev) => ({
-        ...prev,
-        [cleanSymbol]: {
-          loading: false,
-          error: err.message || "Failed to run deep check.",
-          stock: null,
-        },
-      }));
-    }
-  }
-
   async function analyzeSymbol(e) {
     e?.preventDefault();
 
@@ -700,9 +757,7 @@ export default function Home() {
     setSnapStock(null);
 
     try {
-      const res = await fetch(
-        `/api/deepcheck?symbol=${encodeURIComponent(cleanSymbol)}`
-      );
+      const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -750,7 +805,7 @@ export default function Home() {
           }
 
           const res = await fetch(
-            `/api/deepcheck?symbol=${encodeURIComponent(position.symbol)}`
+            `/api?symbol=${encodeURIComponent(position.symbol)}`
           );
 
           const data = await res.json();
@@ -797,6 +852,23 @@ export default function Home() {
     }
   }
 
+  const actionableTrades = useMemo(() => {
+    return stocks.filter(isActionableTrade);
+  }, [stocks]);
+
+  const nearMisses = useMemo(() => {
+    return stocks
+      .filter(isNearMiss)
+      .sort(rankNearMiss)
+      .slice(0, 5);
+  }, [stocks]);
+
+  const avoidList = useMemo(() => {
+    return stocks
+      .filter((stock) => nonOwnedAction(stock) === "Avoid for Now")
+      .slice(0, 5);
+  }, [stocks]);
+
   const portfolioTotals = useMemo(() => {
     let totalValue = 0;
     let totalCost = 0;
@@ -829,10 +901,10 @@ export default function Home() {
     <main className="page">
       <header className="header">
         <div>
-          <h1>🧠 Asymmetry Screener</h1>
+          <h1>🧠 Trade Action Screener</h1>
           <p>
-            Fast candidate discovery with deep action checks for cleaner Buy /
-            Watch / Avoid decisions.
+            Shows actionable trades first. If no trades qualify, the answer is
+            no trade.
           </p>
         </div>
 
@@ -873,249 +945,201 @@ export default function Home() {
           </div>
 
           <div>
-            <span>Purpose</span>
+            <span>Discipline</span>
             <p>
-              {themeMeta?.description ||
-                "Fast broad-market screen. Use Deep Check before treating any idea as actionable."}
+              Main grid only shows Buy Now or Buy. Watch names are demoted to
+              Near Misses.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="card">
+      <section className="card actionCard">
         <div className="sectionTitle">
-          <h2>🔥 Top 10 Ideas</h2>
+          <h2>🔥 Actionable Trades</h2>
           <p>
-            Candidate list only. Use Deep Check for the true action call.
+            This is the trading screen. No Buy Now or Buy means no action right
+            now.
           </p>
         </div>
 
-        {loadingTop && <p className="muted">Loading top ideas...</p>}
+        {loadingTop && <p className="muted">Loading trade screen...</p>}
         {topError && <p className="error">{topError}</p>}
 
-        {!loadingTop && !topError && (
-          <>
-            <div className="ideaGrid">
-              {stocks.map((stock, idx) => {
-                const symbol = getSymbol(stock);
-                const action = displayAction(stock, false);
-                const confidence = getConfidence(stock);
-                const risk = getRisk(stock);
-                const deep = deepChecks[symbol];
+        {!loadingTop && !topError && actionableTrades.length === 0 && (
+          <div className="noTradeBox">
+            <h3>No actionable trades right now.</h3>
+            <p>
+              The screener found candidates, but none cleared the Buy / Buy Now
+              threshold. Stay patient. Cash is a valid position.
+            </p>
+          </div>
+        )}
 
-                return (
-                  <div
-                    className="ideaCard"
-                    key={`${symbol}-card-${idx}`}
-                  >
-                    <div className="ideaTop">
-                      <div>
-                        <div className="ideaSymbol">{symbol}</div>
-                        <div className="ideaPrice">{money(getPrice(stock))}</div>
-                      </div>
+        {!loadingTop && !topError && actionableTrades.length > 0 && (
+          <div className="tradeGrid">
+            {actionableTrades.map((stock, idx) => {
+              const action = displayAction(stock, false);
+              const confidence = getConfidence(stock);
+              const risk = getRisk(stock);
 
-                      <span className={`pill actionPill ${actionClass(action)}`}>
-                        {action}
-                      </span>
+              return (
+                <div className="tradeCard" key={`${getSymbol(stock)}-${idx}`}>
+                  <div className="tradeTop">
+                    <div>
+                      <div className="tradeSymbol">{getSymbol(stock)}</div>
+                      <div className="tradeName">{getName(stock)}</div>
                     </div>
 
-                    <div className="cardField">
-                      <span>Fast Context</span>
-                      <strong className={`contextPill ${getContextTone(stock)}`}>
-                        {shortContext(stock)}
+                    <span className={`pill largePill ${actionClass(action)}`}>
+                      {action}
+                    </span>
+                  </div>
+
+                  <div className="tradePriceRow">
+                    <span>{money(getPrice(stock))}</span>
+                    <strong
+                      className={
+                        getChangePct(stock) >= 0 ? "positive" : "negative"
+                      }
+                    >
+                      {percent(getChangePct(stock))}
+                    </strong>
+                  </div>
+
+                  <div className="tradeMetrics">
+                    <div>
+                      <span>Confidence</span>
+                      <strong className={`miniMetric ${confidenceClass(confidence)}`}>
+                        {confidence}
                       </strong>
                     </div>
 
-                    <div className="cardSplit">
-                      <div>
-                        <span>Confidence</span>
-                        <strong
-                          className={`miniMetric ${confidenceClass(confidence)}`}
-                        >
-                          {confidence}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>Risk</span>
-                        <strong className={`miniMetric ${riskClass(risk)}`}>
-                          {risk}
-                        </strong>
-                      </div>
+                    <div>
+                      <span>Risk</span>
+                      <strong className={`miniMetric ${riskClass(risk)}`}>
+                        {risk}
+                      </strong>
                     </div>
 
-                    <button
-                      type="button"
-                      className="deepButton"
-                      disabled={deep?.loading}
-                      onClick={() => runDeepCheck(symbol)}
-                    >
-                      {deep?.loading ? "Checking..." : "Deep Check"}
-                    </button>
-
-                    {deep?.error && (
-                      <p className="deepError">{deep.error}</p>
-                    )}
-
-                    {deep?.stock && (
-                      <div className="deepResult">
-                        <div className="deepHeader">
-                          <span>Deep Action</span>
-                          <strong
-                            className={`pill ${actionClass(
-                              displayAction(deep.stock, false)
-                            )}`}
-                          >
-                            {displayAction(deep.stock, false)}
-                          </strong>
-                        </div>
-
-                        <div className="deepMiniGrid">
-                          <div>
-                            <span>Context</span>
-                            <strong
-                              className={`miniMetric ${getContextTone(
-                                deep.stock
-                              )}`}
-                            >
-                              {shortContext(deep.stock)}
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span>Hist</span>
-                            <strong className="miniMetric gray">
-                              {getHistoricalScore(deep.stock) || "—"}
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span>Conf</span>
-                            <strong
-                              className={`miniMetric ${confidenceClass(
-                                getConfidence(deep.stock)
-                              )}`}
-                            >
-                              {getConfidence(deep.stock)}
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span>Risk</span>
-                            <strong
-                              className={`miniMetric ${riskClass(
-                                getRisk(deep.stock)
-                              )}`}
-                            >
-                              {getRisk(deep.stock)}
-                            </strong>
-                          </div>
-                        </div>
-
-                        <p className="deepNote">{getEntryNote(deep.stock)}</p>
-                      </div>
-                    )}
+                    <div>
+                      <span>Context</span>
+                      <strong className={`miniMetric ${getContextTone(stock)}`}>
+                        {shortContext(stock)}
+                      </strong>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
 
-            <div className="tableWrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th className="stickyCol">Symbol</th>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Chg %</th>
-                    <th>Fast Action</th>
-                    <th>Context</th>
-                    <th>Confidence</th>
-                    <th>Risk</th>
-                    <th>Deep Check</th>
-                    <th>Why</th>
-                    <th>Entry Note</th>
-                  </tr>
-                </thead>
+                  <div className="tradeNotes">
+                    <div>
+                      <span>Why actionable</span>
+                      <p>{getActionWhy(stock)}</p>
+                    </div>
 
-                <tbody>
-                  {stocks.map((stock, idx) => {
-                    const symbol = getSymbol(stock);
-                    const action = displayAction(stock, false);
-                    const confidence = getConfidence(stock);
-                    const risk = getRisk(stock);
-                    const deep = deepChecks[symbol];
-
-                    return (
-                      <tr key={`${symbol}-row-${idx}`}>
-                        <td className="symbol stickyCol">{symbol}</td>
-                        <td>{getName(stock)}</td>
-                        <td>{money(getPrice(stock))}</td>
-                        <td
-                          className={
-                            getChangePct(stock) >= 0 ? "positive" : "negative"
-                          }
-                        >
-                          {percent(getChangePct(stock))}
-                        </td>
-                        <td>
-                          <span className={`pill ${actionClass(action)}`}>
-                            {action}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`pill ${getContextTone(stock)}`}>
-                            {getContext(stock)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`pill ${confidenceClass(confidence)}`}>
-                            {confidence}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`pill ${riskClass(risk)}`}>
-                            {risk}
-                          </span>
-                        </td>
-                        <td>
-                          {deep?.stock ? (
-                            <span
-                              className={`pill ${actionClass(
-                                displayAction(deep.stock, false)
-                              )}`}
-                            >
-                              {displayAction(deep.stock, false)}
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="smallButton"
-                              disabled={deep?.loading}
-                              onClick={() => runDeepCheck(symbol)}
-                            >
-                              {deep?.loading ? "Checking..." : "Run"}
-                            </button>
-                          )}
-                        </td>
-                        <td className="textCell">{getWhy(stock)}</td>
-                        <td className="textCell mutedText">
-                          {getEntryNote(stock)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
+                    <div>
+                      <span>Trade instruction</span>
+                      <p>{getTriggerNeeded(stock)}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </section>
 
+      {!loadingTop && !topError && nearMisses.length > 0 && (
+        <section className="card compactCard">
+          <div className="sectionTitle">
+            <h2>⚠️ Near Misses</h2>
+            <p>
+              Not trades yet. These are the closest candidates and what is
+              missing.
+            </p>
+          </div>
+
+          <div className="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th className="stickyCol">Symbol</th>
+                  <th>Price</th>
+                  <th>Chg %</th>
+                  <th>Current Status</th>
+                  <th>What Is Missing</th>
+                  <th>Trigger Needed</th>
+                  <th>Confidence</th>
+                  <th>Risk</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {nearMisses.map((stock, idx) => {
+                  const confidence = getConfidence(stock);
+                  const risk = getRisk(stock);
+
+                  return (
+                    <tr key={`${getSymbol(stock)}-near-${idx}`}>
+                      <td className="symbol stickyCol">{getSymbol(stock)}</td>
+                      <td>{money(getPrice(stock))}</td>
+                      <td
+                        className={
+                          getChangePct(stock) >= 0 ? "positive" : "negative"
+                        }
+                      >
+                        {percent(getChangePct(stock))}
+                      </td>
+                      <td>
+                        <span className={`pill ${getContextTone(stock)}`}>
+                          {shortContext(stock)}
+                        </span>
+                      </td>
+                      <td className="textCell">{getActionWhy(stock)}</td>
+                      <td className="textCell mutedText">
+                        {getTriggerNeeded(stock)}
+                      </td>
+                      <td>
+                        <span className={`pill ${confidenceClass(confidence)}`}>
+                          {confidence}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`pill ${riskClass(risk)}`}>
+                          {risk}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {!loadingTop && !topError && avoidList.length > 0 && (
+        <section className="card compactCard">
+          <div className="sectionTitle">
+            <h2>🚫 Avoid / Not Ready</h2>
+            <p>Names rejected by the action screen.</p>
+          </div>
+
+          <div className="avoidChips">
+            {avoidList.map((stock) => (
+              <div className="avoidChip" key={getSymbol(stock)}>
+                <strong>{getSymbol(stock)}</strong>
+                <span>{shortContext(stock)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="card">
-        <h2>Deep Symbol Check</h2>
+        <h2>Single Symbol Action Check</h2>
         <p className="muted">
-          Uses historical confirmation. This is the action check.
+          Use this when you want to check one ticker directly with the deeper
+          symbol analysis endpoint.
         </p>
 
         <form onSubmit={analyzeSymbol} className="formRow">
@@ -1126,7 +1150,7 @@ export default function Home() {
           />
 
           <button className="button" disabled={snapLoading}>
-            {snapLoading ? "Analyzing..." : "Deep Check"}
+            {snapLoading ? "Analyzing..." : "Check Action"}
           </button>
         </form>
 
@@ -1141,7 +1165,9 @@ export default function Home() {
               </div>
 
               <span
-                className={`pill ${actionClass(displayAction(snapStock, false))}`}
+                className={`pill largePill ${actionClass(
+                  displayAction(snapStock, false)
+                )}`}
               >
                 {displayAction(snapStock, false)}
               </span>
@@ -1165,7 +1191,7 @@ export default function Home() {
               </div>
 
               <div>
-                <span>Historical Score</span>
+                <span>Hist Score</span>
                 <strong className="boxedValue gray">
                   {getHistoricalScore(snapStock) || "—"}
                 </strong>
@@ -1199,13 +1225,13 @@ export default function Home() {
 
             <div className="snapNotes">
               <div>
-                <span>Why</span>
-                <p>{getWhy(snapStock)}</p>
+                <span>Action Read</span>
+                <p>{getActionWhy(snapStock)}</p>
               </div>
 
               <div>
-                <span>Entry Note</span>
-                <p>{getEntryNote(snapStock)}</p>
+                <span>Trigger / Instruction</span>
+                <p>{getTriggerNeeded(snapStock)}</p>
               </div>
             </div>
           </div>
@@ -1439,6 +1465,14 @@ export default function Home() {
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
         }
 
+        .actionCard {
+          border-color: #cbd5e1;
+        }
+
+        .compactCard {
+          padding-top: 16px;
+        }
+
         .themeCard {
           border-color: #cbd5e1;
         }
@@ -1502,158 +1536,112 @@ export default function Home() {
           margin-bottom: 14px;
         }
 
-        .ideaGrid {
-          display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
-          gap: 12px;
-          margin-bottom: 18px;
-        }
-
-        .ideaCard {
+        .noTradeBox {
+          background: #f8fafc;
           border: 1px solid #e2e8f0;
           border-radius: 14px;
+          padding: 18px;
+        }
+
+        .noTradeBox h3 {
+          font-size: 22px;
+          margin-bottom: 6px;
+        }
+
+        .noTradeBox p {
+          color: #475569;
+          line-height: 1.4;
+        }
+
+        .tradeGrid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .tradeCard {
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
           background: white;
-          padding: 13px;
+          padding: 16px;
           min-width: 0;
           overflow: hidden;
         }
 
-        .ideaTop {
+        .tradeTop {
           display: flex;
-          align-items: flex-start;
           justify-content: space-between;
-          gap: 8px;
-          margin-bottom: 10px;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 12px;
         }
 
-        .ideaSymbol {
-          font-size: 20px;
-          font-weight: 900;
+        .tradeSymbol {
+          font-size: 26px;
+          font-weight: 950;
           letter-spacing: 0.02em;
         }
 
-        .ideaPrice {
-          font-size: 15px;
+        .tradeName {
+          color: #64748b;
+          font-size: 13px;
           margin-top: 2px;
         }
 
-        .actionPill {
-          font-size: 12px;
-          padding: 5px 9px;
-          max-width: 96px;
-          white-space: normal;
-          line-height: 1.08;
-          text-align: center;
-        }
-
-        .cardField {
+        .tradePriceRow {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           border-top: 1px solid #f1f5f9;
-          padding-top: 9px;
-          margin-top: 8px;
+          border-bottom: 1px solid #f1f5f9;
+          padding: 10px 0;
+          margin-bottom: 12px;
         }
 
-        .cardField span,
-        .cardSplit span {
+        .tradePriceRow span {
+          font-size: 18px;
+          font-weight: 800;
+        }
+
+        .tradeMetrics {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        .tradeMetrics span {
           display: block;
           color: #64748b;
-          font-size: 12px;
-          font-weight: 800;
+          font-size: 11px;
+          font-weight: 900;
           margin-bottom: 4px;
         }
 
-        .contextPill {
-          display: inline-flex;
-          align-items: center;
-          border-radius: 999px;
-          padding: 5px 10px;
-          font-size: 12px;
-          font-weight: 900;
-          line-height: 1.15;
-          max-width: 100%;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .cardSplit {
+        .tradeNotes {
           display: grid;
-          grid-template-columns: 1fr 1fr;
           gap: 8px;
-          margin-top: 12px;
         }
 
-        .miniMetric {
-          display: inline-flex;
-          border-radius: 999px;
-          padding: 4px 9px;
-          font-size: 12px;
-          font-weight: 900;
-          white-space: nowrap;
-        }
-
-        .deepButton {
-          width: 100%;
-          margin-top: 12px;
-          border: 1px solid #0f172a;
-          background: #0f172a;
-          color: white;
-          border-radius: 10px;
-          padding: 9px 10px;
-          font-weight: 900;
-          cursor: pointer;
-        }
-
-        .deepButton:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .deepResult {
-          margin-top: 12px;
+        .tradeNotes div {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
           border-radius: 12px;
           padding: 10px;
         }
 
-        .deepHeader {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 9px;
-        }
-
-        .deepHeader span,
-        .deepMiniGrid span {
+        .tradeNotes span {
+          display: block;
           color: #64748b;
           font-size: 11px;
           font-weight: 900;
+          margin-bottom: 4px;
         }
 
-        .deepMiniGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-        }
-
-        .deepMiniGrid span {
-          display: block;
-          margin-bottom: 3px;
-        }
-
-        .deepNote {
-          margin-top: 9px;
+        .tradeNotes p {
           color: #334155;
-          font-size: 12px;
-          line-height: 1.3;
-        }
-
-        .deepError {
-          margin-top: 8px;
-          color: #b91c1c;
-          font-size: 12px;
-          font-weight: 800;
+          font-size: 13px;
+          line-height: 1.35;
         }
 
         .tableWrap {
@@ -1704,7 +1692,7 @@ export default function Home() {
         }
 
         .textCell {
-          max-width: 360px;
+          max-width: 420px;
           white-space: normal;
           line-height: 1.35;
           color: #334155;
@@ -1714,8 +1702,28 @@ export default function Home() {
           color: #64748b;
         }
 
-        .button,
-        .smallButton {
+        .avoidChips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .avoidChip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 999px;
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+
+        .avoidChip span {
+          color: #64748b;
+        }
+
+        .button {
           background: #0f172a;
           color: white;
           border: 0;
@@ -1726,20 +1734,13 @@ export default function Home() {
           white-space: nowrap;
         }
 
-        .smallButton {
-          padding: 6px 10px;
-          font-size: 12px;
-          border-radius: 999px;
-        }
-
         .button.secondary {
           background: white;
           color: #0f172a;
           border: 1px solid #cbd5e1;
         }
 
-        .button:disabled,
-        .smallButton:disabled {
+        .button:disabled {
           opacity: 0.45;
           cursor: not-allowed;
         }
@@ -1813,6 +1814,20 @@ export default function Home() {
           justify-content: center;
           border-radius: 999px;
           padding: 5px 10px;
+          font-size: 12px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .largePill {
+          font-size: 14px;
+          padding: 7px 13px;
+        }
+
+        .miniMetric {
+          display: inline-flex;
+          border-radius: 999px;
+          padding: 4px 9px;
           font-size: 12px;
           font-weight: 900;
           white-space: nowrap;
@@ -1964,13 +1979,13 @@ export default function Home() {
           margin: 3px 0;
         }
 
-        @media (max-width: 1100px) {
-          .ideaGrid {
+        @media (max-width: 1200px) {
+          .tradeGrid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .metricGrid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
           }
 
           .themeSummary {
@@ -1988,7 +2003,11 @@ export default function Home() {
             flex-direction: column;
           }
 
-          .ideaGrid {
+          .tradeGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .tradeMetrics {
             grid-template-columns: 1fr;
           }
 
@@ -1998,6 +2017,10 @@ export default function Home() {
           }
 
           .snapNotes {
+            grid-template-columns: 1fr;
+          }
+
+          .metricGrid {
             grid-template-columns: 1fr;
           }
 
