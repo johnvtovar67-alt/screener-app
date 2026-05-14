@@ -184,6 +184,10 @@ function getContextTone(stock) {
   const context = String(getContext(stock)).toLowerCase();
   const action = nonOwnedAction(stock);
 
+  if (context.includes("biotech") || context.includes("binary")) {
+    return "yellow";
+  }
+
   if (
     context.includes("fails") ||
     context.includes("extended") ||
@@ -864,7 +868,9 @@ export default function Home() {
                     <div className="cardSplit">
                       <div>
                         <span>Confidence</span>
-                        <strong className={`miniMetric ${confidenceClass(confidence)}`}>
+                        <strong
+                          className={`miniMetric ${confidenceClass(confidence)}`}
+                        >
                           {confidence}
                         </strong>
                       </div>
@@ -1335,9 +1341,11 @@ export default function Home() {
 
         .ideaGrid {
           display: grid;
-          grid-template-columns: repeat(5, minmax(180px, 1fr));
-          gap: 12px;
+          grid-template-columns: repeat(10, minmax(135px, 1fr));
+          gap: 10px;
           margin-bottom: 18px;
+          overflow-x: auto;
+          padding-bottom: 4px;
         }
 
         .ideaCard {
@@ -1345,6 +1353,7 @@ export default function Home() {
           border-radius: 14px;
           background: white;
           padding: 12px;
+          min-width: 135px;
         }
 
         .ideaTop {
@@ -1714,7 +1723,7 @@ export default function Home() {
 
         @media (max-width: 1100px) {
           .ideaGrid {
-            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            grid-template-columns: repeat(10, minmax(135px, 1fr));
           }
 
           .metricGrid {
@@ -1737,7 +1746,7 @@ export default function Home() {
           }
 
           .ideaGrid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(10, minmax(135px, 1fr));
           }
 
           .formRow,
