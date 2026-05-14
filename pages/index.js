@@ -174,6 +174,33 @@ function getContext(stock) {
   );
 }
 
+function getContextTone(stock) {
+  if (isCashLikeSymbol(stock)) return "gray";
+
+  const rec = getRecommendation(stock);
+
+  if (rec?.contextTone) return rec.contextTone;
+
+  const context = String(getContext(stock)).toLowerCase();
+  const action = nonOwnedAction(stock);
+
+  if (
+    context.includes("fails") ||
+    context.includes("extended") ||
+    context.includes("high expectation") ||
+    context.includes("not enough") ||
+    context.includes("lagging") ||
+    context.includes("risk controls")
+  ) {
+    return "red";
+  }
+
+  if (action === "Buy Now" || action === "Buy") return "green";
+  if (action === "Watch for Entry") return "yellow";
+
+  return "red";
+}
+
 function getConfidence(stock) {
   if (isCashLikeSymbol(stock)) return "High";
 
@@ -280,7 +307,7 @@ function nonOwnedAction(stock) {
   const extensionRisk = getExtensionRisk(stock);
 
   if (expectationRisk >= 60 || extensionRisk >= 65) return "Avoid for Now";
-  if (score >= 75 && trigger >= 80 && momentum === "Strong") return "Buy Now";
+  if (score >= 75 && trigger >= 85 && momentum === "Strong") return "Buy Now";
   if (score >= 65 && trigger >= 70 && momentum !== "Weak") return "Buy";
   if (score >= 60 || trigger >= 70 || momentum === "Building") {
     return "Watch for Entry";
@@ -807,6 +834,7 @@ export default function Home() {
               {stocks.map((stock, idx) => {
                 const action = displayAction(stock, false);
                 const context = getContext(stock);
+                const contextTone = getContextTone(stock);
                 const confidence = getConfidence(stock);
                 const risk = getRisk(stock);
 
@@ -828,7 +856,9 @@ export default function Home() {
 
                     <div className="cardField">
                       <span>Context</span>
-                      <strong>{context}</strong>
+                      <strong className={`contextPill ${contextTone}`}>
+                        {context}
+                      </strong>
                     </div>
 
                     <div className="cardSplit">
@@ -891,7 +921,11 @@ export default function Home() {
                             {action}
                           </span>
                         </td>
-                        <td>{getContext(stock)}</td>
+                        <td>
+                          <span className={`pill ${getContextTone(stock)}`}>
+                            {getContext(stock)}
+                          </span>
+                        </td>
                         <td>
                           <span className={`pill ${confidenceClass(confidence)}`}>
                             {confidence}
@@ -970,7 +1004,9 @@ export default function Home() {
 
               <div>
                 <span>Context</span>
-                <strong>{getContext(snapStock)}</strong>
+                <strong className={`boxedValue ${getContextTone(snapStock)}`}>
+                  {getContext(snapStock)}
+                </strong>
               </div>
 
               <div>
@@ -1155,7 +1191,13 @@ export default function Home() {
                           {action}
                         </span>
                       </td>
-                      <td>{isCashLikeSymbol(stock) ? "Cash position" : getContext(stock)}</td>
+                      <td>
+                        <span className={`pill ${getContextTone(stock)}`}>
+                          {isCashLikeSymbol(stock)
+                            ? "Cash position"
+                            : getContext(stock)}
+                        </span>
+                      </td>
                       <td>
                         <span className={`pill ${confidenceClass(confidence)}`}>
                           {confidence}
@@ -1339,10 +1381,14 @@ export default function Home() {
           margin-bottom: 4px;
         }
 
-        .cardField strong {
-          color: #0f172a;
-          font-size: 13px;
-          line-height: 1.3;
+        .contextPill {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-size: 12px;
+          font-weight: 900;
+          line-height: 1.2;
         }
 
         .cardSplit {
