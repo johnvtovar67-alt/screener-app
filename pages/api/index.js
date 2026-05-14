@@ -1,449 +1,2315 @@
-// pages/api/index.js
+import { useEffect, useMemo, useState } from "react";
 
-import {
-  passesInstitutionalFilter,
-  calcFundamentalScore,
-  calcTechnicalScore,
-  calcMomentumScore,
-  calcRelativeStrengthScore,
-  calcAsymmetryScore,
-  calcTriggerScore,
-  compositeScore,
-  getRecommendation,
-  getStage,
-  buildTechnicalSnapshot,
-  buildFundamentalSnapshot,
-} from "../../lib/scoring";
+const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
 
-function normalizeSymbol(symbol) {
-  return String(symbol || "")
-    .replace("-", ".")
-    .toUpperCase()
-    .trim();
-}
+const CASH_SYMBOLS = ["CASH", "SWVXX", "VMFXX", "SPAXX", "FDRXX", "MMF"];
 
-function toFmpSymbol(symbol) {
-  return String(symbol || "")
-    .replace(".", "-")
-    .toUpperCase()
-    .trim();
-}
+const THEME_OPTIONS = [
+  { key: "broad", name: "Broad Market" },
+  { key: "btc", name: "BTC / Digital Assets" },
+  { key: "ai_power", name: "AI Power & Energy" },
+  { key: "cooling_water", name: "Cooling & Water" },
+  { key: "nuclear", name: "Nuclear / Baseload" },
+  { key: "quantum", name: "Quantum Computing" },
+  { key: "ai_infra", name: "AI Infrastructure" },
+];
 
-function toNumber(value, fallback = null) {
-  if (value == null || value === "") return fallback;
-
-  if (typeof value === "string") {
-    const cleaned = value.replace("%", "").replace(/,/g, "").trim();
-    const n = Number(cleaned);
-    return Number.isFinite(n) ? n : fallback;
-  }
-
+function money(value) {
   const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
+
+  if (!Number.isFinite(n)) return "—";
+
+  return n.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  });
 }
 
-function toPositiveNumber(value, fallback = null) {
-  const n = toNumber(value, fallback);
+function percent(value) {
+  const n = Number(value);
 
-  if (n == null) return fallback;
-  if (!Number.isFinite(n)) return fallback;
-  if (n <= 0) return fallback;
+  if (!Number.isFinite(n)) return "—";
 
-  return n;
+  return `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 
-function avg(values = []) {
-  const clean = values
-    .map((v) => Number(v))
-    .filter((v) => Number.isFinite(v));
+function number(value, digits = 2) {
+  const n = Number(value);
 
-  if (!clean.length) return null;
+  if (!Number.isFinite(n)) return "—";
 
-  return clean.reduce((sum, v) => sum + v, 0) / clean.length;
+  return n.toFixed(digits);
 }
 
-function max(values = []) {
-  const clean = values
-    .map((v) => Number(v))
-    .filter((v) => Number.isFinite(v));
+function clampScore(value) {
+  const n = Number(value);
 
-  if (!clean.length) return null;
+  if (!Number.isFinite(n)) return 0;
 
-  return Math.max(...clean);
+  return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-function min(values = []) {
-  const clean = values
-    .map((v) => Number(v))
-    .filter((v) => Number.isFinite(v));
-
-  if (!clean.length) return null;
-
-  return Math.min(...clean);
+function getSymbol(stock) {
+  return String(stock?.symbol ?? stock?.ticker ?? "").toUpperCase();
 }
 
-function pctChange(current, base) {
-  const c = Number(current);
-  const b = Number(base);
+function isCashLikeSymbol(symbolOrStock) {
+  const symbol =
+    typeof symbolOrStock === "string"
+      ? symbolOrStock.toUpperCase()
+      : getSymbol(symbolOrStock);
 
-  if (!Number.isFinite(c) || !Number.isFinite(b) || b <= 0) return null;
-
-  return ((c - b) / b) * 100;
+  return CASH_SYMBOLS.includes(symbol);
 }
 
-function sortHistoricalRows(rows = []) {
-  return rows
-    .filter((row) => row && row.date)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+function getName(stock) {
+  return stock?.name ?? stock?.companyName ?? stock?.company ?? "—";
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
+function getPrice(stock) {
+  return Number(
+    stock?.price ??
+      stock?.currentPrice ??
+      stock?.quote?.price ??
+      stock?.lastPrice
+  );
+}
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(
-      `FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`
-    );
+function getChangePct(stock) {
+  return Number(
+    stock?.dayChangePct ??
+      stock?.changesPercentage ??
+      stock?.changePercent ??
+      stock?.percentChange
+  );
+}
+
+function getRecommendation(stock) {
+  return stock?.recommendation ?? {};
+}
+
+function getScore(stock) {
+  return clampScore(
+    getRecommendation(stock)?.score ??
+      stock?.score ??
+      stock?.compositeScore ??
+      stock?.overallScore ??
+      0
+  );
+}
+
+function getTrigger(stock) {
+  return clampScore(
+    getRecommendation(stock)?.triggerScore ??
+      stock?.triggerScore ??
+      stock?.technicalSnapshot?.triggerScore ??
+      0
+  );
+}
+
+function getMomentumScore(stock) {
+  return clampScore(
+    getRecommendation(stock)?.momentumScore ??
+      stock?.momentumScore ??
+      stock?.technicalSnapshot?.momentumScore ??
+      0
+  );
+}
+
+function getExpectationRisk(stock) {
+  return clampScore(
+    getRecommendation(stock)?.expectationRisk ??
+      stock?.expectationRisk ??
+      stock?.technicalSnapshot?.expectationRisk ??
+      0
+  );
+}
+
+function getExtensionRisk(stock) {
+  return clampScore(
+    getRecommendation(stock)?.extensionRisk ??
+      stock?.extensionRisk ??
+      stock?.technicalSnapshot?.extensionRisk ??
+      0
+  );
+}
+
+function getFreshBreakoutScore(stock) {
+  return clampScore(
+    getRecommendation(stock)?.freshBreakoutScore ??
+      stock?.freshBreakoutScore ??
+      stock?.technicalSnapshot?.freshBreakoutScore ??
+      0
+  );
+}
+
+function getHistoricalScore(stock) {
+  return clampScore(
+    getRecommendation(stock)?.historicalConfirmationScore ??
+      stock?.historicalConfirmationScore ??
+      stock?.technicalSnapshot?.historicalConfirmationScore ??
+      0
+  );
+}
+
+function getRecentHigh20(stock) {
+  return Number(
+    stock?.recentHigh20 ??
+      stock?.technicalSnapshot?.recentHigh20 ??
+      stock?.historicalNotes?.recentHigh20
+  );
+}
+
+function getResistanceOverheadPct(stock) {
+  return Number(
+    stock?.resistanceOverheadPct ??
+      stock?.technicalSnapshot?.resistanceOverheadPct ??
+      stock?.historicalNotes?.resistanceOverheadPct
+  );
+}
+
+function getBreakoutAbove20High(stock) {
+  return Boolean(
+    stock?.breakoutAbove20High ??
+      stock?.technicalSnapshot?.breakoutAbove20High ??
+      stock?.historicalNotes?.breakoutAbove20High
+  );
+}
+
+function getMomentum5Pct(stock) {
+  return Number(
+    stock?.momentum5Pct ??
+      stock?.technicalSnapshot?.momentum5Pct ??
+      stock?.historicalNotes?.momentum5Pct
+  );
+}
+
+function getMomentum10Pct(stock) {
+  return Number(
+    stock?.momentum10Pct ??
+      stock?.technicalSnapshot?.momentum10Pct ??
+      stock?.historicalNotes?.momentum10Pct
+  );
+}
+
+function getShortTrendSlopePct(stock) {
+  return Number(
+    stock?.shortTrendSlopePct ??
+      stock?.technicalSnapshot?.shortTrendSlopePct ??
+      stock?.historicalNotes?.shortTrendSlopePct
+  );
+}
+
+function getVolumeRatio20(stock) {
+  return Number(
+    stock?.volumeRatio20 ??
+      stock?.technicalSnapshot?.volumeRatio20 ??
+      stock?.historicalNotes?.volumeRatio20
+  );
+}
+
+function getMomentumText(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash";
+
+  const rec = getRecommendation(stock);
+
+  if (rec?.momentumLabel) return rec.momentumLabel;
+  if (stock?.momentumLabel) return stock.momentumLabel;
+  if (stock?.technicalSnapshot?.momentumLabel) {
+    return stock.technicalSnapshot.momentumLabel;
   }
 
-  return response.json();
+  const momentumScore = getMomentumScore(stock);
+
+  if (momentumScore >= 75) return "Strong";
+  if (momentumScore >= 55) return "Building";
+
+  return "Weak";
 }
 
-async function fetchQuote(symbol) {
-  const apiKey = process.env.FMP_API_KEY;
+function getContext(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash";
 
-  if (!apiKey) {
-    throw new Error("Missing FMP_API_KEY in environment variables.");
-  }
-
-  const clean = toFmpSymbol(symbol);
-
-  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
-    clean
-  )}&apikey=${apiKey}`;
-
-  const data = await fetchJson(url);
-  const quote = Array.isArray(data) ? data[0] : data;
-
-  if (!quote?.symbol) {
-    throw new Error("No quote data returned.");
-  }
-
-  return normalizeQuote(quote);
+  return (
+    getRecommendation(stock)?.context ??
+    stock?.context ??
+    stock?.technicalSnapshot?.context ??
+    "Setup"
+  );
 }
 
-async function fetchHistorical(symbol) {
-  const apiKey = process.env.FMP_API_KEY;
+function shortContext(stock) {
+  const text = String(getContext(stock));
+  const lower = text.toLowerCase();
 
-  if (!apiKey) {
-    throw new Error("Missing FMP_API_KEY in environment variables.");
-  }
+  if (text.length <= 26) return text;
+  if (lower.includes("confirmed")) return "Confirmed breakout";
+  if (lower.includes("clean")) return "Clean entry";
+  if (lower.includes("improving")) return "Improving setup";
+  if (lower.includes("fresh")) return "Fresh breakout";
+  if (lower.includes("early")) return "Early breakout";
+  if (lower.includes("extended")) return "Extended";
+  if (lower.includes("trigger")) return "Strong trigger";
+  if (lower.includes("momentum")) return "Momentum building";
+  if (lower.includes("binary")) return "Binary risk";
+  if (lower.includes("resistance")) return "Resistance overhead";
+  if (lower.includes("lagging")) return "Lagging";
+  if (lower.includes("trend")) return "Trend issue";
 
-  const clean = toFmpSymbol(symbol);
-
-  const url = `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${encodeURIComponent(
-    clean
-  )}&apikey=${apiKey}`;
-
-  const data = await fetchJson(url);
-
-  const rows = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.historical)
-      ? data.historical
-      : Array.isArray(data?.data)
-        ? data.data
-        : [];
-
-  return sortHistoricalRows(rows).slice(0, 90);
+  return "Setup";
 }
 
-function normalizeQuote(quote = {}) {
-  const price = toPositiveNumber(quote.price);
-  const previousClose = toPositiveNumber(quote.previousClose);
-  const change = toNumber(quote.change);
+function getContextTone(stock) {
+  if (isCashLikeSymbol(stock)) return "gray";
 
-  let dayChangePct = toNumber(quote.changesPercentage);
+  const rec = getRecommendation(stock);
 
-  if (dayChangePct == null) dayChangePct = toNumber(quote.changePercentage);
-  if (dayChangePct == null) dayChangePct = toNumber(quote.changePercent);
+  if (rec?.contextTone) return rec.contextTone;
 
-  if (dayChangePct == null && price != null && previousClose) {
-    dayChangePct = ((price - previousClose) / previousClose) * 100;
+  const context = String(getContext(stock)).toLowerCase();
+  const action = nonOwnedAction(stock);
+
+  if (context.includes("binary")) return "yellow";
+
+  if (
+    context.includes("fails") ||
+    context.includes("extended") ||
+    context.includes("lagging") ||
+    context.includes("not aligned") ||
+    context.includes("risk") ||
+    context.includes("resistance") ||
+    context.includes("fading")
+  ) {
+    return "red";
   }
 
-  if (dayChangePct == null && change != null && previousClose) {
-    dayChangePct = (change / previousClose) * 100;
+  if (context.includes("improving") || context.includes("building")) {
+    return "yellow";
   }
+
+  if (action === "Buy Now" || action === "Buy") return "green";
+  if (action === "Watch for Entry") return "yellow";
+
+  return "red";
+}
+
+function getConfidence(stock) {
+  if (isCashLikeSymbol(stock)) return "High";
+
+  return (
+    getRecommendation(stock)?.confidence ??
+    stock?.confidence ??
+    stock?.technicalSnapshot?.confidence ??
+    "Low"
+  );
+}
+
+function getRisk(stock) {
+  if (isCashLikeSymbol(stock)) return "Low";
+
+  return (
+    getRecommendation(stock)?.risk ??
+    stock?.risk ??
+    stock?.technicalSnapshot?.risk ??
+    fallbackRisk(stock)
+  );
+}
+
+function getWhy(stock) {
+  return (
+    getRecommendation(stock)?.reason ??
+    stock?.reason ??
+    stock?.why ??
+    "No explanation returned."
+  );
+}
+
+function getEntryNote(stock) {
+  return (
+    getRecommendation(stock)?.entryNote ??
+    stock?.entryNote ??
+    stock?.note ??
+    "No entry note returned."
+  );
+}
+
+function fallbackRisk(stock) {
+  const expectationRisk = getExpectationRisk(stock);
+  const extensionRisk = getExtensionRisk(stock);
+
+  if (expectationRisk >= 60 || extensionRisk >= 60) return "High";
+  if (expectationRisk >= 35 || extensionRisk >= 35) return "Medium";
+
+  return "Low";
+}
+
+function confidenceClass(confidence) {
+  const clean = String(confidence || "").toLowerCase();
+
+  if (clean === "high") return "green";
+  if (clean === "medium") return "yellow";
+
+  return "red";
+}
+
+function riskClass(risk) {
+  const clean = String(risk || "").toLowerCase();
+
+  if (clean === "low") return "green";
+  if (clean === "medium") return "yellow";
+
+  return "red";
+}
+
+function calculatePosition(position, livePrice) {
+  const shares = Number(position?.shares ?? 0);
+  const avgCost = Number(position?.avgCost ?? 0);
+  const price = Number(livePrice ?? 0);
+
+  const value = shares * price;
+  const costBasis = shares * avgCost;
+  const gainLoss = value - costBasis;
+  const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
 
   return {
-    symbol: normalizeSymbol(quote.symbol),
-    name: quote.name || quote.companyName || quote.symbol,
-
+    shares,
+    avgCost,
     price,
-    previousClose,
-    dayChangePct,
-    changesPercentage: dayChangePct,
-    change,
-
-    volume: toPositiveNumber(quote.volume),
-    avgVolume: toPositiveNumber(quote.avgVolume),
-
-    marketCap: toPositiveNumber(quote.marketCap),
-
-    priceAvg50: toPositiveNumber(quote.priceAvg50 ?? quote.priceAvg50d),
-    priceAvg200: toPositiveNumber(quote.priceAvg200 ?? quote.priceAvg200d),
-
-    yearHigh: toPositiveNumber(quote.yearHigh ?? quote.yearHighPrice),
-    yearLow: toPositiveNumber(quote.yearLow ?? quote.yearLowPrice),
-
-    eps: toNumber(quote.eps),
-    pe: toNumber(quote.pe ?? quote.peRatio),
-
-    exchange: quote.exchange || "",
-    timestamp: quote.timestamp || null,
+    value,
+    costBasis,
+    gainLoss,
+    gainLossPct,
   };
 }
 
-function buildHistoricalSignals(history = [], quote = {}) {
-  const rows = sortHistoricalRows(history);
+function nonOwnedAction(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash / Hold";
 
-  if (rows.length < 20) {
-    return {
-      historicalDataAvailable: false,
-    };
+  const rec = getRecommendation(stock);
+  const label = String(rec?.displayLabel ?? rec?.label ?? "").toUpperCase();
+
+  if (label === "BUY NOW") return "Buy Now";
+  if (label === "BUY") return "Buy";
+  if (label === "WATCH FOR ENTRY") return "Watch for Entry";
+  if (label === "AVOID FOR NOW") return "Avoid for Now";
+
+  return "Avoid for Now";
+}
+
+function isActionableTrade(stock) {
+  const action = nonOwnedAction(stock);
+
+  return action === "Buy Now" || action === "Buy";
+}
+
+function isNearMiss(stock) {
+  const action = nonOwnedAction(stock);
+
+  return action === "Watch for Entry";
+}
+
+function getEstimatedTriggerPrice(stock) {
+  const price = getPrice(stock);
+  const recentHigh20 = getRecentHigh20(stock);
+  const resistanceOverheadPct = getResistanceOverheadPct(stock);
+  const priceAvg50 = Number(
+    stock?.priceAvg50 ?? stock?.technicalSnapshot?.priceAvg50
+  );
+  const yearHigh = Number(stock?.yearHigh);
+
+  if (Number.isFinite(recentHigh20) && recentHigh20 > 0) {
+    return recentHigh20 * 1.005;
   }
 
-  const price = toPositiveNumber(quote.price);
-
-  if (price == null) {
-    return {
-      historicalDataAvailable: false,
-    };
+  if (
+    Number.isFinite(price) &&
+    Number.isFinite(resistanceOverheadPct) &&
+    resistanceOverheadPct > 0
+  ) {
+    return price * (1 + resistanceOverheadPct / 100) * 1.005;
   }
 
-  const closes = rows.map((row) => toPositiveNumber(row.close));
-  const highs = rows.map((row) => toPositiveNumber(row.high));
-  const lows = rows.map((row) => toPositiveNumber(row.low));
-  const volumes = rows.map((row) => toPositiveNumber(row.volume));
-
-  const close5 = closes[4] ?? null;
-  const close10 = closes[9] ?? null;
-  const close20 = closes[19] ?? null;
-
-  const sma5 = avg(closes.slice(0, 5));
-  const sma10 = avg(closes.slice(0, 10));
-  const sma20 = avg(closes.slice(0, 20));
-
-  const recentHigh10 = max(highs.slice(0, 10));
-  const recentHigh20 = max(highs.slice(0, 20));
-  const recentHigh50 = max(highs.slice(0, 50));
-
-  const recentLow20 = min(lows.slice(0, 20));
-  const avgVolume20 = avg(volumes.slice(0, 20));
-
-  const momentum5Pct = pctChange(price, close5);
-  const momentum10Pct = pctChange(price, close10);
-  const momentum20Pct = pctChange(price, close20);
-
-  const shortTrendSlopePct = pctChange(sma5, sma20);
-  const resistanceOverheadPct =
-    recentHigh20 != null ? ((recentHigh20 - price) / price) * 100 : null;
-
-  const breakoutAbove20High =
-    recentHigh20 != null ? price >= recentHigh20 * 1.0025 : false;
-
-  const nearResistance =
-    resistanceOverheadPct != null &&
-    resistanceOverheadPct > 0 &&
-    resistanceOverheadPct <= 3;
-
-  const closeLocation20 =
-    recentHigh20 != null && recentLow20 != null && recentHigh20 > recentLow20
-      ? ((price - recentLow20) / (recentHigh20 - recentLow20)) * 100
-      : null;
-
-  const volumeRatio20 =
-    avgVolume20 != null && avgVolume20 > 0 && quote.volume != null
-      ? quote.volume / avgVolume20
-      : null;
-
-  let confirmation = 50;
-
-  if (sma5 != null) confirmation += price > sma5 ? 10 : -10;
-  if (sma10 != null) confirmation += price > sma10 ? 10 : -10;
-  if (sma20 != null) confirmation += price > sma20 ? 12 : -12;
-
-  if (shortTrendSlopePct != null) {
-    if (shortTrendSlopePct > 1.5) confirmation += 12;
-    else if (shortTrendSlopePct > 0) confirmation += 6;
-    else if (shortTrendSlopePct < -1.5) confirmation -= 14;
-    else if (shortTrendSlopePct < 0) confirmation -= 7;
+  if (Number.isFinite(yearHigh) && yearHigh > price && yearHigh / price < 1.25) {
+    return yearHigh * 1.005;
   }
 
-  if (momentum5Pct != null) {
-    if (momentum5Pct > 2) confirmation += 10;
-    else if (momentum5Pct > 0) confirmation += 5;
-    else if (momentum5Pct < -2) confirmation -= 12;
-    else if (momentum5Pct < 0) confirmation -= 6;
+  if (Number.isFinite(priceAvg50) && priceAvg50 > price) {
+    return priceAvg50 * 1.005;
   }
 
-  if (momentum10Pct != null) {
-    if (momentum10Pct > 4) confirmation += 10;
-    else if (momentum10Pct > 0) confirmation += 5;
-    else if (momentum10Pct < -4) confirmation -= 12;
-    else if (momentum10Pct < 0) confirmation -= 6;
+  if (Number.isFinite(price)) {
+    return price * 1.025;
   }
 
-  if (breakoutAbove20High) confirmation += 18;
-  else if (nearResistance) confirmation += 5;
-  else if (resistanceOverheadPct != null && resistanceOverheadPct > 6) {
-    confirmation -= 18;
-  } else if (resistanceOverheadPct != null && resistanceOverheadPct > 3) {
-    confirmation -= 9;
-  }
+  return null;
+}
 
-  if (closeLocation20 != null) {
-    if (closeLocation20 >= 75) confirmation += 8;
-    else if (closeLocation20 <= 35) confirmation -= 8;
-  }
-
-  if (volumeRatio20 != null) {
-    if (volumeRatio20 >= 1.2 && volumeRatio20 <= 3.5) confirmation += 8;
-    else if (volumeRatio20 < 0.7) confirmation -= 5;
-  }
-
-  const historicalConfirmationScore = Math.round(
-    Math.max(0, Math.min(100, confirmation))
+function getInvalidationPrice(stock) {
+  const price = getPrice(stock);
+  const priceAvg50 = Number(stock?.priceAvg50);
+  const recentLow20 = Number(
+    stock?.recentLow20 ?? stock?.technicalSnapshot?.recentLow20
   );
 
-  return {
-    historicalDataAvailable: true,
-    historicalConfirmationScore,
+  if (Number.isFinite(recentLow20) && recentLow20 > 0 && recentLow20 < price) {
+    return recentLow20 * 0.995;
+  }
 
-    recentHigh10,
-    recentHigh20,
-    recentHigh50,
-    recentLow20,
+  if (Number.isFinite(priceAvg50) && priceAvg50 > 0 && priceAvg50 < price) {
+    return priceAvg50 * 0.99;
+  }
 
-    sma5,
-    sma10,
-    sma20,
+  if (Number.isFinite(price)) {
+    return price * 0.965;
+  }
 
-    momentum5Pct,
-    momentum10Pct,
-    momentum20Pct,
-    shortTrendSlopePct,
-
-    resistanceOverheadPct,
-    breakoutAbove20High,
-    closeLocation20,
-    volumeRatio20,
-    avgVolume20,
-
-    historicalNotes: {
-      recentHigh20,
-      resistanceOverheadPct,
-      breakoutAbove20High,
-      shortTrendSlopePct,
-      momentum5Pct,
-      momentum10Pct,
-      volumeRatio20,
-    },
-  };
+  return null;
 }
 
-function attachMarketRelativeData(row, spyQuote, qqqQuote) {
-  return {
-    ...row,
-    spyDayChangePct: spyQuote?.dayChangePct ?? null,
-    qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
-  };
+function getDistanceToTriggerPct(stock) {
+  const price = getPrice(stock);
+  const triggerPrice = getEstimatedTriggerPrice(stock);
+
+  if (
+    !Number.isFinite(price) ||
+    price <= 0 ||
+    !Number.isFinite(triggerPrice) ||
+    triggerPrice <= 0
+  ) {
+    return null;
+  }
+
+  return ((triggerPrice - price) / price) * 100;
 }
 
-function buildScoredResult(base) {
-  const institutionalPass = passesInstitutionalFilter(base);
+function getNearMissPriority(stock) {
+  const context = String(getContext(stock)).toLowerCase();
+  const confidence = String(getConfidence(stock)).toLowerCase();
+  const risk = String(getRisk(stock)).toLowerCase();
+  const distance = getDistanceToTriggerPct(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumScore(stock);
+  const score = getScore(stock);
+  const extensionRisk = getExtensionRisk(stock);
 
-  const fundamentalScore = calcFundamentalScore(base);
-  const technicalScore = calcTechnicalScore(base);
-  const momentumScore = calcMomentumScore(base);
-  const relativeStrengthScore = calcRelativeStrengthScore(base);
-  const asymmetryScore = calcAsymmetryScore(base);
-  const triggerScore = calcTriggerScore(base);
-  const score = compositeScore(base);
-  const recommendation = getRecommendation(base);
+  if (
+    context.includes("extended") ||
+    context.includes("binary") ||
+    context.includes("lagging") ||
+    context.includes("not aligned") ||
+    extensionRisk >= 60
+  ) {
+    return "Low Priority";
+  }
 
-  return {
-    ...base,
+  if (
+    Number.isFinite(distance) &&
+    distance <= 3 &&
+    trigger >= 72 &&
+    momentum >= 50 &&
+    score >= 58 &&
+    risk === "low" &&
+    (confidence === "medium" || confidence === "high")
+  ) {
+    return "Closest";
+  }
 
-    institutionalPass,
+  if (
+    trigger >= 68 ||
+    momentum >= 55 ||
+    (Number.isFinite(distance) && distance <= 6)
+  ) {
+    return "Needs Confirmation";
+  }
 
-    score,
-
-    fundamentalScore,
-    technicalScore,
-    momentumScore,
-    relativeStrengthScore,
-    asymmetryScore,
-    triggerScore,
-
-    recommendation,
-
-    stage: getStage(base),
-
-    technicalSnapshot: buildTechnicalSnapshot(base),
-    fundamentalSnapshot: buildFundamentalSnapshot(base),
-  };
+  return "Low Priority";
 }
 
-export default async function handler(req, res) {
-  try {
-    const symbol = String(req.query.symbol || "")
-      .trim()
-      .toUpperCase();
+function priorityClass(priority) {
+  const clean = String(priority || "").toLowerCase();
 
-    if (!symbol) {
-      return res.status(400).json({
-        error: "Missing symbol.",
+  if (clean === "closest") return "green";
+  if (clean === "needs confirmation") return "yellow";
+
+  return "gray";
+}
+
+function getActionWhy(stock) {
+  const action = nonOwnedAction(stock);
+  const context = shortContext(stock);
+  const confidence = getConfidence(stock);
+  const risk = getRisk(stock);
+  const contextLower = String(getContext(stock)).toLowerCase();
+  const momentum5 = getMomentum5Pct(stock);
+  const momentum10 = getMomentum10Pct(stock);
+  const slope = getShortTrendSlopePct(stock);
+  const resistance = getResistanceOverheadPct(stock);
+  const volumeRatio = getVolumeRatio20(stock);
+
+  if (action === "Buy Now") {
+    return `Actionable now: ${context}. Confidence ${confidence}; risk ${risk}.`;
+  }
+
+  if (action === "Buy") {
+    return `Starter trade only: ${context}. Confidence ${confidence}; risk ${risk}.`;
+  }
+
+  if (action === "Watch for Entry") {
+    if (contextLower.includes("extended")) {
+      return "Not actionable: extended after a strong move. Needs a reset or pullback.";
+    }
+
+    if (Number.isFinite(resistance) && resistance > 3) {
+      return `Not actionable: resistance is still about ${number(resistance, 1)}% overhead.`;
+    }
+
+    if (Number.isFinite(momentum5) && momentum5 < 0) {
+      return `Not actionable: short-term momentum is still negative over 5 days (${number(
+        momentum5,
+        1
+      )}%).`;
+    }
+
+    if (Number.isFinite(momentum10) && momentum10 < 0) {
+      return `Not actionable: 10-day momentum has not fully confirmed yet (${number(
+        momentum10,
+        1
+      )}%).`;
+    }
+
+    if (Number.isFinite(slope) && slope < 0) {
+      return `Not actionable: short trend slope is still slightly negative (${number(
+        slope,
+        1
+      )}%).`;
+    }
+
+    if (Number.isFinite(volumeRatio) && volumeRatio < 1) {
+      return `Not actionable: volume confirmation is light (${number(
+        volumeRatio,
+        2
+      )}x normal).`;
+    }
+
+    if (contextLower.includes("momentum")) {
+      return "Not actionable yet: momentum is building, but entry confirmation is incomplete.";
+    }
+
+    if (contextLower.includes("trigger")) {
+      return "Not actionable yet: trigger is strong, but breakout confirmation is incomplete.";
+    }
+
+    return "Not actionable yet: setup is interesting but not clean enough.";
+  }
+
+  return "No trade: setup does not meet action standards.";
+}
+
+function getTriggerNeeded(stock) {
+  const action = nonOwnedAction(stock);
+  const context = String(getContext(stock)).toLowerCase();
+  const triggerPrice = getEstimatedTriggerPrice(stock);
+  const invalidationPrice = getInvalidationPrice(stock);
+  const breakoutAbove20High = getBreakoutAbove20High(stock);
+  const volumeRatio = getVolumeRatio20(stock);
+  const momentum5 = getMomentum5Pct(stock);
+  const momentum10 = getMomentum10Pct(stock);
+  const momentum = getMomentumScore(stock);
+
+  const triggerText = Number.isFinite(triggerPrice)
+    ? `Needs close above roughly ${money(triggerPrice)}`
+    : "Needs clean breakout/close confirmation";
+
+  const invalidationText = Number.isFinite(invalidationPrice)
+    ? `Avoid if it loses roughly ${money(invalidationPrice)}.`
+    : "Avoid if the setup reverses or loses support.";
+
+  if (action === "Buy Now") {
+    return Number.isFinite(invalidationPrice)
+      ? `Buyable now under normal sizing. ${invalidationText}`
+      : "Buyable now under normal sizing. Do not chase oversized.";
+  }
+
+  if (action === "Buy") {
+    return Number.isFinite(invalidationPrice)
+      ? `Starter position only. Add only if it holds. ${invalidationText}`
+      : "Starter position only. Add only if price holds and confirmation improves.";
+  }
+
+  if (context.includes("extended")) {
+    return Number.isFinite(triggerPrice)
+      ? `Do not chase. Needs pullback/reset first, then reclaim near ${money(
+          triggerPrice
+        )}.`
+      : "Do not chase. Needs a pullback, sideways reset, or lower-risk re-entry.";
+  }
+
+  if (context.includes("resistance")) {
+    return Number.isFinite(triggerPrice)
+      ? `${triggerText} with better volume confirmation.`
+      : "Needs a close above resistance with volume confirmation.";
+  }
+
+  if (Number.isFinite(volumeRatio) && volumeRatio < 1) {
+    return Number.isFinite(triggerPrice)
+      ? `${triggerText} with volume above normal.`
+      : "Needs stronger volume confirmation before buying.";
+  }
+
+  if (
+    Number.isFinite(momentum5) &&
+    momentum5 < 0 &&
+    Number.isFinite(momentum10) &&
+    momentum10 < 0
+  ) {
+    return Number.isFinite(triggerPrice)
+      ? `Needs momentum to turn positive and close above roughly ${money(
+          triggerPrice
+        )}.`
+      : "Needs 5-day and 10-day momentum to turn positive.";
+  }
+
+  if (context.includes("momentum") || momentum < 55) {
+    return Number.isFinite(triggerPrice)
+      ? `Needs momentum confirmation and close above roughly ${money(
+          triggerPrice
+        )}.`
+      : "Needs momentum confirmation before acting.";
+  }
+
+  if (context.includes("trigger") || breakoutAbove20High === false) {
+    return Number.isFinite(triggerPrice)
+      ? `${triggerText} before buying.`
+      : "Needs clean breakout/close confirmation before buying.";
+  }
+
+  return Number.isFinite(triggerPrice)
+    ? `${triggerText} before buying.`
+    : "Needs cleaner entry confirmation before buying.";
+}
+
+function portfolioAction(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash / Hold";
+
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumText(stock);
+  const expectationRisk = getExpectationRisk(stock);
+  const extensionRisk = getExtensionRisk(stock);
+  const freshBreakoutScore = getFreshBreakoutScore(stock);
+  const gainLossPct = Number(stock?.gainLossPct);
+  const buyAction = nonOwnedAction(stock);
+
+  const hasGainPct = Number.isFinite(gainLossPct);
+
+  const largeGain = hasGainPct && gainLossPct >= 25;
+  const solidGain = hasGainPct && gainLossPct >= 10;
+  const meaningfulLoss = hasGainPct && gainLossPct <= -8;
+  const deepLoss = hasGainPct && gainLossPct <= -15;
+
+  const trendStrong =
+    trigger >= 80 &&
+    momentum !== "Weak" &&
+    score >= 65 &&
+    expectationRisk <= 55;
+
+  const trendWeak = momentum === "Weak" || trigger < 65 || score < 60;
+
+  const trendFailing =
+    momentum === "Weak" && trigger < 65 && score < 60;
+
+  const stretchedRisk = expectationRisk >= 60 || extensionRisk >= 65;
+
+  const extendedWinner = solidGain && extensionRisk >= 55 && momentum !== "Weak";
+
+  if (largeGain && trendFailing) return "Hold — Watch Closely";
+  if (solidGain && trendFailing) return "Trim / Watch Closely";
+  if (deepLoss && trendFailing) return "Exit — Trend Failure";
+  if (meaningfulLoss && trendFailing) return "Exit — Trend Failure";
+
+  if (largeGain && stretchedRisk) return "Trim Into Strength";
+  if (extendedWinner) return "Hold but Extended";
+
+  if (
+    buyAction === "Buy Now" &&
+    trendStrong &&
+    freshBreakoutScore >= 70 &&
+    !largeGain
+  ) {
+    return "Hold / Add";
+  }
+
+  if (buyAction === "Buy Now" && trendStrong) return "Hold Trend";
+
+  if (
+    trigger >= 85 &&
+    momentum === "Strong" &&
+    expectationRisk <= 45 &&
+    extensionRisk <= 45
+  ) {
+    return "Hold / Add";
+  }
+
+  if (
+    meaningfulLoss &&
+    trigger >= 80 &&
+    momentum !== "Weak" &&
+    expectationRisk <= 50
+  ) {
+    return "Hold — Prove It";
+  }
+
+  if (trigger >= 75 && momentum !== "Weak" && score >= 60) {
+    return "Hold Trend";
+  }
+
+  if (largeGain && trendWeak) return "Hold — Watch Closely";
+  if (solidGain && trendWeak) return "Trim / Watch Closely";
+
+  if (momentum === "Weak" || score < 58) return "Trim / Watch Closely";
+
+  return "Hold Trend";
+}
+
+function displayAction(stock, owned = false) {
+  if (owned) return portfolioAction(stock);
+
+  return nonOwnedAction(stock);
+}
+
+function actionClass(action) {
+  if (action === "Cash / Hold") return "gray";
+
+  if (action === "Buy Now" || action === "Buy" || action === "Hold / Add") {
+    return "green";
+  }
+
+  if (action === "Hold Trend") return "green";
+
+  if (
+    action === "Watch for Entry" ||
+    action === "Hold" ||
+    action === "Hold — Prove It" ||
+    action === "Hold but Extended" ||
+    action === "Hold — Watch Closely"
+  ) {
+    return "yellow";
+  }
+
+  if (action === "Trim Into Strength" || action === "Trim / Watch Closely") {
+    return "orange";
+  }
+
+  return "red";
+}
+
+function rankNearMiss(a, b) {
+  const priorityOrder = {
+    Closest: 3,
+    "Needs Confirmation": 2,
+    "Low Priority": 1,
+  };
+
+  const priorityA = priorityOrder[getNearMissPriority(a)] ?? 0;
+  const priorityB = priorityOrder[getNearMissPriority(b)] ?? 0;
+
+  if (priorityB !== priorityA) return priorityB - priorityA;
+
+  const distanceA = getDistanceToTriggerPct(a);
+  const distanceB = getDistanceToTriggerPct(b);
+
+  if (Number.isFinite(distanceA) && Number.isFinite(distanceB)) {
+    if (distanceA !== distanceB) return distanceA - distanceB;
+  }
+
+  const triggerA = getTrigger(a);
+  const triggerB = getTrigger(b);
+
+  if (triggerB !== triggerA) return triggerB - triggerA;
+
+  const momentumA = getMomentumScore(a);
+  const momentumB = getMomentumScore(b);
+
+  if (momentumB !== momentumA) return momentumB - momentumA;
+
+  const scoreA = getScore(a);
+  const scoreB = getScore(b);
+
+  return scoreB - scoreA;
+}
+
+export default function Home() {
+  const [stocks, setStocks] = useState([]);
+  const [loadingTop, setLoadingTop] = useState(true);
+  const [topError, setTopError] = useState("");
+  const [selectedTheme, setSelectedTheme] = useState("broad");
+  const [themeMeta, setThemeMeta] = useState(null);
+
+  const [symbol, setSymbol] = useState("");
+  const [snapLoading, setSnapLoading] = useState(false);
+  const [snapError, setSnapError] = useState("");
+  const [snapStock, setSnapStock] = useState(null);
+
+  const [portfolio, setPortfolio] = useState([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioResults, setPortfolioResults] = useState([]);
+
+  const [newSymbol, setNewSymbol] = useState("");
+  const [newShares, setNewShares] = useState("");
+  const [newCost, setNewCost] = useState("");
+
+  useEffect(() => {
+    loadTopIdeas(selectedTheme);
+    loadPortfolio();
+  }, []);
+
+  async function loadTopIdeas(theme = selectedTheme) {
+    setLoadingTop(true);
+    setTopError("");
+
+    try {
+      const res = await fetch(`/api/top5?theme=${encodeURIComponent(theme)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.detail || data?.error || "Failed to load trade screen."
+        );
+      }
+
+      const list = Array.isArray(data)
+        ? data
+        : data?.stocks || data?.results || data?.data || [];
+
+      setStocks(list.slice(0, 10));
+      setThemeMeta(data?.selectedTheme || null);
+    } catch (err) {
+      setTopError(err.message || "Failed to load trade screen.");
+    } finally {
+      setLoadingTop(false);
+    }
+  }
+
+  function changeTheme(nextTheme) {
+    setSelectedTheme(nextTheme);
+    loadTopIdeas(nextTheme);
+  }
+
+  function loadPortfolio() {
+    try {
+      const raw = window.localStorage.getItem(PORTFOLIO_KEY);
+
+      if (!raw) return;
+
+      const saved = JSON.parse(raw);
+
+      if (Array.isArray(saved)) setPortfolio(saved);
+    } catch {
+      setPortfolio([]);
+    }
+  }
+
+  function savePortfolio(next) {
+    setPortfolio(next);
+    window.localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(next));
+  }
+
+  async function exportPortfolio() {
+    try {
+      const json = JSON.stringify(portfolio, null, 2);
+
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(json);
+        alert(
+          "Portfolio copied. Paste it into Import Portfolio on another device."
+        );
+      } else {
+        window.prompt("Copy this portfolio data:", json);
+      }
+    } catch {
+      alert("Could not export portfolio.");
+    }
+  }
+
+  function importPortfolio() {
+    const raw = window.prompt("Paste exported portfolio JSON:");
+
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw);
+
+      if (!Array.isArray(parsed)) {
+        throw new Error("Invalid portfolio.");
+      }
+
+      const cleaned = parsed
+        .map((p) => ({
+          symbol: String(p?.symbol || "").trim().toUpperCase(),
+          shares: Number(p?.shares),
+          avgCost: Number(p?.avgCost),
+        }))
+        .filter(
+          (p) =>
+            p.symbol &&
+            Number.isFinite(p.shares) &&
+            p.shares > 0 &&
+            Number.isFinite(p.avgCost) &&
+            p.avgCost >= 0
+        );
+
+      if (!cleaned.length) {
+        throw new Error("No valid positions.");
+      }
+
+      savePortfolio(cleaned);
+      setPortfolioResults([]);
+      alert("Portfolio imported successfully.");
+    } catch {
+      alert("Invalid portfolio data.");
+    }
+  }
+
+  function addPosition() {
+    const cleanSymbol = newSymbol.trim().toUpperCase();
+    const shares = Number(newShares);
+    const avgCost = Number(newCost);
+
+    if (
+      !cleanSymbol ||
+      !Number.isFinite(shares) ||
+      shares <= 0 ||
+      !Number.isFinite(avgCost) ||
+      avgCost < 0
+    ) {
+      alert("Please enter symbol, shares, and cost per share.");
+      return;
+    }
+
+    const next = [...portfolio];
+    const index = next.findIndex((p) => p.symbol === cleanSymbol);
+
+    if (index >= 0) {
+      next[index] = {
+        symbol: cleanSymbol,
+        shares,
+        avgCost,
+      };
+    } else {
+      next.push({
+        symbol: cleanSymbol,
+        shares,
+        avgCost,
       });
     }
 
-    const [quote, spyQuote, qqqQuote, history] = await Promise.all([
-      fetchQuote(symbol),
-      fetchQuote("SPY"),
-      fetchQuote("QQQ"),
-      fetchHistorical(symbol).catch(() => []),
-    ]);
-
-    const historicalSignals = buildHistoricalSignals(history, quote);
-
-    const base = attachMarketRelativeData(
-      {
-        ...quote,
-        ...historicalSignals,
-      },
-      spyQuote,
-      qqqQuote
-    );
-
-    const result = buildScoredResult(base);
-
-    return res.status(200).json({
-      stock: result,
-      meta: {
-        spyChange: spyQuote?.dayChangePct ?? null,
-        qqqChange: qqqQuote?.dayChangePct ?? null,
-        historicalRows: Array.isArray(history) ? history.length : 0,
-        historicalDataAvailable: historicalSignals.historicalDataAvailable,
-      },
-    });
-  } catch (err) {
-    console.error("api/index error:", err);
-
-    return res.status(500).json({
-      error: "Failed to analyze symbol.",
-      detail: err.message || "Unknown error.",
-    });
+    savePortfolio(next);
+    setNewSymbol("");
+    setNewShares("");
+    setNewCost("");
   }
+
+  function removePosition(symbolToRemove) {
+    savePortfolio(portfolio.filter((p) => p.symbol !== symbolToRemove));
+    setPortfolioResults((prev) =>
+      prev.filter((p) => p.symbol !== symbolToRemove)
+    );
+  }
+
+  async function analyzeSymbol(e) {
+    e?.preventDefault();
+
+    const cleanSymbol = symbol.trim().toUpperCase();
+
+    if (!cleanSymbol) return;
+
+    setSnapLoading(true);
+    setSnapError("");
+    setSnapStock(null);
+
+    try {
+      const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.detail || data?.error || "Failed to analyze symbol."
+        );
+      }
+
+      setSnapStock(data?.stock || data?.result || data);
+    } catch (err) {
+      setSnapError(err.message || "Failed to analyze symbol.");
+    } finally {
+      setSnapLoading(false);
+    }
+  }
+
+  async function analyzePortfolio() {
+    if (!portfolio.length) return;
+
+    setPortfolioLoading(true);
+    setPortfolioResults([]);
+
+    try {
+      const results = [];
+
+      for (const position of portfolio) {
+        try {
+          if (isCashLikeSymbol(position.symbol)) {
+            const calculated = calculatePosition(position, position.avgCost || 1);
+
+            results.push({
+              symbol: position.symbol,
+              name: "Cash / Money Market",
+              shares: calculated.shares,
+              avgCost: calculated.avgCost,
+              currentPrice: calculated.price,
+              value: calculated.value,
+              costBasis: calculated.costBasis,
+              gainLoss: calculated.gainLoss,
+              gainLossPct: calculated.gainLossPct,
+              isCash: true,
+            });
+
+            continue;
+          }
+
+          const res = await fetch(
+            `/api?symbol=${encodeURIComponent(position.symbol)}`
+          );
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data?.detail || data?.error || "Could not analyze");
+          }
+
+          const stock = data?.stock || data?.result || data;
+          const livePrice = getPrice(stock);
+          const calculated = calculatePosition(position, livePrice);
+
+          results.push({
+            ...stock,
+            symbol: position.symbol,
+            shares: calculated.shares,
+            avgCost: calculated.avgCost,
+            currentPrice: calculated.price,
+            value: calculated.value,
+            costBasis: calculated.costBasis,
+            gainLoss: calculated.gainLoss,
+            gainLossPct: calculated.gainLossPct,
+          });
+        } catch {
+          const calculated = calculatePosition(position, 0);
+
+          results.push({
+            symbol: position.symbol,
+            shares: calculated.shares,
+            avgCost: calculated.avgCost,
+            currentPrice: null,
+            value: null,
+            costBasis: calculated.costBasis,
+            gainLoss: null,
+            gainLossPct: null,
+            error: "Could not analyze",
+          });
+        }
+      }
+
+      setPortfolioResults(results);
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }
+
+  const actionableTrades = useMemo(() => {
+    return stocks.filter(isActionableTrade);
+  }, [stocks]);
+
+  const nearMisses = useMemo(() => {
+    return stocks
+      .filter(isNearMiss)
+      .sort(rankNearMiss)
+      .slice(0, 5);
+  }, [stocks]);
+
+  const avoidList = useMemo(() => {
+    return stocks
+      .filter((stock) => nonOwnedAction(stock) === "Avoid for Now")
+      .slice(0, 5);
+  }, [stocks]);
+
+  const portfolioTotals = useMemo(() => {
+    let totalValue = 0;
+    let totalCost = 0;
+
+    for (const p of portfolioResults) {
+      const value = Number(p.value);
+      const costBasis = Number(p.costBasis);
+
+      if (Number.isFinite(value)) totalValue += value;
+      if (Number.isFinite(costBasis)) totalCost += costBasis;
+    }
+
+    const totalGainLoss = totalValue - totalCost;
+    const totalGainLossPct =
+      totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
+
+    return {
+      value: totalValue,
+      costBasis: totalCost,
+      gainLoss: totalGainLoss,
+      gainLossPct: totalGainLossPct,
+    };
+  }, [portfolioResults]);
+
+  const selectedThemeName =
+    THEME_OPTIONS.find((theme) => theme.key === selectedTheme)?.name ||
+    "Broad Market";
+
+  return (
+    <main className="page">
+      <header className="header">
+        <div>
+          <h1>🧠 Trade Action Screener</h1>
+          <p>
+            Shows actionable trades first. If no trades qualify, the answer is
+            no trade.
+          </p>
+        </div>
+
+        <button
+          onClick={() => loadTopIdeas(selectedTheme)}
+          className="button secondary"
+        >
+          Reload Screener
+        </button>
+      </header>
+
+      <section className="card themeCard">
+        <div className="sectionHeader">
+          <div>
+            <h2>Theme Focus</h2>
+            <p className="muted">
+              Use Broad Market for discovery, or select a focused macro theme.
+            </p>
+          </div>
+
+          <select
+            value={selectedTheme}
+            onChange={(e) => changeTheme(e.target.value)}
+            className="themeSelect"
+          >
+            {THEME_OPTIONS.map((theme) => (
+              <option key={theme.key} value={theme.key}>
+                {theme.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="themeSummary">
+          <div>
+            <span>Current Mode</span>
+            <strong>{themeMeta?.name || selectedThemeName}</strong>
+          </div>
+
+          <div>
+            <span>Discipline</span>
+            <p>
+              Main grid only shows Buy Now or Buy. Watch names are demoted to
+              Near Misses with priority and trigger guidance.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="card actionCard">
+        <div className="sectionTitle">
+          <h2>🔥 Actionable Trades</h2>
+          <p>
+            This is the trading screen. No Buy Now or Buy means no action right
+            now.
+          </p>
+        </div>
+
+        {loadingTop && <p className="muted">Loading trade screen...</p>}
+        {topError && <p className="error">{topError}</p>}
+
+        {!loadingTop && !topError && actionableTrades.length === 0 && (
+          <div className="noTradeBox">
+            <h3>No actionable trades right now.</h3>
+            <p>
+              The screener found candidates, but none cleared the Buy / Buy Now
+              threshold. Stay patient. Cash is a valid position.
+            </p>
+          </div>
+        )}
+
+        {!loadingTop && !topError && actionableTrades.length > 0 && (
+          <div className="tradeGrid">
+            {actionableTrades.map((stock, idx) => {
+              const action = displayAction(stock, false);
+              const confidence = getConfidence(stock);
+              const risk = getRisk(stock);
+
+              return (
+                <div className="tradeCard" key={`${getSymbol(stock)}-${idx}`}>
+                  <div className="tradeTop">
+                    <div>
+                      <div className="tradeSymbol">{getSymbol(stock)}</div>
+                      <div className="tradeName">{getName(stock)}</div>
+                    </div>
+
+                    <span className={`pill largePill ${actionClass(action)}`}>
+                      {action}
+                    </span>
+                  </div>
+
+                  <div className="tradePriceRow">
+                    <span>{money(getPrice(stock))}</span>
+                    <strong
+                      className={
+                        getChangePct(stock) >= 0 ? "positive" : "negative"
+                      }
+                    >
+                      {percent(getChangePct(stock))}
+                    </strong>
+                  </div>
+
+                  <div className="tradeMetrics">
+                    <div>
+                      <span>Confidence</span>
+                      <strong
+                        className={`miniMetric ${confidenceClass(confidence)}`}
+                      >
+                        {confidence}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Risk</span>
+                      <strong className={`miniMetric ${riskClass(risk)}`}>
+                        {risk}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>Context</span>
+                      <strong className={`miniMetric ${getContextTone(stock)}`}>
+                        {shortContext(stock)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="tradeNotes">
+                    <div>
+                      <span>Why actionable</span>
+                      <p>{getActionWhy(stock)}</p>
+                    </div>
+
+                    <div>
+                      <span>Trade instruction</span>
+                      <p>{getTriggerNeeded(stock)}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {!loadingTop && !topError && nearMisses.length > 0 && (
+        <section className="card compactCard">
+          <div className="sectionTitle">
+            <h2>⚠️ Near Misses</h2>
+            <p>
+              Not trades yet. These are the closest candidates and what is
+              missing.
+            </p>
+          </div>
+
+          <div className="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th className="stickyCol">Symbol</th>
+                  <th>Priority</th>
+                  <th>Price</th>
+                  <th>Chg %</th>
+                  <th>Status</th>
+                  <th>What Is Missing</th>
+                  <th>Trigger Needed</th>
+                  <th>Confidence</th>
+                  <th>Risk</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {nearMisses.map((stock, idx) => {
+                  const confidence = getConfidence(stock);
+                  const risk = getRisk(stock);
+                  const priority = getNearMissPriority(stock);
+
+                  return (
+                    <tr key={`${getSymbol(stock)}-near-${idx}`}>
+                      <td className="symbol stickyCol">{getSymbol(stock)}</td>
+                      <td>
+                        <span className={`pill ${priorityClass(priority)}`}>
+                          {priority}
+                        </span>
+                      </td>
+                      <td>{money(getPrice(stock))}</td>
+                      <td
+                        className={
+                          getChangePct(stock) >= 0 ? "positive" : "negative"
+                        }
+                      >
+                        {percent(getChangePct(stock))}
+                      </td>
+                      <td>
+                        <span className={`pill ${getContextTone(stock)}`}>
+                          {shortContext(stock)}
+                        </span>
+                      </td>
+                      <td className="textCell">{getActionWhy(stock)}</td>
+                      <td className="textCell mutedText">
+                        {getTriggerNeeded(stock)}
+                      </td>
+                      <td>
+                        <span className={`pill ${confidenceClass(confidence)}`}>
+                          {confidence}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`pill ${riskClass(risk)}`}>
+                          {risk}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {!loadingTop && !topError && avoidList.length > 0 && (
+        <section className="card compactCard">
+          <div className="sectionTitle">
+            <h2>🚫 Avoid / Not Ready</h2>
+            <p>Names rejected by the action screen.</p>
+          </div>
+
+          <div className="avoidChips">
+            {avoidList.map((stock) => (
+              <div className="avoidChip" key={getSymbol(stock)}>
+                <strong>{getSymbol(stock)}</strong>
+                <span>{shortContext(stock)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="card">
+        <h2>Single Symbol Action Check</h2>
+        <p className="muted">
+          Use this when you want to check one ticker directly with deeper symbol
+          analysis.
+        </p>
+
+        <form onSubmit={analyzeSymbol} className="formRow">
+          <input
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+            placeholder="Lookup ticker..."
+          />
+
+          <button className="button" disabled={snapLoading}>
+            {snapLoading ? "Analyzing..." : "Check Action"}
+          </button>
+        </form>
+
+        {snapError && <p className="error">{snapError}</p>}
+
+        {snapStock && (
+          <div className="resultBox">
+            <div className="resultTop">
+              <div>
+                <h3>{getSymbol(snapStock)}</h3>
+                <p>{getName(snapStock)}</p>
+              </div>
+
+              <span
+                className={`pill largePill ${actionClass(
+                  displayAction(snapStock, false)
+                )}`}
+              >
+                {displayAction(snapStock, false)}
+              </span>
+            </div>
+
+            <div className="metricGrid">
+              <div>
+                <span>Price</span>
+                <strong>{money(getPrice(snapStock))}</strong>
+              </div>
+
+              <div>
+                <span>Change</span>
+                <strong
+                  className={
+                    getChangePct(snapStock) >= 0 ? "positive" : "negative"
+                  }
+                >
+                  {percent(getChangePct(snapStock))}
+                </strong>
+              </div>
+
+              <div>
+                <span>Hist Score</span>
+                <strong className="boxedValue gray">
+                  {getHistoricalScore(snapStock) || "—"}
+                </strong>
+              </div>
+
+              <div>
+                <span>Context</span>
+                <strong className={`boxedValue ${getContextTone(snapStock)}`}>
+                  {getContext(snapStock)}
+                </strong>
+              </div>
+
+              <div>
+                <span>Confidence</span>
+                <strong
+                  className={`boxedValue ${confidenceClass(
+                    getConfidence(snapStock)
+                  )}`}
+                >
+                  {getConfidence(snapStock)}
+                </strong>
+              </div>
+
+              <div>
+                <span>Risk</span>
+                <strong className={`boxedValue ${riskClass(getRisk(snapStock))}`}>
+                  {getRisk(snapStock)}
+                </strong>
+              </div>
+            </div>
+
+            <div className="snapNotes">
+              <div>
+                <span>Action Read</span>
+                <p>{getActionWhy(snapStock)}</p>
+              </div>
+
+              <div>
+                <span>Trigger / Instruction</span>
+                <p>{getTriggerNeeded(snapStock)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Portfolio Screener</h2>
+        <p className="muted">
+          Uses ownership logic: Hold / Add, Hold Trend, Trim, Cash / Hold, or
+          Exit.
+        </p>
+
+        <div className="portfolioTools">
+          <button onClick={exportPortfolio} className="button secondary">
+            Export Portfolio
+          </button>
+
+          <button onClick={importPortfolio} className="button secondary">
+            Import Portfolio
+          </button>
+        </div>
+
+        <div className="portfolioForm">
+          <input
+            value={newSymbol}
+            onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
+            placeholder="Symbol"
+          />
+
+          <input
+            value={newShares}
+            onChange={(e) => setNewShares(e.target.value)}
+            placeholder="Shares"
+            type="number"
+            step="any"
+          />
+
+          <input
+            value={newCost}
+            onChange={(e) => setNewCost(e.target.value)}
+            placeholder="Cost/share"
+            type="number"
+            step="any"
+          />
+
+          <button onClick={addPosition} className="button">
+            Add / Update
+          </button>
+        </div>
+
+        {portfolio.length > 0 && (
+          <div className="positionChips">
+            {portfolio.map((p) => (
+              <div className="positionChip" key={p.symbol}>
+                <span>
+                  <strong>{p.symbol}</strong> · {number(p.shares, 2)} @{" "}
+                  {money(p.avgCost)}
+                </span>
+
+                <button
+                  onClick={() => removePosition(p.symbol)}
+                  className="chipRemove"
+                  aria-label={`Remove ${p.symbol}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={analyzePortfolio}
+          disabled={!portfolio.length || portfolioLoading}
+          className="button full"
+        >
+          {portfolioLoading ? "Analyzing Portfolio..." : "Analyze Portfolio"}
+        </button>
+      </section>
+
+      {portfolioResults.length > 0 && (
+        <section className="card">
+          <div className="sectionHeader">
+            <div>
+              <h2>Portfolio Analysis</h2>
+              <p>Trade Action is based on stocks you already own.</p>
+            </div>
+
+            <div className="totals">
+              <span>Total Value</span>
+              <strong>{money(portfolioTotals.value)}</strong>
+              <span
+                className={
+                  portfolioTotals.gainLoss >= 0 ? "positive" : "negative"
+                }
+              >
+                {money(portfolioTotals.gainLoss)} /{" "}
+                {percent(portfolioTotals.gainLossPct)}
+              </span>
+            </div>
+          </div>
+
+          <div className="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th className="stickyCol">Symbol</th>
+                  <th>Shares</th>
+                  <th>Cost/share</th>
+                  <th>Price</th>
+                  <th>Value</th>
+                  <th>Cost Basis</th>
+                  <th>Gain / Loss</th>
+                  <th>Action</th>
+                  <th>Context</th>
+                  <th>Confidence</th>
+                  <th>Risk</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {portfolioResults.map((stock) => {
+                  const action = stock.error
+                    ? "Exit — Trend Failure"
+                    : displayAction(stock, true);
+
+                  const confidence = getConfidence(stock);
+                  const risk = getRisk(stock);
+
+                  return (
+                    <tr key={stock.symbol}>
+                      <td className="symbol stickyCol">{stock.symbol}</td>
+                      <td>{number(stock.shares, 2)}</td>
+                      <td>{money(stock.avgCost)}</td>
+                      <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
+                      <td>{stock.error ? "—" : money(stock.value)}</td>
+                      <td>{money(stock.costBasis)}</td>
+                      <td
+                        className={
+                          stock.gainLoss >= 0 ? "positive" : "negative"
+                        }
+                      >
+                        {stock.error
+                          ? "—"
+                          : `${money(stock.gainLoss)} / ${percent(
+                              stock.gainLossPct
+                            )}`}
+                      </td>
+                      <td>
+                        <span className={`pill ${actionClass(action)}`}>
+                          {action}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`pill ${getContextTone(stock)}`}>
+                          {isCashLikeSymbol(stock)
+                            ? "Cash position"
+                            : getContext(stock)}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`pill ${confidenceClass(confidence)}`}>
+                          {confidence}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`pill ${riskClass(risk)}`}>
+                          {risk}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      <style jsx>{`
+        .page {
+          min-height: 100vh;
+          background: #f8fafc;
+          color: #0f172a;
+          padding: 28px;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 18px;
+          margin-bottom: 22px;
+        }
+
+        h1 {
+          margin: 0;
+          font-size: 34px;
+          line-height: 1.05;
+          letter-spacing: -0.04em;
+        }
+
+        h2 {
+          margin: 0 0 5px;
+          font-size: 20px;
+        }
+
+        h3 {
+          margin: 0;
+          font-size: 24px;
+        }
+
+        p {
+          margin: 0;
+        }
+
+        .header p,
+        .muted {
+          color: #64748b;
+          font-size: 14px;
+        }
+
+        .card {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 18px;
+          margin-bottom: 20px;
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        }
+
+        .actionCard {
+          border-color: #cbd5e1;
+        }
+
+        .compactCard {
+          padding-top: 16px;
+        }
+
+        .themeCard {
+          border-color: #cbd5e1;
+        }
+
+        .themeSelect {
+          border: 1px solid #cbd5e1;
+          border-radius: 11px;
+          padding: 11px 12px;
+          font-size: 15px;
+          font-weight: 800;
+          background: white;
+          min-width: 245px;
+        }
+
+        .themeSummary {
+          display: grid;
+          grid-template-columns: 260px 1fr;
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        .themeSummary div {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 12px;
+        }
+
+        .themeSummary span {
+          display: block;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 800;
+          margin-bottom: 4px;
+        }
+
+        .themeSummary strong {
+          font-size: 16px;
+        }
+
+        .themeSummary p {
+          color: #334155;
+          font-size: 14px;
+        }
+
+        .card > p,
+        .sectionTitle p {
+          color: #64748b;
+          font-size: 14px;
+        }
+
+        .sectionTitle {
+          margin-bottom: 14px;
+        }
+
+        .sectionHeader {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+          margin-bottom: 14px;
+        }
+
+        .noTradeBox {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 18px;
+        }
+
+        .noTradeBox h3 {
+          font-size: 22px;
+          margin-bottom: 6px;
+        }
+
+        .noTradeBox p {
+          color: #475569;
+          line-height: 1.4;
+        }
+
+        .tradeGrid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .tradeCard {
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          background: white;
+          padding: 16px;
+          min-width: 0;
+          overflow: hidden;
+        }
+
+        .tradeTop {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .tradeSymbol {
+          font-size: 26px;
+          font-weight: 950;
+          letter-spacing: 0.02em;
+        }
+
+        .tradeName {
+          color: #64748b;
+          font-size: 13px;
+          margin-top: 2px;
+        }
+
+        .tradePriceRow {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-top: 1px solid #f1f5f9;
+          border-bottom: 1px solid #f1f5f9;
+          padding: 10px 0;
+          margin-bottom: 12px;
+        }
+
+        .tradePriceRow span {
+          font-size: 18px;
+          font-weight: 800;
+        }
+
+        .tradeMetrics {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        .tradeMetrics span {
+          display: block;
+          color: #64748b;
+          font-size: 11px;
+          font-weight: 900;
+          margin-bottom: 4px;
+        }
+
+        .tradeNotes {
+          display: grid;
+          gap: 8px;
+        }
+
+        .tradeNotes div {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 10px;
+        }
+
+        .tradeNotes span {
+          display: block;
+          color: #64748b;
+          font-size: 11px;
+          font-weight: 900;
+          margin-bottom: 4px;
+        }
+
+        .tradeNotes p {
+          color: #334155;
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        .tableWrap {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          position: relative;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 14px;
+        }
+
+        th {
+          text-align: left;
+          color: #64748b;
+          font-weight: 800;
+          padding: 10px;
+          border-bottom: 1px solid #e2e8f0;
+          white-space: nowrap;
+          background: white;
+        }
+
+        td {
+          padding: 11px 10px;
+          border-bottom: 1px solid #f1f5f9;
+          vertical-align: top;
+          background: white;
+        }
+
+        .stickyCol {
+          position: sticky;
+          left: 0;
+          z-index: 3;
+          background: white;
+          box-shadow: 8px 0 10px rgba(15, 23, 42, 0.04);
+        }
+
+        th.stickyCol {
+          z-index: 4;
+        }
+
+        .symbol {
+          font-weight: 900;
+          letter-spacing: 0.03em;
+          white-space: nowrap;
+        }
+
+        .textCell {
+          max-width: 460px;
+          white-space: normal;
+          line-height: 1.35;
+          color: #334155;
+        }
+
+        .mutedText {
+          color: #64748b;
+        }
+
+        .avoidChips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .avoidChip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 999px;
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+
+        .avoidChip span {
+          color: #64748b;
+        }
+
+        .button {
+          background: #0f172a;
+          color: white;
+          border: 0;
+          border-radius: 11px;
+          padding: 11px 16px;
+          font-weight: 800;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .button.secondary {
+          background: white;
+          color: #0f172a;
+          border: 1px solid #cbd5e1;
+        }
+
+        .button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        .button.full {
+          width: 100%;
+          margin-top: 14px;
+        }
+
+        input {
+          width: 100%;
+          border: 1px solid #cbd5e1;
+          border-radius: 11px;
+          padding: 11px 12px;
+          font-size: 15px;
+        }
+
+        .formRow {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .portfolioTools {
+          display: flex;
+          gap: 10px;
+          margin: 14px 0;
+          flex-wrap: wrap;
+        }
+
+        .portfolioForm {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr auto;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .positionChips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 14px;
+        }
+
+        .positionChip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 999px;
+          padding: 7px 10px;
+          font-size: 13px;
+        }
+
+        .chipRemove {
+          border: 0;
+          background: #e2e8f0;
+          border-radius: 999px;
+          width: 22px;
+          height: 22px;
+          cursor: pointer;
+          font-weight: 900;
+          color: #334155;
+        }
+
+        .pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-size: 12px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .largePill {
+          font-size: 14px;
+          padding: 7px 13px;
+        }
+
+        .miniMetric {
+          display: inline-flex;
+          border-radius: 999px;
+          padding: 4px 9px;
+          font-size: 12px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .green {
+          background: #dcfce7;
+          color: #166534;
+        }
+
+        .yellow {
+          background: #fef9c3;
+          color: #854d0e;
+        }
+
+        .orange {
+          background: #ffedd5;
+          color: #9a3412;
+        }
+
+        .red {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+
+        .gray {
+          background: #e2e8f0;
+          color: #334155;
+        }
+
+        .positive {
+          color: #15803d;
+          font-weight: 800;
+        }
+
+        .negative {
+          color: #b91c1c;
+          font-weight: 800;
+        }
+
+        .error {
+          color: #b91c1c;
+          font-weight: 800;
+          margin-top: 10px;
+        }
+
+        .resultBox {
+          margin-top: 16px;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 14px;
+          background: #f8fafc;
+        }
+
+        .resultTop {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 14px;
+        }
+
+        .resultTop p {
+          color: #64748b;
+          font-size: 14px;
+          margin-top: 3px;
+        }
+
+        .metricGrid {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 10px;
+        }
+
+        .metricGrid div {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 10px;
+        }
+
+        .metricGrid span {
+          display: block;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 800;
+          margin-bottom: 5px;
+        }
+
+        .metricGrid strong {
+          font-size: 15px;
+        }
+
+        .boxedValue {
+          display: inline-flex;
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-size: 12px !important;
+          font-weight: 900;
+        }
+
+        .snapNotes {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 12px;
+        }
+
+        .snapNotes div {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 12px;
+        }
+
+        .snapNotes span {
+          display: block;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 900;
+          margin-bottom: 5px;
+        }
+
+        .snapNotes p {
+          color: #334155;
+          line-height: 1.35;
+          font-size: 14px;
+        }
+
+        .totals {
+          min-width: 180px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 10px;
+          text-align: right;
+        }
+
+        .totals span {
+          display: block;
+          font-size: 12px;
+          color: #64748b;
+          font-weight: 800;
+        }
+
+        .totals strong {
+          display: block;
+          font-size: 18px;
+          margin: 3px 0;
+        }
+
+        @media (max-width: 1200px) {
+          .tradeGrid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .metricGrid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+
+          .themeSummary {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 760px) {
+          .page {
+            padding: 18px;
+          }
+
+          .header,
+          .sectionHeader {
+            flex-direction: column;
+          }
+
+          .tradeGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .tradeMetrics {
+            grid-template-columns: 1fr;
+          }
+
+          .formRow,
+          .portfolioForm {
+            grid-template-columns: 1fr;
+          }
+
+          .snapNotes {
+            grid-template-columns: 1fr;
+          }
+
+          .metricGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .themeSelect {
+            min-width: 100%;
+          }
+        }
+      `}</style>
+    </main>
+  );
 }
