@@ -312,7 +312,7 @@ function nonOwnedAction(stock) {
 
   if (expectationRisk >= 60 || extensionRisk >= 65) return "Avoid for Now";
   if (score >= 75 && trigger >= 85 && momentum === "Strong") return "Buy Now";
-  if (score >= 65 && trigger >= 70 && momentum !== "Weak") return "Buy";
+  if (trigger >= 78 && expectationRisk <= 60 && extensionRisk <= 62) return "Buy";
   if (score >= 60 || trigger >= 70 || momentum === "Building") {
     return "Watch for Entry";
   }
@@ -1341,7 +1341,7 @@ export default function Home() {
 
         .ideaGrid {
           display: grid;
-          grid-template-columns: repeat(10, minmax(135px, 1fr));
+          grid-template-columns: repeat(10, minmax(175px, 1fr));
           gap: 10px;
           margin-bottom: 18px;
           overflow-x: auto;
@@ -1353,7 +1353,7 @@ export default function Home() {
           border-radius: 14px;
           background: white;
           padding: 12px;
-          min-width: 135px;
+          min-width: 175px;
         }
 
         .ideaTop {
@@ -1398,6 +1398,7 @@ export default function Home() {
           font-size: 12px;
           font-weight: 900;
           line-height: 1.2;
+          white-space: normal;
         }
 
         .cardSplit {
@@ -1723,7 +1724,7 @@ export default function Home() {
 
         @media (max-width: 1100px) {
           .ideaGrid {
-            grid-template-columns: repeat(10, minmax(135px, 1fr));
+            grid-template-columns: repeat(10, minmax(175px, 1fr));
           }
 
           .metricGrid {
@@ -1746,7 +1747,7 @@ export default function Home() {
           }
 
           .ideaGrid {
-            grid-template-columns: repeat(10, minmax(135px, 1fr));
+            grid-template-columns: repeat(10, minmax(175px, 1fr));
           }
 
           .formRow,
