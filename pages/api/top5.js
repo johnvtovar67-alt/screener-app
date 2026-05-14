@@ -63,6 +63,7 @@ const THEME_CONFIG = {
       "ORCL",
       "MSFT",
       "GOOGL",
+      "GOOG",
       "META",
       "AMZN",
       "AAPL",
@@ -342,6 +343,13 @@ function getThemeConfig(themeKey) {
 }
 
 function toNumber(value, fallback = null) {
+  if (typeof value === "string") {
+    const cleaned = value.replace("%", "").replace(/,/g, "").trim();
+    const n = Number(cleaned);
+
+    return Number.isFinite(n) ? n : fallback;
+  }
+
   const n = Number(value);
 
   return Number.isFinite(n) ? n : fallback;
@@ -374,7 +382,6 @@ async function fetchFmpBatch(symbols = [], apiKey) {
   const data = await fetchJson(url);
 
   if (Array.isArray(data)) return data;
-
   if (data && typeof data === "object") return [data];
 
   return [];
@@ -382,17 +389,12 @@ async function fetchFmpBatch(symbols = [], apiKey) {
 
 async function fetchFmpIndividual(symbols = [], apiKey) {
   const cleanSymbols = uniqueSymbols(symbols);
-
-  const batches = [];
+  const all = [];
   const batchSize = 12;
 
   for (let i = 0; i < cleanSymbols.length; i += batchSize) {
-    batches.push(cleanSymbols.slice(i, i + batchSize));
-  }
+    const batch = cleanSymbols.slice(i, i + batchSize);
 
-  const all = [];
-
-  for (const batch of batches) {
     const results = await Promise.allSettled(
       batch.map(async (symbol) => {
         const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
@@ -441,9 +443,7 @@ async function fetchFmpQuotes(symbols = []) {
     return batchQuotes;
   }
 
-  const individualQuotes = await fetchFmpIndividual(cleanSymbols, apiKey);
-
-  return individualQuotes;
+  return fetchFmpIndividual(cleanSymbols, apiKey);
 }
 
 function normalizeQuote(row = {}) {
@@ -455,13 +455,8 @@ function normalizeQuote(row = {}) {
 
   let dayChangePct = toNumber(row.changesPercentage);
 
-  if (dayChangePct == null) {
-    dayChangePct = toNumber(row.changePercentage);
-  }
-
-  if (dayChangePct == null) {
-    dayChangePct = toNumber(row.changesPercentage?.replace?.("%", ""));
-  }
+  if (dayChangePct == null) dayChangePct = toNumber(row.changePercentage);
+  if (dayChangePct == null) dayChangePct = toNumber(row.changePercent);
 
   if (dayChangePct == null && price != null && previousClose) {
     dayChangePct = ((price - previousClose) / previousClose) * 100;
@@ -473,19 +468,23 @@ function normalizeQuote(row = {}) {
 
   return {
     symbol,
-    name: row.name || symbol,
+    name: row.name || row.companyName || symbol,
     price,
     previousClose,
     change,
     dayChangePct,
     changesPercentage: dayChangePct,
+
     marketCap: toNumber(row.marketCap),
     volume: toNumber(row.volume),
     avgVolume: toNumber(row.avgVolume),
+
     priceAvg50: toNumber(row.priceAvg50),
     priceAvg200: toNumber(row.priceAvg200),
+
     eps: toNumber(row.eps),
     pe: toNumber(row.pe),
+
     exchange: row.exchange || "",
     timestamp: row.timestamp || null,
   };
@@ -519,10 +518,9 @@ function institutionalRank(stock = {}) {
   const rec = stock.recommendation || {};
   const tradeReadiness = stock.tradeReadiness || {};
 
-  const actionPoints = actionRank(rec.label) * 1000;
-  const readinessPoints = readinessRank(tradeReadiness.label) * 450;
-
   const score = Number(rec.score || stock.score || 0);
+  const institutionalScore = Number(rec.institutionalScore || score || 0);
+  const actionabilityScore = Number(rec.actionabilityScore || 0);
   const trigger = Number(rec.triggerScore || stock.triggerScore || 0);
   const momentum = Number(rec.momentumScore || stock.momentumScore || 0);
   const relative = Number(rec.relativeStrengthScore || 0);
@@ -532,23 +530,28 @@ function institutionalRank(stock = {}) {
   const extensionRisk = Number(rec.extensionRisk || 0);
   const riskPenalty = Number(rec.riskPenalty || 0);
 
+  const actionPoints = actionRank(rec.label) * 1000;
+  const readinessPoints = readinessRank(tradeReadiness.label) * 450;
+
   const confidenceBoost =
-    rec.confidence === "High" ? 120 : rec.confidence === "Medium" ? 55 : 0;
+    rec.confidence === "High" ? 130 : rec.confidence === "Medium" ? 60 : 0;
 
   const buyMiddleTierBoost =
-    String(rec.label || "").toUpperCase() === "BUY" ? 220 : 0;
+    String(rec.label || "").toUpperCase() === "BUY" ? 240 : 0;
 
   const setupStrength =
-    score * 2.4 +
-    trigger * 3.1 +
+    institutionalScore * 2.6 +
+    actionabilityScore * 2.4 +
+    score * 1.9 +
+    trigger * 3.2 +
     momentum * 2.2 +
-    relative * 1.3 +
-    freshBreakout * 1.2;
+    relative * 1.2 +
+    freshBreakout * 1.3;
 
   const riskDrag =
-    expectationRisk * 1.35 +
-    extensionRisk * 1.45 +
-    riskPenalty * 1.15;
+    expectationRisk * 1.15 +
+    extensionRisk * 1.25 +
+    riskPenalty * 0.85;
 
   return (
     actionPoints +
@@ -575,17 +578,21 @@ function enrichQuote(row = {}) {
 
   const stock = {
     ...normalized,
+
     score,
     compositeScore: score,
+
     recommendation,
     tradeReadiness,
     technicalSnapshot,
     fundamentalSnapshot,
+
     triggerScore: recommendation.triggerScore,
     momentumScore: recommendation.momentumScore,
     expectationRisk: recommendation.expectationRisk,
     extensionRisk: recommendation.extensionRisk,
     freshBreakoutScore: recommendation.freshBreakoutScore,
+
     context: recommendation.context,
     confidence: recommendation.confidence,
     risk: recommendation.risk,
@@ -605,8 +612,8 @@ function sortTopIdeas(a, b) {
 
   if (rankB !== rankA) return rankB - rankA;
 
-  const scoreA = Number(a.recommendation?.score || a.score || 0);
-  const scoreB = Number(b.recommendation?.score || b.score || 0);
+  const scoreA = Number(a.recommendation?.institutionalScore || a.score || 0);
+  const scoreB = Number(b.recommendation?.institutionalScore || b.score || 0);
 
   if (scoreB !== scoreA) return scoreB - scoreA;
 
