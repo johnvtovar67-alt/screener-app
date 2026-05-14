@@ -176,17 +176,19 @@ function getContext(stock) {
 
 function shortContext(stock) {
   const text = String(getContext(stock));
+  const lower = text.toLowerCase();
 
-  if (text.length <= 18) return text;
-  if (text.toLowerCase().includes("fresh")) return "Fresh breakout";
-  if (text.toLowerCase().includes("early")) return "Early breakout";
-  if (text.toLowerCase().includes("extended")) return "Extended";
-  if (text.toLowerCase().includes("trigger")) return "Strong trigger";
-  if (text.toLowerCase().includes("momentum")) return "Building";
-  if (text.toLowerCase().includes("binary")) return "Binary risk";
-  if (text.toLowerCase().includes("lagging")) return "Lagging";
-  if (text.toLowerCase().includes("trend")) return "Trend issue";
-  if (text.toLowerCase().includes("clean")) return "Clean setup";
+  if (text.length <= 22) return text;
+  if (lower.includes("fresh")) return "Fresh breakout";
+  if (lower.includes("early")) return "Early breakout";
+  if (lower.includes("extended")) return "Extended";
+  if (lower.includes("trigger")) return "Strong trigger";
+  if (lower.includes("momentum")) return "Building";
+  if (lower.includes("binary")) return "Binary risk";
+  if (lower.includes("lagging")) return "Lagging";
+  if (lower.includes("trend")) return "Trend issue";
+  if (lower.includes("clean")) return "Clean setup";
+  if (lower.includes("constructive")) return "Constructive";
 
   return "Setup";
 }
@@ -201,9 +203,7 @@ function getContextTone(stock) {
   const context = String(getContext(stock)).toLowerCase();
   const action = nonOwnedAction(stock);
 
-  if (context.includes("biotech") || context.includes("binary")) {
-    return "yellow";
-  }
+  if (context.includes("binary")) return "yellow";
 
   if (
     context.includes("fails") ||
@@ -248,7 +248,7 @@ function getWhy(stock) {
     getRecommendation(stock)?.reason ??
     stock?.reason ??
     stock?.why ??
-    "Constructive setup, but wait for stronger confirmation."
+    "No explanation returned."
   );
 }
 
@@ -257,7 +257,7 @@ function getEntryNote(stock) {
     getRecommendation(stock)?.entryNote ??
     stock?.entryNote ??
     stock?.note ??
-    "Wait for stronger price or volume confirmation."
+    "No entry note returned."
   );
 }
 
@@ -319,21 +319,7 @@ function nonOwnedAction(stock) {
   if (label === "BUY NOW") return "Buy Now";
   if (label === "BUY") return "Buy";
   if (label === "WATCH FOR ENTRY") return "Watch for Entry";
-
-  const score = getScore(stock);
-  const trigger = getTrigger(stock);
-  const momentum = getMomentumText(stock);
-  const expectationRisk = getExpectationRisk(stock);
-  const extensionRisk = getExtensionRisk(stock);
-
-  if (expectationRisk >= 60 || extensionRisk >= 65) return "Avoid for Now";
-  if (score >= 75 && trigger >= 85 && momentum === "Strong") return "Buy Now";
-  if (trigger >= 74 && expectationRisk <= 62 && extensionRisk <= 64) {
-    return "Buy";
-  }
-  if (score >= 55 || trigger >= 62 || momentum === "Building") {
-    return "Watch for Entry";
-  }
+  if (label === "AVOID FOR NOW") return "Avoid for Now";
 
   return "Avoid for Now";
 }
@@ -424,23 +410,7 @@ function portfolioAction(stock) {
 function displayAction(stock, owned = false) {
   if (owned) return portfolioAction(stock);
 
-  const action = nonOwnedAction(stock);
-
-  if (action === "Buy Now") {
-    const dayMove = Number(getChangePct(stock));
-    const expectationRisk = getExpectationRisk(stock);
-    const extensionRisk = getExtensionRisk(stock);
-
-    if (
-      (Number.isFinite(dayMove) && dayMove >= 12) ||
-      expectationRisk >= 50 ||
-      extensionRisk >= 55
-    ) {
-      return "Buy Now — Extended";
-    }
-  }
-
-  return action;
+  return nonOwnedAction(stock);
 }
 
 function actionClass(action) {
@@ -451,7 +421,6 @@ function actionClass(action) {
   }
 
   if (action === "Hold Trend") return "green";
-  if (action === "Buy Now — Extended") return "redExtended";
 
   if (
     action === "Watch for Entry" ||
@@ -886,7 +855,7 @@ export default function Home() {
 
                     <div className="cardSplit">
                       <div>
-                        <span>Conf</span>
+                        <span>Confidence</span>
                         <strong
                           className={`miniMetric ${confidenceClass(confidence)}`}
                         >
@@ -1010,7 +979,7 @@ export default function Home() {
               </span>
             </div>
 
-            <div className="metricGrid simpleMetricGrid">
+            <div className="metricGrid">
               <div>
                 <span>Price</span>
                 <strong>{money(getPrice(snapStock))}</strong>
@@ -1360,8 +1329,8 @@ export default function Home() {
 
         .ideaGrid {
           display: grid;
-          grid-template-columns: repeat(10, minmax(0, 1fr));
-          gap: 8px;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 12px;
           margin-bottom: 18px;
         }
 
@@ -1369,7 +1338,7 @@ export default function Home() {
           border: 1px solid #e2e8f0;
           border-radius: 14px;
           background: white;
-          padding: 9px;
+          padding: 13px;
           min-width: 0;
           overflow: hidden;
         }
@@ -1378,51 +1347,51 @@ export default function Home() {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          gap: 5px;
-          margin-bottom: 8px;
+          gap: 8px;
+          margin-bottom: 10px;
         }
 
         .ideaSymbol {
-          font-size: 17px;
+          font-size: 20px;
           font-weight: 900;
           letter-spacing: 0.02em;
         }
 
         .ideaPrice {
-          font-size: 13px;
-          margin-top: 1px;
+          font-size: 15px;
+          margin-top: 2px;
         }
 
         .actionPill {
-          font-size: 10px;
-          padding: 4px 7px;
-          max-width: 76px;
+          font-size: 12px;
+          padding: 5px 9px;
+          max-width: 96px;
           white-space: normal;
-          line-height: 1.05;
+          line-height: 1.08;
           text-align: center;
         }
 
         .cardField {
           border-top: 1px solid #f1f5f9;
-          padding-top: 7px;
-          margin-top: 6px;
+          padding-top: 9px;
+          margin-top: 8px;
         }
 
         .cardField span,
         .cardSplit span {
           display: block;
           color: #64748b;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 800;
-          margin-bottom: 3px;
+          margin-bottom: 4px;
         }
 
         .contextPill {
           display: inline-flex;
           align-items: center;
           border-radius: 999px;
-          padding: 4px 8px;
-          font-size: 11px;
+          padding: 5px 10px;
+          font-size: 12px;
           font-weight: 900;
           line-height: 1.15;
           max-width: 100%;
@@ -1434,15 +1403,15 @@ export default function Home() {
         .cardSplit {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 5px;
-          margin-top: 9px;
+          gap: 8px;
+          margin-top: 12px;
         }
 
         .miniMetric {
           display: inline-flex;
           border-radius: 999px;
-          padding: 3px 7px;
-          font-size: 11px;
+          padding: 4px 9px;
+          font-size: 12px;
           font-weight: 900;
           white-space: nowrap;
         }
@@ -1621,11 +1590,6 @@ export default function Home() {
           color: #991b1b;
         }
 
-        .redExtended {
-          background: #fecaca;
-          color: #7f1d1d;
-        }
-
         .gray {
           background: #e2e8f0;
           color: #334155;
@@ -1754,7 +1718,7 @@ export default function Home() {
 
         @media (max-width: 1100px) {
           .ideaGrid {
-            grid-template-columns: repeat(5, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .metricGrid {
@@ -1777,7 +1741,7 @@ export default function Home() {
           }
 
           .ideaGrid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: 1fr;
           }
 
           .formRow,
