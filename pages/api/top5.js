@@ -526,6 +526,26 @@ function readinessRank(label) {
   return 0;
 }
 
+function confidenceRank(confidence) {
+  const clean = String(confidence || "").toUpperCase();
+
+  if (clean === "HIGH") return 3;
+  if (clean === "MEDIUM") return 2;
+  if (clean === "LOW") return 1;
+
+  return 0;
+}
+
+function riskRank(risk) {
+  const clean = String(risk || "").toUpperCase();
+
+  if (clean === "LOW") return 3;
+  if (clean === "MEDIUM") return 2;
+  if (clean === "HIGH") return 1;
+
+  return 0;
+}
+
 function institutionalRank(stock = {}) {
   const rec = stock.recommendation || {};
   const tradeReadiness = stock.tradeReadiness || {};
@@ -545,11 +565,37 @@ function institutionalRank(stock = {}) {
   const actionPoints = actionRank(rec.label) * 1000;
   const readinessPoints = readinessRank(tradeReadiness.label) * 450;
 
+  const confRank = confidenceRank(rec.confidence);
+  const rRank = riskRank(rec.risk);
+
   const confidenceBoost =
-    rec.confidence === "High" ? 130 : rec.confidence === "Medium" ? 60 : 0;
+    confRank === 3 ? 360 : confRank === 2 ? 170 : -420;
+
+  const riskBoost =
+    rRank === 3 ? 120 : rRank === 2 ? 20 : -240;
 
   const buyMiddleTierBoost =
     String(rec.label || "").toUpperCase() === "BUY" ? 240 : 0;
+
+  const lowConfidenceDrag =
+    confRank === 1
+      ? Math.max(
+          0,
+          650 -
+            institutionalScore * 2.2 -
+            trigger * 1.9 -
+            momentum * 1.5 -
+            freshBreakout * 1.2
+        )
+      : 0;
+
+  const lowConfidenceWatchDrag =
+    confRank === 1 && String(rec.label || "").toUpperCase() === "WATCH FOR ENTRY"
+      ? 280
+      : 0;
+
+  const weakActionabilityDrag =
+    actionabilityScore < 50 ? (50 - actionabilityScore) * 12 : 0;
 
   const setupStrength =
     institutionalScore * 2.6 +
@@ -570,8 +616,12 @@ function institutionalRank(stock = {}) {
     readinessPoints +
     buyMiddleTierBoost +
     confidenceBoost +
+    riskBoost +
     setupStrength -
-    riskDrag
+    riskDrag -
+    lowConfidenceDrag -
+    lowConfidenceWatchDrag -
+    weakActionabilityDrag
   );
 }
 
@@ -619,10 +669,25 @@ function enrichQuote(row = {}) {
 }
 
 function sortTopIdeas(a, b) {
+  const confidenceA = confidenceRank(a.recommendation?.confidence);
+  const confidenceB = confidenceRank(b.recommendation?.confidence);
+
+  const actionA = actionRank(a.recommendation?.label);
+  const actionB = actionRank(b.recommendation?.label);
+
+  if (actionB !== actionA) return actionB - actionA;
+
   const rankA = Number(a.institutionalRank || 0);
   const rankB = Number(b.institutionalRank || 0);
 
   if (rankB !== rankA) return rankB - rankA;
+
+  if (confidenceB !== confidenceA) return confidenceB - confidenceA;
+
+  const riskA = riskRank(a.recommendation?.risk);
+  const riskB = riskRank(b.recommendation?.risk);
+
+  if (riskB !== riskA) return riskB - riskA;
 
   const scoreA = Number(a.recommendation?.institutionalScore || a.score || 0);
   const scoreB = Number(b.recommendation?.institutionalScore || b.score || 0);
