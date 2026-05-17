@@ -9,17 +9,11 @@ import {
 } from "../../lib/scoring";
 
 function normalizeSymbol(symbol) {
-  return String(symbol || "")
-    .replace("-", ".")
-    .toUpperCase()
-    .trim();
+  return String(symbol || "").replace("-", ".").toUpperCase().trim();
 }
 
 function toFmpSymbol(symbol) {
-  return String(symbol || "")
-    .replace(".", "-")
-    .toUpperCase()
-    .trim();
+  return String(symbol || "").replace(".", "-").toUpperCase().trim();
 }
 
 function uniqueSymbols(symbols = []) {
@@ -30,7 +24,6 @@ function uniqueSymbols(symbols = []) {
     .filter((symbol) => {
       if (!symbol) return false;
       if (seen.has(symbol)) return false;
-
       seen.add(symbol);
       return true;
     });
@@ -39,306 +32,58 @@ function uniqueSymbols(symbols = []) {
 const THEME_CONFIG = {
   broad: {
     name: "Broad Market",
-    description:
-      "Full broad-market discovery list using the institutional scoring model.",
+    description: "Full broad-market discovery list using the institutional scoring model.",
     symbols: [
-      "NVDA",
-      "AMD",
-      "AVGO",
-      "ARM",
-      "MU",
-      "SMCI",
-      "PLTR",
-      "CRWD",
-      "NET",
-      "DDOG",
-      "SNOW",
-      "SHOP",
-      "MDB",
-      "ZS",
-      "PANW",
-      "ANET",
-      "DELL",
-      "HPE",
-      "ORCL",
-      "MSFT",
-      "GOOGL",
-      "GOOG",
-      "META",
-      "AMZN",
-      "AAPL",
-      "TSLA",
-      "UBER",
-      "ROKU",
-      "SOUN",
-      "BBAI",
-      "AI",
-      "AAOI",
-
-      "SCHW",
-      "BGC",
-      "JPM",
-      "BAC",
-      "C",
-      "WFC",
-      "GS",
-      "MS",
-      "BX",
-      "KKR",
-      "APO",
-      "SOFI",
-      "AFRM",
-      "HOOD",
-      "COIN",
-      "PYPL",
-      "SQ",
-      "ALLY",
-      "RKT",
-      "UPST",
-
-      "ETN",
-      "PWR",
-      "VRT",
-      "FIX",
-      "EME",
-      "GEV",
-      "CEG",
-      "VST",
-      "NRG",
-      "TLN",
-      "KMI",
-      "WMB",
-      "TRGP",
-      "LNG",
-      "ET",
-      "EPD",
-      "OKE",
-      "PAGP",
-      "XOM",
-      "CVX",
-      "COP",
-      "SLB",
-      "HAL",
-      "FCX",
-      "CLF",
-      "NUE",
-      "STLD",
-
-      "CCJ",
-      "UEC",
-      "UUUU",
-      "LEU",
-      "BWXT",
-      "SMR",
-      "OKLO",
-      "NNE",
-
-      "MSTR",
-      "MARA",
-      "RIOT",
-      "CLSK",
-      "IREN",
-      "WULF",
-      "HUT",
-      "BTDR",
-      "CIFR",
-      "BITF",
-
-      "HIMS",
-      "BCRX",
-      "ALMS",
-      "VKTX",
-      "RXRX",
-      "SDGR",
-      "DNA",
-      "MRNA",
-      "NVAX",
-      "CRSP",
-      "BEAM",
-      "IOVA",
-      "GERN",
-      "ALT",
-
-      "CELH",
-      "CROX",
-      "DKNG",
-      "RCL",
-      "CCL",
-      "NCLH",
-      "ABNB",
-      "EXPE",
-      "AAL",
-      "UAL",
-      "DAL",
-      "LUV",
-      "DIS",
-      "NFLX",
-      "TGT",
-      "WMT",
-      "COST",
-
-      "AHR",
-      "VICI",
-      "O",
-      "PLD",
-      "DLR",
-      "EQIX",
-      "AMT",
-      "CCI",
-      "WELL",
+      "NVDA","AMD","AVGO","ARM","MU","SMCI","PLTR","CRWD","NET","DDOG","SNOW","SHOP","MDB","ZS","PANW","ANET","DELL","HPE","ORCL","MSFT","GOOGL","GOOG","META","AMZN","AAPL","TSLA","UBER","ROKU","SOUN","BBAI","AI","AAOI",
+      "SCHW","BGC","JPM","BAC","C","WFC","GS","MS","BX","KKR","APO","SOFI","AFRM","HOOD","COIN","PYPL","SQ","ALLY","RKT","UPST",
+      "ETN","PWR","VRT","FIX","EME","GEV","CEG","VST","NRG","TLN","KMI","WMB","TRGP","LNG","ET","EPD","OKE","PAGP","XOM","CVX","COP","SLB","HAL","FCX","CLF","NUE","STLD",
+      "CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE",
+      "MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF",
+      "HIMS","BCRX","ALMS","VKTX","RXRX","SDGR","DNA","MRNA","NVAX","CRSP","BEAM","IOVA","GERN","ALT",
+      "CELH","CROX","DKNG","RCL","CCL","NCLH","ABNB","EXPE","AAL","UAL","DAL","LUV","DIS","NFLX","TGT","WMT","COST",
+      "AHR","VICI","O","PLD","DLR","EQIX","AMT","CCI","WELL",
     ],
   },
 
   btc: {
     name: "BTC / Digital Assets",
-    description:
-      "Bitcoin, crypto infrastructure, exchanges, and digital asset proxies.",
-    symbols: [
-      "MSTR",
-      "MARA",
-      "RIOT",
-      "CLSK",
-      "IREN",
-      "WULF",
-      "HUT",
-      "BTDR",
-      "CIFR",
-      "BITF",
-      "COIN",
-      "HOOD",
-      "SQ",
-      "PYPL",
-    ],
+    description: "Bitcoin, crypto infrastructure, exchanges, and digital asset proxies.",
+    symbols: ["MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF","COIN","HOOD","SQ","PYPL"],
   },
 
   ai_power: {
     name: "AI Power & Energy",
-    description:
-      "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
-    symbols: [
-      "VST",
-      "CEG",
-      "NRG",
-      "TLN",
-      "GEV",
-      "ETN",
-      "PWR",
-      "VRT",
-      "FIX",
-      "EME",
-      "KMI",
-      "WMB",
-      "TRGP",
-      "LNG",
-      "ET",
-      "EPD",
-      "OKE",
-      "XOM",
-      "CVX",
-      "COP",
-    ],
+    description: "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
+    symbols: ["VST","CEG","NRG","TLN","GEV","ETN","PWR","VRT","FIX","EME","KMI","WMB","TRGP","LNG","ET","EPD","OKE","XOM","CVX","COP"],
   },
 
   cooling_water: {
     name: "Cooling & Water",
-    description:
-      "Thermal management, water infrastructure, and cooling beneficiaries.",
-    symbols: [
-      "VRT",
-      "ETN",
-      "PWR",
-      "FIX",
-      "EME",
-      "XYL",
-      "WTS",
-      "AOS",
-      "PNR",
-      "ITT",
-      "DOV",
-      "HUBB",
-      "NVT",
-      "CARR",
-      "TT",
-    ],
+    description: "Thermal management, water infrastructure, and cooling beneficiaries.",
+    symbols: ["VRT","ETN","PWR","FIX","EME","XYL","WTS","AOS","PNR","ITT","DOV","HUBB","NVT","CARR","TT"],
   },
 
   nuclear: {
     name: "Nuclear / Baseload",
-    description:
-      "Uranium, nuclear services, advanced nuclear, and baseload power.",
-    symbols: [
-      "CCJ",
-      "UEC",
-      "UUUU",
-      "LEU",
-      "BWXT",
-      "SMR",
-      "OKLO",
-      "NNE",
-      "CEG",
-      "VST",
-      "TLN",
-      "GEV",
-      "NXE",
-      "DNN",
-    ],
+    description: "Uranium, nuclear services, advanced nuclear, and baseload power.",
+    symbols: ["CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE","CEG","VST","TLN","GEV","NXE","DNN"],
   },
 
   quantum: {
     name: "Quantum Computing",
-    description:
-      "Quantum computing names and larger companies with quantum exposure.",
-    symbols: [
-      "IONQ",
-      "RGTI",
-      "QBTS",
-      "QUBT",
-      "ARQQ",
-      "IBM",
-      "GOOGL",
-      "MSFT",
-      "NVDA",
-      "HON",
-      "AMZN",
-    ],
+    description: "Quantum computing names and larger companies with quantum exposure.",
+    symbols: ["IONQ","RGTI","QBTS","QUBT","ARQQ","IBM","GOOGL","MSFT","NVDA","HON","AMZN"],
   },
 
   ai_infra: {
     name: "AI Infrastructure",
-    description:
-      "Semiconductors, servers, networking, data center infrastructure, and AI platforms.",
-    symbols: [
-      "NVDA",
-      "AMD",
-      "AVGO",
-      "ARM",
-      "MU",
-      "SMCI",
-      "DELL",
-      "HPE",
-      "ANET",
-      "VRT",
-      "ETN",
-      "PWR",
-      "FIX",
-      "EME",
-      "ORCL",
-      "MSFT",
-      "GOOGL",
-      "META",
-      "AMZN",
-      "PLTR",
-      "CRWD",
-      "NET",
-      "DDOG",
-      "SNOW",
-    ],
+    description: "Semiconductors, servers, networking, data center infrastructure, and AI platforms.",
+    symbols: ["NVDA","AMD","AVGO","ARM","MU","SMCI","DELL","HPE","ANET","VRT","ETN","PWR","FIX","EME","ORCL","MSFT","GOOGL","META","AMZN","PLTR","CRWD","NET","DDOG","SNOW"],
   },
 };
 
 function getThemeConfig(themeKey) {
   const clean = String(themeKey || "broad").toLowerCase();
-
   return THEME_CONFIG[clean] || THEME_CONFIG.broad;
 }
 
@@ -348,22 +93,16 @@ function toNumber(value, fallback = null) {
   if (typeof value === "string") {
     const cleaned = value.replace("%", "").replace(/,/g, "").trim();
     const n = Number(cleaned);
-
     return Number.isFinite(n) ? n : fallback;
   }
 
   const n = Number(value);
-
   return Number.isFinite(n) ? n : fallback;
 }
 
 function toPositiveNumber(value, fallback = null) {
   const n = toNumber(value, fallback);
-
-  if (n == null) return fallback;
-  if (!Number.isFinite(n)) return fallback;
-  if (n <= 0) return fallback;
-
+  if (n == null || !Number.isFinite(n) || n <= 0) return fallback;
   return n;
 }
 
@@ -372,9 +111,7 @@ async function fetchJson(url) {
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(
-      `FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`
-    );
+    throw new Error(`FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`);
   }
 
   return response.json();
@@ -382,7 +119,6 @@ async function fetchJson(url) {
 
 async function fetchFmpBatch(symbols = [], apiKey) {
   const cleanSymbols = uniqueSymbols(symbols);
-
   if (!cleanSymbols.length) return [];
 
   const fmpSymbols = cleanSymbols.map(toFmpSymbol).join(",");
@@ -402,30 +138,19 @@ async function fetchFmpBatch(symbols = [], apiKey) {
 async function fetchFmpIndividual(symbols = [], apiKey) {
   const cleanSymbols = uniqueSymbols(symbols);
   const all = [];
-  const batchSize = 8;
 
-  for (let i = 0; i < cleanSymbols.length; i += batchSize) {
-    const batch = cleanSymbols.slice(i, i + batchSize);
+  for (const symbol of cleanSymbols) {
+    try {
+      const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
+        toFmpSymbol(symbol)
+      )}&apikey=${apiKey}`;
 
-    const results = await Promise.allSettled(
-      batch.map(async (symbol) => {
-        const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
-          toFmpSymbol(symbol)
-        )}&apikey=${apiKey}`;
+      const data = await fetchJson(url);
 
-        const data = await fetchJson(url);
-
-        if (Array.isArray(data)) return data[0] || null;
-        if (data && typeof data === "object") return data;
-
-        return null;
-      })
-    );
-
-    for (const result of results) {
-      if (result.status === "fulfilled" && result.value) {
-        all.push(result.value);
-      }
+      if (Array.isArray(data) && data[0]) all.push(data[0]);
+      else if (data && typeof data === "object") all.push(data);
+    } catch {
+      // Skip bad symbols or temporary symbol-level FMP failures.
     }
   }
 
@@ -440,7 +165,6 @@ async function fetchFmpQuotes(symbols = []) {
   }
 
   const cleanSymbols = uniqueSymbols(symbols);
-
   if (!cleanSymbols.length) return [];
 
   let batchQuotes = [];
@@ -486,17 +210,13 @@ function normalizeQuote(row = {}) {
     change,
     dayChangePct,
     changesPercentage: dayChangePct,
-
     marketCap: toPositiveNumber(row.marketCap),
     volume: toPositiveNumber(row.volume),
     avgVolume: toPositiveNumber(row.avgVolume),
-
     priceAvg50: toPositiveNumber(row.priceAvg50),
     priceAvg200: toPositiveNumber(row.priceAvg200),
-
     eps: toNumber(row.eps),
     pe: toNumber(row.pe),
-
     exchange: row.exchange || "",
     timestamp: row.timestamp || null,
   };
@@ -560,6 +280,7 @@ function institutionalRank(stock = {}) {
 
   const expectationRisk = Number(rec.expectationRisk || 0);
   const extensionRisk = Number(rec.extensionRisk || 0);
+  const lateChaseRisk = Number(rec.lateChaseRisk || 0);
   const riskPenalty = Number(rec.riskPenalty || 0);
 
   const actionPoints = actionRank(rec.label) * 1000;
@@ -568,9 +289,7 @@ function institutionalRank(stock = {}) {
   const confRank = confidenceRank(rec.confidence);
   const rRank = riskRank(rec.risk);
 
-  const confidenceBoost =
-    confRank === 3 ? 360 : confRank === 2 ? 170 : -420;
-
+  const confidenceBoost = confRank === 3 ? 360 : confRank === 2 ? 170 : -420;
   const riskBoost = rRank === 3 ? 120 : rRank === 2 ? 20 : -240;
 
   const buyMiddleTierBoost =
@@ -608,6 +327,7 @@ function institutionalRank(stock = {}) {
   const riskDrag =
     expectationRisk * 1.15 +
     extensionRisk * 1.25 +
+    lateChaseRisk * 1.5 +
     riskPenalty * 0.85;
 
   return (
@@ -639,21 +359,18 @@ function enrichQuote(row = {}) {
 
   const stock = {
     ...normalized,
-
     score,
     compositeScore: score,
-
     recommendation,
     tradeReadiness,
     technicalSnapshot,
     fundamentalSnapshot,
-
     triggerScore: recommendation.triggerScore,
     momentumScore: recommendation.momentumScore,
     expectationRisk: recommendation.expectationRisk,
     extensionRisk: recommendation.extensionRisk,
+    lateChaseRisk: recommendation.lateChaseRisk,
     freshBreakoutScore: recommendation.freshBreakoutScore,
-
     context: recommendation.context,
     confidence: recommendation.confidence,
     risk: recommendation.risk,
@@ -703,7 +420,6 @@ export default async function handler(req, res) {
   try {
     const themeKey = String(req.query.theme || "broad").toLowerCase();
     const selectedTheme = getThemeConfig(themeKey);
-
     const symbols = uniqueSymbols(selectedTheme.symbols);
 
     if (!symbols.length) {
@@ -716,26 +432,12 @@ export default async function handler(req, res) {
 
     const quotes = await fetchFmpQuotes(symbols);
 
-    if (!Array.isArray(quotes) || quotes.length === 0) {
-      return res.status(500).json({
-        error: "No quotes returned from FMP.",
-        detail:
-          "The screener could not retrieve quote data. Check FMP_API_KEY, FMP plan access, or FMP quote endpoint availability.",
-      });
-    }
-
-    const enriched = quotes
-      .map(enrichQuote)
-      .filter(Boolean)
-      .filter((stock) => Number.isFinite(Number(stock.price)));
-
-    if (!enriched.length) {
-      return res.status(500).json({
-        error: "Quotes returned but could not be scored.",
-        detail:
-          "FMP returned data, but the quote rows did not include usable price fields.",
-      });
-    }
+    const enriched = Array.isArray(quotes)
+      ? quotes
+          .map(enrichQuote)
+          .filter(Boolean)
+          .filter((stock) => Number.isFinite(Number(stock.price)))
+      : [];
 
     const sorted = enriched.sort(sortTopIdeas).slice(0, 10);
 
@@ -746,6 +448,9 @@ export default async function handler(req, res) {
       meta: {
         historicalConfirmation: false,
         mode: "fast_quote_screen",
+        requestedSymbols: symbols.length,
+        returnedQuotes: Array.isArray(quotes) ? quotes.length : 0,
+        scoredQuotes: enriched.length,
       },
     });
   } catch (error) {
