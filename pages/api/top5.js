@@ -225,12 +225,9 @@ function normalizeQuote(row = {}) {
 function actionRank(label) {
   const clean = String(label || "").toUpperCase();
 
-  if (clean === "BUY NOW") return 4;
-  if (clean === "BUY") return 3;
-  if (clean === "WATCH FOR ENTRY") return 2;
-  if (clean === "WATCH") return 2;
-  if (clean === "AVOID FOR NOW") return 1;
-  if (clean === "AVOID") return 1;
+  if (clean === "BUY NOW") return 3;
+  if (clean === "WATCH" || clean === "WATCH FOR ENTRY") return 2;
+  if (clean === "AVOID" || clean === "AVOID FOR NOW") return 1;
 
   return 0;
 }
@@ -238,30 +235,9 @@ function actionRank(label) {
 function readinessRank(label) {
   const clean = String(label || "").toUpperCase();
 
-  if (clean === "TRADE READY") return 4;
-  if (clean === "BUY") return 3;
-  if (clean === "WATCH CLOSELY") return 2;
-  if (clean === "SETUP ONLY") return 1;
-
-  return 0;
-}
-
-function confidenceRank(confidence) {
-  const clean = String(confidence || "").toUpperCase();
-
-  if (clean === "HIGH") return 3;
-  if (clean === "MEDIUM") return 2;
-  if (clean === "LOW") return 1;
-
-  return 0;
-}
-
-function riskRank(risk) {
-  const clean = String(risk || "").toUpperCase();
-
-  if (clean === "LOW") return 3;
-  if (clean === "MEDIUM") return 2;
-  if (clean === "HIGH") return 1;
+  if (clean === "TRADE READY") return 3;
+  if (clean === "WATCH") return 2;
+  if (clean === "AVOID") return 1;
 
   return 0;
 }
@@ -284,63 +260,36 @@ function institutionalRank(stock = {}) {
   const riskPenalty = Number(rec.riskPenalty || 0);
 
   const actionPoints = actionRank(rec.label) * 1000;
-  const readinessPoints = readinessRank(tradeReadiness.label) * 450;
-
-  const confRank = confidenceRank(rec.confidence);
-  const rRank = riskRank(rec.risk);
-
-  const confidenceBoost = confRank === 3 ? 360 : confRank === 2 ? 170 : -420;
-  const riskBoost = rRank === 3 ? 120 : rRank === 2 ? 20 : -240;
-
-  const buyMiddleTierBoost =
-    String(rec.label || "").toUpperCase() === "BUY" ? 240 : 0;
-
-  const lowConfidenceDrag =
-    confRank === 1
-      ? Math.max(
-          0,
-          650 -
-            institutionalScore * 2.2 -
-            trigger * 1.9 -
-            momentum * 1.5 -
-            freshBreakout * 1.2
-        )
-      : 0;
-
-  const lowConfidenceWatchDrag =
-    confRank === 1 && String(rec.label || "").toUpperCase() === "WATCH FOR ENTRY"
-      ? 280
-      : 0;
+  const readinessPoints = readinessRank(tradeReadiness.label) * 425;
 
   const weakActionabilityDrag =
     actionabilityScore < 50 ? (50 - actionabilityScore) * 12 : 0;
 
+  const watchDrag =
+    String(rec.label || "").toUpperCase() === "WATCH" ? 140 : 0;
+
   const setupStrength =
-    institutionalScore * 2.6 +
-    actionabilityScore * 2.4 +
+    institutionalScore * 2.7 +
+    actionabilityScore * 2.5 +
     score * 1.9 +
-    trigger * 3.2 +
-    momentum * 2.2 +
-    relative * 1.2 +
-    freshBreakout * 1.3;
+    trigger * 3.3 +
+    momentum * 2.3 +
+    relative * 1.25 +
+    freshBreakout * 1.35;
 
   const riskDrag =
     expectationRisk * 1.15 +
     extensionRisk * 1.25 +
-    lateChaseRisk * 1.5 +
+    lateChaseRisk * 1.55 +
     riskPenalty * 0.85;
 
   return (
     actionPoints +
     readinessPoints +
-    buyMiddleTierBoost +
-    confidenceBoost +
-    riskBoost +
     setupStrength -
     riskDrag -
-    lowConfidenceDrag -
-    lowConfidenceWatchDrag -
-    weakActionabilityDrag
+    weakActionabilityDrag -
+    watchDrag
   );
 }
 
@@ -372,8 +321,6 @@ function enrichQuote(row = {}) {
     lateChaseRisk: recommendation.lateChaseRisk,
     freshBreakoutScore: recommendation.freshBreakoutScore,
     context: recommendation.context,
-    confidence: recommendation.confidence,
-    risk: recommendation.risk,
     reason: recommendation.reason,
     entryNote: recommendation.entryNote,
   };
@@ -395,16 +342,6 @@ function sortTopIdeas(a, b) {
 
   if (rankB !== rankA) return rankB - rankA;
 
-  const confidenceA = confidenceRank(a.recommendation?.confidence);
-  const confidenceB = confidenceRank(b.recommendation?.confidence);
-
-  if (confidenceB !== confidenceA) return confidenceB - confidenceA;
-
-  const riskA = riskRank(a.recommendation?.risk);
-  const riskB = riskRank(b.recommendation?.risk);
-
-  if (riskB !== riskA) return riskB - riskA;
-
   const scoreA = Number(a.recommendation?.institutionalScore || a.score || 0);
   const scoreB = Number(b.recommendation?.institutionalScore || b.score || 0);
 
@@ -413,7 +350,12 @@ function sortTopIdeas(a, b) {
   const triggerA = Number(a.recommendation?.triggerScore || 0);
   const triggerB = Number(b.recommendation?.triggerScore || 0);
 
-  return triggerB - triggerA;
+  if (triggerB !== triggerA) return triggerB - triggerA;
+
+  const momentumA = Number(a.recommendation?.momentumScore || 0);
+  const momentumB = Number(b.recommendation?.momentumScore || 0);
+
+  return momentumB - momentumA;
 }
 
 export default async function handler(req, res) {
