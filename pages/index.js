@@ -34,6 +34,14 @@ function percent(value) {
   return `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 }
 
+function signedNumber(value, digits = 2) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n)) return "—";
+
+  return `${n >= 0 ? "+" : ""}${n.toFixed(digits)}`;
+}
+
 function number(value, digits = 2) {
   const n = Number(value);
 
@@ -83,6 +91,50 @@ function getChangePct(stock) {
       stock?.changePercent ??
       stock?.percentChange
   );
+}
+
+function getNetChange(stock) {
+  const direct = Number(
+    stock?.change ??
+      stock?.dayChange ??
+      stock?.priceChange ??
+      stock?.regularMarketChange ??
+      stock?.quote?.change
+  );
+
+  if (Number.isFinite(direct)) return direct;
+
+  const price = getPrice(stock);
+  const pct = getChangePct(stock);
+
+  if (Number.isFinite(price) && Number.isFinite(pct) && pct !== -100) {
+    const previousClose = price / (1 + pct / 100);
+    return price - previousClose;
+  }
+
+  return null;
+}
+
+function priceChangeText(stock) {
+  const change = getNetChange(stock);
+  const pct = getChangePct(stock);
+
+  if (Number.isFinite(change) && Number.isFinite(pct)) {
+    return `${signedNumber(change)} (${percent(pct)})`;
+  }
+
+  if (Number.isFinite(change)) return signedNumber(change);
+  if (Number.isFinite(pct)) return `(${percent(pct)})`;
+
+  return "—";
+}
+
+function priceChangeClass(stock) {
+  const change = getNetChange(stock);
+  const pct = getChangePct(stock);
+  const n = Number.isFinite(change) ? change : pct;
+
+  return Number(n) >= 0 ? "positive" : "negative";
 }
 
 function getRecommendation(stock) {
@@ -288,76 +340,8 @@ function getContextTone(stock) {
     return "yellow";
   }
 
-  if (action === "Buy Now" || action === "Buy") return "green";
-  if (action === "Watch for Entry") return "yellow";
-
-  return "red";
-}
-
-function getConfidence(stock) {
-  if (isCashLikeSymbol(stock)) return "High";
-
-  return (
-    getRecommendation(stock)?.confidence ??
-    stock?.confidence ??
-    stock?.technicalSnapshot?.confidence ??
-    "Low"
-  );
-}
-
-function getRisk(stock) {
-  if (isCashLikeSymbol(stock)) return "Low";
-
-  return (
-    getRecommendation(stock)?.risk ??
-    stock?.risk ??
-    stock?.technicalSnapshot?.risk ??
-    fallbackRisk(stock)
-  );
-}
-
-function getWhy(stock) {
-  return (
-    getRecommendation(stock)?.reason ??
-    stock?.reason ??
-    stock?.why ??
-    "No explanation returned."
-  );
-}
-
-function getEntryNote(stock) {
-  return (
-    getRecommendation(stock)?.entryNote ??
-    stock?.entryNote ??
-    stock?.note ??
-    "No entry note returned."
-  );
-}
-
-function fallbackRisk(stock) {
-  const expectationRisk = getExpectationRisk(stock);
-  const extensionRisk = getExtensionRisk(stock);
-
-  if (expectationRisk >= 60 || extensionRisk >= 60) return "High";
-  if (expectationRisk >= 35 || extensionRisk >= 35) return "Medium";
-
-  return "Low";
-}
-
-function confidenceClass(confidence) {
-  const clean = String(confidence || "").toLowerCase();
-
-  if (clean === "high") return "green";
-  if (clean === "medium") return "yellow";
-
-  return "red";
-}
-
-function riskClass(risk) {
-  const clean = String(risk || "").toLowerCase();
-
-  if (clean === "low") return "green";
-  if (clean === "medium") return "yellow";
+  if (action === "Buy Now") return "green";
+  if (action === "Watch") return "yellow";
 
   return "red";
 }
@@ -384,29 +368,23 @@ function calculatePosition(position, livePrice) {
 }
 
 function nonOwnedAction(stock) {
-  if (isCashLikeSymbol(stock)) return "Cash / Hold";
+  if (isCashLikeSymbol(stock)) return "Cash";
 
   const rec = getRecommendation(stock);
   const label = String(rec?.displayLabel ?? rec?.label ?? "").toUpperCase();
 
   if (label === "BUY NOW") return "Buy Now";
-  if (label === "BUY") return "Buy";
-  if (label === "WATCH FOR ENTRY") return "Watch for Entry";
-  if (label === "AVOID FOR NOW") return "Avoid for Now";
+  if (label === "WATCH" || label === "WATCH FOR ENTRY") return "Watch";
 
-  return "Avoid for Now";
+  return "Avoid";
 }
 
 function isActionableTrade(stock) {
-  const action = nonOwnedAction(stock);
-
-  return action === "Buy Now" || action === "Buy";
+  return nonOwnedAction(stock) === "Buy Now";
 }
 
 function isNearMiss(stock) {
-  const action = nonOwnedAction(stock);
-
-  return action === "Watch for Entry";
+  return nonOwnedAction(stock) === "Watch";
 }
 
 function getEstimatedTriggerPrice(stock) {
@@ -466,8 +444,6 @@ function getInvalidationPrice(stock) {
 function getActionWhy(stock) {
   const action = nonOwnedAction(stock);
   const context = shortContext(stock);
-  const confidence = getConfidence(stock);
-  const risk = getRisk(stock);
   const contextLower = String(getContext(stock)).toLowerCase();
   const momentum5 = getMomentum5Pct(stock);
   const momentum10 = getMomentum10Pct(stock);
@@ -476,59 +452,58 @@ function getActionWhy(stock) {
   const volumeRatio = getVolumeRatio20(stock);
 
   if (action === "Buy Now") {
-    return `Actionable now: ${context}. Confidence ${confidence}; risk ${risk}.`;
+    return `Actionable now: ${context}. Use normal sizing and a defined invalidation level.`;
   }
 
-  if (action === "Buy") {
-    return `Starter trade only: ${context}. Confidence ${confidence}; risk ${risk}.`;
-  }
-
-  if (action === "Watch for Entry") {
+  if (action === "Watch") {
     if (contextLower.includes("extended")) {
-      return "Not actionable: extended after a strong move. Needs a reset or pullback.";
+      return "Interesting but not actionable now: extended after a strong move. Needs a reset or pullback.";
     }
 
     if (Number.isFinite(resistance) && resistance > 3) {
-      return `Not actionable: resistance is still about ${number(resistance, 1)}% overhead.`;
+      return `Interesting but not actionable now: resistance is still about ${number(
+        resistance,
+        1
+      )}% overhead.`;
     }
 
     if (Number.isFinite(momentum5) && momentum5 < 0) {
-      return `Not actionable: short-term momentum is still negative over 5 days (${number(
+      return `Interesting but not actionable now: short-term momentum is still negative over 5 days (${number(
         momentum5,
         1
       )}%).`;
     }
 
     if (Number.isFinite(momentum10) && momentum10 < 0) {
-      return `Not actionable: 10-day momentum has not fully confirmed yet (${number(
+      return `Interesting but not actionable now: 10-day momentum has not fully confirmed yet (${number(
         momentum10,
         1
       )}%).`;
     }
 
     if (Number.isFinite(slope) && slope < 0) {
-      return `Not actionable: short trend slope is still slightly negative (${number(
+      return `Interesting but not actionable now: short trend slope is still slightly negative (${number(
         slope,
         1
       )}%).`;
     }
 
     if (Number.isFinite(volumeRatio) && volumeRatio < 1) {
-      return `Not actionable: volume confirmation is light (${number(
+      return `Interesting but not actionable now: volume confirmation is light (${number(
         volumeRatio,
         2
       )}x normal).`;
     }
 
-    if (contextLower.includes("momentum")) {
-      return "Not actionable yet: momentum is building, but entry confirmation is incomplete.";
+    if (contextLower.includes("support")) {
+      return "Interesting but not actionable now: holding key support, but still needs an upside trigger.";
     }
 
-    if (contextLower.includes("trigger")) {
-      return "Not actionable yet: trigger is strong, but breakout confirmation is incomplete.";
+    if (contextLower.includes("momentum") || contextLower.includes("trend")) {
+      return "Interesting but not actionable now: momentum is improving, but entry confirmation is incomplete.";
     }
 
-    return "Not actionable yet: setup is interesting but not clean enough.";
+    return "Interesting but not actionable now.";
   }
 
   return "No trade: setup does not meet action standards.";
@@ -557,12 +532,6 @@ function getTriggerNeeded(stock) {
     return Number.isFinite(invalidationPrice)
       ? `Buyable now under normal sizing. ${invalidationText}`
       : "Buyable now under normal sizing. Do not chase oversized.";
-  }
-
-  if (action === "Buy") {
-    return Number.isFinite(invalidationPrice)
-      ? `Starter position only. Add only if it holds. ${invalidationText}`
-      : "Starter position only. Add only if price holds and confirmation improves.";
   }
 
   if (context.includes("extended")) {
@@ -618,7 +587,7 @@ function getTriggerNeeded(stock) {
 }
 
 function portfolioAction(stock) {
-  if (isCashLikeSymbol(stock)) return "Cash / Hold";
+  if (isCashLikeSymbol(stock)) return "Cash";
 
   const score = getScore(stock);
   const trigger = getTrigger(stock);
@@ -651,13 +620,13 @@ function portfolioAction(stock) {
 
   const extendedWinner = solidGain && extensionRisk >= 55 && momentum !== "Weak";
 
-  if (largeGain && trendFailing) return "Hold — Watch Closely";
-  if (solidGain && trendFailing) return "Trim / Watch Closely";
-  if (deepLoss && trendFailing) return "Exit — Trend Failure";
-  if (meaningfulLoss && trendFailing) return "Exit — Trend Failure";
+  if (deepLoss && trendFailing) return "Exit";
+  if (meaningfulLoss && trendFailing) return "Exit";
 
-  if (largeGain && stretchedRisk) return "Trim Into Strength";
-  if (extendedWinner) return "Hold but Extended";
+  if (largeGain && stretchedRisk) return "Trim";
+  if (extendedWinner) return "Trim";
+  if (solidGain && trendFailing) return "Trim";
+  if (solidGain && trendWeak) return "Trim";
 
   if (
     buyAction === "Buy Now" &&
@@ -665,39 +634,22 @@ function portfolioAction(stock) {
     freshBreakoutScore >= 70 &&
     !largeGain
   ) {
-    return "Hold / Add";
+    return "Add";
   }
-
-  if (buyAction === "Buy Now" && trendStrong) return "Hold Trend";
 
   if (
     trigger >= 85 &&
     momentum === "Strong" &&
     expectationRisk <= 45 &&
-    extensionRisk <= 45
+    extensionRisk <= 45 &&
+    !largeGain
   ) {
-    return "Hold / Add";
+    return "Add";
   }
 
-  if (
-    meaningfulLoss &&
-    trigger >= 80 &&
-    momentum !== "Weak" &&
-    expectationRisk <= 50
-  ) {
-    return "Hold — Prove It";
-  }
+  if (momentum === "Weak" || score < 58) return "Trim";
 
-  if (trigger >= 75 && momentum !== "Weak" && score >= 60) {
-    return "Hold Trend";
-  }
-
-  if (largeGain && trendWeak) return "Hold — Watch Closely";
-  if (solidGain && trendWeak) return "Trim / Watch Closely";
-
-  if (momentum === "Weak" || score < 58) return "Trim / Watch Closely";
-
-  return "Hold Trend";
+  return "Hold";
 }
 
 function displayAction(stock, owned = false) {
@@ -707,27 +659,10 @@ function displayAction(stock, owned = false) {
 }
 
 function actionClass(action) {
-  if (action === "Cash / Hold") return "gray";
-
-  if (action === "Buy Now" || action === "Buy" || action === "Hold / Add") {
-    return "green";
-  }
-
-  if (action === "Hold Trend") return "green";
-
-  if (
-    action === "Watch for Entry" ||
-    action === "Hold" ||
-    action === "Hold — Prove It" ||
-    action === "Hold but Extended" ||
-    action === "Hold — Watch Closely"
-  ) {
-    return "yellow";
-  }
-
-  if (action === "Trim Into Strength" || action === "Trim / Watch Closely") {
-    return "orange";
-  }
+  if (action === "Cash") return "gray";
+  if (action === "Buy Now" || action === "Add") return "green";
+  if (action === "Watch" || action === "Hold") return "yellow";
+  if (action === "Trim") return "orange";
 
   return "red";
 }
@@ -1047,7 +982,7 @@ export default function Home() {
 
   const avoidList = useMemo(() => {
     return stocks
-      .filter((stock) => nonOwnedAction(stock) === "Avoid for Now")
+      .filter((stock) => nonOwnedAction(stock) === "Avoid")
       .slice(0, 5);
   }, [stocks]);
 
@@ -1129,8 +1064,7 @@ export default function Home() {
           <div>
             <span>Discipline</span>
             <p>
-              Main grid only shows Buy Now or Buy. Watch names are demoted to
-              Near Misses with specific trigger guidance.
+              Main grid only shows Buy Now. Watch means interesting but not actionable now.
             </p>
           </div>
         </div>
@@ -1140,8 +1074,7 @@ export default function Home() {
         <div className="sectionTitle">
           <h2>🔥 Actionable Trades</h2>
           <p>
-            This is the trading screen. No Buy Now or Buy means no action right
-            now.
+            This is the trading screen. No Buy Now means no action right now.
           </p>
         </div>
 
@@ -1152,8 +1085,7 @@ export default function Home() {
           <div className="noTradeBox">
             <h3>No actionable trades right now.</h3>
             <p>
-              The screener found candidates, but none cleared the Buy / Buy Now
-              threshold. Stay patient. Cash is a valid position.
+              The screener found candidates, but none cleared the Buy Now threshold. Stay patient. Cash is a valid position.
             </p>
           </div>
         )}
@@ -1162,8 +1094,6 @@ export default function Home() {
           <div className="tradeGrid">
             {actionableTrades.map((stock, idx) => {
               const action = displayAction(stock, false);
-              const confidence = getConfidence(stock);
-              const risk = getRisk(stock);
 
               return (
                 <div className="tradeCard" key={`${getSymbol(stock)}-${idx}`}>
@@ -1180,32 +1110,12 @@ export default function Home() {
 
                   <div className="tradePriceRow">
                     <span>{money(getPrice(stock))}</span>
-                    <strong
-                      className={
-                        getChangePct(stock) >= 0 ? "positive" : "negative"
-                      }
-                    >
-                      {percent(getChangePct(stock))}
+                    <strong className={priceChangeClass(stock)}>
+                      {priceChangeText(stock)}
                     </strong>
                   </div>
 
                   <div className="tradeMetrics">
-                    <div>
-                      <span>Confidence</span>
-                      <strong
-                        className={`miniMetric ${confidenceClass(confidence)}`}
-                      >
-                        {confidence}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>Risk</span>
-                      <strong className={`miniMetric ${riskClass(risk)}`}>
-                        {risk}
-                      </strong>
-                    </div>
-
                     <div>
                       <span>Context</span>
                       <strong className={`miniMetric ${getContextTone(stock)}`}>
@@ -1248,30 +1158,28 @@ export default function Home() {
                 <tr>
                   <th className="stickyCol">Symbol</th>
                   <th>Price</th>
-                  <th>Chg %</th>
+                  <th>Net Change</th>
                   <th>Status</th>
                   <th>What Is Missing</th>
                   <th>Trigger Needed</th>
-                  <th>Confidence</th>
-                  <th>Risk</th>
                 </tr>
               </thead>
 
               <tbody>
                 {nearMisses.map((stock, idx) => {
-                  const confidence = getConfidence(stock);
-                  const risk = getRisk(stock);
-
                   return (
                     <tr key={`${getSymbol(stock)}-near-${idx}`}>
                       <td className="symbol stickyCol">{getSymbol(stock)}</td>
-                      <td>{money(getPrice(stock))}</td>
-                      <td
-                        className={
-                          getChangePct(stock) >= 0 ? "positive" : "negative"
-                        }
-                      >
-                        {percent(getChangePct(stock))}
+                      <td>
+                        <div className="priceStack">
+                          <strong>{money(getPrice(stock))}</strong>
+                          <span className={priceChangeClass(stock)}>
+                            {priceChangeText(stock)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className={priceChangeClass(stock)}>
+                        {priceChangeText(stock)}
                       </td>
                       <td>
                         <span className={`pill ${getContextTone(stock)}`}>
@@ -1281,16 +1189,6 @@ export default function Home() {
                       <td className="textCell">{getActionWhy(stock)}</td>
                       <td className="textCell mutedText">
                         {getTriggerNeeded(stock)}
-                      </td>
-                      <td>
-                        <span className={`pill ${confidenceClass(confidence)}`}>
-                          {confidence}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`pill ${riskClass(risk)}`}>
-                          {risk}
-                        </span>
                       </td>
                     </tr>
                   );
@@ -1361,17 +1259,9 @@ export default function Home() {
               <div>
                 <span>Price</span>
                 <strong>{money(getPrice(snapStock))}</strong>
-              </div>
-
-              <div>
-                <span>Change</span>
-                <strong
-                  className={
-                    getChangePct(snapStock) >= 0 ? "positive" : "negative"
-                  }
-                >
-                  {percent(getChangePct(snapStock))}
-                </strong>
+                <small className={priceChangeClass(snapStock)}>
+                  {priceChangeText(snapStock)}
+                </small>
               </div>
 
               <div>
@@ -1388,23 +1278,6 @@ export default function Home() {
                 </strong>
               </div>
 
-              <div>
-                <span>Confidence</span>
-                <strong
-                  className={`boxedValue ${confidenceClass(
-                    getConfidence(snapStock)
-                  )}`}
-                >
-                  {getConfidence(snapStock)}
-                </strong>
-              </div>
-
-              <div>
-                <span>Risk</span>
-                <strong className={`boxedValue ${riskClass(getRisk(snapStock))}`}>
-                  {getRisk(snapStock)}
-                </strong>
-              </div>
             </div>
 
             <div className="snapNotes">
@@ -1425,8 +1298,7 @@ export default function Home() {
       <section className="card">
         <h2>Portfolio Screener</h2>
         <p className="muted">
-          Uses ownership logic: Hold / Add, Hold Trend, Trim, Cash / Hold, or
-          Exit.
+          Uses ownership logic: Add, Hold, Trim, Exit, or Cash.
         </p>
 
         <div className="portfolioTools">
@@ -1532,26 +1404,30 @@ export default function Home() {
                   <th>Gain / Loss</th>
                   <th>Action</th>
                   <th>Context</th>
-                  <th>Confidence</th>
-                  <th>Risk</th>
                 </tr>
               </thead>
 
               <tbody>
                 {portfolioResults.map((stock) => {
-                  const action = stock.error
-                    ? "Exit — Trend Failure"
-                    : displayAction(stock, true);
-
-                  const confidence = getConfidence(stock);
-                  const risk = getRisk(stock);
+                  const action = stock.error ? "Exit" : displayAction(stock, true);
 
                   return (
                     <tr key={stock.symbol}>
                       <td className="symbol stickyCol">{stock.symbol}</td>
                       <td>{number(stock.shares, 2)}</td>
                       <td>{money(stock.avgCost)}</td>
-                      <td>{stock.error ? "—" : money(stock.currentPrice)}</td>
+                      <td>
+                        {stock.error ? (
+                          "—"
+                        ) : (
+                          <div className="priceStack">
+                            <strong>{money(stock.currentPrice)}</strong>
+                            <span className={priceChangeClass(stock)}>
+                              {priceChangeText(stock)}
+                            </span>
+                          </div>
+                        )}
+                      </td>
                       <td>{stock.error ? "—" : money(stock.value)}</td>
                       <td>{money(stock.costBasis)}</td>
                       <td
@@ -1575,16 +1451,6 @@ export default function Home() {
                           {isCashLikeSymbol(stock)
                             ? "Cash position"
                             : getContext(stock)}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`pill ${confidenceClass(confidence)}`}>
-                          {confidence}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`pill ${riskClass(risk)}`}>
-                          {risk}
                         </span>
                       </td>
                     </tr>
@@ -1770,6 +1636,18 @@ export default function Home() {
           color: #64748b;
           font-size: 13px;
           margin-top: 2px;
+        }
+
+        .priceStack {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .priceStack span,
+        small {
+          font-size: 12px;
+          font-weight: 700;
         }
 
         .tradePriceRow {
