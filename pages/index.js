@@ -1171,12 +1171,7 @@ export default function Home() {
                     <tr key={`${getSymbol(stock)}-near-${idx}`}>
                       <td className="symbol stickyCol">{getSymbol(stock)}</td>
                       <td>
-                        <div className="priceStack">
-                          <strong>{money(getPrice(stock))}</strong>
-                          <span className={priceChangeClass(stock)}>
-                            {priceChangeText(stock)}
-                          </span>
-                        </div>
+                        <strong>{money(getPrice(stock))}</strong>
                       </td>
                       <td className={priceChangeClass(stock)}>
                         {priceChangeText(stock)}
