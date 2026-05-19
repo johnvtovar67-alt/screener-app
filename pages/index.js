@@ -286,11 +286,20 @@ function getStableTriggerPrice(stock) {
     return price * (1 + resistanceOverheadPct / 100);
   }
 
-  if (Number.isFinite(yearHigh) && yearHigh > price && yearHigh / price < 1.25) {
+  if (
+    Number.isFinite(yearHigh) &&
+    Number.isFinite(price) &&
+    yearHigh > price &&
+    yearHigh / price < 1.25
+  ) {
     return yearHigh;
   }
 
-  if (Number.isFinite(priceAvg50) && priceAvg50 > price) {
+  if (
+    Number.isFinite(priceAvg50) &&
+    Number.isFinite(price) &&
+    priceAvg50 > price
+  ) {
     return priceAvg50;
   }
 
@@ -452,7 +461,9 @@ function isNearMiss(stock) {
 function getInvalidationPrice(stock) {
   const price = getPrice(stock);
   const priceAvg50 = Number(stock?.priceAvg50);
-  const recentLow20 = Number(stock?.recentLow20 ?? stock?.technicalSnapshot?.recentLow20);
+  const recentLow20 = Number(
+    stock?.recentLow20 ?? stock?.technicalSnapshot?.recentLow20
+  );
 
   if (Number.isFinite(recentLow20) && recentLow20 > 0 && recentLow20 < price) {
     return recentLow20 * 0.995;
@@ -618,7 +629,9 @@ function getTriggerNeeded(stock) {
     momentum10 < 0
   ) {
     return Number.isFinite(triggerPrice)
-      ? `Needs momentum to turn positive and close above ${money(triggerPrice)}.`
+      ? `Needs momentum to turn positive and close above ${money(
+          triggerPrice
+        )}.`
       : "Needs 5-day and 10-day momentum to turn positive.";
   }
 
@@ -1140,7 +1153,8 @@ export default function Home() {
           <div>
             <span>Discipline</span>
             <p>
-              Main grid only shows Buy Now. Watch means interesting but not actionable now.
+              Main grid only shows Buy Now. Watch means interesting but not
+              actionable now.
             </p>
           </div>
         </div>
@@ -1159,13 +1173,15 @@ export default function Home() {
         {loadingTop && stocks.length === 0 && (
           <p className="muted">Loading trade screen...</p>
         )}
+
         {topError && <p className="error">{topError}</p>}
 
         {!loadingTop && !topError && actionableTrades.length === 0 && (
           <div className="noTradeBox">
             <h3>No actionable trades right now.</h3>
             <p>
-              The screener found candidates, but none cleared the Buy Now threshold. Stay patient. Cash is a valid position.
+              The screener found candidates, but none cleared the Buy Now
+              threshold. Stay patient. Cash is a valid position.
             </p>
           </div>
         )}
@@ -1279,7 +1295,8 @@ export default function Home() {
           <div className="sectionTitle">
             <h2>🔎 Closest Setups — Not Ready</h2>
             <p>
-              No true near misses qualified, but these are the closest rejected names.
+              No true near misses qualified, but these are the closest rejected
+              names.
             </p>
           </div>
 
