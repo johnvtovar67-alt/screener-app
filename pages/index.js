@@ -137,6 +137,47 @@ function priceChangeClass(stock) {
   return Number(n) >= 0 ? "positive" : "negative";
 }
 
+
+function cleanTradingLevel(value) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n <= 0) return null;
+
+  if (n >= 100) {
+    return Math.round(n);
+  }
+
+  if (n >= 25) {
+    const whole = Math.floor(n);
+    const decimal = n - whole;
+
+    if (decimal >= 0.6) return whole + 1;
+    if (decimal >= 0.35) return whole + 0.5;
+    if (decimal >= 0.1) return whole + 0.25;
+
+    return whole;
+  }
+
+  if (n >= 10) {
+    return Math.round(n * 4) / 4;
+  }
+
+  if (n >= 5) {
+    return Math.round(n * 20) / 20;
+  }
+
+  return Math.round(n * 100) / 100;
+}
+
+function stableLevel(value, bufferPct = 0) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n <= 0) return null;
+
+  const buffered = n * (1 + bufferPct / 100);
+  return cleanTradingLevel(buffered);
+}
+
 function getRecommendation(stock) {
   return stock?.recommendation ?? {};
 }
@@ -192,6 +233,15 @@ function getFreshBreakoutScore(stock) {
     getRecommendation(stock)?.freshBreakoutScore ??
       stock?.freshBreakoutScore ??
       stock?.technicalSnapshot?.freshBreakoutScore ??
+      0
+  );
+}
+
+function getHistoricalScore(stock) {
+  return clampScore(
+    getRecommendation(stock)?.historicalConfirmationScore ??
+      stock?.historicalConfirmationScore ??
+      stock?.technicalSnapshot?.historicalConfirmationScore ??
       0
   );
 }
@@ -252,43 +302,6 @@ function getVolumeRatio20(stock) {
   );
 }
 
-function getStableTriggerPrice(stock) {
-  const direct = Number(
-    stock?.triggerPrice ??
-      stock?.historicalTriggerPrice ??
-      stock?.recommendation?.triggerPrice ??
-      stock?.recommendation?.historicalTriggerPrice ??
-      stock?.technicalSnapshot?.triggerPrice ??
-      stock?.technicalSnapshot?.historicalTriggerPrice ??
-      stock?.historicalNotes?.triggerPrice ??
-      stock?.historicalNotes?.historicalTriggerPrice
-  );
-
-  if (Number.isFinite(direct) && direct > 0) return direct;
-
-  return null;
-}
-
-function getTriggerSource(stock) {
-  return (
-    stock?.triggerSource ??
-    stock?.recommendation?.triggerSource ??
-    stock?.technicalSnapshot?.triggerSource ??
-    stock?.historicalNotes?.triggerSource ??
-    "Stable historical trigger"
-  );
-}
-
-function getTriggerType(stock) {
-  return (
-    stock?.triggerType ??
-    stock?.recommendation?.triggerType ??
-    stock?.technicalSnapshot?.triggerType ??
-    stock?.historicalNotes?.triggerType ??
-    "Resistance"
-  );
-}
-
 function getMomentumText(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
@@ -330,11 +343,10 @@ function shortContext(stock) {
   if (lower.includes("fresh")) return "Fresh breakout";
   if (lower.includes("early")) return "Early breakout";
   if (lower.includes("extended")) return "Extended";
-  if (lower.includes("trigger")) return "Trigger improving";
-  if (lower.includes("momentum")) return "Momentum improving";
+  if (lower.includes("trigger")) return "Strong trigger";
+  if (lower.includes("momentum")) return "Momentum building";
   if (lower.includes("binary")) return "Binary risk";
   if (lower.includes("resistance")) return "Resistance overhead";
-  if (lower.includes("support")) return "Holding key support";
   if (lower.includes("lagging")) return "Lagging";
   if (lower.includes("trend")) return "Trend issue";
 
@@ -365,12 +377,7 @@ function getContextTone(stock) {
     return "red";
   }
 
-  if (
-    context.includes("improving") ||
-    context.includes("building") ||
-    context.includes("support") ||
-    context.includes("trigger")
-  ) {
+  if (context.includes("improving") || context.includes("building")) {
     return "yellow";
   }
 
@@ -419,6 +426,54 @@ function isActionableTrade(stock) {
 
 function isNearMiss(stock) {
   return nonOwnedAction(stock) === "Watch";
+}
+
+function getStableTriggerMeta(stock) {
+  const rec = getRecommendation(stock);
+
+  const triggerPrice = Number(
+    rec?.triggerPrice ??
+      stock?.triggerPrice ??
+      stock?.technicalSnapshot?.triggerPrice
+  );
+
+  const triggerIsStable = Boolean(
+    rec?.triggerIsStable ??
+      stock?.triggerIsStable ??
+      stock?.technicalSnapshot?.triggerIsStable
+  );
+
+  const triggerType =
+    rec?.triggerType ??
+    stock?.triggerType ??
+    stock?.technicalSnapshot?.triggerType ??
+    "Prior completed resistance";
+
+  const triggerSource =
+    rec?.triggerSource ??
+    stock?.triggerSource ??
+    stock?.technicalSnapshot?.triggerSource ??
+    "Completed historical candles";
+
+  if (Number.isFinite(triggerPrice) && triggerPrice > 0 && triggerIsStable) {
+    return {
+      price: triggerPrice,
+      type: triggerType,
+      source: triggerSource,
+      stable: true,
+    };
+  }
+
+  return {
+    price: null,
+    type: "Unavailable",
+    source: "No completed-candle trigger was returned by the API",
+    stable: false,
+  };
+}
+
+function getEstimatedTriggerPrice(stock) {
+  return getStableTriggerMeta(stock).price;
 }
 
 function getInvalidationPrice(stock) {
@@ -512,19 +567,25 @@ function getActionWhy(stock) {
 function getTriggerNeeded(stock) {
   const action = nonOwnedAction(stock);
   const context = String(getContext(stock)).toLowerCase();
-  const triggerPrice = getStableTriggerPrice(stock);
+  const price = getPrice(stock);
+  const triggerMeta = getStableTriggerMeta(stock);
+  const triggerPrice = triggerMeta.price;
   const invalidationPrice = getInvalidationPrice(stock);
   const breakoutAbove20High = getBreakoutAbove20High(stock);
   const volumeRatio = getVolumeRatio20(stock);
   const momentum5 = getMomentum5Pct(stock);
   const momentum10 = getMomentum10Pct(stock);
   const momentum = getMomentumScore(stock);
-  const triggerType = getTriggerType(stock);
-  const triggerSource = getTriggerSource(stock);
+  const alreadyAboveTrigger =
+    Number.isFinite(price) &&
+    Number.isFinite(triggerPrice) &&
+    price >= triggerPrice;
 
   const triggerText = Number.isFinite(triggerPrice)
-    ? `Needs close above ${money(triggerPrice)} (${triggerType}).`
-    : "Needs a stable historical trigger from completed candles.";
+    ? alreadyAboveTrigger
+      ? `Already above ${money(triggerPrice)} (${triggerMeta.type}).`
+      : `Needs close above ${money(triggerPrice)} (${triggerMeta.type}).`
+    : "Needs completed-candle resistance data before giving a price target.";
 
   const invalidationText = Number.isFinite(invalidationPrice)
     ? `Avoid if it loses roughly ${money(invalidationPrice)}.`
@@ -534,6 +595,26 @@ function getTriggerNeeded(stock) {
     return Number.isFinite(invalidationPrice)
       ? `Buyable now under normal sizing. ${invalidationText}`
       : "Buyable now under normal sizing. Do not chase oversized.";
+  }
+
+  if (alreadyAboveTrigger) {
+    if (Number.isFinite(volumeRatio) && volumeRatio < 1) {
+      return `${triggerText} What is missing: volume confirmation above normal.`;
+    }
+
+    if (Number.isFinite(momentum5) && momentum5 < 0) {
+      return `${triggerText} What is missing: 5-day momentum needs to turn positive.`;
+    }
+
+    if (Number.isFinite(momentum10) && momentum10 < 0) {
+      return `${triggerText} What is missing: 10-day momentum needs to confirm.`;
+    }
+
+    if (momentum < 55) {
+      return `${triggerText} What is missing: momentum confirmation.`;
+    }
+
+    return `${triggerText} What is missing: stronger confirmation before buying.`;
   }
 
   if (context.includes("extended")) {
@@ -546,7 +627,7 @@ function getTriggerNeeded(stock) {
 
   if (context.includes("resistance")) {
     return Number.isFinite(triggerPrice)
-      ? `${triggerText} Source: ${triggerSource}.`
+      ? `${triggerText} Source: ${triggerMeta.source}.`
       : "Needs a close above resistance with volume confirmation.";
   }
 
@@ -563,7 +644,9 @@ function getTriggerNeeded(stock) {
     momentum10 < 0
   ) {
     return Number.isFinite(triggerPrice)
-      ? `Needs momentum to turn positive and close above ${money(triggerPrice)}.`
+      ? `Needs momentum to turn positive and close above ${money(
+          triggerPrice
+        )}.`
       : "Needs 5-day and 10-day momentum to turn positive.";
   }
 
@@ -984,6 +1067,15 @@ export default function Home() {
       .slice(0, 5);
   }, [stocks]);
 
+  const closestSetups = useMemo(() => {
+    if (nearMisses.length > 0) return [];
+
+    return stocks
+      .filter((stock) => nonOwnedAction(stock) === "Avoid")
+      .sort(rankNearMiss)
+      .slice(0, 5);
+  }, [stocks, nearMisses.length]);
+
   const portfolioTotals = useMemo(() => {
     let totalValue = 0;
     let totalCost = 0;
@@ -1191,6 +1283,60 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {!loadingTop &&
+        !topError &&
+        nearMisses.length === 0 &&
+        closestSetups.length > 0 && (
+          <section className="card compactCard">
+            <div className="sectionTitle">
+              <h2>🔎 Closest Setups — Not Ready</h2>
+              <p>
+                No true near misses qualified, but these are the closest rejected names.
+              </p>
+            </div>
+
+            <div className="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th className="stickyCol">Symbol</th>
+                    <th>Price</th>
+                    <th>Net Change</th>
+                    <th>Status</th>
+                    <th>Why Not Ready</th>
+                    <th>Trigger / Fix Needed</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {closestSetups.map((stock, idx) => {
+                    return (
+                      <tr key={`${getSymbol(stock)}-closest-${idx}`}>
+                        <td className="symbol stickyCol">{getSymbol(stock)}</td>
+                        <td>
+                          <strong>{money(getPrice(stock))}</strong>
+                        </td>
+                        <td className={priceChangeClass(stock)}>
+                          {priceChangeText(stock)}
+                        </td>
+                        <td>
+                          <span className={`pill ${getContextTone(stock)}`}>
+                            {shortContext(stock)}
+                          </span>
+                        </td>
+                        <td className="textCell">{getActionWhy(stock)}</td>
+                        <td className="textCell mutedText">
+                          {getTriggerNeeded(stock)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
       {!loadingTop && !topError && avoidList.length > 0 && (
         <section className="card compactCard">
@@ -1953,7 +2099,7 @@ export default function Home() {
 
         .metricGrid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(6, 1fr);
           gap: 10px;
         }
 
@@ -1982,8 +2128,6 @@ export default function Home() {
           padding: 5px 10px;
           font-size: 12px !important;
           font-weight: 900;
-          white-space: normal;
-          line-height: 1.35;
         }
 
         .snapNotes {
