@@ -137,6 +137,47 @@ function priceChangeClass(stock) {
   return Number(n) >= 0 ? "positive" : "negative";
 }
 
+
+function cleanTradingLevel(value) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n <= 0) return null;
+
+  if (n >= 100) {
+    return Math.round(n);
+  }
+
+  if (n >= 25) {
+    const whole = Math.floor(n);
+    const decimal = n - whole;
+
+    if (decimal >= 0.6) return whole + 1;
+    if (decimal >= 0.35) return whole + 0.5;
+    if (decimal >= 0.1) return whole + 0.25;
+
+    return whole;
+  }
+
+  if (n >= 10) {
+    return Math.round(n * 4) / 4;
+  }
+
+  if (n >= 5) {
+    return Math.round(n * 20) / 20;
+  }
+
+  return Math.round(n * 100) / 100;
+}
+
+function stableLevel(value, bufferPct = 0) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n <= 0) return null;
+
+  const buffered = n * (1 + bufferPct / 100);
+  return cleanTradingLevel(buffered);
+}
+
 function getRecommendation(stock) {
   return stock?.recommendation ?? {};
 }
@@ -390,32 +431,49 @@ function isNearMiss(stock) {
 function getEstimatedTriggerPrice(stock) {
   const price = getPrice(stock);
   const recentHigh20 = getRecentHigh20(stock);
-  const resistanceOverheadPct = getResistanceOverheadPct(stock);
-  const priceAvg50 = Number(stock?.priceAvg50 ?? stock?.technicalSnapshot?.priceAvg50);
+  const resistancePrice = Number(
+    stock?.resistancePrice ??
+      stock?.technicalSnapshot?.resistancePrice ??
+      stock?.historicalNotes?.resistancePrice
+  );
+  const priorDayHigh = Number(
+    stock?.priorDayHigh ??
+      stock?.previousDayHigh ??
+      stock?.technicalSnapshot?.priorDayHigh ??
+      stock?.historicalNotes?.priorDayHigh
+  );
+  const priceAvg50 = Number(
+    stock?.priceAvg50 ?? stock?.technicalSnapshot?.priceAvg50
+  );
   const yearHigh = Number(stock?.yearHigh);
 
   if (Number.isFinite(recentHigh20) && recentHigh20 > 0) {
-    return recentHigh20 * 1.005;
+    return stableLevel(recentHigh20, 0.5);
+  }
+
+  if (Number.isFinite(resistancePrice) && resistancePrice > 0) {
+    return stableLevel(resistancePrice, 0.5);
+  }
+
+  if (Number.isFinite(priorDayHigh) && priorDayHigh > 0) {
+    return stableLevel(priorDayHigh, 0.5);
   }
 
   if (
+    Number.isFinite(yearHigh) &&
     Number.isFinite(price) &&
-    Number.isFinite(resistanceOverheadPct) &&
-    resistanceOverheadPct > 0
+    yearHigh > price &&
+    yearHigh / price < 1.25
   ) {
-    return price * (1 + resistanceOverheadPct / 100) * 1.005;
+    return stableLevel(yearHigh, 0.5);
   }
 
-  if (Number.isFinite(yearHigh) && yearHigh > price && yearHigh / price < 1.25) {
-    return yearHigh * 1.005;
-  }
-
-  if (Number.isFinite(priceAvg50) && priceAvg50 > price) {
-    return priceAvg50 * 1.005;
-  }
-
-  if (Number.isFinite(price)) {
-    return price * 1.025;
+  if (
+    Number.isFinite(priceAvg50) &&
+    Number.isFinite(price) &&
+    priceAvg50 > price
+  ) {
+    return stableLevel(priceAvg50, 0.5);
   }
 
   return null;
