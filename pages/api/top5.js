@@ -52,7 +52,7 @@ const THEME_CONFIG = {
   ai_power: {
     name: "AI Power & Energy",
     description: "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
-    symbols: ["VST","CEG","NRG","TLN","GEV","ETN","PWR","VRT","FIX","EME","KMI","WMB","TRGP","LNG","ET","EPD","OKE","XOM","CVX","COP"],
+    symbols: ["VST","CEG","NRG","TLN","GEV","ETN","PWR","VRT","FIX","EME","KMI","WMB","TRGP","LNG","ET","EPD","OKE"],
   },
   cooling_water: {
     name: "Cooling & Water",
