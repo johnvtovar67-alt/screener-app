@@ -137,47 +137,6 @@ function priceChangeClass(stock) {
   return Number(n) >= 0 ? "positive" : "negative";
 }
 
-
-function cleanTradingLevel(value) {
-  const n = Number(value);
-
-  if (!Number.isFinite(n) || n <= 0) return null;
-
-  if (n >= 100) {
-    return Math.round(n);
-  }
-
-  if (n >= 25) {
-    const whole = Math.floor(n);
-    const decimal = n - whole;
-
-    if (decimal >= 0.6) return whole + 1;
-    if (decimal >= 0.35) return whole + 0.5;
-    if (decimal >= 0.1) return whole + 0.25;
-
-    return whole;
-  }
-
-  if (n >= 10) {
-    return Math.round(n * 4) / 4;
-  }
-
-  if (n >= 5) {
-    return Math.round(n * 20) / 20;
-  }
-
-  return Math.round(n * 100) / 100;
-}
-
-function stableLevel(value, bufferPct = 0) {
-  const n = Number(value);
-
-  if (!Number.isFinite(n) || n <= 0) return null;
-
-  const buffered = n * (1 + bufferPct / 100);
-  return cleanTradingLevel(buffered);
-}
-
 function getRecommendation(stock) {
   return stock?.recommendation ?? {};
 }
@@ -233,15 +192,6 @@ function getFreshBreakoutScore(stock) {
     getRecommendation(stock)?.freshBreakoutScore ??
       stock?.freshBreakoutScore ??
       stock?.technicalSnapshot?.freshBreakoutScore ??
-      0
-  );
-}
-
-function getHistoricalScore(stock) {
-  return clampScore(
-    getRecommendation(stock)?.historicalConfirmationScore ??
-      stock?.historicalConfirmationScore ??
-      stock?.technicalSnapshot?.historicalConfirmationScore ??
       0
   );
 }
@@ -302,6 +252,71 @@ function getVolumeRatio20(stock) {
   );
 }
 
+function getStableTriggerPrice(stock) {
+  const direct = Number(
+    stock?.triggerPrice ??
+      stock?.historicalTriggerPrice ??
+      stock?.recommendation?.triggerPrice ??
+      stock?.recommendation?.historicalTriggerPrice ??
+      stock?.technicalSnapshot?.triggerPrice ??
+      stock?.technicalSnapshot?.historicalTriggerPrice ??
+      stock?.historicalNotes?.triggerPrice ??
+      stock?.historicalNotes?.historicalTriggerPrice
+  );
+
+  if (Number.isFinite(direct) && direct > 0) return direct;
+
+  const price = getPrice(stock);
+  const recentHigh20 = getRecentHigh20(stock);
+  const resistanceOverheadPct = getResistanceOverheadPct(stock);
+  const priceAvg50 = Number(
+    stock?.priceAvg50 ?? stock?.technicalSnapshot?.priceAvg50
+  );
+  const yearHigh = Number(stock?.yearHigh);
+
+  if (Number.isFinite(recentHigh20) && recentHigh20 > 0) {
+    return recentHigh20;
+  }
+
+  if (
+    Number.isFinite(price) &&
+    Number.isFinite(resistanceOverheadPct) &&
+    resistanceOverheadPct > 0
+  ) {
+    return price * (1 + resistanceOverheadPct / 100);
+  }
+
+  if (Number.isFinite(yearHigh) && yearHigh > price && yearHigh / price < 1.25) {
+    return yearHigh;
+  }
+
+  if (Number.isFinite(priceAvg50) && priceAvg50 > price) {
+    return priceAvg50;
+  }
+
+  return null;
+}
+
+function getTriggerSource(stock) {
+  return (
+    stock?.triggerSource ??
+    stock?.recommendation?.triggerSource ??
+    stock?.technicalSnapshot?.triggerSource ??
+    stock?.historicalNotes?.triggerSource ??
+    "Estimated technical level"
+  );
+}
+
+function getTriggerType(stock) {
+  return (
+    stock?.triggerType ??
+    stock?.recommendation?.triggerType ??
+    stock?.technicalSnapshot?.triggerType ??
+    stock?.historicalNotes?.triggerType ??
+    "Resistance"
+  );
+}
+
 function getMomentumText(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
@@ -343,10 +358,11 @@ function shortContext(stock) {
   if (lower.includes("fresh")) return "Fresh breakout";
   if (lower.includes("early")) return "Early breakout";
   if (lower.includes("extended")) return "Extended";
-  if (lower.includes("trigger")) return "Strong trigger";
-  if (lower.includes("momentum")) return "Momentum building";
+  if (lower.includes("trigger")) return "Trigger improving";
+  if (lower.includes("momentum")) return "Momentum improving";
   if (lower.includes("binary")) return "Binary risk";
   if (lower.includes("resistance")) return "Resistance overhead";
+  if (lower.includes("support")) return "Holding key support";
   if (lower.includes("lagging")) return "Lagging";
   if (lower.includes("trend")) return "Trend issue";
 
@@ -377,7 +393,12 @@ function getContextTone(stock) {
     return "red";
   }
 
-  if (context.includes("improving") || context.includes("building")) {
+  if (
+    context.includes("improving") ||
+    context.includes("building") ||
+    context.includes("support") ||
+    context.includes("trigger")
+  ) {
     return "yellow";
   }
 
@@ -426,54 +447,6 @@ function isActionableTrade(stock) {
 
 function isNearMiss(stock) {
   return nonOwnedAction(stock) === "Watch";
-}
-
-function getStableTriggerMeta(stock) {
-  const rec = getRecommendation(stock);
-
-  const triggerPrice = Number(
-    rec?.triggerPrice ??
-      stock?.triggerPrice ??
-      stock?.technicalSnapshot?.triggerPrice
-  );
-
-  const triggerIsStable = Boolean(
-    rec?.triggerIsStable ??
-      stock?.triggerIsStable ??
-      stock?.technicalSnapshot?.triggerIsStable
-  );
-
-  const triggerType =
-    rec?.triggerType ??
-    stock?.triggerType ??
-    stock?.technicalSnapshot?.triggerType ??
-    "Prior completed resistance";
-
-  const triggerSource =
-    rec?.triggerSource ??
-    stock?.triggerSource ??
-    stock?.technicalSnapshot?.triggerSource ??
-    "Completed historical candles";
-
-  if (Number.isFinite(triggerPrice) && triggerPrice > 0 && triggerIsStable) {
-    return {
-      price: triggerPrice,
-      type: triggerType,
-      source: triggerSource,
-      stable: true,
-    };
-  }
-
-  return {
-    price: null,
-    type: "Unavailable",
-    source: "No completed-candle trigger was returned by the API",
-    stable: false,
-  };
-}
-
-function getEstimatedTriggerPrice(stock) {
-  return getStableTriggerMeta(stock).price;
 }
 
 function getInvalidationPrice(stock) {
@@ -568,14 +541,15 @@ function getTriggerNeeded(stock) {
   const action = nonOwnedAction(stock);
   const context = String(getContext(stock)).toLowerCase();
   const price = getPrice(stock);
-  const triggerMeta = getStableTriggerMeta(stock);
-  const triggerPrice = triggerMeta.price;
+  const triggerPrice = getStableTriggerPrice(stock);
   const invalidationPrice = getInvalidationPrice(stock);
   const breakoutAbove20High = getBreakoutAbove20High(stock);
   const volumeRatio = getVolumeRatio20(stock);
   const momentum5 = getMomentum5Pct(stock);
   const momentum10 = getMomentum10Pct(stock);
   const momentum = getMomentumScore(stock);
+  const triggerType = getTriggerType(stock);
+  const triggerSource = getTriggerSource(stock);
   const alreadyAboveTrigger =
     Number.isFinite(price) &&
     Number.isFinite(triggerPrice) &&
@@ -583,9 +557,9 @@ function getTriggerNeeded(stock) {
 
   const triggerText = Number.isFinite(triggerPrice)
     ? alreadyAboveTrigger
-      ? `Already above ${money(triggerPrice)} (${triggerMeta.type}).`
-      : `Needs close above ${money(triggerPrice)} (${triggerMeta.type}).`
-    : "Needs completed-candle resistance data before giving a price target.";
+      ? `Already above ${money(triggerPrice)} (${triggerType}).`
+      : `Needs close above ${money(triggerPrice)} (${triggerType}).`
+    : "Needs a stable technical trigger.";
 
   const invalidationText = Number.isFinite(invalidationPrice)
     ? `Avoid if it loses roughly ${money(invalidationPrice)}.`
@@ -627,7 +601,7 @@ function getTriggerNeeded(stock) {
 
   if (context.includes("resistance")) {
     return Number.isFinite(triggerPrice)
-      ? `${triggerText} Source: ${triggerMeta.source}.`
+      ? `${triggerText} Source: ${triggerSource}.`
       : "Needs a close above resistance with volume confirmation.";
   }
 
@@ -644,9 +618,7 @@ function getTriggerNeeded(stock) {
     momentum10 < 0
   ) {
     return Number.isFinite(triggerPrice)
-      ? `Needs momentum to turn positive and close above ${money(
-          triggerPrice
-        )}.`
+      ? `Needs momentum to turn positive and close above ${money(triggerPrice)}.`
       : "Needs 5-day and 10-day momentum to turn positive.";
   }
 
@@ -769,6 +741,7 @@ export default function Home() {
   const [stocks, setStocks] = useState([]);
   const [loadingTop, setLoadingTop] = useState(true);
   const [topError, setTopError] = useState("");
+  const [refreshWarning, setRefreshWarning] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("broad");
   const [themeMeta, setThemeMeta] = useState(null);
 
@@ -793,6 +766,7 @@ export default function Home() {
   async function loadTopIdeas(theme = selectedTheme) {
     setLoadingTop(true);
     setTopError("");
+    setRefreshWarning("");
 
     try {
       const res = await fetch(`/api/top5?theme=${encodeURIComponent(theme)}`);
@@ -808,10 +782,22 @@ export default function Home() {
         ? data
         : data?.stocks || data?.results || data?.data || [];
 
+      if (!Array.isArray(list) || list.length === 0) {
+        throw new Error("Quote refresh returned no usable stocks.");
+      }
+
       setStocks(list.slice(0, 10));
       setThemeMeta(data?.selectedTheme || null);
     } catch (err) {
-      setTopError(err.message || "Failed to load trade screen.");
+      const message = err.message || "Failed to load trade screen.";
+
+      if (stocks.length > 0) {
+        setRefreshWarning(
+          `Quote refresh failed — showing last successful screen. ${message}`
+        );
+      } else {
+        setTopError(message);
+      }
     } finally {
       setLoadingTop(false);
     }
@@ -1119,7 +1105,7 @@ export default function Home() {
           onClick={() => loadTopIdeas(selectedTheme)}
           className="button secondary"
         >
-          Reload Screener
+          {loadingTop ? "Refreshing..." : "Reload Screener"}
         </button>
       </header>
 
@@ -1160,6 +1146,8 @@ export default function Home() {
         </div>
       </section>
 
+      {refreshWarning && <p className="warning">{refreshWarning}</p>}
+
       <section className="card actionCard">
         <div className="sectionTitle">
           <h2>🔥 Actionable Trades</h2>
@@ -1168,7 +1156,9 @@ export default function Home() {
           </p>
         </div>
 
-        {loadingTop && <p className="muted">Loading trade screen...</p>}
+        {loadingTop && stocks.length === 0 && (
+          <p className="muted">Loading trade screen...</p>
+        )}
         {topError && <p className="error">{topError}</p>}
 
         {!loadingTop && !topError && actionableTrades.length === 0 && (
@@ -1180,7 +1170,7 @@ export default function Home() {
           </div>
         )}
 
-        {!loadingTop && !topError && actionableTrades.length > 0 && (
+        {actionableTrades.length > 0 && (
           <div className="tradeGrid">
             {actionableTrades.map((stock, idx) => {
               const action = displayAction(stock, false);
@@ -1232,7 +1222,7 @@ export default function Home() {
         )}
       </section>
 
-      {!loadingTop && !topError && nearMisses.length > 0 && (
+      {nearMisses.length > 0 && (
         <section className="card compactCard">
           <div className="sectionTitle">
             <h2>⚠️ Near Misses</h2>
@@ -1284,61 +1274,58 @@ export default function Home() {
         </section>
       )}
 
-      {!loadingTop &&
-        !topError &&
-        nearMisses.length === 0 &&
-        closestSetups.length > 0 && (
-          <section className="card compactCard">
-            <div className="sectionTitle">
-              <h2>🔎 Closest Setups — Not Ready</h2>
-              <p>
-                No true near misses qualified, but these are the closest rejected names.
-              </p>
-            </div>
+      {nearMisses.length === 0 && closestSetups.length > 0 && (
+        <section className="card compactCard">
+          <div className="sectionTitle">
+            <h2>🔎 Closest Setups — Not Ready</h2>
+            <p>
+              No true near misses qualified, but these are the closest rejected names.
+            </p>
+          </div>
 
-            <div className="tableWrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th className="stickyCol">Symbol</th>
-                    <th>Price</th>
-                    <th>Net Change</th>
-                    <th>Status</th>
-                    <th>Why Not Ready</th>
-                    <th>Trigger / Fix Needed</th>
-                  </tr>
-                </thead>
+          <div className="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th className="stickyCol">Symbol</th>
+                  <th>Price</th>
+                  <th>Net Change</th>
+                  <th>Status</th>
+                  <th>Why Not Ready</th>
+                  <th>Trigger / Fix Needed</th>
+                </tr>
+              </thead>
 
-                <tbody>
-                  {closestSetups.map((stock, idx) => {
-                    return (
-                      <tr key={`${getSymbol(stock)}-closest-${idx}`}>
-                        <td className="symbol stickyCol">{getSymbol(stock)}</td>
-                        <td>
-                          <strong>{money(getPrice(stock))}</strong>
-                        </td>
-                        <td className={priceChangeClass(stock)}>
-                          {priceChangeText(stock)}
-                        </td>
-                        <td>
-                          <span className={`pill ${getContextTone(stock)}`}>
-                            {shortContext(stock)}
-                          </span>
-                        </td>
-                        <td className="textCell">{getActionWhy(stock)}</td>
-                        <td className="textCell mutedText">
-                          {getTriggerNeeded(stock)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+              <tbody>
+                {closestSetups.map((stock, idx) => {
+                  return (
+                    <tr key={`${getSymbol(stock)}-closest-${idx}`}>
+                      <td className="symbol stickyCol">{getSymbol(stock)}</td>
+                      <td>
+                        <strong>{money(getPrice(stock))}</strong>
+                      </td>
+                      <td className={priceChangeClass(stock)}>
+                        {priceChangeText(stock)}
+                      </td>
+                      <td>
+                        <span className={`pill ${getContextTone(stock)}`}>
+                          {shortContext(stock)}
+                        </span>
+                      </td>
+                      <td className="textCell">{getActionWhy(stock)}</td>
+                      <td className="textCell mutedText">
+                        {getTriggerNeeded(stock)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
-      {!loadingTop && !topError && avoidList.length > 0 && (
+      {avoidList.length > 0 && (
         <section className="card compactCard">
           <div className="sectionTitle">
             <h2>🚫 Avoid / Not Ready</h2>
@@ -1416,7 +1403,6 @@ export default function Home() {
                   {getContext(snapStock)}
                 </strong>
               </div>
-
             </div>
 
             <div className="snapNotes">
@@ -1723,6 +1709,17 @@ export default function Home() {
           gap: 16px;
           align-items: flex-start;
           margin-bottom: 14px;
+        }
+
+        .warning {
+          background: #fef3c7;
+          color: #92400e;
+          border: 1px solid #facc15;
+          border-radius: 12px;
+          padding: 10px 12px;
+          margin: -6px 0 18px;
+          font-size: 14px;
+          font-weight: 800;
         }
 
         .noTradeBox {
@@ -2099,7 +2096,7 @@ export default function Home() {
 
         .metricGrid {
           display: grid;
-          grid-template-columns: repeat(6, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 10px;
         }
 
@@ -2128,6 +2125,8 @@ export default function Home() {
           padding: 5px 10px;
           font-size: 12px !important;
           font-weight: 900;
+          white-space: normal;
+          line-height: 1.35;
         }
 
         .snapNotes {
