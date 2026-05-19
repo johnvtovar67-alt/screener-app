@@ -137,59 +137,6 @@ function priceChangeClass(stock) {
   return Number(n) >= 0 ? "positive" : "negative";
 }
 
-function cleanTradingLevel(value) {
-  const n = Number(value);
-
-  if (!Number.isFinite(n) || n <= 0) return null;
-
-  if (n >= 100) {
-    return Math.round(n);
-  }
-
-  if (n >= 25) {
-    const whole = Math.floor(n);
-    const decimal = n - whole;
-
-    if (decimal >= 0.6) return whole + 1;
-    if (decimal >= 0.35) return whole + 0.5;
-    if (decimal >= 0.1) return whole + 0.25;
-
-    return whole;
-  }
-
-  if (n >= 10) {
-    return Math.round(n * 4) / 4;
-  }
-
-  if (n >= 5) {
-    return Math.round(n * 20) / 20;
-  }
-
-  return Math.round(n * 100) / 100;
-}
-
-function stableLevel(value, bufferPct = 0) {
-  const n = Number(value);
-
-  if (!Number.isFinite(n) || n <= 0) return null;
-
-  const buffered = n * (1 + bufferPct / 100);
-  return cleanTradingLevel(buffered);
-}
-
-function getReferenceTriggerPrice(stock) {
-  const price = getPrice(stock);
-
-  if (!Number.isFinite(price) || price <= 0) return null;
-
-  if (price >= 100) return cleanTradingLevel(price * 1.03);
-  if (price >= 25) return cleanTradingLevel(price * 1.02);
-  if (price >= 10) return cleanTradingLevel(price * 1.03);
-  if (price >= 5) return cleanTradingLevel(price * 1.04);
-
-  return cleanTradingLevel(price * 1.05);
-}
-
 function getRecommendation(stock) {
   return stock?.recommendation ?? {};
 }
@@ -302,6 +249,43 @@ function getVolumeRatio20(stock) {
     stock?.volumeRatio20 ??
       stock?.technicalSnapshot?.volumeRatio20 ??
       stock?.historicalNotes?.volumeRatio20
+  );
+}
+
+function getStableTriggerPrice(stock) {
+  const direct = Number(
+    stock?.triggerPrice ??
+      stock?.historicalTriggerPrice ??
+      stock?.recommendation?.triggerPrice ??
+      stock?.recommendation?.historicalTriggerPrice ??
+      stock?.technicalSnapshot?.triggerPrice ??
+      stock?.technicalSnapshot?.historicalTriggerPrice ??
+      stock?.historicalNotes?.triggerPrice ??
+      stock?.historicalNotes?.historicalTriggerPrice
+  );
+
+  if (Number.isFinite(direct) && direct > 0) return direct;
+
+  return null;
+}
+
+function getTriggerSource(stock) {
+  return (
+    stock?.triggerSource ??
+    stock?.recommendation?.triggerSource ??
+    stock?.technicalSnapshot?.triggerSource ??
+    stock?.historicalNotes?.triggerSource ??
+    "Stable historical trigger"
+  );
+}
+
+function getTriggerType(stock) {
+  return (
+    stock?.triggerType ??
+    stock?.recommendation?.triggerType ??
+    stock?.technicalSnapshot?.triggerType ??
+    stock?.historicalNotes?.triggerType ??
+    "Resistance"
   );
 }
 
@@ -437,57 +421,6 @@ function isNearMiss(stock) {
   return nonOwnedAction(stock) === "Watch";
 }
 
-function getEstimatedTriggerPrice(stock) {
-  const price = getPrice(stock);
-  const recentHigh20 = getRecentHigh20(stock);
-  const resistancePrice = Number(
-    stock?.resistancePrice ??
-      stock?.technicalSnapshot?.resistancePrice ??
-      stock?.historicalNotes?.resistancePrice
-  );
-  const priorDayHigh = Number(
-    stock?.priorDayHigh ??
-      stock?.previousDayHigh ??
-      stock?.technicalSnapshot?.priorDayHigh ??
-      stock?.historicalNotes?.priorDayHigh
-  );
-  const priceAvg50 = Number(
-    stock?.priceAvg50 ?? stock?.technicalSnapshot?.priceAvg50
-  );
-  const yearHigh = Number(stock?.yearHigh);
-
-  if (Number.isFinite(recentHigh20) && recentHigh20 > 0) {
-    return stableLevel(recentHigh20, 0.5);
-  }
-
-  if (Number.isFinite(resistancePrice) && resistancePrice > 0) {
-    return stableLevel(resistancePrice, 0.5);
-  }
-
-  if (Number.isFinite(priorDayHigh) && priorDayHigh > 0) {
-    return stableLevel(priorDayHigh, 0.5);
-  }
-
-  if (
-    Number.isFinite(yearHigh) &&
-    Number.isFinite(price) &&
-    yearHigh > price &&
-    yearHigh / price < 1.25
-  ) {
-    return stableLevel(yearHigh, 0.5);
-  }
-
-  if (
-    Number.isFinite(priceAvg50) &&
-    Number.isFinite(price) &&
-    priceAvg50 > price
-  ) {
-    return stableLevel(priceAvg50, 0.5);
-  }
-
-  return null;
-}
-
 function getInvalidationPrice(stock) {
   const price = getPrice(stock);
   const priceAvg50 = Number(stock?.priceAvg50);
@@ -579,24 +512,19 @@ function getActionWhy(stock) {
 function getTriggerNeeded(stock) {
   const action = nonOwnedAction(stock);
   const context = String(getContext(stock)).toLowerCase();
-  const stableTriggerPrice = getEstimatedTriggerPrice(stock);
-  const referenceTriggerPrice = getReferenceTriggerPrice(stock);
-  const triggerPrice = Number.isFinite(stableTriggerPrice)
-    ? stableTriggerPrice
-    : referenceTriggerPrice;
-  const hasStableTrigger = Number.isFinite(stableTriggerPrice);
+  const triggerPrice = getStableTriggerPrice(stock);
   const invalidationPrice = getInvalidationPrice(stock);
   const breakoutAbove20High = getBreakoutAbove20High(stock);
   const volumeRatio = getVolumeRatio20(stock);
   const momentum5 = getMomentum5Pct(stock);
   const momentum10 = getMomentum10Pct(stock);
   const momentum = getMomentumScore(stock);
+  const triggerType = getTriggerType(stock);
+  const triggerSource = getTriggerSource(stock);
 
   const triggerText = Number.isFinite(triggerPrice)
-    ? hasStableTrigger
-      ? `Needs close above roughly ${money(triggerPrice)}`
-      : `Needs close above the next clean level near ${money(triggerPrice)}`
-    : "Needs clean breakout/close confirmation";
+    ? `Needs close above ${money(triggerPrice)} (${triggerType}).`
+    : "Needs a stable historical trigger from completed candles.";
 
   const invalidationText = Number.isFinite(invalidationPrice)
     ? `Avoid if it loses roughly ${money(invalidationPrice)}.`
@@ -610,7 +538,7 @@ function getTriggerNeeded(stock) {
 
   if (context.includes("extended")) {
     return Number.isFinite(triggerPrice)
-      ? `Do not chase. Needs pullback/reset first, then reclaim near ${money(
+      ? `Do not chase. Needs pullback/reset first, then reclaim above ${money(
           triggerPrice
         )}.`
       : "Do not chase. Needs a pullback, sideways reset, or lower-risk re-entry.";
@@ -618,13 +546,13 @@ function getTriggerNeeded(stock) {
 
   if (context.includes("resistance")) {
     return Number.isFinite(triggerPrice)
-      ? `${triggerText} with better volume confirmation.`
+      ? `${triggerText} Source: ${triggerSource}.`
       : "Needs a close above resistance with volume confirmation.";
   }
 
   if (Number.isFinite(volumeRatio) && volumeRatio < 1) {
     return Number.isFinite(triggerPrice)
-      ? `${triggerText} with volume above normal.`
+      ? `${triggerText} Needs volume above normal.`
       : "Needs stronger volume confirmation before buying.";
   }
 
@@ -635,26 +563,24 @@ function getTriggerNeeded(stock) {
     momentum10 < 0
   ) {
     return Number.isFinite(triggerPrice)
-      ? `Needs momentum to turn positive and close above roughly ${money(
-          triggerPrice
-        )}.`
+      ? `Needs momentum to turn positive and close above ${money(triggerPrice)}.`
       : "Needs 5-day and 10-day momentum to turn positive.";
   }
 
   if (context.includes("momentum") || momentum < 55) {
     return Number.isFinite(triggerPrice)
-      ? `${triggerText} before buying.`
+      ? `${triggerText}`
       : "Needs momentum confirmation before acting.";
   }
 
   if (context.includes("trigger") || breakoutAbove20High === false) {
     return Number.isFinite(triggerPrice)
-      ? `${triggerText} before buying.`
+      ? `${triggerText}`
       : "Needs clean breakout/close confirmation before buying.";
   }
 
   return Number.isFinite(triggerPrice)
-    ? `${triggerText} before buying.`
+    ? `${triggerText}`
     : "Needs cleaner entry confirmation before buying.";
 }
 
