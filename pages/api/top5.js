@@ -44,37 +44,31 @@ const THEME_CONFIG = {
       "AHR","VICI","O","PLD","DLR","EQIX","AMT","CCI","WELL",
     ],
   },
-
   btc: {
     name: "BTC / Digital Assets",
     description: "Bitcoin, crypto infrastructure, exchanges, and digital asset proxies.",
     symbols: ["MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF","COIN","HOOD","SQ","PYPL"],
   },
-
   ai_power: {
     name: "AI Power & Energy",
     description: "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
     symbols: ["VST","CEG","NRG","TLN","GEV","ETN","PWR","VRT","FIX","EME","KMI","WMB","TRGP","LNG","ET","EPD","OKE","XOM","CVX","COP"],
   },
-
   cooling_water: {
     name: "Cooling & Water",
     description: "Thermal management, water infrastructure, and cooling beneficiaries.",
     symbols: ["VRT","ETN","PWR","FIX","EME","XYL","WTS","AOS","PNR","ITT","DOV","HUBB","NVT","CARR","TT"],
   },
-
   nuclear: {
     name: "Nuclear / Baseload",
     description: "Uranium, nuclear services, advanced nuclear, and baseload power.",
     symbols: ["CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE","CEG","VST","TLN","GEV","NXE","DNN"],
   },
-
   quantum: {
     name: "Quantum Computing",
     description: "Quantum computing names and larger companies with quantum exposure.",
     symbols: ["IONQ","RGTI","QBTS","QUBT","ARQQ","IBM","GOOGL","MSFT","NVDA","HON","AMZN"],
   },
-
   ai_infra: {
     name: "AI Infrastructure",
     description: "Semiconductors, servers, networking, data center infrastructure, and AI platforms.",
@@ -130,23 +124,19 @@ function cleanTradingLevel(value) {
   const n = Number(value);
 
   if (!Number.isFinite(n) || n <= 0) return null;
-
   if (n >= 100) return Math.round(n);
 
   if (n >= 25) {
     const whole = Math.floor(n);
     const decimal = n - whole;
-
     if (decimal >= 0.6) return whole + 1;
     if (decimal >= 0.35) return whole + 0.5;
     if (decimal >= 0.1) return whole + 0.25;
-
     return whole;
   }
 
   if (n >= 10) return Math.round(n * 4) / 4;
   if (n >= 5) return Math.round(n * 20) / 20;
-
   return Math.round(n * 100) / 100;
 }
 
@@ -187,7 +177,6 @@ async function fetchFmpBatch(symbols = [], apiKey) {
 
   if (Array.isArray(data)) return data;
   if (data && typeof data === "object") return [data];
-
   return [];
 }
 
@@ -206,14 +195,20 @@ async function fetchFmpIndividual(symbols = [], apiKey) {
       if (Array.isArray(data) && data[0]) all.push(data[0]);
       else if (data && typeof data === "object") all.push(data);
     } catch {
-      // Skip bad symbols or temporary symbol-level FMP failures.
+      // Keep the screener alive even if one ticker fails.
     }
   }
 
   return all;
 }
 
-async function fetchFmpQuotes(symbols = [], apiKey) {
+async function fetchFmpQuotes(symbols = []) {
+  const apiKey = process.env.FMP_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Missing FMP_API_KEY in environment variables.");
+  }
+
   const cleanSymbols = uniqueSymbols(symbols);
   if (!cleanSymbols.length) return [];
 
@@ -232,12 +227,7 @@ async function fetchFmpQuotes(symbols = [], apiKey) {
   return fetchFmpIndividual(cleanSymbols, apiKey);
 }
 
-async function fetchHistoricalEod(symbol, apiKey) {
-  const url = `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${encodeURIComponent(
-    toFmpSymbol(symbol)
-  )}&from=${daysAgoYmd(95)}&to=${todayYmd()}&apikey=${apiKey}`;
-
-  const data = await fetchJson(url);
+function normalizeHistoricalRows(data) {
   const rows = Array.isArray(data)
     ? data
     : Array.isArray(data?.historical)
@@ -260,25 +250,48 @@ async function fetchHistoricalEod(symbol, apiKey) {
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
-async function fetchHistoricalMap(symbols = [], apiKey) {
-  const cleanSymbols = uniqueSymbols(symbols);
+async function fetchHistoricalEod(symbol, apiKey) {
+  const stableUrl = `https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${encodeURIComponent(
+    toFmpSymbol(symbol)
+  )}&from=${daysAgoYmd(95)}&to=${todayYmd()}&apikey=${apiKey}`;
+
+  try {
+    const data = await fetchJson(stableUrl);
+    const rows = normalizeHistoricalRows(data);
+    if (rows.length) return rows;
+  } catch {
+    // Fall through to older FMP path.
+  }
+
+  const legacyUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/${encodeURIComponent(
+    toFmpSymbol(symbol)
+  )}?from=${daysAgoYmd(95)}&to=${todayYmd()}&apikey=${apiKey}`;
+
+  try {
+    const data = await fetchJson(legacyUrl);
+    return normalizeHistoricalRows(data);
+  } catch {
+    return [];
+  }
+}
+
+async function fetchHistoricalMapForTopStocks(stocks = []) {
+  const apiKey = process.env.FMP_API_KEY;
   const map = new Map();
 
-  await Promise.all(
-    cleanSymbols.map(async (symbol) => {
-      try {
-        const rows = await fetchHistoricalEod(symbol, apiKey);
-        map.set(symbol, rows);
-      } catch {
-        map.set(symbol, []);
-      }
-    })
-  );
+  if (!apiKey) return map;
+
+  const symbols = uniqueSymbols(stocks.map((stock) => stock.symbol)).slice(0, 10);
+
+  for (const symbol of symbols) {
+    const rows = await fetchHistoricalEod(symbol, apiKey);
+    map.set(symbol, rows);
+  }
 
   return map;
 }
 
-function buildHistoricalNotes(symbol, historicalRows = []) {
+function buildHistoricalNotes(historicalRows = []) {
   const rows = Array.isArray(historicalRows) ? historicalRows : [];
   const closes = rows.map((row) => row.close).filter(Number.isFinite);
   const latest = rows[0];
@@ -315,17 +328,17 @@ function buildHistoricalNotes(symbol, historicalRows = []) {
   const momentum10Pct = close10 ? ((close - close10) / close10) * 100 : null;
   const momentum20Pct = close20 ? ((close - close20) / close20) * 100 : null;
 
-  const shortTrendSlopePct = prior5.length >= 5 && prior5[4]?.close
-    ? ((prior5[0].close - prior5[4].close) / prior5[4].close) * 100
-    : null;
+  const shortTrendSlopePct =
+    prior5.length >= 5 && prior5[4]?.close
+      ? ((prior5[0].close - prior5[4].close) / prior5[4].close) * 100
+      : null;
 
   const higherLows =
     prior3.length >= 3 &&
     prior3[0].low > prior3[1].low &&
     prior3[1].low > prior3[2].low;
 
-  const breakoutAbove20High =
-    Number.isFinite(recentHigh20) && close > recentHigh20;
+  const breakoutAbove20High = Number.isFinite(recentHigh20) && close > recentHigh20;
 
   const resistanceOverheadPct =
     Number.isFinite(recentHigh20) && close > 0
@@ -434,15 +447,20 @@ function normalizeQuote(row = {}) {
   };
 }
 
+function normalizeRecommendationLabel(rec = {}) {
+  const label = String(rec.label || rec.displayLabel || "").toUpperCase();
+
+  if (label === "BUY NOW") return "Buy Now";
+  if (label === "WATCH" || label === "WATCH FOR ENTRY") return "Watch";
+  return "Avoid";
+}
+
 function actionRank(label) {
   const clean = String(label || "").toUpperCase();
 
   if (clean === "BUY NOW") return 3;
-  if (clean === "WATCH") return 2;
-  if (clean === "WATCH FOR ENTRY") return 2;
-  if (clean === "AVOID") return 1;
-  if (clean === "AVOID FOR NOW") return 1;
-
+  if (clean === "WATCH" || clean === "WATCH FOR ENTRY") return 2;
+  if (clean === "AVOID" || clean === "AVOID FOR NOW") return 1;
   return 0;
 }
 
@@ -452,7 +470,6 @@ function readinessRank(label) {
   if (clean === "TRADE READY") return 3;
   if (clean === "WATCH CLOSELY") return 2;
   if (clean === "SETUP ONLY") return 1;
-
   return 0;
 }
 
@@ -496,113 +513,147 @@ function institutionalRank(stock = {}) {
   return actionPoints + readinessPoints + setupStrength - riskDrag;
 }
 
-function normalizeRecommendationLabel(rec = {}) {
-  const label = String(rec.label || rec.displayLabel || "").toUpperCase();
-
-  if (label === "BUY NOW") return "Buy Now";
-  if (label === "WATCH" || label === "WATCH FOR ENTRY") return "Watch";
-
-  return "Avoid";
-}
-
-function enrichQuote(row = {}, historicalRows = []) {
+function enrichQuote(row = {}, historicalNotes = null) {
   const normalized = normalizeQuote(row);
 
   if (!normalized.symbol || normalized.price == null) {
     return null;
   }
 
-  const historicalNotes = buildHistoricalNotes(normalized.symbol, historicalRows);
-
-  const enrichedInput = {
+  const notes = historicalNotes || buildHistoricalNotes([]);
+  const scoringInput = {
     ...normalized,
-    ...historicalNotes,
+    ...notes,
   };
 
-  const recommendationRaw = getRecommendation(enrichedInput);
-  const forcedLabel = normalizeRecommendationLabel(recommendationRaw);
+  const recommendationRaw = getRecommendation(scoringInput);
+  const label = normalizeRecommendationLabel(recommendationRaw);
 
   const recommendation = {
     ...recommendationRaw,
-    label: forcedLabel,
-    displayLabel: forcedLabel,
-    triggerPrice: historicalNotes.triggerPrice,
-    historicalTriggerPrice: historicalNotes.historicalTriggerPrice,
-    triggerType: historicalNotes.triggerType,
-    triggerSource: historicalNotes.triggerSource,
-    triggerIsStable: historicalNotes.triggerIsStable,
-    historicalConfirmationScore: historicalNotes.historicalConfirmationScore,
+    label,
+    displayLabel: label,
+    triggerPrice: notes.triggerPrice,
+    historicalTriggerPrice: notes.historicalTriggerPrice,
+    triggerType: notes.triggerType,
+    triggerSource: notes.triggerSource,
+    triggerIsStable: notes.triggerIsStable,
+    historicalConfirmationScore: notes.historicalConfirmationScore,
   };
 
-  const tradeReadiness = getTradeReadiness(enrichedInput);
-  const technicalSnapshot = buildTechnicalSnapshot(enrichedInput);
-  const fundamentalSnapshot = buildFundamentalSnapshot(enrichedInput);
-  const score = compositeScore(enrichedInput);
+  const tradeReadiness = getTradeReadiness(scoringInput);
+  const technicalSnapshot = buildTechnicalSnapshot(scoringInput);
+  const fundamentalSnapshot = buildFundamentalSnapshot(scoringInput);
+  const score = compositeScore(scoringInput);
 
-  return {
-    ...enrichedInput,
+  const stock = {
+    ...scoringInput,
     score,
     compositeScore: score,
     recommendation,
     tradeReadiness,
     technicalSnapshot: {
       ...technicalSnapshot,
-      ...historicalNotes,
+      ...notes,
     },
     fundamentalSnapshot,
-    historicalNotes,
-    triggerPrice: historicalNotes.triggerPrice,
-    historicalTriggerPrice: historicalNotes.historicalTriggerPrice,
-    triggerType: historicalNotes.triggerType,
-    triggerSource: historicalNotes.triggerSource,
-    triggerIsStable: historicalNotes.triggerIsStable,
+    historicalNotes: notes,
+    triggerScore: recommendation.triggerScore,
+    momentumScore: recommendation.momentumScore,
+    expectationRisk: recommendation.expectationRisk,
+    extensionRisk: recommendation.extensionRisk,
+    lateChaseRisk: recommendation.lateChaseRisk,
+    freshBreakoutScore: recommendation.freshBreakoutScore,
+    context: recommendation.context,
+    reason: recommendation.reason,
+    entryNote: recommendation.entryNote,
+    triggerPrice: notes.triggerPrice,
+    historicalTriggerPrice: notes.historicalTriggerPrice,
+    triggerType: notes.triggerType,
+    triggerSource: notes.triggerSource,
+    triggerIsStable: notes.triggerIsStable,
   };
+
+  return {
+    ...stock,
+    institutionalRank: institutionalRank(stock),
+  };
+}
+
+function sortTopIdeas(a, b) {
+  const actionA = actionRank(a.recommendation?.label);
+  const actionB = actionRank(b.recommendation?.label);
+
+  if (actionB !== actionA) return actionB - actionA;
+
+  const rankA = Number(a.institutionalRank || 0);
+  const rankB = Number(b.institutionalRank || 0);
+
+  if (rankB !== rankA) return rankB - rankA;
+
+  const scoreA = Number(a.recommendation?.institutionalScore || a.score || 0);
+  const scoreB = Number(b.recommendation?.institutionalScore || b.score || 0);
+
+  if (scoreB !== scoreA) return scoreB - scoreA;
+
+  const triggerA = Number(a.recommendation?.triggerScore || 0);
+  const triggerB = Number(b.recommendation?.triggerScore || 0);
+
+  return triggerB - triggerA;
+}
+
+async function attachHistoricalTriggersToTopStocks(stocks = []) {
+  const historicalMap = await fetchHistoricalMapForTopStocks(stocks);
+
+  return stocks.map((stock) => {
+    const rows = historicalMap.get(stock.symbol) || [];
+    const notes = buildHistoricalNotes(rows);
+    return enrichQuote(stock, notes) || stock;
+  });
 }
 
 export default async function handler(req, res) {
   try {
-    const apiKey = process.env.FMP_API_KEY;
-
-    if (!apiKey) {
-      return res.status(500).json({
-        error: "Missing FMP_API_KEY in environment variables.",
-      });
-    }
-
-    const selectedTheme = getThemeConfig(req.query.theme);
+    const themeKey = String(req.query.theme || "broad").toLowerCase();
+    const selectedTheme = getThemeConfig(themeKey);
     const symbols = uniqueSymbols(selectedTheme.symbols);
 
-    const quotes = await fetchFmpQuotes(symbols, apiKey);
-
-    if (!quotes.length) {
-      return res.status(502).json({
-        error: "No quotes returned from FMP.",
+    if (!symbols.length) {
+      return res.status(200).json({
+        selectedTheme,
+        count: 0,
+        stocks: [],
       });
     }
 
-    const normalizedQuotes = quotes.map(normalizeQuote).filter(Boolean);
-    const quoteSymbols = normalizedQuotes.map((quote) => quote.symbol);
-    const historicalMap = await fetchHistoricalMap(quoteSymbols, apiKey);
+    const quotes = await fetchFmpQuotes(symbols);
 
-    const enriched = normalizedQuotes
-      .map((quote) => enrichQuote(quote, historicalMap.get(quote.symbol) || []))
-      .filter(Boolean)
-      .sort((a, b) => institutionalRank(b) - institutionalRank(a));
+    const enriched = Array.isArray(quotes)
+      ? quotes
+          .map((quote) => enrichQuote(quote))
+          .filter(Boolean)
+          .filter((stock) => Number.isFinite(Number(stock.price)))
+      : [];
+
+    const quoteSorted = enriched.sort(sortTopIdeas).slice(0, 10);
+    const sorted = await attachHistoricalTriggersToTopStocks(quoteSorted);
 
     return res.status(200).json({
-      selectedTheme: {
-        key: req.query.theme || "broad",
-        name: selectedTheme.name,
-        description: selectedTheme.description,
-        symbolCount: symbols.length,
+      selectedTheme,
+      count: sorted.length,
+      stocks: sorted,
+      meta: {
+        historicalConfirmation: true,
+        mode: "quote_first_with_limited_stable_triggers",
+        requestedSymbols: symbols.length,
+        returnedQuotes: Array.isArray(quotes) ? quotes.length : 0,
+        scoredQuotes: enriched.length,
       },
-      stocks: enriched.slice(0, 10),
-      allCount: enriched.length,
     });
   } catch (error) {
     return res.status(500).json({
-      error: "The screener could not retrieve quote data.",
-      detail: error.message,
+      error: "Failed to load top ideas.",
+      detail: error?.message || String(error),
     });
   }
 }
