@@ -32,53 +32,297 @@ function uniqueSymbols(symbols = []) {
 const THEME_CONFIG = {
   broad: {
     name: "Broad Market",
-    description: "Full broad-market discovery list using the institutional scoring model.",
+    description:
+      "Full broad-market discovery list using the institutional scoring model.",
     symbols: [
-      "NVDA","AMD","AVGO","ARM","MU","SMCI","PLTR","CRWD","NET","DDOG","SNOW","SHOP","MDB","ZS","PANW","ANET","DELL","HPE","ORCL","MSFT","GOOGL","GOOG","META","AMZN","AAPL","TSLA","UBER","ROKU","SOUN","BBAI","AI","AAOI",
-      "SCHW","BGC","JPM","BAC","C","WFC","GS","MS","BX","KKR","APO","SOFI","AFRM","HOOD","COIN","PYPL","SQ","ALLY","RKT","UPST",
-      "ETN","PWR","VRT","FIX","EME","GEV","CEG","VST","NRG","TLN","KMI","WMB","TRGP","LNG","ET","EPD","OKE","PAGP","XOM","CVX","COP","SLB","HAL","FCX","CLF","NUE","STLD",
-      "CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE",
-      "MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF",
-      "HIMS","BCRX","ALMS","VKTX","RXRX","SDGR","DNA","MRNA","NVAX","CRSP","BEAM","IOVA","GERN","ALT",
-      "CELH","CROX","DKNG","RCL","CCL","NCLH","ABNB","EXPE","AAL","UAL","DAL","LUV","DIS","NFLX","TGT","WMT","COST",
-      "AHR","VICI","O","PLD","DLR","EQIX","AMT","CCI","WELL",
+      "NVDA",
+      "AMD",
+      "AVGO",
+      "ARM",
+      "MU",
+      "SMCI",
+      "PLTR",
+      "CRWD",
+      "NET",
+      "DDOG",
+      "SNOW",
+      "SHOP",
+      "MDB",
+      "ZS",
+      "PANW",
+      "ANET",
+      "DELL",
+      "HPE",
+      "ORCL",
+      "MSFT",
+      "GOOGL",
+      "GOOG",
+      "META",
+      "AMZN",
+      "AAPL",
+      "TSLA",
+      "UBER",
+      "ROKU",
+      "SOUN",
+      "BBAI",
+      "AI",
+      "AAOI",
+
+      "SCHW",
+      "BGC",
+      "JPM",
+      "BAC",
+      "C",
+      "WFC",
+      "GS",
+      "MS",
+      "BX",
+      "KKR",
+      "APO",
+      "SOFI",
+      "AFRM",
+      "HOOD",
+      "COIN",
+      "PYPL",
+      "SQ",
+      "ALLY",
+      "RKT",
+      "UPST",
+
+      "ETN",
+      "PWR",
+      "VRT",
+      "FIX",
+      "EME",
+      "GEV",
+      "CEG",
+      "VST",
+      "NRG",
+      "TLN",
+      "KMI",
+      "WMB",
+      "TRGP",
+      "LNG",
+      "ET",
+      "EPD",
+      "OKE",
+      "PAGP",
+      "XOM",
+      "CVX",
+      "COP",
+      "SLB",
+      "HAL",
+      "FCX",
+      "CLF",
+      "NUE",
+      "STLD",
+
+      "CCJ",
+      "UEC",
+      "UUUU",
+      "LEU",
+      "BWXT",
+      "SMR",
+      "OKLO",
+      "NNE",
+
+      "MSTR",
+      "MARA",
+      "RIOT",
+      "CLSK",
+      "IREN",
+      "WULF",
+      "HUT",
+      "BTDR",
+      "CIFR",
+      "BITF",
+
+      "HIMS",
+      "BCRX",
+      "ALMS",
+      "VKTX",
+      "RXRX",
+      "SDGR",
+      "DNA",
+      "MRNA",
+      "NVAX",
+      "CRSP",
+      "BEAM",
+      "IOVA",
+      "GERN",
+      "ALT",
+
+      "CELH",
+      "CROX",
+      "DKNG",
+      "RCL",
+      "CCL",
+      "NCLH",
+      "ABNB",
+      "EXPE",
+      "AAL",
+      "UAL",
+      "DAL",
+      "LUV",
+      "DIS",
+      "NFLX",
+      "TGT",
+      "WMT",
+      "COST",
+
+      "AHR",
+      "VICI",
+      "O",
+      "PLD",
+      "DLR",
+      "EQIX",
+      "AMT",
+      "CCI",
+      "WELL",
     ],
   },
 
   btc: {
     name: "BTC / Digital Assets",
-    description: "Bitcoin, crypto infrastructure, exchanges, and digital asset proxies.",
-    symbols: ["MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF","COIN","HOOD","SQ","PYPL"],
+    description:
+      "Bitcoin, crypto infrastructure, exchanges, and digital asset proxies.",
+    symbols: [
+      "MSTR",
+      "MARA",
+      "RIOT",
+      "CLSK",
+      "IREN",
+      "WULF",
+      "HUT",
+      "BTDR",
+      "CIFR",
+      "BITF",
+      "COIN",
+      "HOOD",
+      "SQ",
+      "PYPL",
+    ],
   },
 
   ai_power: {
     name: "AI Power & Energy",
-    description: "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
-    symbols: ["VST","CEG","NRG","TLN","GEV","ETN","PWR","VRT","FIX","EME","KMI","WMB","TRGP","LNG","ET","EPD","OKE"],
+    description:
+      "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
+    symbols: [
+      "VST",
+      "CEG",
+      "NRG",
+      "TLN",
+      "GEV",
+      "ETN",
+      "PWR",
+      "VRT",
+      "FIX",
+      "EME",
+      "KMI",
+      "WMB",
+      "TRGP",
+      "LNG",
+      "ET",
+      "EPD",
+      "OKE",
+    ],
   },
 
   cooling_water: {
     name: "Cooling & Water",
-    description: "Thermal management, water infrastructure, and cooling beneficiaries.",
-    symbols: ["VRT","ETN","PWR","FIX","EME","XYL","WTS","AOS","PNR","ITT","DOV","HUBB","NVT","CARR","TT"],
+    description:
+      "Thermal management, water infrastructure, and cooling beneficiaries.",
+    symbols: [
+      "VRT",
+      "ETN",
+      "PWR",
+      "FIX",
+      "EME",
+      "XYL",
+      "WTS",
+      "AOS",
+      "PNR",
+      "ITT",
+      "DOV",
+      "HUBB",
+      "NVT",
+      "CARR",
+      "TT",
+    ],
   },
 
   nuclear: {
     name: "Nuclear / Baseload",
-    description: "Uranium, nuclear services, advanced nuclear, and baseload power.",
-    symbols: ["CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE","CEG","VST","TLN","GEV","NXE","DNN"],
+    description:
+      "Uranium, nuclear services, advanced nuclear, and baseload power.",
+    symbols: [
+      "CCJ",
+      "UEC",
+      "UUUU",
+      "LEU",
+      "BWXT",
+      "SMR",
+      "OKLO",
+      "NNE",
+      "CEG",
+      "VST",
+      "TLN",
+      "GEV",
+      "NXE",
+      "DNN",
+    ],
   },
 
   quantum: {
     name: "Quantum Computing",
-    description: "Quantum computing names and larger companies with quantum exposure.",
-    symbols: ["IONQ","RGTI","QBTS","QUBT","ARQQ","IBM","GOOGL","MSFT","NVDA","HON","AMZN"],
+    description:
+      "Quantum computing names and larger companies with quantum exposure.",
+    symbols: [
+      "IONQ",
+      "RGTI",
+      "QBTS",
+      "QUBT",
+      "ARQQ",
+      "IBM",
+      "GOOGL",
+      "MSFT",
+      "NVDA",
+      "HON",
+      "AMZN",
+    ],
   },
 
   ai_infra: {
     name: "AI Infrastructure",
-    description: "Semiconductors, servers, networking, data center infrastructure, and AI platforms.",
-    symbols: ["NVDA","AMD","AVGO","ARM","MU","SMCI","DELL","HPE","ANET","VRT","ETN","PWR","FIX","EME","ORCL","MSFT","GOOGL","META","AMZN","PLTR","CRWD","NET","DDOG","SNOW"],
+    description:
+      "Semiconductors, servers, networking, data center infrastructure, and AI platforms.",
+    symbols: [
+      "NVDA",
+      "AMD",
+      "AVGO",
+      "ARM",
+      "MU",
+      "SMCI",
+      "DELL",
+      "HPE",
+      "ANET",
+      "VRT",
+      "ETN",
+      "PWR",
+      "FIX",
+      "EME",
+      "ORCL",
+      "MSFT",
+      "GOOGL",
+      "META",
+      "AMZN",
+      "PLTR",
+      "CRWD",
+      "NET",
+      "DDOG",
+      "SNOW",
+    ],
   },
 };
 
@@ -111,7 +355,9 @@ async function fetchJson(url) {
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(`FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`);
+    throw new Error(
+      `FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`
+    );
   }
 
   return response.json();
@@ -150,7 +396,7 @@ async function fetchFmpIndividual(symbols = [], apiKey) {
       if (Array.isArray(data) && data[0]) all.push(data[0]);
       else if (data && typeof data === "object") all.push(data);
     } catch {
-      // Skip bad symbols or temporary symbol-level FMP failures.
+      // Skip symbol-level failures so one bad ticker does not kill the screen.
     }
   }
 
@@ -222,18 +468,6 @@ function normalizeQuote(row = {}) {
   };
 }
 
-function normalizeRecommendationLabel(rec = {}) {
-  const label = String(rec.displayLabel || rec.label || "").toUpperCase();
-
-  if (label === "BUY NOW") return "Buy Now";
-  if (label === "WATCH" || label === "WATCH FOR ENTRY") return "Watch";
-  if (label === "BUY" || label === "AGGRESSIVE BUY" || label === "STARTER POSITION") {
-    return "Buy Now";
-  }
-
-  return "Avoid";
-}
-
 function actionRank(label) {
   const clean = String(label || "").toUpperCase();
 
@@ -253,6 +487,71 @@ function readinessRank(label) {
   if (clean === "SETUP ONLY") return 1;
 
   return 0;
+}
+
+function mapFinalLabel(recommendation = {}, tradeReadiness = {}) {
+  const rawLabel = String(
+    recommendation.displayLabel || recommendation.label || ""
+  ).toUpperCase();
+
+  const readiness = String(tradeReadiness.label || "").toUpperCase();
+
+  const score = Number(
+    recommendation.institutionalScore ||
+      recommendation.score ||
+      recommendation.actionabilityScore ||
+      0
+  );
+
+  const trigger = Number(recommendation.triggerScore || 0);
+  const momentum = Number(recommendation.momentumScore || 0);
+  const expectationRisk = Number(recommendation.expectationRisk || 0);
+  const extensionRisk = Number(recommendation.extensionRisk || 0);
+  const lateChaseRisk = Number(recommendation.lateChaseRisk || 0);
+
+  if (
+    rawLabel === "BUY NOW" ||
+    rawLabel === "BUY" ||
+    rawLabel === "AGGRESSIVE BUY" ||
+    readiness === "TRADE READY"
+  ) {
+    return "Buy Now";
+  }
+
+  if (
+    score >= 82 &&
+    trigger >= 75 &&
+    momentum >= 55 &&
+    expectationRisk <= 65 &&
+    extensionRisk <= 70 &&
+    lateChaseRisk <= 70
+  ) {
+    return "Buy Now";
+  }
+
+  if (
+    rawLabel === "WATCH" ||
+    rawLabel === "WATCH FOR ENTRY" ||
+    rawLabel === "WATCH CLOSELY" ||
+    rawLabel === "STARTER POSITION" ||
+    rawLabel === "EARLY MOMENTUM" ||
+    readiness === "WATCH CLOSELY" ||
+    readiness === "SETUP ONLY"
+  ) {
+    return "Watch";
+  }
+
+  if (
+    score >= 68 ||
+    trigger >= 62 ||
+    momentum >= 58 ||
+    rawLabel.includes("MOMENTUM") ||
+    rawLabel.includes("SETUP")
+  ) {
+    return "Watch";
+  }
+
+  return "Avoid";
 }
 
 function institutionalRank(stock = {}) {
@@ -301,14 +600,15 @@ function enrichQuote(row = {}) {
   }
 
   const recommendationRaw = getRecommendation(normalized);
-  const label = normalizeRecommendationLabel(recommendationRaw);
+  const tradeReadiness = getTradeReadiness(normalized);
+  const finalLabel = mapFinalLabel(recommendationRaw, tradeReadiness);
+
   const recommendation = {
     ...recommendationRaw,
-    label,
-    displayLabel: label,
+    label: finalLabel,
+    displayLabel: finalLabel,
   };
 
-  const tradeReadiness = getTradeReadiness(normalized);
   const technicalSnapshot = buildTechnicalSnapshot(normalized);
   const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
   const score = compositeScore(normalized);
@@ -367,10 +667,9 @@ export default async function handler(req, res) {
     const symbols = uniqueSymbols(selectedTheme.symbols);
 
     if (!symbols.length) {
-      return res.status(200).json({
-        selectedTheme,
-        count: 0,
-        stocks: [],
+      return res.status(502).json({
+        error: "Quote refresh returned no usable stocks.",
+        detail: "The selected theme has no symbols configured.",
       });
     }
 
@@ -379,21 +678,21 @@ export default async function handler(req, res) {
     if (!Array.isArray(quotes) || quotes.length === 0) {
       return res.status(502).json({
         error: "Quote refresh returned no usable stocks.",
-        detail: "FMP returned no quotes for this refresh. Keeping the prior screen is safer than replacing it with blanks.",
+        detail:
+          "FMP returned no quotes for this refresh. Keeping the prior screen is safer than replacing it with blanks.",
       });
     }
 
-    const enriched = Array.isArray(quotes)
-      ? quotes
-          .map(enrichQuote)
-          .filter(Boolean)
-          .filter((stock) => Number.isFinite(Number(stock.price)))
-      : [];
+    const enriched = quotes
+      .map(enrichQuote)
+      .filter(Boolean)
+      .filter((stock) => Number.isFinite(Number(stock.price)));
 
     if (!enriched.length) {
       return res.status(502).json({
         error: "Quote refresh returned no usable stocks.",
-        detail: "Quotes came back from FMP, but none could be scored into usable stock rows.",
+        detail:
+          "Quotes came back from FMP, but none could be scored into usable stock rows.",
       });
     }
 
@@ -405,9 +704,9 @@ export default async function handler(req, res) {
       stocks: sorted,
       meta: {
         historicalConfirmation: false,
-        mode: "fast_quote_screen_recovery",
+        mode: "fast_quote_screen_no_blank_recovery_with_label_mapping",
         requestedSymbols: symbols.length,
-        returnedQuotes: Array.isArray(quotes) ? quotes.length : 0,
+        returnedQuotes: quotes.length,
         scoredQuotes: enriched.length,
       },
     });
