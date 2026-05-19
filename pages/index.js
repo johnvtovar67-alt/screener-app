@@ -137,7 +137,6 @@ function priceChangeClass(stock) {
   return Number(n) >= 0 ? "positive" : "negative";
 }
 
-
 function cleanTradingLevel(value) {
   const n = Number(value);
 
@@ -176,6 +175,19 @@ function stableLevel(value, bufferPct = 0) {
 
   const buffered = n * (1 + bufferPct / 100);
   return cleanTradingLevel(buffered);
+}
+
+function getReferenceTriggerPrice(stock) {
+  const price = getPrice(stock);
+
+  if (!Number.isFinite(price) || price <= 0) return null;
+
+  if (price >= 100) return cleanTradingLevel(price * 1.03);
+  if (price >= 25) return cleanTradingLevel(price * 1.02);
+  if (price >= 10) return cleanTradingLevel(price * 1.03);
+  if (price >= 5) return cleanTradingLevel(price * 1.04);
+
+  return cleanTradingLevel(price * 1.05);
 }
 
 function getRecommendation(stock) {
@@ -233,15 +245,6 @@ function getFreshBreakoutScore(stock) {
     getRecommendation(stock)?.freshBreakoutScore ??
       stock?.freshBreakoutScore ??
       stock?.technicalSnapshot?.freshBreakoutScore ??
-      0
-  );
-}
-
-function getHistoricalScore(stock) {
-  return clampScore(
-    getRecommendation(stock)?.historicalConfirmationScore ??
-      stock?.historicalConfirmationScore ??
-      stock?.technicalSnapshot?.historicalConfirmationScore ??
       0
   );
 }
@@ -343,10 +346,11 @@ function shortContext(stock) {
   if (lower.includes("fresh")) return "Fresh breakout";
   if (lower.includes("early")) return "Early breakout";
   if (lower.includes("extended")) return "Extended";
-  if (lower.includes("trigger")) return "Strong trigger";
-  if (lower.includes("momentum")) return "Momentum building";
+  if (lower.includes("trigger")) return "Trigger improving";
+  if (lower.includes("momentum")) return "Momentum improving";
   if (lower.includes("binary")) return "Binary risk";
   if (lower.includes("resistance")) return "Resistance overhead";
+  if (lower.includes("support")) return "Holding key support";
   if (lower.includes("lagging")) return "Lagging";
   if (lower.includes("trend")) return "Trend issue";
 
@@ -377,7 +381,12 @@ function getContextTone(stock) {
     return "red";
   }
 
-  if (context.includes("improving") || context.includes("building")) {
+  if (
+    context.includes("improving") ||
+    context.includes("building") ||
+    context.includes("support") ||
+    context.includes("trigger")
+  ) {
     return "yellow";
   }
 
@@ -570,7 +579,12 @@ function getActionWhy(stock) {
 function getTriggerNeeded(stock) {
   const action = nonOwnedAction(stock);
   const context = String(getContext(stock)).toLowerCase();
-  const triggerPrice = getEstimatedTriggerPrice(stock);
+  const stableTriggerPrice = getEstimatedTriggerPrice(stock);
+  const referenceTriggerPrice = getReferenceTriggerPrice(stock);
+  const triggerPrice = Number.isFinite(stableTriggerPrice)
+    ? stableTriggerPrice
+    : referenceTriggerPrice;
+  const hasStableTrigger = Number.isFinite(stableTriggerPrice);
   const invalidationPrice = getInvalidationPrice(stock);
   const breakoutAbove20High = getBreakoutAbove20High(stock);
   const volumeRatio = getVolumeRatio20(stock);
@@ -579,7 +593,9 @@ function getTriggerNeeded(stock) {
   const momentum = getMomentumScore(stock);
 
   const triggerText = Number.isFinite(triggerPrice)
-    ? `Needs close above roughly ${money(triggerPrice)}`
+    ? hasStableTrigger
+      ? `Needs close above roughly ${money(triggerPrice)}`
+      : `Needs close above the next clean level near ${money(triggerPrice)}`
     : "Needs clean breakout/close confirmation";
 
   const invalidationText = Number.isFinite(invalidationPrice)
@@ -627,9 +643,7 @@ function getTriggerNeeded(stock) {
 
   if (context.includes("momentum") || momentum < 55) {
     return Number.isFinite(triggerPrice)
-      ? `Needs momentum confirmation and close above roughly ${money(
-          triggerPrice
-        )}.`
+      ? `${triggerText} before buying.`
       : "Needs momentum confirmation before acting.";
   }
 
@@ -1318,9 +1332,9 @@ export default function Home() {
               </div>
 
               <div>
-                <span>Hist Score</span>
+                <span>Trigger Needed</span>
                 <strong className="boxedValue gray">
-                  {getHistoricalScore(snapStock) || "—"}
+                  {getTriggerNeeded(snapStock)}
                 </strong>
               </div>
 
@@ -2013,7 +2027,7 @@ export default function Home() {
 
         .metricGrid {
           display: grid;
-          grid-template-columns: repeat(6, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 10px;
         }
 
@@ -2042,6 +2056,8 @@ export default function Home() {
           padding: 5px 10px;
           font-size: 12px !important;
           font-weight: 900;
+          white-space: normal;
+          line-height: 1.35;
         }
 
         .snapNotes {
