@@ -393,10 +393,13 @@ async function fetchFmpIndividual(symbols = [], apiKey) {
 
       const data = await fetchJson(url);
 
-      if (Array.isArray(data) && data[0]) all.push(data[0]);
-      else if (data && typeof data === "object") all.push(data);
+      if (Array.isArray(data) && data[0]) {
+        all.push(data[0]);
+      } else if (data && typeof data === "object") {
+        all.push(data);
+      }
     } catch {
-      // Skip one-symbol failures so one bad quote does not kill the screen.
+      // Skip one-symbol failures so one bad ticker does not kill the full screen.
     }
   }
 
@@ -437,8 +440,13 @@ function normalizeQuote(row = {}) {
 
   let dayChangePct = toNumber(row.changesPercentage);
 
-  if (dayChangePct == null) dayChangePct = toNumber(row.changePercentage);
-  if (dayChangePct == null) dayChangePct = toNumber(row.changePercent);
+  if (dayChangePct == null) {
+    dayChangePct = toNumber(row.changePercentage);
+  }
+
+  if (dayChangePct == null) {
+    dayChangePct = toNumber(row.changePercent);
+  }
 
   if (dayChangePct == null && price != null && previousClose) {
     dayChangePct = ((price - previousClose) / previousClose) * 100;
@@ -468,196 +476,77 @@ function normalizeQuote(row = {}) {
   };
 }
 
-function cleanLabel(value) {
-  return String(value || "").trim().toUpperCase();
-}
+function displayLabel(stock = {}) {
+  const label = String(
+    stock.recommendation?.displayLabel ||
+      stock.recommendation?.label ||
+      ""
+  ).toUpperCase();
 
-function actionRank(label) {
-  const clean = cleanLabel(label);
-
-  if (clean === "BUY NOW") return 3;
-  if (clean === "WATCH" || clean === "WATCH FOR ENTRY") return 2;
-  if (clean === "AVOID" || clean === "AVOID FOR NOW") return 1;
-
-  return 0;
-}
-
-function readinessRank(label) {
-  const clean = cleanLabel(label);
-
-  if (clean === "TRADE READY") return 3;
-  if (clean === "BUY") return 2;
-  if (clean === "WATCH CLOSELY") return 2;
-  if (clean === "SETUP ONLY") return 1;
-
-  return 0;
-}
-
-function mapFinalLabel(recommendation = {}, tradeReadiness = {}) {
-  const rawLabel = cleanLabel(recommendation.displayLabel || recommendation.label);
-  const readiness = cleanLabel(tradeReadiness.label);
-
-  const score = Number(
-    recommendation.institutionalScore ||
-      recommendation.actionabilityScore ||
-      recommendation.score ||
-      0
-  );
-
-  const trigger = Number(recommendation.triggerScore || 0);
-  const momentum = Number(recommendation.momentumScore || 0);
-  const relativeStrength = Number(recommendation.relativeStrengthScore || 0);
-  const freshBreakout = Number(recommendation.freshBreakoutScore || 0);
-
-  const expectationRisk = Number(recommendation.expectationRisk || 0);
-  const extensionRisk = Number(recommendation.extensionRisk || 0);
-  const lateChaseRisk = Number(recommendation.lateChaseRisk || 0);
-  const riskPenalty = Number(recommendation.riskPenalty || 0);
-
-  const context = cleanLabel(recommendation.context);
-  const reason = cleanLabel(recommendation.reason);
-  const entryNote = cleanLabel(recommendation.entryNote);
-  const combinedText = `${context} ${reason} ${entryNote}`;
-
-  const supportOnly =
-    combinedText.includes("HOLDING KEY SUPPORT") ||
-    combinedText.includes("SUPPORT");
-
-  const weakOrCautious =
-    combinedText.includes("EXTENDED") ||
-    combinedText.includes("RESISTANCE") ||
-    combinedText.includes("LAGGING") ||
-    combinedText.includes("FAILED") ||
-    combinedText.includes("FADING") ||
-    combinedText.includes("BINARY");
-
-  const improving =
-    combinedText.includes("IMPROVING") ||
-    combinedText.includes("REBUILDING") ||
-    combinedText.includes("TRIGGER") ||
-    combinedText.includes("MOMENTUM");
-
-  /*
-    Final label rule:
-    - Buy Now must be truly actionable.
-    - Generic Buy / Trade Ready no longer auto-promotes to Buy Now.
-    - Holding key support alone is Watch, not Buy Now.
-  */
-
-  if (rawLabel === "BUY NOW") {
-    if (
-      trigger >= 78 &&
-      momentum >= 58 &&
-      expectationRisk <= 62 &&
-      extensionRisk <= 62 &&
-      lateChaseRisk <= 62 &&
-      !supportOnly &&
-      !weakOrCautious
-    ) {
-      return "Buy Now";
-    }
-
-    return "Watch";
-  }
-
-  if (
-    score >= 90 &&
-    trigger >= 84 &&
-    momentum >= 68 &&
-    relativeStrength >= 55 &&
-    expectationRisk <= 55 &&
-    extensionRisk <= 55 &&
-    lateChaseRisk <= 55 &&
-    riskPenalty <= 35 &&
-    freshBreakout >= 55 &&
-    !supportOnly &&
-    !weakOrCautious
-  ) {
-    return "Buy Now";
-  }
-
-  if (
-    rawLabel === "BUY" ||
-    rawLabel === "AGGRESSIVE BUY" ||
-    readiness === "TRADE READY"
-  ) {
-    if (
-      score >= 88 &&
-      trigger >= 82 &&
-      momentum >= 65 &&
-      expectationRisk <= 55 &&
-      extensionRisk <= 55 &&
-      lateChaseRisk <= 55 &&
-      !supportOnly &&
-      !weakOrCautious
-    ) {
-      return "Buy Now";
-    }
-
-    return "Watch";
-  }
-
-  if (
-    rawLabel === "WATCH" ||
-    rawLabel === "WATCH FOR ENTRY" ||
-    rawLabel === "WATCH CLOSELY" ||
-    rawLabel === "STARTER POSITION" ||
-    rawLabel === "EARLY MOMENTUM" ||
-    readiness === "WATCH CLOSELY" ||
-    readiness === "SETUP ONLY"
-  ) {
-    return "Watch";
-  }
-
-  if (
-    score >= 72 ||
-    trigger >= 65 ||
-    momentum >= 62 ||
-    improving ||
-    supportOnly
-  ) {
-    return "Watch";
-  }
+  if (label === "BUY NOW") return "Buy Now";
+  if (label === "WATCH" || label === "WATCH FOR ENTRY") return "Watch";
 
   return "Avoid";
 }
 
-function institutionalRank(stock = {}) {
+function actionRank(stock = {}) {
+  const label = displayLabel(stock);
+
+  if (label === "Buy Now") return 3;
+  if (label === "Watch") return 2;
+  return 1;
+}
+
+function readinessRank(stock = {}) {
+  const label = String(stock.tradeReadiness?.label || "").toUpperCase();
+
+  if (label === "TRADE READY") return 3;
+  if (label === "WATCH" || label === "WATCH CLOSELY") return 2;
+  if (label === "SETUP ONLY") return 1;
+
+  return 0;
+}
+
+function safeScore(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function rankScore(stock = {}) {
   const rec = stock.recommendation || {};
-  const tradeReadiness = stock.tradeReadiness || {};
 
-  const score = Number(rec.score || stock.score || 0);
-  const institutionalScore = Number(rec.institutionalScore || score || 0);
-  const actionabilityScore = Number(rec.actionabilityScore || 0);
-  const trigger = Number(rec.triggerScore || stock.triggerScore || 0);
-  const momentum = Number(rec.momentumScore || stock.momentumScore || 0);
-  const relative = Number(rec.relativeStrengthScore || 0);
-  const freshBreakout = Number(rec.freshBreakoutScore || 0);
+  const actionPoints = actionRank(stock) * 100000;
+  const readinessPoints = readinessRank(stock) * 10000;
 
-  const expectationRisk = Number(rec.expectationRisk || 0);
-  const extensionRisk = Number(rec.extensionRisk || 0);
-  const lateChaseRisk = Number(rec.lateChaseRisk || 0);
-  const riskPenalty = Number(rec.riskPenalty || 0);
+  const score = safeScore(rec.score || stock.score);
+  const institutionalScore = safeScore(rec.institutionalScore);
+  const actionabilityScore = safeScore(rec.actionabilityScore);
+  const triggerScore = safeScore(rec.triggerScore || stock.triggerScore);
+  const momentumScore = safeScore(rec.momentumScore || stock.momentumScore);
+  const relativeStrengthScore = safeScore(rec.relativeStrengthScore);
+  const freshBreakoutScore = safeScore(rec.freshBreakoutScore);
 
-  const actionPoints = actionRank(rec.label) * 1000;
-  const readinessPoints = readinessRank(tradeReadiness.label) * 450;
+  const expectationRisk = safeScore(rec.expectationRisk);
+  const extensionRisk = safeScore(rec.extensionRisk);
+  const lateChaseRisk = safeScore(rec.lateChaseRisk);
+  const riskPenalty = safeScore(rec.riskPenalty);
 
-  const setupStrength =
+  const positive =
     institutionalScore * 2.6 +
     actionabilityScore * 2.4 +
-    score * 1.9 +
-    trigger * 3.2 +
-    momentum * 2.2 +
-    relative * 1.2 +
-    freshBreakout * 1.3;
+    score * 1.8 +
+    triggerScore * 3.1 +
+    momentumScore * 2.2 +
+    relativeStrengthScore * 1.4 +
+    freshBreakoutScore * 1.4;
 
-  const riskDrag =
-    expectationRisk * 1.15 +
-    extensionRisk * 1.25 +
+  const negative =
+    expectationRisk * 1.2 +
+    extensionRisk * 1.3 +
     lateChaseRisk * 1.5 +
-    riskPenalty * 0.85;
+    riskPenalty * 0.8;
 
-  return actionPoints + readinessPoints + setupStrength - riskDrag;
+  return actionPoints + readinessPoints + positive - negative;
 }
 
 function enrichQuote(row = {}) {
@@ -667,16 +556,8 @@ function enrichQuote(row = {}) {
     return null;
   }
 
-  const recommendationRaw = getRecommendation(normalized);
+  const recommendation = getRecommendation(normalized);
   const tradeReadiness = getTradeReadiness(normalized);
-  const finalLabel = mapFinalLabel(recommendationRaw, tradeReadiness);
-
-  const recommendation = {
-    ...recommendationRaw,
-    label: finalLabel,
-    displayLabel: finalLabel,
-  };
-
   const technicalSnapshot = buildTechnicalSnapshot(normalized);
   const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
   const score = compositeScore(normalized);
@@ -689,43 +570,46 @@ function enrichQuote(row = {}) {
     tradeReadiness,
     technicalSnapshot,
     fundamentalSnapshot,
-    triggerScore: recommendation.triggerScore,
-    momentumScore: recommendation.momentumScore,
-    expectationRisk: recommendation.expectationRisk,
-    extensionRisk: recommendation.extensionRisk,
-    lateChaseRisk: recommendation.lateChaseRisk,
-    freshBreakoutScore: recommendation.freshBreakoutScore,
-    context: recommendation.context,
-    reason: recommendation.reason,
-    entryNote: recommendation.entryNote,
+
+    triggerScore: recommendation?.triggerScore,
+    momentumScore: recommendation?.momentumScore,
+    expectationRisk: recommendation?.expectationRisk,
+    extensionRisk: recommendation?.extensionRisk,
+    lateChaseRisk: recommendation?.lateChaseRisk,
+    freshBreakoutScore: recommendation?.freshBreakoutScore,
+    context: recommendation?.context,
+    reason: recommendation?.reason,
+    entryNote: recommendation?.entryNote,
+    actionWhy: recommendation?.reason,
+    triggerNeeded: recommendation?.entryNote,
   };
 
   return {
     ...stock,
-    institutionalRank: institutionalRank(stock),
+    institutionalRank: rankScore(stock),
   };
 }
 
 function sortTopIdeas(a, b) {
-  const actionA = actionRank(a.recommendation?.label);
-  const actionB = actionRank(b.recommendation?.label);
-
-  if (actionB !== actionA) return actionB - actionA;
-
   const rankA = Number(a.institutionalRank || 0);
   const rankB = Number(b.institutionalRank || 0);
 
   if (rankB !== rankA) return rankB - rankA;
 
-  const scoreA = Number(a.recommendation?.institutionalScore || a.score || 0);
-  const scoreB = Number(b.recommendation?.institutionalScore || b.score || 0);
+  const scoreA = safeScore(a.recommendation?.actionabilityScore || a.score);
+  const scoreB = safeScore(b.recommendation?.actionabilityScore || b.score);
 
   if (scoreB !== scoreA) return scoreB - scoreA;
 
-  const triggerA = Number(a.recommendation?.triggerScore || 0);
-  const triggerB = Number(b.recommendation?.triggerScore || 0);
+  const triggerA = safeScore(a.recommendation?.triggerScore);
+  const triggerB = safeScore(b.recommendation?.triggerScore);
 
-  return triggerB - triggerA;
+  if (triggerB !== triggerA) return triggerB - triggerA;
+
+  const momentumA = safeScore(a.recommendation?.momentumScore);
+  const momentumB = safeScore(b.recommendation?.momentumScore);
+
+  return momentumB - momentumA;
 }
 
 export default async function handler(req, res) {
@@ -771,8 +655,9 @@ export default async function handler(req, res) {
       count: sorted.length,
       stocks: sorted,
       meta: {
-        historicalConfirmation: false,
-        mode: "fast_quote_screen_no_blank_recovery_stricter_buy_now",
+        mode: "single_brain_gate_model",
+        decisionSource: "lib/scoring.js",
+        top5DoesLabelMapping: false,
         requestedSymbols: symbols.length,
         returnedQuotes: quotes.length,
         scoredQuotes: enriched.length,
