@@ -245,6 +245,7 @@ function getDominantReason(stock) {
   const action = nonOwnedAction(stock);
 
   if (action === "Buy Now") return "Setup confirmed.";
+  if (action === "Starter Only") return "Early entry only; not fully confirmed.";
   if (action === "Watch") return "Setup improving; wait for confirmation.";
 
   return "Setup is not strong enough.";
@@ -264,6 +265,10 @@ function getActionSummary(stock) {
 
   if (action === "Buy Now") {
     return "Actionable now. Setup, trend, confirmation, tradability, and risk are aligned.";
+  }
+
+  if (action === "Starter Only") {
+    return "Small starter only. Use reduced size. Add only if the setup confirms.";
   }
 
   if (action === "Watch") {
@@ -296,6 +301,10 @@ function getTriggerNeeded(stock) {
     return "Buyable now under normal sizing. Use a defined invalidation level and do not chase oversized.";
   }
 
+  if (action === "Starter Only") {
+    return "Starter only. Use 25% to 33% normal size. Add only after confirmation.";
+  }
+
   if (action === "Watch") {
     return "Buy only after a clean breakout with strength.";
   }
@@ -312,6 +321,7 @@ function getStatusLabel(stock, owned = false) {
   const action = displayAction(stock, owned);
 
   if (action === "Buy Now") return "Buy Now";
+  if (action === "Starter Only") return "Starter";
   if (action === "Watch") return "Setup";
   if (action === "Avoid") return "Avoid";
   if (action === "Add") return "Add";
@@ -324,9 +334,14 @@ function getStatusLabel(stock, owned = false) {
 }
 
 function getShortReason(stock) {
+  const action = nonOwnedAction(stock);
   const reason = getDominantReason(stock);
   const lower = reason.toLowerCase();
   const price = extractDollarPrice(reason);
+
+  if (action === "Starter Only") {
+    return "Early entry only; not fully confirmed.";
+  }
 
   if (lower.includes("actual trading volume is thin")) {
     return "Liquidity is thin.";
@@ -341,11 +356,15 @@ function getShortReason(stock) {
   }
 
   if (lower.includes("below the 50-day")) {
-    return price ? `Needs to reclaim the 50-day near ${price}.` : "Needs to reclaim the 50-day.";
+    return price
+      ? `Needs to reclaim the 50-day near ${price}.`
+      : "Needs to reclaim the 50-day.";
   }
 
   if (lower.includes("200-day")) {
-    return price ? `Trend structure needs to improve near ${price}.` : "Trend structure needs to improve.";
+    return price
+      ? `Trend structure needs to improve near ${price}.`
+      : "Trend structure needs to improve.";
   }
 
   if (lower.includes("holding near support")) {
@@ -374,10 +393,12 @@ function getShortReason(stock) {
 function shortContext(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
+  const action = nonOwnedAction(stock);
   const reason = getDominantReason(stock);
   const lower = reason.toLowerCase();
 
-  if (nonOwnedAction(stock) === "Buy Now") return "Buy Now";
+  if (action === "Buy Now") return "Buy Now";
+  if (action === "Starter Only") return "Starter only";
   if (lower.includes("extended")) return "Extended";
   if (lower.includes("breakout")) return "Needs breakout";
   if (lower.includes("trigger confirmation")) return "Needs trigger";
@@ -395,8 +416,11 @@ function shortContext(stock) {
 function getContextTone(stock) {
   if (isCashLikeSymbol(stock)) return "gray";
 
-  const context = String(getDominantReason(stock)).toLowerCase();
   const action = nonOwnedAction(stock);
+  const context = String(getDominantReason(stock)).toLowerCase();
+
+  if (action === "Buy Now") return "green";
+  if (action === "Starter Only") return "orange";
 
   if (
     context.includes("fails") ||
@@ -427,7 +451,6 @@ function getContextTone(stock) {
     return "yellow";
   }
 
-  if (action === "Buy Now") return "green";
   if (action === "Watch") return "yellow";
 
   return "red";
@@ -470,6 +493,7 @@ function nonOwnedAction(stock) {
   ).toUpperCase();
 
   if (label === "BUY NOW") return "Buy Now";
+  if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
 
   if (
     label === "WATCH" ||
@@ -484,7 +508,9 @@ function nonOwnedAction(stock) {
 }
 
 function isActionableTrade(stock) {
-  return nonOwnedAction(stock) === "Buy Now";
+  const action = nonOwnedAction(stock);
+
+  return action === "Buy Now" || action === "Starter Only";
 }
 
 function isNearMiss(stock) {
@@ -542,6 +568,15 @@ function portfolioAction(stock) {
   }
 
   if (
+    buyAction === "Starter Only" &&
+    trendStrong &&
+    !largeGain &&
+    expectationRisk <= 55
+  ) {
+    return "Hold";
+  }
+
+  if (
     trigger >= 85 &&
     momentum === "Strong" &&
     expectationRisk <= 45 &&
@@ -565,10 +600,25 @@ function displayAction(stock, owned = false) {
 function actionClass(action) {
   if (action === "Cash") return "gray";
   if (action === "Buy Now" || action === "Add") return "green";
+  if (action === "Starter Only" || action === "Trim") return "orange";
   if (action === "Watch" || action === "Hold") return "yellow";
-  if (action === "Trim") return "orange";
 
   return "red";
+}
+
+function rankActionable(a, b) {
+  const actionA = nonOwnedAction(a);
+  const actionB = nonOwnedAction(b);
+
+  if (actionA === "Buy Now" && actionB !== "Buy Now") return -1;
+  if (actionB === "Buy Now" && actionA !== "Buy Now") return 1;
+
+  const triggerA = getTrigger(a);
+  const triggerB = getTrigger(b);
+
+  if (triggerB !== triggerA) return triggerB - triggerA;
+
+  return getScore(b) - getScore(a);
 }
 
 function rankNearMiss(a, b) {
@@ -888,8 +938,20 @@ export default function Home() {
   }
 
   const actionableTrades = useMemo(() => {
-    return stocks.filter(isActionableTrade);
+    return stocks.filter(isActionableTrade).sort(rankActionable);
   }, [stocks]);
+
+  const buyNowTrades = useMemo(() => {
+    return actionableTrades.filter(
+      (stock) => nonOwnedAction(stock) === "Buy Now"
+    );
+  }, [actionableTrades]);
+
+  const starterTrades = useMemo(() => {
+    return actionableTrades.filter(
+      (stock) => nonOwnedAction(stock) === "Starter Only"
+    );
+  }, [actionableTrades]);
 
   const nearMisses = useMemo(() => {
     return stocks.filter(isNearMiss).sort(rankNearMiss).slice(0, 5);
@@ -944,8 +1006,7 @@ export default function Home() {
         <div>
           <h1>🧠 Trade Action Screener</h1>
           <p>
-            Shows actionable trades first. If no trades qualify, the answer is
-            no trade.
+            Shows full Buy Now trades first, then smaller Starter Only setups.
           </p>
         </div>
 
@@ -988,8 +1049,8 @@ export default function Home() {
           <div>
             <span>Discipline</span>
             <p>
-              Main grid only shows Buy Now. Watch means interesting but not
-              actionable now.
+              Buy Now means normal-size trade. Starter Only means small tactical
+              position before full confirmation.
             </p>
           </div>
         </div>
@@ -1001,7 +1062,7 @@ export default function Home() {
         <div className="sectionTitle">
           <h2>🔥 Actionable Trades</h2>
           <p>
-            This is the trading screen. No Buy Now means no action right now.
+            Buy Now is full-size eligible. Starter Only is small-size only.
           </p>
         </div>
 
@@ -1015,61 +1076,135 @@ export default function Home() {
           <div className="noTradeBox">
             <h3>No actionable trades right now.</h3>
             <p>
-              The screener found candidates, but none cleared the Buy Now
-              threshold. Stay patient. Cash is a valid position.
+              No Buy Now or Starter Only setups cleared the screen. Stay
+              patient. Cash is a valid position.
             </p>
           </div>
         )}
 
-        {actionableTrades.length > 0 && (
-          <div className="tradeGrid">
-            {actionableTrades.map((stock, idx) => {
-              const action = displayAction(stock, false);
+        {buyNowTrades.length > 0 && (
+          <>
+            <div className="subSectionTitle">
+              <h3>Buy Now</h3>
+              <p>Normal-size trade allowed with defined risk.</p>
+            </div>
 
-              return (
-                <div className="tradeCard" key={`${getSymbol(stock)}-${idx}`}>
-                  <div className="tradeTop">
-                    <div>
-                      <div className="tradeSymbol">{getSymbol(stock)}</div>
-                      <div className="tradeName">{getName(stock)}</div>
+            <div className="tradeGrid">
+              {buyNowTrades.map((stock, idx) => {
+                const action = displayAction(stock, false);
+
+                return (
+                  <div
+                    className="tradeCard"
+                    key={`${getSymbol(stock)}-buy-${idx}`}
+                  >
+                    <div className="tradeTop">
+                      <div>
+                        <div className="tradeSymbol">{getSymbol(stock)}</div>
+                        <div className="tradeName">{getName(stock)}</div>
+                      </div>
+
+                      <span className={`pill largePill ${actionClass(action)}`}>
+                        {action}
+                      </span>
                     </div>
 
-                    <span className={`pill largePill ${actionClass(action)}`}>
-                      {action}
-                    </span>
-                  </div>
-
-                  <div className="tradePriceRow">
-                    <span>{money(getPrice(stock))}</span>
-                    <strong className={priceChangeClass(stock)}>
-                      {priceChangeText(stock)}
-                    </strong>
-                  </div>
-
-                  <div className="tradeMetrics">
-                    <div>
-                      <span>Status</span>
-                      <strong className={`miniMetric ${getContextTone(stock)}`}>
-                        {getStatusLabel(stock)}
+                    <div className="tradePriceRow">
+                      <span>{money(getPrice(stock))}</span>
+                      <strong className={priceChangeClass(stock)}>
+                        {priceChangeText(stock)}
                       </strong>
                     </div>
-                  </div>
 
-                  <div className="tradeNotes">
-                    <div>
-                      <span>Why Actionable</span>
-                      <p>{getShortReason(stock)}</p>
+                    <div className="tradeMetrics">
+                      <div>
+                        <span>Status</span>
+                        <strong className={`miniMetric ${getContextTone(stock)}`}>
+                          {getStatusLabel(stock)}
+                        </strong>
+                      </div>
                     </div>
 
-                    <div>
-                      <span>Trade Instruction</span>
-                      <p>{getTriggerNeeded(stock)}</p>
+                    <div className="tradeNotes">
+                      <div>
+                        <span>Why Actionable</span>
+                        <p>{getShortReason(stock)}</p>
+                      </div>
+
+                      <div>
+                        <span>Trade Instruction</span>
+                        <p>{getTriggerNeeded(stock)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {starterTrades.length > 0 && (
+          <>
+            <div className="subSectionTitle starterTitle">
+              <h3>Starter Only</h3>
+              <p>
+                Small tactical entry only. Use 25% to 33% normal size and add
+                only if it confirms.
+              </p>
+            </div>
+
+            <div className="tradeGrid">
+              {starterTrades.map((stock, idx) => {
+                const action = displayAction(stock, false);
+
+                return (
+                  <div
+                    className="tradeCard starterCard"
+                    key={`${getSymbol(stock)}-starter-${idx}`}
+                  >
+                    <div className="tradeTop">
+                      <div>
+                        <div className="tradeSymbol">{getSymbol(stock)}</div>
+                        <div className="tradeName">{getName(stock)}</div>
+                      </div>
+
+                      <span className={`pill largePill ${actionClass(action)}`}>
+                        {action}
+                      </span>
+                    </div>
+
+                    <div className="tradePriceRow">
+                      <span>{money(getPrice(stock))}</span>
+                      <strong className={priceChangeClass(stock)}>
+                        {priceChangeText(stock)}
+                      </strong>
+                    </div>
+
+                    <div className="tradeMetrics">
+                      <div>
+                        <span>Status</span>
+                        <strong className={`miniMetric ${getContextTone(stock)}`}>
+                          {getStatusLabel(stock)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="tradeNotes">
+                      <div>
+                        <span>Why Actionable</span>
+                        <p>{getShortReason(stock)}</p>
+                      </div>
+
+                      <div>
+                        <span>Trade Instruction</span>
+                        <p>{getTriggerNeeded(stock)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </section>
 
@@ -1555,6 +1690,26 @@ export default function Home() {
           margin-bottom: 14px;
         }
 
+        .subSectionTitle {
+          margin: 8px 0 12px;
+        }
+
+        .subSectionTitle h3 {
+          font-size: 18px;
+          margin-bottom: 2px;
+        }
+
+        .subSectionTitle p {
+          color: #64748b;
+          font-size: 13px;
+        }
+
+        .starterTitle {
+          margin-top: 20px;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 16px;
+        }
+
         .sectionHeader {
           display: flex;
           justify-content: space-between;
@@ -1604,6 +1759,11 @@ export default function Home() {
           padding: 16px;
           min-width: 0;
           overflow: hidden;
+        }
+
+        .starterCard {
+          border-color: #fed7aa;
+          background: #fffaf3;
         }
 
         .tradeTop {
@@ -1678,6 +1838,11 @@ export default function Home() {
           border: 1px solid #e2e8f0;
           border-radius: 12px;
           padding: 10px;
+        }
+
+        .starterCard .tradeNotes div {
+          background: white;
+          border-color: #fed7aa;
         }
 
         .tradeNotes span {
