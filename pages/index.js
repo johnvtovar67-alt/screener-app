@@ -230,21 +230,6 @@ function cleanSentence(text) {
     .trim();
 }
 
-function getContext(stock) {
-  if (isCashLikeSymbol(stock)) return "Cash";
-
-  const rec = getRecommendation(stock);
-
-  return (
-    rec?.dominantReason ??
-    rec?.context ??
-    stock?.dominantReason ??
-    stock?.context ??
-    stock?.technicalSnapshot?.context ??
-    "Setup"
-  );
-}
-
 function getDominantReason(stock) {
   const rec = getRecommendation(stock);
 
@@ -312,10 +297,15 @@ function getTriggerNeeded(stock) {
   }
 
   if (action === "Watch") {
-    return "Watch only. Needs confirmation before buying.";
+    return "Buy only after a clean breakout with strength.";
   }
 
   return "Avoid. Wait for the setup to reset or materially improve.";
+}
+
+function extractDollarPrice(text) {
+  const match = String(text || "").match(/\$[\d,]+(?:\.\d{1,2})?/);
+  return match ? match[0] : "";
 }
 
 function getStatusLabel(stock, owned = false) {
@@ -336,37 +326,46 @@ function getStatusLabel(stock, owned = false) {
 function getShortReason(stock) {
   const reason = getDominantReason(stock);
   const lower = reason.toLowerCase();
+  const price = extractDollarPrice(reason);
 
-  if (lower.includes("breakout confirmation above")) {
-    return reason;
+  if (lower.includes("actual trading volume is thin")) {
+    return "Liquidity is thin.";
   }
 
-  if (lower.includes("trigger confirmation above")) {
-    return reason;
+  if (lower.includes("extended") || lower.includes("do not chase")) {
+    return "Extended; do not chase.";
   }
 
-  if (lower.includes("extended")) {
-    return reason;
+  if (lower.includes("risk elevated")) {
+    return "Risk is elevated.";
   }
 
-  if (lower.includes("50-day")) {
-    return reason;
+  if (lower.includes("below the 50-day")) {
+    return price ? `Needs to reclaim the 50-day near ${price}.` : "Needs to reclaim the 50-day.";
   }
 
   if (lower.includes("200-day")) {
-    return reason;
+    return price ? `Trend structure needs to improve near ${price}.` : "Trend structure needs to improve.";
   }
 
-  if (lower.includes("risk")) {
-    return reason;
+  if (lower.includes("holding near support")) {
+    return "Holding support, but no upside trigger yet.";
   }
 
-  if (lower.includes("support")) {
-    return reason;
+  if (
+    lower.includes("trigger confirmation") ||
+    lower.includes("breakout confirmation") ||
+    lower.includes("clears")
+  ) {
+    return "No clean breakout yet.";
   }
 
-  if (lower.includes("not confirming")) {
-    return reason;
+  if (lower.includes("price action is not confirming")) {
+    return "Price action is not confirming yet.";
+  }
+
+  if (lower.includes("volume data") || lower.includes("liquidity")) {
+    return "Confirm real-time liquidity.";
   }
 
   return reason;
@@ -432,47 +431,6 @@ function getContextTone(stock) {
   if (action === "Watch") return "yellow";
 
   return "red";
-}
-
-function getGateStatusText(value) {
-  if (!value) return "";
-
-  if (typeof value === "string") return value.toUpperCase();
-
-  if (typeof value === "object") {
-    const status = value.status ? String(value.status).toUpperCase() : "";
-    const note = cleanSentence(value.note || value.caution || "");
-
-    if (status && note) return `${status}: ${note}`;
-    if (status) return status;
-    if (note) return note;
-  }
-
-  return "";
-}
-
-function getGateSummaryText(stock) {
-  const rec = getRecommendation(stock);
-  const gateSummary =
-    rec?.gateSummary ?? stock?.gateSummary ?? stock?.technicalSnapshot?.gateSummary;
-
-  if (!gateSummary) return "";
-
-  const parts = [
-    ["Tradability", gateSummary.tradability],
-    ["Trend", gateSummary.trend],
-    ["Trigger", gateSummary.trigger],
-    ["Confirm", gateSummary.confirmation],
-    ["Risk", gateSummary.risk],
-  ];
-
-  return parts
-    .map(([label, value]) => {
-      const text = getGateStatusText(value);
-      return text ? `${label}: ${text}` : "";
-    })
-    .filter(Boolean)
-    .join(" · ");
 }
 
 function calculatePosition(position, livePrice) {
