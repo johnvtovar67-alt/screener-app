@@ -238,6 +238,13 @@ function getContext(stock) {
   );
 }
 
+function cleanSentence(text) {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+\./g, ".")
+    .trim();
+}
+
 function shortContext(stock) {
   const rec = getRecommendation(stock);
   const direct = cleanSentence(rec?.dominantReason ?? stock?.dominantReason);
@@ -248,6 +255,12 @@ function shortContext(stock) {
   const lower = text.toLowerCase();
 
   if (text.length <= 32) return text;
+  if (lower.includes("confirm real-time liquidity")) {
+    return "Confirm liquidity";
+  }
+  if (lower.includes("edge is not strong enough")) {
+    return "Setup improving";
+  }
   if (lower.includes("volume data incomplete")) {
     return "Volume data incomplete";
   }
@@ -306,7 +319,8 @@ function getContextTone(stock) {
     context.includes("confirmation") ||
     context.includes("quote-only") ||
     context.includes("volume data incomplete") ||
-    context.includes("breakout")
+    context.includes("breakout") ||
+    context.includes("liquidity")
   ) {
     return "yellow";
   }
@@ -315,13 +329,6 @@ function getContextTone(stock) {
   if (action === "Watch") return "yellow";
 
   return "red";
-}
-
-function cleanSentence(text) {
-  return String(text || "")
-    .replace(/\s+/g, " ")
-    .replace(/\s+\./g, ".")
-    .trim();
 }
 
 function getDominantReason(stock) {
@@ -1119,7 +1126,7 @@ export default function Home() {
                         </span>
                       </td>
                       <td className="textCell">
-                        <strong>{getDominantReason(stock)}</strong>
+                        <p>{getDominantReason(stock)}</p>
                         <p className="subText">{getActionSummary(stock)}</p>
                       </td>
                       <td className="textCell mutedText">
@@ -1174,7 +1181,7 @@ export default function Home() {
                         </span>
                       </td>
                       <td className="textCell">
-                        <strong>{getDominantReason(stock)}</strong>
+                        <p>{getDominantReason(stock)}</p>
                         <p className="subText">{getActionSummary(stock)}</p>
                       </td>
                       <td className="textCell mutedText">
@@ -1760,16 +1767,11 @@ export default function Home() {
           color: #334155;
         }
 
-        .textCell strong {
-          display: block;
-          margin-bottom: 4px;
-          color: #0f172a;
-        }
-
         .subText {
           color: #64748b;
           font-size: 13px;
           line-height: 1.35;
+          margin-top: 4px;
         }
 
         .mutedText {
