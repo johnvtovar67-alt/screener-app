@@ -223,6 +223,13 @@ function getMomentumText(stock) {
   return "Weak";
 }
 
+function cleanSentence(text) {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+\./g, ".")
+    .trim();
+}
+
 function getContext(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
@@ -238,50 +245,150 @@ function getContext(stock) {
   );
 }
 
-function cleanSentence(text) {
-  return String(text || "")
-    .replace(/\s+/g, " ")
-    .replace(/\s+\./g, ".")
-    .trim();
-}
-
-function shortContext(stock) {
+function getDominantReason(stock) {
   const rec = getRecommendation(stock);
-  const direct = cleanSentence(rec?.dominantReason ?? stock?.dominantReason);
+
+  const direct = cleanSentence(
+    rec?.dominantReason ??
+      stock?.dominantReason ??
+      rec?.blockedReason ??
+      stock?.blockedReason
+  );
 
   if (direct) return direct;
 
-  const text = String(getContext(stock));
-  const lower = text.toLowerCase();
+  const action = nonOwnedAction(stock);
 
-  if (text.length <= 32) return text;
-  if (lower.includes("confirm real-time liquidity")) {
-    return "Confirm liquidity";
+  if (action === "Buy Now") return "Setup confirmed.";
+  if (action === "Watch") return "Setup improving; wait for confirmation.";
+
+  return "Setup is not strong enough.";
+}
+
+function getActionSummary(stock) {
+  const rec = getRecommendation(stock);
+
+  const direct = cleanSentence(
+    rec?.actionSummary ?? stock?.actionSummary ?? stock?.summary
+  );
+
+  if (direct) return direct;
+
+  const action = nonOwnedAction(stock);
+  const dominantReason = getDominantReason(stock);
+
+  if (action === "Buy Now") {
+    return "Actionable now. Setup, trend, confirmation, tradability, and risk are aligned.";
   }
-  if (lower.includes("edge is not strong enough")) {
-    return "Setup improving";
+
+  if (action === "Watch") {
+    return dominantReason;
   }
-  if (lower.includes("volume data incomplete")) {
-    return "Volume data incomplete";
+
+  return `Avoid for now. ${dominantReason}`;
+}
+
+function getActionWhy(stock) {
+  const rec = getRecommendation(stock);
+  const direct = cleanSentence(stock?.actionWhy || rec?.reason || stock?.reason);
+
+  if (direct) return direct;
+
+  return getActionSummary(stock);
+}
+
+function getTriggerNeeded(stock) {
+  const rec = getRecommendation(stock);
+  const direct = cleanSentence(
+    stock?.triggerNeeded || rec?.entryNote || stock?.entryNote
+  );
+
+  if (direct) return direct;
+
+  const action = nonOwnedAction(stock);
+
+  if (action === "Buy Now") {
+    return "Buyable now under normal sizing. Use a defined invalidation level and do not chase oversized.";
   }
-  if (lower.includes("breakout")) return "Needs breakout";
+
+  if (action === "Watch") {
+    return "Watch only. Needs confirmation before buying.";
+  }
+
+  return "Avoid. Wait for the setup to reset or materially improve.";
+}
+
+function getStatusLabel(stock, owned = false) {
+  const action = displayAction(stock, owned);
+
+  if (action === "Buy Now") return "Buy Now";
+  if (action === "Watch") return "Setup";
+  if (action === "Avoid") return "Avoid";
+  if (action === "Add") return "Add";
+  if (action === "Hold") return "Hold";
+  if (action === "Trim") return "Trim";
+  if (action === "Exit") return "Exit";
+  if (action === "Cash") return "Cash";
+
+  return action || "Setup";
+}
+
+function getShortReason(stock) {
+  const reason = getDominantReason(stock);
+  const lower = reason.toLowerCase();
+
+  if (lower.includes("breakout confirmation above")) {
+    return reason;
+  }
+
+  if (lower.includes("trigger confirmation above")) {
+    return reason;
+  }
+
+  if (lower.includes("extended")) {
+    return reason;
+  }
+
+  if (lower.includes("50-day")) {
+    return reason;
+  }
+
+  if (lower.includes("200-day")) {
+    return reason;
+  }
+
+  if (lower.includes("risk")) {
+    return reason;
+  }
+
+  if (lower.includes("support")) {
+    return reason;
+  }
+
+  if (lower.includes("not confirming")) {
+    return reason;
+  }
+
+  return reason;
+}
+
+function shortContext(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash";
+
+  const reason = getDominantReason(stock);
+  const lower = reason.toLowerCase();
+
+  if (nonOwnedAction(stock) === "Buy Now") return "Buy Now";
   if (lower.includes("extended")) return "Extended";
-  if (lower.includes("below 50")) return "Below 50dma";
+  if (lower.includes("breakout")) return "Needs breakout";
+  if (lower.includes("trigger confirmation")) return "Needs trigger";
+  if (lower.includes("50-day")) return "Trend issue";
+  if (lower.includes("200-day")) return "Trend issue";
   if (lower.includes("risk")) return "Risk elevated";
   if (lower.includes("support")) return "Holding support";
-  if (lower.includes("confirmed")) return "Confirmed breakout";
-  if (lower.includes("clean")) return "Clean entry";
-  if (lower.includes("quote-only")) return "Quote-only setup";
-  if (lower.includes("improving")) return "Improving setup";
-  if (lower.includes("fresh")) return "Fresh breakout";
-  if (lower.includes("early")) return "Early breakout";
-  if (lower.includes("trigger")) return "Trigger improving";
-  if (lower.includes("momentum")) return "Momentum improving";
-  if (lower.includes("binary")) return "Binary event risk";
-  if (lower.includes("resistance")) return "Resistance overhead";
-  if (lower.includes("lagging")) return "Lagging";
-  if (lower.includes("trend")) return "Trend rebuilding";
-  if (lower.includes("confirmation")) return "Needs confirmation";
+  if (lower.includes("not confirming")) return "No confirmation";
+  if (lower.includes("liquidity")) return "Check liquidity";
+  if (lower.includes("volume")) return "Data caution";
 
   return "Setup";
 }
@@ -289,11 +396,7 @@ function shortContext(stock) {
 function getContextTone(stock) {
   if (isCashLikeSymbol(stock)) return "gray";
 
-  const rec = getRecommendation(stock);
-
-  if (rec?.contextTone) return rec.contextTone;
-
-  const context = String(getContext(stock)).toLowerCase();
+  const context = String(getDominantReason(stock)).toLowerCase();
   const action = nonOwnedAction(stock);
 
   if (
@@ -329,80 +432,6 @@ function getContextTone(stock) {
   if (action === "Watch") return "yellow";
 
   return "red";
-}
-
-function getDominantReason(stock) {
-  const rec = getRecommendation(stock);
-
-  const direct = cleanSentence(
-    rec?.dominantReason ??
-      stock?.dominantReason ??
-      rec?.blockedReason ??
-      stock?.blockedReason
-  );
-
-  if (direct) return direct;
-
-  const action = nonOwnedAction(stock);
-  const context = shortContext(stock);
-
-  if (action === "Buy Now") return "Setup confirmed.";
-  if (action === "Watch") return context;
-
-  return context || "Setup is not strong enough.";
-}
-
-function getActionSummary(stock) {
-  const rec = getRecommendation(stock);
-
-  const direct = cleanSentence(
-    rec?.actionSummary ?? stock?.actionSummary ?? stock?.summary
-  );
-
-  if (direct) return direct;
-
-  const action = nonOwnedAction(stock);
-  const dominantReason = getDominantReason(stock);
-
-  if (action === "Buy Now") {
-    return "Actionable now. Setup, trend, confirmation, tradability, and risk are aligned.";
-  }
-
-  if (action === "Watch") {
-    return `Close, but not actionable yet. ${dominantReason}`;
-  }
-
-  return `Avoid for now. ${dominantReason}`;
-}
-
-function getActionWhy(stock) {
-  const rec = getRecommendation(stock);
-  const direct = cleanSentence(stock?.actionWhy || rec?.reason || stock?.reason);
-
-  if (direct) return direct;
-
-  return getActionSummary(stock);
-}
-
-function getTriggerNeeded(stock) {
-  const rec = getRecommendation(stock);
-  const direct = cleanSentence(
-    stock?.triggerNeeded || rec?.entryNote || stock?.entryNote
-  );
-
-  if (direct) return direct;
-
-  const action = nonOwnedAction(stock);
-
-  if (action === "Buy Now") {
-    return "Buyable now under normal sizing. Use a defined invalidation level and do not chase oversized.";
-  }
-
-  if (action === "Watch") {
-    return "Watch only. Needs confirmation before buying.";
-  }
-
-  return "Avoid. Wait for the setup to reset or materially improve.";
 }
 
 function getGateStatusText(value) {
@@ -1061,17 +1090,17 @@ export default function Home() {
 
                   <div className="tradeMetrics">
                     <div>
-                      <span>Decision Driver</span>
+                      <span>Status</span>
                       <strong className={`miniMetric ${getContextTone(stock)}`}>
-                        {shortContext(stock)}
+                        {getStatusLabel(stock)}
                       </strong>
                     </div>
                   </div>
 
                   <div className="tradeNotes">
                     <div>
-                      <span>Action Summary</span>
-                      <p>{getActionSummary(stock)}</p>
+                      <span>Why Actionable</span>
+                      <p>{getShortReason(stock)}</p>
                     </div>
 
                     <div>
@@ -1122,13 +1151,10 @@ export default function Home() {
                       </td>
                       <td>
                         <span className={`pill ${getContextTone(stock)}`}>
-                          {shortContext(stock)}
+                          {getStatusLabel(stock)}
                         </span>
                       </td>
-                      <td className="textCell">
-                        <p>{getDominantReason(stock)}</p>
-                        <p className="subText">{getActionSummary(stock)}</p>
-                      </td>
+                      <td className="textCell">{getShortReason(stock)}</td>
                       <td className="textCell mutedText">
                         {getTriggerNeeded(stock)}
                       </td>
@@ -1177,13 +1203,10 @@ export default function Home() {
                       </td>
                       <td>
                         <span className={`pill ${getContextTone(stock)}`}>
-                          {shortContext(stock)}
+                          {getStatusLabel(stock)}
                         </span>
                       </td>
-                      <td className="textCell">
-                        <p>{getDominantReason(stock)}</p>
-                        <p className="subText">{getActionSummary(stock)}</p>
-                      </td>
+                      <td className="textCell">{getShortReason(stock)}</td>
                       <td className="textCell mutedText">
                         {getTriggerNeeded(stock)}
                       </td>
@@ -1262,9 +1285,9 @@ export default function Home() {
               </div>
 
               <div>
-                <span>Decision Driver</span>
+                <span>Status</span>
                 <strong className={`boxedValue ${getContextTone(snapStock)}`}>
-                  {getDominantReason(snapStock)}
+                  {getStatusLabel(snapStock)}
                 </strong>
               </div>
 
@@ -1278,8 +1301,8 @@ export default function Home() {
 
             <div className="snapNotes">
               <div>
-                <span>Action Summary</span>
-                <p>{getActionSummary(snapStock)}</p>
+                <span>What Is Missing</span>
+                <p>{getShortReason(snapStock)}</p>
               </div>
 
               <div>
@@ -1761,17 +1784,10 @@ export default function Home() {
         }
 
         .textCell {
-          max-width: 520px;
+          max-width: 540px;
           white-space: normal;
           line-height: 1.35;
           color: #334155;
-        }
-
-        .subText {
-          color: #64748b;
-          font-size: 13px;
-          line-height: 1.35;
-          margin-top: 4px;
         }
 
         .mutedText {
