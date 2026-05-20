@@ -138,7 +138,11 @@ function priceChangeClass(stock) {
 }
 
 function getRecommendation(stock) {
-  return stock?.recommendation ?? {};
+  const rec = stock?.recommendation;
+
+  if (rec && typeof rec === "object") return rec;
+
+  return {};
 }
 
 function getScore(stock) {
@@ -172,8 +176,11 @@ function getMomentumScore(stock) {
 function getExpectationRisk(stock) {
   return clampScore(
     getRecommendation(stock)?.expectationRisk ??
+      getRecommendation(stock)?.riskScore ??
       stock?.expectationRisk ??
+      stock?.riskScore ??
       stock?.technicalSnapshot?.expectationRisk ??
+      stock?.technicalSnapshot?.riskScore ??
       0
   );
 }
@@ -201,6 +208,7 @@ function getMomentumText(stock) {
 
   const rec = getRecommendation(stock);
 
+  if (rec?.momentum) return rec.momentum;
   if (rec?.momentumLabel) return rec.momentumLabel;
   if (stock?.momentumLabel) return stock.momentumLabel;
   if (stock?.technicalSnapshot?.momentumLabel) {
@@ -218,8 +226,12 @@ function getMomentumText(stock) {
 function getContext(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
+  const rec = getRecommendation(stock);
+
   return (
-    getRecommendation(stock)?.context ??
+    rec?.dominantReason ??
+    rec?.context ??
+    stock?.dominantReason ??
     stock?.context ??
     stock?.technicalSnapshot?.context ??
     "Setup"
@@ -227,22 +239,33 @@ function getContext(stock) {
 }
 
 function shortContext(stock) {
+  const rec = getRecommendation(stock);
+  const direct = cleanSentence(rec?.dominantReason ?? stock?.dominantReason);
+
+  if (direct) return direct;
+
   const text = String(getContext(stock));
   const lower = text.toLowerCase();
 
-  if (text.length <= 28) return text;
+  if (text.length <= 32) return text;
+  if (lower.includes("volume data incomplete")) {
+    return "Volume data incomplete";
+  }
+  if (lower.includes("breakout")) return "Needs breakout";
+  if (lower.includes("extended")) return "Extended";
+  if (lower.includes("below 50")) return "Below 50dma";
+  if (lower.includes("risk")) return "Risk elevated";
+  if (lower.includes("support")) return "Holding support";
   if (lower.includes("confirmed")) return "Confirmed breakout";
   if (lower.includes("clean")) return "Clean entry";
   if (lower.includes("quote-only")) return "Quote-only setup";
   if (lower.includes("improving")) return "Improving setup";
   if (lower.includes("fresh")) return "Fresh breakout";
   if (lower.includes("early")) return "Early breakout";
-  if (lower.includes("extended")) return "Extended";
   if (lower.includes("trigger")) return "Trigger improving";
   if (lower.includes("momentum")) return "Momentum improving";
   if (lower.includes("binary")) return "Binary event risk";
   if (lower.includes("resistance")) return "Resistance overhead";
-  if (lower.includes("support")) return "Holding key support";
   if (lower.includes("lagging")) return "Lagging";
   if (lower.includes("trend")) return "Trend rebuilding";
   if (lower.includes("confirmation")) return "Needs confirmation";
@@ -268,7 +291,9 @@ function getContextTone(stock) {
     context.includes("risk") ||
     context.includes("resistance") ||
     context.includes("fading") ||
-    context.includes("binary")
+    context.includes("binary") ||
+    context.includes("do not chase") ||
+    context.includes("below 50")
   ) {
     return action === "Watch" ? "yellow" : "red";
   }
@@ -279,7 +304,9 @@ function getContextTone(stock) {
     context.includes("support") ||
     context.includes("trigger") ||
     context.includes("confirmation") ||
-    context.includes("quote-only")
+    context.includes("quote-only") ||
+    context.includes("volume data incomplete") ||
+    context.includes("breakout")
   ) {
     return "yellow";
   }
@@ -297,24 +324,57 @@ function cleanSentence(text) {
     .trim();
 }
 
-function getActionWhy(stock) {
+function getDominantReason(stock) {
   const rec = getRecommendation(stock);
-  const direct = cleanSentence(stock?.actionWhy || rec?.reason || stock?.reason);
+
+  const direct = cleanSentence(
+    rec?.dominantReason ??
+      stock?.dominantReason ??
+      rec?.blockedReason ??
+      stock?.blockedReason
+  );
 
   if (direct) return direct;
 
   const action = nonOwnedAction(stock);
   const context = shortContext(stock);
 
+  if (action === "Buy Now") return "Setup confirmed.";
+  if (action === "Watch") return context;
+
+  return context || "Setup is not strong enough.";
+}
+
+function getActionSummary(stock) {
+  const rec = getRecommendation(stock);
+
+  const direct = cleanSentence(
+    rec?.actionSummary ?? stock?.actionSummary ?? stock?.summary
+  );
+
+  if (direct) return direct;
+
+  const action = nonOwnedAction(stock);
+  const dominantReason = getDominantReason(stock);
+
   if (action === "Buy Now") {
-    return `Buy Now: ${context}. Core gates passed; use normal sizing and a defined invalidation level.`;
+    return "Actionable now. Setup, trend, confirmation, tradability, and risk are aligned.";
   }
 
   if (action === "Watch") {
-    return `Watch: ${context}. Interesting but not actionable now.`;
+    return `Close, but not actionable yet. ${dominantReason}`;
   }
 
-  return `Avoid: ${context}. No trade right now.`;
+  return `Avoid for now. ${dominantReason}`;
+}
+
+function getActionWhy(stock) {
+  const rec = getRecommendation(stock);
+  const direct = cleanSentence(stock?.actionWhy || rec?.reason || stock?.reason);
+
+  if (direct) return direct;
+
+  return getActionSummary(stock);
 }
 
 function getTriggerNeeded(stock) {
@@ -338,6 +398,23 @@ function getTriggerNeeded(stock) {
   return "Avoid. Wait for the setup to reset or materially improve.";
 }
 
+function getGateStatusText(value) {
+  if (!value) return "";
+
+  if (typeof value === "string") return value.toUpperCase();
+
+  if (typeof value === "object") {
+    const status = value.status ? String(value.status).toUpperCase() : "";
+    const note = cleanSentence(value.note || value.caution || "");
+
+    if (status && note) return `${status}: ${note}`;
+    if (status) return status;
+    if (note) return note;
+  }
+
+  return "";
+}
+
 function getGateSummaryText(stock) {
   const rec = getRecommendation(stock);
   const gateSummary =
@@ -354,8 +431,11 @@ function getGateSummaryText(stock) {
   ];
 
   return parts
-    .filter(([, value]) => value)
-    .map(([label, value]) => `${label}: ${String(value).toUpperCase()}`)
+    .map(([label, value]) => {
+      const text = getGateStatusText(value);
+      return text ? `${label}: ${text}` : "";
+    })
+    .filter(Boolean)
     .join(" · ");
 }
 
@@ -384,10 +464,27 @@ function nonOwnedAction(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
   const rec = getRecommendation(stock);
-  const label = String(rec?.displayLabel ?? rec?.label ?? "").toUpperCase();
+  const label = String(
+    rec?.displayLabel ??
+      rec?.label ??
+      rec?.recommendation ??
+      rec?.tradeAction ??
+      stock?.displayLabel ??
+      stock?.label ??
+      stock?.recommendation ??
+      ""
+  ).toUpperCase();
 
   if (label === "BUY NOW") return "Buy Now";
-  if (label === "WATCH" || label === "WATCH FOR ENTRY") return "Watch";
+
+  if (
+    label === "WATCH" ||
+    label === "WATCH FOR ENTRY" ||
+    label === "NEAR MISS" ||
+    label === "SETUP"
+  ) {
+    return "Watch";
+  }
 
   return "Avoid";
 }
@@ -934,7 +1031,6 @@ export default function Home() {
           <div className="tradeGrid">
             {actionableTrades.map((stock, idx) => {
               const action = displayAction(stock, false);
-              const gateText = getGateSummaryText(stock);
 
               return (
                 <div className="tradeCard" key={`${getSymbol(stock)}-${idx}`}>
@@ -958,7 +1054,7 @@ export default function Home() {
 
                   <div className="tradeMetrics">
                     <div>
-                      <span>Context</span>
+                      <span>Decision Driver</span>
                       <strong className={`miniMetric ${getContextTone(stock)}`}>
                         {shortContext(stock)}
                       </strong>
@@ -967,21 +1063,14 @@ export default function Home() {
 
                   <div className="tradeNotes">
                     <div>
-                      <span>Why actionable</span>
-                      <p>{getActionWhy(stock)}</p>
+                      <span>Action Summary</span>
+                      <p>{getActionSummary(stock)}</p>
                     </div>
 
                     <div>
-                      <span>Trade instruction</span>
+                      <span>Trade Instruction</span>
                       <p>{getTriggerNeeded(stock)}</p>
                     </div>
-
-                    {gateText && (
-                      <div>
-                        <span>Gate check</span>
-                        <p>{gateText}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               );
@@ -1010,7 +1099,6 @@ export default function Home() {
                   <th>Status</th>
                   <th>What Is Missing</th>
                   <th>Trigger Needed</th>
-                  <th>Gate Check</th>
                 </tr>
               </thead>
 
@@ -1030,12 +1118,12 @@ export default function Home() {
                           {shortContext(stock)}
                         </span>
                       </td>
-                      <td className="textCell">{getActionWhy(stock)}</td>
-                      <td className="textCell mutedText">
-                        {getTriggerNeeded(stock)}
+                      <td className="textCell">
+                        <strong>{getDominantReason(stock)}</strong>
+                        <p className="subText">{getActionSummary(stock)}</p>
                       </td>
                       <td className="textCell mutedText">
-                        {getGateSummaryText(stock) || "—"}
+                        {getTriggerNeeded(stock)}
                       </td>
                     </tr>
                   );
@@ -1066,7 +1154,6 @@ export default function Home() {
                   <th>Status</th>
                   <th>Why Not Ready</th>
                   <th>Trigger / Fix Needed</th>
-                  <th>Gate Check</th>
                 </tr>
               </thead>
 
@@ -1086,12 +1173,12 @@ export default function Home() {
                           {shortContext(stock)}
                         </span>
                       </td>
-                      <td className="textCell">{getActionWhy(stock)}</td>
-                      <td className="textCell mutedText">
-                        {getTriggerNeeded(stock)}
+                      <td className="textCell">
+                        <strong>{getDominantReason(stock)}</strong>
+                        <p className="subText">{getActionSummary(stock)}</p>
                       </td>
                       <td className="textCell mutedText">
-                        {getGateSummaryText(stock) || "—"}
+                        {getTriggerNeeded(stock)}
                       </td>
                     </tr>
                   );
@@ -1168,29 +1255,29 @@ export default function Home() {
               </div>
 
               <div>
-                <span>Instruction</span>
-                <strong className="boxedValue gray">
-                  {getTriggerNeeded(snapStock)}
+                <span>Decision Driver</span>
+                <strong className={`boxedValue ${getContextTone(snapStock)}`}>
+                  {getDominantReason(snapStock)}
                 </strong>
               </div>
 
               <div>
-                <span>Context</span>
-                <strong className={`boxedValue ${getContextTone(snapStock)}`}>
-                  {getContext(snapStock)}
+                <span>Instruction</span>
+                <strong className="boxedValue gray">
+                  {getTriggerNeeded(snapStock)}
                 </strong>
               </div>
             </div>
 
             <div className="snapNotes">
               <div>
-                <span>Action Read</span>
-                <p>{getActionWhy(snapStock)}</p>
+                <span>Action Summary</span>
+                <p>{getActionSummary(snapStock)}</p>
               </div>
 
               <div>
-                <span>Gate Check</span>
-                <p>{getGateSummaryText(snapStock) || "Gate data unavailable."}</p>
+                <span>Action Read</span>
+                <p>{getActionWhy(snapStock)}</p>
               </div>
             </div>
           </div>
@@ -1352,7 +1439,7 @@ export default function Home() {
                         <span className={`pill ${getContextTone(stock)}`}>
                           {isCashLikeSymbol(stock)
                             ? "Cash position"
-                            : getContext(stock)}
+                            : shortContext(stock)}
                         </span>
                       </td>
                     </tr>
@@ -1667,10 +1754,22 @@ export default function Home() {
         }
 
         .textCell {
-          max-width: 460px;
+          max-width: 520px;
           white-space: normal;
           line-height: 1.35;
           color: #334155;
+        }
+
+        .textCell strong {
+          display: block;
+          margin-bottom: 4px;
+          color: #0f172a;
+        }
+
+        .subText {
+          color: #64748b;
+          font-size: 13px;
+          line-height: 1.35;
         }
 
         .mutedText {
