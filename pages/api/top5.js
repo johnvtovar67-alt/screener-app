@@ -396,7 +396,7 @@ async function fetchFmpIndividual(symbols = [], apiKey) {
       if (Array.isArray(data) && data[0]) all.push(data[0]);
       else if (data && typeof data === "object") all.push(data);
     } catch {
-      // Skip symbol-level failures so one bad ticker does not kill the screen.
+      // Skip one-symbol failures so one bad quote does not kill the screen.
     }
   }
 
@@ -468,8 +468,12 @@ function normalizeQuote(row = {}) {
   };
 }
 
+function cleanLabel(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
 function actionRank(label) {
-  const clean = String(label || "").toUpperCase();
+  const clean = cleanLabel(label);
 
   if (clean === "BUY NOW") return 3;
   if (clean === "WATCH" || clean === "WATCH FOR ENTRY") return 2;
@@ -479,10 +483,10 @@ function actionRank(label) {
 }
 
 function readinessRank(label) {
-  const clean = String(label || "").toUpperCase();
+  const clean = cleanLabel(label);
 
   if (clean === "TRADE READY") return 3;
-  if (clean === "BUY") return 3;
+  if (clean === "BUY") return 2;
   if (clean === "WATCH CLOSELY") return 2;
   if (clean === "SETUP ONLY") return 1;
 
@@ -490,43 +494,107 @@ function readinessRank(label) {
 }
 
 function mapFinalLabel(recommendation = {}, tradeReadiness = {}) {
-  const rawLabel = String(
-    recommendation.displayLabel || recommendation.label || ""
-  ).toUpperCase();
-
-  const readiness = String(tradeReadiness.label || "").toUpperCase();
+  const rawLabel = cleanLabel(recommendation.displayLabel || recommendation.label);
+  const readiness = cleanLabel(tradeReadiness.label);
 
   const score = Number(
     recommendation.institutionalScore ||
-      recommendation.score ||
       recommendation.actionabilityScore ||
+      recommendation.score ||
       0
   );
 
   const trigger = Number(recommendation.triggerScore || 0);
   const momentum = Number(recommendation.momentumScore || 0);
+  const relativeStrength = Number(recommendation.relativeStrengthScore || 0);
+  const freshBreakout = Number(recommendation.freshBreakoutScore || 0);
+
   const expectationRisk = Number(recommendation.expectationRisk || 0);
   const extensionRisk = Number(recommendation.extensionRisk || 0);
   const lateChaseRisk = Number(recommendation.lateChaseRisk || 0);
+  const riskPenalty = Number(recommendation.riskPenalty || 0);
+
+  const context = cleanLabel(recommendation.context);
+  const reason = cleanLabel(recommendation.reason);
+  const entryNote = cleanLabel(recommendation.entryNote);
+  const combinedText = `${context} ${reason} ${entryNote}`;
+
+  const supportOnly =
+    combinedText.includes("HOLDING KEY SUPPORT") ||
+    combinedText.includes("SUPPORT");
+
+  const weakOrCautious =
+    combinedText.includes("EXTENDED") ||
+    combinedText.includes("RESISTANCE") ||
+    combinedText.includes("LAGGING") ||
+    combinedText.includes("FAILED") ||
+    combinedText.includes("FADING") ||
+    combinedText.includes("BINARY");
+
+  const improving =
+    combinedText.includes("IMPROVING") ||
+    combinedText.includes("REBUILDING") ||
+    combinedText.includes("TRIGGER") ||
+    combinedText.includes("MOMENTUM");
+
+  /*
+    Final label rule:
+    - Buy Now must be truly actionable.
+    - Generic Buy / Trade Ready no longer auto-promotes to Buy Now.
+    - Holding key support alone is Watch, not Buy Now.
+  */
+
+  if (rawLabel === "BUY NOW") {
+    if (
+      trigger >= 78 &&
+      momentum >= 58 &&
+      expectationRisk <= 62 &&
+      extensionRisk <= 62 &&
+      lateChaseRisk <= 62 &&
+      !supportOnly &&
+      !weakOrCautious
+    ) {
+      return "Buy Now";
+    }
+
+    return "Watch";
+  }
 
   if (
-    rawLabel === "BUY NOW" ||
-    rawLabel === "BUY" ||
-    rawLabel === "AGGRESSIVE BUY" ||
-    readiness === "TRADE READY"
+    score >= 90 &&
+    trigger >= 84 &&
+    momentum >= 68 &&
+    relativeStrength >= 55 &&
+    expectationRisk <= 55 &&
+    extensionRisk <= 55 &&
+    lateChaseRisk <= 55 &&
+    riskPenalty <= 35 &&
+    freshBreakout >= 55 &&
+    !supportOnly &&
+    !weakOrCautious
   ) {
     return "Buy Now";
   }
 
   if (
-    score >= 82 &&
-    trigger >= 75 &&
-    momentum >= 55 &&
-    expectationRisk <= 65 &&
-    extensionRisk <= 70 &&
-    lateChaseRisk <= 70
+    rawLabel === "BUY" ||
+    rawLabel === "AGGRESSIVE BUY" ||
+    readiness === "TRADE READY"
   ) {
-    return "Buy Now";
+    if (
+      score >= 88 &&
+      trigger >= 82 &&
+      momentum >= 65 &&
+      expectationRisk <= 55 &&
+      extensionRisk <= 55 &&
+      lateChaseRisk <= 55 &&
+      !supportOnly &&
+      !weakOrCautious
+    ) {
+      return "Buy Now";
+    }
+
+    return "Watch";
   }
 
   if (
@@ -542,11 +610,11 @@ function mapFinalLabel(recommendation = {}, tradeReadiness = {}) {
   }
 
   if (
-    score >= 68 ||
-    trigger >= 62 ||
-    momentum >= 58 ||
-    rawLabel.includes("MOMENTUM") ||
-    rawLabel.includes("SETUP")
+    score >= 72 ||
+    trigger >= 65 ||
+    momentum >= 62 ||
+    improving ||
+    supportOnly
   ) {
     return "Watch";
   }
@@ -704,7 +772,7 @@ export default async function handler(req, res) {
       stocks: sorted,
       meta: {
         historicalConfirmation: false,
-        mode: "fast_quote_screen_no_blank_recovery_with_label_mapping",
+        mode: "fast_quote_screen_no_blank_recovery_stricter_buy_now",
         requestedSymbols: symbols.length,
         returnedQuotes: quotes.length,
         scoredQuotes: enriched.length,
