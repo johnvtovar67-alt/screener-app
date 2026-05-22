@@ -324,10 +324,10 @@ function getStatusLabel(stock, owned = false) {
   if (action === "Starter Only") return "Starter";
   if (action === "Watch") return "Setup";
   if (action === "Avoid") return "Avoid";
-  if (action === "Add") return "Add";
+  if (action === "Hold / Add") return "Hold / Add";
   if (action === "Hold") return "Hold";
   if (action === "Trim") return "Trim";
-  if (action === "Exit") return "Exit";
+  if (action === "Exit / Avoid") return "Exit / Avoid";
   if (action === "Cash") return "Cash";
 
   return action || "Setup";
@@ -537,56 +537,53 @@ function portfolioAction(stock) {
   const deepLoss = hasGainPct && gainLossPct <= -15;
 
   const trendStrong =
-    trigger >= 80 &&
+    trigger >= 75 &&
     momentum !== "Weak" &&
-    score >= 65 &&
-    expectationRisk <= 55;
+    score >= 62 &&
+    expectationRisk <= 60;
 
-  const trendWeak = momentum === "Weak" || trigger < 65 || score < 60;
+  const trendWeak = momentum === "Weak" || trigger < 58 || score < 55;
 
-  const trendFailing = momentum === "Weak" && trigger < 65 && score < 60;
+  const trendFailing = momentum === "Weak" && trigger < 55 && score < 52;
 
-  const stretchedRisk = expectationRisk >= 60 || extensionRisk >= 65;
+  const stretchedRisk = expectationRisk >= 68 || extensionRisk >= 72;
 
-  const extendedWinner = solidGain && extensionRisk >= 55 && momentum !== "Weak";
+  const extendedWinner = solidGain && extensionRisk >= 60 && momentum !== "Weak";
 
-  if (deepLoss && trendFailing) return "Exit";
-  if (meaningfulLoss && trendFailing) return "Exit";
+  if (deepLoss && trendFailing) return "Exit / Avoid";
+  if (meaningfulLoss && trendFailing) return "Exit / Avoid";
 
   if (largeGain && stretchedRisk) return "Trim";
   if (extendedWinner) return "Trim";
   if (solidGain && trendFailing) return "Trim";
   if (solidGain && trendWeak) return "Trim";
 
-  if (
-    buyAction === "Buy Now" &&
-    trendStrong &&
-    freshBreakoutScore >= 70 &&
-    !largeGain
-  ) {
-    return "Add";
+  if (buyAction === "Buy Now" && trendStrong && !largeGain) {
+    return "Hold / Add";
   }
 
   if (
     buyAction === "Starter Only" &&
     trendStrong &&
     !largeGain &&
-    expectationRisk <= 55
+    expectationRisk <= 62
   ) {
-    return "Hold";
+    return "Hold / Add";
   }
 
   if (
-    trigger >= 85 &&
-    momentum === "Strong" &&
-    expectationRisk <= 45 &&
-    extensionRisk <= 45 &&
+    trigger >= 75 &&
+    momentum !== "Weak" &&
+    expectationRisk <= 60 &&
+    extensionRisk <= 62 &&
     !largeGain
   ) {
-    return "Add";
+    return "Hold / Add";
   }
 
-  if (momentum === "Weak" || score < 58) return "Trim";
+  if (solidGain && trendWeak) return "Trim";
+
+  if (momentum === "Weak" && score < 55) return "Trim";
 
   return "Hold";
 }
@@ -599,7 +596,7 @@ function displayAction(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Cash") return "gray";
-  if (action === "Buy Now" || action === "Add") return "green";
+  if (action === "Buy Now" || action === "Hold / Add") return "green";
   if (action === "Starter Only" || action === "Trim") return "orange";
   if (action === "Watch" || action === "Hold") return "yellow";
 
@@ -1410,7 +1407,7 @@ export default function Home() {
       <section className="card">
         <h2>Portfolio Screener</h2>
         <p className="muted">
-          Uses ownership logic: Add, Hold, Trim, Exit, or Cash.
+          Uses ownership logic: Hold / Add, Hold, Trim, Exit / Avoid, or Cash.
         </p>
 
         <div className="portfolioTools">
@@ -1521,7 +1518,9 @@ export default function Home() {
 
               <tbody>
                 {portfolioResults.map((stock) => {
-                  const action = stock.error ? "Exit" : displayAction(stock, true);
+                  const action = stock.error
+                    ? "Exit / Avoid"
+                    : displayAction(stock, true);
 
                   return (
                     <tr key={stock.symbol}>
