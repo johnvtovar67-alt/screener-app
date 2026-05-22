@@ -324,7 +324,7 @@ function getStatusLabel(stock, owned = false) {
   if (action === "Starter Only") return "Starter";
   if (action === "Watch") return "Setup";
   if (action === "Avoid") return "Avoid";
-  if (action === "Add") return "Add";
+  if (action === "Hold / Add") return "Hold / Add";
   if (action === "Hold") return "Hold";
   if (action === "Trim") return "Trim";
   if (action === "Exit") return "Exit";
