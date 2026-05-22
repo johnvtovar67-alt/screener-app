@@ -537,18 +537,29 @@ function portfolioAction(stock) {
   const deepLoss = hasGainPct && gainLossPct <= -15;
 
   const trendStrong =
-    trigger >= 80 &&
+    trigger >= 72 &&
     momentum !== "Weak" &&
-    score >= 65 &&
-    expectationRisk <= 55;
+    score >= 62 &&
+    expectationRisk <= 60;
 
-  const trendWeak = momentum === "Weak" || trigger < 65 || score < 60;
+  const trendWeak =
+    momentum === "Weak" ||
+    trigger < 58 ||
+    score < 55;
 
-  const trendFailing = momentum === "Weak" && trigger < 65 && score < 60;
+  const trendFailing =
+    momentum === "Weak" &&
+    trigger < 55 &&
+    score < 52;
 
-  const stretchedRisk = expectationRisk >= 60 || extensionRisk >= 65;
+  const stretchedRisk =
+    expectationRisk >= 68 ||
+    extensionRisk >= 72;
 
-  const extendedWinner = solidGain && extensionRisk >= 55 && momentum !== "Weak";
+  const extendedWinner =
+    solidGain &&
+    extensionRisk >= 60 &&
+    momentum !== "Weak";
 
   if (deepLoss && trendFailing) return "Exit";
   if (meaningfulLoss && trendFailing) return "Exit";
@@ -556,16 +567,43 @@ function portfolioAction(stock) {
   if (largeGain && stretchedRisk) return "Trim";
   if (extendedWinner) return "Trim";
   if (solidGain && trendFailing) return "Trim";
-  if (solidGain && trendWeak) return "Trim";
 
   if (
     buyAction === "Buy Now" &&
     trendStrong &&
-    freshBreakoutScore >= 70 &&
     !largeGain
   ) {
-    return "Add";
+    return "Hold / Add";
   }
+
+  if (
+    buyAction === "Starter Only" &&
+    trendStrong &&
+    expectationRisk <= 62 &&
+    !largeGain
+  ) {
+    return "Hold / Add";
+  }
+
+  if (
+    trigger >= 75 &&
+    momentum !== "Weak" &&
+    score >= 60 &&
+    expectationRisk <= 60 &&
+    extensionRisk <= 62 &&
+    !largeGain
+  ) {
+    return "Hold / Add";
+  }
+
+  if (trendWeak && solidGain) return "Trim";
+
+  if (momentum === "Weak" && score < 55) {
+    return "Trim";
+  }
+
+  return "Hold";
+}
 
   if (
     buyAction === "Starter Only" &&
