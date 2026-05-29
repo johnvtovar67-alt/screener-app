@@ -263,6 +263,10 @@ function getActionSummary(stock) {
   const action = nonOwnedAction(stock);
   const dominantReason = getDominantReason(stock);
 
+  if (action === "Buy Immediately") {
+    return "Highest-conviction setup. All major checks are aligned.";
+  }
+
   if (action === "Buy Now") {
     return "Actionable now. Setup, trend, confirmation, tradability, and risk are aligned.";
   }
@@ -301,6 +305,10 @@ function getTriggerNeeded(stock) {
 
   const action = nonOwnedAction(stock);
 
+  if (action === "Buy Immediately") {
+    return "Highest-conviction entry. Normal sizing is allowed with a defined invalidation level.";
+  }
+
   if (action === "Buy Now") {
     return "Buyable now under normal sizing. Use a defined invalidation level and do not chase oversized.";
   }
@@ -328,6 +336,7 @@ function extractDollarPrice(text) {
 function getStatusLabel(stock, owned = false) {
   const action = displayAction(stock, owned);
 
+  if (action === "Buy Immediately") return "Buy Immediately";
   if (action === "Buy Now") return "Buy Now";
   if (action === "Breakout Buy") return "Breakout";
   if (action === "Starter Only") return "Starter";
@@ -350,6 +359,18 @@ function getShortReason(stock) {
 
   if (action === "Breakout Buy") {
     return "Fresh breakout; starter entry acceptable.";
+  }
+
+  if (action === "Buy Immediately") {
+    return "All major checks are aligned.";
+  }
+
+  if (action === "Buy Now") {
+    return "Setup confirmed.";
+  }
+
+  if (action === "Breakout Buy") {
+    return "Breakout structure is active.";
   }
 
   if (action === "Starter Only") {
@@ -410,6 +431,7 @@ function shortContext(stock) {
   const reason = getDominantReason(stock);
   const lower = reason.toLowerCase();
 
+  if (action === "Buy Immediately") return "Buy Immediately";
   if (action === "Buy Now") return "Buy Now";
   if (action === "Breakout Buy") return "Breakout";
   if (action === "Starter Only") return "Starter only";
@@ -427,14 +449,55 @@ function shortContext(stock) {
   return "Setup";
 }
 
+
+function portfolioContext(stock) {
+  if (isCashLikeSymbol(stock)) return "Cash position";
+
+  const action = portfolioAction(stock);
+  const gainLossPct = Number(stock?.gainLossPct);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumText(stock);
+  const score = getScore(stock);
+  const expectationRisk = getExpectationRisk(stock);
+  const extensionRisk = getExtensionRisk(stock);
+  const buyAction = nonOwnedAction(stock);
+
+  const hasGain = Number.isFinite(gainLossPct) && gainLossPct > 0;
+  const hasLoss = Number.isFinite(gainLossPct) && gainLossPct < 0;
+  const extended = expectationRisk >= 68 || extensionRisk >= 70;
+  const strongTrend = trigger >= 70 && momentum !== "Weak" && score >= 60;
+  const weakTrend = momentum === "Weak" || trigger < 52 || score < 50;
+
+  if (action === "Hold / Add") {
+    if (buyAction === "Buy Immediately") return "High conviction";
+    if (buyAction === "Buy Now") return "Setup confirmed";
+    if (buyAction === "Breakout Buy") return "Breakout intact";
+    return "Trend supportive";
+  }
+
+  if (action === "Trim") return "Risk stretched";
+  if (action === "Exit / Avoid") return "Trend deteriorating";
+
+  if (hasGain && extended) return "Extended but healthy";
+  if (hasGain && strongTrend) return "Working position";
+  if (hasLoss && strongTrend) return "Pullback in uptrend";
+  if (hasLoss && weakTrend) return "Watching support";
+  if (extended) return "Digesting gains";
+  if (buyAction === "Breakout Buy") return "Breakout intact";
+  if (buyAction === "Starter Only") return "Developing setup";
+  if (weakTrend) return "Consolidating";
+
+  return "Hold / monitor";
+}
+
 function getContextTone(stock) {
   if (isCashLikeSymbol(stock)) return "gray";
 
   const action = nonOwnedAction(stock);
   const context = String(getDominantReason(stock)).toLowerCase();
 
-  if (action === "Buy Now") return "green";
-  if (action === "Starter Only") return "orange";
+  if (action === "Buy Immediately" || action === "Buy Now") return "green";
+  if (action === "Breakout Buy" || action === "Starter Only") return "orange";
 
   if (
     context.includes("fails") ||
@@ -506,6 +569,7 @@ function nonOwnedAction(stock) {
       ""
   ).toUpperCase();
 
+  if (label === "BUY IMMEDIATELY") return "Buy Immediately";
   if (label === "BUY NOW") return "Buy Now";
   if (label === "BREAKOUT BUY") return "Breakout Buy";
   if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
@@ -526,6 +590,7 @@ function isActionableTrade(stock) {
   const action = nonOwnedAction(stock);
 
   return (
+    action === "Buy Immediately" ||
     action === "Buy Now" ||
     action === "Breakout Buy" ||
     action === "Starter Only"
@@ -586,7 +651,7 @@ function portfolioAction(stock) {
   if (bigGain && trendWeak && !breakoutWorking) return "Trim";
 
   if (
-    (buyAction === "Buy Now" || buyAction === "Breakout Buy") &&
+    (buyAction === "Buy Immediately" || buyAction === "Buy Now" || buyAction === "Breakout Buy") &&
     trendStrong &&
     !severeExtensionRisk
   ) {
@@ -607,13 +672,10 @@ function portfolioAction(stock) {
 
   if (trendStrong || breakoutWorking) return "Hold";
 
-  // A losing position should not show Trim. Trim means harvesting gains.
-  // If it is weak but not a confirmed breakdown, keep it as Hold so the
-  // owner can decide whether the original thesis is still intact.
   if (meaningfulLoss && trendWeak) return "Hold";
 
-  // For small/medium winners, default to Hold rather than over-trading.
-  // Trim remains reserved above for very large gains plus real extension.
+  if (momentum === "Weak" && score < 48 && trigger < 50) return "Trim";
+
   return "Hold";
 }
 
@@ -625,7 +687,7 @@ function displayAction(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Cash") return "gray";
-  if (action === "Buy Now" || action === "Breakout Buy" || action === "Hold / Add") return "green";
+  if (action === "Buy Immediately" || action === "Buy Now" || action === "Breakout Buy" || action === "Hold / Add") return "green";
   if (action === "Starter Only" || action === "Trim") return "orange";
   if (action === "Watch" || action === "Hold") return "yellow";
 
@@ -637,6 +699,7 @@ function rankActionable(a, b) {
   const actionB = nonOwnedAction(b);
 
   const rank = {
+    "Buy Immediately": 5,
     "Buy Now": 4,
     "Breakout Buy": 3,
     "Starter Only": 2,
@@ -977,6 +1040,12 @@ export default function Home() {
     return stocks.filter(isActionableTrade).sort(rankActionable);
   }, [stocks]);
 
+  const immediateTrades = useMemo(() => {
+    return actionableTrades.filter(
+      (stock) => nonOwnedAction(stock) === "Buy Immediately"
+    );
+  }, [actionableTrades]);
+
   const buyNowTrades = useMemo(() => {
     return actionableTrades.filter(
       (stock) => nonOwnedAction(stock) === "Buy Now"
@@ -1048,7 +1117,7 @@ export default function Home() {
         <div>
           <h1>🧠 Trade Action Screener</h1>
           <p>
-            Shows full Buy Now trades first, then smaller Starter Only setups.
+            Shows rare Buy Immediately setups first, then Buy Now, Breakout Buy, and Starter Only setups.
           </p>
         </div>
 
@@ -1091,7 +1160,7 @@ export default function Home() {
           <div>
             <span>Discipline</span>
             <p>
-              Buy Now means normal-size trade. Starter Only means small tactical
+              Buy Immediately is the rare all-clear. Buy Now means normal-size trade. Starter Only means small tactical
               position before full confirmation.
             </p>
           </div>
@@ -1104,7 +1173,7 @@ export default function Home() {
         <div className="sectionTitle">
           <h2>🔥 Actionable Trades</h2>
           <p>
-            Buy Now is full-size eligible. Starter Only is small-size only.
+            Buy Immediately is the highest-conviction bucket. Buy Now is full-size eligible. Starter Only is small-size only.
           </p>
         </div>
 
@@ -1118,10 +1187,75 @@ export default function Home() {
           <div className="noTradeBox">
             <h3>No actionable trades right now.</h3>
             <p>
-              No Buy Now or Starter Only setups cleared the screen. Stay
+              No Buy Immediately, Buy Now, Breakout Buy, or Starter Only setups cleared the screen. Stay
               patient. Cash is a valid position.
             </p>
           </div>
+        )}
+
+
+        {immediateTrades.length > 0 && (
+          <>
+            <div className="subSectionTitle immediateTitle">
+              <h3>Buy Immediately</h3>
+              <p>
+                Rare all-clear setup: fundamentals, technicals, momentum, risk,
+                extension, and entry quality are aligned.
+              </p>
+            </div>
+
+            <div className="tradeGrid">
+              {immediateTrades.map((stock, idx) => {
+                const action = displayAction(stock, false);
+
+                return (
+                  <div
+                    className="tradeCard immediateCard"
+                    key={`${getSymbol(stock)}-immediate-${idx}`}
+                  >
+                    <div className="tradeTop">
+                      <div>
+                        <div className="tradeSymbol">{getSymbol(stock)}</div>
+                        <div className="tradeName">{getName(stock)}</div>
+                      </div>
+
+                      <span className={`pill largePill ${actionClass(action)}`}>
+                        {action}
+                      </span>
+                    </div>
+
+                    <div className="tradePriceRow">
+                      <span>{money(getPrice(stock))}</span>
+                      <strong className={priceChangeClass(stock)}>
+                        {priceChangeText(stock)}
+                      </strong>
+                    </div>
+
+                    <div className="tradeMetrics compactMetrics">
+                      <div>
+                        <span>Status</span>
+                        <strong className={`miniMetric ${getContextTone(stock)}`}>
+                          {getStatusLabel(stock)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="tradeNotes compactNotes">
+                      <div>
+                        <span>Why Actionable</span>
+                        <p>{getShortReason(stock)}</p>
+                      </div>
+
+                      <div>
+                        <span>Trade Instruction</span>
+                        <p>{getTriggerNeeded(stock)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {buyNowTrades.length > 0 && (
@@ -1669,9 +1803,7 @@ export default function Home() {
                       </td>
                       <td>
                         <span className={`pill ${getContextTone(stock)}`}>
-                          {isCashLikeSymbol(stock)
-                            ? "Cash position"
-                            : shortContext(stock)}
+                          {portfolioContext(stock)}
                         </span>
                       </td>
                     </tr>
@@ -1865,9 +1997,14 @@ export default function Home() {
           border: 1px solid #e2e8f0;
           border-radius: 14px;
           background: white;
-          padding: 11px;
+          padding: 12px;
           min-width: 0;
           overflow: hidden;
+        }
+
+        .immediateCard {
+          border-color: #86efac;
+          background: #f7fff9;
         }
 
         .starterCard {
@@ -1891,11 +2028,8 @@ export default function Home() {
 
         .tradeName {
           color: #64748b;
-          font-size: 12px;
-          margin-top: 1px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          font-size: 13px;
+          margin-top: 2px;
         }
 
         .priceStack {
@@ -1916,20 +2050,20 @@ export default function Home() {
           align-items: center;
           border-top: 1px solid #f1f5f9;
           border-bottom: 1px solid #f1f5f9;
-          padding: 7px 0;
-          margin-bottom: 8px;
+          padding: 10px 0;
+          margin-bottom: 12px;
         }
 
         .tradePriceRow span {
-          font-size: 15px;
+          font-size: 18px;
           font-weight: 800;
         }
 
         .tradeMetrics {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 6px;
-          margin-bottom: 8px;
+          gap: 8px;
+          margin-bottom: 12px;
         }
 
         .tradeMetrics span {
@@ -1942,14 +2076,14 @@ export default function Home() {
 
         .tradeNotes {
           display: grid;
-          gap: 6px;
+          gap: 8px;
         }
 
         .tradeNotes div {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          padding: 8px;
+          border-radius: 12px;
+          padding: 10px;
         }
 
         .starterCard .tradeNotes div {
@@ -1967,8 +2101,8 @@ export default function Home() {
 
         .tradeNotes p {
           color: #334155;
-          font-size: 12px;
-          line-height: 1.25;
+          font-size: 13px;
+          line-height: 1.35;
         }
 
         .tableWrap {
@@ -2310,7 +2444,7 @@ export default function Home() {
 
         @media (max-width: 1200px) {
           .tradeGrid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .metricGrid {
