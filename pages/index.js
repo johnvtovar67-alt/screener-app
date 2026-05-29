@@ -607,10 +607,13 @@ function portfolioAction(stock) {
 
   if (trendStrong || breakoutWorking) return "Hold";
 
+  // A losing position should not show Trim. Trim means harvesting gains.
+  // If it is weak but not a confirmed breakdown, keep it as Hold so the
+  // owner can decide whether the original thesis is still intact.
   if (meaningfulLoss && trendWeak) return "Hold";
 
-  if (momentum === "Weak" && score < 48 && trigger < 50) return "Trim";
-
+  // For small/medium winners, default to Hold rather than over-trading.
+  // Trim remains reserved above for very large gains plus real extension.
   return "Hold";
 }
 
@@ -1854,15 +1857,15 @@ export default function Home() {
 
         .tradeGrid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 14px;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
         }
 
         .tradeCard {
           border: 1px solid #e2e8f0;
-          border-radius: 16px;
+          border-radius: 14px;
           background: white;
-          padding: 16px;
+          padding: 11px;
           min-width: 0;
           overflow: hidden;
         }
@@ -1876,20 +1879,23 @@ export default function Home() {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          gap: 10px;
-          margin-bottom: 12px;
+          gap: 8px;
+          margin-bottom: 8px;
         }
 
         .tradeSymbol {
-          font-size: 26px;
+          font-size: 22px;
           font-weight: 950;
           letter-spacing: 0.02em;
         }
 
         .tradeName {
           color: #64748b;
-          font-size: 13px;
-          margin-top: 2px;
+          font-size: 12px;
+          margin-top: 1px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .priceStack {
@@ -1910,20 +1916,20 @@ export default function Home() {
           align-items: center;
           border-top: 1px solid #f1f5f9;
           border-bottom: 1px solid #f1f5f9;
-          padding: 10px 0;
-          margin-bottom: 12px;
+          padding: 7px 0;
+          margin-bottom: 8px;
         }
 
         .tradePriceRow span {
-          font-size: 18px;
+          font-size: 15px;
           font-weight: 800;
         }
 
         .tradeMetrics {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-          margin-bottom: 12px;
+          gap: 6px;
+          margin-bottom: 8px;
         }
 
         .tradeMetrics span {
@@ -1936,14 +1942,14 @@ export default function Home() {
 
         .tradeNotes {
           display: grid;
-          gap: 8px;
+          gap: 6px;
         }
 
         .tradeNotes div {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 10px;
+          border-radius: 10px;
+          padding: 8px;
         }
 
         .starterCard .tradeNotes div {
@@ -1961,8 +1967,8 @@ export default function Home() {
 
         .tradeNotes p {
           color: #334155;
-          font-size: 13px;
-          line-height: 1.35;
+          font-size: 12px;
+          line-height: 1.25;
         }
 
         .tableWrap {
@@ -2304,7 +2310,7 @@ export default function Home() {
 
         @media (max-width: 1200px) {
           .tradeGrid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
           }
 
           .metricGrid {
