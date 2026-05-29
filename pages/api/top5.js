@@ -483,6 +483,7 @@ function displayLabel(stock = {}) {
       ""
   ).toUpperCase();
 
+  if (label === "BUY IMMEDIATELY") return "Buy Immediately";
   if (label === "BUY NOW") return "Buy Now";
   if (label === "BREAKOUT BUY") return "Breakout Buy";
   if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
@@ -501,6 +502,7 @@ function displayLabel(stock = {}) {
 function actionRank(stock = {}) {
   const label = displayLabel(stock);
 
+  if (label === "Buy Immediately") return 5;
   if (label === "Buy Now") return 4;
   if (label === "Breakout Buy") return 3;
   if (label === "Starter Only") return 2;
