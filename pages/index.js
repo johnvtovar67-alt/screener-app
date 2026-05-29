@@ -71,6 +71,36 @@ function isCashLikeSymbol(symbolOrStock) {
   return CASH_SYMBOLS.includes(symbol);
 }
 
+
+function isDigitalAssetProxy(stock = {}) {
+  const symbol = getSymbol(stock);
+  const name = String(getName(stock) || "").toLowerCase();
+
+  return (
+    ["MSTR", "MARA", "RIOT", "CLSK", "IREN", "WULF", "HUT", "BTDR", "CIFR", "BITF", "COIN", "HOOD"].includes(symbol) ||
+    name.includes("bitcoin") ||
+    name.includes("crypto") ||
+    name.includes("digital asset") ||
+    name.includes("blockchain")
+  );
+}
+
+function isConstructivePortfolioTrend(stock = {}) {
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumText(stock);
+  const freshBreakout = getFreshBreakoutScore(stock);
+  const buyAction = nonOwnedAction(stock);
+
+  return (
+    (score >= 58 && trigger >= 62 && momentum !== "Weak") ||
+    freshBreakout >= 62 ||
+    buyAction === "Buy Immediately" ||
+    buyAction === "Buy Now" ||
+    buyAction === "Breakout Buy"
+  );
+}
+
 function getName(stock) {
   return stock?.name ?? stock?.companyName ?? stock?.company ?? "—";
 }
@@ -451,7 +481,7 @@ function shortContext(stock) {
 
 
 function portfolioContext(stock) {
-  if (isCashLikeSymbol(stock)) return "Cash position";
+  if (isCashLikeSymbol(stock)) return "Cash Position";
 
   const action = portfolioAction(stock);
   const gainLossPct = Number(stock?.gainLossPct);
@@ -460,34 +490,43 @@ function portfolioContext(stock) {
   const score = getScore(stock);
   const expectationRisk = getExpectationRisk(stock);
   const extensionRisk = getExtensionRisk(stock);
+  const freshBreakoutScore = getFreshBreakoutScore(stock);
   const buyAction = nonOwnedAction(stock);
 
   const hasGain = Number.isFinite(gainLossPct) && gainLossPct > 0;
   const hasLoss = Number.isFinite(gainLossPct) && gainLossPct < 0;
-  const extended = expectationRisk >= 68 || extensionRisk >= 70;
-  const strongTrend = trigger >= 70 && momentum !== "Weak" && score >= 60;
-  const weakTrend = momentum === "Weak" || trigger < 52 || score < 50;
+  const extended = expectationRisk >= 72 || extensionRisk >= 76;
+  const momentumLeader = trigger >= 74 && momentum === "Strong" && score >= 62;
+  const breakoutIntact = freshBreakoutScore >= 66 || buyAction === "Breakout Buy";
+  const strongTrend = trigger >= 66 && momentum !== "Weak" && score >= 58;
+  const weakTrend = momentum === "Weak" || trigger < 50 || score < 48;
 
-  if (action === "Hold / Add") {
-    if (buyAction === "Buy Immediately") return "High conviction";
-    if (buyAction === "Buy Now") return "Setup confirmed";
-    if (buyAction === "Breakout Buy") return "Breakout intact";
-    return "Trend supportive";
+  if (action === "Exit / Avoid") return "Trend Deteriorating";
+
+  if (action === "Trim") {
+    if (momentumLeader || breakoutIntact) return "Momentum Leader";
+    if (hasGain && weakTrend) return "Protecting Gains";
+    return "Trim Into Strength";
   }
 
-  if (action === "Trim") return "Risk stretched";
-  if (action === "Exit / Avoid") return "Trend deteriorating";
+  if (momentumLeader) return "Momentum Leader";
+  if (breakoutIntact) return "Breakout Intact";
 
-  if (hasGain && extended) return "Extended but healthy";
-  if (hasGain && strongTrend) return "Working position";
-  if (hasLoss && strongTrend) return "Pullback in uptrend";
-  if (hasLoss && weakTrend) return "Watching support";
-  if (extended) return "Digesting gains";
-  if (buyAction === "Breakout Buy") return "Breakout intact";
-  if (buyAction === "Starter Only") return "Developing setup";
-  if (weakTrend) return "Consolidating";
+  if (action === "Hold / Add") {
+    if (buyAction === "Buy Immediately") return "High Conviction";
+    if (buyAction === "Buy Now") return "Setup Confirmed";
+    return "Trend Supportive";
+  }
 
-  return "Hold / monitor";
+  if (hasLoss && strongTrend) return "Pullback in Uptrend";
+  if (hasLoss && weakTrend) return "Watching Support";
+  if (hasGain && extended && strongTrend) return "Digesting Gains";
+  if (hasGain && strongTrend) return "Working Position";
+  if (extended) return "Consolidating";
+  if (buyAction === "Starter Only") return "Developing Setup";
+  if (weakTrend) return "Watching Support";
+
+  return "Consolidating";
 }
 
 function getContextTone(stock) {
@@ -614,40 +653,46 @@ function portfolioAction(stock) {
   const buyAction = nonOwnedAction(stock);
 
   const hasGainPct = Number.isFinite(gainLossPct);
-
-  const bigGain = hasGainPct && gainLossPct >= 40;
-  const veryBigGain = hasGainPct && gainLossPct >= 60;
+  const bigGain = hasGainPct && gainLossPct >= 45;
+  const veryBigGain = hasGainPct && gainLossPct >= 75;
   const meaningfulLoss = hasGainPct && gainLossPct <= -10;
-  const deepLoss = hasGainPct && gainLossPct <= -18;
+  const deepLoss = hasGainPct && gainLossPct <= -20;
+
+  const constructiveTrend = isConstructivePortfolioTrend(stock);
+  const digitalProxy = isDigitalAssetProxy(stock);
 
   const trendStrong =
-    trigger >= 70 &&
+    trigger >= 66 &&
     momentum !== "Weak" &&
-    score >= 60 &&
-    expectationRisk <= 68;
+    score >= 58 &&
+    expectationRisk <= (digitalProxy ? 76 : 72);
 
   const breakoutWorking =
-    freshBreakoutScore >= 65 ||
+    freshBreakoutScore >= 64 ||
     buyAction === "Breakout Buy" ||
-    (trigger >= 72 && momentum === "Strong");
+    buyAction === "Buy Now" ||
+    buyAction === "Buy Immediately" ||
+    (trigger >= 70 && momentum === "Strong");
 
-  const trendWeak = momentum === "Weak" || trigger < 52 || score < 50;
+  const trendWeak = momentum === "Weak" || trigger < 50 || score < 48;
+  const trendFailing = momentum === "Weak" && trigger < 48 && score < 46;
 
-  const trendFailing = momentum === "Weak" && trigger < 50 && score < 48;
+  const severeExtensionRisk =
+    expectationRisk >= (digitalProxy && constructiveTrend ? 86 : 80) ||
+    extensionRisk >= (digitalProxy && constructiveTrend ? 88 : 84);
 
-  const severeExtensionRisk = expectationRisk >= 78 || extensionRisk >= 82;
-  const moderateExtensionRisk = expectationRisk >= 70 || extensionRisk >= 74;
+  const moderateExtensionRisk =
+    expectationRisk >= (digitalProxy && constructiveTrend ? 80 : 74) ||
+    extensionRisk >= (digitalProxy && constructiveTrend ? 82 : 78);
 
-  // Exit only when the position is losing and the setup is actually failing.
+  // Exit only when a losing position is actually failing, not merely because it is volatile.
   if (deepLoss && trendFailing) return "Exit / Avoid";
-  if (meaningfulLoss && trendFailing && expectationRisk >= 70) {
-    return "Exit / Avoid";
-  }
+  if (meaningfulLoss && trendFailing && expectationRisk >= 72) return "Exit / Avoid";
 
-  // Do not trim a winner simply because it is green.
-  // Trim only when a large gain is paired with real extension or weakening.
-  if (veryBigGain && moderateExtensionRisk) return "Trim";
-  if (bigGain && severeExtensionRisk) return "Trim";
+  // Winners are not automatic trims. Require both a meaningful gain and evidence that the move is either
+  // truly vertical or momentum is rolling over. This prevents MSTR-style false "Risk Stretched" calls.
+  if (veryBigGain && severeExtensionRisk && !breakoutWorking) return "Trim";
+  if (bigGain && moderateExtensionRisk && trendWeak && !breakoutWorking) return "Trim";
   if (bigGain && trendWeak && !breakoutWorking) return "Trim";
 
   if (
@@ -658,23 +703,15 @@ function portfolioAction(stock) {
     return "Hold / Add";
   }
 
-  if (
-    buyAction === "Starter Only" &&
-    trendStrong &&
-    !severeExtensionRisk
-  ) {
+  if (buyAction === "Starter Only" && trendStrong && !severeExtensionRisk) {
     return "Hold / Add";
   }
 
-  if (trendStrong && breakoutWorking && !severeExtensionRisk) {
-    return "Hold / Add";
-  }
-
-  if (trendStrong || breakoutWorking) return "Hold";
-
+  if (trendStrong && breakoutWorking && !severeExtensionRisk) return "Hold / Add";
+  if (trendStrong || breakoutWorking || constructiveTrend) return "Hold";
   if (meaningfulLoss && trendWeak) return "Hold";
 
-  if (momentum === "Weak" && score < 48 && trigger < 50) return "Trim";
+  if (momentum === "Weak" && score < 46 && trigger < 48 && !hasGainPct) return "Trim";
 
   return "Hold";
 }
@@ -1863,8 +1900,8 @@ export default function Home() {
           background: white;
           border: 1px solid #e2e8f0;
           border-radius: 16px;
-          padding: 18px;
-          margin-bottom: 20px;
+          padding: 14px;
+          margin-bottom: 14px;
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
         }
 
@@ -1873,7 +1910,7 @@ export default function Home() {
         }
 
         .compactCard {
-          padding-top: 16px;
+          padding-top: 12px;
         }
 
         .themeCard {
@@ -1948,7 +1985,7 @@ export default function Home() {
         .starterTitle {
           margin-top: 20px;
           border-top: 1px solid #e2e8f0;
-          padding-top: 16px;
+          padding-top: 12px;
         }
 
         .sectionHeader {
@@ -1989,15 +2026,15 @@ export default function Home() {
 
         .tradeGrid {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 10px;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 8px;
         }
 
         .tradeCard {
           border: 1px solid #e2e8f0;
           border-radius: 14px;
           background: white;
-          padding: 12px;
+          padding: 10px;
           min-width: 0;
           overflow: hidden;
         }
@@ -2021,15 +2058,15 @@ export default function Home() {
         }
 
         .tradeSymbol {
-          font-size: 22px;
+          font-size: 18px;
           font-weight: 950;
           letter-spacing: 0.02em;
         }
 
         .tradeName {
           color: #64748b;
-          font-size: 13px;
-          margin-top: 2px;
+          font-size: 12px;
+          margin-top: 1px;
         }
 
         .priceStack {
@@ -2050,20 +2087,20 @@ export default function Home() {
           align-items: center;
           border-top: 1px solid #f1f5f9;
           border-bottom: 1px solid #f1f5f9;
-          padding: 10px 0;
-          margin-bottom: 12px;
+          padding: 7px 0;
+          margin-bottom: 8px;
         }
 
         .tradePriceRow span {
-          font-size: 18px;
+          font-size: 15px;
           font-weight: 800;
         }
 
         .tradeMetrics {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-          margin-bottom: 12px;
+          gap: 6px;
+          margin-bottom: 8px;
         }
 
         .tradeMetrics span {
@@ -2082,8 +2119,8 @@ export default function Home() {
         .tradeNotes div {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 10px;
+          border-radius: 10px;
+          padding: 7px;
         }
 
         .starterCard .tradeNotes div {
@@ -2101,8 +2138,8 @@ export default function Home() {
 
         .tradeNotes p {
           color: #334155;
-          font-size: 13px;
-          line-height: 1.35;
+          font-size: 12px;
+          line-height: 1.28;
         }
 
         .tableWrap {
@@ -2166,7 +2203,7 @@ export default function Home() {
         .avoidChips {
           display: flex;
           flex-wrap: wrap;
-          gap: 10px;
+          gap: 8px;
         }
 
         .avoidChip {
@@ -2222,13 +2259,13 @@ export default function Home() {
         .formRow {
           display: grid;
           grid-template-columns: 1fr auto;
-          gap: 10px;
+          gap: 8px;
           margin-top: 14px;
         }
 
         .portfolioTools {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           margin: 14px 0;
           flex-wrap: wrap;
         }
@@ -2236,7 +2273,7 @@ export default function Home() {
         .portfolioForm {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr auto;
-          gap: 10px;
+          gap: 8px;
           margin-top: 14px;
         }
 
@@ -2360,14 +2397,14 @@ export default function Home() {
         .metricGrid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 10px;
+          gap: 8px;
         }
 
         .metricGrid div {
           background: white;
           border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 10px;
+          border-radius: 10px;
+          padding: 7px;
         }
 
         .metricGrid span {
@@ -2395,7 +2432,7 @@ export default function Home() {
         .snapNotes {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 10px;
+          gap: 8px;
           margin-top: 12px;
         }
 
@@ -2424,8 +2461,8 @@ export default function Home() {
           min-width: 180px;
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 10px;
+          border-radius: 10px;
+          padding: 7px;
           text-align: right;
         }
 
