@@ -267,6 +267,10 @@ function getActionSummary(stock) {
     return "Actionable now. Setup, trend, confirmation, tradability, and risk are aligned.";
   }
 
+  if (action === "Breakout Buy") {
+    return "Breakout Buy. Starter position is acceptable now; add only if strength holds or it consolidates constructively.";
+  }
+
   if (action === "Starter Only") {
     return "Small starter only. Use reduced size. Add only if the setup confirms.";
   }
@@ -301,6 +305,10 @@ function getTriggerNeeded(stock) {
     return "Buyable now under normal sizing. Use a defined invalidation level and do not chase oversized.";
   }
 
+  if (action === "Breakout Buy") {
+    return "Breakout Buy. Use 25% to 33% normal size now. Add only after strength holds or volume confirms.";
+  }
+
   if (action === "Starter Only") {
     return "Starter only. Use 25% to 33% normal size. Add only after confirmation.";
   }
@@ -321,6 +329,7 @@ function getStatusLabel(stock, owned = false) {
   const action = displayAction(stock, owned);
 
   if (action === "Buy Now") return "Buy Now";
+  if (action === "Breakout Buy") return "Breakout";
   if (action === "Starter Only") return "Starter";
   if (action === "Watch") return "Setup";
   if (action === "Avoid") return "Avoid";
@@ -338,6 +347,10 @@ function getShortReason(stock) {
   const reason = getDominantReason(stock);
   const lower = reason.toLowerCase();
   const price = extractDollarPrice(reason);
+
+  if (action === "Breakout Buy") {
+    return "Fresh breakout; starter entry acceptable.";
+  }
 
   if (action === "Starter Only") {
     return "Early entry only; not fully confirmed.";
@@ -398,6 +411,7 @@ function shortContext(stock) {
   const lower = reason.toLowerCase();
 
   if (action === "Buy Now") return "Buy Now";
+  if (action === "Breakout Buy") return "Breakout";
   if (action === "Starter Only") return "Starter only";
   if (lower.includes("extended")) return "Extended";
   if (lower.includes("breakout")) return "Needs breakout";
@@ -493,6 +507,7 @@ function nonOwnedAction(stock) {
   ).toUpperCase();
 
   if (label === "BUY NOW") return "Buy Now";
+  if (label === "BREAKOUT BUY") return "Breakout Buy";
   if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
 
   if (
@@ -510,7 +525,11 @@ function nonOwnedAction(stock) {
 function isActionableTrade(stock) {
   const action = nonOwnedAction(stock);
 
-  return action === "Buy Now" || action === "Starter Only";
+  return (
+    action === "Buy Now" ||
+    action === "Breakout Buy" ||
+    action === "Starter Only"
+  );
 }
 
 function isNearMiss(stock) {
@@ -531,59 +550,66 @@ function portfolioAction(stock) {
 
   const hasGainPct = Number.isFinite(gainLossPct);
 
-  const largeGain = hasGainPct && gainLossPct >= 25;
-  const solidGain = hasGainPct && gainLossPct >= 10;
-  const meaningfulLoss = hasGainPct && gainLossPct <= -8;
-  const deepLoss = hasGainPct && gainLossPct <= -15;
+  const bigGain = hasGainPct && gainLossPct >= 40;
+  const veryBigGain = hasGainPct && gainLossPct >= 60;
+  const meaningfulLoss = hasGainPct && gainLossPct <= -10;
+  const deepLoss = hasGainPct && gainLossPct <= -18;
 
   const trendStrong =
-    trigger >= 75 &&
+    trigger >= 70 &&
     momentum !== "Weak" &&
-    score >= 62 &&
-    expectationRisk <= 60;
+    score >= 60 &&
+    expectationRisk <= 68;
 
-  const trendWeak = momentum === "Weak" || trigger < 58 || score < 55;
+  const breakoutWorking =
+    freshBreakoutScore >= 65 ||
+    buyAction === "Breakout Buy" ||
+    (trigger >= 72 && momentum === "Strong");
 
-  const trendFailing = momentum === "Weak" && trigger < 55 && score < 52;
+  const trendWeak = momentum === "Weak" || trigger < 52 || score < 50;
 
-  const stretchedRisk = expectationRisk >= 68 || extensionRisk >= 72;
+  const trendFailing = momentum === "Weak" && trigger < 50 && score < 48;
 
-  const extendedWinner = solidGain && extensionRisk >= 60 && momentum !== "Weak";
+  const severeExtensionRisk = expectationRisk >= 78 || extensionRisk >= 82;
+  const moderateExtensionRisk = expectationRisk >= 70 || extensionRisk >= 74;
 
+  // Exit only when the position is losing and the setup is actually failing.
   if (deepLoss && trendFailing) return "Exit / Avoid";
-  if (meaningfulLoss && trendFailing) return "Exit / Avoid";
+  if (meaningfulLoss && trendFailing && expectationRisk >= 70) {
+    return "Exit / Avoid";
+  }
 
-  if (largeGain && stretchedRisk) return "Trim";
-  if (extendedWinner) return "Trim";
-  if (solidGain && trendFailing) return "Trim";
-  if (solidGain && trendWeak) return "Trim";
+  // Do not trim a winner simply because it is green.
+  // Trim only when a large gain is paired with real extension or weakening.
+  if (veryBigGain && moderateExtensionRisk) return "Trim";
+  if (bigGain && severeExtensionRisk) return "Trim";
+  if (bigGain && trendWeak && !breakoutWorking) return "Trim";
 
-  if (buyAction === "Buy Now" && trendStrong && !largeGain) {
+  if (
+    (buyAction === "Buy Now" || buyAction === "Breakout Buy") &&
+    trendStrong &&
+    !severeExtensionRisk
+  ) {
     return "Hold / Add";
   }
 
   if (
     buyAction === "Starter Only" &&
     trendStrong &&
-    !largeGain &&
-    expectationRisk <= 62
+    !severeExtensionRisk
   ) {
     return "Hold / Add";
   }
 
-  if (
-    trigger >= 75 &&
-    momentum !== "Weak" &&
-    expectationRisk <= 60 &&
-    extensionRisk <= 62 &&
-    !largeGain
-  ) {
+  if (trendStrong && breakoutWorking && !severeExtensionRisk) {
     return "Hold / Add";
   }
 
-  if (solidGain && trendWeak) return "Trim";
+  if (trendStrong || breakoutWorking) return "Hold";
 
-  if (momentum === "Weak" && score < 55) return "Trim";
+  if (meaningfulLoss && trendWeak) return "Hold";
+
+  if (momentum === "Weak" && score < 48 && trigger < 50) return "Trim";
 
   return "Hold";
 }
@@ -596,7 +622,7 @@ function displayAction(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Cash") return "gray";
-  if (action === "Buy Now" || action === "Hold / Add") return "green";
+  if (action === "Buy Now" || action === "Breakout Buy" || action === "Hold / Add") return "green";
   if (action === "Starter Only" || action === "Trim") return "orange";
   if (action === "Watch" || action === "Hold") return "yellow";
 
@@ -607,8 +633,18 @@ function rankActionable(a, b) {
   const actionA = nonOwnedAction(a);
   const actionB = nonOwnedAction(b);
 
-  if (actionA === "Buy Now" && actionB !== "Buy Now") return -1;
-  if (actionB === "Buy Now" && actionA !== "Buy Now") return 1;
+  const rank = {
+    "Buy Now": 4,
+    "Breakout Buy": 3,
+    "Starter Only": 2,
+    Watch: 1,
+    Avoid: 0,
+  };
+
+  const actionRankA = rank[actionA] ?? 0;
+  const actionRankB = rank[actionB] ?? 0;
+
+  if (actionRankB !== actionRankA) return actionRankB - actionRankA;
 
   const triggerA = getTrigger(a);
   const triggerB = getTrigger(b);
@@ -944,6 +980,12 @@ export default function Home() {
     );
   }, [actionableTrades]);
 
+  const breakoutTrades = useMemo(() => {
+    return actionableTrades.filter(
+      (stock) => nonOwnedAction(stock) === "Breakout Buy"
+    );
+  }, [actionableTrades]);
+
   const starterTrades = useMemo(() => {
     return actionableTrades.filter(
       (stock) => nonOwnedAction(stock) === "Starter Only"
@@ -1094,6 +1136,71 @@ export default function Home() {
                   <div
                     className="tradeCard"
                     key={`${getSymbol(stock)}-buy-${idx}`}
+                  >
+                    <div className="tradeTop">
+                      <div>
+                        <div className="tradeSymbol">{getSymbol(stock)}</div>
+                        <div className="tradeName">{getName(stock)}</div>
+                      </div>
+
+                      <span className={`pill largePill ${actionClass(action)}`}>
+                        {action}
+                      </span>
+                    </div>
+
+                    <div className="tradePriceRow">
+                      <span>{money(getPrice(stock))}</span>
+                      <strong className={priceChangeClass(stock)}>
+                        {priceChangeText(stock)}
+                      </strong>
+                    </div>
+
+                    <div className="tradeMetrics">
+                      <div>
+                        <span>Status</span>
+                        <strong className={`miniMetric ${getContextTone(stock)}`}>
+                          {getStatusLabel(stock)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="tradeNotes">
+                      <div>
+                        <span>Why Actionable</span>
+                        <p>{getShortReason(stock)}</p>
+                      </div>
+
+                      <div>
+                        <span>Trade Instruction</span>
+                        <p>{getTriggerNeeded(stock)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+
+        {breakoutTrades.length > 0 && (
+          <>
+            <div className="subSectionTitle breakoutTitle">
+              <h3>Breakout Buy</h3>
+              <p>
+                Fresh momentum breakout. Starter position acceptable now; add
+                only if strength holds or consolidation confirms.
+              </p>
+            </div>
+
+            <div className="tradeGrid">
+              {breakoutTrades.map((stock, idx) => {
+                const action = displayAction(stock, false);
+
+                return (
+                  <div
+                    className="tradeCard breakoutCard"
+                    key={`${getSymbol(stock)}-breakout-${idx}`}
                   >
                     <div className="tradeTop">
                       <div>
