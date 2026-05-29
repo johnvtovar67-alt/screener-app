@@ -487,6 +487,7 @@ function portfolioContext(stock) {
   const gainLossPct = Number(stock?.gainLossPct);
   const trigger = getTrigger(stock);
   const momentum = getMomentumText(stock);
+  const momentumScore = getMomentumScore(stock);
   const score = getScore(stock);
   const expectationRisk = getExpectationRisk(stock);
   const extensionRisk = getExtensionRisk(stock);
@@ -495,36 +496,38 @@ function portfolioContext(stock) {
 
   const hasGain = Number.isFinite(gainLossPct) && gainLossPct > 0;
   const hasLoss = Number.isFinite(gainLossPct) && gainLossPct < 0;
-  const extended = expectationRisk >= 72 || extensionRisk >= 76;
-  const momentumLeader = trigger >= 74 && momentum === "Strong" && score >= 62;
-  const breakoutIntact = freshBreakoutScore >= 66 || buyAction === "Breakout Buy";
-  const strongTrend = trigger >= 66 && momentum !== "Weak" && score >= 58;
+  const meaningfulGain = Number.isFinite(gainLossPct) && gainLossPct >= 8;
+  const bigGain = Number.isFinite(gainLossPct) && gainLossPct >= 20;
+  const extended = expectationRisk >= 74 || extensionRisk >= 78;
+  const strongMomentum = momentum === "Strong" || momentumScore >= 72;
+  const momentumLeader = meaningfulGain && trigger >= 72 && strongMomentum && score >= 58;
+  const breakoutIntact = freshBreakoutScore >= 64 || buyAction === "Breakout Buy";
+  const strongTrend = trigger >= 64 && momentum !== "Weak" && score >= 55;
   const weakTrend = momentum === "Weak" || trigger < 50 || score < 48;
+  const supportActuallyAtRisk = weakTrend && trigger < 55 && score < 55;
 
   if (action === "Exit / Avoid") return "Trend Deteriorating";
-
-  if (action === "Trim") {
-    if (momentumLeader || breakoutIntact) return "Momentum Leader";
-    if (hasGain && weakTrend) return "Protecting Gains";
-    return "Trim Into Strength";
-  }
 
   if (momentumLeader) return "Momentum Leader";
   if (breakoutIntact) return "Breakout Intact";
 
+  if (action === "Trim") {
+    if (bigGain && extended) return "Digesting Gains";
+    return "Protecting Gains";
+  }
+
   if (action === "Hold / Add") {
     if (buyAction === "Buy Immediately") return "High Conviction";
     if (buyAction === "Buy Now") return "Setup Confirmed";
-    return "Trend Supportive";
+    if (strongTrend) return "Trend Supportive";
   }
 
-  if (hasLoss && strongTrend) return "Pullback in Uptrend";
-  if (hasLoss && weakTrend) return "Watching Support";
   if (hasGain && extended && strongTrend) return "Digesting Gains";
-  if (hasGain && strongTrend) return "Working Position";
-  if (extended) return "Consolidating";
+  if (hasGain && strongTrend) return "Pullback in Uptrend";
+  if (hasLoss && strongTrend) return "Pullback in Uptrend";
+  if (supportActuallyAtRisk) return "Watching Support";
   if (buyAction === "Starter Only") return "Developing Setup";
-  if (weakTrend) return "Watching Support";
+  if (extended) return "Consolidating";
 
   return "Consolidating";
 }
@@ -1277,16 +1280,8 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="tradeNotes compactNotes">
-                      <div>
-                        <span>Why Actionable</span>
-                        <p>{getShortReason(stock)}</p>
-                      </div>
-
-                      <div>
-                        <span>Trade Instruction</span>
-                        <p>{getTriggerNeeded(stock)}</p>
-                      </div>
+                    <div className="tradeOneLineReason">
+                      {getShortReason(stock)}
                     </div>
                   </div>
                 );
@@ -1338,16 +1333,8 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="tradeNotes">
-                      <div>
-                        <span>Why Actionable</span>
-                        <p>{getShortReason(stock)}</p>
-                      </div>
-
-                      <div>
-                        <span>Trade Instruction</span>
-                        <p>{getTriggerNeeded(stock)}</p>
-                      </div>
+                    <div className="tradeOneLineReason">
+                      {getShortReason(stock)}
                     </div>
                   </div>
                 );
@@ -1403,16 +1390,8 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="tradeNotes">
-                      <div>
-                        <span>Why Actionable</span>
-                        <p>{getShortReason(stock)}</p>
-                      </div>
-
-                      <div>
-                        <span>Trade Instruction</span>
-                        <p>{getTriggerNeeded(stock)}</p>
-                      </div>
+                    <div className="tradeOneLineReason">
+                      {getShortReason(stock)}
                     </div>
                   </div>
                 );
@@ -1467,16 +1446,8 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="tradeNotes">
-                      <div>
-                        <span>Why Actionable</span>
-                        <p>{getShortReason(stock)}</p>
-                      </div>
-
-                      <div>
-                        <span>Trade Instruction</span>
-                        <p>{getTriggerNeeded(stock)}</p>
-                      </div>
+                    <div className="tradeOneLineReason">
+                      {getShortReason(stock)}
                     </div>
                   </div>
                 );
@@ -2026,7 +1997,7 @@ export default function Home() {
 
         .tradeGrid {
           display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
+          grid-template-columns: repeat(6, minmax(0, 1fr));
           gap: 8px;
         }
 
@@ -2034,7 +2005,7 @@ export default function Home() {
           border: 1px solid #e2e8f0;
           border-radius: 14px;
           background: white;
-          padding: 10px;
+          padding: 9px;
           min-width: 0;
           overflow: hidden;
         }
@@ -2098,9 +2069,9 @@ export default function Home() {
 
         .tradeMetrics {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: 1fr;
           gap: 6px;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
 
         .tradeMetrics span {
@@ -2109,6 +2080,22 @@ export default function Home() {
           font-size: 11px;
           font-weight: 900;
           margin-bottom: 4px;
+        }
+
+
+        .tradeOneLineReason {
+          color: #334155;
+          font-size: 12px;
+          line-height: 1.25;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 7px;
+        }
+
+        .starterCard .tradeOneLineReason {
+          background: white;
+          border-color: #fed7aa;
         }
 
         .tradeNotes {
