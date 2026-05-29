@@ -484,7 +484,16 @@ function displayLabel(stock = {}) {
   ).toUpperCase();
 
   if (label === "BUY NOW") return "Buy Now";
-  if (label === "WATCH" || label === "WATCH FOR ENTRY") return "Watch";
+  if (label === "BREAKOUT BUY") return "Breakout Buy";
+  if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
+  if (
+    label === "WATCH" ||
+    label === "WATCH FOR ENTRY" ||
+    label === "NEAR MISS" ||
+    label === "SETUP"
+  ) {
+    return "Watch";
+  }
 
   return "Avoid";
 }
@@ -492,9 +501,11 @@ function displayLabel(stock = {}) {
 function actionRank(stock = {}) {
   const label = displayLabel(stock);
 
-  if (label === "Buy Now") return 3;
-  if (label === "Watch") return 2;
-  return 1;
+  if (label === "Buy Now") return 4;
+  if (label === "Breakout Buy") return 3;
+  if (label === "Starter Only") return 2;
+  if (label === "Watch") return 1;
+  return 0;
 }
 
 function readinessRank(stock = {}) {
