@@ -89,15 +89,15 @@ function isConstructivePortfolioTrend(stock = {}) {
   const score = getScore(stock);
   const trigger = getTrigger(stock);
   const momentum = getMomentumText(stock);
-  const freshBreakout = getFreshBreakoutScore(stock);
+  const freshStarter = getFreshStarterScore(stock);
   const buyAction = nonOwnedAction(stock);
 
   return (
     (score >= 58 && trigger >= 62 && momentum !== "Weak") ||
-    freshBreakout >= 62 ||
-    buyAction === "Buy Immediately" ||
-    buyAction === "Buy Now" ||
-    buyAction === "Breakout Buy"
+    freshStarter >= 62 ||
+    buyAction === "Buy" ||
+    buyAction === "Buy" ||
+    buyAction === "Starter"
   );
 }
 
@@ -185,17 +185,17 @@ function normalizeActionLabel(value) {
   if (!label) return null;
 
   if (label === "BUY IMMEDIATELY" || label === "IMMEDIATE BUY") {
-    return "Buy Immediately";
+    return "Buy";
   }
 
-  if (label === "BUY NOW" || label === "BUY") return "Buy Now";
+  if (label === "BUY NOW" || label === "BUY") return "Buy";
 
   if (
     label === "BREAKOUT BUY" ||
     label === "BREAKOUT" ||
     label === "FRESH BREAKOUT"
   ) {
-    return "Breakout Buy";
+    return "Starter";
   }
 
   if (
@@ -204,7 +204,7 @@ function normalizeActionLabel(value) {
     label === "STARTER BUY" ||
     label === "SMALL STARTER"
   ) {
-    return "Starter Only";
+    return "Starter";
   }
 
   if (
@@ -294,11 +294,11 @@ function getExtensionRisk(stock) {
   );
 }
 
-function getFreshBreakoutScore(stock) {
+function getFreshStarterScore(stock) {
   return clampScore(
-    getRecommendation(stock)?.freshBreakoutScore ??
-      stock?.freshBreakoutScore ??
-      stock?.technicalSnapshot?.freshBreakoutScore ??
+    getRecommendation(stock)?.freshStarterScore ??
+      stock?.freshStarterScore ??
+      stock?.technicalSnapshot?.freshStarterScore ??
       0
   );
 }
@@ -344,8 +344,8 @@ function getDominantReason(stock) {
 
   const action = nonOwnedAction(stock);
 
-  if (action === "Buy Now") return "Setup confirmed.";
-  if (action === "Starter Only") return "Early entry only; not fully confirmed.";
+  if (action === "Buy") return "Setup confirmed.";
+  if (action === "Starter") return "Early entry only; not fully confirmed.";
   if (action === "Watch") return "Setup improving; wait for confirmation.";
 
   return "Setup is not strong enough.";
@@ -363,19 +363,19 @@ function getActionSummary(stock) {
   const action = nonOwnedAction(stock);
   const dominantReason = getDominantReason(stock);
 
-  if (action === "Buy Immediately") {
+  if (action === "Buy") {
     return "Highest-conviction setup. All major checks are aligned.";
   }
 
-  if (action === "Buy Now") {
+  if (action === "Buy") {
     return "Actionable now. Setup, trend, confirmation, tradability, and risk are aligned.";
   }
 
-  if (action === "Breakout Buy") {
-    return "Breakout Buy. Starter position is acceptable now; add only if strength holds or it consolidates constructively.";
+  if (action === "Starter") {
+    return "Starter. Starter position is acceptable now; add only if strength holds or it consolidates constructively.";
   }
 
-  if (action === "Starter Only") {
+  if (action === "Starter") {
     return "Small starter only. Use reduced size. Add only if the setup confirms.";
   }
 
@@ -405,20 +405,20 @@ function getTriggerNeeded(stock) {
 
   const action = nonOwnedAction(stock);
 
-  if (action === "Buy Immediately") {
+  if (action === "Buy") {
     return "Highest-conviction entry. Normal sizing is allowed with a defined invalidation level.";
   }
 
-  if (action === "Buy Now") {
+  if (action === "Buy") {
     return "Buyable now under normal sizing. Use a defined invalidation level and do not chase oversized.";
   }
 
-  if (action === "Breakout Buy") {
-    return "Breakout Buy. Use 25% to 33% normal size now. Add only after strength holds or volume confirms.";
+  if (action === "Starter") {
+    return "Starter. Use 25% to 33% normal size now. Add only after strength holds or volume confirms.";
   }
 
-  if (action === "Starter Only") {
-    return "Starter only. Use 25% to 33% normal size. Add only after confirmation.";
+  if (action === "Starter") {
+    return "Starter. Use 25% to 33% normal size. Add only after confirmation.";
   }
 
   if (action === "Watch") {
@@ -436,10 +436,8 @@ function extractDollarPrice(text) {
 function getStatusLabel(stock, owned = false) {
   const action = displayAction(stock, owned);
 
-  if (action === "Buy Immediately") return "Buy Immediately";
-  if (action === "Buy Now") return "Buy Now";
-  if (action === "Breakout Buy") return "Breakout";
-  if (action === "Starter Only") return "Starter";
+  if (action === "Buy") return "Buy";
+  if (action === "Starter") return "Starter";
   if (action === "Watch") return "Setup";
   if (action === "Avoid") return "Avoid";
   if (action === "Hold / Add") return "Hold / Add";
@@ -457,23 +455,23 @@ function getShortReason(stock) {
   const lower = reason.toLowerCase();
   const price = extractDollarPrice(reason);
 
-  if (action === "Breakout Buy") {
+  if (action === "Starter") {
     return "Fresh breakout; starter entry acceptable.";
   }
 
-  if (action === "Buy Immediately") {
+  if (action === "Buy") {
     return "All major checks are aligned.";
   }
 
-  if (action === "Buy Now") {
+  if (action === "Buy") {
     return "Setup confirmed.";
   }
 
-  if (action === "Breakout Buy") {
-    return "Breakout structure is active.";
+  if (action === "Starter") {
+    return "Starter structure is active.";
   }
 
-  if (action === "Starter Only") {
+  if (action === "Starter") {
     return "Early entry only; not fully confirmed.";
   }
 
@@ -531,10 +529,8 @@ function shortContext(stock) {
   const reason = getDominantReason(stock);
   const lower = reason.toLowerCase();
 
-  if (action === "Buy Immediately") return "Buy Immediately";
-  if (action === "Buy Now") return "Buy Now";
-  if (action === "Breakout Buy") return "Breakout";
-  if (action === "Starter Only") return "Starter only";
+  if (action === "Buy") return "Buy";
+  if (action === "Starter") return "Starter";
   if (lower.includes("extended")) return "Extended";
   if (lower.includes("breakout")) return "Needs breakout";
   if (lower.includes("trigger confirmation")) return "Needs trigger";
@@ -561,7 +557,7 @@ function portfolioContext(stock) {
   const score = getScore(stock);
   const expectationRisk = getExpectationRisk(stock);
   const extensionRisk = getExtensionRisk(stock);
-  const freshBreakoutScore = getFreshBreakoutScore(stock);
+  const freshStarterScore = getFreshStarterScore(stock);
   const buyAction = nonOwnedAction(stock);
 
   const hasGain = Number.isFinite(gainLossPct) && gainLossPct > 0;
@@ -571,7 +567,7 @@ function portfolioContext(stock) {
   const extended = expectationRisk >= 74 || extensionRisk >= 78;
   const strongMomentum = momentum === "Strong" || momentumScore >= 72;
   const momentumLeader = meaningfulGain && trigger >= 72 && strongMomentum && score >= 58;
-  const breakoutIntact = freshBreakoutScore >= 64 || buyAction === "Breakout Buy";
+  const breakoutIntact = freshStarterScore >= 64 || buyAction === "Starter";
   const strongTrend = trigger >= 64 && momentum !== "Weak" && score >= 55;
   const weakTrend = momentum === "Weak" || trigger < 50 || score < 48;
   const supportActuallyAtRisk = weakTrend && trigger < 55 && score < 55;
@@ -579,7 +575,7 @@ function portfolioContext(stock) {
   if (action === "Exit / Avoid") return "Trend Deteriorating";
 
   if (momentumLeader) return "Momentum Leader";
-  if (breakoutIntact) return "Breakout Intact";
+  if (breakoutIntact) return "Starter Intact";
 
   if (action === "Trim") {
     if (bigGain && extended) return "Digesting Gains";
@@ -587,8 +583,8 @@ function portfolioContext(stock) {
   }
 
   if (action === "Hold / Add") {
-    if (buyAction === "Buy Immediately") return "High Conviction";
-    if (buyAction === "Buy Now") return "Setup Confirmed";
+    if (buyAction === "Buy") return "High Conviction";
+    if (buyAction === "Buy") return "Setup Confirmed";
     if (strongTrend) return "Trend Supportive";
   }
 
@@ -596,7 +592,7 @@ function portfolioContext(stock) {
   if (hasGain && strongTrend) return "Pullback in Uptrend";
   if (hasLoss && strongTrend) return "Pullback in Uptrend";
   if (supportActuallyAtRisk) return "Watching Support";
-  if (buyAction === "Starter Only") return "Developing Setup";
+  if (buyAction === "Starter") return "Developing Setup";
   if (extended) return "Consolidating";
 
   return "Consolidating";
@@ -608,8 +604,8 @@ function getContextTone(stock) {
   const action = nonOwnedAction(stock);
   const context = String(getDominantReason(stock)).toLowerCase();
 
-  if (action === "Buy Immediately" || action === "Buy Now") return "green";
-  if (action === "Breakout Buy" || action === "Starter Only") return "orange";
+  if (action === "Buy") return "green";
+  if (action === "Starter") return "orange";
 
   if (
     context.includes("fails") ||
@@ -670,34 +666,40 @@ function nonOwnedAction(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
   const rec = getRecommendation(stock);
+  const label = String(
+    rec?.displayLabel ??
+      rec?.label ??
+      rec?.recommendation ??
+      rec?.tradeAction ??
+      stock?.displayLabel ??
+      stock?.label ??
+      stock?.recommendation ??
+      ""
+  ).toUpperCase();
 
-  // IMPORTANT: client reconciliation deliberately writes `clientReconciledAction`
-  // after calling the exact same `/api?symbol=...` path used by Single Symbol
-  // Action Check. That field must win over the older broad-screener
-  // recommendation object. The prior bug computed Breakout Buy from the
-  // single-symbol response, then overwrote it with the broad Starter Only
-  // recommendation object during merge.
-  const candidates = [
-    stock?.clientReconciledAction,
-    stock?.canonicalAction,
-    stock?.resolvedAction,
-    stock?.finalAction,
-    stock?.overrideAction,
-    rec?.displayLabel,
-    rec?.label,
-    rec?.recommendation,
-    rec?.tradeAction,
-    stock?.displayLabel,
-    stock?.label,
-    typeof stock?.recommendation === "string" ? stock.recommendation : "",
-    stock?.tradeAction,
-    stock?.action,
-    stock?.rating,
-  ];
+  if (label === "BUY" || label === "BUY NOW" || label === "BUY IMMEDIATELY" || label === "STRONG BUY") {
+    return "Buy";
+  }
 
-  for (const candidate of candidates) {
-    const action = normalizeActionLabel(candidate);
-    if (action) return action;
+  if (
+    label === "STARTER" ||
+    label === "STARTER ONLY" ||
+    label === "BREAKOUT BUY" ||
+    label === "BREAKOUT" ||
+    label === "BREAKOUT STARTER"
+  ) {
+    return "Starter";
+  }
+
+  if (
+    label === "WATCH" ||
+    label === "WATCH FOR ENTRY" ||
+    label === "NEAR MISS" ||
+    label === "SETUP" ||
+    label === "SETUP ONLY" ||
+    label === "WATCH CLOSELY"
+  ) {
+    return "Watch";
   }
 
   return "Avoid";
@@ -707,10 +709,10 @@ function isActionableTrade(stock) {
   const action = nonOwnedAction(stock);
 
   return (
-    action === "Buy Immediately" ||
-    action === "Buy Now" ||
-    action === "Breakout Buy" ||
-    action === "Starter Only"
+    action === "Buy" ||
+    action === "Buy" ||
+    action === "Starter" ||
+    action === "Starter"
   );
 }
 
@@ -726,7 +728,7 @@ function portfolioAction(stock) {
   const momentum = getMomentumText(stock);
   const expectationRisk = getExpectationRisk(stock);
   const extensionRisk = getExtensionRisk(stock);
-  const freshBreakoutScore = getFreshBreakoutScore(stock);
+  const freshStarterScore = getFreshStarterScore(stock);
   const gainLossPct = Number(stock?.gainLossPct);
   const buyAction = nonOwnedAction(stock);
 
@@ -746,10 +748,10 @@ function portfolioAction(stock) {
     expectationRisk <= (digitalProxy ? 76 : 72);
 
   const breakoutWorking =
-    freshBreakoutScore >= 64 ||
-    buyAction === "Breakout Buy" ||
-    buyAction === "Buy Now" ||
-    buyAction === "Buy Immediately" ||
+    freshStarterScore >= 64 ||
+    buyAction === "Starter" ||
+    buyAction === "Buy" ||
+    buyAction === "Buy" ||
     (trigger >= 70 && momentum === "Strong");
 
   const trendWeak = momentum === "Weak" || trigger < 50 || score < 48;
@@ -774,14 +776,14 @@ function portfolioAction(stock) {
   if (bigGain && trendWeak && !breakoutWorking) return "Trim";
 
   if (
-    (buyAction === "Buy Immediately" || buyAction === "Buy Now" || buyAction === "Breakout Buy") &&
+    (buyAction === "Buy" || buyAction === "Buy" || buyAction === "Starter") &&
     trendStrong &&
     !severeExtensionRisk
   ) {
     return "Hold / Add";
   }
 
-  if (buyAction === "Starter Only" && trendStrong && !severeExtensionRisk) {
+  if (buyAction === "Starter" && trendStrong && !severeExtensionRisk) {
     return "Hold / Add";
   }
 
@@ -802,8 +804,8 @@ function displayAction(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Cash") return "gray";
-  if (action === "Buy Immediately" || action === "Buy Now" || action === "Breakout Buy" || action === "Hold / Add") return "green";
-  if (action === "Starter Only" || action === "Trim") return "orange";
+  if (action === "Buy" || action === "Starter" || action === "Hold / Add") return "green";
+  if (action === "Trim") return "orange";
   if (action === "Watch" || action === "Hold") return "yellow";
 
   return "red";
@@ -814,10 +816,8 @@ function rankActionable(a, b) {
   const actionB = nonOwnedAction(b);
 
   const rank = {
-    "Buy Immediately": 5,
-    "Buy Now": 4,
-    "Breakout Buy": 3,
-    "Starter Only": 2,
+    Buy: 3,
+    Starter: 2,
     Watch: 1,
     Avoid: 0,
   };
@@ -977,20 +977,18 @@ async function reconcileTopIdeasWithSingleSymbolEngine(list = []) {
 
 function countActions(stocks = []) {
   const counts = {
-    buyImmediatelyCount: 0,
-    buyNowCount: 0,
-    breakoutBuyCount: 0,
-    starterOnlyCount: 0,
+    buyCountLegacy: 0,
+    buyCount: 0,
+    starterCountLegacy: 0,
+    starterCount: 0,
     watchCount: 0,
     avoidCount: 0,
   };
 
   for (const stock of stocks) {
     const action = nonOwnedAction(stock);
-    if (action === "Buy Immediately") counts.buyImmediatelyCount += 1;
-    else if (action === "Buy Now") counts.buyNowCount += 1;
-    else if (action === "Breakout Buy") counts.breakoutBuyCount += 1;
-    else if (action === "Starter Only") counts.starterOnlyCount += 1;
+    if (action === "Buy") counts.buyCount += 1;
+    else if (action === "Starter") counts.starterCount += 1;
     else if (action === "Watch") counts.watchCount += 1;
     else counts.avoidCount += 1;
   }
@@ -1317,27 +1315,17 @@ export default function Home() {
     return stocks.filter(isActionableTrade).sort(rankActionable);
   }, [stocks]);
 
-  const immediateTrades = useMemo(() => {
-    return actionableTrades.filter(
-      (stock) => nonOwnedAction(stock) === "Buy Immediately"
-    );
-  }, [actionableTrades]);
+  const immediateTrades = [];
 
   const buyNowTrades = useMemo(() => {
-    return actionableTrades.filter(
-      (stock) => nonOwnedAction(stock) === "Buy Now"
-    );
+    return actionableTrades.filter((stock) => nonOwnedAction(stock) === "Buy");
   }, [actionableTrades]);
 
-  const breakoutTrades = useMemo(() => {
-    return actionableTrades.filter(
-      (stock) => nonOwnedAction(stock) === "Breakout Buy"
-    );
-  }, [actionableTrades]);
+  const breakoutTrades = [];
 
   const starterTrades = useMemo(() => {
     return actionableTrades
-      .filter((stock) => nonOwnedAction(stock) === "Starter Only")
+      .filter((stock) => nonOwnedAction(stock) === "Starter")
       .slice(0, 10);
   }, [actionableTrades]);
 
@@ -1456,7 +1444,7 @@ export default function Home() {
           <div className="noTradeBox">
             <h3>No actionable trades right now.</h3>
             <p>
-              No Buy Immediately, Buy Now, Breakout Buy, or Starter Only setups cleared the screen. Stay
+              No Buy or Starter setups cleared the screen. Stay
               patient. Cash is a valid position.
             </p>
           </div>
@@ -1466,7 +1454,7 @@ export default function Home() {
         {immediateTrades.length > 0 && (
           <>
             <div className="subSectionTitle immediateTitle compactSubTitle">
-              <h3>Buy Immediately</h3>
+              <h3>Buy</h3>
             </div>
 
             <div className="tradeGrid">
@@ -1518,7 +1506,7 @@ export default function Home() {
         {buyNowTrades.length > 0 && (
           <>
             <div className="subSectionTitle compactSubTitle">
-              <h3>Buy Now</h3>
+              <h3>Buy</h3>
             </div>
 
             <div className="tradeGrid">
@@ -1571,7 +1559,7 @@ export default function Home() {
         {breakoutTrades.length > 0 && (
           <>
             <div className="subSectionTitle breakoutTitle compactSubTitle">
-              <h3>Breakout Buy</h3>
+              <h3>Starter</h3>
             </div>
 
             <div className="tradeGrid">
@@ -1623,7 +1611,7 @@ export default function Home() {
         {starterTrades.length > 0 && (
           <>
             <div className="subSectionTitle starterTitle compactSubTitle">
-              <h3>Starter Only</h3>
+              <h3>Starter</h3>
             </div>
 
             <div className="tradeGrid">
