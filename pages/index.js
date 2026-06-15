@@ -826,7 +826,7 @@ export default function Home() {
         throw new Error("Quote refresh returned no usable stocks.");
       }
 
-      setStocks(list.slice(0, 10));
+      setStocks(list);
       setThemeMeta(data?.selectedTheme || null);
     } catch (err) {
       const message = err.message || "Failed to load trade screen.";
@@ -1099,9 +1099,9 @@ export default function Home() {
   }, [actionableTrades]);
 
   const starterTrades = useMemo(() => {
-    return actionableTrades.filter(
-      (stock) => nonOwnedAction(stock) === "Starter Only"
-    );
+    return actionableTrades
+      .filter((stock) => nonOwnedAction(stock) === "Starter Only")
+      .slice(0, 10);
   }, [actionableTrades]);
 
   const nearMisses = useMemo(() => {
@@ -1200,8 +1200,7 @@ export default function Home() {
           <div>
             <span>Discipline</span>
             <p>
-              Buy Immediately is the rare all-clear. Buy Now means normal-size trade. Starter Only means small tactical
-              position before full confirmation.
+              Buy Immediately is rare, Buy Now is a confirmed normal-size trade, Breakout Buy is actionable starter size, and Starter Only is early participation.
             </p>
           </div>
         </div>
