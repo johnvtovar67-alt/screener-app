@@ -1,479 +1,737 @@
-const NAME_OVERRIDES = {
-  VIST: "Vista Energy",
-  ASO: "Academy Sports",
-  SCHW: "Charles Schwab",
-  CROX: "Crocs",
-  FIX: "Comfort Systems",
-  GCT: "GigaCloud Technology",
-  PLTR: "Palantir",
-  SHOP: "Shopify",
-  AAPL: "Apple",
-  MSTR: "Strategy",
-  MU: "Micron Technology",
-  NVDA: "NVIDIA",
-  AMD: "Advanced Micro Devices",
-  PBF: "PBF Energy",
-  FANG: "Diamondback Energy",
-  ANF: "Abercrombie & Fitch",
-  SMCI: "Super Micro Computer",
-  CELH: "Celsius Holdings",
-  UHAL: "U-Haul Holding",
-  PDD: "PDD Holdings",
-  PINS: "Pinterest",
-  ON: "ON Semiconductor",
-  ALGM: "Allegro MicroSystems",
-  WDC: "Western Digital",
-  HIMS: "Hims & Hers Health",
-  RIOT: "Riot Platforms",
-  SOFI: "SoFi Technologies",
-  PBR: "Petrobras",
-  BTU: "Peabody Energy",
-  CCJ: "Cameco",
-  SLB: "Schlumberger",
-  CENX: "Century Aluminum",
-  ET: "Energy Transfer",
-  KGC: "Kinross Gold",
-  NEM: "Newmont",
-  NIO: "NIO",
-  M: "Macy's",
-  WULF: "TeraWulf",
-  RIG: "Transocean",
-  CHWY: "Chewy",
-  SNAP: "Snap",
-  RBLX: "Roblox",
-  OSCR: "Oscar Health",
-  ARRY: "Array Technologies",
-  BROS: "Dutch Bros",
-  RUN: "Sunrun",
-  APA: "APA Corporation",
-  HAL: "Halliburton",
-  WMB: "Williams Companies",
-  TECK: "Teck Resources",
-  PD: "PagerDuty",
-  ARMK: "Aramark",
-  LTHM: "Livent",
-  UBER: "Uber Technologies",
-  LYFT: "Lyft",
-  TALO: "Talos Energy",
-  MSFT: "Microsoft",
-  GOOGL: "Alphabet",
-  AMZN: "Amazon",
-  META: "Meta Platforms",
-  NFLX: "Netflix",
-  TSLA: "Tesla",
-  ORCL: "Oracle",
-  CRM: "Salesforce",
-  NOW: "ServiceNow",
-  ADBE: "Adobe",
-  INTU: "Intuit",
-  PANW: "Palo Alto Networks",
-  FTNT: "Fortinet",
-  CRWD: "CrowdStrike",
-  DDOG: "Datadog",
-  MDB: "MongoDB",
-  SNOW: "Snowflake",
-  TEAM: "Atlassian",
-  ZS: "Zscaler",
-  OKTA: "Okta",
-  DOCU: "DocuSign",
-  NET: "Cloudflare",
-  HUBS: "HubSpot",
-  SQ: "Block",
-  PYPL: "PayPal",
-  COIN: "Coinbase",
-  HOOD: "Robinhood",
-  AFRM: "Affirm",
-  UPST: "Upstart",
-  ROKU: "Roku",
-  DUOL: "Duolingo",
-  APP: "AppLovin",
-  SPOT: "Spotify",
-  ABNB: "Airbnb",
-  BKNG: "Booking Holdings",
-  EXPE: "Expedia",
-  MAR: "Marriott",
-  HLT: "Hilton",
-  CCL: "Carnival",
-  RCL: "Royal Caribbean",
-  NCLH: "Norwegian Cruise Line",
-  DE: "Deere",
-  CAT: "Caterpillar",
-  ETN: "Eaton",
-  EMR: "Emerson Electric",
-  PH: "Parker-Hannifin",
-  IR: "Ingersoll Rand",
-  DOV: "Dover",
-  ITW: "Illinois Tool Works",
-  JCI: "Johnson Controls",
-  CMI: "Cummins",
-  URI: "United Rentals",
-  HWM: "Howmet Aerospace",
-  X: "United States Steel",
-  NUE: "Nucor",
-  STLD: "Steel Dynamics",
-  RS: "Reliance",
-  TX: "Ternium",
-  FCX: "Freeport-McMoRan",
-  SCCO: "Southern Copper",
-  AA: "Alcoa",
-  CLF: "Cleveland-Cliffs",
-  MP: "MP Materials",
-  MOS: "Mosaic",
-  CF: "CF Industries",
-  ADM: "Archer-Daniels-Midland",
-  BG: "Bunge Global",
-  TSN: "Tyson Foods",
-  GIS: "General Mills",
-  KHC: "Kraft Heinz",
-  KO: "Coca-Cola",
-  PEP: "PepsiCo",
-  TAP: "Molson Coors",
-  PM: "Philip Morris",
-  MO: "Altria",
-  VZ: "Verizon",
-  T: "AT&T",
-  TMUS: "T-Mobile",
-  CMCSA: "Comcast",
-  CHTR: "Charter Communications",
-  DIS: "Disney",
-  PARA: "Paramount Global",
-  WBD: "Warner Bros. Discovery",
-  FOXA: "Fox",
-  JBLU: "JetBlue",
-  DAL: "Delta Air Lines",
-  UAL: "United Airlines",
-  AAL: "American Airlines",
-  LUV: "Southwest Airlines",
-  JBL: "Jabil",
-  FLEX: "Flex",
-  FSLR: "First Solar",
-  ENPH: "Enphase Energy",
-  SEDG: "SolarEdge",
-  BE: "Bloom Energy",
-  PLUG: "Plug Power",
-  AES: "AES",
-  DUK: "Duke Energy",
-  SO: "Southern Company",
-  EXC: "Exelon",
-  CEG: "Constellation Energy",
-  VST: "Vistra",
-  PCG: "PG&E",
-  FE: "FirstEnergy",
-  AEP: "American Electric Power",
-  XOM: "Exxon Mobil",
-  CVX: "Chevron",
-  COP: "ConocoPhillips",
-  EOG: "EOG Resources",
-  OXY: "Occidental Petroleum",
-  DVN: "Devon Energy",
-  MRO: "Marathon Oil",
-  EQT: "EQT",
-  CNQ: "Canadian Natural Resources",
-  SU: "Suncor Energy",
-  TRP: "TC Energy",
-  ENB: "Enbridge",
-  BKR: "Baker Hughes",
-  OIH: "VanEck Oil Services ETF",
-  SCHD: "Schwab U.S. Dividend Equity ETF",
-  XLE: "Energy Select Sector SPDR",
-  XLF: "Financial Select Sector SPDR",
-  XLI: "Industrial Select Sector SPDR",
-  XLK: "Technology Select Sector SPDR",
-  XLU: "Utilities Select Sector SPDR",
-  XLB: "Materials Select Sector SPDR",
-  XLV: "Health Care Select Sector SPDR",
-  UNH: "UnitedHealth",
-  HUM: "Humana",
-  CVS: "CVS Health",
-  CI: "Cigna",
-  ELV: "Elevance Health",
-  HCA: "HCA Healthcare",
-  THC: "Tenet Healthcare",
-  UHS: "Universal Health Services",
-  CAH: "Cardinal Health",
-  MCK: "McKesson",
-  ABC: "AmerisourceBergen",
-  AMGN: "Amgen",
-  GILD: "Gilead Sciences",
-  BIIB: "Biogen",
-  REGN: "Regeneron",
-  VRTX: "Vertex Pharmaceuticals",
-  LLY: "Eli Lilly",
-  ABBV: "AbbVie",
-  MRK: "Merck",
-  PFE: "Pfizer",
-  BMY: "Bristol Myers Squibb",
-  JNJ: "Johnson & Johnson",
-  ISRG: "Intuitive Surgical",
-  SYK: "Stryker",
-  MDT: "Medtronic",
-  BSX: "Boston Scientific",
-  HOLX: "Hologic",
-  DXCM: "DexCom",
-  ALGN: "Align Technology",
-  EW: "Edwards Lifesciences",
-  TMO: "Thermo Fisher",
-  DHR: "Danaher",
-  IQV: "IQVIA",
-  WST: "West Pharmaceutical",
-  ILMN: "Illumina",
-  CORT: "Corcept Therapeutics",
-  MRNA: "Moderna",
-  BNTX: "BioNTech",
-  EXAS: "Exact Sciences",
-  GH: "Guardant Health",
-  ACMR: "ACM Research",
-  ASML: "ASML",
-  KLAC: "KLA",
-  LRCX: "Lam Research",
-  AMAT: "Applied Materials",
-  NXPI: "NXP Semiconductors",
-  QCOM: "Qualcomm",
-  AVGO: "Broadcom",
-  MRVL: "Marvell Technology",
-  QRVO: "Qorvo",
-  SWKS: "Skyworks Solutions",
-  MCHP: "Microchip Technology",
-  ADI: "Analog Devices",
-  TXN: "Texas Instruments",
-  INTC: "Intel",
-  ARM: "Arm Holdings",
-  TSM: "Taiwan Semiconductor",
-  NXST: "Nexstar Media",
-  CAVA: "Cava Group",
-  CMG: "Chipotle",
-  SBUX: "Starbucks",
-  MCD: "McDonald's",
-  YUM: "Yum Brands",
-  DPZ: "Domino's Pizza",
-  WING: "Wingstop",
-  SG: "Sweetgreen",
-  BURL: "Burlington Stores",
-  TJX: "TJX Companies",
-  ROST: "Ross Stores",
-  WMT: "Walmart",
-  TGT: "Target",
-  COST: "Costco",
-  DG: "Dollar General",
-  DLTR: "Dollar Tree",
-  FIVE: "Five Below",
-  OLLI: "Ollie's Bargain Outlet",
-  BBY: "Best Buy",
-  LOW: "Lowe's",
-  HD: "Home Depot",
-  RH: "RH",
-  WSM: "Williams-Sonoma",
-  SONO: "Sonos",
-  BABA: "Alibaba",
-  JD: "JD.com",
-  BIDU: "Baidu",
-  TCOM: "Trip.com",
-  YY: "JOYY",
-  SE: "Sea",
-  MELI: "MercadoLibre",
-  NU: "Nu Holdings",
-  STNE: "StoneCo",
-  PAGS: "PagSeguro",
-  CPNG: "Coupang",
-  IOT: "Samsara",
-  ESTC: "Elastic",
-  CFLT: "Confluent",
-  AI: "C3.ai",
-  PATH: "UiPath",
-  BILL: "Bill Holdings",
-  GTLB: "GitLab",
-  MNDY: "Monday.com",
-  FIVN: "Five9",
-  ZI: "ZoomInfo",
-  ZM: "Zoom Communications",
-  DOCN: "DigitalOcean",
-  RAMP: "LiveRamp",
-  STX: "Seagate",
-  HPQ: "HP",
-  NTAP: "NetApp",
-  ANET: "Arista Networks",
-  CSCO: "Cisco",
-  JNPR: "Juniper Networks",
-  VRT: "Vertiv",
-  APH: "Amphenol",
-  GLW: "Corning",
-  TER: "Teradyne",
-  KBH: "KB Home",
-  LEN: "Lennar",
-  PHM: "PulteGroup",
-  DHI: "D.R. Horton",
-  MTH: "Meritage Homes",
-  TOL: "Toll Brothers",
-  RKT: "Rocket Companies",
-  RDFN: "Redfin",
-  OPEN: "Opendoor",
-  Z: "Zillow",
-  CBRE: "CBRE Group",
-  JLL: "Jones Lang LaSalle",
-  PLD: "Prologis",
-  DLR: "Digital Realty",
-  AMT: "American Tower",
-  CCI: "Crown Castle",
-  O: "Realty Income",
-  SPG: "Simon Property Group",
-  KIM: "Kimco Realty",
-  REG: "Regency Centers",
-  PSA: "Public Storage",
-  WELL: "Welltower",
-  VICI: "VICI Properties",
+// pages/api/top5.js
 
-  JOBY: "Joby Aviation",
-  ACHR: "Archer Aviation",
-  LILM: "Lilium",
-  RKLB: "Rocket Lab",
-  ASTS: "AST SpaceMobile",
-  DNA: "Ginkgo Bioworks",
-  IONQ: "IonQ",
-  QBTS: "D-Wave Quantum",
-  RGTI: "Rigetti Computing",
-  SOUN: "SoundHound AI",
-  BBAI: "BigBear.ai",
-  MARA: "MARA Holdings",
-  CLSK: "CleanSpark",
-  HUT: "Hut 8",
-  BTBT: "Bit Digital",
-  CORZ: "Core Scientific",
-  CIFR: "Cipher Mining",
-  IREN: "IREN",
-  CAN: "Canaan",
-  BITF: "Bitfarms",
-  ARBK: "Argo Blockchain",
-  DLO: "DLocal",
-  CRSR: "Corsair Gaming",
-  GDRX: "GoodRx",
-  TOST: "Toast",
-  APPS: "Digital Turbine",
-  ARLO: "Arlo Technologies",
-  BKSY: "BlackSky",
-  SPIR: "Spire Global",
-  SATS: "EchoStar",
-  LMND: "Lemonade",
-  COMP: "Compass",
-  LCID: "Lucid Group",
-  FUBO: "fuboTV",
-  EVGO: "EVgo",
-  CHPT: "ChargePoint",
-  ENVX: "Enovix",
-  XPEL: "XPEL",
-  S: "SentinelOne",
-  PSNY: "Polestar",
-  VRM: "Vroom",
-};
+import {
+  compositeScore,
+  getRecommendation,
+  getTradeReadiness,
+  buildTechnicalSnapshot,
+  buildFundamentalSnapshot,
+} from "../../lib/scoring";
 
-const VALUE_ENERGY = `
-VIST,ASO,SCHW,PBF,FANG,APA,HAL,WMB,TECK,SLB,ET,PBR,BTU,CCJ,NEM,KGC,CVI,
-TALO,ETN,EMR,JCI,CMI,DOV,PH,IR,X,NUE,STLD,RS,FCX,SCCO,AA,CLF,CF,ADM,BG,
-TSN,GIS,KHC,KO,PEP,TAP,PM,MO,VZ,T,CMCSA,CHTR,PARA,WBD,FOXA,DUK,SO,EXC,
-PCG,FE,AEP,XOM,CVX,COP,EOG,OXY,DVN,MRO,CNQ,SU,TRP,ENB,BKR
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
+function normalizeSymbol(symbol) {
+  return String(symbol || "").replace("-", ".").toUpperCase().trim();
+}
 
-const QUALITY_COMPOUNDERS = `
-MSFT,AAPL,GOOGL,AMZN,META,NFLX,ORCL,CRM,NOW,ADBE,INTU,PANW,FTNT,CRWD,DDOG,
-HUBS,ANET,CSCO,APH,GLW,AMGN,GILD,REGN,VRTX,LLY,ABBV,MRK,ISRG,SYK,BSX,TMO,
-DHR,IQV,WST,ASML,KLAC,LRCX,AMAT,ADI,TXN,AVGO,NXPI,QCOM,CMG,MCD,SBUX,COST,
-WMT,LOW,HD,TJX,ROST,DE,CAT,ETN,PH,URI,HWM,PLD,AMT,VICI,UNH,ELV,HCA
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
+function toFmpSymbol(symbol) {
+  return String(symbol || "").replace(".", "-").toUpperCase().trim();
+}
 
-const GROWTH_MOMENTUM = `
-NVDA,AMD,MU,SMCI,PLTR,SHOP,PDD,CELH,HIMS,BROS,CAVA,APP,DUOL,SPOT,ABNB,NET,
-MDB,SNOW,TEAM,ZS,OKTA,DOCU,ESTC,CFLT,AI,PATH,BILL,GTLB,MNDY,FIVN,ZI,ANF,
-GCT,ON,ALGM,WDC,CCJ,PINS,RBLX,CHWY,SNAP,OSCR,ARRY,RUN,LTHM,IOT,SE,MELI,
-NU,CPNG,CORT,ACMR,ARM,TSM,MRVL,QRVO,SWKS,MCHP,VRT,TER,FSLR,ENPH,BE
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
+function uniqueSymbols(symbols = []) {
+  const seen = new Set();
 
-const SUB25_OPPORTUNITY = `
-RIOT,MARA,CLSK,HUT,BTBT,CORZ,CIFR,IREN,CAN,BITF,ARBK,WULF,
-SOFI,NIO,M,RIG,SNAP,ARRY,LTHM,PD,OSCR,CHWY,RUN,TALO,KGC,BTU,ET,CENX,
-PLUG,BE,JOBY,ACHR,LILM,RKLB,ASTS,DNA,IONQ,QBTS,RGTI,SOUN,AI,PATH,UPST,
-AFRM,HOOD,BBAI,DLO,CRSR,GDRX,TOST,APPS,ARLO,BKSY,SPIR,SATS,LMND,COMP,
-LCID,FUBO,EVGO,CHPT,ENVX,XPEL,S,PSNY,VRM
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
-
-const CYCLICAL_INDUSTRIAL = `
-FIX,DE,CAT,EMR,JCI,CMI,DOV,PH,ITW,IR,URI,HWM,X,NUE,STLD,RS,FCX,SCCO,AA,
-MOS,CF,ADM,BG,JBL,FLEX,TECK,TX,MP,CLF,APA,HAL,SLB,BKR,ETN,EMR,JCI,CMI,
-DOV,PH,ITW,IR,HWM,DE,CAT,URI,FCX,SCCO,AA,CF,MOS,TX,MP,CLF,TECK
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
-
-const FINANCIAL_CONSUMER = `
-SCHW,HOOD,COIN,PYPL,SQ,AFRM,UPST,RKT,NU,STNE,PAGS,SOFI,ALLY,C,GS,MS,JPM,BAC,
-WFC,USB,PNC,TFC,COF,AXP,V,MA,RJF,EWBC,OZK,FHN,ZION,CFG,KEY,RF,HBAN,DFS,
-TJX,ROST,BURL,FIVE,DG,DLTR,BBY,WSM,RH,ANF,CROX,UHAL,M,CHWY,PINS,BROS,CAVA
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
-
-const EVENT_SPECULATIVE = `
-MSTR,RIOT,MARA,CLSK,HUT,BTBT,CORZ,CIFR,IREN,CAN,BITF,ARBK,WULF,
-NIO,RBLX,SNAP,OSCR,RUN,ARRY,PLUG,BE,SEDG,OPEN,RDFN,Z,
-JOBY,ACHR,LILM,RKLB,ASTS,DNA,IONQ,QBTS,RGTI,SOUN,BBAI,AI,PATH,AFRM,UPST,
-HOOD,COIN,SMCI,CELH,HIMS,BROS,APP,DUOL,NET,LMND,FUBO,CHPT,EVGO
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
-
-const AI_CRYPTO_FOCUS = `
-NVDA,AMD,MU,SMCI,PLTR,NET,SNOW,MDB,CFLT,ESTC,AI,PATH,SOUN,BBAI,GTLB,MNDY,
-ANET,VRT,MRVL,AVGO,ARM,TSM,ASML,KLAC,LRCX,AMAT,QCOM,SWKS,ALGM,ON,ACMR,
-MSTR,RIOT,MARA,CLSK,HUT,BTBT,CORZ,CIFR,IREN,CAN,BITF,ARBK,WULF,COIN,HOOD
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
-
-const SPACE_QUANTUM_EDGE = `
-RKLB,ASTS,JOBY,ACHR,LILM,BKSY,SPIR,SATS,DNA,IONQ,QBTS,RGTI,ARLO,ENVX,EVGO,CHPT
-`
-  .replace(/\s+/g, "")
-  .split(",")
-  .filter(Boolean);
-
-const bucketArrays = [
-  ["value", VALUE_ENERGY],
-  ["quality", QUALITY_COMPOUNDERS],
-  ["growth", GROWTH_MOMENTUM],
-  ["sub25", SUB25_OPPORTUNITY],
-  ["cyclical", CYCLICAL_INDUSTRIAL],
-  ["financial", FINANCIAL_CONSUMER],
-  ["event", EVENT_SPECULATIVE],
-  ["ai_crypto", AI_CRYPTO_FOCUS],
-  ["space_quantum", SPACE_QUANTUM_EDGE],
-];
-
-const seen = new Set();
-
-export const STOCK_UNIVERSE = bucketArrays.flatMap(([bucket, symbols]) =>
-  symbols
+  return symbols
+    .map((symbol) => normalizeSymbol(symbol))
     .filter((symbol) => {
+      if (!symbol) return false;
       if (seen.has(symbol)) return false;
       seen.add(symbol);
       return true;
-    })
-    .map((symbol) => ({
-      symbol,
-      name: NAME_OVERRIDES[symbol] || symbol,
-      bucket,
-    }))
-);
+    });
+}
+
+const THEME_CONFIG = {
+  broad: {
+    name: "Broad Market",
+    description:
+      "Full broad-market discovery list using the institutional scoring model.",
+    symbols: [
+      "NVDA",
+      "AMD",
+      "AVGO",
+      "QCOM",
+      "ARM",
+      "MU",
+      "SMCI",
+      "PLTR",
+      "CRWD",
+      "NET",
+      "DDOG",
+      "SNOW",
+      "SHOP",
+      "MDB",
+      "ZS",
+      "PANW",
+      "ANET",
+      "DELL",
+      "HPE",
+      "ORCL",
+      "MSFT",
+      "GOOGL",
+      "GOOG",
+      "META",
+      "AMZN",
+      "AAPL",
+      "TSLA",
+      "UBER",
+      "ROKU",
+      "SOUN",
+      "BBAI",
+      "AI",
+      "AAOI",
+
+      "SCHW",
+      "BGC",
+      "JPM",
+      "BAC",
+      "C",
+      "WFC",
+      "GS",
+      "MS",
+      "BX",
+      "KKR",
+      "APO",
+      "SOFI",
+      "AFRM",
+      "HOOD",
+      "COIN",
+      "PYPL",
+      "SQ",
+      "ALLY",
+      "RKT",
+      "UPST",
+
+      "ETN",
+      "PWR",
+      "VRT",
+      "FIX",
+      "EME",
+      "GEV",
+      "CEG",
+      "VST",
+      "NRG",
+      "TLN",
+      "KMI",
+      "WMB",
+      "TRGP",
+      "LNG",
+      "ET",
+      "EPD",
+      "OKE",
+      "PAGP",
+      "XOM",
+      "CVX",
+      "COP",
+      "SLB",
+      "HAL",
+      "FCX",
+      "CLF",
+      "NUE",
+      "STLD",
+
+      "CCJ",
+      "UEC",
+      "UUUU",
+      "LEU",
+      "BWXT",
+      "SMR",
+      "OKLO",
+      "NNE",
+
+      "MSTR",
+      "MARA",
+      "RIOT",
+      "CLSK",
+      "IREN",
+      "WULF",
+      "HUT",
+      "BTDR",
+      "CIFR",
+      "BITF",
+
+      "HIMS",
+      "BCRX",
+      "ALMS",
+      "VKTX",
+      "RXRX",
+      "SDGR",
+      "DNA",
+      "MRNA",
+      "NVAX",
+      "CRSP",
+      "BEAM",
+      "IOVA",
+      "GERN",
+      "ALT",
+
+      "CELH",
+      "CROX",
+      "DKNG",
+      "RCL",
+      "CCL",
+      "NCLH",
+      "ABNB",
+      "EXPE",
+      "AAL",
+      "UAL",
+      "DAL",
+      "LUV",
+      "DIS",
+      "NFLX",
+      "TGT",
+      "WMT",
+      "COST",
+
+      "AHR",
+      "VICI",
+      "O",
+      "PLD",
+      "DLR",
+      "EQIX",
+      "AMT",
+      "CCI",
+      "WELL",
+    ],
+  },
+
+  btc: {
+    name: "BTC / Digital Assets",
+    description:
+      "Bitcoin, crypto infrastructure, exchanges, and digital asset proxies.",
+    symbols: [
+      "MSTR",
+      "MARA",
+      "RIOT",
+      "CLSK",
+      "IREN",
+      "WULF",
+      "HUT",
+      "BTDR",
+      "CIFR",
+      "BITF",
+      "COIN",
+      "HOOD",
+      "SQ",
+      "PYPL",
+    ],
+  },
+
+  ai_power: {
+    name: "AI Power & Energy",
+    description:
+      "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
+    symbols: [
+      "VST",
+      "CEG",
+      "NRG",
+      "TLN",
+      "GEV",
+      "ETN",
+      "PWR",
+      "VRT",
+      "FIX",
+      "EME",
+      "KMI",
+      "WMB",
+      "TRGP",
+      "LNG",
+      "ET",
+      "EPD",
+      "OKE",
+    ],
+  },
+
+  cooling_water: {
+    name: "Cooling & Water",
+    description:
+      "Thermal management, water infrastructure, and cooling beneficiaries.",
+    symbols: [
+      "VRT",
+      "ETN",
+      "PWR",
+      "FIX",
+      "EME",
+      "XYL",
+      "WTS",
+      "AOS",
+      "PNR",
+      "ITT",
+      "DOV",
+      "HUBB",
+      "NVT",
+      "CARR",
+      "TT",
+    ],
+  },
+
+  nuclear: {
+    name: "Nuclear / Baseload",
+    description:
+      "Uranium, nuclear services, advanced nuclear, and baseload power.",
+    symbols: [
+      "CCJ",
+      "UEC",
+      "UUUU",
+      "LEU",
+      "BWXT",
+      "SMR",
+      "OKLO",
+      "NNE",
+      "CEG",
+      "VST",
+      "TLN",
+      "GEV",
+      "NXE",
+      "DNN",
+    ],
+  },
+
+  quantum: {
+    name: "Quantum Computing",
+    description:
+      "Quantum computing names and larger companies with quantum exposure.",
+    symbols: [
+      "IONQ",
+      "RGTI",
+      "QBTS",
+      "QUBT",
+      "ARQQ",
+      "IBM",
+      "GOOGL",
+      "MSFT",
+      "NVDA",
+      "HON",
+      "AMZN",
+    ],
+  },
+
+  ai_infra: {
+    name: "AI Infrastructure",
+    description:
+      "Semiconductors, servers, networking, data center infrastructure, and AI platforms.",
+    symbols: [
+      "NVDA",
+      "AMD",
+      "AVGO",
+      "QCOM",
+      "ARM",
+      "MU",
+      "SMCI",
+      "DELL",
+      "HPE",
+      "ANET",
+      "VRT",
+      "ETN",
+      "PWR",
+      "FIX",
+      "EME",
+      "ORCL",
+      "MSFT",
+      "GOOGL",
+      "META",
+      "AMZN",
+      "PLTR",
+      "CRWD",
+      "NET",
+      "DDOG",
+      "SNOW",
+    ],
+  },
+};
+
+function getThemeConfig(themeKey) {
+  const clean = String(themeKey || "broad").toLowerCase();
+  return THEME_CONFIG[clean] || THEME_CONFIG.broad;
+}
+
+function toNumber(value, fallback = null) {
+  if (value == null || value === "") return fallback;
+
+  if (typeof value === "string") {
+    const cleaned = value.replace("%", "").replace(/,/g, "").trim();
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function toPositiveNumber(value, fallback = null) {
+  const n = toNumber(value, fallback);
+  if (n == null || !Number.isFinite(n) || n <= 0) return fallback;
+  return n;
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(
+      `FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`
+    );
+  }
+
+  return response.json();
+}
+
+async function fetchFmpBatch(symbols = [], apiKey) {
+  const cleanSymbols = uniqueSymbols(symbols);
+  if (!cleanSymbols.length) return [];
+
+  const fmpSymbols = cleanSymbols.map(toFmpSymbol).join(",");
+
+  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
+    fmpSymbols
+  )}&apikey=${apiKey}`;
+
+  const data = await fetchJson(url);
+
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") return [data];
+
+  return [];
+}
+
+async function fetchFmpIndividual(symbols = [], apiKey) {
+  const cleanSymbols = uniqueSymbols(symbols);
+  const all = [];
+
+  for (const symbol of cleanSymbols) {
+    try {
+      const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
+        toFmpSymbol(symbol)
+      )}&apikey=${apiKey}`;
+
+      const data = await fetchJson(url);
+
+      if (Array.isArray(data) && data[0]) {
+        all.push(data[0]);
+      } else if (data && typeof data === "object") {
+        all.push(data);
+      }
+    } catch {
+      // Skip one-symbol failures so one bad ticker does not kill the full screen.
+    }
+  }
+
+  return all;
+}
+
+async function fetchFmpQuotes(symbols = []) {
+  const apiKey = process.env.FMP_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Missing FMP_API_KEY in environment variables.");
+  }
+
+  const cleanSymbols = uniqueSymbols(symbols);
+  if (!cleanSymbols.length) return [];
+
+  let batchQuotes = [];
+
+  try {
+    batchQuotes = await fetchFmpBatch(cleanSymbols, apiKey);
+  } catch {
+    batchQuotes = [];
+  }
+
+  if (Array.isArray(batchQuotes) && batchQuotes.length > 0) {
+    return batchQuotes;
+  }
+
+  return fetchFmpIndividual(cleanSymbols, apiKey);
+}
+
+function normalizeQuote(row = {}) {
+  const symbol = normalizeSymbol(row.symbol);
+
+  const price = toPositiveNumber(row.price);
+  const previousClose = toPositiveNumber(row.previousClose);
+  const change = toNumber(row.change);
+
+  let dayChangePct = toNumber(row.changesPercentage);
+
+  if (dayChangePct == null) {
+    dayChangePct = toNumber(row.changePercentage);
+  }
+
+  if (dayChangePct == null) {
+    dayChangePct = toNumber(row.changePercent);
+  }
+
+  if (dayChangePct == null && price != null && previousClose) {
+    dayChangePct = ((price - previousClose) / previousClose) * 100;
+  }
+
+  if (dayChangePct == null && change != null && previousClose) {
+    dayChangePct = (change / previousClose) * 100;
+  }
+
+  return {
+    symbol,
+    name: row.name || row.companyName || symbol,
+    price,
+    previousClose,
+    change,
+    dayChangePct,
+    changesPercentage: dayChangePct,
+    marketCap: toPositiveNumber(row.marketCap),
+    volume: toPositiveNumber(row.volume),
+    avgVolume: toPositiveNumber(row.avgVolume),
+    yearHigh: toPositiveNumber(row.yearHigh || row.high52 || row.fiftyTwoWeekHigh),
+    yearLow: toPositiveNumber(row.yearLow || row.low52 || row.fiftyTwoWeekLow),
+    beta: toNumber(row.beta, 1),
+    priceAvg50: toPositiveNumber(row.priceAvg50),
+    priceAvg200: toPositiveNumber(row.priceAvg200),
+    eps: toNumber(row.eps),
+    pe: toNumber(row.pe),
+    exchange: row.exchange || "",
+    timestamp: row.timestamp || null,
+  };
+}
+
+function displayLabel(stock = {}) {
+  const label = String(
+    stock.recommendation?.displayLabel ||
+      stock.recommendation?.label ||
+      ""
+  ).toUpperCase();
+
+  if (label === "BUY IMMEDIATELY") return "Buy Immediately";
+  if (label === "BUY NOW") return "Buy Now";
+  if (label === "BREAKOUT BUY") return "Breakout Buy";
+  if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
+  if (
+    label === "WATCH" ||
+    label === "WATCH FOR ENTRY" ||
+    label === "NEAR MISS" ||
+    label === "SETUP"
+  ) {
+    return "Watch";
+  }
+
+  return "Avoid";
+}
+
+function actionRank(stock = {}) {
+  const label = displayLabel(stock);
+
+  if (label === "Buy Immediately") return 5;
+  if (label === "Buy Now") return 4;
+  if (label === "Breakout Buy") return 3;
+  if (label === "Starter Only") return 2;
+  if (label === "Watch") return 1;
+  return 0;
+}
+
+function readinessRank(stock = {}) {
+  const label = String(stock.tradeReadiness?.label || "").toUpperCase();
+
+  if (label === "TRADE READY") return 3;
+  if (label === "WATCH" || label === "WATCH CLOSELY") return 2;
+  if (label === "SETUP ONLY") return 1;
+
+  return 0;
+}
+
+function safeScore(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function rankScore(stock = {}) {
+  const rec = stock.recommendation || {};
+
+  const actionPoints = actionRank(stock) * 100000;
+  const readinessPoints = readinessRank(stock) * 10000;
+
+  const score = safeScore(rec.score || stock.score);
+  const institutionalScore = safeScore(rec.institutionalScore);
+  const actionabilityScore = safeScore(rec.actionabilityScore);
+  const triggerScore = safeScore(rec.triggerScore || stock.triggerScore);
+  const momentumScore = safeScore(rec.momentumScore || stock.momentumScore);
+  const relativeStrengthScore = safeScore(rec.relativeStrengthScore);
+  const freshBreakoutScore = safeScore(rec.freshBreakoutScore);
+
+  const expectationRisk = safeScore(rec.expectationRisk);
+  const extensionRisk = safeScore(rec.extensionRisk);
+  const lateChaseRisk = safeScore(rec.lateChaseRisk);
+  const riskPenalty = safeScore(rec.riskPenalty);
+
+  const positive =
+    institutionalScore * 2.6 +
+    actionabilityScore * 2.4 +
+    score * 1.8 +
+    triggerScore * 3.1 +
+    momentumScore * 2.2 +
+    relativeStrengthScore * 1.4 +
+    freshBreakoutScore * 1.4;
+
+  const negative =
+    expectationRisk * 1.2 +
+    extensionRisk * 1.3 +
+    lateChaseRisk * 1.5 +
+    riskPenalty * 0.8;
+
+  return actionPoints + readinessPoints + positive - negative;
+}
+
+function enrichQuote(row = {}) {
+  const normalized = normalizeQuote(row);
+
+  if (!normalized.symbol || normalized.price == null) {
+    return null;
+  }
+
+  const recommendation = getRecommendation(normalized);
+  const tradeReadiness = getTradeReadiness(normalized);
+  const technicalSnapshot = buildTechnicalSnapshot(normalized);
+  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
+  const score = compositeScore(normalized);
+
+  const stock = {
+    ...normalized,
+    score,
+    compositeScore: score,
+    recommendation,
+    tradeReadiness,
+    technicalSnapshot,
+    fundamentalSnapshot,
+
+    triggerScore: recommendation?.triggerScore,
+    momentumScore: recommendation?.momentumScore,
+    expectationRisk: recommendation?.expectationRisk,
+    extensionRisk: recommendation?.extensionRisk,
+    lateChaseRisk: recommendation?.lateChaseRisk,
+    freshBreakoutScore: recommendation?.freshBreakoutScore,
+    context: recommendation?.context,
+    reason: recommendation?.reason,
+    entryNote: recommendation?.entryNote,
+    actionWhy: recommendation?.reason,
+    triggerNeeded: recommendation?.entryNote,
+  };
+
+  return {
+    ...stock,
+    institutionalRank: rankScore(stock),
+  };
+}
+
+function buildDisplayUniverse(enriched = []) {
+  const sorted = [...enriched].sort(sortTopIdeas);
+
+  const rank = {
+    "Buy Immediately": 5,
+    "Buy Now": 4,
+    "Breakout Buy": 3,
+    "Starter Only": 2,
+    Watch: 1,
+    Avoid: 0,
+  };
+
+  const byAction = (label) =>
+    sorted
+      .filter((stock) => displayLabel(stock) === label)
+      .sort(sortTopIdeas);
+
+  const selected = [
+    ...byAction("Buy Immediately"),
+    ...byAction("Buy Now"),
+    ...byAction("Breakout Buy"),
+    ...byAction("Starter Only").slice(0, 15),
+    ...byAction("Watch").slice(0, 12),
+    ...byAction("Avoid").slice(0, 8),
+  ];
+
+  const seen = new Set();
+  const unique = [];
+
+  for (const stock of selected) {
+    const symbol = normalizeSymbol(stock.symbol);
+    if (!symbol || seen.has(symbol)) continue;
+    seen.add(symbol);
+    unique.push({
+      ...stock,
+      actionRank: rank[displayLabel(stock)] ?? 0,
+    });
+  }
+
+  return unique.slice(0, 60);
+}
+
+function sortTopIdeas(a, b) {
+  const rankA = Number(a.institutionalRank || 0);
+  const rankB = Number(b.institutionalRank || 0);
+
+  if (rankB !== rankA) return rankB - rankA;
+
+  const scoreA = safeScore(a.recommendation?.actionabilityScore || a.score);
+  const scoreB = safeScore(b.recommendation?.actionabilityScore || b.score);
+
+  if (scoreB !== scoreA) return scoreB - scoreA;
+
+  const triggerA = safeScore(a.recommendation?.triggerScore);
+  const triggerB = safeScore(b.recommendation?.triggerScore);
+
+  if (triggerB !== triggerA) return triggerB - triggerA;
+
+  const momentumA = safeScore(a.recommendation?.momentumScore);
+  const momentumB = safeScore(b.recommendation?.momentumScore);
+
+  return momentumB - momentumA;
+}
+
+export default async function handler(req, res) {
+  try {
+    const themeKey = String(req.query.theme || "broad").toLowerCase();
+    const selectedTheme = getThemeConfig(themeKey);
+    const symbols = uniqueSymbols(selectedTheme.symbols);
+
+    if (!symbols.length) {
+      return res.status(502).json({
+        error: "Quote refresh returned no usable stocks.",
+        detail: "The selected theme has no symbols configured.",
+      });
+    }
+
+    const quotes = await fetchFmpQuotes(symbols);
+
+    if (!Array.isArray(quotes) || quotes.length === 0) {
+      return res.status(502).json({
+        error: "Quote refresh returned no usable stocks.",
+        detail:
+          "FMP returned no quotes for this refresh. Keeping the prior screen is safer than replacing it with blanks.",
+      });
+    }
+
+    const enriched = quotes
+      .map(enrichQuote)
+      .filter(Boolean)
+      .filter((stock) => Number.isFinite(Number(stock.price)));
+
+    if (!enriched.length) {
+      return res.status(502).json({
+        error: "Quote refresh returned no usable stocks.",
+        detail:
+          "Quotes came back from FMP, but none could be scored into usable stock rows.",
+      });
+    }
+
+    const sorted = buildDisplayUniverse(enriched);
+
+    return res.status(200).json({
+      selectedTheme,
+      count: sorted.length,
+      stocks: sorted,
+      meta: {
+        mode: "single_brain_bucketed_universe_v4",
+        decisionSource: "lib/scoring.js",
+        top5DoesLabelMapping: false,
+        requestedSymbols: symbols.length,
+        returnedQuotes: quotes.length,
+        scoredQuotes: enriched.length,
+        displayUniverse: sorted.length,
+        buyImmediatelyCount: enriched.filter((stock) => displayLabel(stock) === "Buy Immediately").length,
+        buyNowCount: enriched.filter((stock) => displayLabel(stock) === "Buy Now").length,
+        breakoutBuyCount: enriched.filter((stock) => displayLabel(stock) === "Breakout Buy").length,
+        starterOnlyCount: enriched.filter((stock) => displayLabel(stock) === "Starter Only").length,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to load top ideas.",
+      detail: error?.message || String(error),
+    });
+  }
+}
