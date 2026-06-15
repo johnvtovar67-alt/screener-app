@@ -1,7 +1,9 @@
 // pages/api/top5.js
 
-// This route intentionally does not import scoring helpers.
-// It consumes the exact /api?symbol output used by the Single Symbol Action Check.
+// This route intentionally uses the same API handler as the Single Symbol Action Check.
+// The broad screener must never derive a different label from a separate quote-only path.
+
+import singleSymbolHandler from "./index";
 
 function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase().trim();
@@ -645,56 +647,95 @@ function bucketRows(rows = []) {
   return unique.slice(0, 75);
 }
 
-function getRequestBaseUrl(req) {
-  const host = req?.headers?.host;
-  if (!host) return "";
 
-  const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "")
-    .split(",")[0]
-    .trim();
-  const protocol = forwardedProto || (host.includes("localhost") ? "http" : "https");
+function createCaptureResponse(symbol) {
+  const capture = {
+    statusCode: 200,
+    body: null,
+    headers: {},
+    ended: false,
+  };
 
-  return `${protocol}://${host}`;
+  const res = {
+    setHeader(name, value) {
+      capture.headers[String(name).toLowerCase()] = value;
+      return res;
+    },
+    status(code) {
+      capture.statusCode = Number(code) || 200;
+      return res;
+    },
+    json(payload) {
+      capture.body = payload;
+      capture.ended = true;
+      return res;
+    },
+    send(payload) {
+      capture.body = payload;
+      capture.ended = true;
+      return res;
+    },
+    end(payload) {
+      if (payload !== undefined && capture.body == null) capture.body = payload;
+      capture.ended = true;
+      return res;
+    },
+  };
+
+  return { capture, res };
 }
 
-async function fetchSingleSymbolAnalysis(req, symbol) {
-  const baseUrl = getRequestBaseUrl(req);
+async function runSingleSymbolHandlerDirect(req, symbol) {
+  const cleanSymbol = normalizeSymbol(symbol);
+  if (!cleanSymbol) throw new Error("Missing symbol for single-symbol engine.");
 
-  if (!baseUrl || !symbol) {
-    throw new Error("Top screener could not determine the app base URL.");
-  }
+  const { capture, res } = createCaptureResponse(cleanSymbol);
 
-  const url = `${baseUrl}/api?symbol=${encodeURIComponent(symbol)}`;
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/json",
-      "x-screener-internal": "top5-single-symbol-required",
+  const mockReq = {
+    ...req,
+    method: "GET",
+    query: {
+      ...(req?.query || {}),
+      symbol: cleanSymbol,
+      source: "top5-direct-single-symbol",
     },
-  });
+    headers: {
+      ...(req?.headers || {}),
+      "x-screener-internal": "top5-direct-single-symbol-required-v9",
+    },
+  };
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
+  await singleSymbolHandler(mockReq, res);
+
+  if (capture.statusCode >= 400) {
+    const detail =
+      typeof capture.body === "object"
+        ? capture.body?.detail || capture.body?.error || JSON.stringify(capture.body).slice(0, 180)
+        : String(capture.body || "").slice(0, 180);
     throw new Error(
-      `${symbol}: single-symbol engine failed with HTTP ${response.status}${
-        text ? ` - ${text.slice(0, 160)}` : ""
+      `${cleanSymbol}: direct single-symbol engine failed with HTTP ${capture.statusCode}${
+        detail ? ` - ${detail}` : ""
       }`
     );
   }
 
-  const data = await response.json();
+  const data = capture.body;
   const stock = data?.stock || data?.result || data?.data || data;
 
   if (!stock || typeof stock !== "object") {
-    throw new Error(`${symbol}: single-symbol engine returned no stock object.`);
+    throw new Error(`${cleanSymbol}: direct single-symbol engine returned no stock object.`);
   }
 
-  const row = normalizeSingleSymbolRow(stock, symbol);
+  const row = normalizeSingleSymbolRow(stock, cleanSymbol);
 
   if (!row.symbol || row.price == null || !Number.isFinite(Number(row.price))) {
-    throw new Error(`${symbol}: single-symbol engine returned an unusable price.`);
+    throw new Error(`${cleanSymbol}: direct single-symbol engine returned an unusable price.`);
   }
 
-  return row;
+  return {
+    ...row,
+    decisionEngine: "direct-single-symbol-handler-required-v9",
+  };
 }
 
 async function mapWithConcurrency(items = [], concurrency = 5, mapper) {
@@ -739,7 +780,7 @@ export default async function handler(req, res) {
     }
 
     const results = await mapWithConcurrency(symbols, 5, (symbol) =>
-      fetchSingleSymbolAnalysis(req, symbol)
+      runSingleSymbolHandlerDirect(req, symbol)
     );
 
     const rows = results.filter((r) => r.ok).map((r) => r.value);
@@ -768,9 +809,11 @@ export default async function handler(req, res) {
       count: stocks.length,
       stocks,
       meta: {
-        mode: "single_symbol_engine_required_v8",
-        decisionSource: "/api?symbol=SYMBOL",
+        mode: "direct_single_symbol_handler_required_v9",
+        dataPath: "direct pages/api/index.js handler",
+        decisionSource: "pages/api/index.js handler invoked directly",
         fallbackUsed: false,
+        directHandlerImport: true,
         requestedSymbols: symbols.length,
         analyzedSymbols: rows.length,
         failedSymbols: failures.length,
