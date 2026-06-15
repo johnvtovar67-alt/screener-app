@@ -433,10 +433,147 @@ async function fetchFmpQuotes(symbols = []) {
   return fetchFmpIndividual(cleanSymbols, apiKey);
 }
 
+
+function getRequestBaseUrl(req) {
+  const host = req?.headers?.host;
+
+  if (!host) return "";
+
+  const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim();
+  const protocol = forwardedProto || (host.includes("localhost") ? "http" : "https");
+
+  return `${protocol}://${host}`;
+}
+
+async function fetchSingleSymbolAnalysis(req, symbol) {
+  const baseUrl = getRequestBaseUrl(req);
+
+  if (!baseUrl || !symbol) return null;
+
+  try {
+    const url = `${baseUrl}/api?symbol=${encodeURIComponent(symbol)}`;
+    const response = await fetch(url, {
+      headers: {
+        accept: "application/json",
+        "x-screener-internal": "top5-single-brain",
+      },
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const stock = data?.stock || data?.result || data?.data || data;
+
+    if (!stock || typeof stock !== "object") return null;
+
+    const normalized = normalizeQuote({
+      ...stock,
+      symbol: stock.symbol || symbol,
+    });
+
+    const recommendation =
+      stock.recommendation && typeof stock.recommendation === "object"
+        ? stock.recommendation
+        : getRecommendation(normalized);
+
+    const tradeReadiness =
+      stock.tradeReadiness && typeof stock.tradeReadiness === "object"
+        ? stock.tradeReadiness
+        : getTradeReadiness(normalized);
+
+    const technicalSnapshot =
+      stock.technicalSnapshot && typeof stock.technicalSnapshot === "object"
+        ? stock.technicalSnapshot
+        : buildTechnicalSnapshot(normalized);
+
+    const fundamentalSnapshot =
+      stock.fundamentalSnapshot && typeof stock.fundamentalSnapshot === "object"
+        ? stock.fundamentalSnapshot
+        : buildFundamentalSnapshot(normalized);
+
+    const score = compositeScore(normalized);
+
+    const row = {
+      ...normalized,
+      ...stock,
+      symbol: normalizeSymbol(stock.symbol || symbol),
+      ticker: normalizeSymbol(stock.symbol || symbol),
+      price: normalized.price,
+      currentPrice: normalized.currentPrice,
+      lastPrice: normalized.lastPrice,
+      close: normalized.close,
+      changesPercentage: normalized.changesPercentage,
+      changePercent: normalized.changePercent,
+      dayChangePct: normalized.dayChangePct,
+      score,
+      compositeScore: score,
+      recommendation,
+      tradeReadiness,
+      technicalSnapshot,
+      fundamentalSnapshot,
+      triggerScore: recommendation?.triggerScore ?? stock.triggerScore,
+      momentumScore: recommendation?.momentumScore ?? stock.momentumScore,
+      expectationRisk: recommendation?.expectationRisk ?? stock.expectationRisk,
+      extensionRisk: recommendation?.extensionRisk ?? stock.extensionRisk,
+      lateChaseRisk: recommendation?.lateChaseRisk ?? stock.lateChaseRisk,
+      freshBreakoutScore:
+        recommendation?.freshBreakoutScore ?? stock.freshBreakoutScore,
+      context: recommendation?.context ?? stock.context,
+      reason: recommendation?.reason ?? stock.reason,
+      entryNote: recommendation?.entryNote ?? stock.entryNote,
+      actionWhy: recommendation?.reason ?? stock.actionWhy,
+      triggerNeeded: recommendation?.entryNote ?? stock.triggerNeeded,
+      dataPath: "single-symbol-api",
+    };
+
+    return {
+      ...row,
+      institutionalRank: rankScore(row),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function mapWithConcurrency(items = [], concurrency = 8, mapper) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, Math.max(items.length, 1)) },
+    () => worker()
+  );
+
+  await Promise.all(workers);
+  return results;
+}
+
+async function fetchSingleBrainUniverse(req, symbols = []) {
+  const cleanSymbols = uniqueSymbols(symbols);
+
+  if (!cleanSymbols.length) return [];
+
+  const rows = await mapWithConcurrency(cleanSymbols, 8, (symbol) =>
+    fetchSingleSymbolAnalysis(req, symbol)
+  );
+
+  return rows.filter(Boolean);
+}
+
 function normalizeQuote(row = {}) {
   const symbol = normalizeSymbol(row.symbol);
 
-  const price = toPositiveNumber(row.price);
+  const price = toPositiveNumber(row.price ?? row.currentPrice ?? row.close);
   const previousClose = toPositiveNumber(row.previousClose);
   const change = toNumber(row.change);
 
@@ -458,25 +595,72 @@ function normalizeQuote(row = {}) {
     dayChangePct = (change / previousClose) * 100;
   }
 
+  // IMPORTANT:
+  // Keep the raw quote fields and explicitly map every scoring field that the
+  // single-symbol analyzer can use. The prior broad screener normalized the FMP
+  // quote too aggressively and dropped fields such as yearHigh/yearLow/beta.
+  // That made the broad screener and the single-symbol checker disagree on the
+  // exact same stock at the exact same price. This object is now the single
+  // source of truth passed into lib/scoring.js for broad-market rows.
+  const yearHigh = toPositiveNumber(
+    row.yearHigh ?? row.high52 ?? row.fiftyTwoWeekHigh ?? row['52WeekHigh']
+  );
+  const yearLow = toPositiveNumber(
+    row.yearLow ?? row.low52 ?? row.fiftyTwoWeekLow ?? row['52WeekLow']
+  );
+  const priceAvg50 = toPositiveNumber(
+    row.priceAvg50 ?? row.fiftyDayAverage ?? row.sma50 ?? row.ma50
+  );
+  const priceAvg200 = toPositiveNumber(
+    row.priceAvg200 ?? row.twoHundredDayAverage ?? row.sma200 ?? row.ma200
+  );
+  const volume = toPositiveNumber(row.volume ?? row.vol);
+  const avgVolume = toPositiveNumber(
+    row.avgVolume ?? row.averageVolume ?? row.avgVolume10Day ?? row.averageVolume10Day
+  );
+
   return {
+    ...row,
     symbol,
+    ticker: symbol,
     name: row.name || row.companyName || symbol,
+    companyName: row.companyName || row.name || symbol,
     price,
+    currentPrice: price,
+    lastPrice: price,
+    close: price,
     previousClose,
     change,
     dayChangePct,
     changesPercentage: dayChangePct,
-    marketCap: toPositiveNumber(row.marketCap),
-    volume: toPositiveNumber(row.volume),
-    avgVolume: toPositiveNumber(row.avgVolume),
-    yearHigh: toPositiveNumber(row.yearHigh || row.high52 || row.fiftyTwoWeekHigh),
-    yearLow: toPositiveNumber(row.yearLow || row.low52 || row.fiftyTwoWeekLow),
-    beta: toNumber(row.beta, 1),
-    priceAvg50: toPositiveNumber(row.priceAvg50),
-    priceAvg200: toPositiveNumber(row.priceAvg200),
+    changePercent: dayChangePct,
+    marketCap: toPositiveNumber(row.marketCap ?? row.mktCap ?? row.marketCapitalization),
+    volume,
+    vol: volume,
+    avgVolume,
+    averageVolume: avgVolume,
+    priceAvg50,
+    fiftyDayAverage: priceAvg50,
+    sma50: priceAvg50,
+    priceAvg200,
+    twoHundredDayAverage: priceAvg200,
+    sma200: priceAvg200,
+    yearHigh,
+    high52: yearHigh,
+    fiftyTwoWeekHigh: yearHigh,
+    yearLow,
+    low52: yearLow,
+    fiftyTwoWeekLow: yearLow,
+    dayHigh: toPositiveNumber(row.dayHigh ?? row.high),
+    dayLow: toPositiveNumber(row.dayLow ?? row.low),
+    open: toPositiveNumber(row.open),
     eps: toNumber(row.eps),
-    pe: toNumber(row.pe),
-    exchange: row.exchange || "",
+    pe: toNumber(row.pe ?? row.peRatio),
+    beta: toNumber(row.beta, null),
+    sharesOutstanding: toPositiveNumber(row.sharesOutstanding),
+    exchange: row.exchange || row.exchangeShortName || "",
+    sector: row.sector || "",
+    industry: row.industry || "",
     timestamp: row.timestamp || null,
   };
 }
@@ -685,26 +869,44 @@ export default async function handler(req, res) {
       });
     }
 
-    const quotes = await fetchFmpQuotes(symbols);
+    // Critical architecture fix:
+    // The broad screener must use the same single-symbol analysis path as the
+    // Single Symbol Action Check. The prior route used quote-only rows and then
+    // re-scored them locally, which allowed the same ticker at the same price to
+    // show Starter Only in the broad screener while the single-symbol checker
+    // showed Breakout Buy. That made calibration impossible.
+    let rawRows = await fetchSingleBrainUniverse(req, symbols);
+    let dataPath = "single-symbol-api";
+    let quotes = [];
 
-    if (!Array.isArray(quotes) || quotes.length === 0) {
-      return res.status(502).json({
-        error: "Quote refresh returned no usable stocks.",
-        detail:
-          "FMP returned no quotes for this refresh. Keeping the prior screen is safer than replacing it with blanks.",
-      });
+    // Safety fallback: if the internal single-symbol path is unavailable in a
+    // local/dev deploy, fall back to the direct FMP quote path rather than fail.
+    // In normal Vercel use, rawRows should come from /api?symbol=... so both
+    // sections share the exact same recommendation object.
+    if (!Array.isArray(rawRows) || rawRows.length === 0) {
+      dataPath = "fmp-quote-fallback";
+      quotes = await fetchFmpQuotes(symbols);
+
+      if (!Array.isArray(quotes) || quotes.length === 0) {
+        return res.status(502).json({
+          error: "Quote refresh returned no usable stocks.",
+          detail:
+            "The single-symbol engine and FMP fallback both returned no usable stocks.",
+        });
+      }
+
+      rawRows = quotes.map(enrichQuote).filter(Boolean);
     }
 
-    const enriched = quotes
-      .map(enrichQuote)
-      .filter(Boolean)
-      .filter((stock) => Number.isFinite(Number(stock.price)));
+    const enriched = rawRows.filter((stock) =>
+      Number.isFinite(Number(stock.price ?? stock.currentPrice ?? stock.lastPrice))
+    );
 
     if (!enriched.length) {
       return res.status(502).json({
         error: "Quote refresh returned no usable stocks.",
         detail:
-          "Quotes came back from FMP, but none could be scored into usable stock rows.",
+          "Rows came back, but none could be scored into usable stock rows.",
       });
     }
 
@@ -715,9 +917,10 @@ export default async function handler(req, res) {
       count: sorted.length,
       stocks: sorted,
       meta: {
-        mode: "single_brain_bucketed_universe_v4",
-        decisionSource: "lib/scoring.js",
+        mode: "single_symbol_engine_unified_v6",
+        decisionSource: "/api?symbol via lib/scoring.js",
         top5DoesLabelMapping: false,
+        dataPath,
         requestedSymbols: symbols.length,
         returnedQuotes: quotes.length,
         scoredQuotes: enriched.length,
