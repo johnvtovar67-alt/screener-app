@@ -708,12 +708,7 @@ function nonOwnedAction(stock) {
 function isActionableTrade(stock) {
   const action = nonOwnedAction(stock);
 
-  return (
-    action === "Buy" ||
-    action === "Buy" ||
-    action === "Starter" ||
-    action === "Starter"
-  );
+  return action === "Buy" || action === "Starter";
 }
 
 function isNearMiss(stock) {
@@ -804,7 +799,8 @@ function displayAction(stock, owned = false) {
 
 function actionClass(action) {
   if (action === "Cash") return "gray";
-  if (action === "Buy" || action === "Starter" || action === "Hold / Add") return "green";
+  if (action === "Buy" || action === "Hold / Add") return "green";
+  if (action === "Starter") return "orange";
   if (action === "Trim") return "orange";
   if (action === "Watch" || action === "Hold") return "yellow";
 
@@ -1326,7 +1322,7 @@ export default function Home() {
   const starterTrades = useMemo(() => {
     return actionableTrades
       .filter((stock) => nonOwnedAction(stock) === "Starter")
-      .slice(0, 10);
+      .slice(0, 6);
   }, [actionableTrades]);
 
   const nearMisses = useMemo(() => {
@@ -1444,8 +1440,7 @@ export default function Home() {
           <div className="noTradeBox">
             <h3>No actionable trades right now.</h3>
             <p>
-              No Buy or Starter setups cleared the screen. Stay
-              patient. Cash is a valid position.
+              No Buy or Starter setups cleared the screen. Cash is a valid position.
             </p>
           </div>
         )}
@@ -1484,14 +1479,6 @@ export default function Home() {
                       </strong>
                     </div>
 
-                    <div className="tradeMetrics compactMetrics">
-                      <div>
-                        <span>Status</span>
-                        <strong className={`miniMetric ${getContextTone(stock)}`}>
-                          {getStatusLabel(stock)}
-                        </strong>
-                      </div>
-                    </div>
 
                     <div className="tradeOneLineReason">
                       {getShortReason(stock)}
@@ -1536,14 +1523,6 @@ export default function Home() {
                       </strong>
                     </div>
 
-                    <div className="tradeMetrics">
-                      <div>
-                        <span>Status</span>
-                        <strong className={`miniMetric ${getContextTone(stock)}`}>
-                          {getStatusLabel(stock)}
-                        </strong>
-                      </div>
-                    </div>
 
                     <div className="tradeOneLineReason">
                       {getShortReason(stock)}
@@ -1589,14 +1568,6 @@ export default function Home() {
                       </strong>
                     </div>
 
-                    <div className="tradeMetrics">
-                      <div>
-                        <span>Status</span>
-                        <strong className={`miniMetric ${getContextTone(stock)}`}>
-                          {getStatusLabel(stock)}
-                        </strong>
-                      </div>
-                    </div>
 
                     <div className="tradeOneLineReason">
                       {getShortReason(stock)}
@@ -1641,14 +1612,6 @@ export default function Home() {
                       </strong>
                     </div>
 
-                    <div className="tradeMetrics">
-                      <div>
-                        <span>Status</span>
-                        <strong className={`miniMetric ${getContextTone(stock)}`}>
-                          {getStatusLabel(stock)}
-                        </strong>
-                      </div>
-                    </div>
 
                     <div className="tradeOneLineReason">
                       {getShortReason(stock)}
