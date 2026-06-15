@@ -352,10 +352,20 @@ function safeScore(value) {
 function normalizeActionLabel(value) {
   const label = String(value || "").trim().toUpperCase();
 
-  if (label === "BUY IMMEDIATELY") return "Buy Immediately";
-  if (label === "BUY NOW") return "Buy Now";
-  if (label === "BREAKOUT BUY" || label === "BREAKOUT") return "Breakout Buy";
-  if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
+  if (label === "BUY" || label === "BUY NOW" || label === "BUY IMMEDIATELY" || label === "STRONG BUY") {
+    return "Buy";
+  }
+
+  if (
+    label === "STARTER" ||
+    label === "STARTER ONLY" ||
+    label === "BREAKOUT BUY" ||
+    label === "BREAKOUT" ||
+    label === "BREAKOUT STARTER"
+  ) {
+    return "Starter";
+  }
+
   if (
     label === "WATCH" ||
     label === "WATCH FOR ENTRY" ||
@@ -365,10 +375,6 @@ function normalizeActionLabel(value) {
     label === "WATCH CLOSELY"
   ) {
     return "Watch";
-  }
-
-  if (label === "AVOID" || label === "AVOID FOR NOW" || label === "EXIT / AVOID") {
-    return "Avoid";
   }
 
   return "Avoid";
@@ -569,10 +575,8 @@ function normalizeSingleSymbolRow(rawStock = {}, requestedSymbol = "") {
 function actionRank(stock = {}) {
   const action = extractSingleSymbolAction(stock);
 
-  if (action === "Buy Immediately") return 5;
-  if (action === "Buy Now") return 4;
-  if (action === "Breakout Buy") return 3;
-  if (action === "Starter Only") return 2;
+  if (action === "Buy") return 3;
+  if (action === "Starter") return 2;
   if (action === "Watch") return 1;
   return 0;
 }
@@ -626,10 +630,8 @@ function bucketRows(rows = []) {
     sorted.filter((stock) => extractSingleSymbolAction(stock) === label).sort(sortTopIdeas);
 
   const selected = [
-    ...byAction("Buy Immediately"),
-    ...byAction("Buy Now"),
-    ...byAction("Breakout Buy"),
-    ...byAction("Starter Only"),
+    ...byAction("Buy"),
+    ...byAction("Starter"),
     ...byAction("Watch").slice(0, 12),
     ...byAction("Avoid").slice(0, 8),
   ];
@@ -701,7 +703,7 @@ async function runSingleSymbolHandlerDirect(req, symbol) {
     },
     headers: {
       ...(req?.headers || {}),
-      "x-screener-internal": "top5-direct-single-symbol-required-v9",
+      "x-screener-internal": "top5-direct-single-symbol-required-v12",
     },
   };
 
@@ -734,7 +736,7 @@ async function runSingleSymbolHandlerDirect(req, symbol) {
 
   return {
     ...row,
-    decisionEngine: "direct-single-symbol-handler-required-v9",
+    decisionEngine: "direct-single-symbol-handler-required-v12",
   };
 }
 
@@ -809,7 +811,7 @@ export default async function handler(req, res) {
       count: stocks.length,
       stocks,
       meta: {
-        mode: "direct_single_symbol_handler_required_v9",
+        mode: "direct_single_symbol_handler_required_v12_four_decisions",
         dataPath: "direct pages/api/index.js handler",
         decisionSource: "pages/api/index.js handler invoked directly",
         fallbackUsed: false,
@@ -817,10 +819,8 @@ export default async function handler(req, res) {
         requestedSymbols: symbols.length,
         analyzedSymbols: rows.length,
         failedSymbols: failures.length,
-        buyImmediatelyCount: countByAction("Buy Immediately"),
-        buyNowCount: countByAction("Buy Now"),
-        breakoutBuyCount: countByAction("Breakout Buy"),
-        starterOnlyCount: countByAction("Starter Only"),
+        buyCount: countByAction("Buy"),
+        starterCount: countByAction("Starter"),
         watchCount: countByAction("Watch"),
         avoidCount: countByAction("Avoid"),
         failures: failures.slice(0, 8),
