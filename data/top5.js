@@ -447,6 +447,76 @@ function getRequestBaseUrl(req) {
   return `${protocol}://${host}`;
 }
 
+
+function extractRecommendationLabel(stock = {}) {
+  const rec = stock.recommendation;
+
+  return String(
+    (typeof rec === "string" ? rec : "") ||
+      rec?.displayLabel ||
+      rec?.label ||
+      rec?.recommendation ||
+      rec?.tradeAction ||
+      stock.displayLabel ||
+      stock.label ||
+      stock.tradeAction ||
+      stock.action ||
+      stock.status ||
+      ""
+  ).trim();
+}
+
+function normalizeRecommendationObject(stock = {}, normalized = {}) {
+  const rec = stock.recommendation;
+
+  if (rec && typeof rec === "object") {
+    const label = extractRecommendationLabel(stock) || rec.label || rec.tradeAction;
+
+    return {
+      ...rec,
+      label,
+      recommendation: rec.recommendation || label,
+      tradeAction: rec.tradeAction || label,
+    };
+  }
+
+  const directLabel = extractRecommendationLabel(stock);
+
+  if (directLabel) {
+    return {
+      label: directLabel,
+      recommendation: directLabel,
+      tradeAction: directLabel,
+      displayLabel: directLabel,
+      score: stock.score ?? stock.compositeScore ?? normalized.score,
+      reason: stock.reason || stock.actionWhy || stock.dominantReason || "",
+      entryNote: stock.entryNote || stock.triggerNeeded || "",
+      triggerScore: stock.triggerScore,
+      momentumScore: stock.momentumScore,
+      riskScore: stock.riskScore,
+      expectationRisk: stock.expectationRisk,
+      extensionRisk: stock.extensionRisk,
+      freshBreakoutScore: stock.freshBreakoutScore,
+    };
+  }
+
+  return getRecommendation(normalized);
+}
+
+function normalizeTradeReadiness(stock = {}, normalized = {}) {
+  const value = stock.tradeReadiness;
+
+  if (value && typeof value === "object") return value;
+  if (typeof value === "string" && value.trim()) {
+    return { label: value.trim(), recommendation: value.trim() };
+  }
+
+  const label = extractRecommendationLabel(stock);
+  if (label) return { label, recommendation: label };
+
+  return { label: getTradeReadiness(normalized) };
+}
+
 async function fetchSingleSymbolAnalysis(req, symbol) {
   const baseUrl = getRequestBaseUrl(req);
 
@@ -473,15 +543,9 @@ async function fetchSingleSymbolAnalysis(req, symbol) {
       symbol: stock.symbol || symbol,
     });
 
-    const recommendation =
-      stock.recommendation && typeof stock.recommendation === "object"
-        ? stock.recommendation
-        : getRecommendation(normalized);
+    const recommendation = normalizeRecommendationObject(stock, normalized);
 
-    const tradeReadiness =
-      stock.tradeReadiness && typeof stock.tradeReadiness === "object"
-        ? stock.tradeReadiness
-        : getTradeReadiness(normalized);
+    const tradeReadiness = normalizeTradeReadiness(stock, normalized);
 
     const technicalSnapshot =
       stock.technicalSnapshot && typeof stock.technicalSnapshot === "object"
@@ -666,9 +730,18 @@ function normalizeQuote(row = {}) {
 }
 
 function displayLabel(stock = {}) {
+  const rec = stock.recommendation;
   const label = String(
-    stock.recommendation?.displayLabel ||
-      stock.recommendation?.label ||
+    (typeof rec === "string" ? rec : "") ||
+      rec?.displayLabel ||
+      rec?.label ||
+      rec?.recommendation ||
+      rec?.tradeAction ||
+      stock.displayLabel ||
+      stock.label ||
+      stock.tradeAction ||
+      stock.action ||
+      stock.status ||
       ""
   ).toUpperCase();
 
@@ -700,11 +773,19 @@ function actionRank(stock = {}) {
 }
 
 function readinessRank(stock = {}) {
-  const label = String(stock.tradeReadiness?.label || "").toUpperCase();
+  const raw = stock.tradeReadiness;
+  const label = String(
+    (typeof raw === "string" ? raw : "") ||
+      raw?.label ||
+      raw?.recommendation ||
+      raw?.tradeAction ||
+      ""
+  ).toUpperCase();
 
-  if (label === "TRADE READY") return 3;
-  if (label === "WATCH" || label === "WATCH CLOSELY") return 2;
-  if (label === "SETUP ONLY") return 1;
+  if (label === "BUY IMMEDIATELY" || label === "TRADE READY") return 3;
+  if (label === "BUY NOW" || label === "BREAKOUT BUY") return 3;
+  if (label === "STARTER ONLY" || label === "WATCH" || label === "WATCH CLOSELY") return 2;
+  if (label === "SETUP ONLY" || label === "NEAR MISS") return 1;
 
   return 0;
 }
@@ -870,32 +951,26 @@ export default async function handler(req, res) {
     }
 
     // Critical architecture fix:
-    // The broad screener must use the same single-symbol analysis path as the
-    // Single Symbol Action Check. The prior route used quote-only rows and then
-    // re-scored them locally, which allowed the same ticker at the same price to
-    // show Starter Only in the broad screener while the single-symbol checker
-    // showed Breakout Buy. That made calibration impossible.
-    let rawRows = await fetchSingleBrainUniverse(req, symbols);
-    let dataPath = "single-symbol-api";
-    let quotes = [];
+    // Broad Market must use the exact same single-symbol decision path as the
+    // Single Symbol Action Check. There is intentionally NO silent quote-only
+    // fallback here. A fallback can make the page look healthy while returning
+    // different labels for the same symbol at the same price, which is exactly
+    // the ANET/QCOM problem we diagnosed.
+    const rawRows = await fetchSingleBrainUniverse(req, symbols);
+    const dataPath = "single-symbol-api-required";
+    const quotes = [];
 
-    // Safety fallback: if the internal single-symbol path is unavailable in a
-    // local/dev deploy, fall back to the direct FMP quote path rather than fail.
-    // In normal Vercel use, rawRows should come from /api?symbol=... so both
-    // sections share the exact same recommendation object.
     if (!Array.isArray(rawRows) || rawRows.length === 0) {
-      dataPath = "fmp-quote-fallback";
-      quotes = await fetchFmpQuotes(symbols);
-
-      if (!Array.isArray(quotes) || quotes.length === 0) {
-        return res.status(502).json({
-          error: "Quote refresh returned no usable stocks.",
-          detail:
-            "The single-symbol engine and FMP fallback both returned no usable stocks.",
-        });
-      }
-
-      rawRows = quotes.map(enrichQuote).filter(Boolean);
+      return res.status(502).json({
+        error: "Single-symbol engine unavailable.",
+        detail:
+          "Broad screener refused to use the old quote-only fallback because it can disagree with the Single Symbol Action Check. Upload pages/api/index.js if this error persists so the route can be wired directly instead of through an internal fetch.",
+        meta: {
+          mode: "single_symbol_engine_required_v7",
+          requestedSymbols: symbols.length,
+          scoredQuotes: 0,
+        },
+      });
     }
 
     const enriched = rawRows.filter((stock) =>
@@ -917,8 +992,8 @@ export default async function handler(req, res) {
       count: sorted.length,
       stocks: sorted,
       meta: {
-        mode: "single_symbol_engine_unified_v6",
-        decisionSource: "/api?symbol via lib/scoring.js",
+        mode: "single_symbol_engine_required_v7",
+        decisionSource: "same /api?symbol output used by Single Symbol Action Check",
         top5DoesLabelMapping: false,
         dataPath,
         requestedSymbols: symbols.length,
