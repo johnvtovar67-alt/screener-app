@@ -784,6 +784,7 @@ export default function Home() {
   const [refreshWarning, setRefreshWarning] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("broad");
   const [themeMeta, setThemeMeta] = useState(null);
+  const [screenerMeta, setScreenerMeta] = useState(null);
 
   const [symbol, setSymbol] = useState("");
   const [snapLoading, setSnapLoading] = useState(false);
@@ -828,6 +829,7 @@ export default function Home() {
 
       setStocks(list);
       setThemeMeta(data?.selectedTheme || null);
+      setScreenerMeta(data?.meta || null);
     } catch (err) {
       const message = err.message || "Failed to load trade screen.";
 
@@ -837,6 +839,7 @@ export default function Home() {
         );
       } else {
         setTopError(message);
+        setScreenerMeta(null);
       }
     } finally {
       setLoadingTop(false);
@@ -1201,6 +1204,16 @@ export default function Home() {
             <span>Discipline</span>
             <p>
               Buy Immediately is rare, Buy Now is a confirmed normal-size trade, Breakout Buy is actionable starter size, and Starter Only is early participation.
+            </p>
+          </div>
+
+          <div>
+            <span>Decision Engine</span>
+            <p>
+              {screenerMeta?.dataPath || "loading"}
+              {screenerMeta?.breakoutBuyCount != null
+                ? ` · BI ${screenerMeta.buyImmediatelyCount || 0} · BN ${screenerMeta.buyNowCount || 0} · BO ${screenerMeta.breakoutBuyCount || 0} · ST ${screenerMeta.starterOnlyCount || 0}`
+                : ""}
             </p>
           </div>
         </div>
