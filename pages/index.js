@@ -1064,13 +1064,6 @@ export default function Home() {
         reconcileFailureSamples: reconciled.failures,
       });
 
-      if (reconciled.correctedCount > 0) {
-        setRefreshWarning(
-          `${reconciled.correctedCount} broad-screener label mismatch${
-            reconciled.correctedCount === 1 ? " was" : "es were"
-          } corrected using the single-symbol engine.`
-        );
-      }
     } catch (err) {
       const message = err.message || "Failed to load trade screen.";
 
@@ -1400,9 +1393,7 @@ export default function Home() {
       <header className="header">
         <div>
           <h1>🧠 Trade Action Screener</h1>
-          <p>
-            Shows rare Buy Immediately setups first, then Buy Now, Breakout Buy, and Starter Only setups.
-          </p>
+          <p>Actionable setups ranked by bucket.</p>
         </div>
 
         <button
@@ -1417,9 +1408,6 @@ export default function Home() {
         <div className="sectionHeader">
           <div>
             <h2>Theme Focus</h2>
-            <p className="muted">
-              Use Broad Market for discovery, or select a focused macro theme.
-            </p>
           </div>
 
           <select
@@ -1444,30 +1432,18 @@ export default function Home() {
           <div>
             <span>Discipline</span>
             <p>
-              Buy Immediately is rare, Buy Now is a confirmed normal-size trade, Breakout Buy is actionable starter size, and Starter Only is early participation.
+              Ranked by confirmed action bucket.
             </p>
           </div>
 
-          <div>
-            <span>Decision Engine</span>
-            <p>
-              {screenerMeta?.dataPath || "loading"}
-              {screenerMeta?.breakoutBuyCount != null
-                ? ` · BI ${screenerMeta.buyImmediatelyCount || 0} · BN ${screenerMeta.buyNowCount || 0} · BO ${screenerMeta.breakoutBuyCount || 0} · ST ${screenerMeta.starterOnlyCount || 0}`
-                : ""}
-            </p>
-          </div>
         </div>
       </section>
 
       {refreshWarning && <p className="warning">{refreshWarning}</p>}
 
       <section className="card actionCard">
-        <div className="sectionTitle">
+        <div className="sectionTitle compactSectionTitle">
           <h2>🔥 Actionable Trades</h2>
-          <p>
-            Buy Immediately is the highest-conviction bucket. Buy Now is full-size eligible. Starter Only is small-size only.
-          </p>
         </div>
 
         {loadingTop && stocks.length === 0 && (
@@ -1489,12 +1465,8 @@ export default function Home() {
 
         {immediateTrades.length > 0 && (
           <>
-            <div className="subSectionTitle immediateTitle">
+            <div className="subSectionTitle immediateTitle compactSubTitle">
               <h3>Buy Immediately</h3>
-              <p>
-                Rare all-clear setup: fundamentals, technicals, momentum, risk,
-                extension, and entry quality are aligned.
-              </p>
             </div>
 
             <div className="tradeGrid">
@@ -1545,9 +1517,8 @@ export default function Home() {
 
         {buyNowTrades.length > 0 && (
           <>
-            <div className="subSectionTitle">
+            <div className="subSectionTitle compactSubTitle">
               <h3>Buy Now</h3>
-              <p>Normal-size trade allowed with defined risk.</p>
             </div>
 
             <div className="tradeGrid">
@@ -1599,12 +1570,8 @@ export default function Home() {
 
         {breakoutTrades.length > 0 && (
           <>
-            <div className="subSectionTitle breakoutTitle">
+            <div className="subSectionTitle breakoutTitle compactSubTitle">
               <h3>Breakout Buy</h3>
-              <p>
-                Fresh momentum breakout. Starter position acceptable now; add
-                only if strength holds or consolidation confirms.
-              </p>
             </div>
 
             <div className="tradeGrid">
@@ -1655,12 +1622,8 @@ export default function Home() {
 
         {starterTrades.length > 0 && (
           <>
-            <div className="subSectionTitle starterTitle">
+            <div className="subSectionTitle starterTitle compactSubTitle">
               <h3>Starter Only</h3>
-              <p>
-                Small tactical entry only. Use 25% to 33% normal size and add
-                only if it confirms.
-              </p>
             </div>
 
             <div className="tradeGrid">
