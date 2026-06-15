@@ -1,19 +1,10 @@
 // pages/api/top5.js
 
-import {
-  compositeScore,
-  getRecommendation,
-  getTradeReadiness,
-  buildTechnicalSnapshot,
-  buildFundamentalSnapshot,
-} from "../../lib/scoring";
+// This route intentionally does not import scoring helpers.
+// It consumes the exact /api?symbol output used by the Single Symbol Action Check.
 
 function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase().trim();
-}
-
-function toFmpSymbol(symbol) {
-  return String(symbol || "").replace(".", "-").toUpperCase().trim();
 }
 
 function uniqueSymbols(symbols = []) {
@@ -38,7 +29,6 @@ const THEME_CONFIG = {
       "NVDA",
       "AMD",
       "AVGO",
-      "QCOM",
       "ARM",
       "MU",
       "SMCI",
@@ -302,7 +292,6 @@ const THEME_CONFIG = {
       "NVDA",
       "AMD",
       "AVGO",
-      "QCOM",
       "ARM",
       "MU",
       "SMCI",
@@ -333,6 +322,7 @@ function getThemeConfig(themeKey) {
   return THEME_CONFIG[clean] || THEME_CONFIG.broad;
 }
 
+
 function toNumber(value, fallback = null) {
   if (value == null || value === "") return fallback;
 
@@ -352,304 +342,102 @@ function toPositiveNumber(value, fallback = null) {
   return n;
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(
-      `FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`
-    );
-  }
-
-  return response.json();
+function safeScore(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
-async function fetchFmpBatch(symbols = [], apiKey) {
-  const cleanSymbols = uniqueSymbols(symbols);
-  if (!cleanSymbols.length) return [];
+function normalizeActionLabel(value) {
+  const label = String(value || "").trim().toUpperCase();
 
-  const fmpSymbols = cleanSymbols.map(toFmpSymbol).join(",");
+  if (label === "BUY IMMEDIATELY") return "Buy Immediately";
+  if (label === "BUY NOW") return "Buy Now";
+  if (label === "BREAKOUT BUY" || label === "BREAKOUT") return "Breakout Buy";
+  if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
+  if (
+    label === "WATCH" ||
+    label === "WATCH FOR ENTRY" ||
+    label === "NEAR MISS" ||
+    label === "SETUP" ||
+    label === "SETUP ONLY" ||
+    label === "WATCH CLOSELY"
+  ) {
+    return "Watch";
+  }
 
-  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
-    fmpSymbols
-  )}&apikey=${apiKey}`;
+  if (label === "AVOID" || label === "AVOID FOR NOW" || label === "EXIT / AVOID") {
+    return "Avoid";
+  }
 
-  const data = await fetchJson(url);
-
-  if (Array.isArray(data)) return data;
-  if (data && typeof data === "object") return [data];
-
-  return [];
+  return "Avoid";
 }
 
-async function fetchFmpIndividual(symbols = [], apiKey) {
-  const cleanSymbols = uniqueSymbols(symbols);
-  const all = [];
+// This intentionally mirrors the exact priority used by the frontend's
+// Single Symbol Action Check. The bug we are fixing is that broad-market cards
+// were deriving labels from a different, quote-only path. If the single-symbol
+// payload says ANET is Breakout Buy, top5 must preserve that label exactly.
+function extractSingleSymbolAction(stock = {}) {
+  const rec =
+    stock?.recommendation && typeof stock.recommendation === "object"
+      ? stock.recommendation
+      : {};
 
-  for (const symbol of cleanSymbols) {
-    try {
-      const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
-        toFmpSymbol(symbol)
-      )}&apikey=${apiKey}`;
+  const rawLabel =
+    rec?.displayLabel ??
+    rec?.label ??
+    rec?.recommendation ??
+    rec?.tradeAction ??
+    stock?.displayLabel ??
+    stock?.label ??
+    stock?.tradeAction ??
+    stock?.action ??
+    stock?.rating ??
+    (typeof stock?.recommendation === "string" ? stock.recommendation : "");
 
-      const data = await fetchJson(url);
-
-      if (Array.isArray(data) && data[0]) {
-        all.push(data[0]);
-      } else if (data && typeof data === "object") {
-        all.push(data);
-      }
-    } catch {
-      // Skip one-symbol failures so one bad ticker does not kill the full screen.
-    }
-  }
-
-  return all;
+  return normalizeActionLabel(rawLabel);
 }
 
-async function fetchFmpQuotes(symbols = []) {
-  const apiKey = process.env.FMP_API_KEY;
+function forceRecommendationObject(stock = {}, action) {
+  const existing =
+    stock?.recommendation && typeof stock.recommendation === "object"
+      ? stock.recommendation
+      : {};
 
-  if (!apiKey) {
-    throw new Error("Missing FMP_API_KEY in environment variables.");
-  }
-
-  const cleanSymbols = uniqueSymbols(symbols);
-  if (!cleanSymbols.length) return [];
-
-  let batchQuotes = [];
-
-  try {
-    batchQuotes = await fetchFmpBatch(cleanSymbols, apiKey);
-  } catch {
-    batchQuotes = [];
-  }
-
-  if (Array.isArray(batchQuotes) && batchQuotes.length > 0) {
-    return batchQuotes;
-  }
-
-  return fetchFmpIndividual(cleanSymbols, apiKey);
+  return {
+    ...existing,
+    label: action,
+    displayLabel: action,
+    recommendation: action,
+    tradeAction: action,
+  };
 }
 
-
-function getRequestBaseUrl(req) {
-  const host = req?.headers?.host;
-
-  if (!host) return "";
-
-  const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "")
-    .split(",")[0]
-    .trim();
-  const protocol = forwardedProto || (host.includes("localhost") ? "http" : "https");
-
-  return `${protocol}://${host}`;
+function getPriceLike(stock = {}) {
+  return toPositiveNumber(
+    stock.price ?? stock.currentPrice ?? stock.lastPrice ?? stock.close ?? stock.quote?.price
+  );
 }
 
-
-function extractRecommendationLabel(stock = {}) {
-  const rec = stock.recommendation;
-
-  return String(
-    (typeof rec === "string" ? rec : "") ||
-      rec?.displayLabel ||
-      rec?.label ||
-      rec?.recommendation ||
-      rec?.tradeAction ||
-      stock.displayLabel ||
-      stock.label ||
-      stock.tradeAction ||
-      stock.action ||
-      stock.status ||
-      ""
-  ).trim();
-}
-
-function normalizeRecommendationObject(stock = {}, normalized = {}) {
-  const rec = stock.recommendation;
-
-  if (rec && typeof rec === "object") {
-    const label = extractRecommendationLabel(stock) || rec.label || rec.tradeAction;
-
-    return {
-      ...rec,
-      label,
-      recommendation: rec.recommendation || label,
-      tradeAction: rec.tradeAction || label,
-    };
-  }
-
-  const directLabel = extractRecommendationLabel(stock);
-
-  if (directLabel) {
-    return {
-      label: directLabel,
-      recommendation: directLabel,
-      tradeAction: directLabel,
-      displayLabel: directLabel,
-      score: stock.score ?? stock.compositeScore ?? normalized.score,
-      reason: stock.reason || stock.actionWhy || stock.dominantReason || "",
-      entryNote: stock.entryNote || stock.triggerNeeded || "",
-      triggerScore: stock.triggerScore,
-      momentumScore: stock.momentumScore,
-      riskScore: stock.riskScore,
-      expectationRisk: stock.expectationRisk,
-      extensionRisk: stock.extensionRisk,
-      freshBreakoutScore: stock.freshBreakoutScore,
-    };
-  }
-
-  return getRecommendation(normalized);
-}
-
-function normalizeTradeReadiness(stock = {}, normalized = {}) {
-  const value = stock.tradeReadiness;
-
-  if (value && typeof value === "object") return value;
-  if (typeof value === "string" && value.trim()) {
-    return { label: value.trim(), recommendation: value.trim() };
-  }
-
-  const label = extractRecommendationLabel(stock);
-  if (label) return { label, recommendation: label };
-
-  return { label: getTradeReadiness(normalized) };
-}
-
-async function fetchSingleSymbolAnalysis(req, symbol) {
-  const baseUrl = getRequestBaseUrl(req);
-
-  if (!baseUrl || !symbol) return null;
-
-  try {
-    const url = `${baseUrl}/api?symbol=${encodeURIComponent(symbol)}`;
-    const response = await fetch(url, {
-      headers: {
-        accept: "application/json",
-        "x-screener-internal": "top5-single-brain",
-      },
-    });
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    const stock = data?.stock || data?.result || data?.data || data;
-
-    if (!stock || typeof stock !== "object") return null;
-
-    const normalized = normalizeQuote({
-      ...stock,
-      symbol: stock.symbol || symbol,
-    });
-
-    const recommendation = normalizeRecommendationObject(stock, normalized);
-
-    const tradeReadiness = normalizeTradeReadiness(stock, normalized);
-
-    const technicalSnapshot =
-      stock.technicalSnapshot && typeof stock.technicalSnapshot === "object"
-        ? stock.technicalSnapshot
-        : buildTechnicalSnapshot(normalized);
-
-    const fundamentalSnapshot =
-      stock.fundamentalSnapshot && typeof stock.fundamentalSnapshot === "object"
-        ? stock.fundamentalSnapshot
-        : buildFundamentalSnapshot(normalized);
-
-    const score = compositeScore(normalized);
-
-    const row = {
-      ...normalized,
-      ...stock,
-      symbol: normalizeSymbol(stock.symbol || symbol),
-      ticker: normalizeSymbol(stock.symbol || symbol),
-      price: normalized.price,
-      currentPrice: normalized.currentPrice,
-      lastPrice: normalized.lastPrice,
-      close: normalized.close,
-      changesPercentage: normalized.changesPercentage,
-      changePercent: normalized.changePercent,
-      dayChangePct: normalized.dayChangePct,
-      score,
-      compositeScore: score,
-      recommendation,
-      tradeReadiness,
-      technicalSnapshot,
-      fundamentalSnapshot,
-      triggerScore: recommendation?.triggerScore ?? stock.triggerScore,
-      momentumScore: recommendation?.momentumScore ?? stock.momentumScore,
-      expectationRisk: recommendation?.expectationRisk ?? stock.expectationRisk,
-      extensionRisk: recommendation?.extensionRisk ?? stock.extensionRisk,
-      lateChaseRisk: recommendation?.lateChaseRisk ?? stock.lateChaseRisk,
-      freshBreakoutScore:
-        recommendation?.freshBreakoutScore ?? stock.freshBreakoutScore,
-      context: recommendation?.context ?? stock.context,
-      reason: recommendation?.reason ?? stock.reason,
-      entryNote: recommendation?.entryNote ?? stock.entryNote,
-      actionWhy: recommendation?.reason ?? stock.actionWhy,
-      triggerNeeded: recommendation?.entryNote ?? stock.triggerNeeded,
-      dataPath: "single-symbol-api",
-    };
-
-    return {
-      ...row,
-      institutionalRank: rankScore(row),
-    };
-  } catch {
-    return null;
-  }
-}
-
-async function mapWithConcurrency(items = [], concurrency = 8, mapper) {
-  const results = new Array(items.length);
-  let nextIndex = 0;
-
-  async function worker() {
-    while (nextIndex < items.length) {
-      const currentIndex = nextIndex;
-      nextIndex += 1;
-      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
-    }
-  }
-
-  const workers = Array.from(
-    { length: Math.min(concurrency, Math.max(items.length, 1)) },
-    () => worker()
+function normalizeSingleSymbolRow(rawStock = {}, requestedSymbol = "") {
+  const symbol = normalizeSymbol(rawStock.symbol || rawStock.ticker || requestedSymbol);
+  const price = getPriceLike(rawStock);
+  const previousClose = toPositiveNumber(rawStock.previousClose ?? rawStock.quote?.previousClose);
+  const change = toNumber(
+    rawStock.change ??
+      rawStock.dayChange ??
+      rawStock.priceChange ??
+      rawStock.regularMarketChange ??
+      rawStock.quote?.change
   );
 
-  await Promise.all(workers);
-  return results;
-}
-
-async function fetchSingleBrainUniverse(req, symbols = []) {
-  const cleanSymbols = uniqueSymbols(symbols);
-
-  if (!cleanSymbols.length) return [];
-
-  const rows = await mapWithConcurrency(cleanSymbols, 8, (symbol) =>
-    fetchSingleSymbolAnalysis(req, symbol)
+  let dayChangePct = toNumber(
+    rawStock.dayChangePct ??
+      rawStock.changesPercentage ??
+      rawStock.changePercent ??
+      rawStock.percentChange ??
+      rawStock.quote?.changesPercentage ??
+      rawStock.quote?.changePercent
   );
-
-  return rows.filter(Boolean);
-}
-
-function normalizeQuote(row = {}) {
-  const symbol = normalizeSymbol(row.symbol);
-
-  const price = toPositiveNumber(row.price ?? row.currentPrice ?? row.close);
-  const previousClose = toPositiveNumber(row.previousClose);
-  const change = toNumber(row.change);
-
-  let dayChangePct = toNumber(row.changesPercentage);
-
-  if (dayChangePct == null) {
-    dayChangePct = toNumber(row.changePercentage);
-  }
-
-  if (dayChangePct == null) {
-    dayChangePct = toNumber(row.changePercent);
-  }
 
   if (dayChangePct == null && price != null && previousClose) {
     dayChangePct = ((price - previousClose) / previousClose) * 100;
@@ -659,36 +447,55 @@ function normalizeQuote(row = {}) {
     dayChangePct = (change / previousClose) * 100;
   }
 
-  // IMPORTANT:
-  // Keep the raw quote fields and explicitly map every scoring field that the
-  // single-symbol analyzer can use. The prior broad screener normalized the FMP
-  // quote too aggressively and dropped fields such as yearHigh/yearLow/beta.
-  // That made the broad screener and the single-symbol checker disagree on the
-  // exact same stock at the exact same price. This object is now the single
-  // source of truth passed into lib/scoring.js for broad-market rows.
-  const yearHigh = toPositiveNumber(
-    row.yearHigh ?? row.high52 ?? row.fiftyTwoWeekHigh ?? row['52WeekHigh']
-  );
-  const yearLow = toPositiveNumber(
-    row.yearLow ?? row.low52 ?? row.fiftyTwoWeekLow ?? row['52WeekLow']
-  );
-  const priceAvg50 = toPositiveNumber(
-    row.priceAvg50 ?? row.fiftyDayAverage ?? row.sma50 ?? row.ma50
-  );
-  const priceAvg200 = toPositiveNumber(
-    row.priceAvg200 ?? row.twoHundredDayAverage ?? row.sma200 ?? row.ma200
-  );
-  const volume = toPositiveNumber(row.volume ?? row.vol);
-  const avgVolume = toPositiveNumber(
-    row.avgVolume ?? row.averageVolume ?? row.avgVolume10Day ?? row.averageVolume10Day
+  const action = extractSingleSymbolAction(rawStock);
+  const recommendation = forceRecommendationObject(rawStock, action);
+  const technicalSnapshot =
+    rawStock.technicalSnapshot && typeof rawStock.technicalSnapshot === "object"
+      ? rawStock.technicalSnapshot
+      : {};
+
+  const fundamentalSnapshot =
+    rawStock.fundamentalSnapshot && typeof rawStock.fundamentalSnapshot === "object"
+      ? rawStock.fundamentalSnapshot
+      : {};
+
+  const score = safeScore(
+    recommendation.score ??
+      rawStock.score ??
+      rawStock.compositeScore ??
+      rawStock.overallScore ??
+      rawStock.heatScore
   );
 
-  return {
-    ...row,
+  const triggerScore = safeScore(
+    recommendation.triggerScore ?? rawStock.triggerScore ?? technicalSnapshot.triggerScore
+  );
+  const momentumScore = safeScore(
+    recommendation.momentumScore ?? rawStock.momentumScore ?? technicalSnapshot.momentumScore
+  );
+  const expectationRisk = safeScore(
+    recommendation.expectationRisk ??
+      recommendation.riskScore ??
+      rawStock.expectationRisk ??
+      rawStock.riskScore ??
+      technicalSnapshot.expectationRisk ??
+      technicalSnapshot.riskScore
+  );
+  const extensionRisk = safeScore(
+    recommendation.extensionRisk ?? rawStock.extensionRisk ?? technicalSnapshot.extensionRisk
+  );
+  const freshBreakoutScore = safeScore(
+    recommendation.freshBreakoutScore ??
+      rawStock.freshBreakoutScore ??
+      technicalSnapshot.freshBreakoutScore
+  );
+
+  const row = {
+    ...rawStock,
     symbol,
     ticker: symbol,
-    name: row.name || row.companyName || symbol,
-    companyName: row.companyName || row.name || symbol,
+    name: rawStock.name || rawStock.companyName || rawStock.company || symbol,
+    companyName: rawStock.companyName || rawStock.name || rawStock.company || symbol,
     price,
     currentPrice: price,
     lastPrice: price,
@@ -698,203 +505,129 @@ function normalizeQuote(row = {}) {
     dayChangePct,
     changesPercentage: dayChangePct,
     changePercent: dayChangePct,
-    marketCap: toPositiveNumber(row.marketCap ?? row.mktCap ?? row.marketCapitalization),
-    volume,
-    vol: volume,
-    avgVolume,
-    averageVolume: avgVolume,
-    priceAvg50,
-    fiftyDayAverage: priceAvg50,
-    sma50: priceAvg50,
-    priceAvg200,
-    twoHundredDayAverage: priceAvg200,
-    sma200: priceAvg200,
-    yearHigh,
-    high52: yearHigh,
-    fiftyTwoWeekHigh: yearHigh,
-    yearLow,
-    low52: yearLow,
-    fiftyTwoWeekLow: yearLow,
-    dayHigh: toPositiveNumber(row.dayHigh ?? row.high),
-    dayLow: toPositiveNumber(row.dayLow ?? row.low),
-    open: toPositiveNumber(row.open),
-    eps: toNumber(row.eps),
-    pe: toNumber(row.pe ?? row.peRatio),
-    beta: toNumber(row.beta, null),
-    sharesOutstanding: toPositiveNumber(row.sharesOutstanding),
-    exchange: row.exchange || row.exchangeShortName || "",
-    sector: row.sector || "",
-    industry: row.industry || "",
-    timestamp: row.timestamp || null,
+    marketCap: toPositiveNumber(rawStock.marketCap ?? rawStock.mktCap ?? rawStock.marketCapitalization),
+    volume: toPositiveNumber(rawStock.volume ?? rawStock.vol),
+    avgVolume: toPositiveNumber(
+      rawStock.avgVolume ?? rawStock.averageVolume ?? rawStock.avgVolume10Day ?? rawStock.averageVolume10Day
+    ),
+    priceAvg50: toPositiveNumber(
+      rawStock.priceAvg50 ?? rawStock.fiftyDayAverage ?? rawStock.sma50 ?? rawStock.ma50
+    ),
+    fiftyDayAverage: toPositiveNumber(
+      rawStock.fiftyDayAverage ?? rawStock.priceAvg50 ?? rawStock.sma50 ?? rawStock.ma50
+    ),
+    priceAvg200: toPositiveNumber(
+      rawStock.priceAvg200 ?? rawStock.twoHundredDayAverage ?? rawStock.sma200 ?? rawStock.ma200
+    ),
+    twoHundredDayAverage: toPositiveNumber(
+      rawStock.twoHundredDayAverage ?? rawStock.priceAvg200 ?? rawStock.sma200 ?? rawStock.ma200
+    ),
+    yearHigh: toPositiveNumber(
+      rawStock.yearHigh ?? rawStock.high52 ?? rawStock.fiftyTwoWeekHigh ?? rawStock["52WeekHigh"]
+    ),
+    yearLow: toPositiveNumber(
+      rawStock.yearLow ?? rawStock.low52 ?? rawStock.fiftyTwoWeekLow ?? rawStock["52WeekLow"]
+    ),
+    eps: toNumber(rawStock.eps),
+    pe: toNumber(rawStock.pe ?? rawStock.peRatio),
+    beta: toNumber(rawStock.beta, null),
+    exchange: rawStock.exchange || rawStock.exchangeShortName || "",
+    score,
+    compositeScore: score,
+    recommendation,
+    tradeReadiness: rawStock.tradeReadiness || null,
+    technicalSnapshot,
+    fundamentalSnapshot,
+    triggerScore,
+    momentumScore,
+    expectationRisk,
+    extensionRisk,
+    lateChaseRisk: safeScore(recommendation.lateChaseRisk ?? rawStock.lateChaseRisk),
+    freshBreakoutScore,
+    context: recommendation.context ?? rawStock.context,
+    dominantReason:
+      recommendation.dominantReason ??
+      rawStock.dominantReason ??
+      rawStock.reason ??
+      recommendation.reason,
+    reason: recommendation.reason ?? rawStock.reason,
+    actionWhy: recommendation.reason ?? rawStock.actionWhy ?? rawStock.reason,
+    entryNote: recommendation.entryNote ?? rawStock.entryNote,
+    triggerNeeded: recommendation.entryNote ?? rawStock.triggerNeeded ?? rawStock.entryNote,
+    singleSymbolAction: action,
+    decisionEngine: "single-symbol-api-required",
+  };
+
+  return {
+    ...row,
+    institutionalRank: rankScore(row),
   };
 }
 
-function displayLabel(stock = {}) {
-  const rec = stock.recommendation;
-  const label = String(
-    (typeof rec === "string" ? rec : "") ||
-      rec?.displayLabel ||
-      rec?.label ||
-      rec?.recommendation ||
-      rec?.tradeAction ||
-      stock.displayLabel ||
-      stock.label ||
-      stock.tradeAction ||
-      stock.action ||
-      stock.status ||
-      ""
-  ).toUpperCase();
-
-  if (label === "BUY IMMEDIATELY") return "Buy Immediately";
-  if (label === "BUY NOW") return "Buy Now";
-  if (label === "BREAKOUT BUY") return "Breakout Buy";
-  if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
-  if (
-    label === "WATCH" ||
-    label === "WATCH FOR ENTRY" ||
-    label === "NEAR MISS" ||
-    label === "SETUP"
-  ) {
-    return "Watch";
-  }
-
-  return "Avoid";
-}
-
 function actionRank(stock = {}) {
-  const label = displayLabel(stock);
+  const action = extractSingleSymbolAction(stock);
 
-  if (label === "Buy Immediately") return 5;
-  if (label === "Buy Now") return 4;
-  if (label === "Breakout Buy") return 3;
-  if (label === "Starter Only") return 2;
-  if (label === "Watch") return 1;
+  if (action === "Buy Immediately") return 5;
+  if (action === "Buy Now") return 4;
+  if (action === "Breakout Buy") return 3;
+  if (action === "Starter Only") return 2;
+  if (action === "Watch") return 1;
   return 0;
-}
-
-function readinessRank(stock = {}) {
-  const raw = stock.tradeReadiness;
-  const label = String(
-    (typeof raw === "string" ? raw : "") ||
-      raw?.label ||
-      raw?.recommendation ||
-      raw?.tradeAction ||
-      ""
-  ).toUpperCase();
-
-  if (label === "BUY IMMEDIATELY" || label === "TRADE READY") return 3;
-  if (label === "BUY NOW" || label === "BREAKOUT BUY") return 3;
-  if (label === "STARTER ONLY" || label === "WATCH" || label === "WATCH CLOSELY") return 2;
-  if (label === "SETUP ONLY" || label === "NEAR MISS") return 1;
-
-  return 0;
-}
-
-function safeScore(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
 }
 
 function rankScore(stock = {}) {
   const rec = stock.recommendation || {};
-
-  const actionPoints = actionRank(stock) * 100000;
-  const readinessPoints = readinessRank(stock) * 10000;
-
-  const score = safeScore(rec.score || stock.score);
-  const institutionalScore = safeScore(rec.institutionalScore);
+  const actionPoints = actionRank(stock) * 1000000;
+  const score = safeScore(rec.score ?? stock.score);
   const actionabilityScore = safeScore(rec.actionabilityScore);
-  const triggerScore = safeScore(rec.triggerScore || stock.triggerScore);
-  const momentumScore = safeScore(rec.momentumScore || stock.momentumScore);
-  const relativeStrengthScore = safeScore(rec.relativeStrengthScore);
-  const freshBreakoutScore = safeScore(rec.freshBreakoutScore);
+  const institutionalScore = safeScore(rec.institutionalScore);
+  const triggerScore = safeScore(rec.triggerScore ?? stock.triggerScore);
+  const momentumScore = safeScore(rec.momentumScore ?? stock.momentumScore);
+  const freshBreakoutScore = safeScore(rec.freshBreakoutScore ?? stock.freshBreakoutScore);
+  const riskScore = safeScore(
+    rec.expectationRisk ?? rec.riskScore ?? stock.expectationRisk ?? stock.riskScore
+  );
+  const extensionRisk = safeScore(rec.extensionRisk ?? stock.extensionRisk);
 
-  const expectationRisk = safeScore(rec.expectationRisk);
-  const extensionRisk = safeScore(rec.extensionRisk);
-  const lateChaseRisk = safeScore(rec.lateChaseRisk);
-  const riskPenalty = safeScore(rec.riskPenalty);
-
-  const positive =
-    institutionalScore * 2.6 +
-    actionabilityScore * 2.4 +
-    score * 1.8 +
-    triggerScore * 3.1 +
-    momentumScore * 2.2 +
-    relativeStrengthScore * 1.4 +
-    freshBreakoutScore * 1.4;
-
-  const negative =
-    expectationRisk * 1.2 +
-    extensionRisk * 1.3 +
-    lateChaseRisk * 1.5 +
-    riskPenalty * 0.8;
-
-  return actionPoints + readinessPoints + positive - negative;
+  return (
+    actionPoints +
+    score * 1000 +
+    actionabilityScore * 40 +
+    institutionalScore * 30 +
+    triggerScore * 25 +
+    momentumScore * 20 +
+    freshBreakoutScore * 10 -
+    riskScore * 8 -
+    extensionRisk * 6
+  );
 }
 
-function enrichQuote(row = {}) {
-  const normalized = normalizeQuote(row);
+function sortTopIdeas(a, b) {
+  const actionDiff = actionRank(b) - actionRank(a);
+  if (actionDiff !== 0) return actionDiff;
 
-  if (!normalized.symbol || normalized.price == null) {
-    return null;
-  }
+  const rankDiff = safeScore(b.institutionalRank) - safeScore(a.institutionalRank);
+  if (rankDiff !== 0) return rankDiff;
 
-  const recommendation = getRecommendation(normalized);
-  const tradeReadiness = getTradeReadiness(normalized);
-  const technicalSnapshot = buildTechnicalSnapshot(normalized);
-  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
-  const score = compositeScore(normalized);
+  const triggerDiff = safeScore(b.triggerScore) - safeScore(a.triggerScore);
+  if (triggerDiff !== 0) return triggerDiff;
 
-  const stock = {
-    ...normalized,
-    score,
-    compositeScore: score,
-    recommendation,
-    tradeReadiness,
-    technicalSnapshot,
-    fundamentalSnapshot,
+  const momentumDiff = safeScore(b.momentumScore) - safeScore(a.momentumScore);
+  if (momentumDiff !== 0) return momentumDiff;
 
-    triggerScore: recommendation?.triggerScore,
-    momentumScore: recommendation?.momentumScore,
-    expectationRisk: recommendation?.expectationRisk,
-    extensionRisk: recommendation?.extensionRisk,
-    lateChaseRisk: recommendation?.lateChaseRisk,
-    freshBreakoutScore: recommendation?.freshBreakoutScore,
-    context: recommendation?.context,
-    reason: recommendation?.reason,
-    entryNote: recommendation?.entryNote,
-    actionWhy: recommendation?.reason,
-    triggerNeeded: recommendation?.entryNote,
-  };
-
-  return {
-    ...stock,
-    institutionalRank: rankScore(stock),
-  };
+  return safeScore(b.score) - safeScore(a.score);
 }
 
-function buildDisplayUniverse(enriched = []) {
-  const sorted = [...enriched].sort(sortTopIdeas);
-
-  const rank = {
-    "Buy Immediately": 5,
-    "Buy Now": 4,
-    "Breakout Buy": 3,
-    "Starter Only": 2,
-    Watch: 1,
-    Avoid: 0,
-  };
-
+function bucketRows(rows = []) {
+  const sorted = [...rows].sort(sortTopIdeas);
   const byAction = (label) =>
-    sorted
-      .filter((stock) => displayLabel(stock) === label)
-      .sort(sortTopIdeas);
+    sorted.filter((stock) => extractSingleSymbolAction(stock) === label).sort(sortTopIdeas);
 
   const selected = [
     ...byAction("Buy Immediately"),
     ...byAction("Buy Now"),
     ...byAction("Breakout Buy"),
-    ...byAction("Starter Only").slice(0, 15),
+    ...byAction("Starter Only"),
     ...byAction("Watch").slice(0, 12),
     ...byAction("Avoid").slice(0, 8),
   ];
@@ -906,39 +639,94 @@ function buildDisplayUniverse(enriched = []) {
     const symbol = normalizeSymbol(stock.symbol);
     if (!symbol || seen.has(symbol)) continue;
     seen.add(symbol);
-    unique.push({
-      ...stock,
-      actionRank: rank[displayLabel(stock)] ?? 0,
-    });
+    unique.push(stock);
   }
 
-  return unique.slice(0, 60);
+  return unique.slice(0, 75);
 }
 
-function sortTopIdeas(a, b) {
-  const rankA = Number(a.institutionalRank || 0);
-  const rankB = Number(b.institutionalRank || 0);
+function getRequestBaseUrl(req) {
+  const host = req?.headers?.host;
+  if (!host) return "";
 
-  if (rankB !== rankA) return rankB - rankA;
+  const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim();
+  const protocol = forwardedProto || (host.includes("localhost") ? "http" : "https");
 
-  const scoreA = safeScore(a.recommendation?.actionabilityScore || a.score);
-  const scoreB = safeScore(b.recommendation?.actionabilityScore || b.score);
+  return `${protocol}://${host}`;
+}
 
-  if (scoreB !== scoreA) return scoreB - scoreA;
+async function fetchSingleSymbolAnalysis(req, symbol) {
+  const baseUrl = getRequestBaseUrl(req);
 
-  const triggerA = safeScore(a.recommendation?.triggerScore);
-  const triggerB = safeScore(b.recommendation?.triggerScore);
+  if (!baseUrl || !symbol) {
+    throw new Error("Top screener could not determine the app base URL.");
+  }
 
-  if (triggerB !== triggerA) return triggerB - triggerA;
+  const url = `${baseUrl}/api?symbol=${encodeURIComponent(symbol)}`;
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+      "x-screener-internal": "top5-single-symbol-required",
+    },
+  });
 
-  const momentumA = safeScore(a.recommendation?.momentumScore);
-  const momentumB = safeScore(b.recommendation?.momentumScore);
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(
+      `${symbol}: single-symbol engine failed with HTTP ${response.status}${
+        text ? ` - ${text.slice(0, 160)}` : ""
+      }`
+    );
+  }
 
-  return momentumB - momentumA;
+  const data = await response.json();
+  const stock = data?.stock || data?.result || data?.data || data;
+
+  if (!stock || typeof stock !== "object") {
+    throw new Error(`${symbol}: single-symbol engine returned no stock object.`);
+  }
+
+  const row = normalizeSingleSymbolRow(stock, symbol);
+
+  if (!row.symbol || row.price == null || !Number.isFinite(Number(row.price))) {
+    throw new Error(`${symbol}: single-symbol engine returned an unusable price.`);
+  }
+
+  return row;
+}
+
+async function mapWithConcurrency(items = [], concurrency = 5, mapper) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+
+      try {
+        results[index] = { ok: true, value: await mapper(items[index], index) };
+      } catch (error) {
+        results[index] = {
+          ok: false,
+          symbol: items[index],
+          error: error?.message || String(error),
+        };
+      }
+    }
+  }
+
+  const workerCount = Math.min(concurrency, Math.max(items.length, 1));
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
 }
 
 export default async function handler(req, res) {
   try {
+    res.setHeader("Cache-Control", "no-store, max-age=0");
+
     const themeKey = String(req.query.theme || "broad").toLowerCase();
     const selectedTheme = getThemeConfig(themeKey);
     const symbols = uniqueSymbols(selectedTheme.symbols);
@@ -950,60 +738,49 @@ export default async function handler(req, res) {
       });
     }
 
-    // Critical architecture fix:
-    // Broad Market must use the exact same single-symbol decision path as the
-    // Single Symbol Action Check. There is intentionally NO silent quote-only
-    // fallback here. A fallback can make the page look healthy while returning
-    // different labels for the same symbol at the same price, which is exactly
-    // the ANET/QCOM problem we diagnosed.
-    const rawRows = await fetchSingleBrainUniverse(req, symbols);
-    const dataPath = "single-symbol-api-required";
-    const quotes = [];
-
-    if (!Array.isArray(rawRows) || rawRows.length === 0) {
-      return res.status(502).json({
-        error: "Single-symbol engine unavailable.",
-        detail:
-          "Broad screener refused to use the old quote-only fallback because it can disagree with the Single Symbol Action Check. Upload pages/api/index.js if this error persists so the route can be wired directly instead of through an internal fetch.",
-        meta: {
-          mode: "single_symbol_engine_required_v7",
-          requestedSymbols: symbols.length,
-          scoredQuotes: 0,
-        },
-      });
-    }
-
-    const enriched = rawRows.filter((stock) =>
-      Number.isFinite(Number(stock.price ?? stock.currentPrice ?? stock.lastPrice))
+    const results = await mapWithConcurrency(symbols, 5, (symbol) =>
+      fetchSingleSymbolAnalysis(req, symbol)
     );
 
-    if (!enriched.length) {
+    const rows = results.filter((r) => r.ok).map((r) => r.value);
+    const failures = results.filter((r) => !r.ok);
+
+    // Do not silently fall back to a different broad-screener decision engine.
+    // If this fails, it should fail loudly instead of showing ANET as Starter Only
+    // while the single-symbol checker says Breakout Buy.
+    if (!rows.length) {
       return res.status(502).json({
-        error: "Quote refresh returned no usable stocks.",
+        error: "Broad screener could not use the single-symbol decision engine.",
         detail:
-          "Rows came back, but none could be scored into usable stock rows.",
+          failures[0]?.error ||
+          "No rows came back from /api?symbol. Showing stale or quote-only labels would be misleading.",
+        failures: failures.slice(0, 12),
       });
     }
 
-    const sorted = buildDisplayUniverse(enriched);
+    const stocks = bucketRows(rows);
+
+    const countByAction = (label) =>
+      rows.filter((stock) => extractSingleSymbolAction(stock) === label).length;
 
     return res.status(200).json({
       selectedTheme,
-      count: sorted.length,
-      stocks: sorted,
+      count: stocks.length,
+      stocks,
       meta: {
-        mode: "single_symbol_engine_required_v7",
-        decisionSource: "same /api?symbol output used by Single Symbol Action Check",
-        top5DoesLabelMapping: false,
-        dataPath,
+        mode: "single_symbol_engine_required_v8",
+        decisionSource: "/api?symbol=SYMBOL",
+        fallbackUsed: false,
         requestedSymbols: symbols.length,
-        returnedQuotes: quotes.length,
-        scoredQuotes: enriched.length,
-        displayUniverse: sorted.length,
-        buyImmediatelyCount: enriched.filter((stock) => displayLabel(stock) === "Buy Immediately").length,
-        buyNowCount: enriched.filter((stock) => displayLabel(stock) === "Buy Now").length,
-        breakoutBuyCount: enriched.filter((stock) => displayLabel(stock) === "Breakout Buy").length,
-        starterOnlyCount: enriched.filter((stock) => displayLabel(stock) === "Starter Only").length,
+        analyzedSymbols: rows.length,
+        failedSymbols: failures.length,
+        buyImmediatelyCount: countByAction("Buy Immediately"),
+        buyNowCount: countByAction("Buy Now"),
+        breakoutBuyCount: countByAction("Breakout Buy"),
+        starterOnlyCount: countByAction("Starter Only"),
+        watchCount: countByAction("Watch"),
+        avoidCount: countByAction("Avoid"),
+        failures: failures.slice(0, 8),
       },
     });
   } catch (error) {
