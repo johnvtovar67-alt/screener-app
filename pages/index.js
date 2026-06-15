@@ -777,6 +777,145 @@ function rankNearMiss(a, b) {
   return scoreB - scoreA;
 }
 
+
+async function mapWithClientConcurrency(items = [], concurrency = 5, mapper) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+
+      try {
+        results[index] = { ok: true, value: await mapper(items[index], index) };
+      } catch (error) {
+        results[index] = {
+          ok: false,
+          symbol: getSymbol(items[index]) || String(items[index]?.symbol || ""),
+          error: error?.message || String(error),
+        };
+      }
+    }
+  }
+
+  const workerCount = Math.min(concurrency, Math.max(items.length, 1));
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
+
+async function fetchSingleSymbolForTopIdea(stock) {
+  const symbol = getSymbol(stock);
+  if (!symbol) throw new Error("Missing symbol.");
+
+  const res = await fetch(
+    `/api?symbol=${encodeURIComponent(symbol)}&source=top5_client_reconcile`,
+    { cache: "no-store" }
+  );
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data?.detail || data?.error || `Single-symbol check failed for ${symbol}.`);
+  }
+
+  const singleStock = data?.stock || data?.result || data?.data || data;
+
+  if (!singleStock || typeof singleStock !== "object") {
+    throw new Error(`Single-symbol check returned no stock object for ${symbol}.`);
+  }
+
+  return singleStock;
+}
+
+function mergeSingleSymbolIntoTopIdea(topStock, singleStock) {
+  const symbol = getSymbol(singleStock) || getSymbol(topStock);
+  const originalAction = nonOwnedAction(topStock);
+  const singleAction = nonOwnedAction(singleStock);
+  const singlePrice = getPrice(singleStock);
+  const topPrice = getPrice(topStock);
+
+  return {
+    ...topStock,
+    ...singleStock,
+    symbol,
+    ticker: symbol,
+    price: Number.isFinite(singlePrice) ? singlePrice : topPrice,
+    currentPrice: Number.isFinite(singlePrice) ? singlePrice : topPrice,
+    recommendation:
+      singleStock?.recommendation && typeof singleStock.recommendation === "object"
+        ? singleStock.recommendation
+        : topStock?.recommendation,
+    top5OriginalAction: originalAction,
+    singleSymbolAction: singleAction,
+    actionReconciled: originalAction !== singleAction,
+    decisionEngine: "client-single-symbol-reconciled",
+  };
+}
+
+async function reconcileTopIdeasWithSingleSymbolEngine(list = []) {
+  const cleanList = Array.isArray(list) ? list : [];
+  const seen = new Set();
+  const uniqueRows = [];
+
+  for (const stock of cleanList) {
+    const symbol = getSymbol(stock);
+    if (!symbol || seen.has(symbol)) continue;
+    seen.add(symbol);
+    uniqueRows.push(stock);
+  }
+
+  const results = await mapWithClientConcurrency(uniqueRows, 5, async (stock) => {
+    const singleStock = await fetchSingleSymbolForTopIdea(stock);
+    return mergeSingleSymbolIntoTopIdea(stock, singleStock);
+  });
+
+  const overrideMap = new Map();
+  const failures = [];
+
+  for (const result of results) {
+    if (result.ok) {
+      overrideMap.set(getSymbol(result.value), result.value);
+    } else {
+      failures.push(result);
+    }
+  }
+
+  const reconciled = cleanList.map((stock) => {
+    const symbol = getSymbol(stock);
+    return overrideMap.get(symbol) || stock;
+  });
+
+  return {
+    stocks: reconciled,
+    correctedCount: reconciled.filter((stock) => stock.actionReconciled).length,
+    failureCount: failures.length,
+    failures: failures.slice(0, 8),
+  };
+}
+
+function countActions(stocks = []) {
+  const counts = {
+    buyImmediatelyCount: 0,
+    buyNowCount: 0,
+    breakoutBuyCount: 0,
+    starterOnlyCount: 0,
+    watchCount: 0,
+    avoidCount: 0,
+  };
+
+  for (const stock of stocks) {
+    const action = nonOwnedAction(stock);
+    if (action === "Buy Immediately") counts.buyImmediatelyCount += 1;
+    else if (action === "Buy Now") counts.buyNowCount += 1;
+    else if (action === "Breakout Buy") counts.breakoutBuyCount += 1;
+    else if (action === "Starter Only") counts.starterOnlyCount += 1;
+    else if (action === "Watch") counts.watchCount += 1;
+    else counts.avoidCount += 1;
+  }
+
+  return counts;
+}
+
 export default function Home() {
   const [stocks, setStocks] = useState([]);
   const [loadingTop, setLoadingTop] = useState(true);
@@ -827,9 +966,29 @@ export default function Home() {
         throw new Error("Quote refresh returned no usable stocks.");
       }
 
-      setStocks(list);
+      const reconciled = await reconcileTopIdeasWithSingleSymbolEngine(list);
+      const reconciledStocks = reconciled.stocks;
+      const reconciledCounts = countActions(reconciledStocks);
+
+      setStocks(reconciledStocks);
       setThemeMeta(data?.selectedTheme || null);
-      setScreenerMeta(data?.meta || null);
+      setScreenerMeta({
+        ...(data?.meta || {}),
+        ...reconciledCounts,
+        dataPath: "top5 + client single-symbol reconciliation",
+        clientSingleSymbolReconcile: true,
+        correctedActionMismatches: reconciled.correctedCount,
+        reconcileFailures: reconciled.failureCount,
+        reconcileFailureSamples: reconciled.failures,
+      });
+
+      if (reconciled.correctedCount > 0) {
+        setRefreshWarning(
+          `${reconciled.correctedCount} broad-screener label mismatch${
+            reconciled.correctedCount === 1 ? " was" : "es were"
+          } corrected using the single-symbol engine.`
+        );
+      }
     } catch (err) {
       const message = err.message || "Failed to load trade screen.";
 
