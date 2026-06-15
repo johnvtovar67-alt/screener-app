@@ -175,6 +175,76 @@ function getRecommendation(stock) {
   return {};
 }
 
+function normalizeActionLabel(value) {
+  const label = String(value || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+
+  if (!label) return null;
+
+  if (label === "BUY IMMEDIATELY" || label === "IMMEDIATE BUY") {
+    return "Buy Immediately";
+  }
+
+  if (label === "BUY NOW" || label === "BUY") return "Buy Now";
+
+  if (
+    label === "BREAKOUT BUY" ||
+    label === "BREAKOUT" ||
+    label === "FRESH BREAKOUT"
+  ) {
+    return "Breakout Buy";
+  }
+
+  if (
+    label === "STARTER ONLY" ||
+    label === "STARTER" ||
+    label === "STARTER BUY" ||
+    label === "SMALL STARTER"
+  ) {
+    return "Starter Only";
+  }
+
+  if (
+    label === "WATCH" ||
+    label === "WATCH FOR ENTRY" ||
+    label === "WATCH CLOSELY" ||
+    label === "NEAR MISS" ||
+    label === "SETUP" ||
+    label === "SETUP ONLY"
+  ) {
+    return "Watch";
+  }
+
+  if (
+    label === "AVOID" ||
+    label === "AVOID FOR NOW" ||
+    label === "EXIT / AVOID" ||
+    label === "EXIT"
+  ) {
+    return "Avoid";
+  }
+
+  return null;
+}
+
+function forceActionRecommendation(stock = {}, action) {
+  const existing =
+    stock?.recommendation && typeof stock.recommendation === "object"
+      ? stock.recommendation
+      : {};
+
+  return {
+    ...existing,
+    label: action,
+    displayLabel: action,
+    recommendation: action,
+    tradeAction: action,
+  };
+}
+
 function getScore(stock) {
   return clampScore(
     getRecommendation(stock)?.score ??
@@ -600,29 +670,34 @@ function nonOwnedAction(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
   const rec = getRecommendation(stock);
-  const label = String(
-    rec?.displayLabel ??
-      rec?.label ??
-      rec?.recommendation ??
-      rec?.tradeAction ??
-      stock?.displayLabel ??
-      stock?.label ??
-      stock?.recommendation ??
-      ""
-  ).toUpperCase();
 
-  if (label === "BUY IMMEDIATELY") return "Buy Immediately";
-  if (label === "BUY NOW") return "Buy Now";
-  if (label === "BREAKOUT BUY") return "Breakout Buy";
-  if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
+  // IMPORTANT: client reconciliation deliberately writes `clientReconciledAction`
+  // after calling the exact same `/api?symbol=...` path used by Single Symbol
+  // Action Check. That field must win over the older broad-screener
+  // recommendation object. The prior bug computed Breakout Buy from the
+  // single-symbol response, then overwrote it with the broad Starter Only
+  // recommendation object during merge.
+  const candidates = [
+    stock?.clientReconciledAction,
+    stock?.canonicalAction,
+    stock?.resolvedAction,
+    stock?.finalAction,
+    stock?.overrideAction,
+    rec?.displayLabel,
+    rec?.label,
+    rec?.recommendation,
+    rec?.tradeAction,
+    stock?.displayLabel,
+    stock?.label,
+    typeof stock?.recommendation === "string" ? stock.recommendation : "",
+    stock?.tradeAction,
+    stock?.action,
+    stock?.rating,
+  ];
 
-  if (
-    label === "WATCH" ||
-    label === "WATCH FOR ENTRY" ||
-    label === "NEAR MISS" ||
-    label === "SETUP"
-  ) {
-    return "Watch";
+  for (const candidate of candidates) {
+    const action = normalizeActionLabel(candidate);
+    if (action) return action;
   }
 
   return "Avoid";
@@ -834,6 +909,11 @@ function mergeSingleSymbolIntoTopIdea(topStock, singleStock) {
   const singlePrice = getPrice(singleStock);
   const topPrice = getPrice(topStock);
 
+  // Force the merged row to carry the single-symbol action in every field the
+  // UI may read. Do not preserve the broad recommendation object when it
+  // conflicts with the single-symbol result.
+  const forcedRecommendation = forceActionRecommendation(singleStock, singleAction);
+
   return {
     ...topStock,
     ...singleStock,
@@ -841,14 +921,16 @@ function mergeSingleSymbolIntoTopIdea(topStock, singleStock) {
     ticker: symbol,
     price: Number.isFinite(singlePrice) ? singlePrice : topPrice,
     currentPrice: Number.isFinite(singlePrice) ? singlePrice : topPrice,
-    recommendation:
-      singleStock?.recommendation && typeof singleStock.recommendation === "object"
-        ? singleStock.recommendation
-        : topStock?.recommendation,
+    recommendation: forcedRecommendation,
+    displayLabel: singleAction,
+    label: singleAction,
+    tradeAction: singleAction,
+    canonicalAction: singleAction,
+    clientReconciledAction: singleAction,
     top5OriginalAction: originalAction,
     singleSymbolAction: singleAction,
     actionReconciled: originalAction !== singleAction,
-    decisionEngine: "client-single-symbol-reconciled",
+    decisionEngine: "client-single-symbol-reconciled-v10",
   };
 }
 
