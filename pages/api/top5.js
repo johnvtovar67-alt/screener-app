@@ -326,6 +326,7 @@ const THEME_CONFIG = {
   },
 };
 
+
 function getThemeConfig(themeKey) {
   const clean = String(themeKey || "broad").toLowerCase();
   return THEME_CONFIG[clean] || THEME_CONFIG.broad;
@@ -350,14 +351,76 @@ function toPositiveNumber(value, fallback = null) {
   return n;
 }
 
+function safeScore(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function normalizeActionLabel(value) {
+  const label = String(value || "").trim().toUpperCase();
+
+  if (
+    label === "BUY" ||
+    label === "BUY NOW" ||
+    label === "BUY IMMEDIATELY" ||
+    label === "STRONG BUY"
+  ) {
+    return "Buy";
+  }
+
+  if (
+    label === "STARTER" ||
+    label === "STARTER ONLY" ||
+    label === "BREAKOUT BUY" ||
+    label === "BREAKOUT" ||
+    label === "BREAKOUT STARTER"
+  ) {
+    return "Starter";
+  }
+
+  if (
+    label === "WATCH" ||
+    label === "WATCH FOR ENTRY" ||
+    label === "NEAR MISS" ||
+    label === "SETUP" ||
+    label === "SETUP ONLY" ||
+    label === "WATCH CLOSELY"
+  ) {
+    return "Watch";
+  }
+
+  return "Avoid";
+}
+
+function getAction(stock = {}) {
+  const rec = stock?.recommendation && typeof stock.recommendation === "object" ? stock.recommendation : {};
+  return normalizeActionLabel(
+    rec.displayLabel ??
+      rec.label ??
+      rec.recommendation ??
+      rec.tradeAction ??
+      stock.displayLabel ??
+      stock.label ??
+      stock.recommendation ??
+      stock.tradeAction ??
+      stock.action
+  );
+}
+
+function actionRank(actionOrStock) {
+  const action = typeof actionOrStock === "string" ? actionOrStock : getAction(actionOrStock);
+  if (action === "Buy") return 3;
+  if (action === "Starter") return 2;
+  if (action === "Watch") return 1;
+  return 0;
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(
-      `FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`
-    );
+    throw new Error(`FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`);
   }
 
   return response.json();
@@ -368,16 +431,13 @@ async function fetchFmpBatch(symbols = [], apiKey) {
   if (!cleanSymbols.length) return [];
 
   const fmpSymbols = cleanSymbols.map(toFmpSymbol).join(",");
-
   const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
     fmpSymbols
   )}&apikey=${apiKey}`;
 
   const data = await fetchJson(url);
-
   if (Array.isArray(data)) return data;
   if (data && typeof data === "object") return [data];
-
   return [];
 }
 
@@ -390,16 +450,12 @@ async function fetchFmpIndividual(symbols = [], apiKey) {
       const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
         toFmpSymbol(symbol)
       )}&apikey=${apiKey}`;
-
       const data = await fetchJson(url);
 
-      if (Array.isArray(data) && data[0]) {
-        all.push(data[0]);
-      } else if (data && typeof data === "object") {
-        all.push(data);
-      }
+      if (Array.isArray(data) && data[0]) all.push(data[0]);
+      else if (data && typeof data === "object") all.push(data);
     } catch {
-      // Skip one-symbol failures so one bad ticker does not kill the full screen.
+      // Keep the screen alive if one symbol fails.
     }
   }
 
@@ -408,10 +464,7 @@ async function fetchFmpIndividual(symbols = [], apiKey) {
 
 async function fetchFmpQuotes(symbols = []) {
   const apiKey = process.env.FMP_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("Missing FMP_API_KEY in environment variables.");
-  }
+  if (!apiKey) throw new Error("Missing FMP_API_KEY in environment variables.");
 
   const cleanSymbols = uniqueSymbols(symbols);
   if (!cleanSymbols.length) return [];
@@ -424,29 +477,19 @@ async function fetchFmpQuotes(symbols = []) {
     batchQuotes = [];
   }
 
-  if (Array.isArray(batchQuotes) && batchQuotes.length > 0) {
-    return batchQuotes;
-  }
-
+  if (Array.isArray(batchQuotes) && batchQuotes.length > 0) return batchQuotes;
   return fetchFmpIndividual(cleanSymbols, apiKey);
 }
 
 function normalizeQuote(row = {}) {
   const symbol = normalizeSymbol(row.symbol);
-
   const price = toPositiveNumber(row.price);
   const previousClose = toPositiveNumber(row.previousClose);
   const change = toNumber(row.change);
 
   let dayChangePct = toNumber(row.changesPercentage);
-
-  if (dayChangePct == null) {
-    dayChangePct = toNumber(row.changePercentage);
-  }
-
-  if (dayChangePct == null) {
-    dayChangePct = toNumber(row.changePercent);
-  }
+  if (dayChangePct == null) dayChangePct = toNumber(row.changePercentage);
+  if (dayChangePct == null) dayChangePct = toNumber(row.changePercent);
 
   if (dayChangePct == null && price != null && previousClose) {
     dayChangePct = ((price - previousClose) / previousClose) * 100;
@@ -456,177 +499,146 @@ function normalizeQuote(row = {}) {
     dayChangePct = (change / previousClose) * 100;
   }
 
-  return {
+  const normalized = {
+    ...row,
     symbol,
+    ticker: symbol,
     name: row.name || row.companyName || symbol,
+    companyName: row.companyName || row.name || symbol,
     price,
+    currentPrice: price,
+    lastPrice: price,
+    close: price,
     previousClose,
     change,
     dayChangePct,
     changesPercentage: dayChangePct,
+    changePercent: dayChangePct,
     marketCap: toPositiveNumber(row.marketCap),
     volume: toPositiveNumber(row.volume),
     avgVolume: toPositiveNumber(row.avgVolume),
     priceAvg50: toPositiveNumber(row.priceAvg50),
+    fiftyDayAverage: toPositiveNumber(row.priceAvg50 ?? row.fiftyDayAverage),
     priceAvg200: toPositiveNumber(row.priceAvg200),
+    twoHundredDayAverage: toPositiveNumber(row.priceAvg200 ?? row.twoHundredDayAverage),
+    yearHigh: toPositiveNumber(row.yearHigh),
+    yearLow: toPositiveNumber(row.yearLow),
     eps: toNumber(row.eps),
     pe: toNumber(row.pe),
-    exchange: row.exchange || "",
+    beta: toNumber(row.beta, null),
+    exchange: row.exchange || row.exchangeShortName || "",
     timestamp: row.timestamp || null,
   };
-}
 
-function displayLabel(stock = {}) {
-  const label = String(
-    stock.recommendation?.displayLabel ||
-      stock.recommendation?.label ||
-      ""
-  ).toUpperCase();
+  const recommendation = getRecommendation(normalized);
+  const score = compositeScore(normalized);
+  const technicalSnapshot = buildTechnicalSnapshot(normalized);
+  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
+  const action = normalizeActionLabel(recommendation.label || getTradeReadiness(normalized));
 
-  if (label === "BUY IMMEDIATELY") return "Buy Immediately";
-  if (label === "BUY NOW") return "Buy Now";
-  if (label === "BREAKOUT BUY") return "Breakout Buy";
-  if (label === "STARTER ONLY" || label === "STARTER") return "Starter Only";
-  if (
-    label === "WATCH" ||
-    label === "WATCH FOR ENTRY" ||
-    label === "NEAR MISS" ||
-    label === "SETUP"
-  ) {
-    return "Watch";
-  }
-
-  return "Avoid";
-}
-
-function actionRank(stock = {}) {
-  const label = displayLabel(stock);
-
-  if (label === "Buy Immediately") return 5;
-  if (label === "Buy Now") return 4;
-  if (label === "Breakout Buy") return 3;
-  if (label === "Starter Only") return 2;
-  if (label === "Watch") return 1;
-  return 0;
-}
-
-function readinessRank(stock = {}) {
-  const label = String(stock.tradeReadiness?.label || "").toUpperCase();
-
-  if (label === "TRADE READY") return 3;
-  if (label === "WATCH" || label === "WATCH CLOSELY") return 2;
-  if (label === "SETUP ONLY") return 1;
-
-  return 0;
-}
-
-function safeScore(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
+  return {
+    ...normalized,
+    score,
+    compositeScore: score,
+    heatScore: score,
+    recommendation: {
+      ...recommendation,
+      label: action,
+      displayLabel: action,
+      recommendation: action,
+      tradeAction: action,
+    },
+    technicalSnapshot,
+    fundamentalSnapshot,
+    triggerScore: recommendation.triggerScore ?? technicalSnapshot.triggerScore,
+    momentumScore: recommendation.momentumScore ?? technicalSnapshot.momentumScore,
+    expectationRisk: recommendation.expectationRisk ?? recommendation.riskScore,
+    extensionRisk: recommendation.extensionRisk,
+    freshBreakoutScore: recommendation.freshBreakoutScore,
+    dominantReason: recommendation.dominantReason,
+    reason: recommendation.reason,
+    actionWhy: recommendation.reason,
+    entryNote: recommendation.entryNote,
+    triggerNeeded: recommendation.entryNote,
+    categoryRiskNote: recommendation.categoryRiskNote || "",
+    decisionEngine: "batch-quote-scoring-js-v18",
+  };
 }
 
 function rankScore(stock = {}) {
   const rec = stock.recommendation || {};
+  const actionPoints = actionRank(stock) * 1000000;
+  const score = safeScore(rec.score ?? stock.score);
+  const triggerScore = safeScore(rec.triggerScore ?? stock.triggerScore);
+  const momentumScore = safeScore(rec.momentumScore ?? stock.momentumScore);
+  const technicalScore = safeScore(rec.technicalScore ?? stock.technicalSnapshot?.technicalScore);
+  const fundamentalScore = safeScore(rec.fundamentalScore ?? stock.fundamentalSnapshot?.fundamentalScore);
+  const freshBreakoutScore = safeScore(rec.freshBreakoutScore ?? stock.freshBreakoutScore);
+  const riskScore = safeScore(rec.expectationRisk ?? rec.riskScore ?? stock.expectationRisk ?? stock.riskScore);
+  const extensionRisk = safeScore(rec.extensionRisk ?? stock.extensionRisk);
 
-  const actionPoints = actionRank(stock) * 100000;
-  const readinessPoints = readinessRank(stock) * 10000;
-
-  const score = safeScore(rec.score || stock.score);
-  const institutionalScore = safeScore(rec.institutionalScore);
-  const actionabilityScore = safeScore(rec.actionabilityScore);
-  const triggerScore = safeScore(rec.triggerScore || stock.triggerScore);
-  const momentumScore = safeScore(rec.momentumScore || stock.momentumScore);
-  const relativeStrengthScore = safeScore(rec.relativeStrengthScore);
-  const freshBreakoutScore = safeScore(rec.freshBreakoutScore);
-
-  const expectationRisk = safeScore(rec.expectationRisk);
-  const extensionRisk = safeScore(rec.extensionRisk);
-  const lateChaseRisk = safeScore(rec.lateChaseRisk);
-  const riskPenalty = safeScore(rec.riskPenalty);
-
-  const positive =
-    institutionalScore * 2.6 +
-    actionabilityScore * 2.4 +
-    score * 1.8 +
-    triggerScore * 3.1 +
-    momentumScore * 2.2 +
-    relativeStrengthScore * 1.4 +
-    freshBreakoutScore * 1.4;
-
-  const negative =
-    expectationRisk * 1.2 +
-    extensionRisk * 1.3 +
-    lateChaseRisk * 1.5 +
-    riskPenalty * 0.8;
-
-  return actionPoints + readinessPoints + positive - negative;
-}
-
-function enrichQuote(row = {}) {
-  const normalized = normalizeQuote(row);
-
-  if (!normalized.symbol || normalized.price == null) {
-    return null;
-  }
-
-  const recommendation = getRecommendation(normalized);
-  const tradeReadiness = getTradeReadiness(normalized);
-  const technicalSnapshot = buildTechnicalSnapshot(normalized);
-  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
-  const score = compositeScore(normalized);
-
-  const stock = {
-    ...normalized,
-    score,
-    compositeScore: score,
-    recommendation,
-    tradeReadiness,
-    technicalSnapshot,
-    fundamentalSnapshot,
-
-    triggerScore: recommendation?.triggerScore,
-    momentumScore: recommendation?.momentumScore,
-    expectationRisk: recommendation?.expectationRisk,
-    extensionRisk: recommendation?.extensionRisk,
-    lateChaseRisk: recommendation?.lateChaseRisk,
-    freshBreakoutScore: recommendation?.freshBreakoutScore,
-    context: recommendation?.context,
-    reason: recommendation?.reason,
-    entryNote: recommendation?.entryNote,
-    actionWhy: recommendation?.reason,
-    triggerNeeded: recommendation?.entryNote,
-  };
-
-  return {
-    ...stock,
-    institutionalRank: rankScore(stock),
-  };
+  return (
+    actionPoints +
+    score * 1000 +
+    triggerScore * 40 +
+    momentumScore * 35 +
+    technicalScore * 20 +
+    fundamentalScore * 12 +
+    freshBreakoutScore * 10 -
+    riskScore * 8 -
+    extensionRisk * 6
+  );
 }
 
 function sortTopIdeas(a, b) {
-  const rankA = Number(a.institutionalRank || 0);
-  const rankB = Number(b.institutionalRank || 0);
+  const actionDiff = actionRank(b) - actionRank(a);
+  if (actionDiff !== 0) return actionDiff;
 
-  if (rankB !== rankA) return rankB - rankA;
+  const rankDiff = rankScore(b) - rankScore(a);
+  if (rankDiff !== 0) return rankDiff;
 
-  const scoreA = safeScore(a.recommendation?.actionabilityScore || a.score);
-  const scoreB = safeScore(b.recommendation?.actionabilityScore || b.score);
+  const triggerDiff = safeScore(b.triggerScore) - safeScore(a.triggerScore);
+  if (triggerDiff !== 0) return triggerDiff;
 
-  if (scoreB !== scoreA) return scoreB - scoreA;
+  const momentumDiff = safeScore(b.momentumScore) - safeScore(a.momentumScore);
+  if (momentumDiff !== 0) return momentumDiff;
 
-  const triggerA = safeScore(a.recommendation?.triggerScore);
-  const triggerB = safeScore(b.recommendation?.triggerScore);
+  return safeScore(b.score) - safeScore(a.score);
+}
 
-  if (triggerB !== triggerA) return triggerB - triggerA;
+function bucketRows(rows = []) {
+  const sorted = [...rows].sort(sortTopIdeas);
+  const byAction = (label) => sorted.filter((stock) => getAction(stock) === label).sort(sortTopIdeas);
 
-  const momentumA = safeScore(a.recommendation?.momentumScore);
-  const momentumB = safeScore(b.recommendation?.momentumScore);
+  const buys = byAction("Buy");
+  const starters = byAction("Starter");
+  const watches = byAction("Watch");
+  const avoids = byAction("Avoid");
 
-  return momentumB - momentumA;
+  const selected = [
+    ...buys.slice(0, 8),
+    ...starters.slice(0, 10),
+    ...watches.slice(0, 12),
+    ...avoids.slice(0, 8),
+  ];
+
+  const seen = new Set();
+  const unique = [];
+
+  for (const stock of selected) {
+    const symbol = normalizeSymbol(stock.symbol);
+    if (!symbol || seen.has(symbol)) continue;
+    seen.add(symbol);
+    unique.push(stock);
+  }
+
+  return unique;
 }
 
 export default async function handler(req, res) {
   try {
+    res.setHeader("Cache-Control", "no-store, max-age=0");
+
     const themeKey = String(req.query.theme || "broad").toLowerCase();
     const selectedTheme = getThemeConfig(themeKey);
     const symbols = uniqueSymbols(selectedTheme.symbols);
@@ -638,42 +650,36 @@ export default async function handler(req, res) {
       });
     }
 
-    const quotes = await fetchFmpQuotes(symbols);
+    const rawQuotes = await fetchFmpQuotes(symbols);
+    const rows = rawQuotes
+      .map(normalizeQuote)
+      .filter((stock) => stock.symbol && Number.isFinite(Number(stock.price)) && Number(stock.price) > 0);
 
-    if (!Array.isArray(quotes) || quotes.length === 0) {
+    if (!rows.length) {
       return res.status(502).json({
         error: "Quote refresh returned no usable stocks.",
-        detail:
-          "FMP returned no quotes for this refresh. Keeping the prior screen is safer than replacing it with blanks.",
+        detail: "FMP returned no usable quotes for the selected theme.",
       });
     }
 
-    const enriched = quotes
-      .map(enrichQuote)
-      .filter(Boolean)
-      .filter((stock) => Number.isFinite(Number(stock.price)));
-
-    if (!enriched.length) {
-      return res.status(502).json({
-        error: "Quote refresh returned no usable stocks.",
-        detail:
-          "Quotes came back from FMP, but none could be scored into usable stock rows.",
-      });
-    }
-
-    const sorted = enriched.sort(sortTopIdeas).slice(0, 10);
+    const stocks = bucketRows(rows);
+    const countByAction = (label) => rows.filter((stock) => getAction(stock) === label).length;
 
     return res.status(200).json({
       selectedTheme,
-      count: sorted.length,
-      stocks: sorted,
+      count: stocks.length,
+      stocks,
       meta: {
-        mode: "single_brain_gate_model",
-        decisionSource: "lib/scoring.js",
-        top5DoesLabelMapping: false,
+        mode: "batch_quote_scoring_js_v18_four_decisions",
+        dataPath: "FMP batch quote + lib/scoring.js",
+        decisionSource: "lib/scoring.js getRecommendation",
+        fallbackUsed: false,
         requestedSymbols: symbols.length,
-        returnedQuotes: quotes.length,
-        scoredQuotes: enriched.length,
+        analyzedSymbols: rows.length,
+        buyCount: countByAction("Buy"),
+        starterCount: countByAction("Starter"),
+        watchCount: countByAction("Watch"),
+        avoidCount: countByAction("Avoid"),
       },
     });
   } catch (error) {
