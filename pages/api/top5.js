@@ -357,6 +357,48 @@ function actionRank(actionOrStock) {
   return 0;
 }
 
+function equivalentShareClassKey(symbol) {
+  const clean = normalizeSymbol(symbol);
+  const equivalents = {
+    GOOGL: "GOOG",
+    FOXA: "FOX",
+    NWSA: "NWS",
+  };
+
+  return equivalents[clean] || clean;
+}
+
+function isBetterEquivalentCandidate(candidate, current) {
+  if (!current) return true;
+
+  const actionDiff = actionRank(candidate) - actionRank(current);
+  if (actionDiff !== 0) return actionDiff > 0;
+
+  const scoreDiff = Number(candidate.score || 0) - Number(current.score || 0);
+  if (scoreDiff !== 0) return scoreDiff > 0;
+
+  const triggerDiff = Number(candidate.triggerScore || 0) - Number(current.triggerScore || 0);
+  if (triggerDiff !== 0) return triggerDiff > 0;
+
+  const preferred = new Set(["GOOG", "FOX", "NWS"]);
+  return preferred.has(normalizeSymbol(candidate.symbol)) && !preferred.has(normalizeSymbol(current.symbol));
+}
+
+function dedupeEquivalentShareClasses(stocks = []) {
+  const byKey = new Map();
+
+  for (const stock of stocks) {
+    const key = equivalentShareClassKey(stock.symbol || stock.ticker);
+    const current = byKey.get(key);
+
+    if (isBetterEquivalentCandidate(stock, current)) {
+      byKey.set(key, stock);
+    }
+  }
+
+  return Array.from(byKey.values());
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -547,11 +589,12 @@ export default async function handler(req, res) {
     const spyQuote = normalized.find((row) => row.symbol === "SPY") || null;
     const qqqQuote = normalized.find((row) => row.symbol === "QQQ") || null;
 
-    const stocks = normalized
+    const analyzed = normalized
       .filter((row) => row.symbol !== "SPY" && row.symbol !== "QQQ")
       .map((row) => analyzeStock(attachMarketRelativeData(row, spyQuote, qqqQuote)))
-      .filter((stock) => includeAvoid || stock.recommendation.label !== "Avoid")
-      .sort(sortStocks);
+      .filter((stock) => includeAvoid || stock.recommendation.label !== "Avoid");
+
+    const stocks = dedupeEquivalentShareClasses(analyzed).sort(sortStocks);
 
     return res.status(200).json({
       theme: { key: themeKey, name: theme.name, description: theme.description },
