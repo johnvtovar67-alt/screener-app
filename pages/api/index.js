@@ -35,21 +35,55 @@ async function fetchJson(url) {
   return response.json();
 }
 
+function calculateDayChangePct(row = {}, price = null, previousClose = null, change = null) {
+  // FMP's stable quote payload has changed names over time. Prefer the actual
+  // dollar change when available because stale percentage fields can produce
+  // impossible +50% / -50% daily moves on normal large caps.
+  const directChange = toNumber(change);
+  const livePrice = toPositiveNumber(price);
+  const prevClose = toPositiveNumber(previousClose);
+
+  if (livePrice !== null && directChange !== null) {
+    const derivedPrevious = livePrice - directChange;
+    if (derivedPrevious > 0) {
+      const derivedPct = (directChange / derivedPrevious) * 100;
+      if (Number.isFinite(derivedPct) && Math.abs(derivedPct) <= 35) {
+        return derivedPct;
+      }
+    }
+  }
+
+  if (livePrice !== null && prevClose !== null) {
+    const derivedPct = ((livePrice - prevClose) / prevClose) * 100;
+    if (Number.isFinite(derivedPct) && Math.abs(derivedPct) <= 35) {
+      return derivedPct;
+    }
+  }
+
+  const directFields = [
+    row.changesPercentage,
+    row.changePercentage,
+    row.changePercent,
+    row.dayChangePct,
+  ];
+
+  for (const field of directFields) {
+    const pct = toNumber(field);
+    if (pct !== null && Number.isFinite(pct) && Math.abs(pct) <= 35) {
+      return pct;
+    }
+  }
+
+  return null;
+}
+
 function normalizeQuote(rawQuote = {}, requestedSymbol = "") {
   const symbol = normalizeSymbol(rawQuote.symbol || requestedSymbol);
   const price = toPositiveNumber(rawQuote.price);
   const previousClose = toPositiveNumber(rawQuote.previousClose);
   const change = toNumber(rawQuote.change);
 
-  let dayChangePct = toNumber(rawQuote.changesPercentage);
-  if (dayChangePct === null) dayChangePct = toNumber(rawQuote.changePercentage);
-  if (dayChangePct === null) dayChangePct = toNumber(rawQuote.changePercent);
-  if (dayChangePct === null && price !== null && previousClose !== null) {
-    dayChangePct = ((price - previousClose) / previousClose) * 100;
-  }
-  if (dayChangePct === null && change !== null && previousClose !== null) {
-    dayChangePct = (change / previousClose) * 100;
-  }
+  const dayChangePct = calculateDayChangePct(rawQuote, price, previousClose, change);
 
   return {
     ...rawQuote,
