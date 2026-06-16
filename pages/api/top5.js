@@ -1,12 +1,6 @@
 // pages/api/top5.js
 
-import {
-  compositeScore,
-  getRecommendation,
-  getTradeReadiness,
-  buildTechnicalSnapshot,
-  buildFundamentalSnapshot,
-} from "../../lib/scoring";
+import { analyzeStock } from "../../lib/scoring";
 
 function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase().trim();
@@ -18,12 +12,10 @@ function toFmpSymbol(symbol) {
 
 function uniqueSymbols(symbols = []) {
   const seen = new Set();
-
   return symbols
     .map((symbol) => normalizeSymbol(symbol))
     .filter((symbol) => {
-      if (!symbol) return false;
-      if (seen.has(symbol)) return false;
+      if (!symbol || seen.has(symbol)) return false;
       seen.add(symbol);
       return true;
     });
@@ -327,88 +319,38 @@ const THEME_CONFIG = {
 };
 
 
+
 function getThemeConfig(themeKey) {
   const clean = String(themeKey || "broad").toLowerCase();
   return THEME_CONFIG[clean] || THEME_CONFIG.broad;
 }
 
 function toNumber(value, fallback = null) {
-  if (value == null || value === "") return fallback;
-
+  if (value === null || value === undefined || value === "") return fallback;
   if (typeof value === "string") {
     const cleaned = value.replace("%", "").replace(/,/g, "").trim();
     const n = Number(cleaned);
     return Number.isFinite(n) ? n : fallback;
   }
-
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
 
 function toPositiveNumber(value, fallback = null) {
   const n = toNumber(value, fallback);
-  if (n == null || !Number.isFinite(n) || n <= 0) return fallback;
-  return n;
-}
-
-function safeScore(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
+  return n !== null && Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
 function normalizeActionLabel(value) {
-  const label = String(value || "").trim().toUpperCase();
-
-  if (
-    label === "BUY" ||
-    label === "BUY NOW" ||
-    label === "BUY IMMEDIATELY" ||
-    label === "STRONG BUY"
-  ) {
-    return "Buy";
-  }
-
-  if (
-    label === "STARTER" ||
-    label === "STARTER ONLY" ||
-    label === "BREAKOUT BUY" ||
-    label === "BREAKOUT" ||
-    label === "BREAKOUT STARTER"
-  ) {
-    return "Starter";
-  }
-
-  if (
-    label === "WATCH" ||
-    label === "WATCH FOR ENTRY" ||
-    label === "NEAR MISS" ||
-    label === "SETUP" ||
-    label === "SETUP ONLY" ||
-    label === "WATCH CLOSELY"
-  ) {
-    return "Watch";
-  }
-
+  const label = String(value || "").toUpperCase().trim();
+  if (label === "BUY") return "Buy";
+  if (label === "STARTER") return "Starter";
+  if (label === "WATCH") return "Watch";
   return "Avoid";
 }
 
-function getAction(stock = {}) {
-  const rec = stock?.recommendation && typeof stock.recommendation === "object" ? stock.recommendation : {};
-  return normalizeActionLabel(
-    rec.displayLabel ??
-      rec.label ??
-      rec.recommendation ??
-      rec.tradeAction ??
-      stock.displayLabel ??
-      stock.label ??
-      stock.recommendation ??
-      stock.tradeAction ??
-      stock.action
-  );
-}
-
 function actionRank(actionOrStock) {
-  const action = typeof actionOrStock === "string" ? actionOrStock : getAction(actionOrStock);
+  const action = typeof actionOrStock === "string" ? actionOrStock : normalizeActionLabel(actionOrStock?.recommendation?.label || actionOrStock?.label);
   if (action === "Buy") return 3;
   if (action === "Starter") return 2;
   if (action === "Watch") return 1;
@@ -417,22 +359,16 @@ function actionRank(actionOrStock) {
 
 async function fetchJson(url) {
   const response = await fetch(url);
-
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new Error(`FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`);
   }
-
   return response.json();
 }
 
-function chunkArray(items = [], size = 25) {
+function chunkArray(items = [], size = 20) {
   const chunks = [];
-
-  for (let i = 0; i < items.length; i += size) {
-    chunks.push(items.slice(i, i + size));
-  }
-
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
   return chunks;
 }
 
@@ -444,41 +380,26 @@ function asQuoteArray(data) {
 
 async function fetchStableQuoteChunk(symbols = [], apiKey) {
   const fmpSymbols = symbols.map(toFmpSymbol).join(",");
-  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
-    fmpSymbols
-  )}&apikey=${apiKey}`;
-
-  return asQuoteArray(await fetchJson(url));
+  return asQuoteArray(await fetchJson(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(fmpSymbols)}&apikey=${apiKey}`));
 }
 
 async function fetchLegacyQuoteChunk(symbols = [], apiKey) {
   const fmpSymbols = symbols.map(toFmpSymbol).join(",");
-  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(
-    fmpSymbols
-  )}?apikey=${apiKey}`;
-
-  return asQuoteArray(await fetchJson(url));
+  return asQuoteArray(await fetchJson(`https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(fmpSymbols)}?apikey=${apiKey}`));
 }
 
 async function fetchQuoteChunk(symbols = [], apiKey) {
   if (!symbols.length) return [];
-
   try {
     const stable = await fetchStableQuoteChunk(symbols, apiKey);
     if (stable.length) return stable;
-  } catch {
-    // Try the legacy FMP quote endpoint before falling back to one-by-one calls.
-  }
-
+  } catch {}
   try {
     const legacy = await fetchLegacyQuoteChunk(symbols, apiKey);
     if (legacy.length) return legacy;
-  } catch {
-    // Try one-by-one below.
-  }
+  } catch {}
 
   const individual = [];
-
   for (const symbol of symbols) {
     try {
       const rows = await fetchStableQuoteChunk([symbol], apiKey);
@@ -486,18 +407,12 @@ async function fetchQuoteChunk(symbols = [], apiKey) {
         individual.push(rows[0]);
         continue;
       }
-    } catch {
-      // Try legacy one-symbol quote below.
-    }
-
+    } catch {}
     try {
       const rows = await fetchLegacyQuoteChunk([symbol], apiKey);
       if (rows.length) individual.push(rows[0]);
-    } catch {
-      // Skip one bad ticker so the screen does not fail.
-    }
+    } catch {}
   }
-
   return individual;
 }
 
@@ -506,12 +421,8 @@ async function fetchFmpQuotes(symbols = []) {
   if (!apiKey) throw new Error("Missing FMP_API_KEY in environment variables.");
 
   const cleanSymbols = uniqueSymbols(symbols);
-  if (!cleanSymbols.length) return [];
-
-  const chunks = chunkArray(cleanSymbols, 20);
   const all = [];
-
-  for (const chunk of chunks) {
+  for (const chunk of chunkArray(cleanSymbols, 20)) {
     const rows = await fetchQuoteChunk(chunk, apiKey);
     all.push(...rows);
   }
@@ -530,20 +441,13 @@ function normalizeQuote(row = {}) {
   const price = toPositiveNumber(row.price);
   const previousClose = toPositiveNumber(row.previousClose);
   const change = toNumber(row.change);
-
   let dayChangePct = toNumber(row.changesPercentage);
-  if (dayChangePct == null) dayChangePct = toNumber(row.changePercentage);
-  if (dayChangePct == null) dayChangePct = toNumber(row.changePercent);
+  if (dayChangePct === null) dayChangePct = toNumber(row.changePercentage);
+  if (dayChangePct === null) dayChangePct = toNumber(row.changePercent);
+  if (dayChangePct === null && price !== null && previousClose !== null) dayChangePct = ((price - previousClose) / previousClose) * 100;
+  if (dayChangePct === null && change !== null && previousClose !== null) dayChangePct = (change / previousClose) * 100;
 
-  if (dayChangePct == null && price != null && previousClose) {
-    dayChangePct = ((price - previousClose) / previousClose) * 100;
-  }
-
-  if (dayChangePct == null && change != null && previousClose) {
-    dayChangePct = (change / previousClose) * 100;
-  }
-
-  const normalized = {
+  return {
     ...row,
     symbol,
     ticker: symbol,
@@ -560,228 +464,77 @@ function normalizeQuote(row = {}) {
     changePercent: dayChangePct,
     marketCap: toPositiveNumber(row.marketCap),
     volume: toPositiveNumber(row.volume),
-    avgVolume: toPositiveNumber(row.avgVolume),
-    priceAvg50: toPositiveNumber(row.priceAvg50),
-    fiftyDayAverage: toPositiveNumber(row.priceAvg50 ?? row.fiftyDayAverage),
-    priceAvg200: toPositiveNumber(row.priceAvg200),
-    twoHundredDayAverage: toPositiveNumber(row.priceAvg200 ?? row.twoHundredDayAverage),
-    yearHigh: toPositiveNumber(row.yearHigh),
-    yearLow: toPositiveNumber(row.yearLow),
+    avgVolume: toPositiveNumber(row.avgVolume ?? row.averageVolume),
+    priceAvg50: toPositiveNumber(row.priceAvg50 ?? row.priceAvg50d ?? row.fiftyDayAverage),
+    fiftyDayAverage: toPositiveNumber(row.priceAvg50 ?? row.priceAvg50d ?? row.fiftyDayAverage),
+    priceAvg200: toPositiveNumber(row.priceAvg200 ?? row.priceAvg200d ?? row.twoHundredDayAverage),
+    twoHundredDayAverage: toPositiveNumber(row.priceAvg200 ?? row.priceAvg200d ?? row.twoHundredDayAverage),
+    yearHigh: toPositiveNumber(row.yearHigh ?? row.yearHighPrice),
+    yearLow: toPositiveNumber(row.yearLow ?? row.yearLowPrice),
     eps: toNumber(row.eps),
-    pe: toNumber(row.pe),
+    pe: toNumber(row.pe ?? row.peRatio),
     beta: toNumber(row.beta, null),
     exchange: row.exchange || row.exchangeShortName || "",
     timestamp: row.timestamp || null,
   };
+}
 
-  const recommendation = getRecommendation(normalized);
-  const score = compositeScore(normalized);
-  const technicalSnapshot = buildTechnicalSnapshot(normalized);
-  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
-  const action = normalizeActionLabel(recommendation.label || getTradeReadiness(normalized));
-
+function attachMarketRelativeData(row, spyQuote, qqqQuote) {
   return {
-    ...normalized,
-    score,
-    compositeScore: score,
-    heatScore: score,
-    recommendation: {
-      ...recommendation,
-      label: action,
-      displayLabel: action,
-      recommendation: action,
-      tradeAction: action,
-    },
-    technicalSnapshot,
-    fundamentalSnapshot,
-    triggerScore: recommendation.triggerScore ?? technicalSnapshot.triggerScore,
-    momentumScore: recommendation.momentumScore ?? technicalSnapshot.momentumScore,
-    expectationRisk: recommendation.expectationRisk ?? recommendation.riskScore,
-    extensionRisk: recommendation.extensionRisk,
-    freshBreakoutScore: recommendation.freshBreakoutScore,
-    dominantReason: recommendation.dominantReason,
-    reason: recommendation.reason,
-    actionWhy: recommendation.reason,
-    entryNote: recommendation.entryNote,
-    triggerNeeded: recommendation.entryNote,
-    categoryRiskNote: recommendation.categoryRiskNote || "",
-    decisionEngine: "batch-quote-scoring-js-v18",
+    ...row,
+    spyDayChangePct: spyQuote?.dayChangePct ?? null,
+    qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
   };
 }
 
-function rankScore(stock = {}) {
-  const rec = stock.recommendation || {};
-  const actionPoints = actionRank(stock) * 1000000;
-  const score = safeScore(rec.score ?? stock.score);
-  const triggerScore = safeScore(rec.triggerScore ?? stock.triggerScore);
-  const momentumScore = safeScore(rec.momentumScore ?? stock.momentumScore);
-  const technicalScore = safeScore(rec.technicalScore ?? stock.technicalSnapshot?.technicalScore);
-  const fundamentalScore = safeScore(rec.fundamentalScore ?? stock.fundamentalSnapshot?.fundamentalScore);
-  const freshBreakoutScore = safeScore(rec.freshBreakoutScore ?? stock.freshBreakoutScore);
-  const riskScore = safeScore(rec.expectationRisk ?? rec.riskScore ?? stock.expectationRisk ?? stock.riskScore);
-  const extensionRisk = safeScore(rec.extensionRisk ?? stock.extensionRisk);
-
-  return (
-    actionPoints +
-    score * 1000 +
-    triggerScore * 40 +
-    momentumScore * 35 +
-    technicalScore * 20 +
-    fundamentalScore * 12 +
-    freshBreakoutScore * 10 -
-    riskScore * 8 -
-    extensionRisk * 6
-  );
-}
-
-function sortTopIdeas(a, b) {
+function sortStocks(a, b) {
   const actionDiff = actionRank(b) - actionRank(a);
-  if (actionDiff !== 0) return actionDiff;
-
-  const rankDiff = rankScore(b) - rankScore(a);
-  if (rankDiff !== 0) return rankDiff;
-
-  const triggerDiff = safeScore(b.triggerScore) - safeScore(a.triggerScore);
-  if (triggerDiff !== 0) return triggerDiff;
-
-  const momentumDiff = safeScore(b.momentumScore) - safeScore(a.momentumScore);
-  if (momentumDiff !== 0) return momentumDiff;
-
-  return safeScore(b.score) - safeScore(a.score);
-}
-
-
-function shareClassFamily(symbol) {
-  const clean = normalizeSymbol(symbol);
-
-  // Keep one Alphabet share class in broad/theme output so the screener does not
-  // spend two slots on the same economic exposure. Prefer GOOGL for consistency.
-  if (clean === "GOOG" || clean === "GOOGL") return "ALPHABET";
-
-  return clean;
-}
-
-function dedupeShareClasses(rows = []) {
-  const preferredSymbol = {
-    ALPHABET: "GOOGL",
-  };
-
-  const bestByFamily = new Map();
-
-  for (const row of rows) {
-    const symbol = normalizeSymbol(row?.symbol);
-    if (!symbol) continue;
-
-    const family = shareClassFamily(symbol);
-    const current = bestByFamily.get(family);
-
-    if (!current) {
-      bestByFamily.set(family, row);
-      continue;
-    }
-
-    const preferred = preferredSymbol[family];
-    if (preferred) {
-      if (symbol === preferred && normalizeSymbol(current.symbol) !== preferred) {
-        bestByFamily.set(family, row);
-        continue;
-      }
-
-      if (normalizeSymbol(current.symbol) === preferred && symbol !== preferred) {
-        continue;
-      }
-    }
-
-    if (sortTopIdeas(row, current) < 0) {
-      bestByFamily.set(family, row);
-    }
-  }
-
-  return Array.from(bestByFamily.values());
-}
-
-function bucketRows(rows = []) {
-  const deDuplicated = dedupeShareClasses(rows);
-  const sorted = [...deDuplicated].sort(sortTopIdeas);
-  const byAction = (label) => sorted.filter((stock) => getAction(stock) === label).sort(sortTopIdeas);
-
-  const buys = byAction("Buy");
-  const starters = byAction("Starter");
-  const watches = byAction("Watch");
-  const avoids = byAction("Avoid");
-
-  const selected = [
-    ...buys.slice(0, 8),
-    ...starters.slice(0, 10),
-    ...watches.slice(0, 12),
-    ...avoids.slice(0, 8),
-  ];
-
-  const seen = new Set();
-  const unique = [];
-
-  for (const stock of selected) {
-    const symbol = normalizeSymbol(stock.symbol);
-    if (!symbol || seen.has(symbol)) continue;
-    seen.add(symbol);
-    unique.push(stock);
-  }
-
-  return unique;
+  if (actionDiff) return actionDiff;
+  const triggerDiff = Number(b.triggerScore || 0) - Number(a.triggerScore || 0);
+  if (triggerDiff) return triggerDiff;
+  return Number(b.score || 0) - Number(a.score || 0);
 }
 
 export default async function handler(req, res) {
   try {
-    res.setHeader("Cache-Control", "no-store, max-age=0");
-
     const themeKey = String(req.query.theme || "broad").toLowerCase();
-    const selectedTheme = getThemeConfig(themeKey);
-    const symbols = uniqueSymbols(selectedTheme.symbols);
+    const limit = Math.max(1, Math.min(100, Number(req.query.limit || 25)));
+    const includeAvoid = String(req.query.includeAvoid || "false").toLowerCase() === "true";
+    const theme = getThemeConfig(themeKey);
 
-    if (!symbols.length) {
-      return res.status(502).json({
-        error: "Quote refresh returned no usable stocks.",
-        detail: "The selected theme has no symbols configured.",
-      });
-    }
-
+    const symbols = uniqueSymbols([...(theme.symbols || []), "SPY", "QQQ"]);
     const rawQuotes = await fetchFmpQuotes(symbols);
-    const rows = rawQuotes
-      .map(normalizeQuote)
-      .filter((stock) => stock.symbol && Number.isFinite(Number(stock.price)) && Number(stock.price) > 0);
+    const normalized = rawQuotes.map(normalizeQuote).filter((row) => row.symbol && row.price !== null);
 
-    if (!rows.length) {
-      return res.status(502).json({
-        error: "Quote refresh returned no usable stocks.",
-        detail: "FMP returned no usable quotes for the selected theme.",
-      });
-    }
+    const spyQuote = normalized.find((row) => row.symbol === "SPY") || null;
+    const qqqQuote = normalized.find((row) => row.symbol === "QQQ") || null;
 
-    const stocks = bucketRows(rows);
-    const countByAction = (label) => rows.filter((stock) => getAction(stock) === label).length;
+    const stocks = normalized
+      .filter((row) => row.symbol !== "SPY" && row.symbol !== "QQQ")
+      .map((row) => analyzeStock(attachMarketRelativeData(row, spyQuote, qqqQuote)))
+      .filter((stock) => includeAvoid || stock.recommendation.label !== "Avoid")
+      .sort(sortStocks);
 
     return res.status(200).json({
-      selectedTheme,
-      count: stocks.length,
-      stocks,
+      theme: { key: themeKey, name: theme.name, description: theme.description },
+      stocks: stocks.slice(0, limit),
+      top: stocks.slice(0, limit),
+      results: stocks.slice(0, limit),
+      allCount: normalized.length,
+      returnedCount: stocks.slice(0, limit).length,
       meta: {
-        mode: "batch_quote_scoring_js_v18_four_decisions",
-        dataPath: "FMP batch quote + lib/scoring.js",
-        decisionSource: "lib/scoring.js getRecommendation",
-        fallbackUsed: false,
-        requestedSymbols: symbols.length,
-        analyzedSymbols: rows.length,
-        deDuplicatedSymbols: dedupeShareClasses(rows).length,
-        buyCount: countByAction("Buy"),
-        starterCount: countByAction("Starter"),
-        watchCount: countByAction("Watch"),
-        avoidCount: countByAction("Avoid"),
+        mode: "broad_theme_screen",
+        model: "shared_analyzeStock_v1",
+        allowedActions: ["Buy", "Starter", "Watch", "Avoid"],
+        spyChange: spyQuote?.dayChangePct ?? null,
+        qqqChange: qqqQuote?.dayChangePct ?? null,
       },
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("api/top5 error:", err);
     return res.status(500).json({
-      error: "Failed to load top ideas.",
-      detail: error?.message || String(error),
+      error: "Failed to run screener.",
+      detail: err.message || "Unknown error.",
     });
   }
 }
