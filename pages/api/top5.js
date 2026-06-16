@@ -650,8 +650,59 @@ function sortTopIdeas(a, b) {
   return safeScore(b.score) - safeScore(a.score);
 }
 
+
+function shareClassFamily(symbol) {
+  const clean = normalizeSymbol(symbol);
+
+  // Keep one Alphabet share class in broad/theme output so the screener does not
+  // spend two slots on the same economic exposure. Prefer GOOGL for consistency.
+  if (clean === "GOOG" || clean === "GOOGL") return "ALPHABET";
+
+  return clean;
+}
+
+function dedupeShareClasses(rows = []) {
+  const preferredSymbol = {
+    ALPHABET: "GOOGL",
+  };
+
+  const bestByFamily = new Map();
+
+  for (const row of rows) {
+    const symbol = normalizeSymbol(row?.symbol);
+    if (!symbol) continue;
+
+    const family = shareClassFamily(symbol);
+    const current = bestByFamily.get(family);
+
+    if (!current) {
+      bestByFamily.set(family, row);
+      continue;
+    }
+
+    const preferred = preferredSymbol[family];
+    if (preferred) {
+      if (symbol === preferred && normalizeSymbol(current.symbol) !== preferred) {
+        bestByFamily.set(family, row);
+        continue;
+      }
+
+      if (normalizeSymbol(current.symbol) === preferred && symbol !== preferred) {
+        continue;
+      }
+    }
+
+    if (sortTopIdeas(row, current) < 0) {
+      bestByFamily.set(family, row);
+    }
+  }
+
+  return Array.from(bestByFamily.values());
+}
+
 function bucketRows(rows = []) {
-  const sorted = [...rows].sort(sortTopIdeas);
+  const deDuplicated = dedupeShareClasses(rows);
+  const sorted = [...deDuplicated].sort(sortTopIdeas);
   const byAction = (label) => sorted.filter((stock) => getAction(stock) === label).sort(sortTopIdeas);
 
   const buys = byAction("Buy");
@@ -720,6 +771,7 @@ export default async function handler(req, res) {
         fallbackUsed: false,
         requestedSymbols: symbols.length,
         analyzedSymbols: rows.length,
+        deDuplicatedSymbols: dedupeShareClasses(rows).length,
         buyCount: countByAction("Buy"),
         starterCount: countByAction("Starter"),
         watchCount: countByAction("Watch"),
