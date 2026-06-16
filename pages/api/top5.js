@@ -436,16 +436,54 @@ async function fetchFmpQuotes(symbols = []) {
   });
 }
 
+function calculateDayChangePct(row = {}, price = null, previousClose = null, change = null) {
+  // FMP's stable quote payload has changed names over time. Prefer the actual
+  // dollar change when available because stale percentage fields can produce
+  // impossible +50% / -50% daily moves on normal large caps.
+  const directChange = toNumber(change);
+  const livePrice = toPositiveNumber(price);
+  const prevClose = toPositiveNumber(previousClose);
+
+  if (livePrice !== null && directChange !== null) {
+    const derivedPrevious = livePrice - directChange;
+    if (derivedPrevious > 0) {
+      const derivedPct = (directChange / derivedPrevious) * 100;
+      if (Number.isFinite(derivedPct) && Math.abs(derivedPct) <= 35) {
+        return derivedPct;
+      }
+    }
+  }
+
+  if (livePrice !== null && prevClose !== null) {
+    const derivedPct = ((livePrice - prevClose) / prevClose) * 100;
+    if (Number.isFinite(derivedPct) && Math.abs(derivedPct) <= 35) {
+      return derivedPct;
+    }
+  }
+
+  const directFields = [
+    row.changesPercentage,
+    row.changePercentage,
+    row.changePercent,
+    row.dayChangePct,
+  ];
+
+  for (const field of directFields) {
+    const pct = toNumber(field);
+    if (pct !== null && Number.isFinite(pct) && Math.abs(pct) <= 35) {
+      return pct;
+    }
+  }
+
+  return null;
+}
+
 function normalizeQuote(row = {}) {
   const symbol = normalizeSymbol(row.symbol);
   const price = toPositiveNumber(row.price);
   const previousClose = toPositiveNumber(row.previousClose);
   const change = toNumber(row.change);
-  let dayChangePct = toNumber(row.changesPercentage);
-  if (dayChangePct === null) dayChangePct = toNumber(row.changePercentage);
-  if (dayChangePct === null) dayChangePct = toNumber(row.changePercent);
-  if (dayChangePct === null && price !== null && previousClose !== null) dayChangePct = ((price - previousClose) / previousClose) * 100;
-  if (dayChangePct === null && change !== null && previousClose !== null) dayChangePct = (change / previousClose) * 100;
+  const dayChangePct = calculateDayChangePct(row, price, previousClose, change);
 
   return {
     ...row,
@@ -517,6 +555,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       theme: { key: themeKey, name: theme.name, description: theme.description },
+      selectedTheme: { key: themeKey, name: theme.name, description: theme.description },
       stocks: stocks.slice(0, limit),
       top: stocks.slice(0, limit),
       results: stocks.slice(0, limit),
