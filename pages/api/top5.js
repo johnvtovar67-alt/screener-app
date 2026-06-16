@@ -426,40 +426,79 @@ async function fetchJson(url) {
   return response.json();
 }
 
-async function fetchFmpBatch(symbols = [], apiKey) {
-  const cleanSymbols = uniqueSymbols(symbols);
-  if (!cleanSymbols.length) return [];
+function chunkArray(items = [], size = 25) {
+  const chunks = [];
 
-  const fmpSymbols = cleanSymbols.map(toFmpSymbol).join(",");
-  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
-    fmpSymbols
-  )}&apikey=${apiKey}`;
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
 
-  const data = await fetchJson(url);
-  if (Array.isArray(data)) return data;
+  return chunks;
+}
+
+function asQuoteArray(data) {
+  if (Array.isArray(data)) return data.filter(Boolean);
   if (data && typeof data === "object") return [data];
   return [];
 }
 
-async function fetchFmpIndividual(symbols = [], apiKey) {
-  const cleanSymbols = uniqueSymbols(symbols);
-  const all = [];
+async function fetchStableQuoteChunk(symbols = [], apiKey) {
+  const fmpSymbols = symbols.map(toFmpSymbol).join(",");
+  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
+    fmpSymbols
+  )}&apikey=${apiKey}`;
 
-  for (const symbol of cleanSymbols) {
+  return asQuoteArray(await fetchJson(url));
+}
+
+async function fetchLegacyQuoteChunk(symbols = [], apiKey) {
+  const fmpSymbols = symbols.map(toFmpSymbol).join(",");
+  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(
+    fmpSymbols
+  )}?apikey=${apiKey}`;
+
+  return asQuoteArray(await fetchJson(url));
+}
+
+async function fetchQuoteChunk(symbols = [], apiKey) {
+  if (!symbols.length) return [];
+
+  try {
+    const stable = await fetchStableQuoteChunk(symbols, apiKey);
+    if (stable.length) return stable;
+  } catch {
+    // Try the legacy FMP quote endpoint before falling back to one-by-one calls.
+  }
+
+  try {
+    const legacy = await fetchLegacyQuoteChunk(symbols, apiKey);
+    if (legacy.length) return legacy;
+  } catch {
+    // Try one-by-one below.
+  }
+
+  const individual = [];
+
+  for (const symbol of symbols) {
     try {
-      const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(
-        toFmpSymbol(symbol)
-      )}&apikey=${apiKey}`;
-      const data = await fetchJson(url);
-
-      if (Array.isArray(data) && data[0]) all.push(data[0]);
-      else if (data && typeof data === "object") all.push(data);
+      const rows = await fetchStableQuoteChunk([symbol], apiKey);
+      if (rows.length) {
+        individual.push(rows[0]);
+        continue;
+      }
     } catch {
-      // Keep the screen alive if one symbol fails.
+      // Try legacy one-symbol quote below.
+    }
+
+    try {
+      const rows = await fetchLegacyQuoteChunk([symbol], apiKey);
+      if (rows.length) individual.push(rows[0]);
+    } catch {
+      // Skip one bad ticker so the screen does not fail.
     }
   }
 
-  return all;
+  return individual;
 }
 
 async function fetchFmpQuotes(symbols = []) {
@@ -469,16 +508,21 @@ async function fetchFmpQuotes(symbols = []) {
   const cleanSymbols = uniqueSymbols(symbols);
   if (!cleanSymbols.length) return [];
 
-  let batchQuotes = [];
+  const chunks = chunkArray(cleanSymbols, 20);
+  const all = [];
 
-  try {
-    batchQuotes = await fetchFmpBatch(cleanSymbols, apiKey);
-  } catch {
-    batchQuotes = [];
+  for (const chunk of chunks) {
+    const rows = await fetchQuoteChunk(chunk, apiKey);
+    all.push(...rows);
   }
 
-  if (Array.isArray(batchQuotes) && batchQuotes.length > 0) return batchQuotes;
-  return fetchFmpIndividual(cleanSymbols, apiKey);
+  const seen = new Set();
+  return all.filter((row) => {
+    const symbol = normalizeSymbol(row?.symbol);
+    if (!symbol || seen.has(symbol)) return false;
+    seen.add(symbol);
+    return true;
+  });
 }
 
 function normalizeQuote(row = {}) {
