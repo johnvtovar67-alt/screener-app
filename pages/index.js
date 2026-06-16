@@ -449,6 +449,58 @@ function getStatusLabel(stock, owned = false) {
   return action || "Setup";
 }
 
+function getStarterReason(stock) {
+  const symbol = getSymbol(stock);
+  const text = String(
+    `${stock?.name || ""} ${stock?.companyName || ""} ${stock?.sector || ""} ${stock?.industry || ""}`
+  ).toLowerCase();
+  const trigger = getTrigger(stock);
+  const momentumScore = getMomentumScore(stock);
+  const score = getScore(stock);
+  const expectationRisk = getExpectationRisk(stock);
+  const extensionRisk = getExtensionRisk(stock);
+  const changePct = getChangePct(stock);
+
+  const highVolatility = expectationRisk >= 64 || extensionRisk >= 68;
+  const strongReclaim = trigger >= 72 && momentumScore >= 66;
+
+  if (text.includes("biotech") || text.includes("therapeutic") || text.includes("pharma") || symbol === "MRNA") {
+    return highVolatility
+      ? "Biotech rebound; starter only."
+      : "Platform-healthcare momentum; starter only.";
+  }
+
+  if (text.includes("bank") || text.includes("financial") || text.includes("capital") || text.includes("asset management")) {
+    return "Financial momentum reclaim; starter only.";
+  }
+
+  if (
+    text.includes("construction") ||
+    text.includes("engineering") ||
+    text.includes("electrical") ||
+    text.includes("infrastructure") ||
+    symbol === "PWR" ||
+    symbol === "FIX"
+  ) {
+    return "Infrastructure strength; starter only.";
+  }
+
+  if (text.includes("airline") || text.includes("travel") || symbol === "DAL") {
+    return "Cyclical rebound; starter only.";
+  }
+
+  if (["ANET", "NET", "CRWD", "PANW", "NVDA", "AVGO", "AAPL", "MSFT", "GOOGL", "GOOG"].includes(symbol)) {
+    return strongReclaim
+      ? "Quality tech breakout; starter only."
+      : "Quality tech setup; starter only.";
+  }
+
+  if (changePct >= 3 && score >= 76) return "Strong momentum day; starter only.";
+  if (strongReclaim) return "Momentum reclaim; starter only.";
+
+  return "Improving setup; starter only.";
+}
+
 function getShortReason(stock) {
   const action = nonOwnedAction(stock);
   const reason = getDominantReason(stock);
@@ -456,23 +508,11 @@ function getShortReason(stock) {
   const price = extractDollarPrice(reason);
 
   if (action === "Starter") {
-    return "Fresh breakout; starter entry acceptable.";
+    return getStarterReason(stock);
   }
 
   if (action === "Buy") {
-    return "All major checks are aligned.";
-  }
-
-  if (action === "Buy") {
-    return "Setup confirmed.";
-  }
-
-  if (action === "Starter") {
-    return "Starter structure is active.";
-  }
-
-  if (action === "Starter") {
-    return "Early entry only; not fully confirmed.";
+    return "Confirmed setup; normal sizing allowed.";
   }
 
   if (lower.includes("actual trading volume is thin")) {
@@ -1416,7 +1456,7 @@ export default function Home() {
           <div>
             <span>Discipline</span>
             <p>
-              Ranked by confirmed action bucket.
+              Buy = normal size. Starter = small tactical position. Watch = wait.
             </p>
           </div>
 
