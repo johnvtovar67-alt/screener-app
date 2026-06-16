@@ -115,12 +115,36 @@ function getPrice(stock) {
 }
 
 function getChangePct(stock) {
-  return Number(
+  const price = getPrice(stock);
+  const change = Number(
+    stock?.change ??
+      stock?.dayChange ??
+      stock?.priceChange ??
+      stock?.regularMarketChange ??
+      stock?.quote?.change
+  );
+
+  // Prefer dollar-change math. It is the best defense against quote-provider
+  // percentage fields that arrive as mixed units or stale values.
+  if (Number.isFinite(price) && price > 0 && Number.isFinite(change)) {
+    const previousClose = price - change;
+    if (previousClose > 0) {
+      const derivedPct = (change / previousClose) * 100;
+      if (Number.isFinite(derivedPct) && Math.abs(derivedPct) <= 40) {
+        return derivedPct;
+      }
+    }
+  }
+
+  const pct = Number(
     stock?.dayChangePct ??
       stock?.changesPercentage ??
       stock?.changePercent ??
       stock?.percentChange
   );
+
+  if (!Number.isFinite(pct)) return NaN;
+  return Math.abs(pct) <= 40 ? pct : NaN;
 }
 
 function getNetChange(stock) {
