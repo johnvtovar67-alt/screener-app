@@ -61,6 +61,43 @@ function getSymbol(stock) {
   return String(stock?.symbol ?? stock?.ticker ?? "").toUpperCase();
 }
 
+
+function extractStockFromResponse(data) {
+  const candidates = [
+    data?.stock,
+    data?.result,
+    data?.data,
+    data?.quote,
+    data,
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
+      const symbol = getSymbol(candidate);
+      const price = getPrice(candidate);
+
+      if (symbol || Number.isFinite(price)) {
+        return candidate;
+      }
+    }
+  }
+
+  return null;
+}
+
+function hasUsableStock(stock, requestedSymbol = "") {
+  if (!stock || typeof stock !== "object") return false;
+
+  const symbol = getSymbol(stock);
+  const price = getPrice(stock);
+  const requested = String(requestedSymbol || "").trim().toUpperCase();
+
+  if (!symbol && !Number.isFinite(price)) return false;
+  if (requested && symbol && symbol !== requested) return true;
+
+  return Boolean(symbol) && Number.isFinite(price);
+}
+
 function getName(stock) {
   return stock?.name ?? stock?.companyName ?? stock?.company ?? "—";
 }
@@ -734,6 +771,42 @@ export default function Home() {
     setPortfolioResults((prev) => prev.filter((p) => p.symbol !== symbolToRemove));
   }
 
+
+  async function fetchAnalyzedStock(requestedSymbol) {
+    const cleanSymbol = String(requestedSymbol || "").trim().toUpperCase();
+    if (!cleanSymbol) throw new Error("Missing symbol.");
+
+    const endpoints = [
+      `/api?symbol=${encodeURIComponent(cleanSymbol)}`,
+      `/api/lookup?symbol=${encodeURIComponent(cleanSymbol)}`,
+    ];
+
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        const res = await fetch(endpoint, { cache: "no-store" });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data?.detail || data?.error || `Failed to analyze ${cleanSymbol}.`);
+        }
+
+        const stock = extractStockFromResponse(data);
+
+        if (!hasUsableStock(stock, cleanSymbol)) {
+          throw new Error(`No usable quote data returned for ${cleanSymbol}.`);
+        }
+
+        return stock;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    throw new Error(lastError?.message || `Failed to analyze ${cleanSymbol}.`);
+  }
+
   async function analyzeSymbol(e) {
     e?.preventDefault();
 
@@ -745,16 +818,8 @@ export default function Home() {
     setSnapStock(null);
 
     try {
-      const res = await fetch(`/api?symbol=${encodeURIComponent(cleanSymbol)}`, {
-        cache: "no-store",
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.detail || data?.error || "Failed to analyze symbol.");
-      }
-
-      setSnapStock(data?.stock || data?.result || data);
+      const stock = await fetchAnalyzedStock(cleanSymbol);
+      setSnapStock(stock);
     } catch (err) {
       setSnapError(err.message || "Failed to analyze symbol.");
     } finally {
@@ -790,16 +855,7 @@ export default function Home() {
           };
         }
 
-        const res = await fetch(`/api?symbol=${encodeURIComponent(position.symbol)}`, {
-          cache: "no-store",
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data?.detail || data?.error || `Failed to analyze ${position.symbol}.`);
-        }
-
-        const stock = data?.stock || data?.result || data;
+        const stock = await fetchAnalyzedStock(position.symbol);
         const livePrice = getPrice(stock);
         const calculated = calculatePosition(position, livePrice);
 
