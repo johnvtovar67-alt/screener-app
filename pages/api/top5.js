@@ -173,9 +173,35 @@ const CORE_OPPORTUNITY_SYMBOLS = [
   "RKLB","ASTS","RDW","BKSY","IRDM","RTX","LHX","NOC","LMT","HII","GD","KTOS","AVAV","ONDS",
   "ABB","ROK","TER","CGNX","SYM","ISRG","ADSK","PTC","SNPS","CDNS",
   "IONQ","RGTI","QBTS","QUBT","ARQQ","IBM","HON",
-  "MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS",
-  "AFRM","SHOP","UBER","TSLA","ROKU","DKNG","CELH","CROX","ABNB","EXPE"
+  "MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS"
 ];
+
+
+const APPROVED_OPPORTUNITY_THEMES = new Set([
+  "AI Compute & Platforms",
+  "AI Networking",
+  "Cybersecurity",
+  "Power & Electrification",
+  "Digital Infrastructure",
+  "Nuclear / Baseload",
+  "BTC / Digital Assets",
+  "Space & Satellites",
+  "Defense & National Security",
+  "Autonomy & Drones",
+  "Robotics & Automation",
+  "Industrial Software",
+  "Quantum Computing",
+  "Platform Biotech",
+]);
+
+function isOpportunityThemeMode(themeKey) {
+  const clean = String(themeKey || "opportunities").toLowerCase();
+  return clean === "opportunities" || clean === "broad";
+}
+
+function isApprovedOpportunity(row = {}) {
+  return APPROVED_OPPORTUNITY_THEMES.has(row.primaryTheme || row.theme || "");
+}
 
 const THEME_CONFIG = {
   opportunities: {
@@ -664,6 +690,7 @@ function buildThemeLeadership(rows = []) {
   const byTheme = new Map();
 
   for (const row of rows) {
+    if (!isApprovedOpportunity(row)) continue;
     const theme = row.primaryTheme || "Other";
     if (!byTheme.has(theme)) {
       byTheme.set(theme, {
@@ -821,7 +848,7 @@ export default async function handler(req, res) {
     const spyQuote = spyQuotes?.[0] ? normalizeQuote(spyQuotes[0]) : null;
     const qqqQuote = qqqQuotes?.[0] ? normalizeQuote(qqqQuotes[0]) : null;
 
-    const rows = quotes
+    const allRows = quotes
       .map(normalizeQuote)
       .filter((row) => row.symbol && row.price != null)
       .map((row) => ({
@@ -832,10 +859,16 @@ export default async function handler(req, res) {
       .map(scoreQuote)
       .map(enrichOutput);
 
+    const rows = isOpportunityThemeMode(themeKey)
+      ? allRows.filter(isApprovedOpportunity)
+      : allRows;
+
     if (!rows.length) {
       return res.status(502).json({
         error: "Quote refresh returned no usable stocks.",
-        detail: "FMP returned no usable quotes for the selected theme.",
+        detail: isOpportunityThemeMode(themeKey)
+          ? "No eligible approved-theme opportunity quotes were returned. Generic 'Other' names are intentionally excluded."
+          : "FMP returned no usable quotes for the selected theme.",
       });
     }
 
