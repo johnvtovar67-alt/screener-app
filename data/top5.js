@@ -1,17 +1,29 @@
 // pages/api/top5.js
 
-// This route intentionally uses the same API handler as the Single Symbol Action Check.
-// The broad screener must never derive a different label from a separate quote-only path.
-
-import singleSymbolHandler from "./index";
+import {
+  compositeScore,
+  calcFundamentalScore,
+  calcTechnicalScore,
+  calcMomentumScore,
+  calcRelativeStrengthScore,
+  calcAsymmetryScore,
+  calcTriggerScore,
+  getRecommendation,
+  getTradeReadiness,
+  buildTechnicalSnapshot,
+  buildFundamentalSnapshot,
+} from "../../lib/scoring";
 
 function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase().trim();
 }
 
+function toFmpSymbol(symbol) {
+  return String(symbol || "").replace(".", "-").toUpperCase().trim();
+}
+
 function uniqueSymbols(symbols = []) {
   const seen = new Set();
-
   return symbols
     .map((symbol) => normalizeSymbol(symbol))
     .filter((symbol) => {
@@ -22,318 +34,244 @@ function uniqueSymbols(symbols = []) {
     });
 }
 
+const PRIMARY_THEME_BY_SYMBOL = {
+  NVDA: "AI Compute & Platforms",
+  AMD: "AI Compute & Platforms",
+  AVGO: "AI Compute & Platforms",
+  ARM: "AI Compute & Platforms",
+  MU: "AI Compute & Platforms",
+  SMCI: "AI Compute & Platforms",
+  DELL: "AI Compute & Platforms",
+  HPE: "AI Compute & Platforms",
+  PLTR: "AI Compute & Platforms",
+  ORCL: "AI Compute & Platforms",
+  MSFT: "AI Compute & Platforms",
+  GOOGL: "AI Compute & Platforms",
+  GOOG: "AI Compute & Platforms",
+  META: "AI Compute & Platforms",
+  AMZN: "AI Compute & Platforms",
+  AAPL: "AI Compute & Platforms",
+
+  ANET: "AI Networking",
+  CSCO: "AI Networking",
+  NTAP: "AI Networking",
+  JNPR: "AI Networking",
+  FFIV: "AI Networking",
+  CIEN: "AI Networking",
+  MRVL: "AI Networking",
+  COHR: "AI Networking",
+  AAOI: "AI Networking",
+
+  CRWD: "Cybersecurity",
+  PANW: "Cybersecurity",
+  NET: "Cybersecurity",
+  ZS: "Cybersecurity",
+  DDOG: "Cybersecurity",
+  SNOW: "Cybersecurity",
+  MDB: "Cybersecurity",
+
+  ETN: "Power & Electrification",
+  PWR: "Power & Electrification",
+  VRT: "Power & Electrification",
+  FIX: "Power & Electrification",
+  EME: "Power & Electrification",
+  GEV: "Power & Electrification",
+  CEG: "Power & Electrification",
+  VST: "Power & Electrification",
+  NRG: "Power & Electrification",
+  TLN: "Power & Electrification",
+
+  EQIX: "Digital Infrastructure",
+  DLR: "Digital Infrastructure",
+  AMT: "Digital Infrastructure",
+  CCI: "Digital Infrastructure",
+  XYL: "Digital Infrastructure",
+  WTS: "Digital Infrastructure",
+  HUBB: "Digital Infrastructure",
+  NVT: "Digital Infrastructure",
+
+  CCJ: "Nuclear / Baseload",
+  UEC: "Nuclear / Baseload",
+  UUUU: "Nuclear / Baseload",
+  LEU: "Nuclear / Baseload",
+  BWXT: "Nuclear / Baseload",
+  SMR: "Nuclear / Baseload",
+  OKLO: "Nuclear / Baseload",
+  NNE: "Nuclear / Baseload",
+  NXE: "Nuclear / Baseload",
+  DNN: "Nuclear / Baseload",
+
+  MSTR: "BTC / Digital Assets",
+  MARA: "BTC / Digital Assets",
+  RIOT: "BTC / Digital Assets",
+  CLSK: "BTC / Digital Assets",
+  IREN: "BTC / Digital Assets",
+  WULF: "BTC / Digital Assets",
+  HUT: "BTC / Digital Assets",
+  BTDR: "BTC / Digital Assets",
+  CIFR: "BTC / Digital Assets",
+  BITF: "BTC / Digital Assets",
+  COIN: "BTC / Digital Assets",
+  HOOD: "BTC / Digital Assets",
+  SQ: "BTC / Digital Assets",
+
+  RKLB: "Space & Satellites",
+  ASTS: "Space & Satellites",
+  RDW: "Space & Satellites",
+  BKSY: "Space & Satellites",
+  IRDM: "Space & Satellites",
+
+  RTX: "Defense & National Security",
+  LHX: "Defense & National Security",
+  NOC: "Defense & National Security",
+  LMT: "Defense & National Security",
+  HII: "Defense & National Security",
+  GD: "Defense & National Security",
+  KTOS: "Defense & National Security",
+  AVAV: "Autonomy & Drones",
+  ONDS: "Autonomy & Drones",
+
+  ABB: "Robotics & Automation",
+  ROK: "Robotics & Automation",
+  TER: "Robotics & Automation",
+  CGNX: "Robotics & Automation",
+  SYM: "Robotics & Automation",
+  ISRG: "Robotics & Automation",
+
+  ADSK: "Industrial Software",
+  PTC: "Industrial Software",
+  SNPS: "Industrial Software",
+  CDNS: "Industrial Software",
+
+  IONQ: "Quantum Computing",
+  RGTI: "Quantum Computing",
+  QBTS: "Quantum Computing",
+  QUBT: "Quantum Computing",
+  ARQQ: "Quantum Computing",
+  IBM: "Quantum Computing",
+  HON: "Quantum Computing",
+
+  MRNA: "Platform Biotech",
+  RXRX: "Platform Biotech",
+  SDGR: "Platform Biotech",
+  CRSP: "Platform Biotech",
+  BEAM: "Platform Biotech",
+  IOVA: "Platform Biotech",
+  VKTX: "Platform Biotech",
+  ALMS: "Platform Biotech",
+  HIMS: "Platform Biotech",
+};
+
+const CORE_OPPORTUNITY_SYMBOLS = [
+  "NVDA","AMD","AVGO","ARM","MU","SMCI","DELL","HPE","PLTR","ORCL","MSFT","GOOGL","GOOG","META","AMZN","AAPL",
+  "ANET","CSCO","NTAP","JNPR","FFIV","CIEN","MRVL","COHR","AAOI",
+  "CRWD","PANW","NET","ZS","DDOG","SNOW","MDB",
+  "ETN","PWR","VRT","FIX","EME","GEV","CEG","VST","NRG","TLN",
+  "EQIX","DLR","AMT","XYL","WTS","HUBB","NVT",
+  "CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE","NXE","DNN",
+  "MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF","COIN","HOOD","SQ",
+  "RKLB","ASTS","RDW","BKSY","IRDM","RTX","LHX","NOC","LMT","HII","GD","KTOS","AVAV","ONDS",
+  "ABB","ROK","TER","CGNX","SYM","ISRG","ADSK","PTC","SNPS","CDNS",
+  "IONQ","RGTI","QBTS","QUBT","ARQQ","IBM","HON",
+  "MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS",
+  "AFRM","SHOP","UBER","TSLA","ROKU","DKNG","CELH","CROX","ABNB","EXPE"
+];
+
 const THEME_CONFIG = {
+  opportunities: {
+    name: "Best Opportunities",
+    description: "Fresh-capital screen. Excludes generic financials and income vehicles.",
+    symbols: CORE_OPPORTUNITY_SYMBOLS,
+  },
   broad: {
-    name: "Broad Market",
-    description:
-      "Full broad-market discovery list using the institutional scoring model.",
-    symbols: [
-      "NVDA",
-      "AMD",
-      "AVGO",
-      "ARM",
-      "MU",
-      "SMCI",
-      "PLTR",
-      "CRWD",
-      "NET",
-      "DDOG",
-      "SNOW",
-      "SHOP",
-      "MDB",
-      "ZS",
-      "PANW",
-      "ANET",
-      "DELL",
-      "HPE",
-      "ORCL",
-      "MSFT",
-      "GOOGL",
-      "GOOG",
-      "META",
-      "AMZN",
-      "AAPL",
-      "TSLA",
-      "UBER",
-      "ROKU",
-      "SOUN",
-      "BBAI",
-      "AI",
-      "AAOI",
-
-      "SCHW",
-      "BGC",
-      "JPM",
-      "BAC",
-      "C",
-      "WFC",
-      "GS",
-      "MS",
-      "BX",
-      "KKR",
-      "APO",
-      "SOFI",
-      "AFRM",
-      "HOOD",
-      "COIN",
-      "PYPL",
-      "SQ",
-      "ALLY",
-      "RKT",
-      "UPST",
-
-      "ETN",
-      "PWR",
-      "VRT",
-      "FIX",
-      "EME",
-      "GEV",
-      "CEG",
-      "VST",
-      "NRG",
-      "TLN",
-      "KMI",
-      "WMB",
-      "TRGP",
-      "LNG",
-      "ET",
-      "EPD",
-      "OKE",
-      "PAGP",
-      "XOM",
-      "CVX",
-      "COP",
-      "SLB",
-      "HAL",
-      "FCX",
-      "CLF",
-      "NUE",
-      "STLD",
-
-      "CCJ",
-      "UEC",
-      "UUUU",
-      "LEU",
-      "BWXT",
-      "SMR",
-      "OKLO",
-      "NNE",
-
-      "MSTR",
-      "MARA",
-      "RIOT",
-      "CLSK",
-      "IREN",
-      "WULF",
-      "HUT",
-      "BTDR",
-      "CIFR",
-      "BITF",
-
-      "HIMS",
-      "BCRX",
-      "ALMS",
-      "VKTX",
-      "RXRX",
-      "SDGR",
-      "DNA",
-      "MRNA",
-      "NVAX",
-      "CRSP",
-      "BEAM",
-      "IOVA",
-      "GERN",
-      "ALT",
-
-      "CELH",
-      "CROX",
-      "DKNG",
-      "RCL",
-      "CCL",
-      "NCLH",
-      "ABNB",
-      "EXPE",
-      "AAL",
-      "UAL",
-      "DAL",
-      "LUV",
-      "DIS",
-      "NFLX",
-      "TGT",
-      "WMT",
-      "COST",
-
-      "AHR",
-      "VICI",
-      "O",
-      "PLD",
-      "DLR",
-      "EQIX",
-      "AMT",
-      "CCI",
-      "WELL",
-    ],
+    name: "Best Opportunities",
+    description: "Fresh-capital screen. Excludes generic financials and income vehicles.",
+    symbols: CORE_OPPORTUNITY_SYMBOLS,
   },
-
-  btc: {
-    name: "BTC / Digital Assets",
-    description:
-      "Bitcoin, crypto infrastructure, exchanges, and digital asset proxies.",
-    symbols: [
-      "MSTR",
-      "MARA",
-      "RIOT",
-      "CLSK",
-      "IREN",
-      "WULF",
-      "HUT",
-      "BTDR",
-      "CIFR",
-      "BITF",
-      "COIN",
-      "HOOD",
-      "SQ",
-      "PYPL",
-    ],
+  ai_compute: {
+    name: "AI Compute & Platforms",
+    description: "Compute, accelerators, cloud platforms, and AI application platforms.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "AI Compute & Platforms").map(([s]) => s),
   },
-
-  ai_power: {
-    name: "AI Power & Energy",
-    description:
-      "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
-    symbols: [
-      "VST",
-      "CEG",
-      "NRG",
-      "TLN",
-      "GEV",
-      "ETN",
-      "PWR",
-      "VRT",
-      "FIX",
-      "EME",
-      "KMI",
-      "WMB",
-      "TRGP",
-      "LNG",
-      "ET",
-      "EPD",
-      "OKE",
-    ],
+  ai_networking: {
+    name: "AI Networking",
+    description: "Networking, optical, and data-movement beneficiaries of AI buildout.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "AI Networking").map(([s]) => s),
   },
-
-  cooling_water: {
-    name: "Cooling & Water",
-    description:
-      "Thermal management, water infrastructure, and cooling beneficiaries.",
-    symbols: [
-      "VRT",
-      "ETN",
-      "PWR",
-      "FIX",
-      "EME",
-      "XYL",
-      "WTS",
-      "AOS",
-      "PNR",
-      "ITT",
-      "DOV",
-      "HUBB",
-      "NVT",
-      "CARR",
-      "TT",
-    ],
+  cybersecurity: {
+    name: "Cybersecurity",
+    description: "Security platforms, cloud security, observability, and data infrastructure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Cybersecurity").map(([s]) => s),
   },
-
+  power: {
+    name: "Power & Electrification",
+    description: "Power, grid, electrification, and AI-load growth beneficiaries.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Power & Electrification").map(([s]) => s),
+  },
+  digital_infra: {
+    name: "Digital Infrastructure",
+    description: "Data centers, towers, water, cooling, and physical digital infrastructure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Digital Infrastructure").map(([s]) => s),
+  },
   nuclear: {
     name: "Nuclear / Baseload",
-    description:
-      "Uranium, nuclear services, advanced nuclear, and baseload power.",
-    symbols: [
-      "CCJ",
-      "UEC",
-      "UUUU",
-      "LEU",
-      "BWXT",
-      "SMR",
-      "OKLO",
-      "NNE",
-      "CEG",
-      "VST",
-      "TLN",
-      "GEV",
-      "NXE",
-      "DNN",
-    ],
+    description: "Uranium, nuclear services, advanced nuclear, and baseload power.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Nuclear / Baseload").map(([s]) => s),
   },
-
+  btc: {
+    name: "BTC / Digital Assets",
+    description: "Bitcoin proxies, miners, exchanges, and digital-asset infrastructure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "BTC / Digital Assets").map(([s]) => s),
+  },
+  defense: {
+    name: "Defense & National Security",
+    description: "Prime defense, national security, missiles, sensors, and space-defense exposure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Defense & National Security").map(([s]) => s),
+  },
+  space: {
+    name: "Space & Satellites",
+    description: "Launch, satellites, communications, and commercial space infrastructure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Space & Satellites").map(([s]) => s),
+  },
+  drones: {
+    name: "Autonomy & Drones",
+    description: "Autonomy, drones, and defense robotics.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Autonomy & Drones").map(([s]) => s),
+  },
+  robotics: {
+    name: "Robotics & Automation",
+    description: "Robotics, industrial automation, and automated manufacturing.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Robotics & Automation").map(([s]) => s),
+  },
+  industrial_software: {
+    name: "Industrial Software",
+    description: "Engineering, EDA, simulation, and product-design software.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Industrial Software").map(([s]) => s),
+  },
   quantum: {
     name: "Quantum Computing",
-    description:
-      "Quantum computing names and larger companies with quantum exposure.",
-    symbols: [
-      "IONQ",
-      "RGTI",
-      "QBTS",
-      "QUBT",
-      "ARQQ",
-      "IBM",
-      "GOOGL",
-      "MSFT",
-      "NVDA",
-      "HON",
-      "AMZN",
-    ],
+    description: "Quantum computing and larger firms with credible quantum exposure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Quantum Computing").map(([s]) => s),
   },
-
-  ai_infra: {
-    name: "AI Infrastructure",
-    description:
-      "Semiconductors, servers, networking, data center infrastructure, and AI platforms.",
-    symbols: [
-      "NVDA",
-      "AMD",
-      "AVGO",
-      "ARM",
-      "MU",
-      "SMCI",
-      "DELL",
-      "HPE",
-      "ANET",
-      "VRT",
-      "ETN",
-      "PWR",
-      "FIX",
-      "EME",
-      "ORCL",
-      "MSFT",
-      "GOOGL",
-      "META",
-      "AMZN",
-      "PLTR",
-      "CRWD",
-      "NET",
-      "DDOG",
-      "SNOW",
-    ],
+  biotech: {
+    name: "Platform Biotech",
+    description: "Platform-oriented healthcare and biotech names, not broad binary biotech.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Platform Biotech").map(([s]) => s),
   },
 };
 
 function getThemeConfig(themeKey) {
-  const clean = String(themeKey || "broad").toLowerCase();
-  return THEME_CONFIG[clean] || THEME_CONFIG.broad;
+  const clean = String(themeKey || "opportunities").toLowerCase();
+  return THEME_CONFIG[clean] || THEME_CONFIG.opportunities;
 }
-
 
 function toNumber(value, fallback = null) {
   if (value == null || value === "") return fallback;
-
   if (typeof value === "string") {
     const cleaned = value.replace("%", "").replace(/,/g, "").trim();
     const n = Number(cleaned);
     return Number.isFinite(n) ? n : fallback;
   }
-
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
@@ -349,161 +287,217 @@ function safeScore(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function clampScore(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function normalizeDailyPct({ price, previousClose, change, rawPct }) {
+  let pct = toNumber(rawPct);
+
+  if (price != null && previousClose != null && previousClose > 0) {
+    const recalculated = ((price - previousClose) / previousClose) * 100;
+    if (pct === null || Math.abs(pct) > 25 || Math.abs(pct - recalculated) > 5) {
+      pct = recalculated;
+    }
+  }
+
+  if (pct === null && change != null && previousClose != null && previousClose > 0) {
+    pct = (change / previousClose) * 100;
+  }
+
+  return pct;
+}
+
 function normalizeActionLabel(value) {
-  const label = String(value || "").trim().toUpperCase();
+  const label = String(value || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
 
-  if (label === "BUY" || label === "BUY NOW" || label === "BUY IMMEDIATELY" || label === "STRONG BUY") {
-    return "Buy";
-  }
-
-  if (
-    label === "STARTER" ||
-    label === "STARTER ONLY" ||
-    label === "BREAKOUT BUY" ||
-    label === "BREAKOUT" ||
-    label === "BREAKOUT STARTER"
-  ) {
-    return "Starter";
-  }
-
-  if (
-    label === "WATCH" ||
-    label === "WATCH FOR ENTRY" ||
-    label === "NEAR MISS" ||
-    label === "SETUP" ||
-    label === "SETUP ONLY" ||
-    label === "WATCH CLOSELY"
-  ) {
-    return "Watch";
-  }
-
+  if (["BUY", "BUY NOW", "BUY IMMEDIATELY", "STRONG BUY"].includes(label)) return "Buy";
+  if (["STARTER", "STARTER ONLY", "STARTER BUY", "BREAKOUT", "BREAKOUT BUY", "BREAKOUT STARTER"].includes(label)) return "Starter";
+  if (["WATCH", "WATCH FOR ENTRY", "WATCH CLOSELY", "NEAR MISS", "SETUP", "SETUP ONLY"].includes(label)) return "Watch";
   return "Avoid";
 }
 
-// This intentionally mirrors the exact priority used by the frontend's
-// Single Symbol Action Check. The bug we are fixing is that broad-market cards
-// were deriving labels from a different, quote-only path. If the single-symbol
-// payload says ANET is Breakout Buy, top5 must preserve that label exactly.
-function extractSingleSymbolAction(stock = {}) {
-  const rec =
-    stock?.recommendation && typeof stock.recommendation === "object"
-      ? stock.recommendation
-      : {};
-
-  const rawLabel =
-    rec?.displayLabel ??
-    rec?.label ??
-    rec?.recommendation ??
-    rec?.tradeAction ??
-    stock?.displayLabel ??
-    stock?.label ??
-    stock?.tradeAction ??
-    stock?.action ??
-    stock?.rating ??
-    (typeof stock?.recommendation === "string" ? stock.recommendation : "");
-
-  return normalizeActionLabel(rawLabel);
+function getAction(stock = {}) {
+  const rec = stock?.recommendation && typeof stock.recommendation === "object" ? stock.recommendation : {};
+  return normalizeActionLabel(
+    rec.displayLabel ??
+      rec.label ??
+      rec.recommendation ??
+      rec.tradeAction ??
+      stock.displayLabel ??
+      stock.label ??
+      stock.recommendation ??
+      stock.tradeAction ??
+      stock.action
+  );
 }
 
-function forceRecommendationObject(stock = {}, action) {
-  const existing =
-    stock?.recommendation && typeof stock.recommendation === "object"
-      ? stock.recommendation
-      : {};
+function actionRank(actionOrStock) {
+  const action = typeof actionOrStock === "string" ? actionOrStock : getAction(actionOrStock);
+  if (action === "Buy") return 3;
+  if (action === "Starter") return 2;
+  if (action === "Watch") return 1;
+  return 0;
+}
+
+function getConvictionGrade(stock = {}) {
+  const score = clampScore(stock.score ?? stock.compositeScore);
+  const trigger = clampScore(stock.triggerScore);
+  const momentum = clampScore(stock.momentumScore);
+  const technical = clampScore(stock.technicalScore);
+  const action = getAction(stock);
+
+  const conviction = score * 0.42 + trigger * 0.23 + momentum * 0.2 + technical * 0.15;
+
+  if (action === "Buy" && conviction >= 86) return "A+";
+  if (conviction >= 82) return "A";
+  if (conviction >= 76) return "A-";
+  if (conviction >= 70) return "B+";
+  if (conviction >= 62) return "B";
+  return "C";
+}
+
+function getCatalyst(stock = {}) {
+  const trigger = clampScore(stock.triggerScore);
+  const momentum = clampScore(stock.momentumScore);
+  const technical = clampScore(stock.technicalScore);
+  const fresh = clampScore(stock.freshBreakoutScore ?? stock.technicalSnapshot?.freshBreakoutScore);
+  const change = toNumber(stock.dayChangePct ?? stock.changesPercentage, 0);
+
+  if (fresh >= 78 && trigger >= 78) return "Breakout";
+  if (trigger >= 76 && momentum >= 70) return "Reclaim";
+  if (technical >= 76 && momentum >= 72) return "RS Leader";
+  if (change < -1 && technical >= 65) return "Pullback";
+  if (momentum >= 70) return "Trend";
+  return "Setup";
+}
+
+function getDecisionClock(stock = {}) {
+  const action = getAction(stock);
+  const trigger = clampScore(stock.triggerScore);
+  const momentum = clampScore(stock.momentumScore);
+
+  if (action === "Buy") return "Immediate";
+  if (action === "Starter" && trigger >= 72 && momentum >= 62) return "1–2 Weeks";
+  if (action === "Starter") return "2–4 Weeks";
+  if (action === "Watch") return "1–3 Months";
+  return "Avoid Until Improved";
+}
+
+function themeFor(symbol) {
+  return PRIMARY_THEME_BY_SYMBOL[normalizeSymbol(symbol)] || "Other";
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`);
+  }
+  return response.json();
+}
+
+function chunkArray(items = [], size = 20) {
+  const chunks = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+}
+
+function asQuoteArray(data) {
+  if (Array.isArray(data)) return data.filter(Boolean);
+  if (data && typeof data === "object") return [data];
+  return [];
+}
+
+async function fetchStableQuoteChunk(symbols = [], apiKey) {
+  const fmpSymbols = symbols.map(toFmpSymbol).join(",");
+  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(fmpSymbols)}&apikey=${apiKey}`;
+  return asQuoteArray(await fetchJson(url));
+}
+
+async function fetchLegacyQuoteChunk(symbols = [], apiKey) {
+  const fmpSymbols = symbols.map(toFmpSymbol).join(",");
+  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(fmpSymbols)}?apikey=${apiKey}`;
+  return asQuoteArray(await fetchJson(url));
+}
+
+async function fetchQuoteChunk(symbols = [], apiKey) {
+  if (!symbols.length) return [];
+
+  try {
+    const stable = await fetchStableQuoteChunk(symbols, apiKey);
+    if (stable.length) return stable;
+  } catch {}
+
+  try {
+    const legacy = await fetchLegacyQuoteChunk(symbols, apiKey);
+    if (legacy.length) return legacy;
+  } catch {}
+
+  const individual = [];
+  for (const symbol of symbols) {
+    try {
+      const rows = await fetchStableQuoteChunk([symbol], apiKey);
+      if (rows.length) {
+        individual.push(rows[0]);
+        continue;
+      }
+    } catch {}
+
+    try {
+      const rows = await fetchLegacyQuoteChunk([symbol], apiKey);
+      if (rows.length) individual.push(rows[0]);
+    } catch {}
+  }
+
+  return individual;
+}
+
+async function fetchFmpQuotes(symbols = []) {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) throw new Error("Missing FMP_API_KEY in environment variables.");
+
+  const cleanSymbols = uniqueSymbols(symbols);
+  if (!cleanSymbols.length) return [];
+
+  const chunks = chunkArray(cleanSymbols, 20);
+  const all = [];
+
+  for (const chunk of chunks) {
+    const rows = await fetchQuoteChunk(chunk, apiKey);
+    all.push(...rows);
+  }
+
+  const seen = new Set();
+  return all.filter((row) => {
+    const symbol = normalizeSymbol(row?.symbol);
+    if (!symbol || seen.has(symbol)) return false;
+    seen.add(symbol);
+    return true;
+  });
+}
+
+function normalizeQuote(row = {}) {
+  const symbol = normalizeSymbol(row.symbol);
+  const price = toPositiveNumber(row.price);
+  const previousClose = toPositiveNumber(row.previousClose);
+  const change = toNumber(row.change);
+  const rawPct = row.changesPercentage ?? row.changePercentage ?? row.changePercent;
+
+  const dayChangePct = normalizeDailyPct({ price, previousClose, change, rawPct });
 
   return {
-    ...existing,
-    label: action,
-    displayLabel: action,
-    recommendation: action,
-    tradeAction: action,
-  };
-}
-
-function getPriceLike(stock = {}) {
-  return toPositiveNumber(
-    stock.price ?? stock.currentPrice ?? stock.lastPrice ?? stock.close ?? stock.quote?.price
-  );
-}
-
-function normalizeSingleSymbolRow(rawStock = {}, requestedSymbol = "") {
-  const symbol = normalizeSymbol(rawStock.symbol || rawStock.ticker || requestedSymbol);
-  const price = getPriceLike(rawStock);
-  const previousClose = toPositiveNumber(rawStock.previousClose ?? rawStock.quote?.previousClose);
-  const change = toNumber(
-    rawStock.change ??
-      rawStock.dayChange ??
-      rawStock.priceChange ??
-      rawStock.regularMarketChange ??
-      rawStock.quote?.change
-  );
-
-  let dayChangePct = toNumber(
-    rawStock.dayChangePct ??
-      rawStock.changesPercentage ??
-      rawStock.changePercent ??
-      rawStock.percentChange ??
-      rawStock.quote?.changesPercentage ??
-      rawStock.quote?.changePercent
-  );
-
-  if (dayChangePct == null && price != null && previousClose) {
-    dayChangePct = ((price - previousClose) / previousClose) * 100;
-  }
-
-  if (dayChangePct == null && change != null && previousClose) {
-    dayChangePct = (change / previousClose) * 100;
-  }
-
-  const action = extractSingleSymbolAction(rawStock);
-  const recommendation = forceRecommendationObject(rawStock, action);
-  const technicalSnapshot =
-    rawStock.technicalSnapshot && typeof rawStock.technicalSnapshot === "object"
-      ? rawStock.technicalSnapshot
-      : {};
-
-  const fundamentalSnapshot =
-    rawStock.fundamentalSnapshot && typeof rawStock.fundamentalSnapshot === "object"
-      ? rawStock.fundamentalSnapshot
-      : {};
-
-  const score = safeScore(
-    recommendation.score ??
-      rawStock.score ??
-      rawStock.compositeScore ??
-      rawStock.overallScore ??
-      rawStock.heatScore
-  );
-
-  const triggerScore = safeScore(
-    recommendation.triggerScore ?? rawStock.triggerScore ?? technicalSnapshot.triggerScore
-  );
-  const momentumScore = safeScore(
-    recommendation.momentumScore ?? rawStock.momentumScore ?? technicalSnapshot.momentumScore
-  );
-  const expectationRisk = safeScore(
-    recommendation.expectationRisk ??
-      recommendation.riskScore ??
-      rawStock.expectationRisk ??
-      rawStock.riskScore ??
-      technicalSnapshot.expectationRisk ??
-      technicalSnapshot.riskScore
-  );
-  const extensionRisk = safeScore(
-    recommendation.extensionRisk ?? rawStock.extensionRisk ?? technicalSnapshot.extensionRisk
-  );
-  const freshBreakoutScore = safeScore(
-    recommendation.freshBreakoutScore ??
-      rawStock.freshBreakoutScore ??
-      technicalSnapshot.freshBreakoutScore
-  );
-
-  const row = {
-    ...rawStock,
+    ...row,
     symbol,
     ticker: symbol,
-    name: rawStock.name || rawStock.companyName || rawStock.company || symbol,
-    companyName: rawStock.companyName || rawStock.name || rawStock.company || symbol,
+    name: row.name || row.companyName || symbol,
+    companyName: row.companyName || row.name || symbol,
     price,
     currentPrice: price,
     lastPrice: price,
@@ -513,98 +507,93 @@ function normalizeSingleSymbolRow(rawStock = {}, requestedSymbol = "") {
     dayChangePct,
     changesPercentage: dayChangePct,
     changePercent: dayChangePct,
-    marketCap: toPositiveNumber(rawStock.marketCap ?? rawStock.mktCap ?? rawStock.marketCapitalization),
-    volume: toPositiveNumber(rawStock.volume ?? rawStock.vol),
-    avgVolume: toPositiveNumber(
-      rawStock.avgVolume ?? rawStock.averageVolume ?? rawStock.avgVolume10Day ?? rawStock.averageVolume10Day
-    ),
-    priceAvg50: toPositiveNumber(
-      rawStock.priceAvg50 ?? rawStock.fiftyDayAverage ?? rawStock.sma50 ?? rawStock.ma50
-    ),
-    fiftyDayAverage: toPositiveNumber(
-      rawStock.fiftyDayAverage ?? rawStock.priceAvg50 ?? rawStock.sma50 ?? rawStock.ma50
-    ),
-    priceAvg200: toPositiveNumber(
-      rawStock.priceAvg200 ?? rawStock.twoHundredDayAverage ?? rawStock.sma200 ?? rawStock.ma200
-    ),
-    twoHundredDayAverage: toPositiveNumber(
-      rawStock.twoHundredDayAverage ?? rawStock.priceAvg200 ?? rawStock.sma200 ?? rawStock.ma200
-    ),
-    yearHigh: toPositiveNumber(
-      rawStock.yearHigh ?? rawStock.high52 ?? rawStock.fiftyTwoWeekHigh ?? rawStock["52WeekHigh"]
-    ),
-    yearLow: toPositiveNumber(
-      rawStock.yearLow ?? rawStock.low52 ?? rawStock.fiftyTwoWeekLow ?? rawStock["52WeekLow"]
-    ),
-    eps: toNumber(rawStock.eps),
-    pe: toNumber(rawStock.pe ?? rawStock.peRatio),
-    beta: toNumber(rawStock.beta, null),
-    exchange: rawStock.exchange || rawStock.exchangeShortName || "",
-    score,
-    compositeScore: score,
-    recommendation,
-    tradeReadiness: rawStock.tradeReadiness || null,
-    technicalSnapshot,
-    fundamentalSnapshot,
-    triggerScore,
-    momentumScore,
-    expectationRisk,
-    extensionRisk,
-    lateChaseRisk: safeScore(recommendation.lateChaseRisk ?? rawStock.lateChaseRisk),
-    freshBreakoutScore,
-    context: recommendation.context ?? rawStock.context,
-    dominantReason:
-      recommendation.dominantReason ??
-      rawStock.dominantReason ??
-      rawStock.reason ??
-      recommendation.reason,
-    reason: recommendation.reason ?? rawStock.reason,
-    actionWhy: recommendation.reason ?? rawStock.actionWhy ?? rawStock.reason,
-    entryNote: recommendation.entryNote ?? rawStock.entryNote,
-    triggerNeeded: recommendation.entryNote ?? rawStock.triggerNeeded ?? rawStock.entryNote,
-    singleSymbolAction: action,
-    decisionEngine: "single-symbol-api-required",
-  };
-
-  return {
-    ...row,
-    institutionalRank: rankScore(row),
+    marketCap: toPositiveNumber(row.marketCap),
+    volume: toPositiveNumber(row.volume),
+    avgVolume: toPositiveNumber(row.avgVolume),
+    priceAvg50: toPositiveNumber(row.priceAvg50),
+    fiftyDayAverage: toPositiveNumber(row.priceAvg50 ?? row.fiftyDayAverage),
+    priceAvg200: toPositiveNumber(row.priceAvg200),
+    twoHundredDayAverage: toPositiveNumber(row.priceAvg200 ?? row.twoHundredDayAverage),
+    yearHigh: toPositiveNumber(row.yearHigh),
+    yearLow: toPositiveNumber(row.yearLow),
+    eps: toNumber(row.eps),
+    pe: toNumber(row.pe),
+    beta: toNumber(row.beta, null),
+    exchange: row.exchange || row.exchangeShortName || "",
+    timestamp: row.timestamp || null,
   };
 }
 
-function actionRank(stock = {}) {
-  const action = extractSingleSymbolAction(stock);
+function scoreQuote(normalized = {}) {
+  const score = compositeScore(normalized);
+  const fundamentalScore = calcFundamentalScore(normalized);
+  const technicalScore = calcTechnicalScore(normalized);
+  const momentumScore = calcMomentumScore(normalized);
+  const relativeStrengthScore = calcRelativeStrengthScore(normalized);
+  const asymmetryScore = calcAsymmetryScore(normalized);
+  const triggerScore = calcTriggerScore(normalized);
+  const technicalSnapshot = buildTechnicalSnapshot(normalized);
+  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
+  const recommendation = getRecommendation(normalized);
+  const action = normalizeActionLabel(recommendation?.label || getTradeReadiness(normalized));
 
-  if (action === "Buy") return 3;
-  if (action === "Starter") return 2;
-  if (action === "Watch") return 1;
-  return 0;
+  return {
+    ...normalized,
+    score,
+    compositeScore: score,
+    heatScore: score,
+    fundamentalScore,
+    technicalScore,
+    momentumScore,
+    relativeStrengthScore,
+    asymmetryScore,
+    triggerScore,
+    primaryTheme: themeFor(normalized.symbol),
+    theme: themeFor(normalized.symbol),
+    recommendation: {
+      ...recommendation,
+      label: action,
+      displayLabel: action,
+      recommendation: action,
+      tradeAction: action,
+      score,
+      triggerScore,
+      momentumScore,
+    },
+    action,
+    technicalSnapshot,
+    fundamentalSnapshot,
+  };
+}
+
+function enrichOutput(stock = {}) {
+  return {
+    ...stock,
+    primaryTheme: themeFor(stock.symbol),
+    theme: themeFor(stock.symbol),
+    convictionGrade: getConvictionGrade(stock),
+    catalyst: getCatalyst(stock),
+    decisionClock: getDecisionClock(stock),
+  };
 }
 
 function rankScore(stock = {}) {
-  const rec = stock.recommendation || {};
-  const actionPoints = actionRank(stock) * 1000000;
-  const score = safeScore(rec.score ?? stock.score);
-  const actionabilityScore = safeScore(rec.actionabilityScore);
-  const institutionalScore = safeScore(rec.institutionalScore);
-  const triggerScore = safeScore(rec.triggerScore ?? stock.triggerScore);
-  const momentumScore = safeScore(rec.momentumScore ?? stock.momentumScore);
-  const freshBreakoutScore = safeScore(rec.freshBreakoutScore ?? stock.freshBreakoutScore);
-  const riskScore = safeScore(
-    rec.expectationRisk ?? rec.riskScore ?? stock.expectationRisk ?? stock.riskScore
-  );
-  const extensionRisk = safeScore(rec.extensionRisk ?? stock.extensionRisk);
+  const action = actionRank(stock);
+  const convictionBias =
+    stock.convictionGrade === "A+" ? 5 :
+    stock.convictionGrade === "A" ? 4 :
+    stock.convictionGrade === "A-" ? 3 :
+    stock.convictionGrade === "B+" ? 2 :
+    stock.convictionGrade === "B" ? 1 : 0;
 
   return (
-    actionPoints +
-    score * 1000 +
-    actionabilityScore * 40 +
-    institutionalScore * 30 +
-    triggerScore * 25 +
-    momentumScore * 20 +
-    freshBreakoutScore * 10 -
-    riskScore * 8 -
-    extensionRisk * 6
+    action * 1000 +
+    safeScore(stock.score) * 2.2 +
+    safeScore(stock.relativeStrengthScore) * 1.5 +
+    safeScore(stock.technicalScore) * 1.25 +
+    safeScore(stock.triggerScore) +
+    safeScore(stock.momentumScore) +
+    convictionBias
   );
 }
 
@@ -612,28 +601,187 @@ function sortTopIdeas(a, b) {
   const actionDiff = actionRank(b) - actionRank(a);
   if (actionDiff !== 0) return actionDiff;
 
-  const rankDiff = safeScore(b.institutionalRank) - safeScore(a.institutionalRank);
+  const rankDiff = rankScore(b) - rankScore(a);
   if (rankDiff !== 0) return rankDiff;
-
-  const triggerDiff = safeScore(b.triggerScore) - safeScore(a.triggerScore);
-  if (triggerDiff !== 0) return triggerDiff;
-
-  const momentumDiff = safeScore(b.momentumScore) - safeScore(a.momentumScore);
-  if (momentumDiff !== 0) return momentumDiff;
 
   return safeScore(b.score) - safeScore(a.score);
 }
 
+function shareClassFamily(symbol) {
+  const clean = normalizeSymbol(symbol);
+  if (clean === "GOOG" || clean === "GOOGL") return "ALPHABET";
+  return clean;
+}
+
+function dedupeShareClasses(rows = []) {
+  const preferredSymbol = { ALPHABET: "GOOGL" };
+  const bestByFamily = new Map();
+
+  for (const row of rows) {
+    const symbol = normalizeSymbol(row?.symbol);
+    if (!symbol) continue;
+
+    const family = shareClassFamily(symbol);
+    const current = bestByFamily.get(family);
+
+    if (!current) {
+      bestByFamily.set(family, row);
+      continue;
+    }
+
+    const preferred = preferredSymbol[family];
+    if (preferred) {
+      if (symbol === preferred && normalizeSymbol(current.symbol) !== preferred) {
+        bestByFamily.set(family, row);
+        continue;
+      }
+      if (normalizeSymbol(current.symbol) === preferred && symbol !== preferred) {
+        continue;
+      }
+    }
+
+    if (sortTopIdeas(row, current) < 0) bestByFamily.set(family, row);
+  }
+
+  return Array.from(bestByFamily.values());
+}
+
+function themeKeyForName(themeName) {
+  const match = Object.entries(THEME_CONFIG).find(([, config]) => config.name === themeName);
+  return match?.[0] || "opportunities";
+}
+
+function convictionToScore(grade) {
+  if (grade === "A+") return 100;
+  if (grade === "A") return 90;
+  if (grade === "A-") return 82;
+  if (grade === "B+") return 74;
+  if (grade === "B") return 64;
+  return 50;
+}
+
+function buildThemeLeadership(rows = []) {
+  const byTheme = new Map();
+
+  for (const row of rows) {
+    const theme = row.primaryTheme || "Other";
+    if (!byTheme.has(theme)) {
+      byTheme.set(theme, {
+        theme,
+        key: themeKeyForName(theme),
+        total: 0,
+        buy: 0,
+        starter: 0,
+        watch: 0,
+        avoid: 0,
+        bestSymbol: row.symbol,
+        bestAction: getAction(row),
+        bestScore: -1,
+        convictionTotal: 0,
+        relativeStrengthTotal: 0,
+        technicalTotal: 0,
+        momentumTotal: 0,
+        dayChangeTotal: 0,
+        dayChangeCount: 0,
+      });
+    }
+
+    const bucket = byTheme.get(theme);
+    const action = getAction(row);
+    const score = safeScore(row.score);
+
+    bucket.total += 1;
+    if (action === "Buy") bucket.buy += 1;
+    else if (action === "Starter") bucket.starter += 1;
+    else if (action === "Watch") bucket.watch += 1;
+    else bucket.avoid += 1;
+
+    bucket.convictionTotal += convictionToScore(row.convictionGrade);
+    bucket.relativeStrengthTotal += safeScore(row.relativeStrengthScore);
+    bucket.technicalTotal += safeScore(row.technicalScore);
+    bucket.momentumTotal += safeScore(row.momentumScore);
+
+    const dayChange = toNumber(row.dayChangePct ?? row.changesPercentage, null);
+    if (dayChange !== null) {
+      bucket.dayChangeTotal += dayChange;
+      bucket.dayChangeCount += 1;
+    }
+
+    const candidateRank = rankScore(row);
+    if (candidateRank > bucket.bestScore) {
+      bucket.bestScore = candidateRank;
+      bucket.bestSymbol = row.symbol;
+      bucket.bestAction = action;
+    }
+  }
+
+  return Array.from(byTheme.values())
+    .map((theme) => {
+      const total = Math.max(theme.total, 1);
+      const avgConviction = theme.convictionTotal / total;
+      const actionableBreadth = ((theme.buy + theme.starter) / total) * 100;
+      const avgRelativeStrength = theme.relativeStrengthTotal / total;
+      const avgTechnical = theme.technicalTotal / total;
+      const avgMomentum = theme.momentumTotal / total;
+      const avgDayChange = theme.dayChangeCount > 0 ? theme.dayChangeTotal / theme.dayChangeCount : 0;
+
+      const healthScore = clampScore(
+        avgConviction * 0.30 +
+          actionableBreadth * 0.25 +
+          avgRelativeStrength * 0.20 +
+          avgTechnical * 0.15 +
+          avgMomentum * 0.10
+      );
+
+      // Stateless Vercel functions do not have yesterday's theme score available.
+      // This is a same-day rotation proxy: positive when the theme's current momentum,
+      // breadth, and day change are improving versus a neutral baseline.
+      const trendDelta = Math.max(
+        -9,
+        Math.min(
+          9,
+          Math.round((avgMomentum - 50) * 0.08 + (actionableBreadth - 25) * 0.04 + avgDayChange * 1.2)
+        )
+      );
+
+      const trendDirection = trendDelta > 1 ? "up" : trendDelta < -1 ? "down" : "flat";
+      const trendArrow = trendDirection === "up" ? "▲" : trendDirection === "down" ? "▼" : "►";
+      const healthLabel = healthScore >= 75 ? "Strong" : healthScore >= 60 ? "Improving" : healthScore >= 45 ? "Neutral" : healthScore >= 30 ? "Weakening" : "Weak";
+
+      return {
+        ...theme,
+        healthScore,
+        averageStrength: healthScore,
+        healthLabel,
+        trendDelta,
+        trendDirection,
+        trendArrow,
+        avgConviction: Math.round(avgConviction),
+        actionableBreadth: Math.round(actionableBreadth),
+        avgRelativeStrength: Math.round(avgRelativeStrength),
+        avgTechnical: Math.round(avgTechnical),
+        avgMomentum: Math.round(avgMomentum),
+      };
+    })
+    .sort((a, b) => b.healthScore - a.healthScore)
+    .slice(0, 6);
+}
+
 function bucketRows(rows = []) {
-  const sorted = [...rows].sort(sortTopIdeas);
-  const byAction = (label) =>
-    sorted.filter((stock) => extractSingleSymbolAction(stock) === label).sort(sortTopIdeas);
+  const deDuplicated = dedupeShareClasses(rows.map(enrichOutput));
+  const sorted = [...deDuplicated].sort(sortTopIdeas);
+  const byAction = (label) => sorted.filter((stock) => getAction(stock) === label).sort(sortTopIdeas);
+
+  const buys = byAction("Buy");
+  const starters = byAction("Starter");
+  const watches = byAction("Watch");
+  const avoids = byAction("Avoid");
 
   const selected = [
-    ...byAction("Buy"),
-    ...byAction("Starter"),
-    ...byAction("Watch").slice(0, 12),
-    ...byAction("Avoid").slice(0, 8),
+    ...buys.slice(0, 6),
+    ...starters.slice(0, 10),
+    ...watches.slice(0, 14),
+    ...avoids.slice(0, 8),
   ];
 
   const seen = new Set();
@@ -646,131 +794,14 @@ function bucketRows(rows = []) {
     unique.push(stock);
   }
 
-  return unique.slice(0, 75);
-}
-
-
-function createCaptureResponse(symbol) {
-  const capture = {
-    statusCode: 200,
-    body: null,
-    headers: {},
-    ended: false,
-  };
-
-  const res = {
-    setHeader(name, value) {
-      capture.headers[String(name).toLowerCase()] = value;
-      return res;
-    },
-    status(code) {
-      capture.statusCode = Number(code) || 200;
-      return res;
-    },
-    json(payload) {
-      capture.body = payload;
-      capture.ended = true;
-      return res;
-    },
-    send(payload) {
-      capture.body = payload;
-      capture.ended = true;
-      return res;
-    },
-    end(payload) {
-      if (payload !== undefined && capture.body == null) capture.body = payload;
-      capture.ended = true;
-      return res;
-    },
-  };
-
-  return { capture, res };
-}
-
-async function runSingleSymbolHandlerDirect(req, symbol) {
-  const cleanSymbol = normalizeSymbol(symbol);
-  if (!cleanSymbol) throw new Error("Missing symbol for single-symbol engine.");
-
-  const { capture, res } = createCaptureResponse(cleanSymbol);
-
-  const mockReq = {
-    ...req,
-    method: "GET",
-    query: {
-      ...(req?.query || {}),
-      symbol: cleanSymbol,
-      source: "top5-direct-single-symbol",
-    },
-    headers: {
-      ...(req?.headers || {}),
-      "x-screener-internal": "top5-direct-single-symbol-required-v12",
-    },
-  };
-
-  await singleSymbolHandler(mockReq, res);
-
-  if (capture.statusCode >= 400) {
-    const detail =
-      typeof capture.body === "object"
-        ? capture.body?.detail || capture.body?.error || JSON.stringify(capture.body).slice(0, 180)
-        : String(capture.body || "").slice(0, 180);
-    throw new Error(
-      `${cleanSymbol}: direct single-symbol engine failed with HTTP ${capture.statusCode}${
-        detail ? ` - ${detail}` : ""
-      }`
-    );
-  }
-
-  const data = capture.body;
-  const stock = data?.stock || data?.result || data?.data || data;
-
-  if (!stock || typeof stock !== "object") {
-    throw new Error(`${cleanSymbol}: direct single-symbol engine returned no stock object.`);
-  }
-
-  const row = normalizeSingleSymbolRow(stock, cleanSymbol);
-
-  if (!row.symbol || row.price == null || !Number.isFinite(Number(row.price))) {
-    throw new Error(`${cleanSymbol}: direct single-symbol engine returned an unusable price.`);
-  }
-
-  return {
-    ...row,
-    decisionEngine: "direct-single-symbol-handler-required-v12",
-  };
-}
-
-async function mapWithConcurrency(items = [], concurrency = 5, mapper) {
-  const results = new Array(items.length);
-  let nextIndex = 0;
-
-  async function worker() {
-    while (nextIndex < items.length) {
-      const index = nextIndex;
-      nextIndex += 1;
-
-      try {
-        results[index] = { ok: true, value: await mapper(items[index], index) };
-      } catch (error) {
-        results[index] = {
-          ok: false,
-          symbol: items[index],
-          error: error?.message || String(error),
-        };
-      }
-    }
-  }
-
-  const workerCount = Math.min(concurrency, Math.max(items.length, 1));
-  await Promise.all(Array.from({ length: workerCount }, () => worker()));
-  return results;
+  return unique;
 }
 
 export default async function handler(req, res) {
   try {
     res.setHeader("Cache-Control", "no-store, max-age=0");
 
-    const themeKey = String(req.query.theme || "broad").toLowerCase();
+    const themeKey = String(req.query.theme || "opportunities").toLowerCase();
     const selectedTheme = getThemeConfig(themeKey);
     const symbols = uniqueSymbols(selectedTheme.symbols);
 
@@ -781,55 +812,71 @@ export default async function handler(req, res) {
       });
     }
 
-    const results = await mapWithConcurrency(symbols, 5, (symbol) =>
-      runSingleSymbolHandlerDirect(req, symbol)
-    );
+    const [quotes, spyQuotes, qqqQuotes] = await Promise.all([
+      fetchFmpQuotes(symbols),
+      fetchFmpQuotes(["SPY"]).catch(() => []),
+      fetchFmpQuotes(["QQQ"]).catch(() => []),
+    ]);
 
-    const rows = results.filter((r) => r.ok).map((r) => r.value);
-    const failures = results.filter((r) => !r.ok);
+    const spyQuote = spyQuotes?.[0] ? normalizeQuote(spyQuotes[0]) : null;
+    const qqqQuote = qqqQuotes?.[0] ? normalizeQuote(qqqQuotes[0]) : null;
 
-    // Do not silently fall back to a different broad-screener decision engine.
-    // If this fails, it should fail loudly instead of showing ANET as Starter Only
-    // while the single-symbol checker says Breakout Buy.
+    const rows = quotes
+      .map(normalizeQuote)
+      .filter((row) => row.symbol && row.price != null)
+      .map((row) => ({
+        ...row,
+        spyDayChangePct: spyQuote?.dayChangePct ?? null,
+        qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
+      }))
+      .map(scoreQuote)
+      .map(enrichOutput);
+
     if (!rows.length) {
       return res.status(502).json({
-        error: "Broad screener could not use the single-symbol decision engine.",
-        detail:
-          failures[0]?.error ||
-          "No rows came back from /api?symbol. Showing stale or quote-only labels would be misleading.",
-        failures: failures.slice(0, 12),
+        error: "Quote refresh returned no usable stocks.",
+        detail: "FMP returned no usable quotes for the selected theme.",
       });
     }
 
-    const stocks = bucketRows(rows);
-
-    const countByAction = (label) =>
-      rows.filter((stock) => extractSingleSymbolAction(stock) === label).length;
+    const bucketed = bucketRows(rows);
+    const counts = bucketed.reduce(
+      (acc, row) => {
+        const action = getAction(row);
+        acc.total += 1;
+        if (action === "Buy") acc.buy += 1;
+        else if (action === "Starter") acc.starter += 1;
+        else if (action === "Watch") acc.watch += 1;
+        else acc.avoid += 1;
+        return acc;
+      },
+      { total: 0, buy: 0, starter: 0, watch: 0, avoid: 0 }
+    );
 
     return res.status(200).json({
-      selectedTheme,
-      count: stocks.length,
-      stocks,
+      stocks: bucketed,
+      selectedTheme: {
+        key: themeKey,
+        name: selectedTheme.name,
+        description: selectedTheme.description,
+      },
+      themeLeadership: buildThemeLeadership(rows),
       meta: {
-        mode: "direct_single_symbol_handler_required_v12_four_decisions",
-        dataPath: "direct pages/api/index.js handler",
-        decisionSource: "pages/api/index.js handler invoked directly",
-        fallbackUsed: false,
-        directHandlerImport: true,
-        requestedSymbols: symbols.length,
-        analyzedSymbols: rows.length,
-        failedSymbols: failures.length,
-        buyCount: countByAction("Buy"),
-        starterCount: countByAction("Starter"),
-        watchCount: countByAction("Watch"),
-        avoidCount: countByAction("Avoid"),
-        failures: failures.slice(0, 8),
+        mode: "investment_operating_system_v3",
+        source: "FMP",
+        universeCount: symbols.length,
+        returnedCount: bucketed.length,
+        rawCount: rows.length,
+        spyChange: spyQuote?.dayChangePct ?? null,
+        qqqChange: qqqQuote?.dayChangePct ?? null,
+        ...counts,
       },
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("api/top5 error:", err);
     return res.status(500).json({
-      error: "Failed to load top ideas.",
-      detail: error?.message || String(error),
+      error: "Failed to load trade screen.",
+      detail: err.message || "Unknown error.",
     });
   }
 }
