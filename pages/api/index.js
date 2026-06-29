@@ -1,38 +1,18 @@
-// pages/api/top5.js
+// pages/api/index.js
 
 import {
-  compositeScore,
   calcFundamentalScore,
   calcTechnicalScore,
   calcMomentumScore,
   calcRelativeStrengthScore,
   calcAsymmetryScore,
   calcTriggerScore,
+  compositeScore,
   getRecommendation,
-  getTradeReadiness,
+  getStage,
   buildTechnicalSnapshot,
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
-
-function normalizeSymbol(symbol) {
-  return String(symbol || "").replace("-", ".").toUpperCase().trim();
-}
-
-function toFmpSymbol(symbol) {
-  return String(symbol || "").replace(".", "-").toUpperCase().trim();
-}
-
-function uniqueSymbols(symbols = []) {
-  const seen = new Set();
-  return symbols
-    .map((symbol) => normalizeSymbol(symbol))
-    .filter((symbol) => {
-      if (!symbol) return false;
-      if (seen.has(symbol)) return false;
-      seen.add(symbol);
-      return true;
-    });
-}
 
 const PRIMARY_THEME_BY_SYMBOL = {
   NVDA: "AI Compute & Platforms",
@@ -88,7 +68,6 @@ const PRIMARY_THEME_BY_SYMBOL = {
   XYL: "Digital Infrastructure",
   WTS: "Digital Infrastructure",
   HUBB: "Digital Infrastructure",
-  NVT: "Digital Infrastructure",
 
   CCJ: "Nuclear / Baseload",
   UEC: "Nuclear / Baseload",
@@ -162,111 +141,16 @@ const PRIMARY_THEME_BY_SYMBOL = {
   HIMS: "Platform Biotech",
 };
 
-const CORE_OPPORTUNITY_SYMBOLS = [
-  "NVDA","AMD","AVGO","ARM","MU","SMCI","DELL","HPE","PLTR","ORCL","MSFT","GOOGL","GOOG","META","AMZN","AAPL",
-  "ANET","CSCO","NTAP","JNPR","FFIV","CIEN","MRVL","COHR","AAOI",
-  "CRWD","PANW","NET","ZS","DDOG","SNOW","MDB",
-  "ETN","PWR","VRT","FIX","EME","GEV","CEG","VST","NRG","TLN",
-  "EQIX","DLR","AMT","XYL","WTS","HUBB","NVT",
-  "CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE","NXE","DNN",
-  "MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF","COIN","HOOD","SQ",
-  "RKLB","ASTS","RDW","BKSY","IRDM","RTX","LHX","NOC","LMT","HII","GD","KTOS","AVAV","ONDS",
-  "ABB","ROK","TER","CGNX","SYM","ISRG","ADSK","PTC","SNPS","CDNS",
-  "IONQ","RGTI","QBTS","QUBT","ARQQ","IBM","HON",
-  "MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS",
-  "AFRM","SHOP","UBER","TSLA","ROKU","DKNG","CELH","CROX","ABNB","EXPE"
-];
+function normalizeSymbol(symbol) {
+  return String(symbol || "").replace("-", ".").toUpperCase().trim();
+}
 
-const THEME_CONFIG = {
-  opportunities: {
-    name: "Best Opportunities",
-    description: "Fresh-capital screen. Excludes generic financials and income vehicles.",
-    symbols: CORE_OPPORTUNITY_SYMBOLS,
-  },
-  broad: {
-    name: "Best Opportunities",
-    description: "Fresh-capital screen. Excludes generic financials and income vehicles.",
-    symbols: CORE_OPPORTUNITY_SYMBOLS,
-  },
-  ai_compute: {
-    name: "AI Compute & Platforms",
-    description: "Compute, accelerators, cloud platforms, and AI application platforms.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "AI Compute & Platforms").map(([s]) => s),
-  },
-  ai_networking: {
-    name: "AI Networking",
-    description: "Networking, optical, and data-movement beneficiaries of AI buildout.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "AI Networking").map(([s]) => s),
-  },
-  cybersecurity: {
-    name: "Cybersecurity",
-    description: "Security platforms, cloud security, observability, and data infrastructure.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Cybersecurity").map(([s]) => s),
-  },
-  power: {
-    name: "Power & Electrification",
-    description: "Power, grid, electrification, and AI-load growth beneficiaries.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Power & Electrification").map(([s]) => s),
-  },
-  digital_infra: {
-    name: "Digital Infrastructure",
-    description: "Data centers, towers, water, cooling, and physical digital infrastructure.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Digital Infrastructure").map(([s]) => s),
-  },
-  nuclear: {
-    name: "Nuclear / Baseload",
-    description: "Uranium, nuclear services, advanced nuclear, and baseload power.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Nuclear / Baseload").map(([s]) => s),
-  },
-  btc: {
-    name: "BTC / Digital Assets",
-    description: "Bitcoin proxies, miners, exchanges, and digital-asset infrastructure.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "BTC / Digital Assets").map(([s]) => s),
-  },
-  defense: {
-    name: "Defense & National Security",
-    description: "Prime defense, national security, missiles, sensors, and space-defense exposure.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Defense & National Security").map(([s]) => s),
-  },
-  space: {
-    name: "Space & Satellites",
-    description: "Launch, satellites, communications, and commercial space infrastructure.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Space & Satellites").map(([s]) => s),
-  },
-  drones: {
-    name: "Autonomy & Drones",
-    description: "Autonomy, drones, and defense robotics.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Autonomy & Drones").map(([s]) => s),
-  },
-  robotics: {
-    name: "Robotics & Automation",
-    description: "Robotics, industrial automation, and automated manufacturing.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Robotics & Automation").map(([s]) => s),
-  },
-  industrial_software: {
-    name: "Industrial Software",
-    description: "Engineering, EDA, simulation, and product-design software.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Industrial Software").map(([s]) => s),
-  },
-  quantum: {
-    name: "Quantum Computing",
-    description: "Quantum computing and larger firms with credible quantum exposure.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Quantum Computing").map(([s]) => s),
-  },
-  biotech: {
-    name: "Platform Biotech",
-    description: "Platform-oriented healthcare and biotech names, not broad binary biotech.",
-    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Platform Biotech").map(([s]) => s),
-  },
-};
-
-function getThemeConfig(themeKey) {
-  const clean = String(themeKey || "opportunities").toLowerCase();
-  return THEME_CONFIG[clean] || THEME_CONFIG.opportunities;
+function toFmpSymbol(symbol) {
+  return String(symbol || "").replace(".", "-").toUpperCase().trim();
 }
 
 function toNumber(value, fallback = null) {
-  if (value == null || value === "") return fallback;
+  if (value === null || value === undefined || value === "") return fallback;
   if (typeof value === "string") {
     const cleaned = value.replace("%", "").replace(/,/g, "").trim();
     const n = Number(cleaned);
@@ -278,19 +162,8 @@ function toNumber(value, fallback = null) {
 
 function toPositiveNumber(value, fallback = null) {
   const n = toNumber(value, fallback);
-  if (n == null || !Number.isFinite(n) || n <= 0) return fallback;
+  if (n === null || !Number.isFinite(n) || n <= 0) return fallback;
   return n;
-}
-
-function safeScore(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function clampScore(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(100, Math.round(n)));
 }
 
 function normalizeDailyPct({ price, previousClose, change, rawPct }) {
@@ -298,6 +171,10 @@ function normalizeDailyPct({ price, previousClose, change, rawPct }) {
 
   if (price != null && previousClose != null && previousClose > 0) {
     const recalculated = ((price - previousClose) / previousClose) * 100;
+
+    // FMP sometimes mixes fractional and percent formats. If the provided value
+    // implies an absurd daily move but the price/previous close do not, trust the
+    // price math.
     if (pct === null || Math.abs(pct) > 25 || Math.abs(pct - recalculated) > 5) {
       pct = recalculated;
     }
@@ -307,7 +184,20 @@ function normalizeDailyPct({ price, previousClose, change, rawPct }) {
     pct = (change / previousClose) * 100;
   }
 
+  if (pct !== null && Math.abs(pct) <= 1 && Math.abs(change || 0) > 1) {
+    return pct;
+  }
+
   return pct;
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`);
+  }
+  return response.json();
 }
 
 function normalizeActionLabel(value) {
@@ -318,32 +208,15 @@ function normalizeActionLabel(value) {
     .toUpperCase();
 
   if (["BUY", "BUY NOW", "BUY IMMEDIATELY", "STRONG BUY"].includes(label)) return "Buy";
-  if (["STARTER", "STARTER ONLY", "STARTER BUY", "BREAKOUT", "BREAKOUT BUY", "BREAKOUT STARTER"].includes(label)) return "Starter";
+  if (["STARTER", "STARTER ONLY", "STARTER BUY", "BREAKOUT", "BREAKOUT BUY"].includes(label)) return "Starter";
   if (["WATCH", "WATCH FOR ENTRY", "WATCH CLOSELY", "NEAR MISS", "SETUP", "SETUP ONLY"].includes(label)) return "Watch";
   return "Avoid";
 }
 
-function getAction(stock = {}) {
-  const rec = stock?.recommendation && typeof stock.recommendation === "object" ? stock.recommendation : {};
-  return normalizeActionLabel(
-    rec.displayLabel ??
-      rec.label ??
-      rec.recommendation ??
-      rec.tradeAction ??
-      stock.displayLabel ??
-      stock.label ??
-      stock.recommendation ??
-      stock.tradeAction ??
-      stock.action
-  );
-}
-
-function actionRank(actionOrStock) {
-  const action = typeof actionOrStock === "string" ? actionOrStock : getAction(actionOrStock);
-  if (action === "Buy") return 3;
-  if (action === "Starter") return 2;
-  if (action === "Watch") return 1;
-  return 0;
+function clampScore(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
 }
 
 function getConvictionGrade(stock = {}) {
@@ -351,7 +224,7 @@ function getConvictionGrade(stock = {}) {
   const trigger = clampScore(stock.triggerScore);
   const momentum = clampScore(stock.momentumScore);
   const technical = clampScore(stock.technicalScore);
-  const action = getAction(stock);
+  const action = normalizeActionLabel(stock?.recommendation?.label ?? stock?.recommendation?.displayLabel ?? stock?.action);
 
   const conviction = score * 0.42 + trigger * 0.23 + momentum * 0.2 + technical * 0.15;
 
@@ -379,7 +252,7 @@ function getCatalyst(stock = {}) {
 }
 
 function getDecisionClock(stock = {}) {
-  const action = getAction(stock);
+  const action = normalizeActionLabel(stock?.recommendation?.label ?? stock?.action);
   const trigger = clampScore(stock.triggerScore);
   const momentum = clampScore(stock.momentumScore);
 
@@ -390,114 +263,40 @@ function getDecisionClock(stock = {}) {
   return "Avoid Until Improved";
 }
 
-function themeFor(symbol) {
-  return PRIMARY_THEME_BY_SYMBOL[normalizeSymbol(symbol)] || "Other";
+function enrichStock(stock = {}) {
+  const symbol = normalizeSymbol(stock.symbol);
+  const theme = PRIMARY_THEME_BY_SYMBOL[symbol] || "Other";
+
+  return {
+    ...stock,
+    symbol,
+    ticker: symbol,
+    primaryTheme: theme,
+    theme,
+    convictionGrade: getConvictionGrade(stock),
+    catalyst: getCatalyst(stock),
+    decisionClock: getDecisionClock(stock),
+  };
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(`FMP request failed: ${response.status}${text ? ` - ${text}` : ""}`);
-  }
-  return response.json();
-}
-
-function chunkArray(items = [], size = 20) {
-  const chunks = [];
-  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
-  return chunks;
-}
-
-function asQuoteArray(data) {
-  if (Array.isArray(data)) return data.filter(Boolean);
-  if (data && typeof data === "object") return [data];
-  return [];
-}
-
-async function fetchStableQuoteChunk(symbols = [], apiKey) {
-  const fmpSymbols = symbols.map(toFmpSymbol).join(",");
-  const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(fmpSymbols)}&apikey=${apiKey}`;
-  return asQuoteArray(await fetchJson(url));
-}
-
-async function fetchLegacyQuoteChunk(symbols = [], apiKey) {
-  const fmpSymbols = symbols.map(toFmpSymbol).join(",");
-  const url = `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(fmpSymbols)}?apikey=${apiKey}`;
-  return asQuoteArray(await fetchJson(url));
-}
-
-async function fetchQuoteChunk(symbols = [], apiKey) {
-  if (!symbols.length) return [];
-
-  try {
-    const stable = await fetchStableQuoteChunk(symbols, apiKey);
-    if (stable.length) return stable;
-  } catch {}
-
-  try {
-    const legacy = await fetchLegacyQuoteChunk(symbols, apiKey);
-    if (legacy.length) return legacy;
-  } catch {}
-
-  const individual = [];
-  for (const symbol of symbols) {
-    try {
-      const rows = await fetchStableQuoteChunk([symbol], apiKey);
-      if (rows.length) {
-        individual.push(rows[0]);
-        continue;
-      }
-    } catch {}
-
-    try {
-      const rows = await fetchLegacyQuoteChunk([symbol], apiKey);
-      if (rows.length) individual.push(rows[0]);
-    } catch {}
-  }
-
-  return individual;
-}
-
-async function fetchFmpQuotes(symbols = []) {
-  const apiKey = process.env.FMP_API_KEY;
-  if (!apiKey) throw new Error("Missing FMP_API_KEY in environment variables.");
-
-  const cleanSymbols = uniqueSymbols(symbols);
-  if (!cleanSymbols.length) return [];
-
-  const chunks = chunkArray(cleanSymbols, 20);
-  const all = [];
-
-  for (const chunk of chunks) {
-    const rows = await fetchQuoteChunk(chunk, apiKey);
-    all.push(...rows);
-  }
-
-  const seen = new Set();
-  return all.filter((row) => {
-    const symbol = normalizeSymbol(row?.symbol);
-    if (!symbol || seen.has(symbol)) return false;
-    seen.add(symbol);
-    return true;
-  });
-}
-
-function normalizeQuote(row = {}) {
-  const symbol = normalizeSymbol(row.symbol);
-  const price = toPositiveNumber(row.price);
-  const previousClose = toPositiveNumber(row.previousClose);
-  const change = toNumber(row.change);
-  const rawPct = row.changesPercentage ?? row.changePercentage ?? row.changePercent;
+function normalizeQuote(rawQuote = {}, requestedSymbol = "") {
+  const symbol = normalizeSymbol(rawQuote.symbol || requestedSymbol);
+  const price = toPositiveNumber(rawQuote.price);
+  const previousClose = toPositiveNumber(rawQuote.previousClose);
+  const change = toNumber(rawQuote.change);
+  const rawPct =
+    rawQuote.changesPercentage ??
+    rawQuote.changePercentage ??
+    rawQuote.changePercent ??
+    rawQuote.dayChangePct;
 
   const dayChangePct = normalizeDailyPct({ price, previousClose, change, rawPct });
 
   return {
-    ...row,
     symbol,
     ticker: symbol,
-    name: row.name || row.companyName || symbol,
-    companyName: row.companyName || row.name || symbol,
+    name: rawQuote.name || rawQuote.companyName || symbol,
+    companyName: rawQuote.companyName || rawQuote.name || symbol,
     price,
     currentPrice: price,
     lastPrice: price,
@@ -507,49 +306,82 @@ function normalizeQuote(row = {}) {
     dayChangePct,
     changesPercentage: dayChangePct,
     changePercent: dayChangePct,
-    marketCap: toPositiveNumber(row.marketCap),
-    volume: toPositiveNumber(row.volume),
-    avgVolume: toPositiveNumber(row.avgVolume),
-    priceAvg50: toPositiveNumber(row.priceAvg50),
-    fiftyDayAverage: toPositiveNumber(row.priceAvg50 ?? row.fiftyDayAverage),
-    priceAvg200: toPositiveNumber(row.priceAvg200),
-    twoHundredDayAverage: toPositiveNumber(row.priceAvg200 ?? row.twoHundredDayAverage),
-    yearHigh: toPositiveNumber(row.yearHigh),
-    yearLow: toPositiveNumber(row.yearLow),
-    eps: toNumber(row.eps),
-    pe: toNumber(row.pe),
-    beta: toNumber(row.beta, null),
-    exchange: row.exchange || row.exchangeShortName || "",
-    timestamp: row.timestamp || null,
+    volume: toPositiveNumber(rawQuote.volume),
+    avgVolume: toPositiveNumber(rawQuote.avgVolume ?? rawQuote.volume),
+    marketCap: toPositiveNumber(rawQuote.marketCap),
+    priceAvg50: toPositiveNumber(rawQuote.priceAvg50 ?? rawQuote.priceAvg50d),
+    fiftyDayAverage: toPositiveNumber(rawQuote.priceAvg50 ?? rawQuote.fiftyDayAverage),
+    priceAvg200: toPositiveNumber(rawQuote.priceAvg200 ?? rawQuote.priceAvg200d),
+    twoHundredDayAverage: toPositiveNumber(rawQuote.priceAvg200 ?? rawQuote.twoHundredDayAverage),
+    yearHigh: toPositiveNumber(rawQuote.yearHigh ?? rawQuote.yearHighPrice),
+    yearLow: toPositiveNumber(rawQuote.yearLow ?? rawQuote.yearLowPrice),
+    eps: toNumber(rawQuote.eps),
+    pe: toNumber(rawQuote.pe ?? rawQuote.peRatio),
+    beta: toNumber(rawQuote.beta, null),
+    exchange: rawQuote.exchange || rawQuote.exchangeShortName || "",
+    timestamp: rawQuote.timestamp || null,
   };
 }
 
-function scoreQuote(normalized = {}) {
-  const score = compositeScore(normalized);
-  const fundamentalScore = calcFundamentalScore(normalized);
-  const technicalScore = calcTechnicalScore(normalized);
-  const momentumScore = calcMomentumScore(normalized);
-  const relativeStrengthScore = calcRelativeStrengthScore(normalized);
-  const asymmetryScore = calcAsymmetryScore(normalized);
-  const triggerScore = calcTriggerScore(normalized);
-  const technicalSnapshot = buildTechnicalSnapshot(normalized);
-  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
-  const recommendation = getRecommendation(normalized);
-  const action = normalizeActionLabel(recommendation?.label || getTradeReadiness(normalized));
+async function fetchQuote(symbol) {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) throw new Error("Missing FMP_API_KEY in environment variables.");
 
+  const clean = toFmpSymbol(symbol);
+
+  const urls = [
+    `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(clean)}&apikey=${apiKey}`,
+    `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(clean)}?apikey=${apiKey}`,
+  ];
+
+  let lastError = null;
+
+  for (const url of urls) {
+    try {
+      const data = await fetchJson(url);
+      const quote = Array.isArray(data) ? data[0] : data;
+
+      if (quote && (quote.symbol || quote.price)) {
+        const normalized = normalizeQuote(quote, symbol);
+        if (normalized.symbol && normalized.price !== null) return normalized;
+      }
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw new Error(lastError?.message || `No quote data returned for ${symbol}.`);
+}
+
+function attachMarketRelativeData(row, spyQuote, qqqQuote) {
   return {
-    ...normalized,
+    ...row,
+    spyDayChangePct: spyQuote?.dayChangePct ?? null,
+    qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
+  };
+}
+
+function buildScoredResult(base) {
+  const fundamentalScore = calcFundamentalScore(base);
+  const technicalScore = calcTechnicalScore(base);
+  const momentumScore = calcMomentumScore(base);
+  const relativeStrengthScore = calcRelativeStrengthScore(base);
+  const asymmetryScore = calcAsymmetryScore(base);
+  const triggerScore = calcTriggerScore(base);
+  const score = compositeScore(base);
+  const recommendation = getRecommendation(base);
+  const action = normalizeActionLabel(recommendation?.label ?? recommendation?.displayLabel ?? recommendation?.tradeAction);
+
+  const result = {
+    ...base,
     score,
     compositeScore: score,
-    heatScore: score,
     fundamentalScore,
     technicalScore,
     momentumScore,
     relativeStrengthScore,
     asymmetryScore,
     triggerScore,
-    primaryTheme: themeFor(normalized.symbol),
-    theme: themeFor(normalized.symbol),
     recommendation: {
       ...recommendation,
       label: action,
@@ -561,321 +393,50 @@ function scoreQuote(normalized = {}) {
       momentumScore,
     },
     action,
-    technicalSnapshot,
-    fundamentalSnapshot,
+    stage: getStage(base),
+    technicalSnapshot: buildTechnicalSnapshot(base),
+    fundamentalSnapshot: buildFundamentalSnapshot(base),
   };
-}
 
-function enrichOutput(stock = {}) {
-  return {
-    ...stock,
-    primaryTheme: themeFor(stock.symbol),
-    theme: themeFor(stock.symbol),
-    convictionGrade: getConvictionGrade(stock),
-    catalyst: getCatalyst(stock),
-    decisionClock: getDecisionClock(stock),
-  };
-}
-
-function rankScore(stock = {}) {
-  const action = actionRank(stock);
-  const convictionBias =
-    stock.convictionGrade === "A+" ? 5 :
-    stock.convictionGrade === "A" ? 4 :
-    stock.convictionGrade === "A-" ? 3 :
-    stock.convictionGrade === "B+" ? 2 :
-    stock.convictionGrade === "B" ? 1 : 0;
-
-  return (
-    action * 1000 +
-    safeScore(stock.score) * 2.2 +
-    safeScore(stock.relativeStrengthScore) * 1.5 +
-    safeScore(stock.technicalScore) * 1.25 +
-    safeScore(stock.triggerScore) +
-    safeScore(stock.momentumScore) +
-    convictionBias
-  );
-}
-
-function sortTopIdeas(a, b) {
-  const actionDiff = actionRank(b) - actionRank(a);
-  if (actionDiff !== 0) return actionDiff;
-
-  const rankDiff = rankScore(b) - rankScore(a);
-  if (rankDiff !== 0) return rankDiff;
-
-  return safeScore(b.score) - safeScore(a.score);
-}
-
-function shareClassFamily(symbol) {
-  const clean = normalizeSymbol(symbol);
-  if (clean === "GOOG" || clean === "GOOGL") return "ALPHABET";
-  return clean;
-}
-
-function dedupeShareClasses(rows = []) {
-  const preferredSymbol = { ALPHABET: "GOOGL" };
-  const bestByFamily = new Map();
-
-  for (const row of rows) {
-    const symbol = normalizeSymbol(row?.symbol);
-    if (!symbol) continue;
-
-    const family = shareClassFamily(symbol);
-    const current = bestByFamily.get(family);
-
-    if (!current) {
-      bestByFamily.set(family, row);
-      continue;
-    }
-
-    const preferred = preferredSymbol[family];
-    if (preferred) {
-      if (symbol === preferred && normalizeSymbol(current.symbol) !== preferred) {
-        bestByFamily.set(family, row);
-        continue;
-      }
-      if (normalizeSymbol(current.symbol) === preferred && symbol !== preferred) {
-        continue;
-      }
-    }
-
-    if (sortTopIdeas(row, current) < 0) bestByFamily.set(family, row);
-  }
-
-  return Array.from(bestByFamily.values());
-}
-
-function themeKeyForName(themeName) {
-  const match = Object.entries(THEME_CONFIG).find(([, config]) => config.name === themeName);
-  return match?.[0] || "opportunities";
-}
-
-function convictionToScore(grade) {
-  if (grade === "A+") return 100;
-  if (grade === "A") return 90;
-  if (grade === "A-") return 82;
-  if (grade === "B+") return 74;
-  if (grade === "B") return 64;
-  return 50;
-}
-
-function buildThemeLeadership(rows = []) {
-  const byTheme = new Map();
-
-  for (const row of rows) {
-    const theme = row.primaryTheme || "Other";
-    if (!byTheme.has(theme)) {
-      byTheme.set(theme, {
-        theme,
-        key: themeKeyForName(theme),
-        total: 0,
-        buy: 0,
-        starter: 0,
-        watch: 0,
-        avoid: 0,
-        bestSymbol: row.symbol,
-        bestAction: getAction(row),
-        bestScore: -1,
-        convictionTotal: 0,
-        relativeStrengthTotal: 0,
-        technicalTotal: 0,
-        momentumTotal: 0,
-        dayChangeTotal: 0,
-        dayChangeCount: 0,
-      });
-    }
-
-    const bucket = byTheme.get(theme);
-    const action = getAction(row);
-    const score = safeScore(row.score);
-
-    bucket.total += 1;
-    if (action === "Buy") bucket.buy += 1;
-    else if (action === "Starter") bucket.starter += 1;
-    else if (action === "Watch") bucket.watch += 1;
-    else bucket.avoid += 1;
-
-    bucket.convictionTotal += convictionToScore(row.convictionGrade);
-    bucket.relativeStrengthTotal += safeScore(row.relativeStrengthScore);
-    bucket.technicalTotal += safeScore(row.technicalScore);
-    bucket.momentumTotal += safeScore(row.momentumScore);
-
-    const dayChange = toNumber(row.dayChangePct ?? row.changesPercentage, null);
-    if (dayChange !== null) {
-      bucket.dayChangeTotal += dayChange;
-      bucket.dayChangeCount += 1;
-    }
-
-    const candidateRank = rankScore(row);
-    if (candidateRank > bucket.bestScore) {
-      bucket.bestScore = candidateRank;
-      bucket.bestSymbol = row.symbol;
-      bucket.bestAction = action;
-    }
-  }
-
-  return Array.from(byTheme.values())
-    .map((theme) => {
-      const total = Math.max(theme.total, 1);
-      const avgConviction = theme.convictionTotal / total;
-      const actionableBreadth = ((theme.buy + theme.starter) / total) * 100;
-      const avgRelativeStrength = theme.relativeStrengthTotal / total;
-      const avgTechnical = theme.technicalTotal / total;
-      const avgMomentum = theme.momentumTotal / total;
-      const avgDayChange = theme.dayChangeCount > 0 ? theme.dayChangeTotal / theme.dayChangeCount : 0;
-
-      const healthScore = clampScore(
-        avgConviction * 0.30 +
-          actionableBreadth * 0.25 +
-          avgRelativeStrength * 0.20 +
-          avgTechnical * 0.15 +
-          avgMomentum * 0.10
-      );
-
-      // Stateless Vercel functions do not have yesterday's theme score available.
-      // This is a same-day rotation proxy: positive when the theme's current momentum,
-      // breadth, and day change are improving versus a neutral baseline.
-      const trendDelta = Math.max(
-        -9,
-        Math.min(
-          9,
-          Math.round((avgMomentum - 50) * 0.08 + (actionableBreadth - 25) * 0.04 + avgDayChange * 1.2)
-        )
-      );
-
-      const trendDirection = trendDelta > 1 ? "up" : trendDelta < -1 ? "down" : "flat";
-      const trendArrow = trendDirection === "up" ? "▲" : trendDirection === "down" ? "▼" : "►";
-      const healthLabel = healthScore >= 75 ? "Strong" : healthScore >= 60 ? "Improving" : healthScore >= 45 ? "Neutral" : healthScore >= 30 ? "Weakening" : "Weak";
-
-      return {
-        ...theme,
-        healthScore,
-        averageStrength: healthScore,
-        healthLabel,
-        trendDelta,
-        trendDirection,
-        trendArrow,
-        avgConviction: Math.round(avgConviction),
-        actionableBreadth: Math.round(actionableBreadth),
-        avgRelativeStrength: Math.round(avgRelativeStrength),
-        avgTechnical: Math.round(avgTechnical),
-        avgMomentum: Math.round(avgMomentum),
-      };
-    })
-    .sort((a, b) => b.healthScore - a.healthScore)
-    .slice(0, 6);
-}
-
-function bucketRows(rows = []) {
-  const deDuplicated = dedupeShareClasses(rows.map(enrichOutput));
-  const sorted = [...deDuplicated].sort(sortTopIdeas);
-  const byAction = (label) => sorted.filter((stock) => getAction(stock) === label).sort(sortTopIdeas);
-
-  const buys = byAction("Buy");
-  const starters = byAction("Starter");
-  const watches = byAction("Watch");
-  const avoids = byAction("Avoid");
-
-  const selected = [
-    ...buys.slice(0, 6),
-    ...starters.slice(0, 10),
-    ...watches.slice(0, 14),
-    ...avoids.slice(0, 8),
-  ];
-
-  const seen = new Set();
-  const unique = [];
-
-  for (const stock of selected) {
-    const symbol = normalizeSymbol(stock.symbol);
-    if (!symbol || seen.has(symbol)) continue;
-    seen.add(symbol);
-    unique.push(stock);
-  }
-
-  return unique;
+  return enrichStock(result);
 }
 
 export default async function handler(req, res) {
   try {
     res.setHeader("Cache-Control", "no-store, max-age=0");
 
-    const themeKey = String(req.query.theme || "opportunities").toLowerCase();
-    const selectedTheme = getThemeConfig(themeKey);
-    const symbols = uniqueSymbols(selectedTheme.symbols);
+    const symbol = String(req.query.symbol || "").trim().toUpperCase();
 
-    if (!symbols.length) {
-      return res.status(502).json({
-        error: "Quote refresh returned no usable stocks.",
-        detail: "The selected theme has no symbols configured.",
-      });
+    if (!symbol) {
+      return res.status(400).json({ error: "Missing symbol." });
     }
 
-    const [quotes, spyQuotes, qqqQuotes] = await Promise.all([
-      fetchFmpQuotes(symbols),
-      fetchFmpQuotes(["SPY"]).catch(() => []),
-      fetchFmpQuotes(["QQQ"]).catch(() => []),
+    const [quote, spyQuote, qqqQuote] = await Promise.all([
+      fetchQuote(symbol),
+      fetchQuote("SPY").catch(() => null),
+      fetchQuote("QQQ").catch(() => null),
     ]);
 
-    const spyQuote = spyQuotes?.[0] ? normalizeQuote(spyQuotes[0]) : null;
-    const qqqQuote = qqqQuotes?.[0] ? normalizeQuote(qqqQuotes[0]) : null;
+    const base = attachMarketRelativeData(quote, spyQuote, qqqQuote);
+    const result = buildScoredResult(base);
 
-    const rows = quotes
-      .map(normalizeQuote)
-      .filter((row) => row.symbol && row.price != null)
-      .map((row) => ({
-        ...row,
-        spyDayChangePct: spyQuote?.dayChangePct ?? null,
-        qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
-      }))
-      .map(scoreQuote)
-      .map(enrichOutput);
-
-    if (!rows.length) {
-      return res.status(502).json({
-        error: "Quote refresh returned no usable stocks.",
-        detail: "FMP returned no usable quotes for the selected theme.",
-      });
+    if (!result?.symbol || result.price === null || result.price === undefined) {
+      throw new Error(`No usable quote data returned for ${symbol}.`);
     }
 
-    const bucketed = bucketRows(rows);
-    const counts = bucketed.reduce(
-      (acc, row) => {
-        const action = getAction(row);
-        acc.total += 1;
-        if (action === "Buy") acc.buy += 1;
-        else if (action === "Starter") acc.starter += 1;
-        else if (action === "Watch") acc.watch += 1;
-        else acc.avoid += 1;
-        return acc;
-      },
-      { total: 0, buy: 0, starter: 0, watch: 0, avoid: 0 }
-    );
-
     return res.status(200).json({
-      stocks: bucketed,
-      selectedTheme: {
-        key: themeKey,
-        name: selectedTheme.name,
-        description: selectedTheme.description,
-      },
-      themeLeadership: buildThemeLeadership(rows),
+      stock: result,
       meta: {
-        mode: "investment_operating_system_v3",
-        source: "FMP",
-        universeCount: symbols.length,
-        returnedCount: bucketed.length,
-        rawCount: rows.length,
+        mode: "single_symbol_shared_model",
         spyChange: spyQuote?.dayChangePct ?? null,
         qqqChange: qqqQuote?.dayChangePct ?? null,
-        ...counts,
       },
     });
   } catch (err) {
-    console.error("api/top5 error:", err);
+    console.error("api/index error:", err);
+
     return res.status(500).json({
-      error: "Failed to load trade screen.",
+      error: "Failed to analyze symbol.",
       detail: err.message || "Unknown error.",
     });
   }
