@@ -23,6 +23,8 @@ const THEME_OPTIONS = [
   { key: "platform_biotech", name: "Platform Biotech" },
 ];
 
+const THEME_RESEARCH_OPTIONS = THEME_OPTIONS.filter((theme) => theme.key !== "broad");
+
 function money(value) {
   const n = Number(value);
 
@@ -1047,6 +1049,7 @@ export default function Home() {
   const [topError, setTopError] = useState("");
   const [refreshWarning, setRefreshWarning] = useState("");
   const [selectedTheme, setSelectedTheme] = useState("broad");
+  const [activeView, setActiveView] = useState("opportunities");
   const [themeMeta, setThemeMeta] = useState(null);
   const [screenerMeta, setScreenerMeta] = useState(null);
 
@@ -1126,6 +1129,21 @@ export default function Home() {
   function changeTheme(nextTheme) {
     setSelectedTheme(nextTheme);
     loadTopIdeas(nextTheme);
+  }
+
+  function switchView(nextView) {
+    setActiveView(nextView);
+
+    if (nextView === "opportunities" && selectedTheme !== "broad") {
+      setSelectedTheme("broad");
+      loadTopIdeas("broad");
+    }
+
+    if (nextView === "themes" && selectedTheme === "broad") {
+      const firstTheme = THEME_RESEARCH_OPTIONS[0]?.key || "ai_infra";
+      setSelectedTheme(firstTheme);
+      loadTopIdeas(firstTheme);
+    }
   }
 
   function loadPortfolio() {
@@ -1425,54 +1443,98 @@ export default function Home() {
     <main className="page">
       <header className="header">
         <div>
-          <h1>🧠 Trade Action Screener</h1>
-          <p>Actionable setups ranked by bucket.</p>
+          <h1>🧠 Investment Operating System</h1>
+          <p>Opportunities, portfolio decisions, thesis research, and single-symbol checks.</p>
         </div>
 
         <button
-          onClick={() => loadTopIdeas(selectedTheme)}
+          onClick={() => loadTopIdeas(activeView === "themes" ? selectedTheme : "broad")}
           className="button secondary"
         >
-          {loadingTop ? "Refreshing..." : "Reload Screener"}
+          {loadingTop ? "Refreshing..." : "Reload"}
         </button>
       </header>
 
-      <section className="card themeCard">
-        <div className="sectionHeader">
-          <div>
-            <h2>Theme Focus</h2>
+      <nav className="navTabs" aria-label="Screener views">
+        <button
+          className={activeView === "opportunities" ? "active" : ""}
+          onClick={() => switchView("opportunities")}
+        >
+          Opportunities
+        </button>
+        <button
+          className={activeView === "portfolio" ? "active" : ""}
+          onClick={() => switchView("portfolio")}
+        >
+          My Portfolio
+        </button>
+        <button
+          className={activeView === "themes" ? "active" : ""}
+          onClick={() => switchView("themes")}
+        >
+          Themes
+        </button>
+        <button
+          className={activeView === "single" ? "active" : ""}
+          onClick={() => switchView("single")}
+        >
+          Single Symbol
+        </button>
+      </nav>
+
+      {activeView === "opportunities" && (
+        <section className="card themeCard">
+          <div className="themeSummary">
+            <div>
+              <span>Current Mode</span>
+              <strong>Best Opportunities</strong>
+            </div>
+            <div>
+              <span>Purpose</span>
+              <p>Fresh capital screen. No theme bias. Buy = normal size, Starter = small tactical position, Watch = wait.</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {activeView === "themes" && (
+        <section className="card themeCard">
+          <div className="sectionHeader">
+            <div>
+              <h2>Theme Research</h2>
+              <p className="muted">Use this only when you want to research a specific thesis.</p>
+            </div>
+
+            <select
+              value={selectedTheme === "broad" ? THEME_RESEARCH_OPTIONS[0]?.key : selectedTheme}
+              onChange={(e) => changeTheme(e.target.value)}
+              className="themeSelect"
+            >
+              {THEME_RESEARCH_OPTIONS.map((theme) => (
+                <option key={theme.key} value={theme.key}>
+                  {theme.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <select
-            value={selectedTheme}
-            onChange={(e) => changeTheme(e.target.value)}
-            className="themeSelect"
-          >
-            {THEME_OPTIONS.map((theme) => (
-              <option key={theme.key} value={theme.key}>
-                {theme.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="themeSummary">
-          <div>
-            <span>Current Mode</span>
-            <strong>{themeMeta?.name || selectedThemeName}</strong>
+          <div className="themeSummary">
+            <div>
+              <span>Current Thesis</span>
+              <strong>{themeMeta?.name || selectedThemeName}</strong>
+            </div>
+            <div>
+              <span>Discipline</span>
+              <p>The theme picks the research universe only. The scoring engine is unchanged.</p>
+            </div>
           </div>
-
-          <div>
-            <span>Discipline</span>
-            <p>
-              Buy = normal size. Starter = small tactical position. Watch = wait.
-            </p>
-          </div>
-
-        </div>
-      </section>
+        </section>
+      )}
 
       {refreshWarning && <p className="warning">{refreshWarning}</p>}
+
+      {(activeView === "opportunities" || activeView === "themes") && (
+        <>
 
       <section className="card actionCard">
         <div className="sectionTitle compactSectionTitle">
@@ -1795,6 +1857,10 @@ export default function Home() {
         </section>
       )}
 
+        </>
+      )}
+
+      {activeView === "single" && (
       <section className="card">
         <h2>Single Symbol Action Check</h2>
         <p className="muted">
@@ -1871,9 +1937,12 @@ export default function Home() {
           </div>
         )}
       </section>
+      )}
 
+      {activeView === "portfolio" && (
+        <>
       <section className="card">
-        <h2>Portfolio Screener</h2>
+        <h2>My Portfolio</h2>
         <p className="muted">
           Uses ownership logic: Hold / Add, Hold, Trim, Exit / Avoid, or Cash.
         </p>
@@ -2038,6 +2107,8 @@ export default function Home() {
           </div>
         </section>
       )}
+        </>
+      )}
 
       <style jsx>{`
         .page {
@@ -2054,6 +2125,35 @@ export default function Home() {
           align-items: flex-start;
           gap: 18px;
           margin-bottom: 22px;
+        }
+
+
+        .navTabs {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
+          margin: -6px 0 18px;
+        }
+
+        .navTabs button {
+          border: 1px solid #d8e1ef;
+          background: #ffffff;
+          color: #334155;
+          border-radius: 14px;
+          padding: 14px 12px;
+          font-weight: 900;
+          cursor: pointer;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .navTabs button.active {
+          background: #0f172a;
+          color: #ffffff;
+          border-color: #0f172a;
+        }
+
+        .navTabs button:hover {
+          border-color: #94a3b8;
         }
 
         h1 {
