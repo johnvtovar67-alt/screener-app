@@ -454,7 +454,7 @@ function OpportunityCard({ stock }) {
       <p className="reasonBox">{getActionSummary(stock)}</p>
 
       <div className="miniMeta">
-        <span>Decision Clock</span>
+        <span>Timing</span>
         <strong>{getDecisionClock(stock)}</strong>
       </div>
     </article>
@@ -853,30 +853,40 @@ export default function Home() {
       <section className="leadershipRibbon">
         <div className="leadershipHeader">
           <span>Institutional Rotation</span>
-          <strong>Theme Health + Flow</strong>
-          <p>Health blends conviction, actionable breadth, relative strength, technical structure, and momentum.</p>
+          <strong>Theme Health</strong>
+          <p>0–100 score. Higher means stronger institutional leadership, broader participation, and more actionable setups.</p>
         </div>
 
         <div className="leadershipItems">
           {themeLeadership.slice(0, 5).map((theme) => {
-            const score = Number(theme.healthScore ?? theme.averageStrength ?? 0);
+            const score = clampScore(theme.healthScore ?? theme.averageStrength ?? 0);
             const delta = Number(theme.trendDelta ?? 0);
-            const arrow = theme.trendArrow || (delta > 1 ? "▲" : delta < -1 ? "▼" : "►");
-            const deltaText = delta > 0 ? `+${delta}` : `${delta}`;
+            const arrow = theme.trendArrow || (delta > 1 ? "▲" : delta < -1 ? "▼" : "—");
+            const deltaText = delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : "Flat";
             const canOpen = theme.key && theme.key !== "opportunities" && theme.key !== "broad";
 
             return (
               <button
                 key={theme.theme}
                 type="button"
-                className={`leadershipPill ${themeTone(score)}`}
+                className={`rotationTile ${themeTone(score)}`}
                 onClick={() => openThemeFromRibbon(theme)}
                 disabled={!canOpen}
                 title={canOpen ? `Open ${theme.theme}` : theme.theme}
               >
-                <span className="rotationTheme">{theme.theme}</span>
-                <span className="rotationScore">{score}</span>
-                <span className={`rotationTrend ${theme.trendDirection || "flat"}`}>{arrow} {deltaText}</span>
+                <div className="rotationTileTop">
+                  <span className="rotationTheme">{theme.theme}</span>
+                  <strong className="rotationScore">{score}</strong>
+                </div>
+
+                <div className="rotationBarTrack" aria-label={`${theme.theme} health score ${score} out of 100`}>
+                  <span className="rotationBarFill" style={{ width: `${score}%` }} />
+                </div>
+
+                <div className="rotationTileBottom">
+                  <span className="rotationScale">Health / 100</span>
+                  <span className={`rotationTrend ${theme.trendDirection || "flat"}`}>{arrow} {deltaText}</span>
+                </div>
               </button>
             );
           })}
@@ -1704,6 +1714,10 @@ export default function Home() {
           .leadershipItems {
             justify-content: flex-start;
           }
+
+          .rotationTile {
+            width: 100%;
+          }
         }
 
         /* Final UI polish: style child components globally so cards do not render as raw text. */
@@ -1854,110 +1868,101 @@ export default function Home() {
 
         .leadershipItems {
           display: flex;
-          gap: 8px;
+          gap: 10px;
           flex-wrap: wrap;
           justify-content: flex-end;
         }
 
-        .leadershipPill {
-          background: rgba(255,255,255,0.10);
-          color: white !important;
-          border: 1px solid rgba(255,255,255,0.18);
-          border-radius: 999px;
-          padding: 8px 10px;
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .leadershipPill strong {
-          display: inline;
-          margin-left: 6px;
-          color: #fbbf24;
-        }
-
-
         .leadershipHeader {
-          min-width: 240px;
+          min-width: 285px;
         }
 
         .leadershipHeader p {
           margin: 5px 0 0;
-          max-width: 380px;
+          max-width: 430px;
           color: #94a3b8;
           font-size: 12px;
           line-height: 1.35;
         }
 
-        .leadershipPill {
+        .rotationTile {
           display: grid;
-          grid-template-columns: minmax(118px, 1fr) auto auto;
-          align-items: center;
           gap: 8px;
+          width: 190px;
+          min-height: 86px;
+          padding: 12px;
+          border: 1px solid rgba(255,255,255,0.15);
+          border-radius: 16px;
+          background: rgba(15,23,42,0.76);
           text-align: left;
           cursor: pointer;
-          min-height: 40px;
+          color: white;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
           transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
         }
 
-        .leadershipPill:hover:not(:disabled) {
+        .rotationTile:hover:not(:disabled) {
           transform: translateY(-1px);
-          border-color: rgba(255,255,255,0.35);
-          background: rgba(255,255,255,0.16);
+          border-color: rgba(255,255,255,0.34);
+          background: rgba(30,41,59,0.88);
         }
 
-        .leadershipPill:disabled {
+        .rotationTile:disabled {
           cursor: default;
-          opacity: 0.9;
+          opacity: 0.95;
         }
 
-        .leadershipPill.strong {
-          background: rgba(34,197,94,0.18);
-          border-color: rgba(34,197,94,0.38);
-        }
-
-        .leadershipPill.improving {
-          background: rgba(132,204,22,0.15);
-          border-color: rgba(132,204,22,0.34);
-        }
-
-        .leadershipPill.neutral {
-          background: rgba(250,204,21,0.14);
-          border-color: rgba(250,204,21,0.32);
-        }
-
-        .leadershipPill.weakening {
-          background: rgba(249,115,22,0.14);
-          border-color: rgba(249,115,22,0.32);
-        }
-
-        .leadershipPill.weak {
-          background: rgba(239,68,68,0.14);
-          border-color: rgba(239,68,68,0.32);
+        .rotationTileTop,
+        .rotationTileBottom {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
         }
 
         .rotationTheme {
-          color: white !important;
+          color: #f8fafc !important;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+          font-size: 12px !important;
+          font-weight: 950 !important;
+          letter-spacing: 0 !important;
         }
 
         .rotationScore {
-          display: inline-flex !important;
-          align-items: center;
-          justify-content: center;
-          min-width: 34px;
-          color: #f8fafc !important;
-          background: rgba(255,255,255,0.12);
-          border-radius: 999px;
-          padding: 4px 7px;
-          font-size: 12px !important;
+          color: #ffffff !important;
+          font-size: 22px !important;
+          line-height: 1 !important;
           font-weight: 950 !important;
+          letter-spacing: -0.04em;
+        }
+
+        .rotationBarTrack {
+          height: 7px;
+          width: 100%;
+          overflow: hidden;
+          border-radius: 999px;
+          background: rgba(148,163,184,0.24);
+        }
+
+        .rotationBarFill {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #ef4444 0%, #f59e0b 42%, #84cc16 68%, #22c55e 100%);
+        }
+
+        .rotationScale {
+          color: #94a3b8 !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          letter-spacing: 0.03em !important;
+          text-transform: uppercase;
         }
 
         .rotationTrend {
-          color: #cbd5e1 !important;
-          font-size: 12px !important;
+          font-size: 11px !important;
           font-weight: 950 !important;
           white-space: nowrap;
         }
