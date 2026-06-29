@@ -831,22 +831,55 @@ export default function Home() {
     }
   }
 
+  function themeTone(score) {
+    const n = Number(score);
+    if (n >= 75) return "strong";
+    if (n >= 60) return "improving";
+    if (n >= 45) return "neutral";
+    if (n >= 30) return "weakening";
+    return "weak";
+  }
+
+  async function openThemeFromRibbon(theme) {
+    if (!theme?.key || theme.key === "opportunities" || theme.key === "broad") return;
+    setActiveTab("themes");
+    await changeTheme(theme.key);
+  }
+
   function renderLeadershipRibbon() {
     if (!themeLeadership.length) return null;
 
     return (
       <section className="leadershipRibbon">
-        <div>
-          <span>Today's Leadership</span>
-          <strong>Theme Rotation Snapshot</strong>
+        <div className="leadershipHeader">
+          <span>Institutional Rotation</span>
+          <strong>Theme Health + Flow</strong>
+          <p>Health blends conviction, actionable breadth, relative strength, technical structure, and momentum.</p>
         </div>
 
         <div className="leadershipItems">
-          {themeLeadership.slice(0, 5).map((theme) => (
-            <span key={theme.theme} className="leadershipPill">
-              {theme.theme} <strong>{theme.averageStrength}</strong>
-            </span>
-          ))}
+          {themeLeadership.slice(0, 5).map((theme) => {
+            const score = Number(theme.healthScore ?? theme.averageStrength ?? 0);
+            const delta = Number(theme.trendDelta ?? 0);
+            const arrow = theme.trendArrow || (delta > 1 ? "▲" : delta < -1 ? "▼" : "►");
+            const deltaText = delta > 0 ? `+${delta}` : `${delta}`;
+            const canOpen = theme.key && theme.key !== "opportunities" && theme.key !== "broad";
+
+            return (
+              <button
+                key={theme.theme}
+                type="button"
+                className={`leadershipPill ${themeTone(score)}`}
+                onClick={() => openThemeFromRibbon(theme)}
+                disabled={!canOpen}
+                title={canOpen ? `Open ${theme.theme}` : theme.theme}
+              >
+                <span className="rotationTheme">{theme.theme}</span>
+                <span className="rotationScore">{score}</span>
+                <span className={`rotationTrend ${theme.trendDirection || "flat"}`}>{arrow} {deltaText}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
     );
@@ -1841,6 +1874,97 @@ export default function Home() {
           margin-left: 6px;
           color: #fbbf24;
         }
+
+
+        .leadershipHeader {
+          min-width: 240px;
+        }
+
+        .leadershipHeader p {
+          margin: 5px 0 0;
+          max-width: 380px;
+          color: #94a3b8;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .leadershipPill {
+          display: grid;
+          grid-template-columns: minmax(118px, 1fr) auto auto;
+          align-items: center;
+          gap: 8px;
+          text-align: left;
+          cursor: pointer;
+          min-height: 40px;
+          transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .leadershipPill:hover:not(:disabled) {
+          transform: translateY(-1px);
+          border-color: rgba(255,255,255,0.35);
+          background: rgba(255,255,255,0.16);
+        }
+
+        .leadershipPill:disabled {
+          cursor: default;
+          opacity: 0.9;
+        }
+
+        .leadershipPill.strong {
+          background: rgba(34,197,94,0.18);
+          border-color: rgba(34,197,94,0.38);
+        }
+
+        .leadershipPill.improving {
+          background: rgba(132,204,22,0.15);
+          border-color: rgba(132,204,22,0.34);
+        }
+
+        .leadershipPill.neutral {
+          background: rgba(250,204,21,0.14);
+          border-color: rgba(250,204,21,0.32);
+        }
+
+        .leadershipPill.weakening {
+          background: rgba(249,115,22,0.14);
+          border-color: rgba(249,115,22,0.32);
+        }
+
+        .leadershipPill.weak {
+          background: rgba(239,68,68,0.14);
+          border-color: rgba(239,68,68,0.32);
+        }
+
+        .rotationTheme {
+          color: white !important;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .rotationScore {
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: center;
+          min-width: 34px;
+          color: #f8fafc !important;
+          background: rgba(255,255,255,0.12);
+          border-radius: 999px;
+          padding: 4px 7px;
+          font-size: 12px !important;
+          font-weight: 950 !important;
+        }
+
+        .rotationTrend {
+          color: #cbd5e1 !important;
+          font-size: 12px !important;
+          font-weight: 950 !important;
+          white-space: nowrap;
+        }
+
+        .rotationTrend.up { color: #86efac !important; }
+        .rotationTrend.down { color: #fca5a5 !important; }
+        .rotationTrend.flat { color: #fde68a !important; }
 
       `}</style>
     </main>
