@@ -646,6 +646,20 @@ function dedupeShareClasses(rows = []) {
   return Array.from(bestByFamily.values());
 }
 
+function themeKeyForName(themeName) {
+  const match = Object.entries(THEME_CONFIG).find(([, config]) => config.name === themeName);
+  return match?.[0] || "opportunities";
+}
+
+function convictionToScore(grade) {
+  if (grade === "A+") return 100;
+  if (grade === "A") return 90;
+  if (grade === "A-") return 82;
+  if (grade === "B+") return 74;
+  if (grade === "B") return 64;
+  return 50;
+}
+
 function buildThemeLeadership(rows = []) {
   const byTheme = new Map();
 
@@ -654,6 +668,7 @@ function buildThemeLeadership(rows = []) {
     if (!byTheme.has(theme)) {
       byTheme.set(theme, {
         theme,
+        key: themeKeyForName(theme),
         total: 0,
         buy: 0,
         starter: 0,
@@ -661,12 +676,19 @@ function buildThemeLeadership(rows = []) {
         avoid: 0,
         bestSymbol: row.symbol,
         bestAction: getAction(row),
-        strengthScore: 0,
+        bestScore: -1,
+        convictionTotal: 0,
+        relativeStrengthTotal: 0,
+        technicalTotal: 0,
+        momentumTotal: 0,
+        dayChangeTotal: 0,
+        dayChangeCount: 0,
       });
     }
 
     const bucket = byTheme.get(theme);
     const action = getAction(row);
+    const score = safeScore(row.score);
 
     bucket.total += 1;
     if (action === "Buy") bucket.buy += 1;
@@ -674,20 +696,74 @@ function buildThemeLeadership(rows = []) {
     else if (action === "Watch") bucket.watch += 1;
     else bucket.avoid += 1;
 
-    bucket.strengthScore += actionRank(action) * 20 + safeScore(row.score) * 0.2 + safeScore(row.relativeStrengthScore) * 0.2;
+    bucket.convictionTotal += convictionToScore(row.convictionGrade);
+    bucket.relativeStrengthTotal += safeScore(row.relativeStrengthScore);
+    bucket.technicalTotal += safeScore(row.technicalScore);
+    bucket.momentumTotal += safeScore(row.momentumScore);
 
-    if (sortTopIdeas(row, { ...row, symbol: bucket.bestSymbol, score: -1 }) < 0) {
+    const dayChange = toNumber(row.dayChangePct ?? row.changesPercentage, null);
+    if (dayChange !== null) {
+      bucket.dayChangeTotal += dayChange;
+      bucket.dayChangeCount += 1;
+    }
+
+    const candidateRank = rankScore(row);
+    if (candidateRank > bucket.bestScore) {
+      bucket.bestScore = candidateRank;
       bucket.bestSymbol = row.symbol;
       bucket.bestAction = action;
     }
   }
 
   return Array.from(byTheme.values())
-    .map((theme) => ({
-      ...theme,
-      averageStrength: theme.total > 0 ? Math.round(theme.strengthScore / theme.total) : 0,
-    }))
-    .sort((a, b) => b.averageStrength - a.averageStrength)
+    .map((theme) => {
+      const total = Math.max(theme.total, 1);
+      const avgConviction = theme.convictionTotal / total;
+      const actionableBreadth = ((theme.buy + theme.starter) / total) * 100;
+      const avgRelativeStrength = theme.relativeStrengthTotal / total;
+      const avgTechnical = theme.technicalTotal / total;
+      const avgMomentum = theme.momentumTotal / total;
+      const avgDayChange = theme.dayChangeCount > 0 ? theme.dayChangeTotal / theme.dayChangeCount : 0;
+
+      const healthScore = clampScore(
+        avgConviction * 0.30 +
+          actionableBreadth * 0.25 +
+          avgRelativeStrength * 0.20 +
+          avgTechnical * 0.15 +
+          avgMomentum * 0.10
+      );
+
+      // Stateless Vercel functions do not have yesterday's theme score available.
+      // This is a same-day rotation proxy: positive when the theme's current momentum,
+      // breadth, and day change are improving versus a neutral baseline.
+      const trendDelta = Math.max(
+        -9,
+        Math.min(
+          9,
+          Math.round((avgMomentum - 50) * 0.08 + (actionableBreadth - 25) * 0.04 + avgDayChange * 1.2)
+        )
+      );
+
+      const trendDirection = trendDelta > 1 ? "up" : trendDelta < -1 ? "down" : "flat";
+      const trendArrow = trendDirection === "up" ? "▲" : trendDirection === "down" ? "▼" : "►";
+      const healthLabel = healthScore >= 75 ? "Strong" : healthScore >= 60 ? "Improving" : healthScore >= 45 ? "Neutral" : healthScore >= 30 ? "Weakening" : "Weak";
+
+      return {
+        ...theme,
+        healthScore,
+        averageStrength: healthScore,
+        healthLabel,
+        trendDelta,
+        trendDirection,
+        trendArrow,
+        avgConviction: Math.round(avgConviction),
+        actionableBreadth: Math.round(actionableBreadth),
+        avgRelativeStrength: Math.round(avgRelativeStrength),
+        avgTechnical: Math.round(avgTechnical),
+        avgMomentum: Math.round(avgMomentum),
+      };
+    })
+    .sort((a, b) => b.healthScore - a.healthScore)
     .slice(0, 6);
 }
 
