@@ -6,12 +6,21 @@ const CASH_SYMBOLS = ["CASH", "SWVXX", "VMFXX", "SPAXX", "FDRXX", "MMF"];
 
 const THEME_OPTIONS = [
   { key: "broad", name: "Broad Market" },
-  { key: "btc", name: "BTC / Digital Assets" },
-  { key: "ai_power", name: "AI Power & Energy" },
-  { key: "cooling_water", name: "Cooling & Water" },
-  { key: "nuclear", name: "Nuclear / Baseload" },
-  { key: "quantum", name: "Quantum Computing" },
   { key: "ai_infra", name: "AI Infrastructure" },
+  { key: "ai_networking", name: "AI Networking" },
+  { key: "cybersecurity", name: "Cybersecurity" },
+  { key: "btc", name: "BTC / Digital Assets" },
+  { key: "ai_power", name: "Power & Electrification" },
+  { key: "cooling_water", name: "Cooling & Water" },
+  { key: "digital_infra", name: "Digital Infrastructure" },
+  { key: "nuclear", name: "Nuclear / Baseload" },
+  { key: "robotics", name: "Robotics & Automation" },
+  { key: "industrial_software", name: "Industrial Software" },
+  { key: "defense_space", name: "Defense & Space" },
+  { key: "space", name: "Space" },
+  { key: "autonomy_drones", name: "Autonomy & Drones" },
+  { key: "quantum", name: "Quantum Computing" },
+  { key: "platform_biotech", name: "Platform Biotech" },
 ];
 
 function money(value) {
@@ -115,36 +124,12 @@ function getPrice(stock) {
 }
 
 function getChangePct(stock) {
-  const price = getPrice(stock);
-  const change = Number(
-    stock?.change ??
-      stock?.dayChange ??
-      stock?.priceChange ??
-      stock?.regularMarketChange ??
-      stock?.quote?.change
-  );
-
-  // Prefer dollar-change math. It is the best defense against quote-provider
-  // percentage fields that arrive as mixed units or stale values.
-  if (Number.isFinite(price) && price > 0 && Number.isFinite(change)) {
-    const previousClose = price - change;
-    if (previousClose > 0) {
-      const derivedPct = (change / previousClose) * 100;
-      if (Number.isFinite(derivedPct) && Math.abs(derivedPct) <= 40) {
-        return derivedPct;
-      }
-    }
-  }
-
-  const pct = Number(
+  return Number(
     stock?.dayChangePct ??
       stock?.changesPercentage ??
       stock?.changePercent ??
       stock?.percentChange
   );
-
-  if (!Number.isFinite(pct)) return NaN;
-  return Math.abs(pct) <= 40 ? pct : NaN;
 }
 
 function getNetChange(stock) {
