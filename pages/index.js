@@ -1168,7 +1168,7 @@ export default function Home() {
         </section>
       )}
 
-      <style jsx>{`
+      <style jsx global>{`
         .page {
           min-height: 100vh;
           background: #f8fafc;
@@ -1672,6 +1672,176 @@ export default function Home() {
             justify-content: flex-start;
           }
         }
+
+        /* Final UI polish: style child components globally so cards do not render as raw text. */
+        .actionCard { overflow: hidden; }
+
+        .ideaGrid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 12px;
+        }
+
+        .ideaCard {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          border: 1px solid #dbe5f1;
+          border-radius: 16px;
+          padding: 14px;
+          background: #ffffff;
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+          min-height: 205px;
+        }
+
+        .ideaCard.green {
+          border-color: #bbf7d0;
+          background: linear-gradient(180deg, #ffffff 0%, #f7fffa 100%);
+        }
+
+        .ideaCard.orange {
+          border-color: #fed7aa;
+          background: linear-gradient(180deg, #ffffff 0%, #fff8ed 100%);
+        }
+
+        .ideaTop {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+          border-bottom: 1px solid #e2e8f0;
+          padding-bottom: 9px;
+        }
+
+        .ideaTop h3 {
+          font-size: 22px;
+          line-height: 1;
+          letter-spacing: -0.04em;
+        }
+
+        .ideaTop p {
+          color: #64748b;
+          font-size: 13px;
+          margin-top: 4px;
+          line-height: 1.15;
+        }
+
+        .badgeRow {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin: 0;
+        }
+
+        .themeBadge,
+        .convictionBadge,
+        .catalystBadge {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          padding: 5px 8px;
+          font-size: 11px;
+          font-weight: 900;
+          line-height: 1;
+          white-space: nowrap;
+        }
+
+        .themeBadge { background: #eff6ff; color: #1d4ed8; }
+        .convictionBadge { background: #f8fafc; color: #0f172a; border: 1px solid #dbe5f1; }
+        .catalystBadge { background: #fef3c7; color: #92400e; }
+
+        .priceRow {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          font-size: 17px;
+          margin-top: auto;
+        }
+
+        .reasonBox {
+          border: 1px solid #dbe5f1;
+          background: #f8fafc;
+          border-radius: 12px;
+          padding: 10px;
+          color: #334155;
+          font-size: 13px;
+          line-height: 1.35;
+          min-height: 54px;
+        }
+
+        .miniMeta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-top: 0;
+          padding-top: 2px;
+        }
+
+        .miniMeta span {
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .miniMeta strong {
+          background: #eef2ff;
+          color: #3730a3;
+          border-radius: 999px;
+          padding: 5px 8px;
+          font-size: 12px;
+          white-space: nowrap;
+        }
+
+        .leadershipRibbon {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 16px;
+          background: #0f172a;
+          color: white;
+          border-radius: 18px;
+          padding: 16px 18px;
+          margin-bottom: 18px;
+          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.10);
+        }
+
+        .leadershipRibbon span {
+          color: #cbd5e1;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0.02em;
+        }
+
+        .leadershipRibbon strong {
+          display: block;
+          margin-top: 4px;
+        }
+
+        .leadershipItems {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .leadershipPill {
+          background: rgba(255,255,255,0.10);
+          color: white !important;
+          border: 1px solid rgba(255,255,255,0.18);
+          border-radius: 999px;
+          padding: 8px 10px;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .leadershipPill strong {
+          display: inline;
+          margin-left: 6px;
+          color: #fbbf24;
+        }
+
       `}</style>
     </main>
   );
