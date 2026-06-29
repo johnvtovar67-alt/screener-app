@@ -410,9 +410,9 @@ function getDecisionClock(stock = {}) {
   const momentum = clampScore(stock.momentumScore);
 
   if (action === "Buy") return "Immediate";
-  if (action === "Starter" && trigger >= 72 && momentum >= 62) return "1–2 Weeks";
-  if (action === "Starter") return "2–4 Weeks";
-  if (action === "Watch") return "1–3 Months";
+  if (action === "Starter" && trigger >= 72 && momentum >= 62) return "This Week";
+  if (action === "Starter") return "Next 2 Weeks";
+  if (action === "Watch") return "Monitor";
   return "Avoid Until Improved";
 }
 
