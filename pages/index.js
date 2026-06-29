@@ -233,7 +233,22 @@ function getCatalyst(stock) {
 }
 
 function getDecisionClock(stock) {
-  return stock?.decisionClock || "1–3 Months";
+  const clock = stock?.decisionClock;
+
+  if (clock === "1–2 Weeks") return "Next 2 Weeks";
+  if (clock === "2–4 Weeks") return "Monitor";
+  if (clock === "1–3 Months") return "Monitor";
+
+  return clock || "Monitor";
+}
+
+function getPositionSize(stock) {
+  const action = nonOwnedAction(stock);
+
+  if (action === "Buy") return "Full";
+  if (action === "Starter") return "Starter";
+
+  return "None";
 }
 
 function getDominantReason(stock) {
@@ -249,11 +264,11 @@ function getDominantReason(stock) {
 
   const action = nonOwnedAction(stock);
 
-  if (action === "Buy") return "Confirmed setup; normal sizing allowed.";
-  if (action === "Starter") return "Setup is improving; starter only.";
-  if (action === "Watch") return "Setup is close, but not ready for fresh capital yet.";
+  if (action === "Buy") return "High-conviction setup. Normal position size is appropriate.";
+  if (action === "Starter") return "Small position is acceptable. Upgrade only after confirmation.";
+  if (action === "Watch") return "Not actionable yet. Wait for confirmation.";
 
-  return "Setup is not strong enough for new capital yet.";
+  return "Capital is better deployed elsewhere today.";
 }
 
 function getActionSummary(stock) {
@@ -263,10 +278,10 @@ function getActionSummary(stock) {
 
   const action = nonOwnedAction(stock);
 
-  if (action === "Buy") return "Confirmed setup; normal sizing allowed.";
-  if (action === "Starter") return `${getCatalyst(stock)} setup; starter only.`;
-  if (action === "Watch") return getDominantReason(stock);
-  return `Avoid for now. ${getDominantReason(stock)}`;
+  if (action === "Buy") return "High-conviction setup. Normal position size is appropriate.";
+  if (action === "Starter") return "Small position is acceptable. Upgrade only after confirmation.";
+  if (action === "Watch") return "Not actionable yet. Wait for confirmation.";
+  return "Capital is better deployed elsewhere today.";
 }
 
 function getTriggerNeeded(stock) {
@@ -277,8 +292,8 @@ function getTriggerNeeded(stock) {
   const price = getPrice(stock);
   const action = nonOwnedAction(stock);
 
-  if (action === "Buy") return "Immediate. Use normal sizing with a defined invalidation level.";
-  if (action === "Starter") return "Start small. Add only after strength holds or volume confirms.";
+  if (action === "Buy") return "Immediate decision. Normal size is appropriate with a defined invalidation level.";
+  if (action === "Starter") return "Starter size only. Reassess after confirmation.";
   if (action === "Watch" && Number.isFinite(price)) {
     return `Watch for a break above ${money(price * 1.03)} or a constructive pullback to support.`;
   }
@@ -491,8 +506,13 @@ function OpportunityCard({ stock }) {
       <p className="reasonBox">{getActionSummary(stock)}</p>
 
       <div className="miniMeta">
-        <span>Timing</span>
+        <span>Decision Clock</span>
         <strong>{getDecisionClock(stock)}</strong>
+      </div>
+
+      <div className="miniMeta compactMeta">
+        <span>Position Size</span>
+        <strong>{getPositionSize(stock)}</strong>
       </div>
     </article>
   );
@@ -1009,7 +1029,7 @@ export default function Home() {
           <section className="card actionCard">
             <div className="sectionTitle compactSectionTitle">
               <h2>🔥 Opportunities</h2>
-              <p>Fresh money only. Buy = normal size. Starter = tactical size. Watch = wait.</p>
+              <p>Fresh money only. Decision Clock = when this investment is likely to require your next decision, not how long you must wait before buying.</p>
             </div>
 
             {loadingTop && stocks.length === 0 && <p className="muted">Loading opportunities...</p>}
@@ -1591,6 +1611,12 @@ export default function Home() {
           align-items: center;
           margin-top: 10px;
           color: #334155;
+        }
+
+        .compactMeta {
+          margin-top: 6px;
+          padding-top: 8px;
+          border-top: 1px solid #e2e8f0;
         }
 
         .tableWrap {
