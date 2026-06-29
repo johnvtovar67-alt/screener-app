@@ -1,7 +1,18 @@
 // pages/api/top5.js
-// Broad/theme screener. Uses the same lib/scoring.js analyzeStock engine as /api?symbol=.
 
-import { analyzeStock } from "../../lib/scoring";
+import {
+  compositeScore,
+  calcFundamentalScore,
+  calcTechnicalScore,
+  calcMomentumScore,
+  calcRelativeStrengthScore,
+  calcAsymmetryScore,
+  calcTriggerScore,
+  getRecommendation,
+  getTradeReadiness,
+  buildTechnicalSnapshot,
+  buildFundamentalSnapshot,
+} from "../../lib/scoring";
 
 function normalizeSymbol(symbol) {
   return String(symbol || "").replace("-", ".").toUpperCase().trim();
@@ -13,168 +24,245 @@ function toFmpSymbol(symbol) {
 
 function uniqueSymbols(symbols = []) {
   const seen = new Set();
-  return symbols.map(normalizeSymbol).filter((symbol) => {
-    if (!symbol || seen.has(symbol)) return false;
-    seen.add(symbol);
-    return true;
-  });
+  return symbols
+    .map((symbol) => normalizeSymbol(symbol))
+    .filter((symbol) => {
+      if (!symbol) return false;
+      if (seen.has(symbol)) return false;
+      seen.add(symbol);
+      return true;
+    });
 }
 
+const PRIMARY_THEME_BY_SYMBOL = {
+  NVDA: "AI Compute & Platforms",
+  AMD: "AI Compute & Platforms",
+  AVGO: "AI Compute & Platforms",
+  ARM: "AI Compute & Platforms",
+  MU: "AI Compute & Platforms",
+  SMCI: "AI Compute & Platforms",
+  DELL: "AI Compute & Platforms",
+  HPE: "AI Compute & Platforms",
+  PLTR: "AI Compute & Platforms",
+  ORCL: "AI Compute & Platforms",
+  MSFT: "AI Compute & Platforms",
+  GOOGL: "AI Compute & Platforms",
+  GOOG: "AI Compute & Platforms",
+  META: "AI Compute & Platforms",
+  AMZN: "AI Compute & Platforms",
+  AAPL: "AI Compute & Platforms",
+
+  ANET: "AI Networking",
+  CSCO: "AI Networking",
+  NTAP: "AI Networking",
+  JNPR: "AI Networking",
+  FFIV: "AI Networking",
+  CIEN: "AI Networking",
+  MRVL: "AI Networking",
+  COHR: "AI Networking",
+  AAOI: "AI Networking",
+
+  CRWD: "Cybersecurity",
+  PANW: "Cybersecurity",
+  NET: "Cybersecurity",
+  ZS: "Cybersecurity",
+  DDOG: "Cybersecurity",
+  SNOW: "Cybersecurity",
+  MDB: "Cybersecurity",
+
+  ETN: "Power & Electrification",
+  PWR: "Power & Electrification",
+  VRT: "Power & Electrification",
+  FIX: "Power & Electrification",
+  EME: "Power & Electrification",
+  GEV: "Power & Electrification",
+  CEG: "Power & Electrification",
+  VST: "Power & Electrification",
+  NRG: "Power & Electrification",
+  TLN: "Power & Electrification",
+
+  EQIX: "Digital Infrastructure",
+  DLR: "Digital Infrastructure",
+  AMT: "Digital Infrastructure",
+  CCI: "Digital Infrastructure",
+  XYL: "Digital Infrastructure",
+  WTS: "Digital Infrastructure",
+  HUBB: "Digital Infrastructure",
+  NVT: "Digital Infrastructure",
+
+  CCJ: "Nuclear / Baseload",
+  UEC: "Nuclear / Baseload",
+  UUUU: "Nuclear / Baseload",
+  LEU: "Nuclear / Baseload",
+  BWXT: "Nuclear / Baseload",
+  SMR: "Nuclear / Baseload",
+  OKLO: "Nuclear / Baseload",
+  NNE: "Nuclear / Baseload",
+  NXE: "Nuclear / Baseload",
+  DNN: "Nuclear / Baseload",
+
+  MSTR: "BTC / Digital Assets",
+  MARA: "BTC / Digital Assets",
+  RIOT: "BTC / Digital Assets",
+  CLSK: "BTC / Digital Assets",
+  IREN: "BTC / Digital Assets",
+  WULF: "BTC / Digital Assets",
+  HUT: "BTC / Digital Assets",
+  BTDR: "BTC / Digital Assets",
+  CIFR: "BTC / Digital Assets",
+  BITF: "BTC / Digital Assets",
+  COIN: "BTC / Digital Assets",
+  HOOD: "BTC / Digital Assets",
+  SQ: "BTC / Digital Assets",
+
+  RKLB: "Space & Satellites",
+  ASTS: "Space & Satellites",
+  RDW: "Space & Satellites",
+  BKSY: "Space & Satellites",
+  IRDM: "Space & Satellites",
+
+  RTX: "Defense & National Security",
+  LHX: "Defense & National Security",
+  NOC: "Defense & National Security",
+  LMT: "Defense & National Security",
+  HII: "Defense & National Security",
+  GD: "Defense & National Security",
+  KTOS: "Defense & National Security",
+  AVAV: "Autonomy & Drones",
+  ONDS: "Autonomy & Drones",
+
+  ABB: "Robotics & Automation",
+  ROK: "Robotics & Automation",
+  TER: "Robotics & Automation",
+  CGNX: "Robotics & Automation",
+  SYM: "Robotics & Automation",
+  ISRG: "Robotics & Automation",
+
+  ADSK: "Industrial Software",
+  PTC: "Industrial Software",
+  SNPS: "Industrial Software",
+  CDNS: "Industrial Software",
+
+  IONQ: "Quantum Computing",
+  RGTI: "Quantum Computing",
+  QBTS: "Quantum Computing",
+  QUBT: "Quantum Computing",
+  ARQQ: "Quantum Computing",
+  IBM: "Quantum Computing",
+  HON: "Quantum Computing",
+
+  MRNA: "Platform Biotech",
+  RXRX: "Platform Biotech",
+  SDGR: "Platform Biotech",
+  CRSP: "Platform Biotech",
+  BEAM: "Platform Biotech",
+  IOVA: "Platform Biotech",
+  VKTX: "Platform Biotech",
+  ALMS: "Platform Biotech",
+  HIMS: "Platform Biotech",
+};
+
+const CORE_OPPORTUNITY_SYMBOLS = [
+  "NVDA","AMD","AVGO","ARM","MU","SMCI","DELL","HPE","PLTR","ORCL","MSFT","GOOGL","GOOG","META","AMZN","AAPL",
+  "ANET","CSCO","NTAP","JNPR","FFIV","CIEN","MRVL","COHR","AAOI",
+  "CRWD","PANW","NET","ZS","DDOG","SNOW","MDB",
+  "ETN","PWR","VRT","FIX","EME","GEV","CEG","VST","NRG","TLN",
+  "EQIX","DLR","AMT","XYL","WTS","HUBB","NVT",
+  "CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE","NXE","DNN",
+  "MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF","COIN","HOOD","SQ",
+  "RKLB","ASTS","RDW","BKSY","IRDM","RTX","LHX","NOC","LMT","HII","GD","KTOS","AVAV","ONDS",
+  "ABB","ROK","TER","CGNX","SYM","ISRG","ADSK","PTC","SNPS","CDNS",
+  "IONQ","RGTI","QBTS","QUBT","ARQQ","IBM","HON",
+  "MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS",
+  "AFRM","SHOP","UBER","TSLA","ROKU","DKNG","CELH","CROX","ABNB","EXPE"
+];
+
 const THEME_CONFIG = {
+  opportunities: {
+    name: "Best Opportunities",
+    description: "Fresh-capital screen. Excludes generic financials and income vehicles.",
+    symbols: CORE_OPPORTUNITY_SYMBOLS,
+  },
   broad: {
     name: "Best Opportunities",
-    tier: "All Primary Themes",
-    description: "Fresh-capital screen using one primary theme per symbol. This deliberately excludes slow-growth banks, generic financials, airlines, cruises, broad retail, and other non-philosophy names from the default opportunity page.",
-    symbols: [],
+    description: "Fresh-capital screen. Excludes generic financials and income vehicles.",
+    symbols: CORE_OPPORTUNITY_SYMBOLS,
   },
-  ai_infra: {
+  ai_compute: {
     name: "AI Compute & Platforms",
-    tier: "Core Secular Growth",
-    description: "Semiconductors, accelerators, AI platforms, servers, and scaled cloud platforms.",
-    symbols: ["NVDA", "AMD", "AVGO", "ARM", "MU", "SMCI", "DELL", "HPE", "ORCL", "MSFT", "GOOG", "META", "AMZN", "PLTR"],
+    description: "Compute, accelerators, cloud platforms, and AI application platforms.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "AI Compute & Platforms").map(([s]) => s),
   },
   ai_networking: {
     name: "AI Networking",
-    tier: "Core Secular Growth",
-    description: "Switching, optical, connectivity, storage, and networking beneficiaries of AI/data-center buildout.",
-    symbols: ["ANET", "MRVL", "CSCO", "CIEN", "AAOI", "LITE", "COHR", "NTAP", "JNPR"],
+    description: "Networking, optical, and data-movement beneficiaries of AI buildout.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "AI Networking").map(([s]) => s),
   },
   cybersecurity: {
     name: "Cybersecurity",
-    tier: "Core Secular Growth",
-    description: "Security software, identity, endpoint, network, and cloud-protection leaders.",
-    symbols: ["CRWD", "PANW", "ZS", "NET", "FTNT", "OKTA", "S", "CYBR", "TENB", "VRNS", "QLYS", "DDOG"],
+    description: "Security platforms, cloud security, observability, and data infrastructure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Cybersecurity").map(([s]) => s),
   },
-  btc: {
-    name: "BTC / Digital Assets",
-    tier: "Core Secular Growth",
-    description: "Bitcoin, miners, exchanges, and digital-asset infrastructure proxies.",
-    symbols: ["MSTR", "MARA", "RIOT", "CLSK", "IREN", "WULF", "HUT", "BTDR", "CIFR", "BITF", "COIN", "HOOD", "SQ", "PYPL"],
-  },
-  ai_power: {
+  power: {
     name: "Power & Electrification",
-    tier: "Core Secular Growth",
-    description: "Grid, electrification, power equipment, and AI-load-growth beneficiaries.",
-    symbols: ["GEV", "ETN", "PWR", "VRT", "FIX", "EME", "CEG", "VST", "NRG", "TLN", "HUBB", "NVT"],
-  },
-  cooling_water: {
-    name: "Cooling & Water",
-    tier: "Core Secular Growth",
-    description: "Thermal management, cooling, HVAC, and water-infrastructure beneficiaries.",
-    symbols: ["XYL", "WTS", "AOS", "PNR", "ITT", "DOV", "CARR", "TT"],
+    description: "Power, grid, electrification, and AI-load growth beneficiaries.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Power & Electrification").map(([s]) => s),
   },
   digital_infra: {
     name: "Digital Infrastructure",
-    tier: "Industrial Transformation",
-    description: "Data-center landlords, towers, and hard-asset digital-infrastructure picks and shovels.",
-    symbols: ["EQIX", "DLR", "AMT", "CCI"],
+    description: "Data centers, towers, water, cooling, and physical digital infrastructure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Digital Infrastructure").map(([s]) => s),
   },
   nuclear: {
     name: "Nuclear / Baseload",
-    tier: "Industrial Transformation",
     description: "Uranium, nuclear services, advanced nuclear, and baseload power.",
-    symbols: ["CCJ", "UEC", "UUUU", "LEU", "BWXT", "SMR", "OKLO", "NNE", "NXE", "DNN"],
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Nuclear / Baseload").map(([s]) => s),
   },
-  robotics: {
-    name: "Robotics & Automation",
-    tier: "Industrial Transformation",
-    description: "Industrial automation, robotics, machine vision, surgical robotics, and factory automation.",
-    symbols: ["SYM", "TER", "ROK", "CGNX", "ABBNY", "ISRG", "FANUY", "HON", "EMR", "ZBRA", "IR", "AME"],
+  btc: {
+    name: "BTC / Digital Assets",
+    description: "Bitcoin proxies, miners, exchanges, and digital-asset infrastructure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "BTC / Digital Assets").map(([s]) => s),
   },
-  industrial_software: {
-    name: "Industrial Software",
-    tier: "Industrial Transformation",
-    description: "Design, engineering, EDA, simulation, product-lifecycle, and workflow software.",
-    symbols: ["ADSK", "PTC", "SNPS", "CDNS", "ANSS", "BSY", "ROP", "TYL", "TEAM", "MDB"],
-  },
-  defense_space: {
+  defense: {
     name: "Defense & National Security",
-    tier: "National Security & Space",
-    description: "Prime defense, defense electronics, missile defense, naval, and government technology.",
-    symbols: ["LHX", "RTX", "NOC", "LMT", "KTOS", "AVAV", "HII", "GD", "LDOS", "BA", "TXT"],
+    description: "Prime defense, national security, missiles, sensors, and space-defense exposure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Defense & National Security").map(([s]) => s),
   },
   space: {
     name: "Space & Satellites",
-    tier: "National Security & Space",
-    description: "Launch, satellites, space infrastructure, and space communications.",
-    symbols: ["RKLB", "ASTS", "RDW", "BKSY", "IRDM"],
+    description: "Launch, satellites, communications, and commercial space infrastructure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Space & Satellites").map(([s]) => s),
   },
-  autonomy_drones: {
+  drones: {
     name: "Autonomy & Drones",
-    tier: "National Security & Space",
-    description: "Autonomous systems, voice/AI agents, workflow automation, and drone-adjacent software.",
-    symbols: ["AI", "SOUN", "PATH"],
+    description: "Autonomy, drones, and defense robotics.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Autonomy & Drones").map(([s]) => s),
+  },
+  robotics: {
+    name: "Robotics & Automation",
+    description: "Robotics, industrial automation, and automated manufacturing.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Robotics & Automation").map(([s]) => s),
+  },
+  industrial_software: {
+    name: "Industrial Software",
+    description: "Engineering, EDA, simulation, and product-design software.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Industrial Software").map(([s]) => s),
   },
   quantum: {
     name: "Quantum Computing",
-    tier: "Emerging Technologies",
-    description: "Quantum pure plays and larger companies with credible quantum exposure.",
-    symbols: ["IONQ", "RGTI", "QBTS", "QUBT", "ARQQ", "IBM"],
+    description: "Quantum computing and larger firms with credible quantum exposure.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Quantum Computing").map(([s]) => s),
   },
-  platform_biotech: {
+  biotech: {
     name: "Platform Biotech",
-    tier: "Emerging Technologies",
-    description: "Selective platform-healthcare and biotech names. Higher catalyst and binary risk.",
-    symbols: ["MRNA", "ALMS", "VKTX", "RXRX", "SDGR", "DNA", "CRSP", "BEAM", "IOVA", "GERN", "ALT", "BCRX", "HIMS", "TMDX"],
+    description: "Platform-oriented healthcare and biotech names, not broad binary biotech.",
+    symbols: Object.entries(PRIMARY_THEME_BY_SYMBOL).filter(([, t]) => t === "Platform Biotech").map(([s]) => s),
   },
 };
 
-const PRIMARY_THEME_BY_SYMBOL = Object.entries(THEME_CONFIG).reduce((acc, [key, config]) => {
-  if (key === "broad") return acc;
-  for (const symbol of config.symbols) {
-    const clean = normalizeSymbol(symbol);
-    if (!acc[clean]) {
-      acc[clean] = { key, name: config.name, tier: config.tier };
-    }
-  }
-  return acc;
-}, {});
-
-THEME_CONFIG.broad.symbols = Object.keys(PRIMARY_THEME_BY_SYMBOL);
-
 function getThemeConfig(themeKey) {
-  const clean = String(themeKey || "broad").toLowerCase();
-  return THEME_CONFIG[clean] || THEME_CONFIG.broad;
-}
-
-function getPrimaryThemeForSymbol(symbol) {
-  return PRIMARY_THEME_BY_SYMBOL[normalizeSymbol(symbol)] || null;
-}
-
-function getThemesForSymbol(symbol) {
-  const normalized = normalizeSymbol(symbol);
-  const primary = getPrimaryThemeForSymbol(normalized);
-  const themes = Object.entries(THEME_CONFIG)
-    .filter(([key, config]) => key !== "broad" && config.symbols.map(normalizeSymbol).includes(normalized))
-    .map(([key, config]) => ({
-      key,
-      name: config.name,
-      tier: config.tier,
-      primary: primary?.key === key,
-    }));
-
-  if (!primary) return themes;
-
-  return themes.sort((a, b) => Number(b.primary) - Number(a.primary));
-}
-
-function getConvictionScore(stock = {}) {
-  const score = Number(stock.score || stock.compositeScore || 0);
-  const leadership = Number(stock.leadershipScore || stock.relativeStrengthScore || 0);
-  const technical = Number(stock.technicalScore || 0);
-  const entry = Number(stock.entryQualityScore || 0);
-  const action = stock?.recommendation?.label || stock.label || stock.tradeAction || "Avoid";
-  const actionBoost = action === "Buy" ? 8 : action === "Starter" ? 3 : action === "Watch" ? 0 : -8;
-  const raw = score * 0.42 + leadership * 0.28 + technical * 0.20 + entry * 0.10 + actionBoost;
-  return Math.max(0, Math.min(100, Math.round(raw)));
-}
-
-function getConvictionStars(score = 0) {
-  if (score >= 86) return 5;
-  if (score >= 76) return 4;
-  if (score >= 66) return 3;
-  if (score >= 56) return 2;
-  return 1;
+  const clean = String(themeKey || "opportunities").toLowerCase();
+  return THEME_CONFIG[clean] || THEME_CONFIG.opportunities;
 }
 
 function toNumber(value, fallback = null) {
@@ -194,27 +282,116 @@ function toPositiveNumber(value, fallback = null) {
   return n;
 }
 
-function normalizeDayChangePct(row = {}, price = null, previousClose = null, change = null) {
-  const rawCandidates = [row.changesPercentage, row.changePercentage, row.changePercent, row.percentChange]
-    .map((value) => toNumber(value, null))
-    .filter((value) => value !== null);
-  const raw = rawCandidates.length ? rawCandidates[0] : null;
-  let computed = null;
+function safeScore(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function clampScore(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function normalizeDailyPct({ price, previousClose, change, rawPct }) {
+  let pct = toNumber(rawPct);
 
   if (price != null && previousClose != null && previousClose > 0) {
-    computed = ((price - previousClose) / previousClose) * 100;
-  } else if (change != null && previousClose != null && previousClose > 0) {
-    computed = (change / previousClose) * 100;
+    const recalculated = ((price - previousClose) / previousClose) * 100;
+    if (pct === null || Math.abs(pct) > 25 || Math.abs(pct - recalculated) > 5) {
+      pct = recalculated;
+    }
   }
 
-  if (computed != null && Number.isFinite(computed)) {
-    if (raw == null) return computed;
-    if (Math.abs(raw) > 25 && Math.abs(computed) < 15) return computed;
-    if (Math.abs(raw * 100 - computed) < Math.abs(raw - computed)) return raw * 100;
-    return raw;
+  if (pct === null && change != null && previousClose != null && previousClose > 0) {
+    pct = (change / previousClose) * 100;
   }
 
-  return raw;
+  return pct;
+}
+
+function normalizeActionLabel(value) {
+  const label = String(value || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+
+  if (["BUY", "BUY NOW", "BUY IMMEDIATELY", "STRONG BUY"].includes(label)) return "Buy";
+  if (["STARTER", "STARTER ONLY", "STARTER BUY", "BREAKOUT", "BREAKOUT BUY", "BREAKOUT STARTER"].includes(label)) return "Starter";
+  if (["WATCH", "WATCH FOR ENTRY", "WATCH CLOSELY", "NEAR MISS", "SETUP", "SETUP ONLY"].includes(label)) return "Watch";
+  return "Avoid";
+}
+
+function getAction(stock = {}) {
+  const rec = stock?.recommendation && typeof stock.recommendation === "object" ? stock.recommendation : {};
+  return normalizeActionLabel(
+    rec.displayLabel ??
+      rec.label ??
+      rec.recommendation ??
+      rec.tradeAction ??
+      stock.displayLabel ??
+      stock.label ??
+      stock.recommendation ??
+      stock.tradeAction ??
+      stock.action
+  );
+}
+
+function actionRank(actionOrStock) {
+  const action = typeof actionOrStock === "string" ? actionOrStock : getAction(actionOrStock);
+  if (action === "Buy") return 3;
+  if (action === "Starter") return 2;
+  if (action === "Watch") return 1;
+  return 0;
+}
+
+function getConvictionGrade(stock = {}) {
+  const score = clampScore(stock.score ?? stock.compositeScore);
+  const trigger = clampScore(stock.triggerScore);
+  const momentum = clampScore(stock.momentumScore);
+  const technical = clampScore(stock.technicalScore);
+  const action = getAction(stock);
+
+  const conviction = score * 0.42 + trigger * 0.23 + momentum * 0.2 + technical * 0.15;
+
+  if (action === "Buy" && conviction >= 86) return "A+";
+  if (conviction >= 82) return "A";
+  if (conviction >= 76) return "A-";
+  if (conviction >= 70) return "B+";
+  if (conviction >= 62) return "B";
+  return "C";
+}
+
+function getCatalyst(stock = {}) {
+  const trigger = clampScore(stock.triggerScore);
+  const momentum = clampScore(stock.momentumScore);
+  const technical = clampScore(stock.technicalScore);
+  const fresh = clampScore(stock.freshBreakoutScore ?? stock.technicalSnapshot?.freshBreakoutScore);
+  const change = toNumber(stock.dayChangePct ?? stock.changesPercentage, 0);
+
+  if (fresh >= 78 && trigger >= 78) return "Breakout";
+  if (trigger >= 76 && momentum >= 70) return "Reclaim";
+  if (technical >= 76 && momentum >= 72) return "RS Leader";
+  if (change < -1 && technical >= 65) return "Pullback";
+  if (momentum >= 70) return "Trend";
+  return "Setup";
+}
+
+function getDecisionClock(stock = {}) {
+  const action = getAction(stock);
+  const trigger = clampScore(stock.triggerScore);
+  const momentum = clampScore(stock.momentumScore);
+
+  if (action === "Buy") return "Immediate";
+  if (action === "Starter" && trigger >= 72 && momentum >= 62) return "1–2 Weeks";
+  if (action === "Starter") return "2–4 Weeks";
+  if (action === "Watch") return "1–3 Months";
+  return "Avoid Until Improved";
+}
+
+function themeFor(symbol) {
+  return PRIMARY_THEME_BY_SYMBOL[normalizeSymbol(symbol)] || "Other";
 }
 
 async function fetchJson(url) {
@@ -252,10 +429,12 @@ async function fetchLegacyQuoteChunk(symbols = [], apiKey) {
 
 async function fetchQuoteChunk(symbols = [], apiKey) {
   if (!symbols.length) return [];
+
   try {
     const stable = await fetchStableQuoteChunk(symbols, apiKey);
     if (stable.length) return stable;
   } catch {}
+
   try {
     const legacy = await fetchLegacyQuoteChunk(symbols, apiKey);
     if (legacy.length) return legacy;
@@ -264,17 +443,19 @@ async function fetchQuoteChunk(symbols = [], apiKey) {
   const individual = [];
   for (const symbol of symbols) {
     try {
-      const stable = await fetchStableQuoteChunk([symbol], apiKey);
-      if (stable.length) {
-        individual.push(stable[0]);
+      const rows = await fetchStableQuoteChunk([symbol], apiKey);
+      if (rows.length) {
+        individual.push(rows[0]);
         continue;
       }
     } catch {}
+
     try {
-      const legacy = await fetchLegacyQuoteChunk([symbol], apiKey);
-      if (legacy.length) individual.push(legacy[0]);
+      const rows = await fetchLegacyQuoteChunk([symbol], apiKey);
+      if (rows.length) individual.push(rows[0]);
     } catch {}
   }
+
   return individual;
 }
 
@@ -283,9 +464,15 @@ async function fetchFmpQuotes(symbols = []) {
   if (!apiKey) throw new Error("Missing FMP_API_KEY in environment variables.");
 
   const cleanSymbols = uniqueSymbols(symbols);
+  if (!cleanSymbols.length) return [];
+
   const chunks = chunkArray(cleanSymbols, 20);
   const all = [];
-  for (const chunk of chunks) all.push(...(await fetchQuoteChunk(chunk, apiKey)));
+
+  for (const chunk of chunks) {
+    const rows = await fetchQuoteChunk(chunk, apiKey);
+    all.push(...rows);
+  }
 
   const seen = new Set();
   return all.filter((row) => {
@@ -296,13 +483,14 @@ async function fetchFmpQuotes(symbols = []) {
   });
 }
 
-function normalizeQuote(row = {}, selectedTheme = null, spyQuote = null, qqqQuote = null) {
+function normalizeQuote(row = {}) {
   const symbol = normalizeSymbol(row.symbol);
   const price = toPositiveNumber(row.price);
   const previousClose = toPositiveNumber(row.previousClose);
   const change = toNumber(row.change);
-  const dayChangePct = normalizeDayChangePct(row, price, previousClose, change);
-  const themes = getThemesForSymbol(symbol);
+  const rawPct = row.changesPercentage ?? row.changePercentage ?? row.changePercent;
+
+  const dayChangePct = normalizeDailyPct({ price, previousClose, change, rawPct });
 
   return {
     ...row,
@@ -321,10 +509,10 @@ function normalizeQuote(row = {}, selectedTheme = null, spyQuote = null, qqqQuot
     changePercent: dayChangePct,
     marketCap: toPositiveNumber(row.marketCap),
     volume: toPositiveNumber(row.volume),
-    avgVolume: toPositiveNumber(row.avgVolume ?? row.averageVolume ?? row.volume),
-    priceAvg50: toPositiveNumber(row.priceAvg50 ?? row.fiftyDayAverage),
+    avgVolume: toPositiveNumber(row.avgVolume),
+    priceAvg50: toPositiveNumber(row.priceAvg50),
     fiftyDayAverage: toPositiveNumber(row.priceAvg50 ?? row.fiftyDayAverage),
-    priceAvg200: toPositiveNumber(row.priceAvg200 ?? row.twoHundredDayAverage),
+    priceAvg200: toPositiveNumber(row.priceAvg200),
     twoHundredDayAverage: toPositiveNumber(row.priceAvg200 ?? row.twoHundredDayAverage),
     yearHigh: toPositiveNumber(row.yearHigh),
     yearLow: toPositiveNumber(row.yearLow),
@@ -333,133 +521,286 @@ function normalizeQuote(row = {}, selectedTheme = null, spyQuote = null, qqqQuot
     beta: toNumber(row.beta, null),
     exchange: row.exchange || row.exchangeShortName || "",
     timestamp: row.timestamp || null,
-    themeKey: selectedTheme?.key === "broad" ? themes[0]?.key || null : selectedTheme?.key || null,
-    themeName: selectedTheme?.key === "broad" ? themes[0]?.name || "Unassigned" : selectedTheme?.name || themes[0]?.name || "Unassigned",
-    themeTier: selectedTheme?.key === "broad" ? themes[0]?.tier || "Unassigned" : selectedTheme?.tier || themes[0]?.tier || "Unassigned",
-    primaryThemeKey: themes[0]?.key || null,
-    primaryThemeName: themes[0]?.name || "Unassigned",
-    primaryThemeTier: themes[0]?.tier || "Unassigned",
-    themes,
-    spyDayChangePct: spyQuote?.dayChangePct ?? null,
-    qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
   };
 }
 
-function canonicalSymbol(symbol) {
+function scoreQuote(normalized = {}) {
+  const score = compositeScore(normalized);
+  const fundamentalScore = calcFundamentalScore(normalized);
+  const technicalScore = calcTechnicalScore(normalized);
+  const momentumScore = calcMomentumScore(normalized);
+  const relativeStrengthScore = calcRelativeStrengthScore(normalized);
+  const asymmetryScore = calcAsymmetryScore(normalized);
+  const triggerScore = calcTriggerScore(normalized);
+  const technicalSnapshot = buildTechnicalSnapshot(normalized);
+  const fundamentalSnapshot = buildFundamentalSnapshot(normalized);
+  const recommendation = getRecommendation(normalized);
+  const action = normalizeActionLabel(recommendation?.label || getTradeReadiness(normalized));
+
+  return {
+    ...normalized,
+    score,
+    compositeScore: score,
+    heatScore: score,
+    fundamentalScore,
+    technicalScore,
+    momentumScore,
+    relativeStrengthScore,
+    asymmetryScore,
+    triggerScore,
+    primaryTheme: themeFor(normalized.symbol),
+    theme: themeFor(normalized.symbol),
+    recommendation: {
+      ...recommendation,
+      label: action,
+      displayLabel: action,
+      recommendation: action,
+      tradeAction: action,
+      score,
+      triggerScore,
+      momentumScore,
+    },
+    action,
+    technicalSnapshot,
+    fundamentalSnapshot,
+  };
+}
+
+function enrichOutput(stock = {}) {
+  return {
+    ...stock,
+    primaryTheme: themeFor(stock.symbol),
+    theme: themeFor(stock.symbol),
+    convictionGrade: getConvictionGrade(stock),
+    catalyst: getCatalyst(stock),
+    decisionClock: getDecisionClock(stock),
+  };
+}
+
+function rankScore(stock = {}) {
+  const action = actionRank(stock);
+  const convictionBias =
+    stock.convictionGrade === "A+" ? 5 :
+    stock.convictionGrade === "A" ? 4 :
+    stock.convictionGrade === "A-" ? 3 :
+    stock.convictionGrade === "B+" ? 2 :
+    stock.convictionGrade === "B" ? 1 : 0;
+
+  return (
+    action * 1000 +
+    safeScore(stock.score) * 2.2 +
+    safeScore(stock.relativeStrengthScore) * 1.5 +
+    safeScore(stock.technicalScore) * 1.25 +
+    safeScore(stock.triggerScore) +
+    safeScore(stock.momentumScore) +
+    convictionBias
+  );
+}
+
+function sortTopIdeas(a, b) {
+  const actionDiff = actionRank(b) - actionRank(a);
+  if (actionDiff !== 0) return actionDiff;
+
+  const rankDiff = rankScore(b) - rankScore(a);
+  if (rankDiff !== 0) return rankDiff;
+
+  return safeScore(b.score) - safeScore(a.score);
+}
+
+function shareClassFamily(symbol) {
   const clean = normalizeSymbol(symbol);
-  if (clean === "GOOGL") return "GOOG";
-  if (clean === "BRK.B") return "BRK.A";
+  if (clean === "GOOG" || clean === "GOOGL") return "ALPHABET";
   return clean;
 }
 
-function actionRank(stock = {}) {
-  const label = stock?.recommendation?.label || stock.label || stock.tradeAction || "Avoid";
-  if (label === "Buy") return 3;
-  if (label === "Starter") return 2;
-  if (label === "Watch") return 1;
-  return 0;
-}
-
 function dedupeShareClasses(rows = []) {
-  const byCanonical = new Map();
+  const preferredSymbol = { ALPHABET: "GOOGL" };
+  const bestByFamily = new Map();
+
   for (const row of rows) {
-    const key = canonicalSymbol(row.symbol);
-    const existing = byCanonical.get(key);
-    if (!existing) {
-      byCanonical.set(key, row);
+    const symbol = normalizeSymbol(row?.symbol);
+    if (!symbol) continue;
+
+    const family = shareClassFamily(symbol);
+    const current = bestByFamily.get(family);
+
+    if (!current) {
+      bestByFamily.set(family, row);
       continue;
     }
-    const rowRank = actionRank(row);
-    const existingRank = actionRank(existing);
-    if (rowRank > existingRank || (rowRank === existingRank && Number(row.score || 0) > Number(existing.score || 0))) {
-      byCanonical.set(key, row);
+
+    const preferred = preferredSymbol[family];
+    if (preferred) {
+      if (symbol === preferred && normalizeSymbol(current.symbol) !== preferred) {
+        bestByFamily.set(family, row);
+        continue;
+      }
+      if (normalizeSymbol(current.symbol) === preferred && symbol !== preferred) {
+        continue;
+      }
+    }
+
+    if (sortTopIdeas(row, current) < 0) bestByFamily.set(family, row);
+  }
+
+  return Array.from(bestByFamily.values());
+}
+
+function buildThemeLeadership(rows = []) {
+  const byTheme = new Map();
+
+  for (const row of rows) {
+    const theme = row.primaryTheme || "Other";
+    if (!byTheme.has(theme)) {
+      byTheme.set(theme, {
+        theme,
+        total: 0,
+        buy: 0,
+        starter: 0,
+        watch: 0,
+        avoid: 0,
+        bestSymbol: row.symbol,
+        bestAction: getAction(row),
+        strengthScore: 0,
+      });
+    }
+
+    const bucket = byTheme.get(theme);
+    const action = getAction(row);
+
+    bucket.total += 1;
+    if (action === "Buy") bucket.buy += 1;
+    else if (action === "Starter") bucket.starter += 1;
+    else if (action === "Watch") bucket.watch += 1;
+    else bucket.avoid += 1;
+
+    bucket.strengthScore += actionRank(action) * 20 + safeScore(row.score) * 0.2 + safeScore(row.relativeStrengthScore) * 0.2;
+
+    if (sortTopIdeas(row, { ...row, symbol: bucket.bestSymbol, score: -1 }) < 0) {
+      bucket.bestSymbol = row.symbol;
+      bucket.bestAction = action;
     }
   }
-  return [...byCanonical.values()];
+
+  return Array.from(byTheme.values())
+    .map((theme) => ({
+      ...theme,
+      averageStrength: theme.total > 0 ? Math.round(theme.strengthScore / theme.total) : 0,
+    }))
+    .sort((a, b) => b.averageStrength - a.averageStrength)
+    .slice(0, 6);
 }
 
-function sortStocks(a, b) {
-  const actionDiff = actionRank(b) - actionRank(a);
-  if (actionDiff !== 0) return actionDiff;
-  const scoreDiff = Number(b.score || 0) - Number(a.score || 0);
-  if (scoreDiff !== 0) return scoreDiff;
-  return Number(b.leadershipScore || b.relativeStrengthScore || 0) - Number(a.leadershipScore || a.relativeStrengthScore || 0);
-}
+function bucketRows(rows = []) {
+  const deDuplicated = dedupeShareClasses(rows.map(enrichOutput));
+  const sorted = [...deDuplicated].sort(sortTopIdeas);
+  const byAction = (label) => sorted.filter((stock) => getAction(stock) === label).sort(sortTopIdeas);
 
-function countByAction(rows = [], action) {
-  return rows.filter((stock) => (stock?.recommendation?.label || stock.label) === action).length;
+  const buys = byAction("Buy");
+  const starters = byAction("Starter");
+  const watches = byAction("Watch");
+  const avoids = byAction("Avoid");
+
+  const selected = [
+    ...buys.slice(0, 6),
+    ...starters.slice(0, 10),
+    ...watches.slice(0, 14),
+    ...avoids.slice(0, 8),
+  ];
+
+  const seen = new Set();
+  const unique = [];
+
+  for (const stock of selected) {
+    const symbol = normalizeSymbol(stock.symbol);
+    if (!symbol || seen.has(symbol)) continue;
+    seen.add(symbol);
+    unique.push(stock);
+  }
+
+  return unique;
 }
 
 export default async function handler(req, res) {
   try {
     res.setHeader("Cache-Control", "no-store, max-age=0");
 
-    const themeKey = String(req.query.theme || "broad").toLowerCase();
-    const selectedTheme = { key: themeKey, ...getThemeConfig(themeKey) };
-    const requestedSymbols = uniqueSymbols(selectedTheme.symbols);
+    const themeKey = String(req.query.theme || "opportunities").toLowerCase();
+    const selectedTheme = getThemeConfig(themeKey);
+    const symbols = uniqueSymbols(selectedTheme.symbols);
 
-    if (!requestedSymbols.length) {
+    if (!symbols.length) {
       return res.status(502).json({
         error: "Quote refresh returned no usable stocks.",
         detail: "The selected theme has no symbols configured.",
       });
     }
 
-    const benchmarkSymbols = ["SPY", "QQQ"];
-    const rawQuotes = await fetchFmpQuotes([...requestedSymbols, ...benchmarkSymbols]);
-    const rawSpy = rawQuotes.find((row) => normalizeSymbol(row.symbol) === "SPY");
-    const rawQqq = rawQuotes.find((row) => normalizeSymbol(row.symbol) === "QQQ");
-    const spyQuote = rawSpy ? normalizeQuote(rawSpy, null, null, null) : null;
-    const qqqQuote = rawQqq ? normalizeQuote(rawQqq, null, null, null) : null;
+    const [quotes, spyQuotes, qqqQuotes] = await Promise.all([
+      fetchFmpQuotes(symbols),
+      fetchFmpQuotes(["SPY"]).catch(() => []),
+      fetchFmpQuotes(["QQQ"]).catch(() => []),
+    ]);
 
-    const analyzed = rawQuotes
-      .filter((row) => !benchmarkSymbols.includes(normalizeSymbol(row.symbol)))
-      .map((row) => normalizeQuote(row, selectedTheme, spyQuote, qqqQuote))
-      .filter((stock) => stock.symbol && Number.isFinite(Number(stock.price)) && Number(stock.price) > 0)
-      .map(analyzeStock)
-      .map((stock) => {
-        const convictionScore = getConvictionScore(stock);
-        return {
-          ...stock,
-          convictionScore,
-          convictionStars: getConvictionStars(convictionScore),
-        };
-      });
+    const spyQuote = spyQuotes?.[0] ? normalizeQuote(spyQuotes[0]) : null;
+    const qqqQuote = qqqQuotes?.[0] ? normalizeQuote(qqqQuotes[0]) : null;
 
-    if (!analyzed.length) {
+    const rows = quotes
+      .map(normalizeQuote)
+      .filter((row) => row.symbol && row.price != null)
+      .map((row) => ({
+        ...row,
+        spyDayChangePct: spyQuote?.dayChangePct ?? null,
+        qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
+      }))
+      .map(scoreQuote)
+      .map(enrichOutput);
+
+    if (!rows.length) {
       return res.status(502).json({
         error: "Quote refresh returned no usable stocks.",
         detail: "FMP returned no usable quotes for the selected theme.",
       });
     }
 
-    const stocks = dedupeShareClasses(analyzed).sort(sortStocks);
+    const bucketed = bucketRows(rows);
+    const counts = bucketed.reduce(
+      (acc, row) => {
+        const action = getAction(row);
+        acc.total += 1;
+        if (action === "Buy") acc.buy += 1;
+        else if (action === "Starter") acc.starter += 1;
+        else if (action === "Watch") acc.watch += 1;
+        else acc.avoid += 1;
+        return acc;
+      },
+      { total: 0, buy: 0, starter: 0, watch: 0, avoid: 0 }
+    );
 
     return res.status(200).json({
-      selectedTheme,
-      count: stocks.length,
-      stocks,
+      stocks: bucketed,
+      selectedTheme: {
+        key: themeKey,
+        name: selectedTheme.name,
+        description: selectedTheme.description,
+      },
+      themeLeadership: buildThemeLeadership(rows),
       meta: {
-        mode: "investment_operating_system_primary_theme_v1",
-        dataPath: "FMP batch quote + lib/scoring.js analyzeStock",
-        decisionSource: "lib/scoring.js analyzeStock",
-        philosophy: "Institutional-quality secular-growth leaders with actionable technical entries.",
-        requestedSymbols: requestedSymbols.length,
-        analyzedSymbols: analyzed.length,
-        deDuplicatedSymbols: stocks.length,
-        buyCount: countByAction(stocks, "Buy"),
-        starterCount: countByAction(stocks, "Starter"),
-        watchCount: countByAction(stocks, "Watch"),
-        avoidCount: countByAction(stocks, "Avoid"),
+        mode: "investment_operating_system_v3",
+        source: "FMP",
+        universeCount: symbols.length,
+        returnedCount: bucketed.length,
+        rawCount: rows.length,
         spyChange: spyQuote?.dayChangePct ?? null,
         qqqChange: qqqQuote?.dayChangePct ?? null,
+        ...counts,
       },
     });
-  } catch (error) {
-    console.error("api/top5 error:", error);
+  } catch (err) {
+    console.error("api/top5 error:", err);
     return res.status(500).json({
-      error: "Failed to load top ideas.",
-      detail: error?.message || String(error),
+      error: "Failed to load trade screen.",
+      detail: err.message || "Unknown error.",
     });
   }
 }
