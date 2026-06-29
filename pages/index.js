@@ -5,8 +5,8 @@ const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
 const CASH_SYMBOLS = ["CASH", "SWVXX", "VMFXX", "SPAXX", "FDRXX", "MMF"];
 
 const THEME_OPTIONS = [
-  { key: "broad", name: "Broad Market" },
-  { key: "ai_infra", name: "AI Infrastructure" },
+  { key: "broad", name: "Best Opportunities" },
+  { key: "ai_infra", name: "AI Compute & Platforms" },
   { key: "ai_networking", name: "AI Networking" },
   { key: "cybersecurity", name: "Cybersecurity" },
   { key: "btc", name: "BTC / Digital Assets" },
@@ -16,8 +16,8 @@ const THEME_OPTIONS = [
   { key: "nuclear", name: "Nuclear / Baseload" },
   { key: "robotics", name: "Robotics & Automation" },
   { key: "industrial_software", name: "Industrial Software" },
-  { key: "defense_space", name: "Defense & Space" },
-  { key: "space", name: "Space" },
+  { key: "defense_space", name: "Defense & National Security" },
+  { key: "space", name: "Space & Satellites" },
   { key: "autonomy_drones", name: "Autonomy & Drones" },
   { key: "quantum", name: "Quantum Computing" },
   { key: "platform_biotech", name: "Platform Biotech" },
@@ -858,6 +858,52 @@ function actionClass(action) {
   return "red";
 }
 
+function getThemeLabel(stock = {}) {
+  return (
+    stock.primaryThemeName ||
+    stock.themeName ||
+    stock.theme ||
+    stock.themes?.find?.((theme) => theme?.primary)?.name ||
+    stock.themes?.[0]?.name ||
+    "Unassigned"
+  );
+}
+
+function getConvictionScore(stock = {}) {
+  const direct = Number(stock.convictionScore ?? stock.recommendation?.convictionScore);
+  if (Number.isFinite(direct) && direct > 0) return clampScore(direct);
+
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumScore(stock);
+  const leadership = clampScore(
+    stock.leadershipScore ??
+      stock.relativeStrengthScore ??
+      stock.recommendation?.leadershipScore ??
+      stock.recommendation?.relativeStrengthScore ??
+      0
+  );
+
+  return clampScore(score * 0.4 + leadership * 0.3 + trigger * 0.2 + momentum * 0.1);
+}
+
+function getConvictionStars(stock = {}) {
+  const direct = Number(stock.convictionStars ?? stock.recommendation?.convictionStars);
+  const stars = Number.isFinite(direct) && direct > 0
+    ? Math.round(direct)
+    : getConvictionScore(stock) >= 86
+      ? 5
+      : getConvictionScore(stock) >= 76
+        ? 4
+        : getConvictionScore(stock) >= 66
+          ? 3
+          : getConvictionScore(stock) >= 56
+            ? 2
+            : 1;
+
+  return "★".repeat(Math.max(1, Math.min(5, stars))) + "☆".repeat(Math.max(0, 5 - Math.max(1, Math.min(5, stars))));
+}
+
 function rankActionable(a, b) {
   const actionA = nonOwnedAction(a);
   const actionB = nonOwnedAction(b);
@@ -1491,7 +1537,7 @@ export default function Home() {
             </div>
             <div>
               <span>Purpose</span>
-              <p>Fresh capital screen. No theme bias. Buy = normal size, Starter = small tactical position, Watch = wait.</p>
+              <p>Fresh capital screen. One primary theme per stock. Buy = normal size, Starter = small tactical position, Watch = wait.</p>
             </div>
           </div>
         </section>
@@ -1525,7 +1571,7 @@ export default function Home() {
             </div>
             <div>
               <span>Discipline</span>
-              <p>The theme picks the research universe only. The scoring engine is unchanged.</p>
+              <p>Themes are research watchlists. Each symbol has one primary theme on the Opportunities page to prevent repeated names across themes.</p>
             </div>
           </div>
         </section>
@@ -1576,6 +1622,10 @@ export default function Home() {
                       <div>
                         <div className="tradeSymbol">{getSymbol(stock)}</div>
                         <div className="tradeName">{getName(stock)}</div>
+                        <div className="tradeMetaLine">
+                          <span>{getThemeLabel(stock)}</span>
+                          <span className="convictionStars">{getConvictionStars(stock)}</span>
+                        </div>
                       </div>
 
                       <span className={`pill largePill ${actionClass(action)}`}>
@@ -1620,6 +1670,10 @@ export default function Home() {
                       <div>
                         <div className="tradeSymbol">{getSymbol(stock)}</div>
                         <div className="tradeName">{getName(stock)}</div>
+                        <div className="tradeMetaLine">
+                          <span>{getThemeLabel(stock)}</span>
+                          <span className="convictionStars">{getConvictionStars(stock)}</span>
+                        </div>
                       </div>
 
                       <span className={`pill largePill ${actionClass(action)}`}>
@@ -1665,6 +1719,10 @@ export default function Home() {
                       <div>
                         <div className="tradeSymbol">{getSymbol(stock)}</div>
                         <div className="tradeName">{getName(stock)}</div>
+                        <div className="tradeMetaLine">
+                          <span>{getThemeLabel(stock)}</span>
+                          <span className="convictionStars">{getConvictionStars(stock)}</span>
+                        </div>
                       </div>
 
                       <span className={`pill largePill ${actionClass(action)}`}>
@@ -1709,6 +1767,10 @@ export default function Home() {
                       <div>
                         <div className="tradeSymbol">{getSymbol(stock)}</div>
                         <div className="tradeName">{getName(stock)}</div>
+                        <div className="tradeMetaLine">
+                          <span>{getThemeLabel(stock)}</span>
+                          <span className="convictionStars">{getConvictionStars(stock)}</span>
+                        </div>
                       </div>
 
                       <span className={`pill largePill ${actionClass(action)}`}>
@@ -1750,6 +1812,8 @@ export default function Home() {
               <thead>
                 <tr>
                   <th className="stickyCol">Symbol</th>
+                  <th>Theme</th>
+                  <th>Conviction</th>
                   <th>Price</th>
                   <th>Net Change</th>
                   <th>Status</th>
@@ -1763,6 +1827,8 @@ export default function Home() {
                   return (
                     <tr key={`${getSymbol(stock)}-near-${idx}`}>
                       <td className="symbol stickyCol">{getSymbol(stock)}</td>
+                      <td className="textCell mutedText">{getThemeLabel(stock)}</td>
+                      <td><span className="convictionStars smallStars">{getConvictionStars(stock)}</span></td>
                       <td>
                         <strong>{money(getPrice(stock))}</strong>
                       </td>
@@ -1802,6 +1868,8 @@ export default function Home() {
               <thead>
                 <tr>
                   <th className="stickyCol">Symbol</th>
+                  <th>Theme</th>
+                  <th>Conviction</th>
                   <th>Price</th>
                   <th>Net Change</th>
                   <th>Status</th>
@@ -1815,6 +1883,8 @@ export default function Home() {
                   return (
                     <tr key={`${getSymbol(stock)}-closest-${idx}`}>
                       <td className="symbol stickyCol">{getSymbol(stock)}</td>
+                      <td className="textCell mutedText">{getThemeLabel(stock)}</td>
+                      <td><span className="convictionStars smallStars">{getConvictionStars(stock)}</span></td>
                       <td>
                         <strong>{money(getPrice(stock))}</strong>
                       </td>
@@ -2354,6 +2424,28 @@ export default function Home() {
           color: #64748b;
           font-size: 12px;
           margin-top: 1px;
+        }
+
+        .tradeMetaLine {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+          color: #64748b;
+          font-size: 10.5px;
+          font-weight: 800;
+          margin-top: 4px;
+        }
+
+        .convictionStars {
+          color: #f59e0b;
+          letter-spacing: 0.04em;
+          font-size: 11px;
+          white-space: nowrap;
+        }
+
+        .smallStars {
+          font-size: 12px;
         }
 
         .priceStack {
