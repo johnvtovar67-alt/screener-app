@@ -22,126 +22,159 @@ function uniqueSymbols(symbols = []) {
 
 const THEME_CONFIG = {
   broad: {
-    name: "Broad Market",
-    tier: "All Themes",
-    description: "Curated institutional-quality secular-growth universe.",
-    symbols: [
-      "NVDA", "AMD", "AVGO", "ARM", "MU", "SMCI", "DELL", "HPE", "ANET", "ORCL", "MSFT", "GOOG", "META", "AMZN", "AAPL", "TSLA", "PLTR",
-      "CRWD", "NET", "DDOG", "SNOW", "MDB", "ZS", "PANW", "SHOP", "UBER", "ROKU", "SOUN", "BBAI", "AI", "AAOI",
-      "SCHW", "BGC", "JPM", "BAC", "C", "WFC", "GS", "MS", "BX", "KKR", "APO", "SOFI", "AFRM", "HOOD", "COIN", "PYPL", "SQ", "ALLY", "RKT", "UPST",
-      "ETN", "PWR", "VRT", "FIX", "EME", "GEV", "CEG", "VST", "NRG", "TLN", "KMI", "WMB", "TRGP", "LNG", "ET", "EPD", "OKE", "PAGP", "XOM", "CVX", "COP", "SLB", "HAL", "FCX", "CLF", "NUE", "STLD",
-      "CCJ", "UEC", "UUUU", "LEU", "BWXT", "SMR", "OKLO", "NNE", "NXE", "DNN",
-      "MSTR", "MARA", "RIOT", "CLSK", "IREN", "WULF", "HUT", "BTDR", "CIFR", "BITF",
-      "HIMS", "BCRX", "ALMS", "VKTX", "RXRX", "SDGR", "DNA", "MRNA", "NVAX", "CRSP", "BEAM", "IOVA", "GERN", "ALT",
-      "CELH", "CROX", "DKNG", "RCL", "CCL", "NCLH", "ABNB", "EXPE", "AAL", "UAL", "DAL", "LUV", "DIS", "NFLX", "TGT", "WMT", "COST",
-      "AHR", "VICI", "O", "PLD", "DLR", "EQIX", "AMT", "CCI", "WELL",
-      "RKLB", "ASTS", "RDW", "BKSY", "IRDM", "LHX", "RTX", "NOC", "LMT", "KTOS", "AVAV", "HII", "GD", "LDOS", "BA", "TXT",
-      "SYM", "TER", "ROK", "CGNX", "ABBNY", "ISRG", "ADSK", "PTC", "SNPS", "CDNS", "FANUY", "HUBB", "NVT", "XYL", "WTS", "AOS", "PNR", "ITT", "DOV", "CARR", "TT",
-      "IONQ", "RGTI", "QBTS", "QUBT", "ARQQ", "IBM", "HON"
-    ],
+    name: "Best Opportunities",
+    tier: "All Primary Themes",
+    description: "Fresh-capital screen using one primary theme per symbol. This deliberately excludes slow-growth banks, generic financials, airlines, cruises, broad retail, and other non-philosophy names from the default opportunity page.",
+    symbols: [],
   },
   ai_infra: {
-    name: "AI Infrastructure",
+    name: "AI Compute & Platforms",
     tier: "Core Secular Growth",
-    description: "Semiconductors, servers, networking, data-center infrastructure, and AI platforms.",
-    symbols: ["NVDA", "AMD", "AVGO", "ARM", "MU", "SMCI", "DELL", "HPE", "ANET", "VRT", "ETN", "PWR", "FIX", "EME", "ORCL", "MSFT", "GOOG", "META", "AMZN", "PLTR", "CRWD", "NET", "DDOG", "SNOW"],
+    description: "Semiconductors, accelerators, AI platforms, servers, and scaled cloud platforms.",
+    symbols: ["NVDA", "AMD", "AVGO", "ARM", "MU", "SMCI", "DELL", "HPE", "ORCL", "MSFT", "GOOG", "META", "AMZN", "PLTR"],
   },
   ai_networking: {
     name: "AI Networking",
     tier: "Core Secular Growth",
-    description: "Networking, switching, optical, and connectivity beneficiaries of AI/data-center buildout.",
-    symbols: ["ANET", "AVGO", "MRVL", "CSCO", "JNPR", "CIEN", "AAOI", "LITE", "COHR", "NTAP", "DELL", "HPE", "SMCI"],
+    description: "Switching, optical, connectivity, storage, and networking beneficiaries of AI/data-center buildout.",
+    symbols: ["ANET", "MRVL", "CSCO", "CIEN", "AAOI", "LITE", "COHR", "NTAP", "JNPR"],
   },
   cybersecurity: {
     name: "Cybersecurity",
     tier: "Core Secular Growth",
-    description: "Security software and identity/cloud protection leaders.",
+    description: "Security software, identity, endpoint, network, and cloud-protection leaders.",
     symbols: ["CRWD", "PANW", "ZS", "NET", "FTNT", "OKTA", "S", "CYBR", "TENB", "VRNS", "QLYS", "DDOG"],
   },
   btc: {
     name: "BTC / Digital Assets",
     tier: "Core Secular Growth",
-    description: "Bitcoin, crypto infrastructure, exchanges, and digital-asset proxies.",
+    description: "Bitcoin, miners, exchanges, and digital-asset infrastructure proxies.",
     symbols: ["MSTR", "MARA", "RIOT", "CLSK", "IREN", "WULF", "HUT", "BTDR", "CIFR", "BITF", "COIN", "HOOD", "SQ", "PYPL"],
   },
   ai_power: {
     name: "Power & Electrification",
     tier: "Core Secular Growth",
-    description: "Power generation, grid, electrification, and energy infrastructure tied to AI load growth.",
-    symbols: ["VST", "CEG", "NRG", "TLN", "GEV", "ETN", "PWR", "VRT", "FIX", "EME", "HUBB", "NVT", "KMI", "WMB", "TRGP", "LNG", "ET", "EPD", "OKE"],
+    description: "Grid, electrification, power equipment, and AI-load-growth beneficiaries.",
+    symbols: ["GEV", "ETN", "PWR", "VRT", "FIX", "EME", "CEG", "VST", "NRG", "TLN", "HUBB", "NVT"],
   },
   cooling_water: {
     name: "Cooling & Water",
     tier: "Core Secular Growth",
-    description: "Thermal management, water infrastructure, and cooling beneficiaries.",
-    symbols: ["VRT", "ETN", "PWR", "FIX", "EME", "XYL", "WTS", "AOS", "PNR", "ITT", "DOV", "HUBB", "NVT", "CARR", "TT"],
+    description: "Thermal management, cooling, HVAC, and water-infrastructure beneficiaries.",
+    symbols: ["XYL", "WTS", "AOS", "PNR", "ITT", "DOV", "CARR", "TT"],
   },
   digital_infra: {
     name: "Digital Infrastructure",
     tier: "Industrial Transformation",
-    description: "Data-center landlords, towers, and physical digital-infrastructure picks and shovels.",
-    symbols: ["EQIX", "DLR", "AMT", "CCI", "VRT", "ETN", "PWR", "ANET", "HUBB", "NVT", "TT", "CARR"],
+    description: "Data-center landlords, towers, and hard-asset digital-infrastructure picks and shovels.",
+    symbols: ["EQIX", "DLR", "AMT", "CCI"],
   },
   nuclear: {
     name: "Nuclear / Baseload",
     tier: "Industrial Transformation",
     description: "Uranium, nuclear services, advanced nuclear, and baseload power.",
-    symbols: ["CCJ", "UEC", "UUUU", "LEU", "BWXT", "SMR", "OKLO", "NNE", "CEG", "VST", "TLN", "GEV", "NXE", "DNN"],
+    symbols: ["CCJ", "UEC", "UUUU", "LEU", "BWXT", "SMR", "OKLO", "NNE", "NXE", "DNN"],
   },
   robotics: {
     name: "Robotics & Automation",
     tier: "Industrial Transformation",
-    description: "Industrial automation, robotics, machine vision, and surgical robotics.",
-    symbols: ["SYM", "TER", "ROK", "CGNX", "ABBNY", "ISRG", "FANUY", "HON", "EMR", "ROBO", "ZBRA", "IR", "AME"],
+    description: "Industrial automation, robotics, machine vision, surgical robotics, and factory automation.",
+    symbols: ["SYM", "TER", "ROK", "CGNX", "ABBNY", "ISRG", "FANUY", "HON", "EMR", "ZBRA", "IR", "AME"],
   },
   industrial_software: {
     name: "Industrial Software",
     tier: "Industrial Transformation",
-    description: "Design, engineering, EDA, simulation, and product-lifecycle software.",
-    symbols: ["ADSK", "PTC", "SNPS", "CDNS", "ANSS", "BSY", "ROP", "TYL", "TEAM", "DDOG", "MDB"],
+    description: "Design, engineering, EDA, simulation, product-lifecycle, and workflow software.",
+    symbols: ["ADSK", "PTC", "SNPS", "CDNS", "ANSS", "BSY", "ROP", "TYL", "TEAM", "MDB"],
   },
   defense_space: {
-    name: "Defense & Space",
+    name: "Defense & National Security",
     tier: "National Security & Space",
-    description: "Space, missile defense, aerospace, defense electronics, drones, and national-security software.",
-    symbols: ["RKLB", "ASTS", "RDW", "BKSY", "IRDM", "LHX", "RTX", "NOC", "LMT", "KTOS", "AVAV", "HII", "GD", "LDOS", "PLTR", "BA", "TXT"],
+    description: "Prime defense, defense electronics, missile defense, naval, and government technology.",
+    symbols: ["LHX", "RTX", "NOC", "LMT", "KTOS", "AVAV", "HII", "GD", "LDOS", "BA", "TXT"],
   },
   space: {
-    name: "Space",
+    name: "Space & Satellites",
     tier: "National Security & Space",
     description: "Launch, satellites, space infrastructure, and space communications.",
-    symbols: ["RKLB", "ASTS", "RDW", "BKSY", "IRDM", "LHX", "RTX", "NOC", "LMT", "KTOS", "BA"],
+    symbols: ["RKLB", "ASTS", "RDW", "BKSY", "IRDM"],
   },
   autonomy_drones: {
     name: "Autonomy & Drones",
     tier: "National Security & Space",
-    description: "Drones, autonomous systems, defense software, and command/control platforms.",
-    symbols: ["AVAV", "KTOS", "PLTR", "TXT", "LHX", "LDOS", "NOC", "RTX", "BA", "AI", "SOUN", "PATH"],
+    description: "Autonomous systems, voice/AI agents, workflow automation, and drone-adjacent software.",
+    symbols: ["AI", "SOUN", "PATH"],
   },
   quantum: {
     name: "Quantum Computing",
     tier: "Emerging Technologies",
-    description: "Quantum computing names and larger companies with quantum exposure.",
-    symbols: ["IONQ", "RGTI", "QBTS", "QUBT", "ARQQ", "IBM", "GOOG", "MSFT", "NVDA", "HON", "AMZN"],
+    description: "Quantum pure plays and larger companies with credible quantum exposure.",
+    symbols: ["IONQ", "RGTI", "QBTS", "QUBT", "ARQQ", "IBM"],
   },
   platform_biotech: {
     name: "Platform Biotech",
     tier: "Emerging Technologies",
-    description: "Selective platform-healthcare and biotech names. Higher binary/catalyst risk.",
-    symbols: ["MRNA", "ALMS", "VKTX", "RXRX", "SDGR", "DNA", "CRSP", "BEAM", "IOVA", "GERN", "ALT", "BCRX", "HIMS", "TMDX", "ISRG"],
+    description: "Selective platform-healthcare and biotech names. Higher catalyst and binary risk.",
+    symbols: ["MRNA", "ALMS", "VKTX", "RXRX", "SDGR", "DNA", "CRSP", "BEAM", "IOVA", "GERN", "ALT", "BCRX", "HIMS", "TMDX"],
   },
 };
+
+const PRIMARY_THEME_BY_SYMBOL = Object.entries(THEME_CONFIG).reduce((acc, [key, config]) => {
+  if (key === "broad") return acc;
+  for (const symbol of config.symbols) {
+    const clean = normalizeSymbol(symbol);
+    if (!acc[clean]) {
+      acc[clean] = { key, name: config.name, tier: config.tier };
+    }
+  }
+  return acc;
+}, {});
+
+THEME_CONFIG.broad.symbols = Object.keys(PRIMARY_THEME_BY_SYMBOL);
 
 function getThemeConfig(themeKey) {
   const clean = String(themeKey || "broad").toLowerCase();
   return THEME_CONFIG[clean] || THEME_CONFIG.broad;
 }
 
+function getPrimaryThemeForSymbol(symbol) {
+  return PRIMARY_THEME_BY_SYMBOL[normalizeSymbol(symbol)] || null;
+}
+
 function getThemesForSymbol(symbol) {
   const normalized = normalizeSymbol(symbol);
-  return Object.entries(THEME_CONFIG)
+  const primary = getPrimaryThemeForSymbol(normalized);
+  const themes = Object.entries(THEME_CONFIG)
     .filter(([key, config]) => key !== "broad" && config.symbols.map(normalizeSymbol).includes(normalized))
-    .map(([key, config]) => ({ key, name: config.name, tier: config.tier }));
+    .map(([key, config]) => ({
+      key,
+      name: config.name,
+      tier: config.tier,
+      primary: primary?.key === key,
+    }));
+
+  if (!primary) return themes;
+
+  return themes.sort((a, b) => Number(b.primary) - Number(a.primary));
+}
+
+function getConvictionScore(stock = {}) {
+  const score = Number(stock.score || stock.compositeScore || 0);
+  const leadership = Number(stock.leadershipScore || stock.relativeStrengthScore || 0);
+  const technical = Number(stock.technicalScore || 0);
+  const entry = Number(stock.entryQualityScore || 0);
+  const action = stock?.recommendation?.label || stock.label || stock.tradeAction || "Avoid";
+  const actionBoost = action === "Buy" ? 8 : action === "Starter" ? 3 : action === "Watch" ? 0 : -8;
+  const raw = score * 0.42 + leadership * 0.28 + technical * 0.20 + entry * 0.10 + actionBoost;
+  return Math.max(0, Math.min(100, Math.round(raw)));
+}
+
+function getConvictionStars(score = 0) {
+  if (score >= 86) return 5;
+  if (score >= 76) return 4;
+  if (score >= 66) return 3;
+  if (score >= 56) return 2;
+  return 1;
 }
 
 function toNumber(value, fallback = null) {
@@ -300,9 +333,12 @@ function normalizeQuote(row = {}, selectedTheme = null, spyQuote = null, qqqQuot
     beta: toNumber(row.beta, null),
     exchange: row.exchange || row.exchangeShortName || "",
     timestamp: row.timestamp || null,
-    themeKey: selectedTheme?.key || null,
-    themeName: selectedTheme?.name || themes[0]?.name || "Broad Market",
-    themeTier: selectedTheme?.tier || themes[0]?.tier || "All Themes",
+    themeKey: selectedTheme?.key === "broad" ? themes[0]?.key || null : selectedTheme?.key || null,
+    themeName: selectedTheme?.key === "broad" ? themes[0]?.name || "Unassigned" : selectedTheme?.name || themes[0]?.name || "Unassigned",
+    themeTier: selectedTheme?.key === "broad" ? themes[0]?.tier || "Unassigned" : selectedTheme?.tier || themes[0]?.tier || "Unassigned",
+    primaryThemeKey: themes[0]?.key || null,
+    primaryThemeName: themes[0]?.name || "Unassigned",
+    primaryThemeTier: themes[0]?.tier || "Unassigned",
     themes,
     spyDayChangePct: spyQuote?.dayChangePct ?? null,
     qqqDayChangePct: qqqQuote?.dayChangePct ?? null,
@@ -380,7 +416,15 @@ export default async function handler(req, res) {
       .filter((row) => !benchmarkSymbols.includes(normalizeSymbol(row.symbol)))
       .map((row) => normalizeQuote(row, selectedTheme, spyQuote, qqqQuote))
       .filter((stock) => stock.symbol && Number.isFinite(Number(stock.price)) && Number(stock.price) > 0)
-      .map(analyzeStock);
+      .map(analyzeStock)
+      .map((stock) => {
+        const convictionScore = getConvictionScore(stock);
+        return {
+          ...stock,
+          convictionScore,
+          convictionStars: getConvictionStars(convictionScore),
+        };
+      });
 
     if (!analyzed.length) {
       return res.status(502).json({
@@ -396,7 +440,7 @@ export default async function handler(req, res) {
       count: stocks.length,
       stocks,
       meta: {
-        mode: "screener_v2_shared_engine",
+        mode: "investment_operating_system_primary_theme_v1",
         dataPath: "FMP batch quote + lib/scoring.js analyzeStock",
         decisionSource: "lib/scoring.js analyzeStock",
         philosophy: "Institutional-quality secular-growth leaders with actionable technical entries.",
