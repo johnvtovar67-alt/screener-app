@@ -1,4 +1,5 @@
 // pages/api/index.js
+// Single-symbol checker. Uses the same lib/scoring.js analyzeStock engine as the broad screener.
 
 import { analyzeStock } from "../../lib/scoring";
 
@@ -23,7 +24,8 @@ function toNumber(value, fallback = null) {
 
 function toPositiveNumber(value, fallback = null) {
   const n = toNumber(value, fallback);
-  return n !== null && Number.isFinite(n) && n > 0 ? n : fallback;
+  if (n === null || !Number.isFinite(n) || n <= 0) return fallback;
+  return n;
 }
 
 async function fetchJson(url) {
@@ -35,46 +37,29 @@ async function fetchJson(url) {
   return response.json();
 }
 
-function calculateDayChangePct(row = {}, price = null, previousClose = null, change = null) {
-  // FMP's stable quote payload has changed names over time. Prefer the actual
-  // dollar change when available because stale percentage fields can produce
-  // impossible +50% / -50% daily moves on normal large caps.
-  const directChange = toNumber(change);
-  const livePrice = toPositiveNumber(price);
-  const prevClose = toPositiveNumber(previousClose);
+function normalizeDayChangePct(row = {}, price = null, previousClose = null, change = null) {
+  const rawCandidates = [row.changesPercentage, row.changePercentage, row.changePercent, row.percentChange]
+    .map((value) => toNumber(value, null))
+    .filter((value) => value !== null);
 
-  if (livePrice !== null && directChange !== null) {
-    const derivedPrevious = livePrice - directChange;
-    if (derivedPrevious > 0) {
-      const derivedPct = (directChange / derivedPrevious) * 100;
-      if (Number.isFinite(derivedPct) && Math.abs(derivedPct) <= 35) {
-        return derivedPct;
-      }
-    }
+  const raw = rawCandidates.length ? rawCandidates[0] : null;
+  let computed = null;
+
+  if (price !== null && previousClose !== null && previousClose > 0) {
+    computed = ((price - previousClose) / previousClose) * 100;
+  } else if (change !== null && previousClose !== null && previousClose > 0) {
+    computed = (change / previousClose) * 100;
   }
 
-  if (livePrice !== null && prevClose !== null) {
-    const derivedPct = ((livePrice - prevClose) / prevClose) * 100;
-    if (Number.isFinite(derivedPct) && Math.abs(derivedPct) <= 35) {
-      return derivedPct;
-    }
+  if (computed !== null && Number.isFinite(computed)) {
+    // Prefer arithmetic from price/previousClose when a vendor field is obviously off.
+    if (raw === null) return computed;
+    if (Math.abs(raw) > 25 && Math.abs(computed) < 15) return computed;
+    if (Math.abs(raw * 100 - computed) < Math.abs(raw - computed)) return raw * 100;
+    return raw;
   }
 
-  const directFields = [
-    row.changesPercentage,
-    row.changePercentage,
-    row.changePercent,
-    row.dayChangePct,
-  ];
-
-  for (const field of directFields) {
-    const pct = toNumber(field);
-    if (pct !== null && Number.isFinite(pct) && Math.abs(pct) <= 35) {
-      return pct;
-    }
-  }
-
-  return null;
+  return raw;
 }
 
 function normalizeQuote(rawQuote = {}, requestedSymbol = "") {
@@ -82,8 +67,7 @@ function normalizeQuote(rawQuote = {}, requestedSymbol = "") {
   const price = toPositiveNumber(rawQuote.price);
   const previousClose = toPositiveNumber(rawQuote.previousClose);
   const change = toNumber(rawQuote.change);
-
-  const dayChangePct = calculateDayChangePct(rawQuote, price, previousClose, change);
+  const dayChangePct = normalizeDayChangePct(rawQuote, price, previousClose, change);
 
   return {
     ...rawQuote,
@@ -101,7 +85,7 @@ function normalizeQuote(rawQuote = {}, requestedSymbol = "") {
     changesPercentage: dayChangePct,
     changePercent: dayChangePct,
     volume: toPositiveNumber(rawQuote.volume),
-    avgVolume: toPositiveNumber(rawQuote.avgVolume ?? rawQuote.averageVolume),
+    avgVolume: toPositiveNumber(rawQuote.avgVolume ?? rawQuote.averageVolume ?? rawQuote.volume),
     marketCap: toPositiveNumber(rawQuote.marketCap),
     priceAvg50: toPositiveNumber(rawQuote.priceAvg50 ?? rawQuote.priceAvg50d ?? rawQuote.fiftyDayAverage),
     fiftyDayAverage: toPositiveNumber(rawQuote.priceAvg50 ?? rawQuote.priceAvg50d ?? rawQuote.fiftyDayAverage),
@@ -128,6 +112,7 @@ async function fetchQuote(symbol) {
   ];
 
   let lastError = null;
+
   for (const url of urls) {
     try {
       const data = await fetchJson(url);
@@ -154,7 +139,9 @@ function attachMarketRelativeData(row, spyQuote, qqqQuote) {
 
 export default async function handler(req, res) {
   try {
-    const symbol = normalizeSymbol(req.query.symbol);
+    res.setHeader("Cache-Control", "no-store, max-age=0");
+
+    const symbol = String(req.query.symbol || "").trim().toUpperCase();
     if (!symbol) return res.status(400).json({ error: "Missing symbol." });
 
     const [quote, spyQuote, qqqQuote] = await Promise.all([
@@ -163,14 +150,14 @@ export default async function handler(req, res) {
       fetchQuote("QQQ").catch(() => null),
     ]);
 
-    const stock = analyzeStock(attachMarketRelativeData(quote, spyQuote, qqqQuote));
+    const base = attachMarketRelativeData(quote, spyQuote, qqqQuote);
+    const stock = analyzeStock(base);
 
     return res.status(200).json({
       stock,
       meta: {
-        mode: "single_symbol_quote_screen",
-        model: "shared_analyzeStock_v1",
-        allowedActions: ["Buy", "Starter", "Watch", "Avoid"],
+        mode: "single_symbol_screener_v2_shared_engine",
+        decisionSource: "lib/scoring.js analyzeStock",
         spyChange: spyQuote?.dayChangePct ?? null,
         qqqChange: qqqQuote?.dayChangePct ?? null,
       },
