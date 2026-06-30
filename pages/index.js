@@ -197,9 +197,9 @@ function getRiskPlanText(stock = {}) {
   const invalidation = formatRiskPrice(plan.invalidationPrice);
   const trim = formatRiskPrice(plan.firstTrimPrice);
 
-  if (action === "Buy") return `Exit/reassess < ${invalidation} • Trim zone ${trim}`;
-  if (action === "Starter") return `Add > ${addAbove} • Reassess < ${invalidation}`;
-  if (action === "Watch") return `Trigger > ${addAbove}`;
+  if (action === "Buy") return `Review below ${invalidation} • Profit review above ${trim}`;
+  if (action === "Starter") return `Add above ${addAbove} • Review below ${invalidation}`;
+  if (action === "Watch") return `Trigger above ${addAbove}`;
   return "No new capital.";
 }
 
@@ -576,19 +576,19 @@ function portfolioProfitPlan(stock) {
   if (!Number.isFinite(price) || price <= 0) return "No profit level available without a live quote.";
 
   if (Number.isFinite(stretch) && stretch > 0 && price >= stretch) {
-    return `Stretch zone active above ${stretchText}. Consider trimming 15–25% if position size is large.`;
+    return `Stretch zone active above ${stretchText}. Consider trimming 20–30% or tightening risk controls.`;
   }
 
   if (Number.isFinite(firstTrim) && firstTrim > 0 && price >= firstTrim) {
     if (risk >= 70 || momentum < 60) {
-      return `Trim zone active above ${firstTrimText}. Consider reducing 10–20% to protect gains.`;
+      return `Profit zone active above ${firstTrimText}. Consider trimming 10–25% to capture gains.`;
     }
 
-    return `Profit review active above ${firstTrimText}. Let it run unless it becomes extended or momentum fades.`;
+    return `Profit review active above ${firstTrimText}. Let it run, but consider a partial trim if momentum fades.`;
   }
 
   if (Number.isFinite(gainLossPct) && gainLossPct >= 35 && (risk >= 72 || momentum < 58)) {
-    return "Protect gains. Consider trimming 10–20% if strength does not resume.";
+    return "Protect gains. Consider trimming 10–25% if strength does not resume.";
   }
 
   if (Number.isFinite(gainLossPct) && gainLossPct >= 18) {
@@ -599,7 +599,7 @@ function portfolioProfitPlan(stock) {
     return `No trim yet. Review gains near ${firstTrimText}.`;
   }
 
-  return `Focus on thesis and risk first. Profit review begins near ${firstTrimText}.`;
+  return `Focus on risk first. Profit review begins near ${firstTrimText}.`;
 }
 
 function portfolioNextDecision(stock) {
@@ -697,7 +697,7 @@ function OpportunityCard({ stock }) {
       </div>
 
       <div className="riskPlanBox">
-        <span>Risk Plan</span>
+        <span>Position Plan</span>
         <strong>{getRiskPlanText(stock)}</strong>
       </div>
 
@@ -1219,7 +1219,7 @@ export default function Home() {
           <section className="card actionCard">
             <div className="sectionTitle compactSectionTitle">
               <h2>🔥 Opportunities</h2>
-              <p>Fresh money only. Decision Clock = when this investment is likely to require your next decision, not how long you must wait before buying.</p>
+              <p>Fresh money only. Decision Clock = when this investment is likely to require your next decision, not a mandatory waiting period.</p>
             </div>
 
             {loadingTop && stocks.length === 0 && <p className="muted">Loading opportunities...</p>}
@@ -1261,7 +1261,7 @@ export default function Home() {
             <div className="sectionTitle">
               <div>
                 <h2>💼 My Portfolio</h2>
-                <p>Designed for owned positions: thesis health, add/hold/trim decisions, and next action.</p>
+                <p>Designed for this trading account: thesis health, add/hold/trim decisions, profit review zones, and next action.</p>
               </div>
 
               <div className="buttonRow">
@@ -1297,7 +1297,7 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h2>Portfolio Decisions</h2>
-                  <p>This is not a fresh-capital screen. It evaluates thesis health, add/hold/trim decisions, and profit review zones.</p>
+                  <p>This is not a fresh-capital screen. It manages owned positions: add, hold, reduce, and profit review zones.</p>
                 </div>
 
                 <div className="totals">
@@ -1474,7 +1474,7 @@ export default function Home() {
                   <strong>{getTriggerNeeded(snapStock)}</strong>
                 </div>
                 <div>
-                  <span>Risk Plan</span>
+                  <span>Position Plan</span>
                   <strong>{getRiskPlanText(snapStock)}</strong>
                 </div>
               </div>
