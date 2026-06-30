@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
+const ACTION_MEMORY_KEY = "stock_screener_action_memory_v1";
 
 const CASH_SYMBOLS = ["CASH", "SWVXX", "VMFXX", "SPAXX", "FDRXX", "MMF"];
 
@@ -150,6 +151,143 @@ function priceChangeClass(stock) {
   const pct = getChangePct(stock);
   const n = Number.isFinite(change) ? change : pct;
   return Number(n) >= 0 ? "positive" : "negative";
+}
+
+
+function getLocalTradeDate() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function readActionMemory() {
+  try {
+    const raw = window.localStorage.getItem(ACTION_MEMORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeActionMemory(memory) {
+  try {
+    window.localStorage.setItem(ACTION_MEMORY_KEY, JSON.stringify(memory || {}));
+  } catch {
+    // Ignore storage failures; the screener still works without same-day memory.
+  }
+}
+
+function getRiskPlan(stock = {}) {
+  const direct = stock?.riskPlan ?? stock?.recommendation?.riskPlan;
+  return direct && typeof direct === "object" ? direct : {};
+}
+
+function formatRiskPrice(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? money(n) : "—";
+}
+
+function getRiskPlanText(stock = {}) {
+  const action = nonOwnedAction(stock);
+  const plan = getRiskPlan(stock);
+  const addAbove = formatRiskPrice(plan.addAbovePrice);
+  const invalidation = formatRiskPrice(plan.invalidationPrice);
+  const trim = formatRiskPrice(plan.firstTrimPrice);
+
+  if (action === "Buy") return `Exit/reassess < ${invalidation} • Trim zone ${trim}`;
+  if (action === "Starter") return `Add > ${addAbove} • Reassess < ${invalidation}`;
+  if (action === "Watch") return `Trigger > ${addAbove}`;
+  return "No new capital.";
+}
+
+function isMaterialBreakdown(stock = {}) {
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumScore(stock);
+  const price = getPrice(stock);
+  const plan = getRiskPlan(stock);
+  const invalidation = Number(plan.invalidationPrice);
+
+  if (score < 65) return true;
+  if (trigger < 58) return true;
+  if (momentum < 52) return true;
+  if (Number.isFinite(price) && Number.isFinite(invalidation) && invalidation > 0 && price < invalidation) return true;
+
+  return false;
+}
+
+function stabilizeSameDayStarter(stock = {}) {
+  if (typeof window === "undefined" || !stock) return stock;
+
+  const symbol = getSymbol(stock);
+  if (!symbol || isCashLikeSymbol(symbol)) return stock;
+
+  const today = getLocalTradeDate();
+  const currentAction = nonOwnedAction(stock);
+  const memory = readActionMemory();
+  const prior = memory[symbol];
+
+  let nextStock = stock;
+
+  const canPreserveStarter =
+    prior?.date === today &&
+    prior?.action === "Starter" &&
+    currentAction !== "Buy" &&
+    currentAction !== "Starter" &&
+    !isMaterialBreakdown(stock);
+
+  if (canPreserveStarter) {
+    const existingRec = getRecommendation(stock);
+    nextStock = {
+      ...stock,
+      stabilizedStarter: true,
+      originalAction: currentAction,
+      displayLabel: "Starter",
+      label: "Starter",
+      action: "Starter",
+      tradeAction: "Starter",
+      actionSummary: "Existing starter remains acceptable. Do not add until confirmation.",
+      dominantReason: "Same-day starter stability is active; intraday noise has not materially broken the setup.",
+      entryNote: getRiskPlanText(stock),
+      triggerNeeded: getRiskPlanText(stock),
+      recommendation: {
+        ...existingRec,
+        label: "Starter",
+        displayLabel: "Starter",
+        recommendation: "Starter",
+        tradeAction: "Starter",
+        actionSummary: "Existing starter remains acceptable. Do not add until confirmation.",
+        dominantReason: "Same-day starter stability is active; intraday noise has not materially broken the setup.",
+        entryNote: getRiskPlanText(stock),
+        triggerNeeded: getRiskPlanText(stock),
+      },
+    };
+  }
+
+  const nextAction = nonOwnedAction(nextStock);
+  const nextPlan = getRiskPlan(nextStock);
+
+  if (nextAction === "Buy" || nextAction === "Starter") {
+    memory[symbol] = {
+      date: today,
+      action: nextAction,
+      score: getScore(nextStock),
+      trigger: getTrigger(nextStock),
+      momentum: getMomentumScore(nextStock),
+      invalidationPrice: nextPlan.invalidationPrice ?? null,
+      recordedAt: new Date().toISOString(),
+    };
+    writeActionMemory(memory);
+  }
+
+  return nextStock;
+}
+
+function stabilizeStockList(rows = []) {
+  return rows.map(stabilizeSameDayStarter);
 }
 
 function getRecommendation(stock) {
@@ -421,6 +559,49 @@ function portfolioRisk(stock) {
   return "Low";
 }
 
+function portfolioProfitPlan(stock) {
+  if (isCashLikeSymbol(stock)) return "No profit plan needed.";
+
+  const price = getPrice(stock);
+  const plan = getRiskPlan(stock);
+  const firstTrim = Number(plan.firstTrimPrice);
+  const stretch = Number(plan.stretchTargetPrice);
+  const gainLossPct = Number(stock?.gainLossPct);
+  const risk = getExpectationRisk(stock);
+  const momentum = getMomentumScore(stock);
+
+  const firstTrimText = formatRiskPrice(firstTrim);
+  const stretchText = formatRiskPrice(stretch);
+
+  if (!Number.isFinite(price) || price <= 0) return "No profit level available without a live quote.";
+
+  if (Number.isFinite(stretch) && stretch > 0 && price >= stretch) {
+    return `Stretch zone active above ${stretchText}. Consider trimming 15–25% if position size is large.`;
+  }
+
+  if (Number.isFinite(firstTrim) && firstTrim > 0 && price >= firstTrim) {
+    if (risk >= 70 || momentum < 60) {
+      return `Trim zone active above ${firstTrimText}. Consider reducing 10–20% to protect gains.`;
+    }
+
+    return `Profit review active above ${firstTrimText}. Let it run unless it becomes extended or momentum fades.`;
+  }
+
+  if (Number.isFinite(gainLossPct) && gainLossPct >= 35 && (risk >= 72 || momentum < 58)) {
+    return "Protect gains. Consider trimming 10–20% if strength does not resume.";
+  }
+
+  if (Number.isFinite(gainLossPct) && gainLossPct >= 18) {
+    return `Let winners run. First profit review near ${firstTrimText}.`;
+  }
+
+  if (Number.isFinite(gainLossPct) && gainLossPct > 0) {
+    return `No trim yet. Review gains near ${firstTrimText}.`;
+  }
+
+  return `Focus on thesis and risk first. Profit review begins near ${firstTrimText}.`;
+}
+
 function portfolioNextDecision(stock) {
   if (isCashLikeSymbol(stock)) return "Hold cash / dry powder.";
 
@@ -514,6 +695,15 @@ function OpportunityCard({ stock }) {
         <span>Position Size</span>
         <strong>{getPositionSize(stock)}</strong>
       </div>
+
+      <div className="riskPlanBox">
+        <span>Risk Plan</span>
+        <strong>{getRiskPlanText(stock)}</strong>
+      </div>
+
+      {stock?.stabilizedStarter && (
+        <p className="stabilityNote">Same-day starter stability: do not add until confirmation.</p>
+      )}
     </article>
   );
 }
@@ -667,7 +857,7 @@ export default function Home() {
         throw new Error(data?.detail || data?.error || "Failed to load trade screen.");
       }
 
-      const list = Array.isArray(data?.stocks) ? data.stocks : [];
+      const list = stabilizeStockList(Array.isArray(data?.stocks) ? data.stocks : []);
 
       if (theme === "opportunities") {
         setStocks(list);
@@ -818,7 +1008,7 @@ export default function Home() {
           throw new Error(`No usable quote data returned for ${cleanSymbol}.`);
         }
 
-        return stock;
+        return stabilizeSameDayStarter(stock);
       } catch (err) {
         lastError = err;
       }
@@ -1107,7 +1297,7 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h2>Portfolio Decisions</h2>
-                  <p>This is not a fresh-capital screen. It evaluates whether the owned thesis is still healthy.</p>
+                  <p>This is not a fresh-capital screen. It evaluates thesis health, add/hold/trim decisions, and profit review zones.</p>
                 </div>
 
                 <div className="totals">
@@ -1128,6 +1318,7 @@ export default function Home() {
                       <th>Action</th>
                       <th>Health</th>
                       <th>Risk</th>
+                      <th>Profit Plan</th>
                       <th>Price</th>
                       <th>Gain / Loss</th>
                       <th>Next Decision</th>
@@ -1151,6 +1342,7 @@ export default function Home() {
                             <span className="smallBadge">{stock.error ? "—" : portfolioHealth(stock)}</span>
                           </td>
                           <td>{stock.error ? "—" : portfolioRisk(stock)}</td>
+                          <td className="profitPlanCell">{stock.error ? "—" : portfolioProfitPlan(stock)}</td>
                           <td>
                             {stock.error ? (
                               "—"
@@ -1280,6 +1472,10 @@ export default function Home() {
                 <div>
                   <span>Decision</span>
                   <strong>{getTriggerNeeded(snapStock)}</strong>
+                </div>
+                <div>
+                  <span>Risk Plan</span>
+                  <strong>{getRiskPlanText(snapStock)}</strong>
                 </div>
               </div>
             </div>
@@ -1618,6 +1814,42 @@ export default function Home() {
           padding-top: 8px;
           border-top: 1px solid #e2e8f0;
         }
+
+        .riskPlanBox {
+          margin-top: 10px;
+          border: 1px solid #dbe5f1;
+          background: #f8fafc;
+          border-radius: 12px;
+          padding: 9px 10px;
+        }
+
+        .riskPlanBox span {
+          display: block;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0.02em;
+          margin-bottom: 4px;
+        }
+
+        .riskPlanBox strong {
+          display: block;
+          color: #0f172a;
+          font-size: 13px;
+          line-height: 1.35;
+        }
+
+        .stabilityNote {
+          margin-top: 8px;
+          color: #7c2d12;
+          background: #ffedd5;
+          border: 1px solid #fed7aa;
+          border-radius: 10px;
+          padding: 8px;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
 
         .tableWrap {
           overflow-x: auto;
