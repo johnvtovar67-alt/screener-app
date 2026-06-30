@@ -587,6 +587,7 @@ function scoreQuote(normalized = {}) {
       momentumScore,
     },
     action,
+    riskPlan: recommendation?.riskPlan ?? null,
     technicalSnapshot,
     fundamentalSnapshot,
   };
@@ -600,6 +601,7 @@ function enrichOutput(stock = {}) {
     convictionGrade: getConvictionGrade(stock),
     catalyst: getCatalyst(stock),
     decisionClock: getDecisionClock(stock),
+    riskPlan: stock.riskPlan ?? stock.recommendation?.riskPlan ?? null,
   };
 }
 
