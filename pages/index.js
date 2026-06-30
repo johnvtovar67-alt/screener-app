@@ -197,7 +197,7 @@ function getRiskPlanText(stock = {}) {
   const invalidation = formatRiskPrice(plan.invalidationPrice);
   const trim = formatRiskPrice(plan.firstTrimPrice);
 
-  if (action === "Buy") return `Review below ${invalidation} • Profit review above ${trim}`;
+  if (action === "Buy") return `Review below ${invalidation} • Review gains above ${trim}`;
   if (action === "Starter") return `Add above ${addAbove} • Review below ${invalidation}`;
   if (action === "Watch") return `Trigger above ${addAbove}`;
   return "No new capital.";
@@ -576,15 +576,15 @@ function portfolioProfitPlan(stock) {
   if (!Number.isFinite(price) || price <= 0) return "No profit level available without a live quote.";
 
   if (Number.isFinite(stretch) && stretch > 0 && price >= stretch) {
-    return `Stretch zone active above ${stretchText}. Consider trimming 20–30% or tightening risk controls.`;
+    return `Extended zone active above ${stretchText}. Consider trimming 20–30% or tightening risk controls.`;
   }
 
   if (Number.isFinite(firstTrim) && firstTrim > 0 && price >= firstTrim) {
     if (risk >= 70 || momentum < 60) {
-      return `Profit zone active above ${firstTrimText}. Consider trimming 10–25% to capture gains.`;
+      return `Profit review active above ${firstTrimText}. Consider trimming 10–25% to capture gains.`;
     }
 
-    return `Profit review active above ${firstTrimText}. Let it run, but consider a partial trim if momentum fades.`;
+    return `Review gains above ${firstTrimText}. Let it run, but consider a partial trim if momentum fades.`;
   }
 
   if (Number.isFinite(gainLossPct) && gainLossPct >= 35 && (risk >= 72 || momentum < 58)) {
@@ -592,14 +592,14 @@ function portfolioProfitPlan(stock) {
   }
 
   if (Number.isFinite(gainLossPct) && gainLossPct >= 18) {
-    return `Let winners run. First profit review near ${firstTrimText}.`;
+    return `Let winners run. Review gains near ${firstTrimText}.` ;
   }
 
   if (Number.isFinite(gainLossPct) && gainLossPct > 0) {
     return `No trim yet. Review gains near ${firstTrimText}.`;
   }
 
-  return `Focus on risk first. Profit review begins near ${firstTrimText}.`;
+  return `Risk first. Profit review is not relevant until price reclaims ${firstTrimText}.`;
 }
 
 function portfolioNextDecision(stock) {
