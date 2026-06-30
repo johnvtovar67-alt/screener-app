@@ -190,15 +190,40 @@ function formatRiskPrice(value) {
   return Number.isFinite(n) && n > 0 ? money(n) : "—";
 }
 
+function formatPlanPct(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "";
+  return `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
+}
+
+function getTradeQuality(stock = {}) {
+  const plan = getRiskPlan(stock);
+  return String(plan.tradeQualityLabel || plan.tradeQuality || "Unavailable");
+}
+
+function getTradeQualityClass(stock = {}) {
+  const quality = getTradeQuality(stock).toLowerCase();
+  if (quality === "excellent") return "excellent";
+  if (quality === "good") return "good";
+  if (quality === "thin") return "thin";
+  if (quality === "poor") return "poor";
+  return "neutral";
+}
+
 function getRiskPlanText(stock = {}) {
   const action = nonOwnedAction(stock);
   const plan = getRiskPlan(stock);
   const addAbove = formatRiskPrice(plan.addAbovePrice);
   const invalidation = formatRiskPrice(plan.invalidationPrice);
   const trim = formatRiskPrice(plan.firstTrimPrice);
+  const downside = formatPlanPct(-Math.abs(Number(plan.downsideToReviewPct)));
+  const upside = formatPlanPct(plan.upsideToFirstTrimPct);
 
-  if (action === "Buy") return `Review below ${invalidation} • Review gains above ${trim}`;
-  if (action === "Starter") return `Add above ${addAbove} • Review below ${invalidation}`;
+  const belowText = downside ? `${invalidation} (${downside})` : invalidation;
+  const gainText = upside ? `${trim} (${upside})` : trim;
+
+  if (action === "Buy") return `Review below ${belowText} • Review gains above ${gainText}`;
+  if (action === "Starter") return `Add above ${addAbove} • Review below ${belowText}`;
   if (action === "Watch") return `Trigger above ${addAbove}`;
   return "No new capital.";
 }
@@ -699,6 +724,7 @@ function OpportunityCard({ stock }) {
       <div className="riskPlanBox">
         <span>Position Plan</span>
         <strong>{getRiskPlanText(stock)}</strong>
+        <em className={`tradeQuality ${getTradeQualityClass(stock)}`}>Trade Quality: {getTradeQuality(stock)}</em>
       </div>
 
       {stock?.stabilizedStarter && (
@@ -1477,6 +1503,10 @@ export default function Home() {
                   <span>Position Plan</span>
                   <strong>{getRiskPlanText(snapStock)}</strong>
                 </div>
+                <div>
+                  <span>Trade Quality</span>
+                  <strong>{getTradeQuality(snapStock)}</strong>
+                </div>
               </div>
             </div>
           )}
@@ -1837,6 +1867,49 @@ export default function Home() {
           color: #0f172a;
           font-size: 13px;
           line-height: 1.35;
+        }
+
+        .tradeQuality {
+          display: inline-flex;
+          align-items: center;
+          margin-top: 8px;
+          border-radius: 999px;
+          padding: 4px 8px;
+          font-style: normal;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.02em;
+          border: 1px solid transparent;
+        }
+
+        .tradeQuality.excellent {
+          background: #dcfce7;
+          color: #14532d;
+          border-color: #86efac;
+        }
+
+        .tradeQuality.good {
+          background: #e0f2fe;
+          color: #075985;
+          border-color: #7dd3fc;
+        }
+
+        .tradeQuality.thin {
+          background: #fef3c7;
+          color: #92400e;
+          border-color: #fcd34d;
+        }
+
+        .tradeQuality.poor {
+          background: #fee2e2;
+          color: #991b1b;
+          border-color: #fecaca;
+        }
+
+        .tradeQuality.neutral {
+          background: #f1f5f9;
+          color: #475569;
+          border-color: #cbd5e1;
         }
 
         .stabilityNote {
