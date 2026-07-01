@@ -706,35 +706,35 @@ function portfolioThesisTracker(stock) {
   const price = getPrice(stock);
   const plan = getRiskPlan(stock);
   const invalidation = Number(plan.invalidationPrice);
+  const belowReview = Number.isFinite(price) && Number.isFinite(invalidation) && invalidation > 0 && price < invalidation;
 
-  if (Number.isFinite(price) && Number.isFinite(invalidation) && invalidation > 0 && price < invalidation) {
-    return { status: "Broken", detail: `Below review level. ${theme} thesis needs a hard reassessment.` };
-  }
-
-  if (score < 48 && trigger < 50) {
-    return { status: "Broken", detail: `Score and trigger are weak. ${theme} thesis is not being confirmed.` };
-  }
-
-  if (Number.isFinite(gainLossPct) && gainLossPct <= -20 && score < 60) {
-    return { status: "Testing", detail: `Large drawdown. ${theme} thesis needs proof before adding.` };
-  }
-
+  // Thesis Tracker is intentionally broader than the current trade setup.
+  // It should answer: "Is the original reason for owning this still plausible?"
+  // Price/trigger weakness can mean the thesis is not confirming yet, but that is different from declaring it broken.
   if (score >= 72 && trigger >= 60 && momentum >= 58 && risk < 78) {
-    return { status: "Intact", detail: `${theme} thesis is still supported by score, trigger, and momentum.` };
+    return { status: "Confirmed", detail: `${theme} thesis is being confirmed by score, trigger, and momentum.` };
   }
 
   if (score >= 60 && (trigger >= 55 || momentum >= 55)) {
-    return { status: "Intact / Watch", detail: `${theme} thesis is still plausible, but confirmation is not strong enough for aggressive adds.` };
+    return { status: "Intact", detail: `${theme} thesis remains plausible, but confirmation is not strong enough for aggressive adds.` };
   }
 
-  return { status: "Testing", detail: `${theme} thesis is mixed; wait for better confirmation.` };
+  if (Number.isFinite(gainLossPct) && gainLossPct <= -30 && score < 45 && trigger < 45 && momentum < 45) {
+    return { status: "Broken", detail: `${theme} thesis is failing both price action and scoring; reassess whether the original reason still holds.` };
+  }
+
+  if (belowReview || (Number.isFinite(gainLossPct) && gainLossPct <= -20) || (score < 50 && trigger < 50)) {
+    return { status: "Not Confirming", detail: `${theme} thesis may still be valid, but current price action and scoring are not confirming it.` };
+  }
+
+  return { status: "Testing", detail: `${theme} thesis is plausible but mixed; wait for better evidence before adding.` };
 }
 
 function portfolioThesisClass(stock) {
   const status = portfolioThesisTracker(stock).status;
-  if (status === "Intact") return "green";
-  if (status === "Intact / Watch") return "yellow";
-  if (status === "Testing") return "orange";
+  if (status === "Confirmed") return "green";
+  if (status === "Intact") return "yellow";
+  if (status === "Testing" || status === "Not Confirming") return "orange";
   if (status === "Broken" || status === "Needs Data") return "red";
   return "gray";
 }
@@ -1490,7 +1490,7 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h2>Portfolio Intelligence</h2>
-                  <p>Owned-position view: thesis tracker, health why, recommended action, capital priority, and profit review plan.</p>
+                  <p>Owned-position view: broader thesis status, health why, recommended action, capital priority, and profit review plan.</p>
                 </div>
 
                 <div className="totals">
@@ -1514,7 +1514,6 @@ export default function Home() {
                       <th>Profit Plan</th>
                       <th>Price</th>
                       <th>Gain / Loss</th>
-                      <th>Next Decision</th>
                     </tr>
                   </thead>
 
@@ -1568,7 +1567,6 @@ export default function Home() {
                           <td className={stock.gainLoss >= 0 ? "positive" : "negative"}>
                             {stock.error ? "—" : `${money(stock.gainLoss)} / ${percent(stock.gainLossPct)}`}
                           </td>
-                          <td>{stock.error ? stock.error : portfolioNextDecision(stock)}</td>
                         </tr>
                       );
                     })}
