@@ -572,6 +572,173 @@ function portfolioHealth(stock) {
   return "C";
 }
 
+function portfolioHealthScore(stock) {
+  if (isCashLikeSymbol(stock)) return 100;
+
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumScore(stock);
+  const risk = getExpectationRisk(stock);
+
+  return Math.round(score * 0.38 + trigger * 0.24 + momentum * 0.22 + (100 - risk) * 0.16);
+}
+
+function portfolioHealthWhy(stock) {
+  if (isCashLikeSymbol(stock)) return "Dry powder; no thesis risk.";
+
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumScore(stock);
+  const risk = getExpectationRisk(stock);
+  const gainLossPct = Number(stock?.gainLossPct);
+  const health = portfolioHealthScore(stock);
+
+  if (health >= 78 && trigger >= 65 && momentum >= 60 && risk < 72) {
+    return "Strong score, confirmed setup, and manageable risk.";
+  }
+
+  if (health >= 72 && trigger >= 60) {
+    return risk >= 72
+      ? "Healthy thesis, but risk is elevated. Add carefully."
+      : "Thesis is healthy; setup remains constructive.";
+  }
+
+  if (Number.isFinite(gainLossPct) && gainLossPct <= -20 && score < 60) {
+    return "Loss is large and score is weak; thesis needs proof.";
+  }
+
+  if (trigger < 55 && momentum < 55) {
+    return "Trigger and momentum are weak; do not add until repaired.";
+  }
+
+  if (risk >= 78) {
+    return "Risk is elevated; protect capital before adding.";
+  }
+
+  if (health < 58) {
+    return "Below-average health; thesis is being tested.";
+  }
+
+  return "Mixed but acceptable; hold unless conditions worsen.";
+}
+
+function portfolioRecommendedAction(stock) {
+  if (stock?.error) return "Manual Review";
+  return portfolioAction(stock);
+}
+
+function portfolioActionWhy(stock) {
+  if (stock?.error) return stock.error;
+
+  const action = portfolioRecommendedAction(stock);
+  const buyAction = nonOwnedAction(stock);
+  const quality = getTradeQuality(stock);
+  const gainLossPct = Number(stock?.gainLossPct);
+
+  if (action === "Hold / Add") return `Owned position remains addable. Fresh-money signal is ${buyAction} with ${quality} trade quality.`;
+  if (action === "Trim") return "Position has entered a gain-protection zone; trim only if momentum fades.";
+  if (action === "Review / Reduce") return "Thesis or price structure is weak enough to review exposure.";
+  if (action === "Cash") return "Cash is available for better setups.";
+  if (buyAction === "Buy") return "Hold existing shares. Add selectively; avoid chasing.";
+  if (buyAction === "Starter") return "Hold existing shares. Add only after confirmation.";
+  if (buyAction === "Watch") return "Hold only; not attractive for new money yet.";
+
+  if (Number.isFinite(gainLossPct) && gainLossPct < -15) return "Hold only if the thesis still matches your original reason for owning it.";
+  return "Hold existing position and wait for clearer evidence.";
+}
+
+function portfolioCapitalPriority(stock) {
+  if (stock?.error) return "Manual Review";
+  if (isCashLikeSymbol(stock)) return "Dry Powder";
+
+  const action = portfolioRecommendedAction(stock);
+  const health = portfolioHealthScore(stock);
+  const quality = getTradeQuality(stock);
+  const risk = getExpectationRisk(stock);
+  const buyAction = nonOwnedAction(stock);
+  const gainLossPct = Number(stock?.gainLossPct);
+
+  if (action === "Trim") return "Harvest Gains";
+  if (action === "Review / Reduce") return "Defense First";
+  if (Number.isFinite(gainLossPct) && gainLossPct <= -20 && health < 64) return "Defense First";
+  if (action === "Hold / Add" && ["Excellent", "Good"].includes(quality) && health >= 72) return "Add Candidate";
+  if (buyAction === "Buy" && ["Excellent", "Good"].includes(quality) && risk < 75) return "Selective Add";
+  if (buyAction === "Starter" || quality === "Thin") return "Small Only";
+  if (quality === "Poor" || buyAction === "Watch" || buyAction === "Avoid") return "No New Capital";
+
+  return "Hold Existing";
+}
+
+function portfolioCapitalWhy(stock) {
+  const priority = portfolioCapitalPriority(stock);
+
+  if (priority === "Add Candidate") return "One of the better places for incremental dollars.";
+  if (priority === "Selective Add") return "Can add, but only on pullback or confirmation.";
+  if (priority === "Small Only") return "Starter-size add only; payoff or confirmation is not strong enough for full size.";
+  if (priority === "No New Capital") return "Keep existing shares only; fresh money should go elsewhere.";
+  if (priority === "Defense First") return "Focus on preserving capital before considering adds.";
+  if (priority === "Harvest Gains") return "Consider capturing part of the gain if the move stalls.";
+  if (priority === "Dry Powder") return "Available cash for stronger opportunities.";
+  if (priority === "Manual Review") return "Data issue; verify manually before acting.";
+
+  return "Hold position; not a priority for new capital.";
+}
+
+function portfolioPriorityClass(stock) {
+  const priority = portfolioCapitalPriority(stock);
+  if (["Add Candidate", "Selective Add"].includes(priority)) return "green";
+  if (["Small Only", "Hold Existing"].includes(priority)) return "yellow";
+  if (["Defense First", "Harvest Gains"].includes(priority)) return "orange";
+  if (["No New Capital", "Manual Review"].includes(priority)) return "red";
+  return "gray";
+}
+
+function portfolioThesisTracker(stock) {
+  if (stock?.error) return { status: "Needs Data", detail: "Quote or scoring data was unavailable." };
+  if (isCashLikeSymbol(stock)) return { status: "Dry Powder", detail: "Cash has no operating thesis; keep available for better setups." };
+
+  const score = getScore(stock);
+  const trigger = getTrigger(stock);
+  const momentum = getMomentumScore(stock);
+  const risk = getExpectationRisk(stock);
+  const gainLossPct = Number(stock?.gainLossPct);
+  const theme = portfolioThesis(stock);
+  const price = getPrice(stock);
+  const plan = getRiskPlan(stock);
+  const invalidation = Number(plan.invalidationPrice);
+
+  if (Number.isFinite(price) && Number.isFinite(invalidation) && invalidation > 0 && price < invalidation) {
+    return { status: "Broken", detail: `Below review level. ${theme} thesis needs a hard reassessment.` };
+  }
+
+  if (score < 48 && trigger < 50) {
+    return { status: "Broken", detail: `Score and trigger are weak. ${theme} thesis is not being confirmed.` };
+  }
+
+  if (Number.isFinite(gainLossPct) && gainLossPct <= -20 && score < 60) {
+    return { status: "Testing", detail: `Large drawdown. ${theme} thesis needs proof before adding.` };
+  }
+
+  if (score >= 72 && trigger >= 60 && momentum >= 58 && risk < 78) {
+    return { status: "Intact", detail: `${theme} thesis is still supported by score, trigger, and momentum.` };
+  }
+
+  if (score >= 60 && (trigger >= 55 || momentum >= 55)) {
+    return { status: "Intact / Watch", detail: `${theme} thesis is still plausible, but confirmation is not strong enough for aggressive adds.` };
+  }
+
+  return { status: "Testing", detail: `${theme} thesis is mixed; wait for better confirmation.` };
+}
+
+function portfolioThesisClass(stock) {
+  const status = portfolioThesisTracker(stock).status;
+  if (status === "Intact") return "green";
+  if (status === "Intact / Watch") return "yellow";
+  if (status === "Testing") return "orange";
+  if (status === "Broken" || status === "Needs Data") return "red";
+  return "gray";
+}
+
 function portfolioRisk(stock) {
   if (isCashLikeSymbol(stock)) return "Low";
 
@@ -1322,8 +1489,8 @@ export default function Home() {
             <section className="card">
               <div className="sectionTitle">
                 <div>
-                  <h2>Portfolio Decisions</h2>
-                  <p>This is not a fresh-capital screen. It manages owned positions: add, hold, reduce, and profit review zones.</p>
+                  <h2>Portfolio Intelligence</h2>
+                  <p>Owned-position view: thesis tracker, health why, recommended action, capital priority, and profit review plan.</p>
                 </div>
 
                 <div className="totals">
@@ -1340,10 +1507,10 @@ export default function Home() {
                   <thead>
                     <tr>
                       <th>Symbol</th>
-                      <th>Thesis</th>
-                      <th>Action</th>
-                      <th>Health</th>
-                      <th>Risk</th>
+                      <th>Thesis Tracker</th>
+                      <th>Health Why</th>
+                      <th>Recommended Action</th>
+                      <th>Capital Priority</th>
                       <th>Profit Plan</th>
                       <th>Price</th>
                       <th>Gain / Loss</th>
@@ -1353,21 +1520,40 @@ export default function Home() {
 
                   <tbody>
                     {portfolioResults.map((stock) => {
-                      const action = stock.error ? "Review / Reduce" : portfolioAction(stock);
+                      const action = portfolioRecommendedAction(stock);
+                      const tracker = portfolioThesisTracker(stock);
                       return (
                         <tr key={getSymbol(stock)}>
                           <td>
                             <strong>{getSymbol(stock)}</strong>
                             <div className="mutedSmall">{getName(stock)}</div>
-                          </td>
-                          <td>{stock.error ? "Data unavailable" : portfolioThesis(stock)}</td>
-                          <td>
-                            <span className={`pill ${actionClass(action)}`}>{action}</span>
+                            <div className="mutedSmall">{stock.error ? "Data unavailable" : portfolioThesis(stock)}</div>
                           </td>
                           <td>
-                            <span className="smallBadge">{stock.error ? "—" : portfolioHealth(stock)}</span>
+                            <div className="intelStack">
+                              <span className={`pill ${portfolioThesisClass(stock)}`}>{tracker.status}</span>
+                              <p>{tracker.detail}</p>
+                            </div>
                           </td>
-                          <td>{stock.error ? "—" : portfolioRisk(stock)}</td>
+                          <td>
+                            <div className="intelStack">
+                              <span className="smallBadge">{stock.error ? "—" : portfolioHealth(stock)}</span>
+                              <p>{stock.error ? stock.error : portfolioHealthWhy(stock)}</p>
+                              {!stock.error && <em>Risk: {portfolioRisk(stock)}</em>}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="intelStack">
+                              <span className={`pill ${actionClass(action)}`}>{action}</span>
+                              <p>{portfolioActionWhy(stock)}</p>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="intelStack">
+                              <span className={`pill ${portfolioPriorityClass(stock)}`}>{portfolioCapitalPriority(stock)}</span>
+                              <p>{portfolioCapitalWhy(stock)}</p>
+                            </div>
+                          </td>
                           <td className="profitPlanCell">{stock.error ? "—" : portfolioProfitPlan(stock)}</td>
                           <td>
                             {stock.error ? (
@@ -2045,6 +2231,36 @@ export default function Home() {
         .priceStack {
           display: grid;
           gap: 4px;
+        }
+
+
+        .intelStack {
+          display: grid;
+          gap: 6px;
+          min-width: 190px;
+          max-width: 270px;
+        }
+
+        .intelStack p {
+          margin: 0;
+          color: #334155;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .intelStack em {
+          color: #64748b;
+          font-size: 11px;
+          font-style: normal;
+          font-weight: 800;
+        }
+
+        .profitPlanCell {
+          color: #0f172a;
+          font-size: 12px;
+          line-height: 1.35;
+          font-weight: 700;
+          min-width: 210px;
         }
 
         .singleForm {
