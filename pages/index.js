@@ -210,6 +210,35 @@ function getTradeQualityClass(stock = {}) {
   return "neutral";
 }
 
+function getEntryQuality(stock = {}) {
+  return String(
+    getRecommendation(stock)?.entryQualityLabel ??
+      getRecommendation(stock)?.gateSummary?.entryQualityLabel ??
+      stock?.entryQualityLabel ??
+      stock?.technicalSnapshot?.entryQualityLabel ??
+      "Unknown"
+  );
+}
+
+function getEntryQualityRankValue(stock = {}) {
+  const label = getEntryQuality(stock);
+  if (label === "Clean Entry") return 4;
+  if (label === "Pullback Entry") return 3;
+  if (label === "Early Setup") return 2;
+  if (label === "Chase Risk") return 1;
+  if (label === "Extended") return 0;
+  return 0;
+}
+
+function getEntryQualityClass(stock = {}) {
+  const label = getEntryQuality(stock);
+  if (label === "Clean Entry" || label === "Pullback Entry") return "good";
+  if (label === "Early Setup") return "neutral";
+  if (label === "Chase Risk") return "thin";
+  if (label === "Extended") return "poor";
+  return "neutral";
+}
+
 function getRiskPlanText(stock = {}) {
   const action = nonOwnedAction(stock);
   const plan = getRiskPlan(stock);
@@ -473,8 +502,9 @@ function cleanSentence(text) {
 function actionClass(action) {
   if (action === "Cash") return "gray";
   if (action === "Buy" || action === "Hold / Add") return "green";
-  if (action === "Starter" || action === "Trim") return "orange";
+  if (action === "Starter" || action === "Trim" || action === "Hold or Exit") return "orange";
   if (action === "Watch" || action === "Hold") return "yellow";
+  if (action === "Exit Candidate" || action === "Review / Reduce") return "red";
   return "red";
 }
 
@@ -490,6 +520,17 @@ function rankActionable(a, b) {
   const gradeB = gradeRank[getConviction(b)] ?? 0;
 
   if (gradeB !== gradeA) return gradeB - gradeA;
+
+  const entryB = getEntryQualityRankValue(b);
+  const entryA = getEntryQualityRankValue(a);
+
+  if (entryB !== entryA) return entryB - entryA;
+
+  const qualityRank = { Excellent: 3, Good: 2, Thin: 1, Poor: 0, Unavailable: 0 };
+  const tqB = qualityRank[getTradeQuality(b)] ?? 0;
+  const tqA = qualityRank[getTradeQuality(a)] ?? 0;
+
+  if (tqB !== tqA) return tqB - tqA;
 
   const triggerB = getTrigger(b);
   const triggerA = getTrigger(a);
@@ -532,6 +573,21 @@ function calculatePosition(position, livePrice) {
   };
 }
 
+function portfolioPositionScale(stock) {
+  const value = Number(stock?.value);
+  const costBasis = Number(stock?.costBasis);
+  const size = Math.max(Number.isFinite(value) ? value : 0, Number.isFinite(costBasis) ? costBasis : 0);
+
+  if (size > 0 && size < 25000) return "Small";
+  if (size >= 25000 && size < 75000) return "Medium";
+  if (size >= 75000) return "Large";
+  return "Unknown";
+}
+
+function isSmallPortfolioPosition(stock) {
+  return portfolioPositionScale(stock) === "Small";
+}
+
 function portfolioAction(stock) {
   if (isCashLikeSymbol(stock)) return "Cash";
 
@@ -545,7 +601,15 @@ function portfolioAction(stock) {
   const deepLoss = Number.isFinite(gainLossPct) && gainLossPct <= -20;
   const bigGain = Number.isFinite(gainLossPct) && gainLossPct >= 35;
 
-  if (deepLoss && score < 48 && trigger < 50) return "Review / Reduce";
+  const thesis = portfolioThesisTracker(stock).status;
+  const smallPosition = isSmallPortfolioPosition(stock);
+
+  if (deepLoss && score < 48 && trigger < 50) {
+    if (smallPosition && thesis === "Broken") return "Exit Candidate";
+    if (smallPosition) return "Hold or Exit";
+    return "Review / Reduce";
+  }
+
   if (bigGain && risk >= 78 && momentum < 55) return "Trim";
   if (buyAction === "Buy" && score >= 72 && risk <= 74) return "Hold / Add";
   if (buyAction === "Starter" && trigger >= 60) return "Hold";
@@ -637,7 +701,9 @@ function portfolioActionWhy(stock) {
 
   if (action === "Hold / Add") return `Owned position remains addable. Fresh-money signal is ${buyAction} with ${quality} trade quality.`;
   if (action === "Trim") return "Position has entered a gain-protection zone; trim only if momentum fades.";
-  if (action === "Review / Reduce") return "Thesis or price structure is weak enough to review exposure.";
+  if (action === "Exit Candidate") return "Small broken position; trimming is not useful, so decide whether to exit or keep only as an option ticket.";
+  if (action === "Hold or Exit") return "Small weak position; either keep as an option ticket or exit and redeploy.";
+  if (action === "Review / Reduce") return "Meaningful-size position with weak thesis or price structure; review exposure.";
   if (action === "Cash") return "Cash is available for better setups.";
   if (buyAction === "Buy") return "Hold existing shares. Add selectively; avoid chasing.";
   if (buyAction === "Starter") return "Hold existing shares. Add only after confirmation.";
@@ -659,6 +725,8 @@ function portfolioCapitalPriority(stock) {
   const gainLossPct = Number(stock?.gainLossPct);
 
   if (action === "Trim") return "Harvest Gains";
+  if (action === "Exit Candidate") return "Exit Review";
+  if (action === "Hold or Exit") return "Defense First";
   if (action === "Review / Reduce") return "Defense First";
   if (Number.isFinite(gainLossPct) && gainLossPct <= -20 && health < 64) return "Defense First";
   if (action === "Hold / Add" && ["Excellent", "Good"].includes(quality) && health >= 72) return "Add Candidate";
@@ -676,6 +744,7 @@ function portfolioCapitalWhy(stock) {
   if (priority === "Selective Add") return "Can add, but only on pullback or confirmation.";
   if (priority === "Small Only") return "Starter-size add only; payoff or confirmation is not strong enough for full size.";
   if (priority === "No New Capital") return "Keep existing shares only; fresh money should go elsewhere.";
+  if (priority === "Exit Review") return "Small position is weak enough that the decision is keep or exit, not trim.";
   if (priority === "Defense First") return "Focus on preserving capital before considering adds.";
   if (priority === "Harvest Gains") return "Consider capturing part of the gain if the move stalls.";
   if (priority === "Dry Powder") return "Available cash for stronger opportunities.";
@@ -689,7 +758,7 @@ function portfolioPriorityClass(stock) {
   if (["Add Candidate", "Selective Add"].includes(priority)) return "green";
   if (["Small Only", "Hold Existing"].includes(priority)) return "yellow";
   if (["Defense First", "Harvest Gains"].includes(priority)) return "orange";
-  if (["No New Capital", "Manual Review"].includes(priority)) return "red";
+  if (["Exit Review", "No New Capital", "Manual Review"].includes(priority)) return "red";
   return "gray";
 }
 
@@ -869,6 +938,7 @@ function OpportunityCard({ stock }) {
         <span className="themeBadge">{getTheme(stock)}</span>
         <span className="convictionBadge">Conviction {getConviction(stock)}</span>
         <span className="catalystBadge">{getCatalyst(stock)}</span>
+        <span className={`entryBadge ${getEntryQualityClass(stock)}`}>Entry: {getEntryQuality(stock)}</span>
       </div>
 
       <div className="priceRow">
@@ -922,6 +992,7 @@ function OnDeckTable({ rows }) {
                 <th>Theme</th>
                 <th>Conviction</th>
                 <th>Catalyst</th>
+                <th>Entry</th>
                 <th>Price</th>
                 <th>Net Change</th>
                 <th>Status</th>
@@ -939,6 +1010,7 @@ function OnDeckTable({ rows }) {
                     <span className="smallBadge">{getConviction(stock)}</span>
                   </td>
                   <td>{getCatalyst(stock)}</td>
+                  <td><span className={`entryBadge ${getEntryQualityClass(stock)}`}>{getEntryQuality(stock)}</span></td>
                   <td>{money(getPrice(stock))}</td>
                   <td className={priceChangeClass(stock)}>{priceChangeText(stock)}</td>
                   <td>
@@ -1454,7 +1526,7 @@ export default function Home() {
             <div className="sectionTitle">
               <div>
                 <h2>💼 My Portfolio</h2>
-                <p>Designed for this trading account: thesis health, add/hold/trim decisions, profit review zones, and next action.</p>
+                <p>Designed for this trading account: thesis health, hold/add/exit decisions, capital priority, and profit review zones.</p>
               </div>
 
               <div className="buttonRow">
@@ -1690,6 +1762,10 @@ export default function Home() {
                 <div>
                   <span>Trade Quality</span>
                   <strong>{getTradeQuality(snapStock)}</strong>
+                </div>
+                <div>
+                  <span>Entry Quality</span>
+                  <strong>{getEntryQuality(snapStock)}</strong>
                 </div>
               </div>
             </div>
@@ -2397,6 +2473,23 @@ export default function Home() {
         .themeBadge { background: #eff6ff; color: #1d4ed8; }
         .convictionBadge { background: #f8fafc; color: #0f172a; border: 1px solid #dbe5f1; }
         .catalystBadge { background: #fef3c7; color: #92400e; }
+        .entryBadge {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          padding: 5px 8px;
+          font-size: 11px;
+          font-weight: 900;
+          line-height: 1;
+          white-space: nowrap;
+          border: 1px solid #cbd5e1;
+          background: #f8fafc;
+          color: #334155;
+        }
+        .entryBadge.good { background: #dcfce7; color: #166534; border-color: #86efac; }
+        .entryBadge.thin { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+        .entryBadge.poor { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+        .entryBadge.neutral { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
 
         .priceRow {
           display: flex;
