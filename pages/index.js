@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const PORTFOLIO_KEY = "stock_screener_portfolio_v1";
 const ACTION_MEMORY_KEY = "stock_screener_action_memory_v1";
+const SIGNAL_MEMORY_KEY = "stock_screener_signal_memory_v1";
 
 const CASH_SYMBOLS = ["CASH", "SWVXX", "VMFXX", "SPAXX", "FDRXX", "MMF"];
 
@@ -179,6 +180,158 @@ function writeActionMemory(memory) {
     // Ignore storage failures; the screener still works without same-day memory.
   }
 }
+
+function readSignalMemory() {
+  try {
+    const raw = window.localStorage.getItem(SIGNAL_MEMORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSignalMemory(memory) {
+  try {
+    window.localStorage.setItem(SIGNAL_MEMORY_KEY, JSON.stringify(memory || {}));
+  } catch {
+    // Signal memory is helpful but not required for the app to run.
+  }
+}
+
+function daysSince(dateString) {
+  if (!dateString) return Infinity;
+  const then = new Date(`${dateString}T00:00:00`);
+  if (!Number.isFinite(then.getTime())) return Infinity;
+  const now = new Date(`${getLocalTradeDate()}T00:00:00`);
+  return Math.floor((now.getTime() - then.getTime()) / 86400000);
+}
+
+function actionRankValue(action) {
+  const rank = { Buy: 4, Starter: 3, Watch: 2, Avoid: 1, Cash: 0 };
+  return rank[action] ?? 0;
+}
+
+function deriveSignalState(stock = {}, prior = null) {
+  const action = nonOwnedAction(stock);
+  if (action !== "Buy" && action !== "Starter") return "";
+
+  const priorAge = daysSince(prior?.lastSeenDate || prior?.date);
+  const priorAction = prior?.lastAction || prior?.action || "";
+
+  if (!prior || priorAge > 7) return action === "Buy" ? "New Buy" : "New Starter";
+  if (priorAction === action) return action === "Buy" ? "Still Buy" : "Still Starter";
+  if (priorAction === "Starter" && action === "Buy") return "Upgraded";
+  if (priorAction === "Buy" && action === "Starter") return "Cooling Off";
+  if (["Watch", "Avoid"].includes(priorAction)) return "Repaired";
+  return "Still Valid";
+}
+
+function getSignalState(stock = {}) {
+  return String(
+    stock?.signalStateLabel ||
+      stock?.signalState ||
+      stock?.recommendation?.signalStateLabel ||
+      stock?.recommendation?.signalState ||
+      ""
+  );
+}
+
+function getSignalClass(stock = {}) {
+  const state = getSignalState(stock);
+  if (["New Buy", "New Starter", "Upgraded", "Repaired"].includes(state)) return "fresh";
+  if (["Still Buy", "Still Starter", "Still Valid"].includes(state)) return "still";
+  if (state === "Cooling Off") return "cooling";
+  return "neutral";
+}
+
+function getSignalRank(stock = {}) {
+  const state = getSignalState(stock);
+  if (["New Buy", "New Starter", "Upgraded", "Repaired"].includes(state)) return 3;
+  if (["Still Buy", "Still Starter", "Still Valid"].includes(state)) return 2;
+  if (state === "Cooling Off") return 1;
+  return 2;
+}
+
+function signalAwareSummary(stock = {}, signalState = "") {
+  const action = nonOwnedAction(stock);
+
+  if (signalState === "Still Buy") {
+    return "Still valid; already surfaced recently. Do not treat this as a brand-new alert.";
+  }
+
+  if (signalState === "Still Starter") {
+    return "Still a starter candidate; already surfaced recently. Upgrade only after confirmation.";
+  }
+
+  if (signalState === "Cooling Off") {
+    return "Prior Buy is cooling off. Keep sizing modest and wait for cleaner confirmation.";
+  }
+
+  if (signalState === "Upgraded") {
+    return "Signal upgraded from Starter to Buy; entry is cleaner than the prior read.";
+  }
+
+  if (signalState === "Repaired") {
+    return action === "Buy"
+      ? "Signal has repaired into a fresh Buy; confirm risk plan before sizing."
+      : "Signal has repaired into a starter; keep size small until confirmation.";
+  }
+
+  return "";
+}
+
+function applySignalMemory(rows = []) {
+  if (typeof window === "undefined") return rows;
+
+  const today = getLocalTradeDate();
+  const memory = readSignalMemory();
+  let changed = false;
+
+  const nextRows = rows.map((stock) => {
+    const symbol = getSymbol(stock);
+    if (!symbol || isCashLikeSymbol(symbol)) return stock;
+
+    const action = nonOwnedAction(stock);
+    const prior = memory[symbol] || null;
+    const signalState = deriveSignalState(stock, prior);
+
+    memory[symbol] = {
+      firstSeenDate: prior?.firstSeenDate || today,
+      lastSeenDate: today,
+      lastAction: action,
+      score: getScore(stock),
+      trigger: getTrigger(stock),
+      momentum: getMomentumScore(stock),
+      price: getPrice(stock),
+      seenCount: Number(prior?.seenCount || 0) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    changed = true;
+
+    if (!signalState) return stock;
+
+    const summary = signalAwareSummary(stock, signalState);
+    const existingRec = getRecommendation(stock);
+
+    return {
+      ...stock,
+      signalState,
+      signalStateLabel: signalState,
+      ...(summary ? { actionSummary: summary } : {}),
+      recommendation: {
+        ...existingRec,
+        signalState,
+        signalStateLabel: signalState,
+        ...(summary ? { actionSummary: summary } : {}),
+      },
+    };
+  });
+
+  if (changed) writeSignalMemory(memory);
+  return nextRows;
+}
+
 
 function getRiskPlan(stock = {}) {
   const direct = stock?.riskPlan ?? stock?.recommendation?.riskPlan;
@@ -514,6 +667,11 @@ function rankActionable(a, b) {
   const actionRankB = rank[nonOwnedAction(b)] ?? 0;
 
   if (actionRankB !== actionRankA) return actionRankB - actionRankA;
+
+  const signalRankB = getSignalRank(b);
+  const signalRankA = getSignalRank(a);
+
+  if (signalRankB !== signalRankA) return signalRankB - signalRankA;
 
   const gradeRank = { "A+": 6, A: 5, "A-": 4, "B+": 3, B: 2, C: 1 };
   const gradeA = gradeRank[getConviction(a)] ?? 0;
@@ -939,6 +1097,7 @@ function OpportunityCard({ stock }) {
         <span className="convictionBadge">Conviction {getConviction(stock)}</span>
         <span className="catalystBadge">{getCatalyst(stock)}</span>
         <span className={`entryBadge ${getEntryQualityClass(stock)}`}>Entry: {getEntryQuality(stock)}</span>
+        {getSignalState(stock) && <span className={`signalBadge ${getSignalClass(stock)}`}>Signal: {getSignalState(stock)}</span>}
       </div>
 
       <div className="priceRow">
@@ -1122,7 +1281,8 @@ export default function Home() {
         throw new Error(data?.detail || data?.error || "Failed to load trade screen.");
       }
 
-      const list = stabilizeStockList(Array.isArray(data?.stocks) ? data.stocks : []);
+      const baseList = stabilizeStockList(Array.isArray(data?.stocks) ? data.stocks : []);
+      const list = theme === "opportunities" ? applySignalMemory(baseList) : baseList;
 
       if (theme === "opportunities") {
         setStocks(list);
@@ -2490,6 +2650,23 @@ export default function Home() {
         .entryBadge.thin { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
         .entryBadge.poor { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
         .entryBadge.neutral { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+        .signalBadge {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          padding: 5px 8px;
+          font-size: 11px;
+          font-weight: 900;
+          line-height: 1;
+          white-space: nowrap;
+          border: 1px solid #cbd5e1;
+          background: #f8fafc;
+          color: #334155;
+        }
+        .signalBadge.fresh { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+        .signalBadge.still { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+        .signalBadge.cooling { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+        .signalBadge.neutral { background: #f8fafc; color: #334155; border-color: #cbd5e1; }
 
         .priceRow {
           display: flex;
