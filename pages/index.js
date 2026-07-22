@@ -1078,6 +1078,19 @@ async function mapWithClientConcurrency(items = [], concurrency = 5, mapper) {
   return results;
 }
 
+
+function getEventRisk(stock = {}) {
+  return stock?.eventRisk || stock?.preTradeCheck || stock?.recommendation?.eventRisk || stock?.recommendation?.preTradeCheck || null;
+}
+
+function getEventRiskClass(stock = {}) {
+  const status = String(getEventRisk(stock)?.status || "").toLowerCase();
+  if (status === "clear") return "clear";
+  if (status === "caution") return "caution";
+  if (status === "blocked") return "blocked";
+  return "incomplete";
+}
+
 function OpportunityCard({ stock }) {
   const action = nonOwnedAction(stock);
 
@@ -1098,6 +1111,7 @@ function OpportunityCard({ stock }) {
         <span className="catalystBadge">{getCatalyst(stock)}</span>
         <span className={`entryBadge ${getEntryQualityClass(stock)}`}>Entry: {getEntryQuality(stock)}</span>
         {getSignalState(stock) && <span className={`signalBadge ${getSignalClass(stock)}`}>Signal: {getSignalState(stock)}</span>}
+        {getEventRisk(stock) && <span className={`eventBadge ${getEventRiskClass(stock)}`}>{getEventRisk(stock).label}</span>}
       </div>
 
       <div className="priceRow">
@@ -1927,6 +1941,10 @@ export default function Home() {
                   <span>Entry Quality</span>
                   <strong>{getEntryQuality(snapStock)}</strong>
                 </div>
+                <div>
+                  <span>Pre-Trade Check</span>
+                  <strong>{getEventRisk(snapStock)?.label || "Unavailable"}</strong>
+                </div>
               </div>
             </div>
           )}
@@ -2663,6 +2681,15 @@ export default function Home() {
           background: #f8fafc;
           color: #334155;
         }
+
+        .eventBadge {
+          display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 9px;
+          font-size: 12px; font-weight: 800; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155;
+        }
+        .eventBadge.clear { background: #dcfce7; color: #166534; border-color: #86efac; }
+        .eventBadge.caution { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+        .eventBadge.blocked, .eventBadge.incomplete { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+
         .signalBadge.fresh { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
         .signalBadge.still { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
         .signalBadge.cooling { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
