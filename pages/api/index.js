@@ -13,6 +13,7 @@ import {
   buildTechnicalSnapshot,
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
+import { fetchEventRiskMap, applyEventRiskGate } from "../../lib/eventRisk";
 
 const PRIMARY_THEME_BY_SYMBOL = {
   NVDA: "AI Compute & Platforms",
@@ -420,7 +421,9 @@ export default async function handler(req, res) {
     ]);
 
     const base = attachMarketRelativeData(quote, spyQuote, qqqQuote);
-    const result = buildScoredResult(base);
+    const scored = buildScoredResult(base);
+    const eventRiskMap = await fetchEventRiskMap([symbol]);
+    const result = applyEventRiskGate(scored, eventRiskMap.get(normalizeSymbol(symbol)));
 
     if (!result?.symbol || result.price === null || result.price === undefined) {
       throw new Error(`No usable quote data returned for ${symbol}.`);
