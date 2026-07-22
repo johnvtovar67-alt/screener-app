@@ -12,6 +12,7 @@ import {
   buildTechnicalSnapshot,
   buildFundamentalSnapshot,
 } from "../../lib/scoring";
+import { fetchEventRiskMap, applyEventRiskGate } from "../../lib/eventRisk";
 
 function normalizeSymbol(symbol) {
   return String(symbol || "")
@@ -147,7 +148,7 @@ export default async function handler(
     const stock =
       await fetchQuote(symbol);
 
-    const result = {
+    const rawResult = {
       ...stock,
 
       fundamentalScore:
@@ -198,6 +199,9 @@ export default async function handler(
           stock
         ),
     };
+
+    const eventRiskMap = await fetchEventRiskMap([symbol]);
+    const result = applyEventRiskGate(rawResult, eventRiskMap.get(normalizeSymbol(symbol)));
 
     return res.status(200).json({
       stock: result,
