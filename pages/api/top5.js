@@ -132,7 +132,6 @@ const PRIMARY_THEME_BY_SYMBOL = {
   AVAV: "Autonomy & Drones",
   ONDS: "Autonomy & Drones",
 
-  ABB: "Robotics & Automation",
   ROK: "Robotics & Automation",
   TER: "Robotics & Automation",
   CGNX: "Robotics & Automation",
@@ -172,11 +171,22 @@ const CORE_OPPORTUNITY_SYMBOLS = [
   "CCJ","UEC","UUUU","LEU","BWXT","SMR","OKLO","NNE","NXE","DNN",
   "MSTR","MARA","RIOT","CLSK","IREN","WULF","HUT","BTDR","CIFR","BITF","COIN","HOOD","SQ",
   "RKLB","ASTS","RDW","BKSY","IRDM","RTX","LHX","NOC","LMT","HII","GD","KTOS","AVAV","ONDS",
-  "ABB","ROK","TER","CGNX","SYM","ISRG","ADSK","PTC","SNPS","CDNS",
+  "ROK","TER","CGNX","SYM","ISRG","ADSK","PTC","SNPS","CDNS",
   "IONQ","RGTI","QBTS","QUBT","ARQQ","IBM","HON",
   "MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS"
 ];
 
+
+
+// Exclude symbols that are not cleanly tradable in Schwab/thinkorswim or whose
+// FMP symbol/price does not match the U.S. executable ticker. ABB is excluded
+// because the app surfaced ABB at an ordinary-share price while Schwab/TOS uses
+// the OTC ADR ABBNY at a different price.
+const EXCLUDED_OPPORTUNITY_SYMBOLS = new Set(["ABB", "ABBNY"]);
+
+function isExcludedOpportunitySymbol(symbol) {
+  return EXCLUDED_OPPORTUNITY_SYMBOLS.has(normalizeSymbol(symbol));
+}
 
 const APPROVED_OPPORTUNITY_THEMES = new Set([
   "AI Compute & Platforms",
@@ -833,7 +843,7 @@ export default async function handler(req, res) {
 
     const themeKey = String(req.query.theme || "opportunities").toLowerCase();
     const selectedTheme = getThemeConfig(themeKey);
-    const symbols = uniqueSymbols(selectedTheme.symbols);
+    const symbols = uniqueSymbols(selectedTheme.symbols).filter((symbol) => !isExcludedOpportunitySymbol(symbol));
 
     if (!symbols.length) {
       return res.status(502).json({
@@ -863,8 +873,8 @@ export default async function handler(req, res) {
       .map(enrichOutput);
 
     const baseRows = isOpportunityThemeMode(themeKey)
-      ? allRows.filter(isApprovedOpportunity)
-      : allRows;
+      ? allRows.filter((row) => isApprovedOpportunity(row) && !isExcludedOpportunitySymbol(row.symbol))
+      : allRows.filter((row) => !isExcludedOpportunitySymbol(row.symbol));
 
     const eventCandidates = baseRows.filter((row) => ["Buy", "Starter"].includes(getAction(row))).map((row) => row.symbol);
     const eventRiskMap = await fetchEventRiskMap(eventCandidates);
