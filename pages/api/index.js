@@ -111,7 +111,6 @@ const PRIMARY_THEME_BY_SYMBOL = {
   AVAV: "Autonomy & Drones",
   ONDS: "Autonomy & Drones",
 
-  ABB: "Robotics & Automation",
   ROK: "Robotics & Automation",
   TER: "Robotics & Automation",
   CGNX: "Robotics & Automation",
