@@ -49,9 +49,45 @@ function getConvictionGrade(s={}){const score=clampScore(s.score),trigger=clampS
 function getCatalyst(s={}){const e=s.recommendation?.expertDecision;if(e&&!e.buyPass&&e.trendStatus==="Not Confirmed")return"Reclaim Pending";const t=clampScore(s.triggerScore),m=clampScore(s.momentumScore),tech=clampScore(s.technicalScore),d=toNumber(s.dayChangePct,0);if(t>=78&&m>=70)return"Breakout";if(t>=76&&m>=70)return"Reclaim";if(tech>=76&&m>=72)return"RS Leader";if(d< -1&&tech>=65)return"Pullback";if(m>=70)return"Trend";return"Setup";}
 function getDecisionClock(s={}){const a=getAction(s);if(a==="Buy")return"Immediate";if(a==="Starter")return"This Week";if(a==="Watch")return"Monitor";return"Avoid Until Improved";}
 function themeFor(s){return PRIMARY_THEME_BY_SYMBOL[normalizeSymbol(s)]||"Other";}
-async function fetchJson(url){const r=await fetch(url);if(!r.ok)throw new Error(`FMP request failed: ${r.status}`);return r.json();}
+async function fetchJson(url){const r=await fetch(url);if(!r.ok){const text=await r.text().catch(()=>"");throw new Error(`FMP request failed: ${r.status}${text?` - ${text}`:""}`);}return r.json();}
 function chunks(a,size=20){const out=[];for(let i=0;i<a.length;i+=size)out.push(a.slice(i,i+size));return out;}
-async function fetchFmpQuotes(symbols=[]){const key=process.env.FMP_API_KEY;if(!key)throw new Error("Missing FMP_API_KEY in environment variables.");const all=[];for(const c of chunks(uniqueSymbols(symbols))){const f=c.map(toFmpSymbol).join(",");let data=[];try{data=await fetchJson(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(f)}&apikey=${key}`);}catch{data=await fetchJson(`https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(f)}?apikey=${key}`);}if(Array.isArray(data))all.push(...data);else if(data)all.push(data);}return all;}
+function asQuoteArray(data){if(Array.isArray(data))return data.filter(Boolean);if(data&&typeof data==="object")return [data];return [];}
+
+async function fetchQuoteChunk(symbols,key){
+  if(!symbols.length)return [];
+  const joined=symbols.map(toFmpSymbol).join(",");
+  const stable=`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(joined)}&apikey=${key}`;
+  const legacy=`https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(joined)}?apikey=${key}`;
+  try{const rows=asQuoteArray(await fetchJson(stable));if(rows.length>=Math.min(symbols.length,2))return rows;}catch{}
+  try{const rows=asQuoteArray(await fetchJson(legacy));if(rows.length>=Math.min(symbols.length,2))return rows;}catch{}
+
+  // FMP batch endpoints can return an empty/partial set on some plans. Fall back
+  // to individual requests so the broad opportunity screen never silently empties.
+  const rows=[];
+  for(const symbol of symbols){
+    const clean=toFmpSymbol(symbol);
+    try{
+      const one=asQuoteArray(await fetchJson(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(clean)}&apikey=${key}`));
+      if(one.length){rows.push(one[0]);continue;}
+    }catch{}
+    try{
+      const one=asQuoteArray(await fetchJson(`https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(clean)}?apikey=${key}`));
+      if(one.length)rows.push(one[0]);
+    }catch{}
+  }
+  return rows;
+}
+
+async function fetchFmpQuotes(symbols=[]){
+  const key=process.env.FMP_API_KEY;
+  if(!key)throw new Error("Missing FMP_API_KEY in environment variables.");
+  const requested=uniqueSymbols(symbols), all=[];
+  for(const c of chunks(requested,20)) all.push(...await fetchQuoteChunk(c,key));
+  const bySymbol=new Map();
+  for(const row of all){const symbol=normalizeSymbol(row?.symbol);if(symbol&&!bySymbol.has(symbol))bySymbol.set(symbol,row);}
+  return [...bySymbol.values()];
+}
+
 function normalizeQuote(r={}){const symbol=normalizeSymbol(r.symbol),price=toPositiveNumber(r.price),previousClose=toPositiveNumber(r.previousClose),change=toNumber(r.change),dayChangePct=normalizeDailyPct({price,previousClose,change,rawPct:r.changesPercentage??r.changePercentage??r.changePercent});return{...r,symbol,ticker:symbol,name:r.name||r.companyName||symbol,companyName:r.companyName||r.name||symbol,price,currentPrice:price,lastPrice:price,close:price,previousClose,change,dayChangePct,changesPercentage:dayChangePct,changePercent:dayChangePct,marketCap:toPositiveNumber(r.marketCap),volume:toPositiveNumber(r.volume),avgVolume:toPositiveNumber(r.avgVolume),priceAvg50:toPositiveNumber(r.priceAvg50),fiftyDayAverage:toPositiveNumber(r.priceAvg50??r.fiftyDayAverage),priceAvg200:toPositiveNumber(r.priceAvg200),twoHundredDayAverage:toPositiveNumber(r.priceAvg200??r.twoHundredDayAverage),yearHigh:toPositiveNumber(r.yearHigh),yearLow:toPositiveNumber(r.yearLow),eps:toNumber(r.eps),pe:toNumber(r.pe),beta:toNumber(r.beta,null),exchange:r.exchange||r.exchangeShortName||"",timestamp:r.timestamp||null};}
 function scoreQuote(n={}){const score=compositeScore(n),fundamentalScore=calcFundamentalScore(n),technicalScore=calcTechnicalScore(n),momentumScore=calcMomentumScore(n),relativeStrengthScore=calcRelativeStrengthScore(n),asymmetryScore=calcAsymmetryScore(n),triggerScore=calcTriggerScore(n),technicalSnapshot=buildTechnicalSnapshot(n),fundamentalSnapshot=buildFundamentalSnapshot(n);const raw=getRecommendation({...n,score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,triggerScore});const recommendation=applyExpertDecision({...n,score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,triggerScore},raw),action=normalizeActionLabel(recommendation.label);return{...n,score,compositeScore:score,heatScore:score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,asymmetryScore,triggerScore,primaryTheme:themeFor(n.symbol),theme:themeFor(n.symbol),recommendation:{...recommendation,label:action,displayLabel:action,recommendation:action,tradeAction:action,score,triggerScore,momentumScore},action,riskPlan:recommendation.riskPlan??raw.riskPlan??null,technicalSnapshot,fundamentalSnapshot,expertDecision:recommendation.expertDecision,expertOverride:recommendation.expertOverride,expertOverrideReason:recommendation.expertOverrideReason,thesisScore:recommendation.thesisScore,tradeSetupScore:recommendation.tradeSetupScore};}
 function enrich(s={}){return{...s,convictionGrade:getConvictionGrade(s),catalyst:getCatalyst(s),decisionClock:getDecisionClock(s)};}
