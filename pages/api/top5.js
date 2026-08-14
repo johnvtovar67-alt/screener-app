@@ -31,10 +31,10 @@ const THEMES={
   "Platform Biotech":["MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS"],
 };
 const PRIMARY_THEME_BY_SYMBOL=Object.fromEntries(Object.entries(THEMES).flatMap(([theme,symbols])=>symbols.map(s=>[s,theme])));
-const CORE_OPPORTUNITY_SYMBOLS=Object.keys(PRIMARY_THEME_BY_SYMBOL),EXCLUDED=new Set(["ABB","ABBNY"]);
+const CORE_OPPORTUNITY_SYMBOLS=Object.keys(PRIMARY_THEME_BY_SYMBOL),EXCLUDED=new Set(["ABB","ABBNY","DLR","EQIX","AMT"]);
 const THEME_CONFIG={
-  opportunities:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking.",symbols:CORE_OPPORTUNITY_SYMBOLS},
-  broad:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking.",symbols:CORE_OPPORTUNITY_SYMBOLS},
+  opportunities:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking. REITs and non-executable/mismatched symbols are excluded.",symbols:CORE_OPPORTUNITY_SYMBOLS},
+  broad:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking. REITs and non-executable/mismatched symbols are excluded.",symbols:CORE_OPPORTUNITY_SYMBOLS},
   ai_compute:{name:"AI Compute & Platforms",symbols:THEMES["AI Compute & Platforms"]},ai_networking:{name:"AI Networking",symbols:THEMES["AI Networking"]},cybersecurity:{name:"Cybersecurity",symbols:THEMES.Cybersecurity},power:{name:"Power & Electrification",symbols:THEMES["Power & Electrification"]},digital_infra:{name:"Digital Infrastructure",symbols:THEMES["Digital Infrastructure"]},nuclear:{name:"Nuclear / Baseload",symbols:THEMES["Nuclear / Baseload"]},btc:{name:"BTC / Digital Assets",symbols:THEMES["BTC / Digital Assets"]},defense:{name:"Defense & National Security",symbols:THEMES["Defense & National Security"]},space:{name:"Space & Satellites",symbols:THEMES["Space & Satellites"]},drones:{name:"Autonomy & Drones",symbols:THEMES["Autonomy & Drones"]},robotics:{name:"Robotics & Automation",symbols:THEMES["Robotics & Automation"]},industrial_software:{name:"Industrial Software",symbols:THEMES["Industrial Software"]},quantum:{name:"Quantum Computing",symbols:THEMES["Quantum Computing"]},biotech:{name:"Platform Biotech",symbols:THEMES["Platform Biotech"]}
 };
 const getThemeConfig=k=>THEME_CONFIG[String(k||"opportunities").toLowerCase()]||THEME_CONFIG.opportunities;
@@ -49,8 +49,6 @@ async function fetchQuoteChunk(symbols,key){if(!symbols.length)return[];const jo
 async function fetchFmpQuotes(symbols=[]){const key=process.env.FMP_API_KEY;if(!key)throw new Error("Missing FMP_API_KEY in environment variables.");const requested=uniqueSymbols(symbols),all=[];for(const c of chunks(requested,20))all.push(...await fetchQuoteChunk(c,key));const bySymbol=new Map();for(const row of all){const symbol=normalizeSymbol(row?.symbol);if(symbol&&!bySymbol.has(symbol))bySymbol.set(symbol,row)}return[...bySymbol.values()]}
 
 function scoreQuote(n={}){
-  // Momentum/trigger scoring must compare a full-day-equivalent volume pace to avgVolume.
-  // The expert hard gate still receives actual accumulated volume and applies its own paced ratio.
   const scoringInput={...n,volume:projectedFullDayVolume(n)};
   const score=compositeScore(scoringInput),fundamentalScore=calcFundamentalScore(scoringInput),technicalScore=calcTechnicalScore(scoringInput),momentumScore=calcMomentumScore(scoringInput),relativeStrengthScore=calcRelativeStrengthScore(scoringInput),asymmetryScore=calcAsymmetryScore(scoringInput),triggerScore=calcTriggerScore(scoringInput),technicalSnapshot=buildTechnicalSnapshot(scoringInput),fundamentalSnapshot=buildFundamentalSnapshot(scoringInput);
   const raw=getRecommendation({...scoringInput,score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,triggerScore});
