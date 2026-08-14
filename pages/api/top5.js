@@ -1,5 +1,5 @@
 // pages/api/top5.js
-// Broad opportunity engine: absolute expert gates first, then relative fresh-capital selection.
+// Broad opportunity engine: score -> standalone expert decision -> event risk -> relative capital decision.
 
 import {
   compositeScore, calcFundamentalScore, calcTechnicalScore, calcMomentumScore,
@@ -8,11 +8,12 @@ import {
 } from "../../lib/scoring";
 import { applyExpertDecision } from "../../lib/expertDecision";
 import { fetchEventRiskMap, applyEventRiskGate } from "../../lib/eventRisk";
+import { projectedFullDayVolume } from "../../lib/marketSession";
+import { finalizeBroadOpportunityDecisions, relativeCapitalScore } from "../../lib/opportunityDecision";
 
-function normalizeSymbol(s){return String(s||"").replace("-", ".").toUpperCase().trim();}
-function toFmpSymbol(s){return String(s||"").replace(".", "-").toUpperCase().trim();}
-function uniqueSymbols(a=[]){return [...new Set(a.map(normalizeSymbol).filter(Boolean))];}
-
+const normalizeSymbol=s=>String(s||"").replace("-", ".").toUpperCase().trim();
+const toFmpSymbol=s=>String(s||"").replace(".", "-").toUpperCase().trim();
+const uniqueSymbols=a=>[...new Set((a||[]).map(normalizeSymbol).filter(Boolean))];
 const THEMES={
   "AI Compute & Platforms":["NVDA","AMD","AVGO","ARM","MU","SMCI","DELL","HPE","PLTR","ORCL","MSFT","GOOGL","GOOG","META","AMZN","AAPL"],
   "AI Networking":["ANET","CSCO","NTAP","JNPR","FFIV","CIEN","MRVL","COHR","AAOI"],
@@ -30,74 +31,33 @@ const THEMES={
   "Platform Biotech":["MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS"],
 };
 const PRIMARY_THEME_BY_SYMBOL=Object.fromEntries(Object.entries(THEMES).flatMap(([theme,symbols])=>symbols.map(s=>[s,theme])));
-const CORE_OPPORTUNITY_SYMBOLS=Object.keys(PRIMARY_THEME_BY_SYMBOL);
-const EXCLUDED=new Set(["ABB","ABBNY"]);
+const CORE_OPPORTUNITY_SYMBOLS=Object.keys(PRIMARY_THEME_BY_SYMBOL),EXCLUDED=new Set(["ABB","ABBNY"]);
 const THEME_CONFIG={
-  opportunities:{name:"Best Opportunities",description:"Fresh-capital screen using absolute expert gates plus relative capital attractiveness.",symbols:CORE_OPPORTUNITY_SYMBOLS},
-  broad:{name:"Best Opportunities",description:"Fresh-capital screen using absolute expert gates plus relative capital attractiveness.",symbols:CORE_OPPORTUNITY_SYMBOLS},
-  ai_compute:{name:"AI Compute & Platforms",symbols:THEMES["AI Compute & Platforms"]},
-  ai_networking:{name:"AI Networking",symbols:THEMES["AI Networking"]},
-  cybersecurity:{name:"Cybersecurity",symbols:THEMES.Cybersecurity},
-  power:{name:"Power & Electrification",symbols:THEMES["Power & Electrification"]},
-  digital_infra:{name:"Digital Infrastructure",symbols:THEMES["Digital Infrastructure"]},
-  nuclear:{name:"Nuclear / Baseload",symbols:THEMES["Nuclear / Baseload"]},
-  btc:{name:"BTC / Digital Assets",symbols:THEMES["BTC / Digital Assets"]},
-  defense:{name:"Defense & National Security",symbols:THEMES["Defense & National Security"]},
-  space:{name:"Space & Satellites",symbols:THEMES["Space & Satellites"]},
-  drones:{name:"Autonomy & Drones",symbols:THEMES["Autonomy & Drones"]},
-  robotics:{name:"Robotics & Automation",symbols:THEMES["Robotics & Automation"]},
-  industrial_software:{name:"Industrial Software",symbols:THEMES["Industrial Software"]},
-  quantum:{name:"Quantum Computing",symbols:THEMES["Quantum Computing"]},
-  biotech:{name:"Platform Biotech",symbols:THEMES["Platform Biotech"]},
+  opportunities:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking.",symbols:CORE_OPPORTUNITY_SYMBOLS},
+  broad:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking.",symbols:CORE_OPPORTUNITY_SYMBOLS},
+  ai_compute:{name:"AI Compute & Platforms",symbols:THEMES["AI Compute & Platforms"]},ai_networking:{name:"AI Networking",symbols:THEMES["AI Networking"]},cybersecurity:{name:"Cybersecurity",symbols:THEMES.Cybersecurity},power:{name:"Power & Electrification",symbols:THEMES["Power & Electrification"]},digital_infra:{name:"Digital Infrastructure",symbols:THEMES["Digital Infrastructure"]},nuclear:{name:"Nuclear / Baseload",symbols:THEMES["Nuclear / Baseload"]},btc:{name:"BTC / Digital Assets",symbols:THEMES["BTC / Digital Assets"]},defense:{name:"Defense & National Security",symbols:THEMES["Defense & National Security"]},space:{name:"Space & Satellites",symbols:THEMES["Space & Satellites"]},drones:{name:"Autonomy & Drones",symbols:THEMES["Autonomy & Drones"]},robotics:{name:"Robotics & Automation",symbols:THEMES["Robotics & Automation"]},industrial_software:{name:"Industrial Software",symbols:THEMES["Industrial Software"]},quantum:{name:"Quantum Computing",symbols:THEMES["Quantum Computing"]},biotech:{name:"Platform Biotech",symbols:THEMES["Platform Biotech"]}
 };
-function getThemeConfig(k){return THEME_CONFIG[String(k||"opportunities").toLowerCase()]||THEME_CONFIG.opportunities;}
-function toNumber(v,f=null){if(v==null||v==="")return f;const n=Number(typeof v==="string"?v.replace("%","").replace(/,/g,"").trim():v);return Number.isFinite(n)?n:f;}
-function toPositiveNumber(v,f=null){const n=toNumber(v,f);return n!=null&&n>0?n:f;}
-function safeScore(v){return Number.isFinite(Number(v))?Number(v):0;}
-function clampScore(v){return Math.max(0,Math.min(100,Math.round(safeScore(v))));}
-function normalizeDailyPct({price,previousClose,change,rawPct}){let pct=toNumber(rawPct);if(price&&previousClose){const x=((price-previousClose)/previousClose)*100;if(pct===null||Math.abs(pct)>25||Math.abs(pct-x)>5)pct=x;}if(pct===null&&change!=null&&previousClose)pct=(change/previousClose)*100;return pct;}
-
-// One vocabulary end-to-end. Deprecated Starter outcomes are treated as Watch.
-function normalizeActionLabel(v){const x=String(v||"").replace(/[_-]+/g," ").replace(/\s+/g," ").trim().toUpperCase();if(x==="STRONG BUY")return"Strong Buy";if(["BUY","BUY NOW","BUY IMMEDIATELY"].includes(x))return"Buy";if(x.includes("STARTER")||x==="BREAKOUT"||x.includes("WATCH")||x.includes("SETUP")||x==="NEAR MISS")return"Watch";return"Avoid";}
-function getAction(s={}){const r=s.recommendation&&typeof s.recommendation==="object"?s.recommendation:{};return normalizeActionLabel(r.displayLabel??r.label??r.recommendation??r.tradeAction??s.action);}
-function actionRank(x){const a=typeof x==="string"?normalizeActionLabel(x):getAction(x);return a==="Strong Buy"?4:a==="Buy"?3:a==="Watch"?1:0;}
-function getConvictionGrade(s={}){const score=clampScore(s.score),trigger=clampScore(s.triggerScore),momentum=clampScore(s.momentumScore),technical=clampScore(s.technicalScore),action=getAction(s),c=score*.42+trigger*.23+momentum*.2+technical*.15;if(action==="Strong Buy"&&c>=86)return"A+";if(action==="Buy"&&c>=82)return"A";if(c>=76)return"A-";if(c>=70)return"B+";if(c>=62)return"B";return"C";}
-function getCatalyst(s={}){const e=s.recommendation?.expertDecision;if(e&&!e.buyPass&&e.trendStatus==="Not Confirmed")return"Reclaim Pending";const t=clampScore(s.triggerScore),m=clampScore(s.momentumScore),tech=clampScore(s.technicalScore),d=toNumber(s.dayChangePct,0);if(t>=78&&m>=70)return"Breakout";if(t>=76&&m>=70)return"Reclaim";if(tech>=76&&m>=72)return"RS Leader";if(d< -1&&tech>=65)return"Pullback";if(m>=70)return"Trend";return"Setup";}
-function getDecisionClock(s={}){const a=getAction(s);if(a==="Strong Buy"||a==="Buy")return"Immediate";if(a==="Watch")return"Monitor";return"Avoid Until Improved";}
-function themeFor(s){return PRIMARY_THEME_BY_SYMBOL[normalizeSymbol(s)]||"Other";}
-async function fetchJson(url){const r=await fetch(url);if(!r.ok){const text=await r.text().catch(()=>"");throw new Error(`FMP request failed: ${r.status}${text?` - ${text}`:""}`);}return r.json();}
-function chunks(a,size=20){const out=[];for(let i=0;i<a.length;i+=size)out.push(a.slice(i,i+size));return out;}
-function asQuoteArray(data){if(Array.isArray(data))return data.filter(Boolean);if(data&&typeof data==="object")return[data];return[];}
-
-async function fetchQuoteChunk(symbols,key){
-  if(!symbols.length)return[];
-  const joined=symbols.map(toFmpSymbol).join(","),stable=`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(joined)}&apikey=${key}`,legacy=`https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(joined)}?apikey=${key}`;
-  try{const rows=asQuoteArray(await fetchJson(stable));if(rows.length>=Math.min(symbols.length,2))return rows;}catch{}
-  try{const rows=asQuoteArray(await fetchJson(legacy));if(rows.length>=Math.min(symbols.length,2))return rows;}catch{}
-  const rows=[];
-  for(const symbol of symbols){const clean=toFmpSymbol(symbol);try{const one=asQuoteArray(await fetchJson(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(clean)}&apikey=${key}`));if(one.length){rows.push(one[0]);continue;}}catch{}try{const one=asQuoteArray(await fetchJson(`https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(clean)}?apikey=${key}`));if(one.length)rows.push(one[0]);}catch{}}
-  return rows;
-}
-async function fetchFmpQuotes(symbols=[]){const key=process.env.FMP_API_KEY;if(!key)throw new Error("Missing FMP_API_KEY in environment variables.");const requested=uniqueSymbols(symbols),all=[];for(const c of chunks(requested,20))all.push(...await fetchQuoteChunk(c,key));const bySymbol=new Map();for(const row of all){const symbol=normalizeSymbol(row?.symbol);if(symbol&&!bySymbol.has(symbol))bySymbol.set(symbol,row);}return[...bySymbol.values()];}
-function normalizeQuote(r={}){const symbol=normalizeSymbol(r.symbol),price=toPositiveNumber(r.price),previousClose=toPositiveNumber(r.previousClose),change=toNumber(r.change),dayChangePct=normalizeDailyPct({price,previousClose,change,rawPct:r.changesPercentage??r.changePercentage??r.changePercent});return{...r,symbol,ticker:symbol,name:r.name||r.companyName||symbol,companyName:r.companyName||r.name||symbol,price,currentPrice:price,lastPrice:price,close:price,previousClose,change,dayChangePct,changesPercentage:dayChangePct,changePercent:dayChangePct,marketCap:toPositiveNumber(r.marketCap),volume:toPositiveNumber(r.volume),avgVolume:toPositiveNumber(r.avgVolume),priceAvg50:toPositiveNumber(r.priceAvg50),fiftyDayAverage:toPositiveNumber(r.priceAvg50??r.fiftyDayAverage),priceAvg200:toPositiveNumber(r.priceAvg200),twoHundredDayAverage:toPositiveNumber(r.priceAvg200??r.twoHundredDayAverage),yearHigh:toPositiveNumber(r.yearHigh),yearLow:toPositiveNumber(r.yearLow),eps:toNumber(r.eps),pe:toNumber(r.pe),beta:toNumber(r.beta,null),exchange:r.exchange||r.exchangeShortName||"",timestamp:r.timestamp||null};}
+const getThemeConfig=k=>THEME_CONFIG[String(k||"opportunities").toLowerCase()]||THEME_CONFIG.opportunities;
+const toNumber=(v,f=null)=>{if(v==null||v==="")return f;const n=Number(typeof v==="string"?v.replace("%","").replace(/,/g,"").trim():v);return Number.isFinite(n)?n:f};
+const toPositiveNumber=(v,f=null)=>{const n=toNumber(v,f);return n!=null&&n>0?n:f};
+function normalizeDailyPct({price,previousClose,change,rawPct}){let pct=toNumber(rawPct);if(price&&previousClose){const x=((price-previousClose)/previousClose)*100;if(pct===null||Math.abs(pct)>25||Math.abs(pct-x)>5)pct=x}if(pct===null&&change!=null&&previousClose)pct=(change/previousClose)*100;return pct}
+function normalizeQuote(r={}){const symbol=normalizeSymbol(r.symbol),price=toPositiveNumber(r.price),previousClose=toPositiveNumber(r.previousClose),change=toNumber(r.change),dayChangePct=normalizeDailyPct({price,previousClose,change,rawPct:r.changesPercentage??r.changePercentage??r.changePercent});return{...r,symbol,ticker:symbol,name:r.name||r.companyName||symbol,companyName:r.companyName||r.name||symbol,price,currentPrice:price,lastPrice:price,close:price,previousClose,change,dayChangePct,changesPercentage:dayChangePct,changePercent:dayChangePct,marketCap:toPositiveNumber(r.marketCap),volume:toPositiveNumber(r.volume),avgVolume:toPositiveNumber(r.avgVolume),priceAvg50:toPositiveNumber(r.priceAvg50),fiftyDayAverage:toPositiveNumber(r.priceAvg50??r.fiftyDayAverage),priceAvg200:toPositiveNumber(r.priceAvg200),twoHundredDayAverage:toPositiveNumber(r.priceAvg200??r.twoHundredDayAverage),yearHigh:toPositiveNumber(r.yearHigh),yearLow:toPositiveNumber(r.yearLow),eps:toNumber(r.eps),pe:toNumber(r.pe),beta:toNumber(r.beta,null),exchange:r.exchange||r.exchangeShortName||"",timestamp:r.timestamp||null}}
+async function fetchJson(url){const r=await fetch(url);if(!r.ok){const text=await r.text().catch(()=>"");throw new Error(`FMP request failed: ${r.status}${text?` - ${text}`:""}`)}return r.json()}
+const asQuoteArray=data=>Array.isArray(data)?data.filter(Boolean):data&&typeof data==="object"?[data]:[];
+function chunks(a,size=20){const out=[];for(let i=0;i<a.length;i+=size)out.push(a.slice(i,i+size));return out}
+async function fetchQuoteChunk(symbols,key){if(!symbols.length)return[];const joined=symbols.map(toFmpSymbol).join(","),stable=`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(joined)}&apikey=${key}`,legacy=`https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(joined)}?apikey=${key}`;try{const rows=asQuoteArray(await fetchJson(stable));if(rows.length>=Math.min(symbols.length,2))return rows}catch{}try{const rows=asQuoteArray(await fetchJson(legacy));if(rows.length>=Math.min(symbols.length,2))return rows}catch{}const rows=[];for(const symbol of symbols){const clean=toFmpSymbol(symbol);for(const url of[`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(clean)}&apikey=${key}`,`https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(clean)}?apikey=${key}`]){try{const one=asQuoteArray(await fetchJson(url));if(one.length){rows.push(one[0]);break}}catch{}}}return rows}
+async function fetchFmpQuotes(symbols=[]){const key=process.env.FMP_API_KEY;if(!key)throw new Error("Missing FMP_API_KEY in environment variables.");const requested=uniqueSymbols(symbols),all=[];for(const c of chunks(requested,20))all.push(...await fetchQuoteChunk(c,key));const bySymbol=new Map();for(const row of all){const symbol=normalizeSymbol(row?.symbol);if(symbol&&!bySymbol.has(symbol))bySymbol.set(symbol,row)}return[...bySymbol.values()]}
 
 function scoreQuote(n={}){
-  const score=compositeScore(n),fundamentalScore=calcFundamentalScore(n),technicalScore=calcTechnicalScore(n),momentumScore=calcMomentumScore(n),relativeStrengthScore=calcRelativeStrengthScore(n),asymmetryScore=calcAsymmetryScore(n),triggerScore=calcTriggerScore(n),technicalSnapshot=buildTechnicalSnapshot(n),fundamentalSnapshot=buildFundamentalSnapshot(n);
-  const raw=getRecommendation({...n,score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,triggerScore});
-  const recommendation=applyExpertDecision({...n,score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,triggerScore},raw),action=normalizeActionLabel(recommendation.label);
-  return{...n,score,compositeScore:score,heatScore:score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,asymmetryScore,triggerScore,primaryTheme:themeFor(n.symbol),theme:themeFor(n.symbol),recommendation:{...recommendation,label:action,displayLabel:action,recommendation:action,tradeAction:action,score,triggerScore,momentumScore},action,riskPlan:recommendation.riskPlan??raw.riskPlan??null,technicalSnapshot,fundamentalSnapshot,expertDecision:recommendation.expertDecision,expertOverride:recommendation.expertOverride,expertOverrideReason:recommendation.expertOverrideReason,thesisScore:recommendation.thesisScore,tradeSetupScore:recommendation.tradeSetupScore,capitalScore:recommendation.capitalScore};
+  // Momentum/trigger scoring must compare a full-day-equivalent volume pace to avgVolume.
+  // The expert hard gate still receives actual accumulated volume and applies its own paced ratio.
+  const scoringInput={...n,volume:projectedFullDayVolume(n)};
+  const score=compositeScore(scoringInput),fundamentalScore=calcFundamentalScore(scoringInput),technicalScore=calcTechnicalScore(scoringInput),momentumScore=calcMomentumScore(scoringInput),relativeStrengthScore=calcRelativeStrengthScore(scoringInput),asymmetryScore=calcAsymmetryScore(scoringInput),triggerScore=calcTriggerScore(scoringInput),technicalSnapshot=buildTechnicalSnapshot(scoringInput),fundamentalSnapshot=buildFundamentalSnapshot(scoringInput);
+  const raw=getRecommendation({...scoringInput,score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,triggerScore});
+  const recommendation=applyExpertDecision({...n,score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,triggerScore},raw);
+  return{...n,score,compositeScore:score,heatScore:score,fundamentalScore,technicalScore,momentumScore,relativeStrengthScore,asymmetryScore,triggerScore,primaryTheme:PRIMARY_THEME_BY_SYMBOL[n.symbol]||"Other",theme:PRIMARY_THEME_BY_SYMBOL[n.symbol]||"Other",recommendation,riskPlan:recommendation.riskPlan??raw.riskPlan??null,technicalSnapshot,fundamentalSnapshot,expertDecision:recommendation.expertDecision,expertOverride:recommendation.expertOverride,expertOverrideReason:recommendation.expertOverrideReason,thesisScore:recommendation.thesisScore,tradeSetupScore:recommendation.tradeSetupScore,capitalScore:recommendation.capitalScore};
 }
-function enrich(s={}){return{...s,convictionGrade:getConvictionGrade(s),catalyst:getCatalyst(s),decisionClock:getDecisionClock(s)};}
-
-// Relative capital score answers the portfolio question: among names that are individually buyable, which ones are competitive for today's fresh capital?
-function relativeCapitalScore(s={}){const r=s.recommendation||{},e=r.expertDecision||{};return safeScore(r.capitalScore??s.capitalScore??e.capitalScore)*.45+safeScore(r.tradeSetupScore??s.tradeSetupScore??e.tradeSetupScore)*.30+safeScore(s.relativeStrengthScore)*.15+safeScore(s.technicalScore)*.10;}
-function percentile(values=[],p=.70){if(!values.length)return 0;const a=[...values].sort((x,y)=>x-y),i=(a.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return lo===hi?a[lo]:a[lo]+(a[hi]-a[lo])*(i-lo);}
-function demoteToWatch(s,peerScore,cutoff,bestScore){const standalone=getAction(s),reason=`Passes the standalone ${standalone} gates, but it is materially less attractive than today's strongest fresh-capital setups. Keep it on Watch rather than self-filtering among too many Buys.`;return{...s,action:"Watch",standaloneAction:standalone,relativeCapitalScore:Math.round(peerScore*10)/10,relativeCapitalCutoff:Math.round(cutoff*10)/10,bestRelativeCapitalScore:Math.round(bestScore*10)/10,recommendation:{...(s.recommendation||{}),label:"Watch",displayLabel:"Watch",recommendation:"Watch",tradeAction:"Watch",decisionTiming:"Wait for Trigger",positionSize:"None",decisionWhy:reason,relativeCapitalReason:reason,standaloneAction:standalone}};}
-function applyRelativeCapitalFilter(rows=[]){const actionable=rows.filter(s=>["Strong Buy","Buy"].includes(getAction(s)));if(actionable.length<=1)return rows;const scored=actionable.map(s=>({s,score:relativeCapitalScore(s)})),scores=scored.map(x=>x.score),best=Math.max(...scores),cutoff=Math.max(percentile(scores,.70),best-5);return rows.map(s=>{const a=getAction(s);if(!["Strong Buy","Buy"].includes(a))return s;const peer=relativeCapitalScore(s),capital=safeScore(s.recommendation?.capitalScore??s.capitalScore??s.recommendation?.expertDecision?.capitalScore),trade=safeScore(s.tradeSetupScore??s.recommendation?.tradeSetupScore??s.recommendation?.expertDecision?.tradeSetupScore);const competitive=peer>=cutoff&&capital>=70&&trade>=74;if(!competitive)return demoteToWatch(s,peer,cutoff,best);return{...s,standaloneAction:a,relativeCapitalScore:Math.round(peer*10)/10,relativeCapitalCutoff:Math.round(cutoff*10)/10,bestRelativeCapitalScore:Math.round(best*10)/10,recommendation:{...(s.recommendation||{}),standaloneAction:a,relativeCapitalScore:Math.round(peer*10)/10}};});}
-
-function rankScore(s={}){return actionRank(s)*1000+relativeCapitalScore(s)*4+safeScore(s.tradeSetupScore)*2+safeScore(s.relativeStrengthScore)+safeScore(s.score);}
-function sortTop(a,b){return rankScore(b)-rankScore(a);}
-function buildThemeLeadership(rows=[]){const map=new Map();for(const r of rows){const t=r.primaryTheme||"Other";if(!map.has(t))map.set(t,{theme:t,key:Object.entries(THEME_CONFIG).find(([,x])=>x.name===t)?.[0]||"opportunities",total:0,strongBuy:0,buy:0,watch:0,avoid:0,scoreTotal:0,bestSymbol:r.symbol,bestRank:-1});const b=map.get(t),a=getAction(r);b.total++;if(a==="Strong Buy")b.strongBuy++;else if(a==="Buy")b.buy++;else if(a==="Watch")b.watch++;else b.avoid++;b.scoreTotal+=safeScore(r.tradeSetupScore??r.score);const rank=rankScore(r);if(rank>b.bestRank){b.bestRank=rank;b.bestSymbol=r.symbol;}}return[...map.values()].map(b=>({...b,score:Math.round(b.scoreTotal/Math.max(1,b.total)),status:b.strongBuy||b.buy?"Leading":b.watch?"Mixed":"Weak"})).sort((a,b)=>b.score-a.score);}
+function buildThemeLeadership(rows=[]){const map=new Map();for(const r of rows){const t=r.primaryTheme||"Other";if(!map.has(t))map.set(t,{theme:t,total:0,strongBuy:0,buy:0,watch:0,avoid:0,scoreTotal:0,bestSymbol:r.symbol,bestRank:-1});const b=map.get(t),a=r.finalDecision?.action||"Avoid";b.total++;if(a==="Strong Buy")b.strongBuy++;else if(a==="Buy")b.buy++;else if(a==="Watch")b.watch++;else b.avoid++;b.scoreTotal+=Number(r.tradeSetupScore||r.score||0);const rank=(a==="Strong Buy"?4:a==="Buy"?3:a==="Watch"?1:0)*1000+relativeCapitalScore(r);if(rank>b.bestRank){b.bestRank=rank;b.bestSymbol=r.symbol}}return[...map.values()].map(b=>({...b,score:Math.round(b.scoreTotal/Math.max(1,b.total)),status:b.strongBuy||b.buy?"Leading":b.watch?"Mixed":"Weak"})).sort((a,b)=>b.score-a.score)}
 
 export default async function handler(req,res){
   try{
@@ -106,9 +66,9 @@ export default async function handler(req,res){
     const quotes=await fetchFmpQuotes([...symbols,"SPY","QQQ"]),normalized=quotes.map(normalizeQuote).filter(q=>q.symbol&&q.price),spy=normalized.find(q=>q.symbol==="SPY"),qqq=normalized.find(q=>q.symbol==="QQQ");
     let rows=normalized.filter(q=>symbols.includes(q.symbol)).map(q=>scoreQuote({...q,spyDayChangePct:spy?.dayChangePct??null,qqqDayChangePct:qqq?.dayChangePct??null}));
     const eventRiskMap=await fetchEventRiskMap(rows.map(r=>r.symbol));
-    rows=rows.map(r=>enrich(applyEventRiskGate(r,eventRiskMap.get(r.symbol))));
-    rows=applyRelativeCapitalFilter(rows).sort(sortTop);
+    rows=rows.map(r=>applyEventRiskGate(r,eventRiskMap.get(r.symbol)));
+    rows=finalizeBroadOpportunityDecisions(rows);
     const themeLeadership=buildThemeLeadership(rows);
-    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list using the same expert decision model and relative capital filter."},meta:{mode:"expert_decision_v4_relative",universeSize:symbols.length,returned:rows.length,strongBuys:rows.filter(r=>getAction(r)==="Strong Buy").length,buys:rows.filter(r=>getAction(r)==="Buy").length,watches:rows.filter(r=>getAction(r)==="Watch").length,expertOverrides:rows.filter(r=>r.expertOverride).length}});
-  }catch(err){console.error("api/top5 error:",err);return res.status(500).json({error:"Failed to load trade screen.",detail:err.message||"Unknown error."});}
+    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list using the same final decision pipeline."},meta:{mode:"expert_decision_v5_authoritative",universeSize:symbols.length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length}});
+  }catch(err){console.error("api/top5 error:",err);return res.status(500).json({error:"Failed to load trade screen.",detail:err.message||"Unknown error."})}
 }
