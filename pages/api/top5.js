@@ -57,16 +57,35 @@ function scoreQuote(n={}){
 }
 function buildThemeLeadership(rows=[]){const map=new Map();for(const r of rows){const t=r.primaryTheme||"Other";if(!map.has(t))map.set(t,{theme:t,total:0,strongBuy:0,buy:0,watch:0,avoid:0,scoreTotal:0,bestSymbol:r.symbol,bestRank:-1});const b=map.get(t),a=r.finalDecision?.action||"Avoid";b.total++;if(a==="Strong Buy")b.strongBuy++;else if(a==="Buy")b.buy++;else if(a==="Watch")b.watch++;else b.avoid++;b.scoreTotal+=Number(r.tradeSetupScore||r.score||0);const rank=(a==="Strong Buy"?4:a==="Buy"?3:a==="Watch"?1:0)*1000+relativeCapitalScore(r);if(rank>b.bestRank){b.bestRank=rank;b.bestSymbol=r.symbol}}return[...map.values()].map(b=>({...b,score:Math.round(b.scoreTotal/Math.max(1,b.total)),status:b.strongBuy||b.buy?"Leading":b.watch?"Mixed":"Weak"})).sort((a,b)=>b.score-a.score)}
 
-export default async function handler(req,res){
-  try{
-    res.setHeader("Cache-Control","no-store, max-age=0");
-    const themeKey=String(req.query.theme||"opportunities").toLowerCase(),config=getThemeConfig(themeKey),symbols=config.symbols.filter(s=>!EXCLUDED.has(s));
-    const quotes=await fetchFmpQuotes([...symbols,"SPY","QQQ"]),normalized=quotes.map(normalizeQuote).filter(q=>q.symbol&&q.price),spy=normalized.find(q=>q.symbol==="SPY"),qqq=normalized.find(q=>q.symbol==="QQQ");
-    let rows=normalized.filter(q=>symbols.includes(q.symbol)).map(q=>scoreQuote({...q,spyDayChangePct:spy?.dayChangePct??null,qqqDayChangePct:qqq?.dayChangePct??null}));
+const CACHE_KEY="__screenerBroadOpportunityCacheV1";
+const CACHE_MS=30000;
+async function buildBroadSnapshot(){
+  const now=Date.now(),cached=globalThis[CACHE_KEY];
+  if(cached?.rows&&now-cached.ts<CACHE_MS)return cached.rows;
+  if(cached?.promise)return cached.promise;
+  const promise=(async()=>{
+    const broadSymbols=CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s));
+    const quotes=await fetchFmpQuotes([...broadSymbols,"SPY","QQQ"]),normalized=quotes.map(normalizeQuote).filter(q=>q.symbol&&q.price),spy=normalized.find(q=>q.symbol==="SPY"),qqq=normalized.find(q=>q.symbol==="QQQ");
+    let rows=normalized.filter(q=>broadSymbols.includes(q.symbol)).map(q=>scoreQuote({...q,spyDayChangePct:spy?.dayChangePct??null,qqqDayChangePct:qqq?.dayChangePct??null}));
     const eventRiskMap=await fetchEventRiskMap(rows.map(r=>r.symbol));
     rows=rows.map(r=>applyEventRiskGate(r,eventRiskMap.get(r.symbol)));
     rows=finalizeBroadOpportunityDecisions(rows);
-    const themeLeadership=buildThemeLeadership(rows);
-    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list using the same final decision pipeline."},meta:{mode:"expert_decision_v5_authoritative",universeSize:symbols.length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length}});
+    globalThis[CACHE_KEY]={ts:Date.now(),rows,promise:null};
+    return rows;
+  })();
+  globalThis[CACHE_KEY]={ts:cached?.ts||0,rows:cached?.rows||null,promise};
+  try{return await promise}catch(err){globalThis[CACHE_KEY]={ts:cached?.ts||0,rows:cached?.rows||null,promise:null};throw err}
+}
+
+export default async function handler(req,res){
+  try{
+    res.setHeader("Cache-Control","no-store, max-age=0");
+    const themeKey=String(req.query.theme||"opportunities").toLowerCase(),config=getThemeConfig(themeKey);
+    const broadRows=await buildBroadSnapshot();
+    const themeLeadership=buildThemeLeadership(broadRows);
+    const isBroad=themeKey==="opportunities"||themeKey==="broad";
+    const selectedSymbols=new Set(config.symbols.filter(s=>!EXCLUDED.has(s)));
+    const rows=isBroad?broadRows:broadRows.filter(r=>selectedSymbols.has(r.symbol));
+    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list filtered from the authoritative broad opportunity decisions."},meta:{mode:"expert_decision_v6_cached_single_authority",universeSize:CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s)).length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length}});
   }catch(err){console.error("api/top5 error:",err);return res.status(500).json({error:"Failed to load trade screen.",detail:err.message||"Unknown error."})}
 }
