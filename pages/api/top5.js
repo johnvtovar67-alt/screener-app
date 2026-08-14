@@ -60,13 +60,19 @@ function buildThemeLeadership(rows=[]){const map=new Map();for(const r of rows){
 export default async function handler(req,res){
   try{
     res.setHeader("Cache-Control","no-store, max-age=0");
-    const themeKey=String(req.query.theme||"opportunities").toLowerCase(),config=getThemeConfig(themeKey),symbols=config.symbols.filter(s=>!EXCLUDED.has(s));
-    const quotes=await fetchFmpQuotes([...symbols,"SPY","QQQ"]),normalized=quotes.map(normalizeQuote).filter(q=>q.symbol&&q.price),spy=normalized.find(q=>q.symbol==="SPY"),qqq=normalized.find(q=>q.symbol==="QQQ");
-    let rows=normalized.filter(q=>symbols.includes(q.symbol)).map(q=>scoreQuote({...q,spyDayChangePct:spy?.dayChangePct??null,qqqDayChangePct:qqq?.dayChangePct??null}));
-    const eventRiskMap=await fetchEventRiskMap(rows.map(r=>r.symbol));
-    rows=rows.map(r=>applyEventRiskGate(r,eventRiskMap.get(r.symbol)));
-    rows=finalizeBroadOpportunityDecisions(rows);
-    const themeLeadership=buildThemeLeadership(rows);
-    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list using the same final decision pipeline."},meta:{mode:"expert_decision_v5_authoritative",universeSize:symbols.length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length}});
+    const themeKey=String(req.query.theme||"opportunities").toLowerCase(),config=getThemeConfig(themeKey);
+    // Always run the authoritative relative-capital decision across the SAME broad universe.
+    // Theme pages are presentation filters only; they must never recalculate a different Buy/Watch decision.
+    const broadSymbols=CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s));
+    const selectedSymbols=new Set(config.symbols.filter(s=>!EXCLUDED.has(s)));
+    const quotes=await fetchFmpQuotes([...broadSymbols,"SPY","QQQ"]),normalized=quotes.map(normalizeQuote).filter(q=>q.symbol&&q.price),spy=normalized.find(q=>q.symbol==="SPY"),qqq=normalized.find(q=>q.symbol==="QQQ");
+    let broadRows=normalized.filter(q=>broadSymbols.includes(q.symbol)).map(q=>scoreQuote({...q,spyDayChangePct:spy?.dayChangePct??null,qqqDayChangePct:qqq?.dayChangePct??null}));
+    const eventRiskMap=await fetchEventRiskMap(broadRows.map(r=>r.symbol));
+    broadRows=broadRows.map(r=>applyEventRiskGate(r,eventRiskMap.get(r.symbol)));
+    broadRows=finalizeBroadOpportunityDecisions(broadRows);
+    const themeLeadership=buildThemeLeadership(broadRows);
+    const isBroad=themeKey==="opportunities"||themeKey==="broad";
+    const rows=isBroad?broadRows:broadRows.filter(r=>selectedSymbols.has(r.symbol));
+    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list filtered from the authoritative broad opportunity decisions."},meta:{mode:"expert_decision_v6_single_authority",universeSize:broadSymbols.length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length}});
   }catch(err){console.error("api/top5 error:",err);return res.status(500).json({error:"Failed to load trade screen.",detail:err.message||"Unknown error."})}
 }
