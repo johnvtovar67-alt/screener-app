@@ -31,10 +31,10 @@ const THEMES={
   "Platform Biotech":["MRNA","RXRX","SDGR","CRSP","BEAM","IOVA","VKTX","ALMS","HIMS"],
 };
 const PRIMARY_THEME_BY_SYMBOL=Object.fromEntries(Object.entries(THEMES).flatMap(([theme,symbols])=>symbols.map(s=>[s,theme])));
-const CORE_OPPORTUNITY_SYMBOLS=Object.keys(PRIMARY_THEME_BY_SYMBOL),EXCLUDED=new Set(["ABB","ABBNY","DLR","EQIX","AMT"]);
+const CORE_OPPORTUNITY_SYMBOLS=Object.keys(PRIMARY_THEME_BY_SYMBOL),EXCLUDED=new Set(["ABB","ABBNY"]);
 const THEME_CONFIG={
-  opportunities:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking. REITs and non-executable/mismatched symbols are excluded.",symbols:CORE_OPPORTUNITY_SYMBOLS},
-  broad:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking. REITs and non-executable/mismatched symbols are excluded.",symbols:CORE_OPPORTUNITY_SYMBOLS},
+  opportunities:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking. Theme-aligned REITs compete on the same setup and capital-ranking rules; only non-executable/mismatched symbols are excluded.",symbols:CORE_OPPORTUNITY_SYMBOLS},
+  broad:{name:"Best Opportunities",description:"Fresh-capital screen using absolute qualification followed by relative capital ranking. Theme-aligned REITs compete on the same setup and capital-ranking rules; only non-executable/mismatched symbols are excluded.",symbols:CORE_OPPORTUNITY_SYMBOLS},
   ai_compute:{name:"AI Compute & Platforms",symbols:THEMES["AI Compute & Platforms"]},ai_networking:{name:"AI Networking",symbols:THEMES["AI Networking"]},cybersecurity:{name:"Cybersecurity",symbols:THEMES.Cybersecurity},power:{name:"Power & Electrification",symbols:THEMES["Power & Electrification"]},digital_infra:{name:"Digital Infrastructure",symbols:THEMES["Digital Infrastructure"]},nuclear:{name:"Nuclear / Baseload",symbols:THEMES["Nuclear / Baseload"]},btc:{name:"BTC / Digital Assets",symbols:THEMES["BTC / Digital Assets"]},defense:{name:"Defense & National Security",symbols:THEMES["Defense & National Security"]},space:{name:"Space & Satellites",symbols:THEMES["Space & Satellites"]},drones:{name:"Autonomy & Drones",symbols:THEMES["Autonomy & Drones"]},robotics:{name:"Robotics & Automation",symbols:THEMES["Robotics & Automation"]},industrial_software:{name:"Industrial Software",symbols:THEMES["Industrial Software"]},quantum:{name:"Quantum Computing",symbols:THEMES["Quantum Computing"]},biotech:{name:"Platform Biotech",symbols:THEMES["Platform Biotech"]}
 };
 const getThemeConfig=k=>THEME_CONFIG[String(k||"opportunities").toLowerCase()]||THEME_CONFIG.opportunities;
@@ -57,7 +57,7 @@ function scoreQuote(n={}){
 }
 function buildThemeLeadership(rows=[]){const map=new Map();for(const r of rows){const t=r.primaryTheme||"Other";if(!map.has(t))map.set(t,{theme:t,total:0,strongBuy:0,buy:0,watch:0,avoid:0,scoreTotal:0,bestSymbol:r.symbol,bestRank:-1});const b=map.get(t),a=r.finalDecision?.action||"Avoid";b.total++;if(a==="Strong Buy")b.strongBuy++;else if(a==="Buy")b.buy++;else if(a==="Watch")b.watch++;else b.avoid++;b.scoreTotal+=Number(r.tradeSetupScore||r.score||0);const rank=(a==="Strong Buy"?4:a==="Buy"?3:a==="Watch"?1:0)*1000+relativeCapitalScore(r);if(rank>b.bestRank){b.bestRank=rank;b.bestSymbol=r.symbol}}return[...map.values()].map(b=>({...b,score:Math.round(b.scoreTotal/Math.max(1,b.total)),status:b.strongBuy||b.buy?"Leading":b.watch?"Mixed":"Weak"})).sort((a,b)=>b.score-a.score)}
 
-const CACHE_KEY="__screenerBroadOpportunityCacheV1";
+const CACHE_KEY="__screenerBroadOpportunityCacheV2";
 const CACHE_MS=30000;
 async function buildBroadSnapshot(){
   const now=Date.now(),cached=globalThis[CACHE_KEY];
@@ -86,6 +86,6 @@ export default async function handler(req,res){
     const isBroad=themeKey==="opportunities"||themeKey==="broad";
     const selectedSymbols=new Set(config.symbols.filter(s=>!EXCLUDED.has(s)));
     const rows=isBroad?broadRows:broadRows.filter(r=>selectedSymbols.has(r.symbol));
-    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list filtered from the authoritative broad opportunity decisions."},meta:{mode:"expert_decision_v6_cached_single_authority",universeSize:CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s)).length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length}});
+    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list filtered from the authoritative broad opportunity decisions."},meta:{mode:"expert_decision_v7_theme_aligned_reits",universeSize:CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s)).length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length}});
   }catch(err){console.error("api/top5 error:",err);return res.status(500).json({error:"Failed to load trade screen.",detail:err.message||"Unknown error."})}
 }
