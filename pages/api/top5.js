@@ -10,6 +10,7 @@ import { applyExpertDecision } from "../../lib/expertDecision";
 import { fetchEventRiskMap, applyEventRiskGate } from "../../lib/eventRisk";
 import { projectedFullDayVolume } from "../../lib/marketSession";
 import { finalizeBroadOpportunityDecisions, relativeCapitalScore } from "../../lib/opportunityDecision";
+import { fetchFmpFundamentals, mergeFundamentals } from "../../lib/fmpFundamentals";
 
 const normalizeSymbol=s=>String(s||"").replace("-", ".").toUpperCase().trim();
 const toFmpSymbol=s=>String(s||"").replace(".", "-").toUpperCase().trim();
@@ -66,7 +67,9 @@ async function buildBroadSnapshot(){
   const promise=(async()=>{
     const broadSymbols=CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s));
     const quotes=await fetchFmpQuotes([...broadSymbols,"SPY","QQQ"]),normalized=quotes.map(normalizeQuote).filter(q=>q.symbol&&q.price),spy=normalized.find(q=>q.symbol==="SPY"),qqq=normalized.find(q=>q.symbol==="QQQ");
-    let rows=normalized.filter(q=>broadSymbols.includes(q.symbol)).map(q=>scoreQuote({...q,spyDayChangePct:spy?.dayChangePct??null,qqqDayChangePct:qqq?.dayChangePct??null}));
+    const broadQuotes=normalized.filter(q=>broadSymbols.includes(q.symbol));
+    const fundamentalMap=await fetchFmpFundamentals(broadQuotes.map(q=>q.symbol));
+    let rows=broadQuotes.map(q=>scoreQuote(mergeFundamentals({...q,spyDayChangePct:spy?.dayChangePct??null,qqqDayChangePct:qqq?.dayChangePct??null},fundamentalMap)));
     const eventRiskMap=await fetchEventRiskMap(rows.map(r=>r.symbol));
     rows=rows.map(r=>applyEventRiskGate(r,eventRiskMap.get(r.symbol)));
     rows=finalizeBroadOpportunityDecisions(rows);
@@ -86,6 +89,7 @@ export default async function handler(req,res){
     const isBroad=themeKey==="opportunities"||themeKey==="broad";
     const selectedSymbols=new Set(config.symbols.filter(s=>!EXCLUDED.has(s)));
     const rows=isBroad?broadRows:broadRows.filter(r=>selectedSymbols.has(r.symbol));
-    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list filtered from the authoritative broad opportunity decisions."},meta:{mode:"expert_decision_v7_theme_aligned_reits",universeSize:CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s)).length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length}});
+    const fundamentalsComplete=rows.filter(r=>r.fundamentalDataStatus==="complete").length;
+    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list filtered from the authoritative broad opportunity decisions."},meta:{mode:"expert_decision_v8_fmp_fundamentals",universeSize:CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s)).length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length,fundamentalsComplete,fundamentalsIncomplete:rows.length-fundamentalsComplete}});
   }catch(err){console.error("api/top5 error:",err);return res.status(500).json({error:"Failed to load trade screen.",detail:err.message||"Unknown error."})}
 }
