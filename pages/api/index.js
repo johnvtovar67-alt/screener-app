@@ -9,6 +9,7 @@ import { applyExpertDecision } from "../../lib/expertDecision";
 import { fetchEventRiskMap, applyEventRiskGate } from "../../lib/eventRisk";
 import { projectedFullDayVolume } from "../../lib/marketSession";
 import { finalizeStandaloneOpportunityDecision } from "../../lib/opportunityDecision";
+import { fetchFmpFundamentals, mergeFundamentals } from "../../lib/fmpFundamentals";
 
 const PRIMARY_THEME_BY_SYMBOL={
   NVDA:"AI Compute & Platforms",AMD:"AI Compute & Platforms",AVGO:"AI Compute & Platforms",ARM:"AI Compute & Platforms",MU:"AI Compute & Platforms",SMCI:"AI Compute & Platforms",DELL:"AI Compute & Platforms",HPE:"AI Compute & Platforms",PLTR:"AI Compute & Platforms",ORCL:"AI Compute & Platforms",MSFT:"AI Compute & Platforms",GOOGL:"AI Compute & Platforms",GOOG:"AI Compute & Platforms",META:"AI Compute & Platforms",AMZN:"AI Compute & Platforms",AAPL:"AI Compute & Platforms",
@@ -47,8 +48,8 @@ export default async function handler(req,res){
     res.setHeader("Cache-Control","no-store, max-age=0");
     const symbol=String(req.query.symbol||"").trim().toUpperCase();if(!symbol)return res.status(400).json({error:"Missing symbol."});
     const[quote,spyQuote,qqqQuote]=await Promise.all([fetchQuote(symbol),fetchQuote("SPY").catch(()=>null),fetchQuote("QQQ").catch(()=>null)]);
-    const base=attachMarketRelativeData(quote,spyQuote,qqqQuote),scored=buildScoredResult(base),eventRiskMap=await fetchEventRiskMap([symbol]),eventAdjusted=applyEventRiskGate(scored,eventRiskMap.get(normalizeSymbol(symbol))),result=finalizeStandaloneOpportunityDecision(eventAdjusted);
+    const base=attachMarketRelativeData(quote,spyQuote,qqqQuote),fundamentalMap=await fetchFmpFundamentals([symbol]),enriched=mergeFundamentals(base,fundamentalMap),scored=buildScoredResult(enriched),eventRiskMap=await fetchEventRiskMap([symbol]),eventAdjusted=applyEventRiskGate(scored,eventRiskMap.get(normalizeSymbol(symbol))),result=finalizeStandaloneOpportunityDecision(eventAdjusted);
     if(!result?.symbol||result.price===null||result.price===undefined)throw new Error(`No usable quote data returned for ${symbol}.`);
-    return res.status(200).json({stock:result,meta:{mode:"single_symbol_expert_model_v5_authoritative",note:"Single-symbol finalDecision is the standalone decision after event risk. Broad Opportunities may demote a standalone Buy to Qualified Watch based on relative capital attractiveness.",spyChange:spyQuote?.dayChangePct??null,qqqChange:qqqQuote?.dayChangePct??null}});
+    return res.status(200).json({stock:result,meta:{mode:"single_symbol_expert_model_v6_fmp_fundamentals",note:"Single-symbol finalDecision is the standalone decision after fundamental enrichment and event risk. Broad Opportunities may demote a standalone Buy to Qualified Watch based on relative capital attractiveness.",spyChange:spyQuote?.dayChangePct??null,qqqChange:qqqQuote?.dayChangePct??null,fundamentalDataStatus:result.fundamentalDataStatus||"unknown"}});
   }catch(err){console.error("api/index error:",err);return res.status(500).json({error:"Failed to analyze symbol.",detail:err.message||"Unknown error."})}
 }
