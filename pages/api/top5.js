@@ -15,6 +15,57 @@ import { fetchFmpFundamentals, mergeFundamentals } from "../../lib/fmpFundamenta
 const normalizeSymbol=s=>String(s||"").replace("-", ".").toUpperCase().trim();
 const toFmpSymbol=s=>String(s||"").replace(".", "-").toUpperCase().trim();
 const uniqueSymbols=a=>[...new Set((a||[]).map(normalizeSymbol).filter(Boolean))];
+
+// Strong Buy is intentionally stateful. Earning Strong Buy uses the strict expert gates;
+// retaining it uses a slightly wider band so small quote/score movement does not create
+// whipsaw. The state lives in an HttpOnly browser cookie rather than Vercel process memory,
+// so it survives serverless instance changes. It expires if the app is not refreshed for days.
+const SIGNAL_COOKIE="screener_strong_buy_state_v1";
+const SIGNAL_STATE_MAX_AGE_MS=5*24*60*60*1000;
+const SIGNAL_COOKIE_MAX_AGE_SECONDS=7*24*60*60;
+function readCookie(req,name){const raw=String(req?.headers?.cookie||"");for(const part of raw.split(";")){const i=part.indexOf("=");if(i<0)continue;if(part.slice(0,i).trim()===name)return part.slice(i+1).trim()}return""}
+function readStrongBuyState(req,now=Date.now()){
+  const raw=readCookie(req,SIGNAL_COOKIE);if(!raw)return{};
+  try{const parsed=JSON.parse(decodeURIComponent(raw)),out={};for(const[symbol,ts]of Object.entries(parsed||{})){const t=Number(ts),key=normalizeSymbol(symbol);if(key&&Number.isFinite(t)&&t>0&&now-t<=SIGNAL_STATE_MAX_AGE_MS)out[key]=t}return out}catch{return{}}
+}
+function writeStrongBuyState(res,state={}){
+  const entries=Object.entries(state).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,25),compact=Object.fromEntries(entries);
+  res.setHeader("Set-Cookie",`${SIGNAL_COOKIE}=${encodeURIComponent(JSON.stringify(compact))}; Path=/; Max-Age=${SIGNAL_COOKIE_MAX_AGE_SECONDS}; HttpOnly; Secure; SameSite=Lax`);
+}
+function strongBuyRetentionEligible(s={}){
+  const r=s?.recommendation&&typeof s.recommendation==="object"?s.recommendation:{},e=r?.expertDecision||s?.expertDecision||{},m=e?.metrics||{},d=s?.finalDecision||{};
+  if(!["Strong Buy","Buy","Watch"].includes(String(d.action||"")))return false;
+  const event=s?.eventRisk||s?.preTradeCheck||r?.eventRisk||r?.preTradeCheck||{},eventStatus=String(event?.status||"").toLowerCase();
+  if(event?.blockNewCapital||event?.manualCheckRequired||["blocked","manual","caution"].includes(eventStatus))return false;
+  if(m.quoteFreshnessPass===false||m.fundamentalsPass===false)return false;
+  if(e.trendStatus&&e.trendStatus!=="Confirmed")return false;
+  if(m.below50||m.below200)return false;
+  const rv=m.relativeVolume;if(rv!==null&&rv!==undefined&&Number.isFinite(Number(rv))&&Number(rv)<.4)return false;
+  const rr=Number(m.payoffRatio);if(Number.isFinite(rr)&&rr>0&&rr<1.5)return false;
+  const vs50=m.vs50===null||m.vs50===undefined?null:Number(m.vs50),day=Number(m.day||0),extension=Number(m.extension??50);
+  if(extension>=65||(Number.isFinite(vs50)&&vs50>20)||day>8)return false;
+  const thesis=Number(r.thesisScore??s.thesisScore??e.thesisScore??s.fundamentalScore??0),trade=Number(r.tradeSetupScore??s.tradeSetupScore??e.tradeSetupScore??0),capital=Number(r.capitalScore??s.capitalScore??e.capitalScore??0),raw=Number(s.score??s.compositeScore??r.score??0),technical=Number(m.technical??s.technicalScore??r.technicalScore??0),leadership=Number(m.leadership??s.relativeStrengthScore??r.relativeStrengthScore??0),momentum=Number(m.momentum??s.momentumScore??r.momentumScore??0),entry=Number(m.entry??r.entryQualityScore??s.entryQualityScore??0),risk=Number(m.risk??r.riskScore??s.riskScore??100);
+  return thesis>=74&&trade>=82&&capital>=79&&raw>=72&&technical>=62&&leadership>=64&&momentum>=52&&entry>=52&&risk<=70;
+}
+function applyStrongBuyHysteresis(rows=[],priorState={},now=Date.now()){
+  const state={...priorState};
+  let adjusted=rows.map(s=>{
+    const symbol=normalizeSymbol(s.symbol||s.ticker),d=s?.finalDecision||{},strictStrong=d.action==="Strong Buy"&&d.source!=="strong-buy-retention";
+    if(strictStrong){state[symbol]=now;return{...s,finalDecision:{...d,hysteresisProtected:false,strongBuyState:"earned"}}}
+    const recent=Number(state[symbol])>0&&now-Number(state[symbol])<=SIGNAL_STATE_MAX_AGE_MS;
+    if(recent&&strongBuyRetentionEligible(s)){
+      state[symbol]=now;
+      const e=s?.recommendation?.expertDecision||s?.expertDecision||{},first=Array.isArray(e?.failures)?e.failures[0]:"";
+      return{...s,finalDecision:{...d,action:"Strong Buy",timing:"Now",size:"Full",priority:"Retained Strong Buy",reason:`Strong Buy retained: the setup remains inside the high-conviction retention band and no hard safety gate has failed.${first?` Current softened factor: ${first}`:""}`,source:"strong-buy-retention",hysteresisProtected:true,strongBuyState:"retained"}};
+    }
+    if(recent)delete state[symbol];
+    return{...s,finalDecision:{...d,hysteresisProtected:false,strongBuyState:"none"}};
+  });
+  const rank=a=>a==="Strong Buy"?4:a==="Buy"?3:a==="Watch"?1:0;
+  adjusted=adjusted.sort((a,b)=>{const ar=rank(b?.finalDecision?.action)-rank(a?.finalDecision?.action);if(ar)return ar;return relativeCapitalScore(b)-relativeCapitalScore(a)});
+  return{rows:adjusted,state};
+}
+
 const THEMES={
   "AI Compute & Platforms":["NVDA","AMD","AVGO","ARM","MU","SMCI","DELL","HPE","PLTR","ORCL","MSFT","GOOGL","GOOG","META","AMZN","AAPL"],
   "AI Networking":["ANET","CSCO","NTAP","JNPR","FFIV","CIEN","MRVL","COHR","AAOI"],
@@ -83,13 +134,14 @@ async function buildBroadSnapshot(){
 export default async function handler(req,res){
   try{
     res.setHeader("Cache-Control","no-store, max-age=0");
-    const themeKey=String(req.query.theme||"opportunities").toLowerCase(),config=getThemeConfig(themeKey);
-    const broadRows=await buildBroadSnapshot();
+    const themeKey=String(req.query.theme||"opportunities").toLowerCase(),config=getThemeConfig(themeKey),now=Date.now();
+    const snapshot=await buildBroadSnapshot(),priorState=readStrongBuyState(req,now),hysteresis=applyStrongBuyHysteresis(snapshot,priorState,now),broadRows=hysteresis.rows;
+    writeStrongBuyState(res,hysteresis.state);
     const themeLeadership=buildThemeLeadership(broadRows);
     const isBroad=themeKey==="opportunities"||themeKey==="broad";
     const selectedSymbols=new Set(config.symbols.filter(s=>!EXCLUDED.has(s)));
     const rows=isBroad?broadRows:broadRows.filter(r=>selectedSymbols.has(r.symbol));
     const fundamentalsComplete=rows.filter(r=>r.fundamentalDataStatus==="complete").length;
-    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list filtered from the authoritative broad opportunity decisions."},meta:{mode:"expert_decision_v8_fmp_fundamentals",universeSize:CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s)).length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length,fundamentalsComplete,fundamentalsIncomplete:rows.length-fundamentalsComplete}});
+    return res.status(200).json({stocks:rows,themeLeadership,selectedTheme:{key:themeKey,name:config.name,description:config.description||"Focused research list filtered from the authoritative broad opportunity decisions."},meta:{mode:"expert_decision_v9_stateful_strong_buy_hysteresis",universeSize:CORE_OPPORTUNITY_SYMBOLS.filter(s=>!EXCLUDED.has(s)).length,returned:rows.length,strongBuys:rows.filter(r=>r.finalDecision?.action==="Strong Buy").length,retainedStrongBuys:rows.filter(r=>r.finalDecision?.source==="strong-buy-retention").length,buys:rows.filter(r=>r.finalDecision?.action==="Buy").length,watches:rows.filter(r=>r.finalDecision?.action==="Watch").length,qualifiedWatches:rows.filter(r=>r.finalDecision?.priority==="Qualified Watch").length,fundamentalsComplete,fundamentalsIncomplete:rows.length-fundamentalsComplete}});
   }catch(err){console.error("api/top5 error:",err);return res.status(500).json({error:"Failed to load trade screen.",detail:err.message||"Unknown error."})}
 }
