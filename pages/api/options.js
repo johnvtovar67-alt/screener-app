@@ -1,9 +1,9 @@
 // Read-only Massive options-chain diagnostics + transparent Phase 1 analysis.
-// Phase 1 is intentionally limited to covered calls and cash-secured puts.
+// Phase 1 covers covered calls, cash-secured puts, and defined-risk put credit spreads.
 // Executable recommendations remain prohibited until quote quality and all
 // authoritative stock, event-risk, and portfolio context are verified.
 
-import { analyzeOptionContract, OPTIONS_ANALYSIS_POLICY, summarizeOptionsAnalysis } from '../../lib/optionsAnalysis';
+import { analyzeOptionContract, buildPutCreditSpreadCandidates, OPTIONS_ANALYSIS_POLICY, summarizeOptionsAnalysis } from '../../lib/optionsAnalysis';
 
 const BASE_URL = 'https://api.massive.com/v3/snapshot/options';
 
@@ -57,9 +57,9 @@ async function fetchUnderlyingPrice(symbol) {
 
 function strikeBandFor(type, underlyingPrice) {
   if (!(underlyingPrice > 0)) return null;
-  if (type === 'put') return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.03, rationale: '75%-103% of current underlying for cash-secured-put analysis' };
+  if (type === 'put') return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.03, rationale: '75%-103% of current underlying for CSP and put-credit-spread analysis' };
   if (type === 'call') return { min: underlyingPrice * 0.97, max: underlyingPrice * 1.30, rationale: '97%-130% of current underlying for covered-call analysis' };
-  return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.30, rationale: '75%-130% of current underlying for Phase 1 covered-call/CSP analysis' };
+  return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.30, rationale: '75%-130% of current underlying for Phase 1 options analysis' };
 }
 
 function summarize(contract={}) {
@@ -167,6 +167,9 @@ export default async function handler(req, res) {
       analysis: analyzeOptionContract(contract, { now, context: analysisContext }),
     }));
     const analysisRows = analyzedContracts.map(x => x.analysis);
+    const putCreditSpreads = (type === 'put' || !type)
+      ? buildPutCreditSpreadCandidates(contracts, { now, context: analysisContext })
+      : [];
     const withQuote = contracts.filter(x => x.bid !== null || x.ask !== null).length;
     const withGreeks = contracts.filter(x => x.delta !== null || x.gamma !== null || x.theta !== null || x.vega !== null).length;
     const withIV = contracts.filter(x => x.impliedVolatility !== null).length;
@@ -177,12 +180,12 @@ export default async function handler(req, res) {
     const structuralCandidates = analyzedContracts.filter(x => x.analysis?.data?.structuralPass);
 
     return res.status(200).json({
-      mode: 'options_chain_analysis_v4_cc_csp_context_gated',
+      mode: 'options_chain_analysis_v5_cc_csp_put_spread_context_gated',
       readOnly: true,
       recommendationEnabled: false,
       provider: 'Massive',
-      phase1Strategies: ['Covered Call', 'Cash-Secured Put'],
-      deferredStrategies: ['Put Credit Spread', 'Collar'],
+      phase1Strategies: ['Covered Call', 'Cash-Secured Put', 'Put Credit Spread'],
+      deferredStrategies: ['Collar', 'Call Credit Spread'],
       symbol,
       fetchedAt: now.toISOString(),
       requestId: body.request_id || null,
@@ -213,7 +216,10 @@ export default async function handler(req, res) {
         openInterest: withOI,
         volume: withVolume,
       },
-      analysisSummary: summarizeOptionsAnalysis(analysisRows),
+      analysisSummary: {
+        ...summarizeOptionsAnalysis(analysisRows),
+        putCreditSpreadStructuralCandidates: putCreditSpreads.length,
+      },
       structuralCandidates: structuralCandidates.map(x => ({
         ticker: x.ticker,
         contractType: x.contractType,
@@ -227,6 +233,7 @@ export default async function handler(req, res) {
         cashSecuredPutCandidate: x.analysis?.strategies?.cashSecuredPut?.structureCandidate ?? false,
         coveredCallCandidate: x.analysis?.strategies?.coveredCall?.structureCandidate ?? false,
       })),
+      putCreditSpreads,
       underlyingPrice: effectiveUnderlyingPrice,
       hasMore: Boolean(body.next_url),
       contracts: analyzedContracts,
