@@ -1,7 +1,7 @@
 // Read-only Massive options-chain diagnostics + transparent Phase 1 analysis.
-// This endpoint can identify structure candidates, but executable recommendations
-// remain prohibited until quote quality, paired-leg economics, event risk, and
-// portfolio context are all verified.
+// Phase 1 is intentionally limited to covered calls and cash-secured puts.
+// Executable recommendations remain prohibited until quote quality and all
+// authoritative stock, event-risk, and portfolio context are verified.
 
 import { analyzeOptionContract, OPTIONS_ANALYSIS_POLICY, summarizeOptionsAnalysis } from '../../lib/optionsAnalysis';
 
@@ -17,6 +17,11 @@ const num = value => {
 const intInRange = (value, fallback, lo, hi) => {
   const x = Number(value);
   return Number.isFinite(x) ? Math.max(lo, Math.min(hi, Math.round(x))) : fallback;
+};
+const optionalBool = value => {
+  if (value === true || value === 'true' || value === '1' || value === 1) return true;
+  if (value === false || value === 'false' || value === '0' || value === 0) return false;
+  return null;
 };
 
 function isoDatePlusDays(days, now = new Date()) {
@@ -52,9 +57,9 @@ async function fetchUnderlyingPrice(symbol) {
 
 function strikeBandFor(type, underlyingPrice) {
   if (!(underlyingPrice > 0)) return null;
-  if (type === 'put') return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.03, rationale: '75%-103% of current underlying for short-put analysis' };
-  if (type === 'call') return { min: underlyingPrice * 0.97, max: underlyingPrice * 1.30, rationale: '97%-130% of current underlying for short-call analysis' };
-  return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.30, rationale: '75%-130% of current underlying for mixed option analysis' };
+  if (type === 'put') return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.03, rationale: '75%-103% of current underlying for cash-secured-put analysis' };
+  if (type === 'call') return { min: underlyingPrice * 0.97, max: underlyingPrice * 1.30, rationale: '97%-130% of current underlying for covered-call analysis' };
+  return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.30, rationale: '75%-130% of current underlying for Phase 1 covered-call/CSP analysis' };
 }
 
 function summarize(contract={}) {
@@ -109,6 +114,16 @@ export default async function handler(req, res) {
   const requestedLimit = Math.min(250, Math.max(1, Number(req.query.limit) || 100));
   const minDte = intInRange(req.query.minDte, OPTIONS_ANALYSIS_POLICY.shortPremium.minDte, 0, 365);
   const maxDte = intInRange(req.query.maxDte, OPTIONS_ANALYSIS_POLICY.shortPremium.maxDte, minDte, 365);
+  const analysisContext = {
+    stockAction: String(req.query.stockAction || '').trim() || null,
+    portfolioAction: String(req.query.portfolioAction || '').trim() || null,
+    ownedShares: num(req.query.ownedShares),
+    cashAvailable: num(req.query.cashAvailable),
+    eventBlockNewCapital: optionalBool(req.query.eventBlockNewCapital),
+    eventManualCheckRequired: optionalBool(req.query.eventManualCheckRequired),
+    eventLabel: String(req.query.eventLabel || '').trim() || null,
+  };
+
   const underlying = await fetchUnderlyingPrice(symbol);
   const strikeBand = strikeBandFor(type, underlying.price);
   const params = new URLSearchParams({
@@ -149,7 +164,7 @@ export default async function handler(req, res) {
     const contracts = Array.isArray(body.results) ? body.results.map(summarize) : [];
     const analyzedContracts = contracts.map(contract => ({
       ...contract,
-      analysis: analyzeOptionContract(contract, { now }),
+      analysis: analyzeOptionContract(contract, { now, context: analysisContext }),
     }));
     const analysisRows = analyzedContracts.map(x => x.analysis);
     const withQuote = contracts.filter(x => x.bid !== null || x.ask !== null).length;
@@ -162,18 +177,22 @@ export default async function handler(req, res) {
     const structuralCandidates = analyzedContracts.filter(x => x.analysis?.data?.structuralPass);
 
     return res.status(200).json({
-      mode: 'options_chain_analysis_v3_price_anchored',
+      mode: 'options_chain_analysis_v4_cc_csp_context_gated',
       readOnly: true,
       recommendationEnabled: false,
       provider: 'Massive',
+      phase1Strategies: ['Covered Call', 'Cash-Secured Put'],
+      deferredStrategies: ['Put Credit Spread', 'Collar'],
       symbol,
       fetchedAt: now.toISOString(),
       requestId: body.request_id || null,
       analysisWindow: req.query.expiration ? { expiration: String(req.query.expiration) } : { minDte, maxDte },
+      context: analysisContext,
+      contextNote: 'Phase 1 context is supplied by the app layer for analysis. Executable recommendations remain disabled until this context is server-verified.',
       underlying: {
         price: effectiveUnderlyingPrice,
         source: underlying.price !== null ? underlying.source : (massiveUnderlyingPrices.length ? 'Massive' : null),
-        status: underlying.price !== null ? underlying.status : underlying.status,
+        status: underlying.status,
       },
       strikeSampling: strikeBand ? {
         minStrike: Number(strikeBand.min.toFixed(2)),
@@ -205,8 +224,8 @@ export default async function handler(req, res) {
         openInterest: x.openInterest,
         impliedVolatility: x.impliedVolatility,
         executionQuotePass: x.analysis?.data?.executionQuotePass ?? false,
-        putCreditSpreadShortLegCandidate: x.analysis?.strategies?.putCreditSpreadShortLeg?.structureCandidate ?? false,
-        cashSecuredPutStructureCandidate: x.analysis?.strategies?.cashSecuredPut?.structureCandidate ?? false,
+        cashSecuredPutCandidate: x.analysis?.strategies?.cashSecuredPut?.structureCandidate ?? false,
+        coveredCallCandidate: x.analysis?.strategies?.coveredCall?.structureCandidate ?? false,
       })),
       underlyingPrice: effectiveUnderlyingPrice,
       hasMore: Boolean(body.next_url),
