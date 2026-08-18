@@ -231,6 +231,7 @@ export default function Home(){
     if(d.action==="Rotate"&&fs.length){const f=fs.find(x=>x.kind==="Rotate")||fs[0];if(f.fullRotation)return`Sell the full position; ${tradeLabel(f.target,f.amount)}${f.residualCash>1?`; keep ${money(f.residualCash)} in cash`:""}.`;return`Sell ${f.sourceSellShares} shares (${money(f.sourceSaleProceeds)}); ${tradeLabel(f.target,f.amount)}; keep ${f.sourceRemainingShares} shares${f.residualCash>1?` and ${money(f.residualCash)} cash`:""}.`;}
     if(d.action==="Exit"){const alloc=fs.filter(x=>x.kind==="Exit"),toCash=fs.filter(x=>x.kind==="Exit Cash").reduce((a,x)=>a+x.amount,0);if(alloc.length){const parts=alloc.map(x=>tradeLabel(x.target,x.amount)).join(", ");return`Exit; redeploy ${parts}${toCash>1?`; leave ${money(toCash)} in cash`:""}.`;}return"Exit to cash; no qualifying Buy needs the proceeds.";}
     if(d.action==="Trim"){const t=trimPlans.get(sym(s));return t?`Bank profits: sell ${t.shares} shares (${money(t.amount)}); keep ${t.remainingShares} shares (${money(t.residual)}).`:"Hold; no nuisance trim is warranted.";}
+    if(d.action==="Hold"&&String(d.reason||"").includes("no meaningful executable funding action available"))return"Hold for now; add if meaningful cash becomes available or a clearly superior rotation funds the position.";
     return"Hold; no new capital unless the authoritative setup strengthens.";
   }
 
