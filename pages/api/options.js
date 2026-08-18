@@ -8,7 +8,11 @@ import { analyzeOptionContract, OPTIONS_ANALYSIS_POLICY, summarizeOptionsAnalysi
 const BASE_URL = 'https://api.massive.com/v3/snapshot/options';
 
 const cleanSymbol = (value='') => String(value).trim().toUpperCase().replace(/[^A-Z.\-]/g, '');
-const num = value => Number.isFinite(Number(value)) ? Number(value) : null;
+const num = value => {
+  if (value === null || value === undefined || value === '') return null;
+  const x = Number(value);
+  return Number.isFinite(x) ? x : null;
+};
 const intInRange = (value, fallback, lo, hi) => {
   const x = Number(value);
   return Number.isFinite(x) ? Math.max(lo, Math.min(hi, Math.round(x))) : fallback;
