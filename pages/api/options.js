@@ -8,6 +8,7 @@ import { analyzeOptionContract, OPTIONS_ANALYSIS_POLICY, summarizeOptionsAnalysi
 const BASE_URL = 'https://api.massive.com/v3/snapshot/options';
 
 const cleanSymbol = (value='') => String(value).trim().toUpperCase().replace(/[^A-Z.\-]/g, '');
+const toFmpSymbol = value => String(value || '').replace('.', '-').toUpperCase().trim();
 const num = value => {
   if (value === null || value === undefined || value === '') return null;
   const x = Number(value);
@@ -22,6 +23,38 @@ function isoDatePlusDays(days, now = new Date()) {
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+async function fetchUnderlyingPrice(symbol) {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) return { price: null, source: null, status: 'FMP_API_KEY unavailable' };
+  const clean = toFmpSymbol(symbol);
+  const urls = [
+    `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(clean)}&apikey=${apiKey}`,
+    `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(clean)}?apikey=${apiKey}`,
+  ];
+  let lastStatus = 'No quote returned';
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) { lastStatus = `FMP ${response.status}`; continue; }
+      const body = await response.json();
+      const row = Array.isArray(body) ? body[0] : body;
+      const price = num(row?.price ?? row?.currentPrice ?? row?.lastPrice);
+      if (price !== null && price > 0) return { price, source: 'FMP', status: 'Fresh quote obtained' };
+      lastStatus = 'FMP quote missing price';
+    } catch (error) {
+      lastStatus = error?.message || 'FMP quote request failed';
+    }
+  }
+  return { price: null, source: null, status: lastStatus };
+}
+
+function strikeBandFor(type, underlyingPrice) {
+  if (!(underlyingPrice > 0)) return null;
+  if (type === 'put') return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.03, rationale: '75%-103% of current underlying for short-put analysis' };
+  if (type === 'call') return { min: underlyingPrice * 0.97, max: underlyingPrice * 1.30, rationale: '97%-130% of current underlying for short-call analysis' };
+  return { min: underlyingPrice * 0.75, max: underlyingPrice * 1.30, rationale: '75%-130% of current underlying for mixed option analysis' };
 }
 
 function summarize(contract={}) {
@@ -65,15 +98,19 @@ function summarize(contract={}) {
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   const symbol = cleanSymbol(req.query.symbol);
   if (!symbol) return res.status(400).json({ error: 'Missing symbol. Example: /api/options?symbol=MU&type=put' });
   if (!process.env.MASSIVE_API_KEY) return res.status(500).json({ error: 'MASSIVE_API_KEY is not configured' });
 
   const now = new Date();
+  const type = ['call','put'].includes(String(req.query.type || '').toLowerCase()) ? String(req.query.type).toLowerCase() : '';
   const requestedLimit = Math.min(250, Math.max(1, Number(req.query.limit) || 100));
   const minDte = intInRange(req.query.minDte, OPTIONS_ANALYSIS_POLICY.shortPremium.minDte, 0, 365);
   const maxDte = intInRange(req.query.maxDte, OPTIONS_ANALYSIS_POLICY.shortPremium.maxDte, minDte, 365);
+  const underlying = await fetchUnderlyingPrice(symbol);
+  const strikeBand = strikeBandFor(type, underlying.price);
   const params = new URLSearchParams({
     apiKey: process.env.MASSIVE_API_KEY,
     limit: String(requestedLimit),
@@ -88,8 +125,10 @@ export default async function handler(req, res) {
     params.set('expiration_date.lte', isoDatePlusDays(maxDte, now));
   }
 
-  if (req.query.type && ['call','put'].includes(String(req.query.type).toLowerCase())) {
-    params.set('contract_type', String(req.query.type).toLowerCase());
+  if (type) params.set('contract_type', type);
+  if (strikeBand) {
+    params.set('strike_price.gte', strikeBand.min.toFixed(4));
+    params.set('strike_price.lte', strikeBand.max.toFixed(4));
   }
 
   const url = `${BASE_URL}/${encodeURIComponent(symbol)}?${params.toString()}`;
@@ -118,10 +157,12 @@ export default async function handler(req, res) {
     const withIV = contracts.filter(x => x.impliedVolatility !== null).length;
     const withOI = contracts.filter(x => x.openInterest !== null).length;
     const withVolume = contracts.filter(x => x.volume !== null).length;
-    const underlyingPrices = contracts.map(x => x.underlyingPrice).filter(x => x !== null);
+    const massiveUnderlyingPrices = contracts.map(x => x.underlyingPrice).filter(x => x !== null);
+    const effectiveUnderlyingPrice = underlying.price ?? (massiveUnderlyingPrices.length ? massiveUnderlyingPrices[0] : null);
+    const structuralCandidates = analyzedContracts.filter(x => x.analysis?.data?.structuralPass);
 
     return res.status(200).json({
-      mode: 'options_chain_analysis_v2',
+      mode: 'options_chain_analysis_v3_price_anchored',
       readOnly: true,
       recommendationEnabled: false,
       provider: 'Massive',
@@ -129,6 +170,20 @@ export default async function handler(req, res) {
       fetchedAt: now.toISOString(),
       requestId: body.request_id || null,
       analysisWindow: req.query.expiration ? { expiration: String(req.query.expiration) } : { minDte, maxDte },
+      underlying: {
+        price: effectiveUnderlyingPrice,
+        source: underlying.price !== null ? underlying.source : (massiveUnderlyingPrices.length ? 'Massive' : null),
+        status: underlying.price !== null ? underlying.status : underlying.status,
+      },
+      strikeSampling: strikeBand ? {
+        minStrike: Number(strikeBand.min.toFixed(2)),
+        maxStrike: Number(strikeBand.max.toFixed(2)),
+        rationale: strikeBand.rationale,
+      } : {
+        minStrike: null,
+        maxStrike: null,
+        rationale: 'Underlying price unavailable; strike sampling could not be price-anchored.',
+      },
       policy: OPTIONS_ANALYSIS_POLICY,
       returnedContracts: contracts.length,
       requestedLimit,
@@ -140,7 +195,20 @@ export default async function handler(req, res) {
         volume: withVolume,
       },
       analysisSummary: summarizeOptionsAnalysis(analysisRows),
-      underlyingPrice: underlyingPrices.length ? underlyingPrices[0] : null,
+      structuralCandidates: structuralCandidates.map(x => ({
+        ticker: x.ticker,
+        contractType: x.contractType,
+        expirationDate: x.expirationDate,
+        strike: x.strike,
+        dte: x.analysis?.dte ?? null,
+        delta: x.delta,
+        openInterest: x.openInterest,
+        impliedVolatility: x.impliedVolatility,
+        executionQuotePass: x.analysis?.data?.executionQuotePass ?? false,
+        putCreditSpreadShortLegCandidate: x.analysis?.strategies?.putCreditSpreadShortLeg?.structureCandidate ?? false,
+        cashSecuredPutStructureCandidate: x.analysis?.strategies?.cashSecuredPut?.structureCandidate ?? false,
+      })),
+      underlyingPrice: effectiveUnderlyingPrice,
       hasMore: Boolean(body.next_url),
       contracts: analyzedContracts,
     });
