@@ -47,7 +47,7 @@ function rank(a,b){
   if(ar)return ar;return (+d2.relativeCapitalScore||0)-(+d1.relativeCapitalScore||0);
 }
 function capitalScore(s){return +(fd(s)?.relativeCapitalScore??rec(s)?.capitalScore??s?.capitalScore??rec(s)?.expertDecision?.capitalScore??s?.expertDecision?.capitalScore??0)||0;}
-function targetWeight(action,size){if(action==="Strong Buy")return .12;if(action==="Buy")return .075;if(!action&&size==="Full")return .12;if(!action&&size==="Partial")return .075;return 0;}
+function targetWeight(action,size){if(action==="Strong Buy")return .09;if(action==="Buy")return .06;if(!action&&size==="Full")return .09;if(!action&&size==="Partial")return .06;return 0;}
 function rotationStrength(gap){const g=+gap||0;if(g>=40)return{label:"Very Strong Rotation Edge",tone:"veryStrong"};if(g>=30)return{label:"Strong Rotation Edge",tone:"strong"};return{label:"Meaningful Rotation Edge",tone:"meaningful"};}
 
 function rotationTargetEligible(s){
