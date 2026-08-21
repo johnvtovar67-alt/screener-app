@@ -19,6 +19,7 @@ jobs:
           node-version: 20
       - run: node tools/apply-position-reunderwrite.cjs
       - run: node tools/regression-check.cjs
+      - run: node tools/reunderwrite-regression.cjs
       - run: npm ci
       - run: npm run build
       - name: Commit integration
