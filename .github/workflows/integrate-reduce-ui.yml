@@ -1,0 +1,31 @@
+name: Integrate Reduce UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/run-reduce-ui.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/apply-reduce-ui.cjs
+      - run: node tools/regression-check.cjs
+      - run: node tools/reunderwrite-regression.cjs
+      - run: npm ci
+      - run: npm run build
+      - name: Commit integration
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add pages/index.js
+          git diff --cached --quiet || git commit -m "Make Reduce guidance executable"
+          git push
