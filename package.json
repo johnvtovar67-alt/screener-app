@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node tools/apply-reduce-ui.cjs && node tools/regression-check.cjs && node tools/reunderwrite-regression.cjs",
     "build": "next build",
     "start": "next start"
   },
