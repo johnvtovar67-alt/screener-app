@@ -10,6 +10,28 @@ const nextAnchor='if(d.action==="Review")return"Capital review: do not add or ro
 const nextNew='if(d.action==="Reduce"){const rw=d.reunderwrite||{},sh=Math.max(0,Math.floor(+rw.reduceShares||0)),pr=price(s),amt=sh*pr,remain=Math.max(0,Math.floor(+s.shares||0)-sh);return sh>0?`Sell ${sh} ${sh===1?"share":"shares"} (${money(amt)}); keep ${remain} shares. Leave proceeds in cash unless a separate rotation independently clears the rotation hurdle.`:"Reduce risk; calculate whole-share sizing before trading.";}if(d.action==="Review")return"Review the position before adding or rotating.";return"Hold. Add only if the fresh-capital standard is met.";';
 if(s.includes(nextAnchor))s=s.replace(nextAnchor,nextNew);else if(!s.includes('if(d.action==="Reduce")'))throw new Error('next-move anchor missing');
 
+const rowAnchor='\n  function PortfolioRow({s,mobile=false})';
+const summaryCode='\n  const finalActionGroups=[...actionGroups];\n  const summarizedSources=new Set(finalActionGroups.map(g=>g.source));\n  for(const stock of results){const d=pd(stock),k=sym(stock);if(d.action!=="Reduce"||summarizedSources.has(k))continue;const rw=d.reunderwrite||{},sh=Math.max(0,Math.floor(+rw.reduceShares||0)),pr=price(stock),amount=sh*pr,remainingShares=Math.max(0,Math.floor(+stock.shares||0)-sh);if(sh>0){finalActionGroups.push({source:k,type:"Reduce",items:[],sourceSellShares:sh,sourceSaleProceeds:amount,sourceRemainingShares:remainingShares,cash:amount});summarizedSources.add(k);}}\n';
+if(!s.includes('const finalActionGroups=[...actionGroups]')){
+  if(!s.includes(rowAnchor))throw new Error('portfolio row anchor missing');
+  s=s.replace(rowAnchor,summaryCode+rowAnchor);
+}
+
+s=s.replace('{actionGroups.length>0&&<div className="rotationBox">','{finalActionGroups.length>0&&<div className="rotationBox">');
+s=s.replace('{actionGroups.map((g,i)=>','{finalActionGroups.map((g,i)=>');
+
+const labelOld='const label=g.type==="Exit"?`EXIT ${g.source}`:g.type==="Cash"?"USE CASH":g.type==="Trim"?`BANK PROFITS ${g.source}`:g.fullRotation?`ROTATE ${g.source}`:`REDUCE ${g.source}`;';
+const labelNew='const label=g.type==="Exit"?`EXIT ${g.source}`:g.type==="Cash"?"USE CASH":g.type==="Trim"?`BANK PROFITS ${g.source}`:g.type==="Reduce"?`REDUCE ${g.source}`:g.fullRotation?`ROTATE ${g.source}`:`REDUCE ${g.source}`;';
+if(s.includes(labelOld))s=s.replace(labelOld,labelNew);
+
+const detailNeedle=':g.type==="Trim"?`${g.trim.severity} profit protection';
+if(!s.includes('g.type==="Reduce"?`Sell ${g.sourceSellShares} shares')){
+  if(!s.includes(detailNeedle))throw new Error('action detail anchor missing');
+  s=s.replace(detailNeedle,':g.type==="Reduce"?`Sell ${g.sourceSellShares} shares (${money(g.sourceSaleProceeds)}) • keep ${g.sourceRemainingShares} shares • proceeds stay in cash unless a separate rotation clears the hurdle`'+detailNeedle);
+}
+
 if(!s.includes('if(d.action==="Reduce")'))throw new Error('Reduce next move not installed');
 if(!s.includes('"Trim","Rotate","Reduce"'))throw new Error('Reduce color not installed');
+if(!s.includes('const finalActionGroups=[...actionGroups]'))throw new Error('final action summary not installed');
+if(!s.includes('finalActionGroups.map'))throw new Error('summary is not using final decisions');
 fs.writeFileSync(path,s);
