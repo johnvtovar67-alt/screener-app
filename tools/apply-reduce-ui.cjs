@@ -16,7 +16,10 @@ if(s.includes(nextAnchor))s=s.replace(nextAnchor,nextNew);else if(!s.includes('i
 
 const allowanceAnchor='const initialAllowance=capitalAllowance({target:bp.stock,action:bp.action,requested:need,risk:projectedRisk});need=Math.min(need,initialAllowance.amount);if(initialAllowance.blocked||need<minFundingAction){bp.blockReason=initialAllowance.reason;bp.remainingNeed=bp.need;continue;}';
 const allowanceNew='const initialAllowance=capitalAllowance({target:bp.stock,action:bp.action,requested:need,risk:projectedRisk});need=Math.min(need,initialAllowance.amount);if(initialAllowance.blocked||need<minFundingAction){bp.blockReason=initialAllowance.reason;bp.remainingNeed=bp.need;continue;}const contribution=portfolioContributionGate({target:bp.stock,approvedAmount:need,risk:projectedRisk,existingValue:bp.existingValue});bp.contribution=contribution;if(!contribution.pass){bp.blockReason=contribution.reason;bp.remainingNeed=bp.need;continue;}need=Math.min(need,contribution.invested||need);';
-if(s.includes(allowanceAnchor))s=s.replace(allowanceAnchor,allowanceNew);else if(!s.includes('bp.contribution=contribution'))throw new Error('capital contribution anchor missing');
+if(!s.includes('const contribution=portfolioContributionGate(')){
+  if(!s.includes(allowanceAnchor))throw new Error('capital contribution anchor missing');
+  s=s.replace(allowanceAnchor,allowanceNew);
+}
 
 const rowAnchor='\n  function PortfolioRow({s,mobile=false})';
 const summaryCode='\n  const finalActionGroups=[...actionGroups];\n  const summarizedSources=new Set(finalActionGroups.map(g=>g.source));\n  for(const stock of results){const d=pd(stock),k=sym(stock);if(d.action!=="Reduce"||summarizedSources.has(k))continue;const rw=d.reunderwrite||{},sh=Math.max(0,Math.floor(+rw.reduceShares||0)),pr=price(stock),amount=sh*pr,remainingShares=Math.max(0,Math.floor(+stock.shares||0)-sh);if(sh>0){finalActionGroups.push({source:k,type:"Reduce",items:[],sourceSellShares:sh,sourceSaleProceeds:amount,sourceRemainingShares:remainingShares,cash:amount});summarizedSources.add(k);}}\n';
