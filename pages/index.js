@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useState} from "react";
 import {portfolioDecision} from "../lib/expertDecision";
-import {factorFor,factorWeightsFor,signalPersistence,portfolioRiskSnapshot,swingTargetPct,capitalAllowance,capitalSignalEligible,rotationGate,swingTimeReview} from "../lib/portfolioGovernor";
+import {factorFor,factorWeightsFor,signalPersistence,portfolioRiskSnapshot,swingTargetPct,capitalAllowance,portfolioContributionGate,capitalSignalEligible,rotationGate,swingTimeReview} from "../lib/portfolioGovernor";
 import {winnerTrimGate,recordWinnerTrim} from "../lib/winnerLifecycle";
 import {reunderwriteExistingPosition} from "../lib/positionReunderwrite";
 
@@ -178,7 +178,7 @@ export default function Home(){
 
   for(const bp of buyPlans){
     let need=bp.need;if(!bp.signal.pass){bp.blockReason=bp.signal.reason;bp.remainingNeed=need;continue;}
-    const initialAllowance=capitalAllowance({target:bp.stock,action:bp.action,requested:need,risk:projectedRisk});need=Math.min(need,initialAllowance.amount);if(initialAllowance.blocked||need<minFundingAction){bp.blockReason=initialAllowance.reason;bp.remainingNeed=bp.need;continue;}
+    const initialAllowance=capitalAllowance({target:bp.stock,action:bp.action,requested:need,risk:projectedRisk});need=Math.min(need,initialAllowance.amount);if(initialAllowance.blocked||need<minFundingAction){bp.blockReason=initialAllowance.reason;bp.remainingNeed=bp.need;continue;}const contribution=portfolioContributionGate({target:bp.stock,approvedAmount:need,risk:projectedRisk,existingValue:bp.existingValue});bp.contribution=contribution;if(!contribution.pass){bp.blockReason=contribution.reason;bp.remainingNeed=bp.need;continue;}need=Math.min(need,contribution.invested||need);
     if(need<=minFundingAction){bp.toleranceGap=need;bp.remainingNeed=0;bp.funded=0;continue;}
     for(const pool of exitPools){if(need<=minFundingAction)break;if(pool.remaining<=0)continue;const allowance=capitalAllowance({target:bp.stock,action:bp.action,requested:Math.min(pool.remaining,need),risk:projectedRisk}),exec=executableBuy(bp,allowance.amount);if(exec.amount<minFundingAction)continue;fundingPlan.push({symbol:pool.symbol,target:bp.symbol,kind:"Exit",amount:exec.amount,targetShares:exec.shares,sourceValue:pool.sourceValue,buyRank:bp.rank});pool.remaining-=exec.amount;need-=exec.amount;applyProjectedSale(pool.stock,exec.amount);applyProjectedBuy(bp.stock,exec.amount);}
     for(const pool of cashPools){if(need<=minFundingAction)break;if(pool.remaining<=0)continue;const allowance=capitalAllowance({target:bp.stock,action:bp.action,requested:Math.min(pool.remaining,need),risk:projectedRisk}),exec=executableBuy(bp,allowance.amount);if(exec.amount<minFundingAction)continue;fundingPlan.push({symbol:pool.symbol,target:bp.symbol,kind:"Cash",amount:exec.amount,targetShares:exec.shares,sourceValue:pool.sourceValue,buyRank:bp.rank});pool.remaining-=exec.amount;need-=exec.amount;applyProjectedBuy(bp.stock,exec.amount);}
