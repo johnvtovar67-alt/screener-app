@@ -1,0 +1,6 @@
+const fs=require('fs');const vm=require('vm');const assert=(c,m)=>{if(!c)throw new Error(m)};
+let src=fs.readFileSync('lib/marketCycleUniverse.js','utf8').replace(/export const /g,'const ').replace(/export function /g,'function ');src+='\nmodule.exports={marketCycleProxySymbols,scoreMarketCycleProxy,discoverMarketCycles};';const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Set,Map};vm.createContext(sandbox);vm.runInContext(src,sandbox);const{marketCycleProxySymbols,discoverMarketCycles}=sandbox.module.exports;
+assert(marketCycleProxySymbols().length>=15,'Market-cycle radar must span broad sectors/industries');
+const q=(symbol,price,ma50,ma200,day=0)=>({symbol,price,priceAvg50:ma50,priceAvg200:ma200,dayChangePct:day});
+const quotes=marketCycleProxySymbols().map(s=>q(s,100,100,100,0));quotes.push(q('XME',120,100,95,1),q('KIE',115,100,97,.7));
+const d=discoverMarketCycles(quotes);assert(d.selected.some(x=>x.proxy==='XME'),'Strong metals/miners cycle must be discovered');assert(d.dynamicSymbols.includes('FCX'),'Selected cycle must contribute constituent candidates');assert(d.groups.every(x=>['Leading','Emerging','Neutral','Fading','Broken'].includes(x.state)),'Every cycle must have a regime state');console.log('MARKET CYCLE REGRESSION PASS: 4 checks passed');
