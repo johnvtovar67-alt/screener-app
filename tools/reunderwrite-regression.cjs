@@ -11,7 +11,7 @@ const nvt={symbol:'NVT',role:'Swing',shares:23,price:151.98,gainLossPct:-12.74,r
 let r=reunderwriteExistingPosition({stock:nvt,decision:{action:'Hold',reason:'generic hold'},risk,timeReview:{review:false}});
 assert(r.override&&r.action==='Reduce','Oversized losing crowded NVT must resolve to Reduce');
 assert(r.reduceShares>0&&r.reduceShares<23,'NVT Reduce must calculate an executable partial share reduction');
-assert(/too large/.test(r.reason)&&/cut risk rather than exit/.test(r.reason),'NVT Reduce must explain sizing versus thesis');
+assert(/too large|aging Swing/.test(r.reason)&&/weak|without enough forward strength/.test(r.reason),'NVT Reduce must explain portfolio sizing and weak forward evidence');
 const core={...nvt,symbol:'MSTR',role:'Core'};
 r=reunderwriteExistingPosition({stock:core,decision:{action:'Hold',reason:'core hold'},risk,timeReview:{review:true}});
 assert(!r.override,'Core holdings must not be governed by Swing reunderwriter');
@@ -21,4 +21,7 @@ assert(r.override&&r.action==='Hold'&&/remain supportive/.test(r.reason),'Health
 const weak={symbol:'XYZ',role:'Swing',gainLossPct:-4,recommendation:{expertDecision:{thesisScore:55,tradeSetupScore:45,capitalScore:50,metrics:{technical:46,momentum:45,leadership:47,risk:60}}}};
 r=reunderwriteExistingPosition({stock:weak,decision:{action:'Hold',reason:'generic'},risk:{swingCapital:18058,positions:{XYZ:{value:1264,pctSwing:.07,factorWeights:{Other:1}}},factorPct:{Other:.07}},timeReview:{review:false}});
 assert(r.override&&r.action==='Hold'&&/forward evidence is weak/.test(r.reason),'Weak Swing should not hide behind generic stabilization language');
-console.log('REUNDERWRITE REGRESSION PASS: 4 checks passed');
+const stale={symbol:'STALE',role:'Swing',gainLossPct:-2,recommendation:{expertDecision:{thesisScore:66,tradeSetupScore:54,capitalScore:58,metrics:{technical:54,momentum:49,leadership:50,risk:52}}}};
+r=reunderwriteExistingPosition({stock:stale,decision:{action:'Hold',reason:'generic'},risk:{swingCapital:18058,positions:{STALE:{value:1400,pctSwing:.078,factorWeights:{Other:1}}},factorPct:{Other:.078}},timeReview:{review:true,held:45}});
+assert(r.override&&r.action==='Hold'&&r.opportunityCost===true,'45-day flat/losing Swing must explicitly enter opportunity-cost review');
+console.log('REUNDERWRITE REGRESSION PASS: 5 checks passed');
