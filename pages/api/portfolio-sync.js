@@ -3,7 +3,6 @@ import {createHash} from 'crypto';
 
 export const config={api:{bodyParser:{sizeLimit:'1mb'}}};
 const PREFIX='portfolio-sync/';
-const hasToken=()=>Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 const keyFrom=req=>{const h=String(req.headers.authorization||'');return h.startsWith('Bearer ')?h.slice(7).trim():'';};
 const validKey=k=>/^[A-Za-z0-9_-]{32,128}$/.test(k);
 const pathname=k=>`${PREFIX}${createHash('sha256').update(k).digest('hex')}.json`;
@@ -40,9 +39,16 @@ async function writePortfolio(key,portfolio){
   await put(pathname(key),JSON.stringify(payload),{access:'private',allowOverwrite:true,addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:0});
   return payload;
 }
+async function storageHealth(){
+  try{await list({prefix:'portfolio-sync-health/',limit:1});return{ok:true};}
+  catch(e){return{ok:false,error:e.message||'Blob storage unavailable'};}
+}
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store, max-age=0');
-  if(!hasToken())return res.status(503).json({error:'Portfolio sync storage is not configured.'});
+  if(req.method==='GET'&&String(req.query.health||'')==='1'){
+    const health=await storageHealth();
+    return res.status(health.ok?200:503).json({storageReady:health.ok,error:health.ok?null:health.error});
+  }
   const key=keyFrom(req);if(!validKey(key))return res.status(401).json({error:'A valid portfolio sync key is required.'});
   try{
     if(req.method==='GET'){
