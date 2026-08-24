@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node tools/apply-market-cycle.cjs && node tools/apply-reduce-ui.cjs && node tools/apply-signal-stability.cjs && node tools/apply-time-review-ui.cjs && node tools/regression-check.cjs && node tools/reunderwrite-regression.cjs && node tools/market-cycle-regression.cjs && node tools/signal-stability-regression.cjs && node tools/time-review-ui-regression.cjs",
+    "prebuild": "node tools/apply-market-cycle.cjs && node tools/apply-reduce-ui.cjs && node tools/apply-signal-stability.cjs && node tools/apply-time-review-ui.cjs && node tools/apply-ui-polish.cjs && node tools/regression-check.cjs && node tools/reunderwrite-regression.cjs && node tools/market-cycle-regression.cjs && node tools/signal-stability-regression.cjs && node tools/time-review-ui-regression.cjs && node tools/ui-polish-regression.cjs",
     "build": "next build",
     "start": "next start"
   },
