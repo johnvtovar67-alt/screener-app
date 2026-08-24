@@ -3,6 +3,8 @@ const assert=(cond,msg)=>{if(!cond)throw new Error(`PORTFOLIO SYNC REGRESSION FA
 const api=fs.readFileSync('pages/api/portfolio-sync.js','utf8');
 const page=fs.readFileSync('pages/index.js','utf8');
 assert(api.includes("access:'private'"),'cloud portfolio must use private blob storage');
+assert(api.includes("get(path,{access:'private',useCache:false})"),'private blob reads must pass required access options');
+assert(api.includes("get('portfolio-sync-health/nonexistent.json',{access:'private',useCache:false})"),'health check must exercise private blob read configuration');
 assert(api.includes("createHash('sha256')"),'sync key must be hashed before becoming a blob pathname');
 assert(!api.includes('`${PREFIX}${key}'),'raw sync key must not be used in blob pathname');
 assert(api.includes("req.headers.authorization"),'API must require bearer sync key');
@@ -12,4 +14,4 @@ assert(page.includes("if(syncKey)void pushCloudPortfolio(x,syncKey)"),'portfolio
 assert(page.includes("void pullCloudPortfolio(k,local,true)"),'paired devices must pull cloud portfolio on load');
 assert(page.includes('openedAt'),'opened date metadata must remain in synchronized portfolio');
 assert(page.includes('winnerHistory'),'winner lifecycle metadata must remain in synchronized portfolio');
-console.log('PORTFOLIO SYNC PASS: private keyed storage, automatic push/pull, and portfolio metadata verified.');
+console.log('PORTFOLIO SYNC PASS: private keyed storage, authenticated reads, automatic push/pull, and portfolio metadata verified.');
