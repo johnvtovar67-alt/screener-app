@@ -11,13 +11,12 @@ if(!s.includes('const[marketRadar,setMarketRadar]')){
   s=s.replace(marker, marker+'\n  const[marketRadar,setMarketRadar]=useState([]);');
 }
 
-// Capture the broad market-cycle radar (preferred) with theme-leadership fallback.
 const loadOld='if(t==="opportunities"){setStocks(d.stocks||[]);}else setThemeStocks(d.stocks||[]);setLastUpdated(new Date());';
 const loadNew='if(t==="opportunities"){setStocks(d.stocks||[]);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else setThemeStocks(d.stocks||[]);setLastUpdated(new Date());';
 if(s.includes(loadOld))s=s.replace(loadOld,loadNew);else if(!s.includes('setMarketRadar((d.meta?.marketCycleRadar'))throw new Error('ui polish: load marker missing');
 
-const analyzeOld='if(sr.ok&&Array.isArray(sd.stocks))snapshot=sd.stocks;if(pr.ok&&Array.isArray(pd.records))performance=pd.records;';
-const analyzeNew='if(sr.ok&&Array.isArray(sd.stocks)){snapshot=sd.stocks;setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}if(pr.ok&&Array.isArray(pd.records))performance=pd.records;';
+const analyzeOld='if(sr.ok&&Array.isArray(sd.stocks))snapshot=sd.stocks;const pr=await fetch(\'/api/performance\',{cache:\'no-store\'}),pd=await pr.json();if(pr.ok&&Array.isArray(pd.records))performance=pd.records;';
+const analyzeNew='if(sr.ok&&Array.isArray(sd.stocks)){snapshot=sd.stocks;setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}const pr=await fetch(\'/api/performance\',{cache:\'no-store\'}),pd=await pr.json();if(pr.ok&&Array.isArray(pd.records))performance=pd.records;';
 if(s.includes(analyzeOld))s=s.replace(analyzeOld,analyzeNew);else if(!s.includes('sd.meta?.marketCycleRadar'))throw new Error('ui polish: analyze marker missing');
 
 if(!s.includes('className="marketRadarBar"')){
