@@ -1,6 +1,7 @@
 import {put,list,get} from '@vercel/blob';
 import {createHash} from 'crypto';
 
+// Redeployed after the project Blob store was connected so production picks up storage credentials.
 export const config={api:{bodyParser:{sizeLimit:'1mb'}}};
 const PREFIX='portfolio-sync/';
 const keyFrom=req=>{const h=String(req.headers.authorization||'');return h.startsWith('Bearer ')?h.slice(7).trim():'';};
