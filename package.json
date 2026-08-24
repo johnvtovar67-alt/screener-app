@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node tools/apply-market-cycle.cjs && node tools/apply-reduce-ui.cjs && node tools/apply-signal-stability.cjs && node tools/apply-time-review-ui.cjs && node tools/apply-ui-polish.cjs && node tools/apply-portfolio-sync.cjs && node tools/apply-open-date-display.cjs && node tools/regression-check.cjs && node tools/reunderwrite-regression.cjs && node tools/market-cycle-regression.cjs && node tools/signal-stability-regression.cjs && node tools/time-review-ui-regression.cjs && node tools/ui-polish-regression.cjs && node tools/portfolio-sync-regression.cjs && node tools/open-date-display-regression.cjs",
+    "prebuild": "node tools/apply-market-cycle.cjs && node tools/apply-reduce-ui.cjs && node tools/apply-signal-stability.cjs && node tools/apply-time-review-ui.cjs && node tools/apply-ui-polish.cjs && node tools/apply-portfolio-sync.cjs && node tools/apply-open-date-display.cjs && node tools/apply-special-situations.cjs && node tools/apply-stage-badges.cjs && node tools/regression-check.cjs && node tools/reunderwrite-regression.cjs && node tools/market-cycle-regression.cjs && node tools/signal-stability-regression.cjs && node tools/time-review-ui-regression.cjs && node tools/ui-polish-regression.cjs && node tools/portfolio-sync-regression.cjs && node tools/open-date-display-regression.cjs && node tools/special-situation-regression.cjs && node tools/stage-badges-regression.cjs",
     "build": "next build",
     "start": "next start"
   },
