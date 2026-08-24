@@ -31,7 +31,8 @@ function cleanPortfolio(rows=[]){
 async function readPortfolio(key){
   const path=pathname(key),{blobs}=await list({prefix:path,limit:1}),blob=blobs.find(b=>b.pathname===path)||null;
   if(!blob)return null;
-  const result=await get(blob.url);if(!result)return null;
+  const result=await get(path,{access:'private',useCache:false});
+  if(!result||result.statusCode!==200)return null;
   const text=await new Response(result.stream).text(),parsed=JSON.parse(text);
   return parsed&&Array.isArray(parsed.portfolio)?parsed:null;
 }
@@ -41,8 +42,11 @@ async function writePortfolio(key,portfolio){
   return payload;
 }
 async function storageHealth(){
-  try{await list({prefix:'portfolio-sync-health/',limit:1});return{ok:true};}
-  catch(e){return{ok:false,error:e.message||'Blob storage unavailable'};}
+  try{
+    await list({prefix:'portfolio-sync-health/',limit:1});
+    await get('portfolio-sync-health/nonexistent.json',{access:'private',useCache:false});
+    return{ok:true};
+  }catch(e){return{ok:false,error:e.message||'Blob storage unavailable'};}
 }
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store, max-age=0');
