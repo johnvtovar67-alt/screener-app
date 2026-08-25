@@ -1,0 +1,65 @@
+name: Materialize Build Patches
+
+on:
+  push:
+    branches: [hardening/version-control-2026-08-25]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hardening/version-control-2026-08-25
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-audit --no-fund
+      - name: Apply legacy patches and regression checks once
+        run: npm run prebuild
+      - name: Convert prebuild to verification-only
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const p=JSON.parse(fs.readFileSync('package.json','utf8'));
+          p.scripts.prebuild=[
+            'node tools/regression-check.cjs',
+            'node tools/reunderwrite-regression.cjs',
+            'node tools/market-cycle-regression.cjs',
+            'node tools/signal-stability-regression.cjs',
+            'node tools/time-review-ui-regression.cjs',
+            'node tools/ui-polish-regression.cjs',
+            'node tools/portfolio-sync-regression.cjs',
+            'node tools/open-date-display-regression.cjs',
+            'node tools/special-situation-regression.cjs',
+            'node tools/stage-badges-regression.cjs',
+            'node tools/cash-display-regression.cjs',
+            'node tools/material-event-regression.cjs',
+            'node tools/time-review-score-visuals-regression.cjs',
+            'node tools/replacement-edge-ticker-regression.cjs',
+            'node tools/fmp-fundamentals-regression.cjs',
+            'node tools/proof-followthrough-regression.cjs',
+            'node tools/portfolio-action-summary-regression.cjs'
+          ].join(' && ');
+          p.scripts.verify=p.scripts.prebuild;
+          fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
+          NODE
+      - name: Prove materialized source builds without patching
+        run: npm run build
+      - name: Commit materialized application source
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pages lib package.json
+          if git diff --cached --quiet; then
+            echo 'No materialization changes required.'
+            exit 0
+          fi
+          git commit -m 'Materialize build-time patches into committed source'
+          git push origin HEAD:hardening/version-control-2026-08-25
