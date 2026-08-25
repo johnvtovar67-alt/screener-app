@@ -15,7 +15,17 @@ box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Bool
 vm.createContext(box);vm.runInContext(pos,box);
 const {reunderwriteExistingPosition}=box.module.exports;
 
-const stock=(days,pnl,{thesis=70,trade=80,technical=80,momentum=75,leadership=75,capital=78}={})=>({symbol:'TEST',role:'Swing',openedAt:daysAgo(days),lastTradeAt:daysAgo(days),gainLossPct:pnl,recommendation:{expertDecision:{thesisScore:thesis,tradeSetupScore:trade,capitalScore:capital,metrics:{technical,momentum,leadership,risk:45}}}}});
+const stock=(days,pnl,{thesis=70,trade=80,technical=80,momentum=75,leadership=75,capital=78}={})=>({
+  symbol:'TEST',role:'Swing',openedAt:daysAgo(days),lastTradeAt:daysAgo(days),gainLossPct:pnl,
+  recommendation:{
+    expertDecision:{
+      thesisScore:thesis,
+      tradeSetupScore:trade,
+      capitalScore:capital,
+      metrics:{technical,momentum,leadership,risk:45}
+    }
+  }
+});
 const risk={swingCapital:18000,positions:{TEST:{value:1200,pctSwing:.067,factorWeights:{Other:1}}},factorPct:{Other:.067}};
 
 let s=stock(15,0);
