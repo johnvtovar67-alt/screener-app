@@ -14,16 +14,16 @@ if(!src.includes('Lifecycle exits are summarized even when generated after fundi
   src=src.replace(oldExit,newExit);
 }
 
-if(!src.includes('className="timeReviewBox"><b>⏱ Time Review</b><span>')){
+if(!src.includes('className="timeReviewCompact"')){
   const start='{timeReviewRows.length>0&&<div className="timeReviewBox">';
   const governor='{riskSnapshot.concentrations.length>0&&<div className="governorBox">';
   const a=src.indexOf(start),b=src.indexOf(governor,a);
   if(a<0||b<0)throw new Error('portfolio action summary patch: time review panel markers not found');
-  const compact='{timeReviewRows.length>0&&<div className="timeReviewBox"><b>⏱ Time Review</b><span>{timeReviewRows.map(({s,time,decision})=>`${sym(s)} ${time.held}d · ${time.stage} · ${decision.action}`).join("   •   ")}</span></div>}';
+  const compact='{timeReviewRows.length>0&&<div className="timeReviewBox"><b>⏱ Time Review</b><div className="timeReviewCompact">{timeReviewRows.map(({s,time,decision})=><span className="timeReviewItem" key={`time-${sym(s)}`}><b>{sym(s)}</b><span>{time.held}d</span><span className={`stageBadge ${stageTone(time.stage)}`}>{time.stage}</span>{(()=>{const v=capitalScoreVisual(capitalScore(s));return <span className={`scoreVisual ${v.tone}`}><b>{v.value}</b><small>{v.label}</small></span>;})()}{(()=>{const v=replacementEdgeVisual(s.opportunityGap,s.rotationTargetEligible);return <span className={`edgeVisual ${v.tone}`}><b>{v.value===null?"—":v.value}</b><small>{replacementEdgeTargetLabel(s,v)}</small></span>;})()}<b className={`pill ${cls(decision.action)}`}>{decision.action}</b></span>)}</div></div>}';
   src=src.slice(0,a)+compact+src.slice(b);
 
   const oldCss='.timeReviewBox{border:1px solid #94a3b8;background:#f8fafc;border-radius:12px;padding:12px;margin:12px 0}.timeReviewBox>p{color:#53657f;margin:6px 0 10px}';
-  const newCss='.timeReviewBox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid #cbd5e1;background:#f8fafc;border-radius:10px;padding:8px 10px;margin:10px 0}.timeReviewBox>span{color:#53657f;font-weight:700}';
+  const newCss='.timeReviewBox{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;border:1px solid #cbd5e1;background:#f8fafc;border-radius:10px;padding:8px 10px;margin:10px 0}.timeReviewCompact{display:flex;gap:8px;flex:1;flex-wrap:wrap}.timeReviewItem{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#53657f}.timeReviewItem>b:first-child{color:#111827}';
   if(!src.includes(oldCss))throw new Error('portfolio action summary patch: time review CSS marker not found');
   src=src.replace(oldCss,newCss);
 }
