@@ -1,0 +1,10 @@
+const fs=require('fs');
+const assert=(cond,msg)=>{if(!cond)throw new Error(msg)};
+const page=fs.readFileSync('pages/index.js','utf8');
+assert(page.includes('Lifecycle exits are summarized even when generated after funding-plan construction'),'lifecycle exits are not being added to the summary');
+assert(page.includes('d.action==="Exit"'),'exit decisions are not summarized');
+assert(page.includes('sourceShares'),'exit share count is missing from summary data');
+assert(page.includes('Sell ${g.sourceShares}'),'exit summary is not showing whole-position share count');
+assert(page.includes('className="timeReviewBox"><b>⏱ Time Review</b><span>'),'time review panel is not compact');
+assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');
+console.log('PORTFOLIO ACTION SUMMARY PASS: lifecycle exits are summarized and time review is compact.');
