@@ -1,1 +1,7 @@
 .ideaGrid{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))!important;}
+
+/* Time-review logic remains active in portfolio decisions, but the redundant
+   standalone review panel is suppressed. Keep the lifecycle stage visible as
+   a compact audit cue alongside each position instead. */
+.timeReviewBox{display:none!important;}
+.positionBadges .stageBadge::before{content:"Evidence: ";font-weight:900;}
