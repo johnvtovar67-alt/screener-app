@@ -27,14 +27,14 @@ const busyMarker='  const busy=reloading||loading;';
 if(!src.includes(busyMarker))throw new Error('time-review patch: busy marker not found');
 src=src.replace(busyMarker,'  const timeReviewRows=results.filter(s=>s.role==="Swing"&&!CASH.includes(sym(s))).map(s=>({s,time:swingTimeReview(s),decision:pd(s)})).filter(x=>x.time.held!==null&&x.time.held>=42).sort((a,b)=>(b.time.held||0)-(a.time.held||0));\n\n'+busyMarker);
 
-const tableMarker='<div className="desktopTable">';
-if(!src.includes(tableMarker))throw new Error('time-review patch: desktop table marker not found');
-const panel='{timeReviewRows.length>0&&<div className="timeReviewBox"><b>⏱ Time Review</b><span>{timeReviewRows.map(({s,time,decision})=>`${sym(s)} ${time.held}d · ${time.stage} · ${decision.action}`).join("   •   ")}</span></div>}';
-src=src.replace(tableMarker,panel+tableMarker);
+const governorMarker='{riskSnapshot.concentrations.length>0&&<div className="governorBox">';
+if(!src.includes(governorMarker))throw new Error('time-review patch: governor marker not found');
+const panel='{timeReviewRows.length>0&&<div className="timeReviewBox"><b>⏱ Swing Time Reviews</b><p>Positions enter an explicit opportunity-cost review as they mature. Time alone never forces a sale; the position must re-earn capital versus current alternatives.</p><div className="scroll"><table><thead><tr><th>Position</th><th>Days Held</th><th>Stage</th><th>P/L</th><th>Capital Score</th><th>Opportunity Gap</th><th>Current Review</th></tr></thead><tbody>{timeReviewRows.map(({s,time,decision})=><tr key={`time-${sym(s)}`}><td><b>{sym(s)}</b></td><td>{time.held}</td><td>{time.stage}</td><td className={s.gainLossPct>=0?"pos":"neg"}>{pct(s.gainLossPct)}</td><td>{Math.round(capitalScore(s))}</td><td>{Math.round(+s.opportunityGap||0)}</td><td><b>{decision.action}</b> — {decision.reason}</td></tr>)}</tbody></table></div></div>}';
+src=src.replace(governorMarker,panel+governorMarker);
 
 const cssMarker='.governorBox{border:1px solid #f59e0b;background:#fffbeb;border-radius:12px;padding:12px;margin:12px 0}';
 if(!src.includes(cssMarker))throw new Error('time-review patch: css marker not found');
-src=src.replace(cssMarker,'.timeReviewBox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid #cbd5e1;background:#f8fafc;border-radius:10px;padding:8px 10px;margin:10px 0}.timeReviewBox>span{color:#53657f;font-weight:700}.openedInput{display:flex;flex-direction:column;gap:2px}.openedInput small{color:#64748b;font-weight:800}.openedInput input{padding:7px 10px}'+cssMarker);
+src=src.replace(cssMarker,'.timeReviewBox{border:1px solid #94a3b8;background:#f8fafc;border-radius:12px;padding:12px;margin:12px 0}.timeReviewBox>p{color:#53657f;margin:6px 0 10px}.openedInput{display:flex;flex-direction:column;gap:2px}.openedInput small{color:#64748b;font-weight:800}.openedInput input{padding:7px 10px}'+cssMarker);
 
 fs.writeFileSync(pagePath,src);
-console.log('Applied compact Swing time review UI and editable opened-date tracking.');
+console.log('Applied first-class Swing time review UI and editable opened-date tracking.');
