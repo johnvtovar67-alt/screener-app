@@ -3,6 +3,7 @@ import "../styles/card-layout.css";
 
 const CANONICAL_HOST="screener-app-cq5t.vercel.app";
 const LEGACY_PREFIXES=["screener-app.vercel.app","screener-app-hp1w","screener-app-us7z"];
+const CAPITAL_NOTE="Capital actions reflect portfolio fit, not raw opportunity rank. A higher-ranked Buy can be skipped when concentration, correlation, position-size, or risk-budget constraints make another qualified target the better incremental use of capital.";
 
 export default function App({ Component, pageProps }) {
   const [version,setVersion]=useState(null);
@@ -15,6 +16,27 @@ export default function App({ Component, pageProps }) {
       return;
     }
     fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
+  },[]);
+
+  useEffect(()=>{
+    const explainCapitalSelection=()=>{
+      for(const box of document.querySelectorAll('.rotationBox')){
+        if(box.querySelector('[data-capital-fit-note]'))continue;
+        const note=document.createElement('p');
+        note.dataset.capitalFitNote='true';
+        note.textContent=CAPITAL_NOTE;
+        note.style.margin='8px 0 10px';
+        note.style.fontSize='0.9em';
+        note.style.color='#52647f';
+        note.style.lineHeight='1.35';
+        const heading=box.querySelector('b');
+        if(heading)heading.insertAdjacentElement('afterend',note);else box.prepend(note);
+      }
+    };
+    explainCapitalSelection();
+    const observer=new MutationObserver(explainCapitalSelection);
+    observer.observe(document.body,{childList:true,subtree:true});
+    return()=>observer.disconnect();
   },[]);
 
   return <>
