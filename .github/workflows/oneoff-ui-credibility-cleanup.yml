@@ -1,5 +1,6 @@
 name: One-off UI credibility cleanup
 
+# Triggered once after installation so the workflow exists before the matching push event.
 on:
   push:
     branches: [main]
