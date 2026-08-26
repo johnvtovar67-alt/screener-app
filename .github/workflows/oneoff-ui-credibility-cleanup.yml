@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   patch:
-    if: github.event.head_commit.message == 'Apply opportunity allocation consistency patch'
+    if: github.event.head_commit.message == 'Run opportunity allocation consistency fix'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -20,33 +20,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Make opportunity cards consistent with deployability
+      - name: Patch opportunity display consistency
         run: |
-          node <<'NODE'
-          const fs=require('fs');
-          const path='pages/index.js';
-          let s=fs.readFileSync(path,'utf8');
-          const from=`  function opportunityDecision(s){
-    const d=fd(s),special=specialSituation(s);if(special?.blockNewCapital)return{...d,action:"Watch",timing:"Wait",size:"None",reason:"Acquisition pending — ordinary Swing Buy/Strong Buy signals are disabled. Evaluate the merger spread, closing risk, RKLB collar exposure, and opportunity cost instead."};if(!["Strong Buy","Buy"].includes(d.action))return d;
-    const owned=portfolio.find(p=>p.symbol===sym(s));if(!owned)return d;`;
-          const to=`  function opportunityDecision(s){
-    const d=fd(s),special=specialSituation(s);if(special?.blockNewCapital)return{...d,action:"Watch",timing:"Wait",size:"None",reason:"Acquisition pending — ordinary Swing Buy/Strong Buy signals are disabled. Evaluate the merger spread, closing risk, RKLB collar exposure, and opportunity cost instead."};if(!["Strong Buy","Buy"].includes(d.action))return d;
-    const signal=capitalSignalEligible({target:s,action:d.action,persistence:s.signalPersistence});
-    const owned=portfolio.find(p=>p.symbol===sym(s));
-    if(!owned&&!signal.pass)return{...d,timing:"Await Confirmation",size:"Qualified — Not Funded",priority:d.priority,reason:\`${'${d.reason}'} Portfolio action: ${'${signal.reason}'}\`};
-    if(!owned)return d;`;
-          if(!s.includes(from))throw new Error('opportunityDecision marker not found');
-          s=s.replace(from,to);
-          fs.writeFileSync(path,s);
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('pages/index.js')
+          s=p.read_text()
+          old='''    const owned=portfolio.find(p=>p.symbol===sym(s));if(!owned)return d;'''
+          new='''    const signal=capitalSignalEligible({target:s,action:d.action,persistence:s.signalPersistence});\n    const owned=portfolio.find(p=>p.symbol===sym(s));\n    if(!owned&&!signal.pass)return{...d,timing:"Await Confirmation",size:"Qualified — Not Funded",reason:`${d.reason} Portfolio action: ${signal.reason}`};\n    if(!owned)return d;'''
+          if old not in s:
+              raise SystemExit('opportunityDecision marker not found')
+          p.write_text(s.replace(old,new,1))
 
-          const reg='tools/portfolio-action-summary-regression.cjs';
-          let r=fs.readFileSync(reg,'utf8');
-          const marker="assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');";
-          const add=`${marker}\nassert(page.includes('timing:\"Await Confirmation\"')&&page.includes('size:\"Qualified — Not Funded\"'),'Buy cards can still claim immediate partial deployment when the capital signal is not fundable');`;
-          if(!r.includes(marker))throw new Error('regression marker not found');
-          r=r.replace(marker,add);
-          fs.writeFileSync(reg,r);
-          NODE
+          r=Path('tools/portfolio-action-summary-regression.cjs')
+          t=r.read_text()
+          marker="assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');"
+          extra="\nassert(page.includes('timing:\"Await Confirmation\"')&&page.includes('size:\"Qualified — Not Funded\"'),'Buy cards can still imply executable deployment when the portfolio capital signal is not fundable');"
+          if extra.strip() not in t:
+              if marker not in t:
+                  raise SystemExit('regression marker not found')
+              t=t.replace(marker,marker+extra,1)
+              r.write_text(t)
+          PY
       - name: Install and verify
         run: |
           npm install --no-audit --no-fund
