@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   patch:
-    if: github.event.head_commit.message == 'Run opportunity allocation consistency fix'
+    if: github.event.head_commit.message == 'Run allocator-aware opportunity consistency fix'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -20,22 +20,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Patch opportunity display consistency
+      - name: Patch opportunity cards against final allocator state
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('pages/index.js')
           s=p.read_text()
-          old='''    const owned=portfolio.find(p=>p.symbol===sym(s));if(!owned)return d;'''
-          new='''    const signal=capitalSignalEligible({target:s,action:d.action,persistence:s.signalPersistence});\n    const owned=portfolio.find(p=>p.symbol===sym(s));\n    if(!owned&&!signal.pass)return{...d,timing:"Await Confirmation",size:"Qualified — Not Funded",reason:`${d.reason} Portfolio action: ${signal.reason}`};\n    if(!owned)return d;'''
+          old='''    if(!owned&&!signal.pass)return{...d,timing:"Await Confirmation",size:"Qualified — Not Funded",reason:`${d.reason} Portfolio action: ${signal.reason}`};\n    if(!owned)return d;'''
+          new='''    if(!owned&&!signal.pass)return{...d,timing:"Await Confirmation",size:"Qualified — Not Funded",reason:`${d.reason} Portfolio action: ${signal.reason}`};\n    if(!owned){\n      if(results.length){\n        const bp=buyPlans.find(x=>x.symbol===sym(s)),funded=typeof fundedFor==="function"?fundedFor(sym(s)):0;\n        if(bp&&(bp.blockReason||funded<minFundingAction)){\n          const why=bp.blockReason||"The portfolio governor found no meaningful risk-budgeted funding action. Keep the setup qualified without forcing deployment.";\n          return{...d,timing:"Await Capital",size:"Qualified — Not Funded",reason:`${d.reason} Portfolio action: ${why}`};\n        }\n      }\n      return d;\n    }'''
           if old not in s:
-              raise SystemExit('opportunityDecision marker not found')
+              raise SystemExit('allocator opportunityDecision marker not found')
           p.write_text(s.replace(old,new,1))
 
           r=Path('tools/portfolio-action-summary-regression.cjs')
           t=r.read_text()
-          marker="assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');"
-          extra="\nassert(page.includes('timing:\"Await Confirmation\"')&&page.includes('size:\"Qualified — Not Funded\"'),'Buy cards can still imply executable deployment when the portfolio capital signal is not fundable');"
+          marker="assert(page.includes('timing:\"Await Confirmation\"')&&page.includes('size:\"Qualified — Not Funded\"'),'Buy cards can still imply executable deployment when the portfolio capital signal is not fundable');"
+          extra="\nassert(page.includes('timing:\"Await Capital\"')&&page.includes('bp.blockReason||funded<minFundingAction'),'Buy cards are not reconciled against the final portfolio allocator');"
           if extra.strip() not in t:
               if marker not in t:
                   raise SystemExit('regression marker not found')
@@ -46,10 +46,10 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run build
-      - name: Commit consistency fix
+      - name: Commit allocator-aware consistency fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add pages/index.js tools/portfolio-action-summary-regression.cjs
-          git commit -m 'Align opportunity cards with portfolio deployability'
+          git commit -m 'Reconcile opportunity cards with final allocator'
           git push origin HEAD:main
