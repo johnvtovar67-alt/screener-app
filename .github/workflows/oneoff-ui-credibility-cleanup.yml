@@ -1,0 +1,88 @@
+name: One-off UI credibility cleanup
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Apply On Deck and portfolio UI cleanup'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Patch UI
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path='pages/index.js';
+          let s=fs.readFileSync(path,'utf8');
+          const replace=(from,to,label)=>{if(!s.includes(from))throw new Error(`Missing marker: ${label}`);s=s.replace(from,to)};
+
+          replace(
+            'const act=s=>CASH.includes(sym(s))?"Cash":specialSituation(s)?.blockNewCapital?"Watch":fd(s).action;\nconst cls=',
+            'const act=s=>CASH.includes(sym(s))?"Cash":specialSituation(s)?.blockNewCapital?"Watch":fd(s).action;\nfunction dataQualityBlocked(s){const e=rec(s)?.expertDecision||s?.expertDecision||{},m=e?.metrics||{};return fd(s).action==="Watch"&&m.fundamentalsPass===false&&((+e.tradeSetupScore||0)>=78||(+e.capitalScore||0)>=72||(+fd(s).relativeCapitalScore||0)>=75);}\nfunction onDeckReason(s){return dataQualityBlocked(s)?`Data check — setup remains near-Buy quality, but required fundamental verification is unavailable. ${fd(s).reason}`:fd(s).reason;}\nfunction deckRank(a,b){const blocked=(dataQualityBlocked(b)?1:0)-(dataQualityBlocked(a)?1:0);return blocked||rank(a,b);}\nconst cls=',
+            'data-quality helpers'
+          );
+
+          replace(
+            'function OnDeck({rows}){return <section className="card"><h2>🟡 On Deck</h2><p className="sub">Top 10 highest-priority near-Buy candidates. Qualified Watches rank first; the broader research universe remains behind the scenes.</p><div className="scroll"><table><thead><tr><th>Symbol</th><th>Theme</th><th>Price</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{rows.map(s=><tr key={sym(s)}><td><b>{sym(s)}</b></td><td>{theme(s)}</td><td>{money(price(s))}</td><td>{fd(s).reason}</td><td>{fd(s).nextTrigger||riskText(s)}</td></tr>)}</tbody></table></div></section>}',
+            'function OnDeck({rows}){return <section className="card"><h2>🟡 On Deck</h2><p className="sub">Top 10 highest-priority near-Buy candidates. Data-blocked setups stay visible here instead of disappearing when a required feed is temporarily unavailable.</p><div className="scroll"><table><thead><tr><th>Symbol</th><th>Theme</th><th>Price</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{rows.map(s=><tr key={sym(s)}><td><b>{sym(s)}</b>{dataQualityBlocked(s)&&<span className="dataBlockTag">Data check</span>}</td><td>{theme(s)}</td><td>{money(price(s))}</td><td>{onDeckReason(s)}</td><td>{fd(s).nextTrigger||riskText(s)}</td></tr>)}</tbody></table></div></section>}',
+            'On Deck rendering'
+          );
+
+          replace(
+            'const deck=useMemo(()=>stocks.filter(s=>act(s)==="Watch").sort(rank).slice(0,10),[stocks]);',
+            'const deck=useMemo(()=>stocks.filter(s=>act(s)==="Watch").sort(deckRank).slice(0,10),[stocks]);',
+            'opportunities deck ranking'
+          );
+          replace(
+            'const td=useMemo(()=>themeStocks.filter(s=>act(s)==="Watch").sort(rank).slice(0,10),[themeStocks]);',
+            'const td=useMemo(()=>themeStocks.filter(s=>act(s)==="Watch").sort(deckRank).slice(0,10),[themeStocks]);',
+            'themes deck ranking'
+          );
+
+          replace(
+            '<div className="mobileField"><small>Why</small><p>{d.reason}</p></div><div className="mobileField"><small>Next Move</small><p>{next(s,d)}</p></div><div className="mobileNumbers">',
+            '<div className="mobileField"><small>Why</small><p>{d.reason}</p></div><div className="mobileNumbers">',
+            'mobile Next Move removal'
+          );
+          replace(
+            '<td><b className={`pill ${cls(d.action)}`}>{d.action}</b></td><td>{d.reason}</td><td>{next(s,d)}</td><td>{cashDryPowder?',
+            '<td><b className={`pill ${cls(d.action)}`}>{d.action}</b></td><td>{d.reason}</td><td>{cashDryPowder?',
+            'desktop Next Move cell removal'
+          );
+          replace(
+            '<th>Position</th><th>Open Date</th><th>Decision</th><th>Why</th><th>Next Move</th><th>Price</th><th>Gain/Loss</th>',
+            '<th>Position</th><th>Open Date</th><th>Decision</th><th>Why</th><th>Price</th><th>Gain/Loss</th>',
+            'desktop Next Move header removal'
+          );
+
+          replace(
+            '.eventTag{color:#166534;background:#f0fdf4}.pill.green',
+            '.eventTag{color:#166534;background:#f0fdf4}.dataBlockTag{display:block;width:max-content;margin-top:5px;border:1px solid #f59e0b;border-radius:999px;padding:2px 7px;background:#fffbeb;color:#92400e;font-size:10px;font-weight:900}.pill.green',
+            'Data check badge styling'
+          );
+
+          fs.writeFileSync(path,s);
+          NODE
+      - name: Install and verify
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pages/index.js
+          git commit -m 'Keep data-blocked ideas visible and simplify portfolio table'
+          git push origin HEAD:main
