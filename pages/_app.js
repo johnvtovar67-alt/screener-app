@@ -1,9 +1,12 @@
 import {useEffect,useState} from "react";
+import {factorWeightsFor} from "../lib/portfolioGovernor";
 import "../styles/card-layout.css";
 
 const CANONICAL_HOST="screener-app-cq5t.vercel.app";
 const LEGACY_PREFIXES=["screener-app.vercel.app","screener-app-hp1w","screener-app-us7z"];
 const CAPITAL_NOTE="Capital actions reflect portfolio fit, not raw opportunity rank. A higher-ranked Buy can be skipped when concentration, correlation, position-size, or risk-budget constraints make another qualified target the better incremental use of capital.";
+const actionOf=s=>String(s?.finalDecision?.action||s?.recommendation?.displayLabel||s?.recommendation?.label||"");
+const symbolOf=s=>String(s?.symbol||s?.ticker||"").toUpperCase();
 
 export default function App({ Component, pageProps }) {
   const [version,setVersion]=useState(null);
@@ -19,24 +22,50 @@ export default function App({ Component, pageProps }) {
   },[]);
 
   useEffect(()=>{
+    let ideas=[];
+    let stopped=false;
+    const refreshIdeas=async()=>{
+      try{
+        const r=await fetch('/api/top5?theme=opportunities',{cache:'no-store'}),d=await r.json();
+        if(r.ok&&Array.isArray(d.stocks)){ideas=d.stocks;explainCapitalSelection();}
+      }catch{}
+    };
+    const specificCapitalNote=box=>{
+      const governor=document.querySelector('.governorBox')?.textContent||'';
+      const concentration=governor.match(/([^:]+):\s*(\d+)% of Swing capital/i);
+      const funded=(box.textContent||'').match(/→\s*([A-Z][A-Z0-9.-]{0,9})\b/);
+      if(!concentration||!funded||!ideas.length)return CAPITAL_NOTE;
+      const factor=concentration[1].replace(/^⚠\s*Portfolio Governor\s*/i,'').trim(),factorPct=Number(concentration[2]),target=funded[1].toUpperCase();
+      const targetIndex=ideas.findIndex(s=>symbolOf(s)===target);
+      if(targetIndex<0)return CAPITAL_NOTE;
+      const skipped=ideas.slice(0,targetIndex).find(s=>["Strong Buy","Buy"].includes(actionOf(s))&&Number(factorWeightsFor(s)?.[factor]||0)>=.20);
+      if(!skipped)return `${target} is the best risk-budgeted use of capital among the currently fundable qualified opportunities. ${CAPITAL_NOTE}`;
+      const weight=Number(factorWeightsFor(skipped)?.[factor]||0);
+      return `${target} is funded because it clears the fresh-capital standard without adding to the constrained ${factor} exposure. ${symbolOf(skipped)} ranks higher on standalone opportunity quality but carries about ${Math.round(weight*100)}% ${factor} exposure, so with that factor already at ${factorPct}% of Swing capital it is not funded today.`;
+    };
     const explainCapitalSelection=()=>{
+      if(stopped)return;
       for(const box of document.querySelectorAll('.rotationBox')){
-        if(box.querySelector('[data-capital-fit-note]'))continue;
-        const note=document.createElement('p');
-        note.dataset.capitalFitNote='true';
-        note.textContent=CAPITAL_NOTE;
-        note.style.margin='8px 0 10px';
-        note.style.fontSize='0.9em';
-        note.style.color='#52647f';
-        note.style.lineHeight='1.35';
-        const heading=box.querySelector('b');
-        if(heading)heading.insertAdjacentElement('afterend',note);else box.prepend(note);
+        let note=box.querySelector('[data-capital-fit-note]');
+        if(!note){
+          note=document.createElement('p');
+          note.dataset.capitalFitNote='true';
+          note.style.margin='8px 0 10px';
+          note.style.fontSize='0.9em';
+          note.style.color='#52647f';
+          note.style.lineHeight='1.35';
+          const heading=box.querySelector('b');
+          if(heading)heading.insertAdjacentElement('afterend',note);else box.prepend(note);
+        }
+        const text=specificCapitalNote(box);
+        if(note.textContent!==text)note.textContent=text;
       }
     };
     explainCapitalSelection();
+    void refreshIdeas();
     const observer=new MutationObserver(explainCapitalSelection);
     observer.observe(document.body,{childList:true,subtree:true});
-    return()=>observer.disconnect();
+    return()=>{stopped=true;observer.disconnect();};
   },[]);
 
   return <>
