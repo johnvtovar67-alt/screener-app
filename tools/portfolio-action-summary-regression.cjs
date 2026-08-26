@@ -9,4 +9,5 @@ assert(page.includes('className="timeReviewCompact"'),'time review panel is not 
 assert(page.includes('scoreVisual ${v.tone}')&&page.includes('edgeVisual ${v.tone}'),'compact time review lost score or opportunity-gap visuals');
 assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');
 assert(page.includes('timing:"Await Confirmation"')&&page.includes('size:"Qualified — Not Funded"'),'Buy cards can still imply executable deployment when the portfolio capital signal is not fundable');
+assert(page.includes('timing:"Await Capital"')&&page.includes('bp.blockReason||funded<minFundingAction'),'Buy cards are not reconciled against the final portfolio allocator');
 console.log('PORTFOLIO ACTION SUMMARY PASS: lifecycle exits are summarized and time review is compact.');
