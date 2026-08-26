@@ -1,0 +1,1 @@
+Trigger the opportunity-card / portfolio-allocation consistency patch. Qualification must not imply deployment when the portfolio capital signal is not fundable.
