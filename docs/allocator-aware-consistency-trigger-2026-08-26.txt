@@ -1,0 +1,1 @@
+Trigger allocator-aware opportunity-card consistency patch after final portfolio funding state is known.
