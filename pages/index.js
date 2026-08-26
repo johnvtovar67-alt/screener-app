@@ -157,7 +157,10 @@ export default function Home(){
   const resultForCards=useMemo(()=>new Map(results.map(r=>[sym(r),r])),[results]);
   function opportunityDecision(s){
     const d=fd(s),special=specialSituation(s);if(special?.blockNewCapital)return{...d,action:"Watch",timing:"Wait",size:"None",reason:"Acquisition pending — ordinary Swing Buy/Strong Buy signals are disabled. Evaluate the merger spread, closing risk, RKLB collar exposure, and opportunity cost instead."};if(!["Strong Buy","Buy"].includes(d.action))return d;
-    const owned=portfolio.find(p=>p.symbol===sym(s));if(!owned)return d;
+    const signal=capitalSignalEligible({target:s,action:d.action,persistence:s.signalPersistence});
+    const owned=portfolio.find(p=>p.symbol===sym(s));
+    if(!owned&&!signal.pass)return{...d,timing:"Await Confirmation",size:"Qualified — Not Funded",reason:`${d.reason} Portfolio action: ${signal.reason}`};
+    if(!owned)return d;
     const risk=portfolioRiskSnapshot(results.length?results:portfolio.map(p=>({...p,value:(+p.shares||0)*(+p.avgCost||0)}))),active=risk.swingCapital||portfolioValueForCards,targetPct=swingTargetPct(d.action),targetValue=active*targetPct,currentResult=resultForCards.get(sym(s)),currentValue=currentResult?+currentResult.value||0:(+owned.shares||0)*price(s),gap=Math.max(0,targetValue-currentValue),tolerance=Math.max(500,active*.02);
     if(gap<=tolerance)return{...d,action:"Hold",timing:"Hold",size:"At Target",priority:"At Target",reason:`${d.action}-quality setup, but your existing Swing position is already within the active-capital target tolerance. No additional purchase is needed.`};
     const allowance=capitalAllowance({target:s,action:d.action,requested:gap,risk});if(allowance.blocked)return{...d,action:"Hold",timing:"Hold",size:"Risk Capped",priority:"Portfolio Governor",reason:allowance.reason};
