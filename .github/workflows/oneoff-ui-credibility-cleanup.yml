@@ -1,6 +1,5 @@
-name: One-off UI credibility cleanup
+name: Fundamental feed resilience cleanup
 
-# Triggered once after installation so the workflow exists before the matching push event.
 on:
   push:
     branches: [main]
@@ -10,7 +9,7 @@ permissions:
 
 jobs:
   patch:
-    if: github.event.head_commit.message == 'Apply On Deck and portfolio UI cleanup'
+    if: github.event.head_commit.message == 'Apply fundamental feed resilience cleanup'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -21,60 +20,52 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Patch UI
+      - name: Patch feed handling and UI
         run: |
           node <<'NODE'
           const fs=require('fs');
-          const path='pages/index.js';
-          let s=fs.readFileSync(path,'utf8');
-          const replace=(from,to,label)=>{if(!s.includes(from))throw new Error(`Missing marker: ${label}`);s=s.replace(from,to)};
+          const patch=(path,fn)=>{let s=fs.readFileSync(path,'utf8');s=fn(s);fs.writeFileSync(path,s)};
+          const replace=(s,from,to,label)=>{if(!s.includes(from))throw new Error(`Missing marker: ${label}`);return s.replace(from,to)};
 
-          replace(
-            'const act=s=>CASH.includes(sym(s))?"Cash":specialSituation(s)?.blockNewCapital?"Watch":fd(s).action;\nconst cls=',
-            'const act=s=>CASH.includes(sym(s))?"Cash":specialSituation(s)?.blockNewCapital?"Watch":fd(s).action;\nfunction dataQualityBlocked(s){const e=rec(s)?.expertDecision||s?.expertDecision||{},m=e?.metrics||{};return fd(s).action==="Watch"&&m.fundamentalsPass===false&&((+e.tradeSetupScore||0)>=78||(+e.capitalScore||0)>=72||(+fd(s).relativeCapitalScore||0)>=75);}\nfunction onDeckReason(s){return dataQualityBlocked(s)?`Data check — setup remains near-Buy quality, but required fundamental verification is unavailable. ${fd(s).reason}`:fd(s).reason;}\nfunction deckRank(a,b){const blocked=(dataQualityBlocked(b)?1:0)-(dataQualityBlocked(a)?1:0);return blocked||rank(a,b);}\nconst cls=',
-            'data-quality helpers'
-          );
+          patch('lib/fmpFundamentals.js',s=>{
+            s=replace(s,
+              'async function firstUsable(urls=[],accept=()=>true){\n  for(const url of urls){\n    try{\n      const rows=asArray(await fetchJson(url));\n      const row=rows.find(x=>x&&typeof x==="object"&&accept(x));\n      if(row)return row;\n    }catch{}\n  }\n  return null;\n}',
+              'async function firstUsable(urls=[],accept=()=>true){\n  let lastError=null;\n  for(const url of urls){\n    try{\n      const rows=asArray(await fetchJson(url));\n      const row=rows.find(x=>x&&typeof x==="object"&&accept(x));\n      if(row)return row;\n    }catch(e){lastError=e;}\n  }\n  if(lastError)console.warn("FMP fundamentals endpoint fallback exhausted:",lastError.message);\n  return null;\n}', 'firstUsable diagnostics');
+            s=replace(s,
+              'async function firstRows(urls=[],minRows=1){\n  for(const url of urls){\n    try{\n      const rows=asArray(await fetchJson(url)).filter(x=>x&&typeof x==="object");\n      if(rows.length>=minRows)return rows;\n    }catch{}\n  }\n  return [];\n}',
+              'async function firstRows(urls=[],minRows=1){\n  let lastError=null;\n  for(const url of urls){\n    try{\n      const rows=asArray(await fetchJson(url)).filter(x=>x&&typeof x==="object");\n      if(rows.length>=minRows)return rows;\n    }catch(e){lastError=e;}\n  }\n  if(lastError)console.warn("FMP statement fallback exhausted:",lastError.message);\n  return [];\n}', 'firstRows diagnostics');
+            s=replace(s,'  }catch{}\n  return null;\n}\n\nasync function fetchStatementFallback', '  }catch(e){console.warn("FMP bulk ratios unavailable:",e.message)}\n  return null;\n}\n\nasync function fetchStatementFallback','bulk diagnostics');
+            return s;
+          });
 
-          replace(
-            'function OnDeck({rows}){return <section className="card"><h2>🟡 On Deck</h2><p className="sub">Top 10 highest-priority near-Buy candidates. Qualified Watches rank first; the broader research universe remains behind the scenes.</p><div className="scroll"><table><thead><tr><th>Symbol</th><th>Theme</th><th>Price</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{rows.map(s=><tr key={sym(s)}><td><b>{sym(s)}</b></td><td>{theme(s)}</td><td>{money(price(s))}</td><td>{fd(s).reason}</td><td>{fd(s).nextTrigger||riskText(s)}</td></tr>)}</tbody></table></div></section>}',
-            'function OnDeck({rows}){return <section className="card"><h2>🟡 On Deck</h2><p className="sub">Top 10 highest-priority near-Buy candidates. Data-blocked setups stay visible here instead of disappearing when a required feed is temporarily unavailable.</p><div className="scroll"><table><thead><tr><th>Symbol</th><th>Theme</th><th>Price</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{rows.map(s=><tr key={sym(s)}><td><b>{sym(s)}</b>{dataQualityBlocked(s)&&<span className="dataBlockTag">Data check</span>}</td><td>{theme(s)}</td><td>{money(price(s))}</td><td>{onDeckReason(s)}</td><td>{fd(s).nextTrigger||riskText(s)}</td></tr>)}</tbody></table></div></section>}',
-            'On Deck rendering'
-          );
+          patch('pages/api/top5.js',s=>{
+            s=replace(s,
+              'const fundamentalsComplete=rows.filter(r=>r.fundamentalDataStatus==="complete").length,actionable=',
+              'const fundamentalsComplete=rows.filter(r=>r.fundamentalDataStatus==="complete").length,fundamentalCoveragePct=Math.round(fundamentalsComplete/Math.max(1,rows.length)*100),fundamentalFeedStatus=fundamentalCoveragePct<25?"unavailable":fundamentalCoveragePct<75?"degraded":"healthy",actionable=',
+              'feed health calculation');
+            s=replace(s,
+              'fundamentalsComplete,fundamentalsIncomplete:rows.length-fundamentalsComplete',
+              'fundamentalsComplete,fundamentalsIncomplete:rows.length-fundamentalsComplete,fundamentalCoveragePct,fundamentalFeedStatus',
+              'feed health metadata');
+            return s;
+          });
 
-          replace(
-            'const deck=useMemo(()=>stocks.filter(s=>act(s)==="Watch").sort(rank).slice(0,10),[stocks]);',
-            'const deck=useMemo(()=>stocks.filter(s=>act(s)==="Watch").sort(deckRank).slice(0,10),[stocks]);',
-            'opportunities deck ranking'
-          );
-          replace(
-            'const td=useMemo(()=>themeStocks.filter(s=>act(s)==="Watch").sort(rank).slice(0,10),[themeStocks]);',
-            'const td=useMemo(()=>themeStocks.filter(s=>act(s)==="Watch").sort(deckRank).slice(0,10),[themeStocks]);',
-            'themes deck ranking'
-          );
-
-          replace(
-            '<div className="mobileField"><small>Why</small><p>{d.reason}</p></div><div className="mobileField"><small>Next Move</small><p>{next(s,d)}</p></div><div className="mobileNumbers">',
-            '<div className="mobileField"><small>Why</small><p>{d.reason}</p></div><div className="mobileNumbers">',
-            'mobile Next Move removal'
-          );
-          replace(
-            '<td><b className={`pill ${cls(d.action)}`}>{d.action}</b></td><td>{d.reason}</td><td>{next(s,d)}</td><td>{cashDryPowder?',
-            '<td><b className={`pill ${cls(d.action)}`}>{d.action}</b></td><td>{d.reason}</td><td>{cashDryPowder?',
-            'desktop Next Move cell removal'
-          );
-          replace(
-            '<th>Position</th><th>Open Date</th><th>Decision</th><th>Why</th><th>Next Move</th><th>Price</th><th>Gain/Loss</th>',
-            '<th>Position</th><th>Open Date</th><th>Decision</th><th>Why</th><th>Price</th><th>Gain/Loss</th>',
-            'desktop Next Move header removal'
-          );
-
-          replace(
-            '.eventTag{color:#166534;background:#f0fdf4}.pill.green',
-            '.eventTag{color:#166534;background:#f0fdf4}.dataBlockTag{display:block;width:max-content;margin-top:5px;border:1px solid #f59e0b;border-radius:999px;padding:2px 7px;background:#fffbeb;color:#92400e;font-size:10px;font-weight:900}.pill.green',
-            'Data check badge styling'
-          );
-
-          fs.writeFileSync(path,s);
+          patch('pages/index.js',s=>{
+            s=replace(s,'const[marketRadar,setMarketRadar]=useState([]);','const[marketRadar,setMarketRadar]=useState([]),[feedHealth,setFeedHealth]=useState({status:"healthy",coverage:100});','feed state');
+            s=replace(s,'if(t==="opportunities"){setStocks(d.stocks||[]);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}','if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth({status:d.meta?.fundamentalFeedStatus||"healthy",coverage:d.meta?.fundamentalCoveragePct??100});setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}','load feed state');
+            s=replace(s,
+              'function onDeckReason(s){return dataQualityBlocked(s)?`Data check — setup remains near-Buy quality, but required fundamental verification is unavailable. ${fd(s).reason}`:fd(s).reason;}\nfunction deckRank(a,b){const blocked=(dataQualityBlocked(b)?1:0)-(dataQualityBlocked(a)?1:0);return blocked||rank(a,b);}',
+              'function onDeckReason(s,systemBlocked=false){return dataQualityBlocked(s)?(systemBlocked?"Awaiting fundamental-feed recovery; current technical/market evidence is retained, but this is not a fresh Buy qualification.":`Data check — required fundamental verification is unavailable. ${fd(s).reason}`):fd(s).reason;}\nfunction deckRank(a,b){return rank(a,b);}',
+              'honest blocked wording and ranking');
+            s=replace(s,
+              'function OnDeck({rows}){return <section className="card"><h2>🟡 On Deck</h2><p className="sub">Top 10 highest-priority near-Buy candidates. Data-blocked setups stay visible here instead of disappearing when a required feed is temporarily unavailable.</p><div className="scroll"><table><thead><tr><th>Symbol</th><th>Theme</th><th>Price</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{rows.map(s=><tr key={sym(s)}><td><b>{sym(s)}</b>{dataQualityBlocked(s)&&<span className="dataBlockTag">Data check</span>}</td><td>{theme(s)}</td><td>{money(price(s))}</td><td>{onDeckReason(s)}</td><td>{fd(s).nextTrigger||riskText(s)}</td></tr>)}</tbody></table></div></section>}',
+              'function OnDeck({rows,feedHealth={status:"healthy",coverage:100}}){const systemBlocked=feedHealth.status==="unavailable";return <section className="card"><h2>🟡 On Deck</h2>{systemBlocked&&<div className="feedBanner"><b>Fundamental feed temporarily unavailable</b><span> New Buy qualification is paused. Candidates remain visible from current market/technical evidence while fundamentals are re-verified. This is a feed condition, not ten separate stock downgrades.</span></div>}<p className="sub">Top 10 highest-priority near-Buy candidates.{!systemBlocked&&" Data-blocked names remain visible instead of silently disappearing."}</p><div className="scroll"><table><thead><tr><th>Symbol</th><th>Theme</th><th>Price</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{rows.map(s=><tr key={sym(s)}><td><b>{sym(s)}</b>{dataQualityBlocked(s)&&!systemBlocked&&<span className="dataBlockTag">Data check</span>}</td><td>{theme(s)}</td><td>{money(price(s))}</td><td>{onDeckReason(s,systemBlocked)}</td><td>{fd(s).nextTrigger||riskText(s)}</td></tr>)}</tbody></table></div></section>}',
+              'system feed banner');
+            s=replace(s,'.eventTag{color:#166534;background:#f0fdf4}.dataBlockTag{display:block;', '.eventTag{color:#166534;background:#f0fdf4}.feedBanner{margin:10px 0 12px;padding:10px 12px;border:1px solid #f59e0b;border-radius:10px;background:#fffbeb;color:#78350f}.feedBanner span{color:#78350f}.dataBlockTag{display:block;','feed banner style');
+            s=s.replace(/<OnDeck rows=\{deck\}\/>/g,'<OnDeck rows={deck} feedHealth={feedHealth}/>');
+            s=s.replace(/<OnDeck rows=\{td\}\/>/g,'<OnDeck rows={td} feedHealth={feedHealth}/>');
+            return s;
+          });
           NODE
       - name: Install and verify
         run: |
@@ -84,6 +75,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add pages/index.js
-          git commit -m 'Keep data-blocked ideas visible and simplify portfolio table'
+          git add lib/fmpFundamentals.js pages/api/top5.js pages/index.js
+          git commit -m 'Handle broad fundamental feed outages cleanly'
           git push origin HEAD:main
