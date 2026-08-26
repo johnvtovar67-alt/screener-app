@@ -57,9 +57,10 @@ assert(page.includes('factorWeightsFor'),'Projected-risk engine is not using wei
 assert(page.includes('trimCount:2')&&page.includes('trimmedShares:218')&&page.includes('originalShares:400'),'Known IOVA lifecycle history not seeded');
 assert(/Winner lifecycle/.test(page),'Lifecycle block reason not surfaced to user');
 
-// 8) Fundamental incompleteness must still gate fresh capital; do not loosen the standard.
+// 8) Fundamental incompleteness and the base entry gate must both constrain fresh-capital sizing.
 const expert=fs.readFileSync('lib/expertDecision.js','utf8');
 assert(expert.includes("fundamentalsPass=!['partial','unavailable','error'].includes(fundamentalStatus)"),'Fundamental completeness gate missing');
-assert(expert.includes('fullBuyPass=fundamentalsPass')&&expert.includes('partialBuyPass=fundamentalsPass'),'Buy path can bypass fundamental verification');
+assert(/fullBuyPass=[^;]*fundamentalsPass/.test(expert)&&/partialBuyPass=[^;]*fundamentalsPass/.test(expert),'Buy path can bypass fundamental verification');
+assert(/fullBuyPass=[^;]*scoringBuyEligible/.test(expert)&&/partialBuyPass=[^;]*scoringStarterEligible/.test(expert),'Expert sizing can bypass the base entry gate');
 
 console.log('REGRESSION PASS: 8 portfolio/signal/lifecycle checks passed');
