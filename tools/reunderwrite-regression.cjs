@@ -20,8 +20,8 @@ r=reunderwriteExistingPosition({stock:strong,decision:{action:'Hold',reason:'gen
 assert(r.override&&r.action==='Hold'&&/remain supportive/.test(r.reason),'Healthy Swing should receive a concise affirmative Hold');
 const weak={symbol:'XYZ',role:'Swing',gainLossPct:-4,recommendation:{expertDecision:{thesisScore:55,tradeSetupScore:45,capitalScore:50,metrics:{technical:46,momentum:45,leadership:47,risk:60}}}};
 r=reunderwriteExistingPosition({stock:weak,decision:{action:'Hold',reason:'generic'},risk:{swingCapital:18058,positions:{XYZ:{value:1264,pctSwing:.07,factorWeights:{Other:1}}},factorPct:{Other:.07}},timeReview:{review:false}});
-assert(r.override&&r.action==='Hold'&&/forward evidence is weak/.test(r.reason),'Weak Swing should not hide behind generic stabilization language');
+assert(r.override&&r.action==='Review'&&/forward evidence is weak/.test(r.reason),'Weak Swing should surface as Review instead of hiding behind generic Hold language');
 const stale={symbol:'STALE',role:'Swing',gainLossPct:-2,recommendation:{expertDecision:{thesisScore:66,tradeSetupScore:54,capitalScore:58,metrics:{technical:54,momentum:49,leadership:50,risk:52}}}};
 r=reunderwriteExistingPosition({stock:stale,decision:{action:'Hold',reason:'generic'},risk:{swingCapital:18058,positions:{STALE:{value:1400,pctSwing:.078,factorWeights:{Other:1}}},factorPct:{Other:.078}},timeReview:{review:true,held:45}});
-assert(r.override&&r.action==='Hold'&&r.opportunityCost===true,'45-day flat/losing Swing must explicitly enter opportunity-cost review');
+assert(r.override&&r.action==='Review'&&r.opportunityCost===true,'45-day flat/losing Swing must explicitly enter opportunity-cost Review');
 console.log('REUNDERWRITE REGRESSION PASS: 5 checks passed');
