@@ -7,6 +7,7 @@ import {
 } from "../../lib/scoring";
 import { applyExpertDecision } from "../../lib/expertDecision";
 import { fetchEventRiskMap, applyEventRiskGate } from "../../lib/eventRisk";
+import { fetchEntryTimingMap, applyEntryTimingGate } from "../../lib/entryTiming";
 import { projectedFullDayVolume } from "../../lib/marketSession";
 import { finalizeStandaloneOpportunityDecision } from "../../lib/opportunityDecision";
 import { fetchFmpFundamentals, mergeFundamentals } from "../../lib/fmpFundamentals";
@@ -48,8 +49,10 @@ export default async function handler(req,res){
     res.setHeader("Cache-Control","no-store, max-age=0");
     const symbol=String(req.query.symbol||"").trim().toUpperCase();if(!symbol)return res.status(400).json({error:"Missing symbol."});
     const[quote,spyQuote,qqqQuote]=await Promise.all([fetchQuote(symbol),fetchQuote("SPY").catch(()=>null),fetchQuote("QQQ").catch(()=>null)]);
-    const base=attachMarketRelativeData(quote,spyQuote,qqqQuote),fundamentalMap=await fetchFmpFundamentals([symbol]),enriched=mergeFundamentals(base,fundamentalMap),scored=buildScoredResult(enriched),eventRiskMap=await fetchEventRiskMap([symbol]),eventAdjusted=applyEventRiskGate(scored,eventRiskMap.get(normalizeSymbol(symbol))),result=finalizeStandaloneOpportunityDecision(eventAdjusted);
+    const base=attachMarketRelativeData(quote,spyQuote,qqqQuote),fundamentalMap=await fetchFmpFundamentals([symbol]),enriched=mergeFundamentals(base,fundamentalMap),scored=buildScoredResult(enriched),eventRiskMap=await fetchEventRiskMap([symbol]),eventAdjusted=applyEventRiskGate(scored,eventRiskMap.get(normalizeSymbol(symbol)));
+    let timed=eventAdjusted;const current=String(eventAdjusted.recommendation?.displayLabel||eventAdjusted.recommendation?.label||eventAdjusted.action);if(['Buy','Strong Buy'].includes(current)){const timingMap=await fetchEntryTimingMap([symbol]);timed=applyEntryTimingGate(eventAdjusted,timingMap.get(normalizeSymbol(symbol)));}
+    const result=finalizeStandaloneOpportunityDecision(timed);
     if(!result?.symbol||result.price===null||result.price===undefined)throw new Error(`No usable quote data returned for ${symbol}.`);
-    return res.status(200).json({stock:result,meta:{mode:"single_symbol_expert_model_v6_fmp_fundamentals",note:"Single-symbol finalDecision is the standalone decision after fundamental enrichment and event risk. Broad Opportunities may demote a standalone Buy to Qualified Watch based on relative capital attractiveness.",spyChange:spyQuote?.dayChangePct??null,qqqChange:qqqQuote?.dayChangePct??null,fundamentalDataStatus:result.fundamentalDataStatus||"unknown"}});
+    return res.status(200).json({stock:result,meta:{mode:"single_symbol_expert_model_v7_historical_entry_timing",note:"Stock quality and entry timing are separate gates. Fresh capital must pass daily-history timing after fundamental and event-risk qualification.",spyChange:spyQuote?.dayChangePct??null,qqqChange:qqqQuote?.dayChangePct??null,fundamentalDataStatus:result.fundamentalDataStatus||"unknown"}});
   }catch(err){console.error("api/index error:",err);return res.status(500).json({error:"Failed to analyze symbol.",detail:err.message||"Unknown error."})}
 }
