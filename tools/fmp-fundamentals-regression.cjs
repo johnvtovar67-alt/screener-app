@@ -5,7 +5,7 @@ let src=fs.readFileSync('lib/fmpFundamentals.js','utf8')
   .replace(/export async function /g,'async function ')
   .replace(/export function /g,'function ');
 src+='\nmodule.exports={statementRatioFields,statementGrowthFields,fillMissing};';
-const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date};
+const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,setTimeout,clearTimeout,AbortController,fetch:async()=>({ok:true,json:async()=>[]})};
 vm.createContext(sandbox);vm.runInContext(src,sandbox);
 const {statementRatioFields,statementGrowthFields,fillMissing}=sandbox.module.exports;
 const ratios=statementRatioFields(
@@ -23,7 +23,12 @@ assert(Math.abs(growth.revenueGrowth-20)<.001,'Statement fallback must derive re
 assert(Math.abs(growth.earningsGrowth-20)<.001,'Statement fallback must derive earnings growth');
 const merged=fillMissing({grossMargin:null,pe:18},{grossMargin:42,pe:21,debtToEquity:.4});
 assert(merged.grossMargin===42&&merged.pe===18&&merged.debtToEquity===.4,'Fallback must fill only missing fields');
-assert(src.includes('/stable/key-metrics-ttm?symbol='),'Key-metrics fallback endpoint must remain available');
-assert(src.includes('/stable/income-statement?symbol='),'Income-statement fallback endpoint must remain available');
+assert(src.includes('/stable/ratios-ttm?symbol='),'Stable ratios endpoint must remain available');
+assert(src.includes('/stable/income-statement-growth?symbol='),'Stable growth endpoint must remain available');
+assert(src.includes('/stable/income-statement?symbol='),'Stable statement fallback must remain available');
+assert(!src.includes('/api/v3/'),'Retired v3 endpoints must not return');
+assert(!src.includes('ratios-ttm-bulk'),'Restricted bulk-ratios endpoint must not return');
+assert(src.includes('setCooldown'),'Rate/subscription failures must activate cooldown rather than request storms');
+assert(src.includes('mapLimited(missing,1'),'Fundamental enrichment concurrency must remain capped at one request lane');
 assert(src.includes('statementFallback:Boolean(fallback?.sourceAvailable)'),'Fundamental source diagnostics must expose statement fallback use');
-console.log('FMP FUNDAMENTALS REGRESSION PASS: 9 checks passed');
+console.log('FMP FUNDAMENTALS REGRESSION PASS: stable-only, cooldown, and fallback checks passed');
