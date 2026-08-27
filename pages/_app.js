@@ -17,11 +17,56 @@ const LEGACY_HOSTS=new Set([
 const CAPITAL_NOTE="Capital actions reflect portfolio fit, not raw opportunity rank. A higher-ranked Buy can be skipped when concentration, correlation, position-size, or risk-budget constraints make another qualified target the better incremental use of capital.";
 const actionOf=s=>String(s?.finalDecision?.action||s?.recommendation?.displayLabel||s?.recommendation?.label||"");
 const symbolOf=s=>String(s?.symbol||s?.ticker||"").toUpperCase();
+const API_TIMEOUT_MS=15000;
+const API_RETRIES=1;
+
+function installResilientApiFetch(){
+  if(typeof window==="undefined"||window.__screenerResilientFetchInstalled)return;
+  const nativeFetch=window.fetch.bind(window);
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  window.fetch=async function resilientFetch(input,init={}){
+    let url;
+    try{url=new URL(typeof input==="string"?input:input?.url,window.location.href);}catch{return nativeFetch(input,init);}
+    const method=String(init?.method||(typeof input!=="string"&&input?.method)||"GET").toUpperCase();
+    const sameOrigin=url.origin===window.location.origin;
+    const resilient=sameOrigin&&url.pathname.startsWith("/api/")&&method==="GET";
+    if(!resilient)return nativeFetch(input,init);
+
+    let lastError=null;
+    for(let attempt=0;attempt<=API_RETRIES;attempt++){
+      const controller=new AbortController();
+      const parentSignal=init?.signal;
+      const onAbort=()=>controller.abort(parentSignal?.reason);
+      if(parentSignal){if(parentSignal.aborted)controller.abort(parentSignal.reason);else parentSignal.addEventListener("abort",onAbort,{once:true});}
+      const timer=setTimeout(()=>controller.abort(new DOMException("API request timed out","TimeoutError")),API_TIMEOUT_MS);
+      try{
+        const response=await nativeFetch(input,{...init,signal:controller.signal});
+        clearTimeout(timer);
+        if(parentSignal)parentSignal.removeEventListener("abort",onAbort);
+        if(attempt<API_RETRIES&&(response.status===429||response.status>=500)){
+          await wait(response.status===429?900:500);
+          continue;
+        }
+        return response;
+      }catch(error){
+        clearTimeout(timer);
+        if(parentSignal)parentSignal.removeEventListener("abort",onAbort);
+        if(parentSignal?.aborted)throw error;
+        lastError=error;
+        if(attempt<API_RETRIES){await wait(500);continue;}
+      }
+    }
+    const timeout=lastError?.name==="AbortError"||lastError?.name==="TimeoutError";
+    throw new Error(timeout?"Live refresh timed out after an automatic retry. Existing verified data is still shown; try Reload again in a moment.":`Live refresh failed after an automatic retry${lastError?.message?`: ${lastError.message}`:"."}`);
+  };
+  window.__screenerResilientFetchInstalled=true;
+}
 
 export default function App({ Component, pageProps }) {
   const [version,setVersion]=useState(null);
 
   useEffect(()=>{
+    installResilientApiFetch();
     const host=window.location.hostname;
     if(LEGACY_HOSTS.has(host)){
       window.location.replace(`https://${CANONICAL_HOST}${window.location.pathname}${window.location.search}${window.location.hash}`);
