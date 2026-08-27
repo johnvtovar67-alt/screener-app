@@ -59,7 +59,7 @@ assert(/Winner lifecycle/.test(page),'Lifecycle block reason not surfaced to use
 
 // 8) Fundamental incompleteness and the base entry gate must both constrain fresh-capital sizing.
 const expert=fs.readFileSync('lib/expertDecision.js','utf8');
-assert(expert.includes("fundamentalsPass=!['partial','unavailable','error'].includes(fundamentalStatus)"),'Fundamental completeness gate missing');
+assert(expert.includes("fundamentalsPass=fundamentalStatus==='complete'||fundamentalStatus==='legacy'"),'Fundamental completeness gate missing');
 assert(/fullBuyPass=[^;]*fundamentalsPass/.test(expert)&&/partialBuyPass=[^;]*fundamentalsPass/.test(expert),'Buy path can bypass fundamental verification');
 assert(/fullBuyPass=[^;]*scoringBuyEligible/.test(expert)&&/partialBuyPass=[^;]*scoringStarterEligible/.test(expert),'Expert sizing can bypass the base entry gate');
 
