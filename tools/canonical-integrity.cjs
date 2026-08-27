@@ -12,6 +12,10 @@ for(const name of lifecycle){
   assert(!/tools\/apply-[^ ]+\.cjs/.test(script),`${name} mutates source through an apply-* script`);
   assert(!/git\s+(commit|push|add)\b/.test(script),`${name} performs a Git write`);
 }
+const prebuild=String(pkg.scripts?.prebuild||'');
+const verify=String(pkg.scripts?.verify||'');
+assert(prebuild.includes('tools/canonical-integrity.cjs'),'prebuild must run canonical integrity check');
+assert(verify.includes('tools/canonical-integrity.cjs'),'verify must run canonical integrity check');
 
 const workflowDir='.github/workflows';
 if(fs.existsSync(workflowDir)){
@@ -27,6 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
+  'release:"2026-08-27-consolidated-production"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',
@@ -39,7 +44,10 @@ hasAll(manifest,[
   '"capitulation-review-guard"',
   '"strong-buy-hysteresis"',
   '"immutable-build-source"',
-  '"canonical-version-integrity"'
+  '"canonical-version-integrity"',
+  '"legacy-domain-canonical-redirect"',
+  '"blob-oidc-health-check"',
+  '"build-time-canonical-integrity"'
 ],'lib/releaseManifest.js');
 
 const expert=read('lib/expertDecision.js');
@@ -73,9 +81,9 @@ const version=read('pages/api/version.js');
 hasAll(version,['RELEASE_MANIFEST','VERCEL_GIT_COMMIT_SHA','VERCEL_GIT_COMMIT_REF'],'pages/api/version.js');
 
 const health=read('pages/api/health.js');
-hasAll(health,['canonicalProject','blobConfigured','gitMetadata'],'pages/api/health.js');
+hasAll(health,['canonicalProject','blobConfigured','VERCEL_OIDC_TOKEN','gitMetadata'],'pages/api/health.js');
 
 const app=read('pages/_app.js');
-hasAll(app,['screener-app-cq5t.vercel.app','/api/version'],'pages/_app.js');
+hasAll(app,['screener-app-cq5t.vercel.app','screener-app-nu.vercel.app','/api/version'],'pages/_app.js');
 
-console.log('Canonical integrity check passed: one read-only CI workflow, immutable committed build source, and critical trading/version-control safeguards are present.');
+console.log('Canonical integrity check passed: one read-only CI workflow, immutable committed build source, canonical legacy redirects, and critical trading/version-control safeguards are present.');
