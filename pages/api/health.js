@@ -1,3 +1,4 @@
+import {list} from '@vercel/blob';
 import {RELEASE_MANIFEST} from "../../lib/releaseManifest";
 
 const requiredFeatures=[
@@ -24,12 +25,21 @@ const requiredFeatures=[
   "build-time-canonical-integrity"
 ];
 
-export default function handler(req,res){
+async function blobAvailable(){
+  try{
+    await list({prefix:'screener-performance-ledger.json',limit:1});
+    return true;
+  }catch{
+    return false;
+  }
+}
+
+export default async function handler(req,res){
   const featureSet=new Set(RELEASE_MANIFEST.features||[]);
   const checks={
     manifest:requiredFeatures.every(x=>featureSet.has(x)),
     fmpConfigured:Boolean(process.env.FMP_API_KEY||process.env.FMP_KEY),
-    blobConfigured:Boolean(process.env.BLOB_READ_WRITE_TOKEN||process.env.VERCEL_OIDC_TOKEN),
+    blobConfigured:await blobAvailable(),
     gitMetadata:Boolean(process.env.VERCEL_GIT_COMMIT_SHA)||process.env.NODE_ENV!=="production"
   };
   const ok=Object.values(checks).every(Boolean);
