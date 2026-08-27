@@ -3,7 +3,17 @@ import {factorWeightsFor} from "../lib/portfolioGovernor";
 import "../styles/card-layout.css";
 
 const CANONICAL_HOST="screener-app-cq5t.vercel.app";
-const LEGACY_PREFIXES=["screener-app.vercel.app","screener-app-hp1w","screener-app-us7z"];
+const LEGACY_HOSTS=new Set([
+  "screener-app-nu.vercel.app",
+  "screener-app-johnvtovar67-7543s-projects.vercel.app",
+  "screener-app-git-main-johnvtovar67-7543s-projects.vercel.app",
+  "screener-app-us7z.vercel.app",
+  "screener-app-us7z-johnvtovar67-7543s-projects.vercel.app",
+  "screener-app-us7z-git-main-johnvtovar67-7543s-projects.vercel.app",
+  "screener-app-hp1w.vercel.app",
+  "screener-app-hp1w-johnvtovar67-7543s-projects.vercel.app",
+  "screener-app-hp1w-git-main-johnvtovar67-7543s-projects.vercel.app"
+]);
 const CAPITAL_NOTE="Capital actions reflect portfolio fit, not raw opportunity rank. A higher-ranked Buy can be skipped when concentration, correlation, position-size, or risk-budget constraints make another qualified target the better incremental use of capital.";
 const actionOf=s=>String(s?.finalDecision?.action||s?.recommendation?.displayLabel||s?.recommendation?.label||"");
 const symbolOf=s=>String(s?.symbol||s?.ticker||"").toUpperCase();
@@ -13,8 +23,7 @@ export default function App({ Component, pageProps }) {
 
   useEffect(()=>{
     const host=window.location.hostname;
-    const legacy=LEGACY_PREFIXES.some(x=>host===x||host.startsWith(`${x}-`));
-    if(legacy){
+    if(LEGACY_HOSTS.has(host)){
       window.location.replace(`https://${CANONICAL_HOST}${window.location.pathname}${window.location.search}${window.location.hash}`);
       return;
     }
