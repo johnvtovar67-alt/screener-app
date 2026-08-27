@@ -2,7 +2,7 @@ name: Materialize Build Patches
 
 on:
   push:
-    branches: [hardening/version-control-2026-08-25]
+    branches: [reconcile/canonical-2026-08-26]
 
 permissions:
   contents: write
@@ -15,20 +15,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: hardening/version-control-2026-08-25
+          ref: reconcile/canonical-2026-08-26
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - run: npm install --no-audit --no-fund
-      - name: Apply legacy patches and regression checks once
+      - name: Apply all legacy build patches once
         run: npm run prebuild
-      - name: Convert prebuild to verification-only
+      - name: Convert build to verification-only
         run: |
           node <<'NODE'
           const fs=require('fs');
           const p=JSON.parse(fs.readFileSync('package.json','utf8'));
-          p.scripts.prebuild=[
+          const checks=[
+            'node tools/exit-stability-regression.cjs',
             'node tools/regression-check.cjs',
             'node tools/reunderwrite-regression.cjs',
             'node tools/market-cycle-regression.cjs',
@@ -46,13 +47,14 @@ jobs:
             'node tools/fmp-fundamentals-regression.cjs',
             'node tools/proof-followthrough-regression.cjs',
             'node tools/portfolio-action-summary-regression.cjs'
-          ].join(' && ');
+          ];
+          p.scripts.prebuild=checks.join(' && ');
           p.scripts.verify=p.scripts.prebuild;
           fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
           NODE
-      - name: Prove materialized source builds without patching
+      - name: Prove committed source builds without mutation
         run: npm run build
-      - name: Commit materialized application source
+      - name: Commit materialized source
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -61,5 +63,5 @@ jobs:
             echo 'No materialization changes required.'
             exit 0
           fi
-          git commit -m 'Materialize build-time patches into committed source'
-          git push origin HEAD:hardening/version-control-2026-08-25
+          git commit -m 'Materialize all build-time patches into canonical source'
+          git push origin HEAD:reconcile/canonical-2026-08-26
