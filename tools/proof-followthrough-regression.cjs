@@ -11,7 +11,7 @@ const {swingTimeReview}=box.module.exports;
 
 let pos=fs.readFileSync('lib/positionReunderwrite.js','utf8').replace(/export function /g,'function ');
 pos+='\nmodule.exports={reunderwriteExistingPosition};';
-box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean};
+box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Date};
 vm.createContext(box);vm.runInContext(pos,box);
 const {reunderwriteExistingPosition}=box.module.exports;
 
@@ -21,7 +21,7 @@ const catalyst={type:'Bellwether Earnings',material:true,days:0,label:'NVDA earn
 const macroCatalyst={type:'Macro',material:true,days:0,label:'CPI inflation report today',detail:'Broad macro context should not rescue a weak position from a lifecycle exit.'};
 
 let s=stock(15,0);let t=swingTimeReview(s);assert(t.stage==='Proof'&&!t.review,'15-day flat trade with strong forward evidence should remain normal Proof');
-s=stock(16,0,{trade:57,technical:57,momentum:52,leadership:53,capital:60});t=swingTimeReview(s);assert(t.review&&t.proofFailure,'flat weak 15+ day trade must trigger Proof review');let r=reunderwriteExistingPosition({stock:s,decision:{action:'Hold'},risk,timeReview:t});assert(r.action==='Review'&&r.proofFailure&&/recycle the capital/.test(r.reason),'weak flat Proof trade must explicitly surface recycling as Review');
+s=stock(16,0,{trade:57,technical:57,momentum:52,leadership:53,capital:60});t=swingTimeReview(s);assert(t.review&&t.proofFailure,'flat weak 15+ day trade must trigger Proof review');let r=reunderwriteExistingPosition({stock:s,decision:{action:'Hold'},risk,timeReview:t});assert(r.action==='Review'&&r.proofFailure&&(/recycle the capital|has not earned continued capital/i.test(r.reason)),'weak flat Proof trade must explicitly challenge continued capital as Review');
 s=stock(18,-11,{trade:56,technical:54,momentum:50,leadership:52,capital:58});t=swingTimeReview(s);assert(t.review&&t.proofFailure,'double-digit Proof loss must always trigger review');r=reunderwriteExistingPosition({stock:s,decision:{action:'Hold'},risk,timeReview:t});assert(r.action==='Exit'&&/failed Proof/.test(r.reason),'double-digit weak Proof loss must exit');
 s=stock(18,-11,{trade:56,technical:54,momentum:50,leadership:52,capital:58,materialCatalysts:[catalyst]});t=swingTimeReview(s);r=reunderwriteExistingPosition({stock:s,decision:{action:'Hold'},risk,timeReview:t});assert(r.action==='Hold'&&r.catalystDeferredExit&&/Material catalyst review/.test(r.reason),'marginal Proof exit may defer for an imminent stock/factor-specific catalyst');
 s=stock(18,-11,{trade:56,technical:54,momentum:50,leadership:52,capital:58,materialCatalysts:[macroCatalyst]});t=swingTimeReview(s);r=reunderwriteExistingPosition({stock:s,decision:{action:'Hold'},risk,timeReview:t});assert(r.action==='Exit'&&!r.catalystDeferredExit,'broad macro events must not rescue a weak Proof trade from a lifecycle exit');
