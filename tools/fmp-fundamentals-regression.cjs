@@ -29,9 +29,9 @@ assert(src.includes('/stable/income-statement?symbol='),'Stable statement fallba
 assert(!src.includes('/api/v3/'),'Retired v3 endpoints must not return');
 assert(!src.includes('ratios-ttm-bulk'),'Restricted bulk-ratios endpoint must not return');
 assert(src.includes('setCooldown'),'Rate/subscription failures must activate cooldown rather than request storms');
-assert(src.includes('MAX_NEW_SYMBOLS_PER_RUN=48'),'A cold broad refresh must have a hard fundamental symbol budget');
+assert(src.includes('MAX_NEW_SYMBOLS_PER_RUN=12'),'A cold broad refresh must keep fundamental fanout well below the Premium rate ceiling');
 assert(src.includes('missing.slice(0,MAX_NEW_SYMBOLS_PER_RUN)'),'Only the bounded missing-symbol slice may reach FMP');
 assert(src.includes('mapLimited(toFetch,1'),'Fundamental enrichment concurrency must remain capped at one request lane');
 assert(src.includes('fundamentalDataStatus:"deferred"'),'Unfetched breadth names must be marked deferred rather than misreported as provider failures');
 assert(src.includes('statementFallback:Boolean(fallback?.sourceAvailable)'),'Fundamental source diagnostics must expose statement fallback use');
-console.log('FMP FUNDAMENTALS REGRESSION PASS: stable-only, cooldown, bounded fanout, and fallback checks passed');
+console.log('FMP FUNDAMENTALS REGRESSION PASS: stable-only, cooldown, low fanout, and fallback checks passed');
