@@ -100,8 +100,6 @@ function cleanDashboardText(){
   }
 }
 
-// Install before the page component mounts. The previous useEffect installation happened
-// after the page's initial useEffect could already start /api/top5, leaving that first request unprotected.
 if(typeof window!=="undefined")installResilientApiFetch();
 
 export default function App({ Component, pageProps }) {
@@ -113,7 +111,6 @@ export default function App({ Component, pageProps }) {
     fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
     return()=>window.removeEventListener("screener-feed-notice",onNotice);
   },[]);
-  useEffect(()=>{let stopped=false;const clean=()=>{if(!stopped)cleanDashboardText();};clean();const observer=new MutationObserver(clean);observer.observe(document.body,{childList:true,subtree:true,characterData:true});return()=>{stopped=true;observer.disconnect();};},[]);
   return <>
     {feedNotice&&<div style={{position:"sticky",top:0,zIndex:10000,padding:"9px 14px",background:"#fff7ed",borderBottom:"1px solid #fb923c",color:"#9a3412",fontWeight:800,fontSize:13}}>{feedNotice}</div>}
     <Component {...pageProps} />
