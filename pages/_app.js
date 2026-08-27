@@ -23,7 +23,9 @@ const TOP5_CACHE_PREFIX="screener_top5_response_v2:";
 function emitFeedNotice(message=""){try{window.dispatchEvent(new CustomEvent("screener-feed-notice",{detail:message}));}catch{}}
 function readTop5Cache(key){try{const raw=window.localStorage.getItem(TOP5_CACHE_PREFIX+key);const x=raw?JSON.parse(raw):null;return x&&typeof x.body==="string"?x:null;}catch{return null;}}
 function writeTop5Cache(key,body){try{window.localStorage.setItem(TOP5_CACHE_PREFIX+key,JSON.stringify({ts:Date.now(),body}));}catch{}}
+function clearTop5Cache(){try{for(let i=window.localStorage.length-1;i>=0;i--){const k=window.localStorage.key(i);if(k&&k.startsWith(TOP5_CACHE_PREFIX))window.localStorage.removeItem(k);}}catch{}}
 function cachedResponse(hit,stale=false){return new Response(hit.body,{status:200,headers:{"content-type":"application/json; charset=utf-8","x-screener-cache":stale?"stale":"fresh"}});}
+function forceLiveRefresh(){if(typeof window==="undefined")return;clearTop5Cache();emitFeedNotice("");window.location.reload();}
 
 function installResilientApiFetch(){
   if(typeof window==="undefined"||window.__screenerResilientFetchInstalled)return;
@@ -113,10 +115,13 @@ export default function App({ Component, pageProps }) {
     const host=window.location.hostname;if(LEGACY_HOSTS.has(host)){window.location.replace(`https://${CANONICAL_HOST}${window.location.pathname}${window.location.search}${window.location.hash}`);return()=>window.removeEventListener("screener-feed-notice",onNotice);}
     fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
     const timers=[0,250,1000,2500,5000].map(ms=>setTimeout(()=>{cleanDashboardText();keepDesktopControlsUsable();},ms));
-    return()=>{window.removeEventListener("screener-feed-notice",onNotice);for(const t of timers)clearTimeout(t);};
+    const controlTimer=setInterval(keepDesktopControlsUsable,500);
+    const onHeaderReload=e=>{const b=e.target?.closest?.('header button');if(!b)return;const text=String(b.textContent||'').trim();if(text==='Reload'||text==='Reloading...'){e.preventDefault();e.stopPropagation();forceLiveRefresh();}};
+    document.addEventListener('click',onHeaderReload,true);
+    return()=>{window.removeEventListener("screener-feed-notice",onNotice);document.removeEventListener('click',onHeaderReload,true);clearInterval(controlTimer);for(const t of timers)clearTimeout(t);};
   },[]);
   return <>
-    {feedNotice&&<div style={{position:"sticky",top:0,zIndex:10000,padding:"9px 14px",background:"#fff7ed",borderBottom:"1px solid #fb923c",color:"#9a3412",fontWeight:800,fontSize:13}}>{feedNotice}</div>}
+    {feedNotice&&<div style={{position:"sticky",top:0,zIndex:10000,padding:"9px 14px",background:"#fff7ed",borderBottom:"1px solid #fb923c",color:"#9a3412",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span>{feedNotice}</span><button type="button" onClick={forceLiveRefresh} style={{border:"1px solid #fb923c",background:"#fff",color:"#9a3412",borderRadius:8,padding:"5px 9px",fontWeight:900,cursor:"pointer",whiteSpace:"nowrap"}}>Force live refresh</button></div>}
     <Component {...pageProps} />
     <div style={{position:"fixed",right:8,bottom:6,zIndex:9999,fontSize:10,padding:"4px 7px",borderRadius:6,background:"rgba(15,23,42,.82)",color:"#e2e8f0",fontFamily:"ui-monospace,SFMono-Regular,Menlo,monospace",pointerEvents:"none"}}>{version?`Production • ${version.commit} • ${version.project} • ${version.release}`:"Production • version loading…"}</div>
   </>;
