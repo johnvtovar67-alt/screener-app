@@ -7,7 +7,7 @@ const helper=fs.readFileSync('lib/strongBuyPersistence.js','utf8');
 const decision=fs.readFileSync('lib/opportunityDecision.js','utf8');
 
 assert(top5.includes('seedDurableStrongBuyMemory'),'Broad screen is not seeding durable Strong Buy state');
-assert(top5.includes('await seedDurableStrongBuyMemory();rows=finalizeBroadOpportunityDecisions(rows);'),'Strong Buy state must be restored before final decisions');
+assert(/await seedDurableStrongBuyMemory\(\);\s*rows\s*=\s*finalizeBroadOpportunityDecisions\(rows\);/.test(top5),'Strong Buy state must be restored before final decisions');
 assert(helper.includes("BLOB_READ_WRITE_TOKEN")&&helper.includes("screener-performance-ledger.json"),'Durable state must use the persistent performance ledger');
 assert(helper.includes("6.5*60*60*1000")||helper.includes("6.5*60*60*1000"),'Strong Buy persistence window changed unexpectedly');
 assert(decision.includes("m.forwardAsymmetryPass===false")&&decision.includes("m.lateTrend===true")&&decision.includes("m.severeLateTrend===true"),'Hard forward-entry invalidations must override Strong Buy retention');
