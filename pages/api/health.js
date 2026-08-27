@@ -6,7 +6,22 @@ const requiredFeatures=[
   "proof-followthrough",
   "portfolio-action-summary",
   "winner-lifecycle",
-  "swing-time-review-logic"
+  "swing-time-review-logic",
+  "forward-asymmetry-gates",
+  "entry-impulse-anti-chase",
+  "capital-confirmation-margin",
+  "capital-efficiency-ranking",
+  "whole-share-capital-friction",
+  "company-news-fda-risk-gate",
+  "performance-mae-mfe-audit",
+  "strong-buy-hysteresis",
+  "exit-structural-confirmation",
+  "capitulation-review-guard",
+  "immutable-build-source",
+  "canonical-version-integrity",
+  "legacy-domain-canonical-redirect",
+  "blob-oidc-health-check",
+  "build-time-canonical-integrity"
 ];
 
 export default function handler(req,res){
@@ -14,7 +29,7 @@ export default function handler(req,res){
   const checks={
     manifest:requiredFeatures.every(x=>featureSet.has(x)),
     fmpConfigured:Boolean(process.env.FMP_API_KEY||process.env.FMP_KEY),
-    blobConfigured:Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+    blobConfigured:Boolean(process.env.BLOB_READ_WRITE_TOKEN||process.env.VERCEL_OIDC_TOKEN),
     gitMetadata:Boolean(process.env.VERCEL_GIT_COMMIT_SHA)||process.env.NODE_ENV!=="production"
   };
   const ok=Object.values(checks).every(Boolean);
