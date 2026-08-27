@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import {portfolioDecision} from "../lib/expertDecision";
 import {factorFor,factorWeightsFor,signalPersistence,portfolioRiskSnapshot,swingTargetPct,capitalAllowance,portfolioContributionGate,capitalSignalEligible,rotationGate,swingTimeReview} from "../lib/portfolioGovernor";
 import {winnerTrimGate,recordWinnerTrim} from "../lib/winnerLifecycle";
@@ -40,7 +40,7 @@ function fallbackDecision(s){
 const fd=s=>s?.finalDecision||fallbackDecision(s);
 const act=s=>CASH.includes(sym(s))?"Cash":specialSituation(s)?.blockNewCapital?"Watch":fd(s).action;
 function dataQualityBlocked(s){const e=rec(s)?.expertDecision||s?.expertDecision||{},m=e?.metrics||{};return fd(s).action==="Watch"&&m.fundamentalsPass===false&&((+e.tradeSetupScore||0)>=78||(+e.capitalScore||0)>=72||(+fd(s).relativeCapitalScore||0)>=75);}
-function onDeckReason(s,systemBlocked=false){return dataQualityBlocked(s)?(systemBlocked?"Awaiting fundamental-feed recovery; current technical/market evidence is retained, but this is not a fresh Buy qualification.":`Data check — required fundamental verification is unavailable. ${fd(s).reason}`):fd(s).reason;}
+function onDeckReason(s,systemBlocked=false){return dataQualityBlocked(s)?(systemBlocked?"Awaiting fundamental-feed recovery; current technical/market evidence is retained, but this is not a fresh Buy qualification.":`Fundamentals are being verified automatically; no manual refresh is needed. ${fd(s).reason}`):fd(s).reason;}
 function deckRank(a,b){return rank(a,b);}
 const cls=a=>["Strong Buy","Buy","Add"].includes(a)?"green":["Trim","Rotate","Reduce"].includes(a)?"orange":["Watch","Hold","Review"].includes(a)?"yellow":a==="Cash"?"gray":"red";
 function stageTone(stage){return({"Setup":"setup","Proof":"proof","Re-underwrite":"reunderwrite","Opportunity Cost":"opportunity","Long Swing Review":"long"})[stage]||"unknown";}
@@ -81,7 +81,7 @@ function Card({s,decision=null}){
     <div className="plan"><small>Plan</small><b>{riskText(s)}</b></div>
   </article>;
 }
-function OnDeck({rows,feedHealth={status:"healthy",coverage:100}}){const systemBlocked=feedHealth.status==="unavailable";return <section className="card"><h2>🟡 On Deck</h2>{systemBlocked&&<div className="feedBanner"><b>Fundamental feed temporarily unavailable</b><span> New Buy qualification is paused. Candidates remain visible from current market/technical evidence while fundamentals are re-verified. This is a feed condition, not ten separate stock downgrades.</span></div>}<p className="sub">Top 10 highest-priority near-Buy candidates.{!systemBlocked&&" Data-blocked names remain visible instead of silently disappearing."}</p><div className="scroll"><table><thead><tr><th>Symbol</th><th>Theme</th><th>Price</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{rows.map(s=><tr key={sym(s)}><td><b>{sym(s)}</b>{dataQualityBlocked(s)&&!systemBlocked&&<span className="dataBlockTag">Data check</span>}</td><td>{theme(s)}</td><td>{money(price(s))}</td><td>{onDeckReason(s,systemBlocked)}</td><td>{fd(s).nextTrigger||riskText(s)}</td></tr>)}</tbody></table></div></section>}
+function OnDeck({rows,feedHealth={status:"healthy",coverage:100}}){const systemBlocked=feedHealth.status==="unavailable";return <section className="card"><h2>🟡 On Deck</h2>{systemBlocked&&<div className="feedBanner"><b>Fundamental feed temporarily unavailable</b><span> New Buy qualification is paused. Candidates remain visible from current market/technical evidence while fundamentals are re-verified. This is a feed condition, not ten separate stock downgrades.</span></div>}<p className="sub">Top 10 highest-priority near-Buy candidates.{!systemBlocked&&" Deferred checks are retried automatically; no repeated Reload is needed."}</p><div className="scroll"><table><thead><tr><th>Symbol</th><th>Theme</th><th>Price</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{rows.map(s=><tr key={sym(s)}><td><b>{sym(s)}</b>{dataQualityBlocked(s)&&!systemBlocked&&<span className="dataBlockTag">Verifying</span>}</td><td>{theme(s)}</td><td>{money(price(s))}</td><td>{onDeckReason(s,systemBlocked)}</td><td>{fd(s).nextTrigger||riskText(s)}</td></tr>)}</tbody></table></div></section>}
 function calc(p,live){const sh=+p.shares||0,c=+p.avgCost||0,pr=+live||0,v=sh*pr,cb=sh*c,g=v-cb;return{shares:sh,avgCost:c,price:pr,value:v,costBasis:cb,gainLoss:g,gainLossPct:cb?g/cb*100:0};}
 function extract(d){for(const x of[d?.stock,d?.result,d?.data,d])if(x&&typeof x==="object"&&!Array.isArray(x)&&(sym(x)||Number.isFinite(price(x))))return x;return null;}
 function winnerHistoryFor(p={}){
@@ -93,17 +93,19 @@ function winnerHistoryFor(p={}){
 export default function Home(){
   const[tab,setTab]=useState("opportunities"),[stocks,setStocks]=useState([]),[themeStocks,setThemeStocks]=useState([]),[selectedTheme,setSelectedTheme]=useState("ai_compute");
   const[portfolio,setPortfolio]=useState([]),[results,setResults]=useState([]),[buyQueue,setBuyQueue]=useState([]);
-  const[marketRadar,setMarketRadar]=useState([]),[feedHealth,setFeedHealth]=useState({status:"healthy",coverage:100});
+  const[marketRadar,setMarketRadar]=useState([]),[feedHealth,setFeedHealth]=useState({status:"healthy",coverage:100,deferred:0});
   const[syncKey,setSyncKey]=useState(""),[syncInput,setSyncInput]=useState(""),[syncStatus,setSyncStatus]=useState("");
   const[loading,setLoading]=useState(false),[reloading,setReloading]=useState(false),[err,setErr]=useState("");
   const[ns,setNs]=useState(""),[nsh,setNsh]=useState(""),[nc,setNc]=useState(""),[nr,setNr]=useState("Swing"),[symbol,setSymbol]=useState(""),[snap,setSnap]=useState(null),[lastUpdated,setLastUpdated]=useState(null);
   const[openedDate,setOpenedDate]=useState("");
+  const automaticVerificationPass=useRef(0);
 
   useEffect(()=>{let local=[];try{const x=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(x)){local=x.map(p=>({...p,role:role(p.symbol,p.role),winnerHistory:winnerHistoryFor(p)}));setPortfolio(local);localStorage.setItem(KEY,JSON.stringify(local));}}catch{}const k=localStorage.getItem(SYNC_KEY)||"";if(k){setSyncKey(k);setSyncInput(k);void pullCloudPortfolio(k,local,true);}load("opportunities");},[]);
+  useEffect(()=>{if(tab!=="opportunities"||feedHealth.status!=="degraded"||feedHealth.deferred<=0||automaticVerificationPass.current>=4)return;const timer=setTimeout(()=>{automaticVerificationPass.current+=1;void load("opportunities",automaticVerificationPass.current);},75000);return()=>clearTimeout(timer);},[tab,feedHealth.status,feedHealth.coverage,feedHealth.deferred]);
 
-  async function load(t){
+  async function load(t,verificationPass=0){
     setReloading(true);setErr("");
-    try{const r=await fetch(`/api/top5?theme=${encodeURIComponent(t)}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth({status:d.meta?.fundamentalFeedStatus||"healthy",coverage:d.meta?.fundamentalCoveragePct??100});setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else setThemeStocks(d.stocks||[]);setLastUpdated(new Date());}
+    try{const r=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${verificationPass}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth({status:d.meta?.fundamentalFeedStatus||"healthy",coverage:d.meta?.fundamentalCoveragePct??100,deferred:d.meta?.fundamentalsDeferred??0});setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else setThemeStocks(d.stocks||[]);setLastUpdated(new Date());}
     catch(e){setErr(e.message);}finally{setReloading(false);}
   }
   async function fetchStock(s){const r=await fetch(`/api?symbol=${encodeURIComponent(s)}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);const x=extract(d);if(!x)throw new Error(`No usable data for ${s}`);return x;}
@@ -151,7 +153,7 @@ export default function Home(){
     try{let broad=[];try{const r=await fetch(`/api/top5?theme=opportunities`,{cache:"no-store"}),d=await r.json();if(r.ok&&Array.isArray(d.stocks)){broad=d.stocks;setStocks(broad);}}catch{}const authoritative=broad.find(s=>sym(s)===key);setSnap(authoritative||await fetchStock(key));setLastUpdated(new Date());}
     catch(e){setErr(e.message);}
   }
-  async function handleReload(){if(tab==="portfolio")return analyze();return load(tab==="themes"?selectedTheme:"opportunities");}
+  async function handleReload(){if(tab==="portfolio")return analyze();automaticVerificationPass.current=0;return load(tab==="themes"?selectedTheme:"opportunities");}
 
   const portfolioValueForCards=useMemo(()=>results.length?results.reduce((a,r)=>a+(+r.value||0),0):portfolio.reduce((a,p)=>a+(+p.shares||0)*(+p.avgCost||0),0),[results,portfolio]);
   const resultForCards=useMemo(()=>new Map(results.map(r=>[sym(r),r])),[results]);
