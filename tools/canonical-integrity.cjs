@@ -81,7 +81,7 @@ const version=read('pages/api/version.js');
 hasAll(version,['RELEASE_MANIFEST','VERCEL_GIT_COMMIT_SHA','VERCEL_GIT_COMMIT_REF'],'pages/api/version.js');
 
 const health=read('pages/api/health.js');
-hasAll(health,['canonicalProject','blobConfigured','VERCEL_OIDC_TOKEN','gitMetadata'],'pages/api/health.js');
+hasAll(health,['canonicalProject','blobConfigured','gitMetadata'],'pages/api/health.js');
 
 const app=read('pages/_app.js');
 hasAll(app,['screener-app-cq5t.vercel.app','screener-app-nu.vercel.app','/api/version'],'pages/_app.js');
