@@ -2,6 +2,7 @@ const fs=require('fs');
 const vm=require('vm');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 let src=fs.readFileSync('lib/fmpFundamentals.js','utf8')
+  .replace(/import\s+\{put,list,get\}\s+from\s+'@vercel\/blob';/,'')
   .replace(/export async function /g,'async function ')
   .replace(/export function /g,'function ');
 src+='\nmodule.exports={statementRatioFields,statementGrowthFields,fillMissing};';
@@ -32,6 +33,8 @@ assert(src.includes('setCooldown'),'Rate/subscription failures must activate coo
 assert(src.includes('MAX_NEW_SYMBOLS_PER_RUN=12'),'A cold broad refresh must keep fundamental fanout well below the Premium rate ceiling');
 assert(src.includes('missing.slice(0,MAX_NEW_SYMBOLS_PER_RUN)'),'Only the bounded missing-symbol slice may reach FMP');
 assert(src.includes('mapLimited(toFetch,1'),'Fundamental enrichment concurrency must remain capped at one request lane');
+assert(src.includes('hydratePersistentCache')&&src.includes('persistFundamentalCache'),'Verified fundamentals must survive Vercel cold starts');
+assert(src.includes('BLOB_READ_WRITE_TOKEN')&&src.includes('fmp-fundamentals-cache-v1.json'),'Durable fundamental cache must use the configured private Blob store');
 assert(src.includes('fundamentalDataStatus:"deferred"'),'Unfetched breadth names must be marked deferred rather than misreported as provider failures');
 const top5=fs.readFileSync('pages/api/top5.js','utf8');
 assert(/fundamentalsComplete\s*===\s*0\s*&&\s*fundamentalsUnavailable\s*>\s*0\s*\?\s*"unavailable"/.test(top5),'Deferred breadth must not be misreported as a provider-wide fundamental outage');
