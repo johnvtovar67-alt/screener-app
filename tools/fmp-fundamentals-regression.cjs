@@ -33,5 +33,7 @@ assert(src.includes('MAX_NEW_SYMBOLS_PER_RUN=12'),'A cold broad refresh must kee
 assert(src.includes('missing.slice(0,MAX_NEW_SYMBOLS_PER_RUN)'),'Only the bounded missing-symbol slice may reach FMP');
 assert(src.includes('mapLimited(toFetch,1'),'Fundamental enrichment concurrency must remain capped at one request lane');
 assert(src.includes('fundamentalDataStatus:"deferred"'),'Unfetched breadth names must be marked deferred rather than misreported as provider failures');
+const top5=fs.readFileSync('pages/api/top5.js','utf8');
+assert(top5.includes('fundamentalsComplete===0&&fundamentalsUnavailable>0?"unavailable"'),'Deferred breadth must not be misreported as a provider-wide fundamental outage');
 assert(src.includes('statementFallback:Boolean(fallback?.sourceAvailable)'),'Fundamental source diagnostics must expose statement fallback use');
 console.log('FMP FUNDAMENTALS REGRESSION PASS: stable-only, cooldown, low fanout, and fallback checks passed');
