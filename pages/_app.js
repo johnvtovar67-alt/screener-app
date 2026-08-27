@@ -14,8 +14,8 @@ const LEGACY_HOSTS=new Set([
   "screener-app-hp1w-git-main-johnvtovar67-7543s-projects.vercel.app"
 ]);
 const CAPITAL_NOTE="Capital actions reflect portfolio fit, not raw opportunity rank. A higher-ranked Buy can be skipped when concentration, correlation, position-size, timing, or risk-budget constraints make cash or another qualified target the better incremental use of capital.";
-const API_TIMEOUT_MS=12000;
-const API_RETRIES=1;
+const API_TIMEOUT_MS=10000;
+const API_RETRIES=0;
 const TOP5_FRESH_MS=2*60*1000;
 const TOP5_STALE_MS=30*60*1000;
 const TOP5_CACHE_PREFIX="screener_top5_response_v2:";
@@ -51,7 +51,6 @@ function installResilientApiFetch(){
             if(isTop5){const body=await response.text();writeTop5Cache(cacheKey,body);emitFeedNotice("");return new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});}
             return response;
           }
-          // Do not retry 402/403/429. Retrying a subscription/rate-limit response worsens pressure.
           if([402,403,429].includes(response.status))break;
           if(attempt<API_RETRIES&&response.status>=500){await wait(500);continue;}
           return response;
@@ -62,7 +61,7 @@ function installResilientApiFetch(){
       if(isTop5&&hit&&age<TOP5_STALE_MS){emitFeedNotice("Live FMP refresh is delayed; showing the last verified screener snapshot while the feed recovers.");return cachedResponse(hit,true);}
       if(lastResponse)return lastResponse;
       const timeout=lastError?.name==="AbortError"||lastError?.name==="TimeoutError";
-      throw new Error(timeout?"Live refresh timed out. No repeated FMP retries were sent; try again after the provider cools down.":`Live refresh failed${lastError?.message?`: ${lastError.message}`:"."}`);
+      throw new Error(timeout?"Live refresh timed out. The app stopped the request instead of hanging; use Portfolio, Themes, or Single while the provider recovers.":`Live refresh failed${lastError?.message?`: ${lastError.message}`:"."}`);
     };
 
     if(isTop5){const p=run().finally(()=>inflight.delete(cacheKey));inflight.set(cacheKey,p);const r=await p;return r.clone();}
@@ -73,7 +72,6 @@ function installResilientApiFetch(){
 
 function sentenceCase(text=""){const t=String(text||"").trim();return t?t[0].toUpperCase()+t.slice(1):t;}
 function cleanDashboardText(){
-  // On Deck: a timing/chase rejection must never instruct the user to buy at an even higher price.
   for(const table of document.querySelectorAll("table")){
     const headers=[...table.querySelectorAll("thead th")].map(x=>x.textContent?.trim());
     if(headers.includes("Why Wait")&&headers.includes("Next Trigger")){
@@ -94,7 +92,6 @@ function cleanDashboardText(){
       }
     }
   }
-  // Mobile portfolio uses paragraph fields rather than table cells.
   for(const field of document.querySelectorAll(".mobileField")){
     const label=field.querySelector("small")?.textContent?.trim();if(label!=="Why")continue;const p=field.querySelector("p");if(!p)continue;const text=String(p.textContent||"").trim();if(/^thesis,\s*setup,\s*technicals remain supportive/i.test(text))p.textContent="Thesis and setup remain supportive. Short-term technical/timing confirmation is required before any add.";else if(/^[a-z]/.test(text))p.textContent=sentenceCase(text);
   }
@@ -102,6 +99,10 @@ function cleanDashboardText(){
     let note=box.querySelector('[data-capital-fit-note]');if(!note){note=document.createElement('p');note.dataset.capitalFitNote='true';note.style.margin='8px 0 10px';note.style.fontSize='0.9em';note.style.color='#52647f';note.style.lineHeight='1.35';const heading=box.querySelector('b');if(heading)heading.insertAdjacentElement('afterend',note);else box.prepend(note);}if(note.textContent!==CAPITAL_NOTE)note.textContent=CAPITAL_NOTE;
   }
 }
+
+// Install before the page component mounts. The previous useEffect installation happened
+// after the page's initial useEffect could already start /api/top5, leaving that first request unprotected.
+if(typeof window!=="undefined")installResilientApiFetch();
 
 export default function App({ Component, pageProps }) {
   const [version,setVersion]=useState(null),[feedNotice,setFeedNotice]=useState("");
