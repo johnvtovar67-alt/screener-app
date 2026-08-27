@@ -14,7 +14,7 @@ const LEGACY_HOSTS=new Set([
   "screener-app-hp1w-git-main-johnvtovar67-7543s-projects.vercel.app"
 ]);
 const CAPITAL_NOTE="Capital actions reflect portfolio fit, not raw opportunity rank. A higher-ranked Buy can be skipped when concentration, correlation, position-size, timing, or risk-budget constraints make cash or another qualified target the better incremental use of capital.";
-const API_TIMEOUT_MS=10000;
+const API_TIMEOUT_MS=7000;
 const API_RETRIES=0;
 const TOP5_FRESH_MS=2*60*1000;
 const TOP5_STALE_MS=30*60*1000;
@@ -27,7 +27,7 @@ function cachedResponse(hit,stale=false){return new Response(hit.body,{status:20
 
 function installResilientApiFetch(){
   if(typeof window==="undefined"||window.__screenerResilientFetchInstalled)return;
-  const nativeFetch=window.fetch.bind(window),wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  const nativeFetch=window.fetch.bind(window);
   const inflight=new Map();
   window.fetch=async function resilientFetch(input,init={}){
     let url;try{url=new URL(typeof input==="string"?input:input?.url,window.location.href);}catch{return nativeFetch(input,init);}
@@ -36,32 +36,29 @@ function installResilientApiFetch(){
 
     const isTop5=url.pathname==="/api/top5",cacheKey=isTop5?`${url.pathname}${url.search}`:"",hit=isTop5?readTop5Cache(cacheKey):null,age=hit?Date.now()-Number(hit.ts||0):Infinity;
     if(hit&&age<TOP5_FRESH_MS){emitFeedNotice("");return cachedResponse(hit,false);}
-    if(isTop5&&inflight.has(cacheKey)){const r=await inflight.get(cacheKey);return r.clone();}
+    if(isTop5&&inflight.has(cacheKey)){
+      if(hit&&age<TOP5_STALE_MS){emitFeedNotice("Live refresh is still running; showing the last verified screener snapshot without blocking the desktop app.");return cachedResponse(hit,true);}
+      const active=inflight.get(cacheKey);
+      const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Existing live refresh is still running.")),2500));
+      try{const r=await Promise.race([active,timeout]);return r.clone();}catch{throw new Error("Live refresh is still running. Other tabs remain available.");}
+    }
 
     const run=async()=>{
-      let lastError=null,lastResponse=null;
-      for(let attempt=0;attempt<=API_RETRIES;attempt++){
-        const controller=new AbortController(),parentSignal=init?.signal,onAbort=()=>controller.abort(parentSignal?.reason);
-        if(parentSignal){if(parentSignal.aborted)controller.abort(parentSignal.reason);else parentSignal.addEventListener("abort",onAbort,{once:true});}
-        const timer=setTimeout(()=>controller.abort(new DOMException("API request timed out","TimeoutError")),API_TIMEOUT_MS);
-        try{
-          const response=await nativeFetch(input,{...init,signal:controller.signal});lastResponse=response;
-          clearTimeout(timer);if(parentSignal)parentSignal.removeEventListener("abort",onAbort);
-          if(response.ok){
-            if(isTop5){const body=await response.text();writeTop5Cache(cacheKey,body);emitFeedNotice("");return new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});}
-            return response;
-          }
-          if([402,403,429].includes(response.status))break;
-          if(attempt<API_RETRIES&&response.status>=500){await wait(500);continue;}
+      const controller=new AbortController(),parentSignal=init?.signal,onAbort=()=>controller.abort(parentSignal?.reason);
+      if(parentSignal){if(parentSignal.aborted)controller.abort(parentSignal.reason);else parentSignal.addEventListener("abort",onAbort,{once:true});}
+      const timer=setTimeout(()=>controller.abort(new DOMException("API request timed out","TimeoutError")),API_TIMEOUT_MS);
+      let response=null,error=null;
+      try{
+        response=await nativeFetch(input,{...init,signal:controller.signal});
+        if(response.ok){
+          if(isTop5){const body=await response.text();writeTop5Cache(cacheKey,body);emitFeedNotice("");return new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});}
           return response;
-        }catch(error){
-          clearTimeout(timer);if(parentSignal)parentSignal.removeEventListener("abort",onAbort);if(parentSignal?.aborted)throw error;lastError=error;if(attempt<API_RETRIES){await wait(450);continue;}
         }
-      }
+      }catch(e){error=e;}finally{clearTimeout(timer);if(parentSignal)parentSignal.removeEventListener("abort",onAbort);}
       if(isTop5&&hit&&age<TOP5_STALE_MS){emitFeedNotice("Live FMP refresh is delayed; showing the last verified screener snapshot while the feed recovers.");return cachedResponse(hit,true);}
-      if(lastResponse)return lastResponse;
-      const timeout=lastError?.name==="AbortError"||lastError?.name==="TimeoutError";
-      throw new Error(timeout?"Live refresh timed out. The app stopped the request instead of hanging; use Portfolio, Themes, or Single while the provider recovers.":`Live refresh failed${lastError?.message?`: ${lastError.message}`:"."}`);
+      if(response)return response;
+      const timedOut=error?.name==="AbortError"||error?.name==="TimeoutError";
+      throw new Error(timedOut?"Live refresh timed out. The desktop app remains usable; try Reload again later.":`Live refresh failed${error?.message?`: ${error.message}`:"."}`);
     };
 
     if(isTop5){const p=run().finally(()=>inflight.delete(cacheKey));inflight.set(cacheKey,p);const r=await p;return r.clone();}
@@ -99,6 +96,12 @@ function cleanDashboardText(){
     let note=box.querySelector('[data-capital-fit-note]');if(!note){note=document.createElement('p');note.dataset.capitalFitNote='true';note.style.margin='8px 0 10px';note.style.fontSize='0.9em';note.style.color='#52647f';note.style.lineHeight='1.35';const heading=box.querySelector('b');if(heading)heading.insertAdjacentElement('afterend',note);else box.prepend(note);}if(note.textContent!==CAPITAL_NOTE)note.textContent=CAPITAL_NOTE;
   }
 }
+function keepDesktopControlsUsable(){
+  for(const button of document.querySelectorAll('header button')){
+    const text=String(button.textContent||'').trim();
+    if(text==='Reloading...'||text==='Reload')button.removeAttribute('disabled');
+  }
+}
 
 if(typeof window!=="undefined")installResilientApiFetch();
 
@@ -109,7 +112,8 @@ export default function App({ Component, pageProps }) {
     const onNotice=e=>setFeedNotice(String(e?.detail||""));window.addEventListener("screener-feed-notice",onNotice);
     const host=window.location.hostname;if(LEGACY_HOSTS.has(host)){window.location.replace(`https://${CANONICAL_HOST}${window.location.pathname}${window.location.search}${window.location.hash}`);return()=>window.removeEventListener("screener-feed-notice",onNotice);}
     fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
-    return()=>window.removeEventListener("screener-feed-notice",onNotice);
+    const timers=[0,250,1000,2500,5000].map(ms=>setTimeout(()=>{cleanDashboardText();keepDesktopControlsUsable();},ms));
+    return()=>{window.removeEventListener("screener-feed-notice",onNotice);for(const t of timers)clearTimeout(t);};
   },[]);
   return <>
     {feedNotice&&<div style={{position:"sticky",top:0,zIndex:10000,padding:"9px 14px",background:"#fff7ed",borderBottom:"1px solid #fb923c",color:"#9a3412",fontWeight:800,fontSize:13}}>{feedNotice}</div>}
