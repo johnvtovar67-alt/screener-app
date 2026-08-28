@@ -10,7 +10,8 @@ const checks=[
   ['standalone universe disclosure',s.includes('outsideBroadUniverse')&&s.includes('outside today’s Opportunities universe')],
   ['empty On Deck confirmation',s.includes('No stocks currently qualify for On Deck.')&&s.includes('Reload completed.')],
   ['visible reload engagement',s.includes('650-(Date.now()-started)')],
-  ['theme feed health isolated',s.includes('themeFeedHealth')&&s.includes('feedHealth={themeFeedHealth}')]
+  ['theme feed health isolated',s.includes('themeFeedHealth')&&s.includes('feedHealth={themeFeedHealth}')],
+  ['data pauses separated from watch list',s.includes('Data Verification Paused')&&s.includes('Paused is a feed condition')&&s.includes('!dataQualityBlocked(s)')]
 ];
 const app=fs.readFileSync('pages/_app.js','utf8');
 checks.push(['theme reload preserves client state',app.includes('clearTop5Cache();emitFeedNotice("");')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);
