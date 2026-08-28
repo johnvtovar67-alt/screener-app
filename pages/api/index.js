@@ -10,6 +10,7 @@ import { fetchEventRiskMap, applyEventRiskGate } from "../../lib/eventRisk";
 import { fetchEntryTimingMap, applyEntryTimingGate } from "../../lib/entryTiming";
 import { projectedFullDayVolume } from "../../lib/marketSession";
 import { finalizeStandaloneOpportunityDecision } from "../../lib/opportunityDecision";
+import { applyPersonalCapitalPolicy } from "../../lib/personalCapitalPolicy";
 import { fetchFmpFundamentals, mergeFundamentals } from "../../lib/fmpFundamentals";
 
 const PRIMARY_THEME_BY_SYMBOL={
@@ -51,7 +52,7 @@ export default async function handler(req,res){
     const[quote,spyQuote,qqqQuote]=await Promise.all([fetchQuote(symbol),fetchQuote("SPY").catch(()=>null),fetchQuote("QQQ").catch(()=>null)]);
     const base=attachMarketRelativeData(quote,spyQuote,qqqQuote),fundamentalMap=await fetchFmpFundamentals([symbol]),enriched=mergeFundamentals(base,fundamentalMap),scored=buildScoredResult(enriched),eventRiskMap=await fetchEventRiskMap([symbol]),eventAdjusted=applyEventRiskGate(scored,eventRiskMap.get(normalizeSymbol(symbol)));
     const timingMap=await fetchEntryTimingMap([symbol]),timed=applyEntryTimingGate(eventAdjusted,timingMap.get(normalizeSymbol(symbol)));
-    const result=finalizeStandaloneOpportunityDecision(timed);
+    const result=applyPersonalCapitalPolicy(finalizeStandaloneOpportunityDecision(timed));
     if(!result?.symbol||result.price===null||result.price===undefined)throw new Error(`No usable quote data returned for ${symbol}.`);
     return res.status(200).json({stock:result,meta:{mode:"single_symbol_expert_model_v8_historical_timing_all_symbols",note:"Stock quality and entry timing are separate gates. Daily-history timing is attached to every analyzed symbol and fresh capital cannot override a failed timing gate.",spyChange:spyQuote?.dayChangePct??null,qqqChange:qqqQuote?.dayChangePct??null,fundamentalDataStatus:result.fundamentalDataStatus||"unknown"}});
   }catch(err){console.error("api/index error:",err);return res.status(500).json({error:"Failed to analyze symbol.",detail:err.message||"Unknown error."})}
