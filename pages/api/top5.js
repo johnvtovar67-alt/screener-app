@@ -31,7 +31,9 @@ import {
 } from "../../lib/fmpFundamentals";
 import {
   marketCycleProxySymbols,
+  marketCycleMemberSymbols,
   discoverMarketCycles,
+  discoverMarketCycleCandidates,
 } from "../../lib/marketCycleUniverse";
 const normalizeSymbol = (s) =>
     String(s || "")
@@ -589,7 +591,7 @@ function buildThemeLeadership(rows = []) {
     }))
     .sort((a, b) => b.score - a.score);
 }
-const CACHE_KEY = "__screenerBroadOpportunityCacheV8",
+const CACHE_KEY = "__screenerBroadOpportunityCacheV9",
   CACHE_MS = 60000,
   STALE_SNAPSHOT_MS = 24 * 60 * 60 * 1000;
 async function buildBroadSnapshot(verificationPass = 0) {
@@ -616,19 +618,26 @@ async function buildBroadSnapshot(verificationPass = 0) {
         "No verified quote data available after batch and bounded single-quote fallback.",
       );
     const cycle = discoverMarketCycles(seedNormalized),
-      dynamicSymbols = cycle.dynamicSymbols.filter(
+      marketMemberSymbols = marketCycleMemberSymbols().filter(
         (x) => !strategicSymbols.includes(x) && !EXCLUDED.has(x),
       ),
-      dynamicRaw = dynamicSymbols.length
-        ? await fetchFmpQuotes(dynamicSymbols)
+      marketMemberRaw = marketMemberSymbols.length
+        ? await fetchFmpQuotes(marketMemberSymbols)
         : [],
-      dynamicTheme = new Map();
-    for (const g of cycle.selected)
-      for (const m of g.members)
-        if (dynamicSymbols.includes(m)) dynamicTheme.set(m, g.name);
-    const dynamicNormalized = dynamicRaw
+      marketMemberNormalized = marketMemberRaw
         .map(normalizeQuote)
-        .filter((q) => q.symbol && q.price)
+        .filter((q) => q.symbol && q.price),
+      candidateDiscovery = discoverMarketCycleCandidates(
+        marketMemberNormalized,
+        cycle,
+        { limit: 48, exclude: strategicSymbols },
+      ),
+      dynamicSymbols = candidateDiscovery.map((x) => x.symbol),
+      dynamicTheme = new Map(
+        candidateDiscovery.map((x) => [x.symbol, x.marketCycleTheme]),
+      );
+    const dynamicNormalized = marketMemberNormalized
+        .filter((q) => dynamicSymbols.includes(q.symbol))
         .map((q) => ({
           ...q,
           marketCycleTheme: dynamicTheme.get(q.symbol) || "Market Cycle",
@@ -795,7 +804,7 @@ export default async function handler(req, res) {
         meta: {
           mode: "expert_decision_v14_resilient_fmp_historical_entry_timing",
           universeDesign:
-            "strategic themes plus dynamic market-cycle sleeve; fresh capital must independently pass historical entry timing",
+            "strategic themes plus the strongest individual candidates discovered across every market-cycle group; fresh capital must independently pass verified fundamentals, event risk, and historical entry timing",
           universeSize: broadSnapshot.universeSize,
           strategicUniverseSize: broadSnapshot.strategicCount,
           dynamicUniverseSize: broadSnapshot.dynamicCount,
