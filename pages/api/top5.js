@@ -25,6 +25,7 @@ import {
   relativeCapitalScore,
 } from "../../lib/opportunityDecision";
 import { seedDurableStrongBuyMemory } from "../../lib/strongBuyPersistence";
+import { applyPersonalCapitalPolicy } from "../../lib/personalCapitalPolicy";
 import {
   fetchFmpFundamentals,
   mergeFundamentals,
@@ -695,6 +696,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
     );
     await seedDurableStrongBuyMemory();
     rows = finalizeBroadOpportunityDecisions(rows);
+    rows = rows.map(applyPersonalCapitalPolicy);
     const result = {
       rows,
       cycle,
