@@ -131,10 +131,11 @@ export default function Home(){
   function setRole(s,r){save(portfolio.map(p=>p.symbol===s?{...p,role:r}:p));}
 
   async function analyze(){
-    setLoading(true);setErr("");const rows=[];let snapshot=[],performance=[];
+    setLoading(true);setErr("");const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map();
     try{
       try{const sr=await fetch(`/api/top5?theme=opportunities`,{cache:"no-store"}),sd=await sr.json();if(sr.ok&&Array.isArray(sd.stocks)){snapshot=sd.stocks;setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}const pr=await fetch('/api/performance',{cache:'no-store'}),pd=await pr.json();if(pr.ok&&Array.isArray(pd.records))performance=pd.records;}catch{}
-      snapshot=snapshot.map(s=>({...s,signalPersistence:signalPersistence(performance,sym(s))}));setStocks(snapshot);
+      try{const heldSymbols=portfolio.map(p=>sym(p)).filter(s=>s&&!CASH.includes(s));if(heldSymbols.length){const tr=await fetch(`/api/entry-timing?symbols=${encodeURIComponent(heldSymbols.join(','))}`,{cache:'no-store'}),td=await tr.json();if(tr.ok&&td.timing&&typeof td.timing==='object')timingBySymbol=new Map(Object.entries(td.timing));}}catch{}
+      snapshot=snapshot.map(s=>({...s,...(timingBySymbol.has(sym(s))?{entryTiming:timingBySymbol.get(sym(s))}:{}),signalPersistence:signalPersistence(performance,sym(s))}));setStocks(snapshot);
       const bySymbol=new Map(snapshot.map(s=>[sym(s),s]));
       for(const p of portfolio){
         try{
