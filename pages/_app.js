@@ -123,6 +123,6 @@ export default function App({ Component, pageProps }) {
   return <>
     {feedNotice&&<div style={{position:"sticky",top:0,zIndex:10000,padding:"9px 14px",background:"#fff7ed",borderBottom:"1px solid #fb923c",color:"#9a3412",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span>{feedNotice}</span><button type="button" onClick={forceLiveRefresh} style={{border:"1px solid #fb923c",background:"#fff",color:"#9a3412",borderRadius:8,padding:"5px 9px",fontWeight:900,cursor:"pointer",whiteSpace:"nowrap"}}>Force live refresh</button></div>}
     <Component {...pageProps} />
-    <div style={{position:"fixed",right:8,bottom:6,zIndex:9999,fontSize:10,padding:"4px 7px",borderRadius:6,background:"rgba(15,23,42,.82)",color:"#e2e8f0",fontFamily:"ui-monospace,SFMono-Regular,Menlo,monospace",pointerEvents:"none"}}>{version?`Production • ${version.commit} • ${version.project} • ${version.release}`:"Production • version loading…"}</div>
+    <div data-version-stamp style={{position:"relative",width:"fit-content",maxWidth:"calc(100% - 20px)",margin:"14px auto 8px",fontSize:10,padding:"4px 7px",borderRadius:6,background:"rgba(15,23,42,.82)",color:"#e2e8f0",fontFamily:"ui-monospace,SFMono-Regular,Menlo,monospace",pointerEvents:"none",textAlign:"center",overflowWrap:"anywhere"}}>{version?`Production • ${version.commit} • ${version.project} • ${version.release}`:"Production • version loading…"}</div>
   </>;
 }
