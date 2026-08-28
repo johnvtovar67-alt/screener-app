@@ -8,8 +8,10 @@ const decision=fs.readFileSync('lib/opportunityDecision.js','utf8');
 const ledger=fs.readFileSync('pages/api/performance.js','utf8');
 
 assert(top5.includes('seedDurableStrongBuyMemory'),'Broad screen is not seeding durable Strong Buy state');
+const durable=fs.readFileSync('lib/strongBuyPersistence.js','utf8');
+assert(!durable.includes('if(!hasToken())'),'Durable signal memory must support Vercel OIDC instead of requiring only a legacy Blob token');
 assert(/await seedDurableStrongBuyMemory\(\);\s*rows\s*=\s*finalizeBroadOpportunityDecisions\(rows\);/.test(top5),'Strong Buy state must be restored before final decisions');
-assert(helper.includes("BLOB_READ_WRITE_TOKEN")&&helper.includes("screener-performance-ledger.json"),'Durable state must use the persistent performance ledger');
+assert(helper.includes("screener-performance-ledger.json")&&helper.includes("await list(")&&helper.includes("await get("),'Durable state must read the persistent performance ledger');
 assert(helper.includes("6.5*60*60*1000")||helper.includes("6.5*60*60*1000"),'Strong Buy persistence window changed unexpectedly');
 assert(helper.includes("BUY_VISIBILITY_WINDOW_MS=36*60*60*1000")&&helper.includes("['Strong Buy','Buy'].includes(r?.action)"),'Recent Buy history must persist long enough to explain a downgrade');
 assert(decision.includes("m.forwardAsymmetryPass===false")&&decision.includes("m.lateTrend===true")&&decision.includes("m.severeLateTrend===true"),'Hard forward-entry invalidations must override Strong Buy retention');

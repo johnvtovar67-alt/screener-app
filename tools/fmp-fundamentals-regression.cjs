@@ -36,7 +36,7 @@ assert(src.includes('FUNDAMENTAL_CONCURRENCY=2')&&src.includes('mapLimited(toFet
 assert(src.includes('hydratePersistentCache')&&src.includes('persistFundamentalCache'),'Verified fundamentals must survive Vercel cold starts');
 assert(src.includes('mergePersistentRows(await readPersistentCacheRows())'),'A warm instance must merge durable rows before writing so it cannot erase another instance’s verified fundamentals');
 assert(src.includes('PERSISTENT_REHYDRATE_MS'),'Warm instances must periodically learn fundamentals verified by other instances');
-assert(src.includes('BLOB_READ_WRITE_TOKEN')&&src.includes('fmp-fundamentals-cache-v1.json'),'Durable fundamental cache must use the configured private Blob store');
+assert(src.includes('fmp-fundamentals-cache-v1.json')&&!src.includes('if(!hasBlobToken())'),'Durable fundamental cache must support Vercel OIDC instead of requiring only a legacy Blob token');
 assert(src.includes('fundamentalDataStatus:"deferred"'),'Unfetched breadth names must be marked deferred rather than misreported as provider failures');
 assert(src.includes('fundamentalRefreshDeferred:true'),'Previously verified fundamentals inside the stale-safety window must remain usable while bounded refresh is deferred');
 const top5=fs.readFileSync('pages/api/top5.js','utf8');
