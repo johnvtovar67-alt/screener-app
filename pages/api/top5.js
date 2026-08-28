@@ -737,14 +737,16 @@ async function recordPerformance(req, rows) {
     const proto = req.headers["x-forwarded-proto"] || "https",
       host = req.headers.host;
     if (!host) return;
-    await fetch(`${proto}://${host}/api/performance`, {
+    const response = await fetch(`${proto}://${host}/api/performance`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         stocks: rows,
         timestamp: new Date().toISOString(),
       }),
+      signal: AbortSignal.timeout(5000),
     });
+    if (!response.ok) throw new Error(`ledger returned ${response.status}`);
   } catch (e) {
     console.warn("performance ledger:", e.message);
   }
@@ -766,7 +768,7 @@ export default async function handler(req, res) {
       rows = isBroad
         ? broadRows
         : broadRows.filter((r) => selectedSymbols.has(r.symbol));
-    if (isBroad) void recordPerformance(req, broadRows);
+    if (isBroad) await recordPerformance(req, broadRows);
     const fundamentalsComplete = rows.filter(
         (r) => r.fundamentalDataStatus === "complete",
       ).length,

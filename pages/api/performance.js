@@ -23,7 +23,7 @@ async function writeLedger(records){
   }catch(e){return{ok:false,warning:`ledger write failed: ${e.message}`};}
 }
 function summarize(records){
-  const entries=records.filter(r=>['Buy','Strong Buy'].includes(r.action)&&r.source!=='user');
+  const entries=records.filter(r=>r.recordType!=='state'&&['Buy','Strong Buy'].includes(r.action)&&r.source!=='user');
   const byAction={};
   for(const action of['Buy','Strong Buy']){
     const a=entries.filter(r=>r.action===action);byAction[action]={signals:a.length};
@@ -42,14 +42,16 @@ export default async function handler(req,res){
   const rows=Array.isArray(req.body?.stocks)?req.body.stocks:[],now=req.body?.timestamp||new Date().toISOString(),today=dayKey(now);let records=[...ledger.records];
   for(const s of rows){
     const symbol=String(s.symbol||s.ticker||'').toUpperCase(),action=s.finalDecision?.action||s.recommendation?.displayLabel||s.action,price=n(s.price||s.currentPrice);if(!symbol||!price)continue;
-    for(const r of records.filter(x=>x.symbol===symbol&&['Buy','Strong Buy'].includes(x.action))){
+    for(const r of records.filter(x=>x.symbol===symbol&&x.recordType!=='state'&&['Buy','Strong Buy'].includes(x.action))){
       const mark=(price/r.price-1)*100,age=Math.floor((new Date(today)-new Date(r.day))/86400000);r.forward=r.forward||{};
       for(const d of DAYS)if(age>=d&&r.forward[d]==null)r.forward[d]=mark;
       r.pathMaePct=Number.isFinite(r.pathMaePct)?Math.min(r.pathMaePct,mark):Math.min(0,mark);
       r.pathMfePct=Number.isFinite(r.pathMfePct)?Math.max(r.pathMfePct,mark):Math.max(0,mark);
       r.lastMarkPct=mark;r.lastMarkAt=now;r.daysObserved=Math.max(Number(r.daysObserved)||0,age);
     }
-    if(['Buy','Strong Buy'].includes(action)&&!records.some(r=>r.symbol===symbol&&r.day===today&&r.action===action))records.push({id:`${today}:${symbol}:${action}`,day:today,timestamp:now,symbol,action,price,theme:s.primaryTheme||s.theme||'Other',source:s.signalSource||s.tradeSource||'screener',capitalScore:n(s.finalDecision?.relativeCapitalScore||s.capitalScore),tradeSetupScore:n(s.tradeSetupScore),entryQuality:s.recommendation?.entryQualityLabel||s.technicalSnapshot?.entryQualityLabel||null,dayChangePct:n(s.dayChangePct),vs50:n(s.expertDecision?.metrics?.vs50||s.recommendation?.expertDecision?.metrics?.vs50),extension:n(s.expertDecision?.metrics?.extension||s.recommendation?.expertDecision?.metrics?.extension),pathMaePct:0,pathMfePct:0,lastMarkPct:0,lastMarkAt:now,daysObserved:0,forward:{}});
+    if(['Buy','Strong Buy'].includes(action)&&!records.some(r=>r.recordType!=='state'&&r.symbol===symbol&&r.day===today&&r.action===action))records.push({id:`${today}:${symbol}:${action}`,recordType:'signal',day:today,timestamp:now,symbol,action,price,theme:s.primaryTheme||s.theme||'Other',source:s.signalSource||s.tradeSource||'screener',capitalScore:n(s.finalDecision?.relativeCapitalScore||s.capitalScore),tradeSetupScore:n(s.tradeSetupScore),entryQuality:s.recommendation?.entryQualityLabel||s.technicalSnapshot?.entryQualityLabel||null,dayChangePct:n(s.dayChangePct),vs50:n(s.expertDecision?.metrics?.vs50||s.recommendation?.expertDecision?.metrics?.vs50),extension:n(s.expertDecision?.metrics?.extension||s.recommendation?.expertDecision?.metrics?.extension),pathMaePct:0,pathMfePct:0,lastMarkPct:0,lastMarkAt:now,daysObserved:0,forward:{}});
+    const stateRows=records.filter(r=>r.recordType==='state'&&r.signalState===true&&r.symbol===symbol),lastState=stateRows[stateRows.length-1],actionable=['Buy','Strong Buy'].includes(action),dailyConfirmation=actionable&&lastState?.day!==today;
+    if(['Strong Buy','Buy','Watch','Avoid'].includes(action)&&(!lastState||lastState.action!==action||dailyConfirmation))records.push({id:`state:${now}:${symbol}:${action}`,recordType:'state',signalState:true,day:today,timestamp:now,symbol,action,price,theme:s.primaryTheme||s.theme||'Other',source:'screener-state'});
   }
   records=records.slice(-10000);const write=await writeLedger(records);if(!write.ok)console.warn('performance ledger persistence:',write.warning);
   return res.status(200).json({persisted:write.ok,records:records.length,summary:summarize(records),warning:ledger.warning||write.warning||null,persistentStorage:write.ok});

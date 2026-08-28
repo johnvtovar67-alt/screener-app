@@ -9,7 +9,7 @@ function loadPureModule(path,names){
   vm.createContext(sandbox);vm.runInContext(src,sandbox,{filename:path});return sandbox.module.exports;
 }
 
-const gov=loadPureModule('lib/portfolioGovernor.js',['factorWeightsFor','factorOverlap','portfolioRiskSnapshot','capitalAllowance','capitalSignalEligible','rotationGate']);
+const gov=loadPureModule('lib/portfolioGovernor.js',['factorWeightsFor','factorOverlap','signalPersistence','portfolioRiskSnapshot','capitalAllowance','capitalSignalEligible','rotationGate']);
 const life=loadPureModule('lib/winnerLifecycle.js',['winnerTrimGate','normalizeWinnerLifecycle']);
 
 // 1) WTS must load on the same AI-capex factor instead of escaping as Other.
@@ -32,6 +32,10 @@ assert(wtsAllowance.blocked,'Crowded-factor WTS buy should be blocked');
 // 4) Ordinary Buy requires persistence; one marginal observation cannot spend capital.
 assert(!gov.capitalSignalEligible({action:'Buy',persistence:{persistent:false}}).pass,'Unconfirmed Buy capital regression');
 assert(gov.capitalSignalEligible({action:'Buy',persistence:{persistent:true}}).pass,'Persistent Buy eligibility regression');
+const state=(action,daysAgo)=>{const timestamp=new Date(Date.now()-daysAgo*86400000).toISOString();return{recordType:'state',signalState:true,symbol:'OKE',action,day:timestamp.slice(0,10),timestamp}};
+let persistence=gov.signalPersistence([state('Buy',3),state('Buy',2)],'OKE');assert(persistence.persistent&&persistence.actionableDays===2,'Two uninterrupted daily Buy observations must qualify');
+persistence=gov.signalPersistence([state('Buy',3),state('Buy',2),state('Watch',1),state('Buy',0)],'OKE');assert(!persistence.persistent&&persistence.interrupted&&persistence.actionableDays===1,'An intervening Watch must reset Buy funding confirmation');
+persistence=gov.signalPersistence([{symbol:'OKE',action:'Buy',day:new Date().toISOString().slice(0,10),timestamp:new Date().toISOString()}],'OKE');assert(!persistence.persistent&&!persistence.trackingComplete,'Legacy positive-only history must not qualify without state tracking');
 
 // 5) Fast churn and correlated rotations need exceptional edge.
 const riskForRotation=gov.portfolioRiskSnapshot([{symbol:'NVT',role:'Swing',value:3000},{symbol:'CGNX',role:'Swing',value:7000}]);
