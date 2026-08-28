@@ -30,10 +30,12 @@ assert(src.includes('/stable/income-statement?symbol='),'Stable statement fallba
 assert(!src.includes('/api/v3/'),'Retired v3 endpoints must not return');
 assert(!src.includes('ratios-ttm-bulk'),'Restricted bulk-ratios endpoint must not return');
 assert(src.includes('setCooldown'),'Rate/subscription failures must activate cooldown rather than request storms');
-assert(src.includes('MAX_NEW_SYMBOLS_PER_RUN=12'),'A cold broad refresh must keep fundamental fanout well below the Premium rate ceiling');
+assert(src.includes('MAX_NEW_SYMBOLS_PER_RUN=24'),'A cold broad refresh must keep fundamental fanout well below the Premium rate ceiling');
 assert(src.includes('missing.slice(0,MAX_NEW_SYMBOLS_PER_RUN)'),'Only the bounded missing-symbol slice may reach FMP');
-assert(src.includes('mapLimited(toFetch,1'),'Fundamental enrichment concurrency must remain capped at one request lane');
+assert(src.includes('FUNDAMENTAL_CONCURRENCY=2')&&src.includes('mapLimited(toFetch,FUNDAMENTAL_CONCURRENCY'),'Fundamental enrichment concurrency must remain explicitly bounded');
 assert(src.includes('hydratePersistentCache')&&src.includes('persistFundamentalCache'),'Verified fundamentals must survive Vercel cold starts');
+assert(src.includes('mergePersistentRows(await readPersistentCacheRows())'),'A warm instance must merge durable rows before writing so it cannot erase another instance’s verified fundamentals');
+assert(src.includes('PERSISTENT_REHYDRATE_MS'),'Warm instances must periodically learn fundamentals verified by other instances');
 assert(src.includes('BLOB_READ_WRITE_TOKEN')&&src.includes('fmp-fundamentals-cache-v1.json'),'Durable fundamental cache must use the configured private Blob store');
 assert(src.includes('fundamentalDataStatus:"deferred"'),'Unfetched breadth names must be marked deferred rather than misreported as provider failures');
 const top5=fs.readFileSync('pages/api/top5.js','utf8');

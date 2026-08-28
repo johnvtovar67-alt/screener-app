@@ -656,7 +656,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
         .map((q) => q.symbol),
       fundamentalOffset = Math.min(
         fundamentalPriority.length,
-        Math.max(0, Math.floor(Number(verificationPass) || 0)) * 12,
+        Math.max(0, Math.floor(Number(verificationPass) || 0)) * 24,
       ),
       rotatedFundamentalPriority = [
         ...fundamentalPriority.slice(fundamentalOffset),
