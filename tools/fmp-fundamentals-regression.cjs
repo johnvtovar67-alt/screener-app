@@ -44,5 +44,6 @@ assert(/fundamentalsComplete\s*===\s*0\s*&&\s*fundamentalsUnavailable\s*>\s*0\s*
 assert(top5.includes('rotatedFundamentalPriority')&&top5.includes('verificationPass'),'Automatic verification passes must rotate through the bounded priority queue');
 const page=fs.readFileSync('pages/index.js','utf8');
 assert(page.includes('automaticVerificationPass')&&page.includes('75000'),'Degraded fundamental coverage must trigger bounded, spaced automatic rechecks');
+assert(page.includes('automaticVerificationPass.current>=9'),'Automatic recovery must have enough bounded passes to cover the full broad universe without manual reloads');
 assert(src.includes('statementFallback:Boolean(fallback?.sourceAvailable)'),'Fundamental source diagnostics must expose statement fallback use');
 console.log('FMP FUNDAMENTALS REGRESSION PASS: stable-only, cooldown, low fanout, and fallback checks passed');

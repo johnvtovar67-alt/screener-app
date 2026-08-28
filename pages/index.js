@@ -105,7 +105,7 @@ export default function Home(){
   const automaticVerificationPass=useRef(0);
 
   useEffect(()=>{let local=[];try{const x=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(x)){local=x.map(p=>({...p,role:role(p.symbol,p.role),winnerHistory:winnerHistoryFor(p)}));setPortfolio(local);localStorage.setItem(KEY,JSON.stringify(local));}}catch{}const k=localStorage.getItem(SYNC_KEY)||"";if(k){setSyncKey(k);setSyncInput(k);void pullCloudPortfolio(k,local,true);}load("opportunities");},[]);
-  useEffect(()=>{if(tab!=="opportunities"||feedHealth.status!=="degraded"||feedHealth.deferred<=0||automaticVerificationPass.current>=4)return;const timer=setTimeout(()=>{automaticVerificationPass.current+=1;void load("opportunities",automaticVerificationPass.current);},75000);return()=>clearTimeout(timer);},[tab,feedHealth.status,feedHealth.coverage,feedHealth.deferred]);
+  useEffect(()=>{if(tab!=="opportunities"||feedHealth.status!=="degraded"||feedHealth.deferred<=0||automaticVerificationPass.current>=9)return;const timer=setTimeout(()=>{automaticVerificationPass.current+=1;void load("opportunities",automaticVerificationPass.current);},75000);return()=>clearTimeout(timer);},[tab,feedHealth.status,feedHealth.coverage,feedHealth.deferred]);
   useEffect(()=>{if(tab==="portfolio"&&portfolio.length>0)void analyze();},[tab,portfolio]);
 
   async function load(t,verificationPass=0){
