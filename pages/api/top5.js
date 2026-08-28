@@ -631,9 +631,9 @@ async function buildBroadSnapshot(verificationPass = 0) {
       candidateDiscovery = discoverMarketCycleCandidates(
         marketMemberNormalized,
         cycle,
-        { limit: 48, exclude: strategicSymbols },
+        { limit: marketMemberSymbols.length, exclude: strategicSymbols },
       ),
-      dynamicSymbols = candidateDiscovery.map((x) => x.symbol),
+      dynamicSymbols = marketMemberNormalized.map((x) => x.symbol),
       dynamicTheme = new Map(
         candidateDiscovery.map((x) => [x.symbol, x.marketCycleTheme]),
       );
@@ -806,7 +806,7 @@ export default async function handler(req, res) {
         meta: {
           mode: "expert_decision_v14_resilient_fmp_historical_entry_timing",
           universeDesign:
-            "strategic themes plus the strongest individual candidates discovered across every market-cycle group; fresh capital must independently pass verified fundamentals, event risk, and historical entry timing",
+            "strategic themes plus every configured market-cycle constituent; lightweight quote discovery is universal while fresh capital must independently pass verified fundamentals, event risk, historical entry timing, and relative capital ranking",
           universeSize: broadSnapshot.universeSize,
           strategicUniverseSize: broadSnapshot.strategicCount,
           dynamicUniverseSize: broadSnapshot.dynamicCount,

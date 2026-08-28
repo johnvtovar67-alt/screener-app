@@ -10,10 +10,21 @@ assert(top5.includes('seedDurableStrongBuyMemory'),'Broad screen is not seeding 
 assert(/await seedDurableStrongBuyMemory\(\);\s*rows\s*=\s*finalizeBroadOpportunityDecisions\(rows\);/.test(top5),'Strong Buy state must be restored before final decisions');
 assert(helper.includes("BLOB_READ_WRITE_TOKEN")&&helper.includes("screener-performance-ledger.json"),'Durable state must use the persistent performance ledger');
 assert(helper.includes("6.5*60*60*1000")||helper.includes("6.5*60*60*1000"),'Strong Buy persistence window changed unexpectedly');
+assert(helper.includes("BUY_VISIBILITY_WINDOW_MS=36*60*60*1000")&&helper.includes("['Strong Buy','Buy'].includes(r?.action)"),'Recent Buy history must persist long enough to explain a downgrade');
 assert(decision.includes("m.forwardAsymmetryPass===false")&&decision.includes("m.lateTrend===true")&&decision.includes("m.severeLateTrend===true"),'Hard forward-entry invalidations must override Strong Buy retention');
 assert(decision.includes("if(!t?.available||!t.pass)return false"),'Continuity must not create a Buy without a verified historical-timing pass');
 assert(decision.includes("if(t&&!t.strongPass)return false"),'Strong Buy hysteresis must not override the full-size historical-timing gate');
 assert(!page.includes("Promise.all([fetch(`/api/top5?theme=opportunities`"),'Portfolio refresh still races signal recording against persistence history');
 assert(page.includes("const sr=await fetch(`/api/top5?theme=opportunities`")&&page.includes("const pr=await fetch('/api/performance'"),'Portfolio refresh must read history after the screen records current signals');
+assert(page.includes('Recent Signal Changes')&&page.includes('recentDowngrades'),'Recent Buy-to-Avoid changes must remain visible without forcing a Watch or Buy');
+assert(page.includes('priorActionableSignal')&&page.includes('downgraded on the latest refresh.'),'Recent Buy or Strong-Buy changes must be explained and prioritized on On Deck');
+
+let src=decision.replace(/export function /g,'function ');src+='\nmodule.exports={finalizeBroadOpportunityDecisions};';const sandbox={module:{exports:{}},exports:{},console,Date,Math,Number,String,Object,Array,Set,Map,Boolean,RegExp};sandbox.__screenerStrongBuyMemoryV1=new Map([['ALL',{action:'Buy',earnedAt:Date.now()}]]);require('vm').createContext(sandbox);require('vm').runInContext(src,sandbox,{filename:'lib/opportunityDecision.js'});const changed=sandbox.module.exports.finalizeBroadOpportunityDecisions([{symbol:'ALL',action:'Avoid',price:100,recommendation:{label:'Avoid',decisionWhy:'The setup deteriorated rapidly.'}}])[0];
+assert(changed.finalDecision.action==='Avoid','Recent Buy continuity must not manufacture a Watch or Buy');
+assert(changed.signalChange?.from==='Buy'&&changed.signalChange?.to==='Avoid','Recent Buy downgrade must retain an explicit audit trail');
+// Reset the simulated durable memory to a prior Strong Buy before checking its hard-gated downgrade.
+sandbox.__screenerStrongBuyMemoryV1=new Map([['ALL',{action:'Strong Buy',earnedAt:Date.now()}]]);const strongChanged=sandbox.module.exports.finalizeBroadOpportunityDecisions([{symbol:'ALL',action:'Avoid',price:100,recommendation:{label:'Avoid',decisionWhy:'A hard entry gate failed.'}}])[0];
+assert(strongChanged.finalDecision.action==='Avoid','Recent Strong Buy continuity must not override a hard downgrade');
+assert(strongChanged.signalChange?.from==='Strong Buy'&&strongChanged.signalChange?.to==='Avoid','Recent Strong Buy downgrade must retain an explicit audit trail');
 
 console.log('SIGNAL STABILITY PASS: durable Strong Buy memory, hard invalidations, and refresh ordering verified.');
