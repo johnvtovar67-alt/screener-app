@@ -21,4 +21,7 @@ assert(page.includes('tab==="portfolio"&&portfolio.length>0')&&page.includes('vo
 assert(page.includes('portfolioAnalyzedAt')&&page.includes('Analysis updated'),'Portfolio must show its device-specific analysis timestamp');
 const app=fs.readFileSync('pages/_app.js','utf8');
 assert(app.includes('data-version-stamp')&&!app.includes('position:"fixed",right:8,bottom:6'),'mobile version stamp must scroll with the page instead of covering content');
+assert(page.includes('/api/entry-timing?symbols=')&&page.includes('timingBySymbol'),'Portfolio analysis must attach historical timing to every held non-cash symbol');
+const timingApi=fs.readFileSync('pages/api/entry-timing.js','utf8');
+assert(timingApi.includes('.slice(0,25)')&&timingApi.includes('fetchEntryTimingMap(symbols)'),'Portfolio timing requests must remain bounded and use the stable shared timing engine');
 console.log('TIME REVIEW UI PASS: aging swing review, winner protection, opened-date correction, and compact portfolio visibility verified.');
