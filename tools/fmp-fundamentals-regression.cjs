@@ -38,6 +38,7 @@ assert(src.includes('mergePersistentRows(await readPersistentCacheRows())'),'A w
 assert(src.includes('PERSISTENT_REHYDRATE_MS'),'Warm instances must periodically learn fundamentals verified by other instances');
 assert(src.includes('BLOB_READ_WRITE_TOKEN')&&src.includes('fmp-fundamentals-cache-v1.json'),'Durable fundamental cache must use the configured private Blob store');
 assert(src.includes('fundamentalDataStatus:"deferred"'),'Unfetched breadth names must be marked deferred rather than misreported as provider failures');
+assert(src.includes('fundamentalRefreshDeferred:true'),'Previously verified fundamentals inside the stale-safety window must remain usable while bounded refresh is deferred');
 const top5=fs.readFileSync('pages/api/top5.js','utf8');
 assert(/fundamentalsComplete\s*===\s*0\s*&&\s*fundamentalsUnavailable\s*>\s*0\s*\?\s*"unavailable"/.test(top5),'Deferred breadth must not be misreported as a provider-wide fundamental outage');
 assert(top5.includes('rotatedFundamentalPriority')&&top5.includes('verificationPass'),'Automatic verification passes must rotate through the bounded priority queue');
