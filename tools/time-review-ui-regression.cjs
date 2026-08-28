@@ -17,4 +17,8 @@ assert(page.includes('timeReviewRows'),'time-review rows not computed');
 assert(page.includes('⏱ Time Review')||page.includes('Swing Time Reviews'),'time-review visibility missing');
 assert(page.includes('type="date" value={openedDate}'),'opened-date editor missing');
 assert(page.includes('openedAt:openedAtInput||prior?.openedAt||now'),'manual opened date must be able to correct legacy positions');
+assert(page.includes('tab==="portfolio"&&portfolio.length>0')&&page.includes('void analyze()'),'opening Portfolio must automatically run a fresh analysis');
+assert(page.includes('portfolioAnalyzedAt')&&page.includes('Analysis updated'),'Portfolio must show its device-specific analysis timestamp');
+const app=fs.readFileSync('pages/_app.js','utf8');
+assert(app.includes('data-version-stamp')&&!app.includes('position:"fixed",right:8,bottom:6'),'mobile version stamp must scroll with the page instead of covering content');
 console.log('TIME REVIEW UI PASS: aging swing review, winner protection, opened-date correction, and compact portfolio visibility verified.');
