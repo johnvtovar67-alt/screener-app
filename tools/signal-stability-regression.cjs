@@ -18,7 +18,7 @@ assert(decision.includes("if(t&&!t.strongPass)return false"),'Strong Buy hystere
 assert(!page.includes("Promise.all([fetch(`/api/top5?theme=opportunities`"),'Portfolio refresh still races signal recording against persistence history');
 assert(page.includes("const sr=await fetch(`/api/top5?theme=opportunities`")&&page.includes("const pr=await fetch('/api/performance'"),'Portfolio refresh must read history after the screen records current signals');
 assert(top5.includes('await recordPerformance(req, broadRows)')&&!top5.includes('void recordPerformance(req, broadRows)'),'Broad screen must finish its bounded ledger update before portfolio sizing reads persistence');
-assert(ledger.includes("recordType:'state'")&&ledger.includes('signalState:true')&&ledger.includes("['Strong Buy','Buy','Watch','Avoid'].includes(action)"),'Ledger must record both actionable and downgrade transitions');
+assert(ledger.includes("recordType:'state'")&&ledger.includes('signalState:true')&&ledger.includes("stateAction=systemPaused?'Paused':action"),'Ledger must record actionable, downgrade, and data-pause transitions distinctly');
 assert(helper.includes('interruptedAt')&&decision.includes("!prior?.interruptedAt"),'A recorded downgrade must also break Strong Buy hysteresis continuity');
 assert(page.includes('Recent Signal Changes')&&page.includes('recentDowngrades'),'Recent Buy-to-Avoid changes must remain visible without forcing a Watch or Buy');
 assert(page.includes('priorActionableSignal')&&page.includes('downgraded on the latest refresh.'),'Recent Buy or Strong-Buy changes must be explained and prioritized on On Deck');

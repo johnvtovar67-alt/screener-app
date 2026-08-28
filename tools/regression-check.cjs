@@ -35,6 +35,7 @@ assert(gov.capitalSignalEligible({action:'Buy',persistence:{persistent:true}}).p
 const state=(action,daysAgo)=>{const timestamp=new Date(Date.now()-daysAgo*86400000).toISOString();return{recordType:'state',signalState:true,symbol:'OKE',action,day:timestamp.slice(0,10),timestamp}};
 let persistence=gov.signalPersistence([state('Buy',3),state('Buy',2)],'OKE');assert(persistence.persistent&&persistence.actionableDays===2,'Two uninterrupted daily Buy observations must qualify');
 persistence=gov.signalPersistence([state('Buy',3),state('Buy',2),state('Watch',1),state('Buy',0)],'OKE');assert(!persistence.persistent&&persistence.interrupted&&persistence.actionableDays===1,'An intervening Watch must reset Buy funding confirmation');
+persistence=gov.signalPersistence([state('Buy',3),state('Buy',2),state('Paused',1),state('Buy',0)],'OKE');assert(persistence.persistent&&!persistence.interrupted,'A temporary data-verification pause must not masquerade as stock deterioration or erase an otherwise uninterrupted Buy streak');
 persistence=gov.signalPersistence([{symbol:'OKE',action:'Buy',day:new Date().toISOString().slice(0,10),timestamp:new Date().toISOString()}],'OKE');assert(!persistence.persistent&&!persistence.trackingComplete,'Legacy positive-only history must not qualify without state tracking');
 
 // 5) Fast churn and correlated rotations need exceptional edge.
