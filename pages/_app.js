@@ -116,7 +116,7 @@ export default function App({ Component, pageProps }) {
     fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
     const timers=[0,250,1000,2500,5000].map(ms=>setTimeout(()=>{cleanDashboardText();keepDesktopControlsUsable();},ms));
     const controlTimer=setInterval(keepDesktopControlsUsable,500);
-    const onHeaderReload=e=>{const b=e.target?.closest?.('header button');if(!b)return;const text=String(b.textContent||'').trim();if(text==='Reload'||text==='Reloading...'){e.preventDefault();e.stopPropagation();forceLiveRefresh();}};
+    const onHeaderReload=e=>{const b=e.target?.closest?.('header button');if(!b)return;const text=String(b.textContent||'').trim();if(text==='Reload'||text==='Reloading...'){clearTop5Cache();emitFeedNotice("");}};
     document.addEventListener('click',onHeaderReload,true);
     return()=>{window.removeEventListener("screener-feed-notice",onNotice);document.removeEventListener('click',onHeaderReload,true);clearInterval(controlTimer);for(const t of timers)clearTimeout(t);};
   },[]);
