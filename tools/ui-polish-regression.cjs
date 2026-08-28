@@ -6,8 +6,11 @@ const checks=[
   ['market cycle meta wiring',s.includes('marketCycleRadar')],
   ['theme leadership fallback',s.includes('themeLeadership')],
   ['date label removed',!s.includes('<small>Opened</small>')],
-  ['date accessibility retained',s.includes('aria-label="Position opened date"')]
+  ['date accessibility retained',s.includes('aria-label="Position opened date"')],
+  ['standalone universe disclosure',s.includes('outsideBroadUniverse')&&s.includes('outside today’s Opportunities universe')]
 ];
+const app=fs.readFileSync('pages/_app.js','utf8');
+checks.push(['theme reload preserves client state',app.includes('clearTop5Cache();emitFeedNotice("");')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);
 const failed=checks.filter(([,ok])=>!ok);
 if(failed.length){for(const [name] of failed)console.error('FAIL:',name);process.exit(1);}
 console.log(`UI POLISH PASS: ${checks.length} market-leadership/date-control checks passed.`);
