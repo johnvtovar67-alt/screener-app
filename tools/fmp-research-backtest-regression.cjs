@@ -270,10 +270,17 @@ assert(
     rawSource.includes('status: "collecting"') &&
     rawSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
+    rawSource.includes("FMP_RESEARCH_COMPILED_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
+    rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 1") &&
     rawSource.includes("REPLAY_WINDOWS_PER_RUN = 3") &&
     rawSource.includes("compactResearchRun") &&
+    rawSource.includes('stage: "compiled"') &&
     rawSource.includes('stage: "replay"') &&
+    rawSource.includes("compiledDatasetCheckpointReused") &&
+    rawSource.includes(
+      "const { candidateRuns: _candidateRuns, ...publicProgress } = checkpoint",
+    ) &&
     rawSource.includes("equivalentAcquisitionSignature") &&
     rawSource.includes("equivalentStatementSignature") &&
     rawSource.includes("eligibleForCapitalClaims: false") &&
