@@ -272,10 +272,12 @@ assert(
     rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_COMPILED_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
-    rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 1") &&
+    rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 2") &&
+    rawSource.includes("COMPILE_SESSIONS_PER_RUN = 100") &&
     rawSource.includes("REPLAY_WINDOWS_PER_RUN = 3") &&
     rawSource.includes("compactResearchRun") &&
     rawSource.includes('stage: "compiled"') &&
+    rawSource.includes('"compiling"') &&
     rawSource.includes('stage: "replay"') &&
     rawSource.includes("compiledDatasetCheckpointReused") &&
     rawSource.includes(

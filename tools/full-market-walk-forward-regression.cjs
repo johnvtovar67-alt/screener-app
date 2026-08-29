@@ -759,7 +759,7 @@ for (let cursor = new Date("2026-04-01T12:00:00.000Z"); historicalDates.length <
   if (![0, 6].includes(cursor.getUTCDay()))
     historicalDates.push(cursor.toISOString().slice(0, 10));
 }
-const compiled = compilePointInTimeSignals({
+const compilerDataset = {
   metadata: {
     ...metadata(),
     source: "synthetic point-in-time compiler regression",
@@ -823,7 +823,26 @@ const compiled = compilePointInTimeSignals({
       ],
     };
   }),
-});
+};
+const compiled = compilePointInTimeSignals(compilerDataset);
+let batchedCompiled = null;
+let compilerResume = null;
+do {
+  batchedCompiled = compilePointInTimeSignals(compilerDataset, {
+    maxSessions: 13,
+    resume: compilerResume,
+  });
+  compilerResume = {
+    sessions: batchedCompiled.sessions,
+    completedSessions: batchedCompiled.compilerProgress.completedSessions,
+    decisionMemory:
+      batchedCompiled.compilerCheckpoint?.decisionMemory || [],
+  };
+} while (!batchedCompiled.compilerProgress.complete);
+assert(
+  JSON.stringify(batchedCompiled.sessions) === JSON.stringify(compiled.sessions),
+  "Bounded compiler checkpoints must reproduce the exact monolithic point-in-time decisions and hysteresis state.",
+);
 assert(
   compiled.sessions.length === historicalDates.length &&
     compiled.sessions.at(-1).signals.some((row) => row.symbol === "AAA") &&
