@@ -843,6 +843,25 @@ assert(
   JSON.stringify(batchedCompiled.sessions) === JSON.stringify(compiled.sessions),
   "Bounded compiler checkpoints must reproduce the exact monolithic point-in-time decisions and hysteresis state.",
 );
+const chunkedSessions = [];
+compilerResume = null;
+do {
+  batchedCompiled = compilePointInTimeSignals(compilerDataset, {
+    maxSessions: 13,
+    resume: compilerResume,
+  });
+  chunkedSessions.push(...batchedCompiled.sessions);
+  compilerResume = {
+    sessions: [],
+    completedSessions: batchedCompiled.compilerProgress.completedSessions,
+    decisionMemory:
+      batchedCompiled.compilerCheckpoint?.decisionMemory || [],
+  };
+} while (!batchedCompiled.compilerProgress.complete);
+assert(
+  JSON.stringify(chunkedSessions) === JSON.stringify(compiled.sessions),
+  "Independent compiled chunks must preserve the exact monolithic decisions without carrying prior output payloads.",
+);
 assert(
   compiled.sessions.length === historicalDates.length &&
     compiled.sessions.at(-1).signals.some((row) => row.symbol === "AAA") &&

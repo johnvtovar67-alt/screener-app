@@ -271,10 +271,13 @@ assert(
     rawSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_COMPILED_CHECKPOINT_STORE") &&
+    rawSource.includes("FMP_RESEARCH_COMPILED_CHUNK_PREFIX") &&
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
-    rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 2") &&
-    rawSource.includes("COMPILE_SESSIONS_PER_RUN = 100") &&
-    rawSource.includes("REPLAY_WINDOWS_PER_RUN = 3") &&
+    rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 3") &&
+    rawSource.includes("COMPILE_SESSIONS_PER_RUN = 20") &&
+    rawSource.includes("REPLAY_WINDOWS_PER_RUN = 1") &&
+    rawSource.includes("persistPrivateGzipJson") &&
+    rawSource.includes("readPrivateGzipJson") &&
     rawSource.includes("compactResearchRun") &&
     rawSource.includes('stage: "compiled"') &&
     rawSource.includes('"compiling"') &&
