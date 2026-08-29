@@ -269,7 +269,7 @@ assert(
     rawSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
-    rawSource.includes("REPLAY_CANDIDATES_PER_RUN = 1") &&
+    rawSource.includes("REPLAY_FOLDS_PER_RUN = 1") &&
     rawSource.includes("compactResearchRun") &&
     rawSource.includes('stage: "replay"') &&
     rawSource.includes("equivalentAcquisitionSignature") &&
@@ -351,22 +351,23 @@ const contractCalls = [];
     })),
   };
   let checkpoint = null;
-  for (let completed = 1; completed <= 5; completed++) {
+  for (let completed = 1; completed <= 10; completed++) {
     const partial = await runProvisionalWindows(mockDataset, {
       initial: checkpoint,
-      maxCandidates: 1,
+      maxFolds: 1,
     });
     assert(
       partial.status === "collecting" &&
-        partial.progress.completedCandidates === completed &&
-        partial.progress.remainingCandidates === 5 - completed,
-      "Each replay invocation must durably advance exactly one thesis candidate.",
+        partial.progress.completedFolds === completed &&
+        partial.progress.remainingFolds === 10 - completed &&
+        partial.progress.completedCandidates === Math.floor(completed / 2),
+      "Each replay invocation must durably advance exactly one chronological thesis fold.",
     );
     checkpoint = partial.checkpoint;
   }
   const completedReplay = await runProvisionalWindows(mockDataset, {
     initial: checkpoint,
-    maxCandidates: 1,
+    maxFolds: 1,
   });
   assert(
     completedReplay.status === "complete" &&
