@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-08-27-consolidated-production"',
+  'release:"2026-08-29-decision-engine-regression"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',
@@ -47,7 +47,13 @@ hasAll(manifest,[
   '"canonical-version-integrity"',
   '"legacy-domain-canonical-redirect"',
   '"blob-oidc-health-check"',
-  '"build-time-canonical-integrity"'
+  '"build-time-canonical-integrity"',
+  '"us-market-session-persistence"',
+  '"authoritative-live-refresh"',
+  '"partial-universe-verification-pause"',
+  '"bounded-stable-fmp-recovery"',
+  '"mock-trade-allocation-simulation"',
+  '"clean-performance-session-basis"'
 ],'lib/releaseManifest.js');
 
 const expert=read('lib/expertDecision.js');

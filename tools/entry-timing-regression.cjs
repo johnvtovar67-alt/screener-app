@@ -1,8 +1,8 @@
 const fs=require('fs'),vm=require('vm');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
-let src=fs.readFileSync('lib/entryTiming.js','utf8').replace(/export function /g,'function ').replace(/export async function /g,'async function ');
+let src=fs.readFileSync('lib/entryTiming.js','utf8').replace(/^import .*$/gm,'').replace(/export function /g,'function ').replace(/export async function /g,'async function ');
 src+='\nmodule.exports={analyzeEntryTiming,applyEntryTimingGate};';
-const box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Date,AbortController,setTimeout,clearTimeout};vm.createContext(box);vm.runInContext(src,box);const{analyzeEntryTiming,applyEntryTimingGate}=box.module.exports;
+const box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Date,AbortController,setTimeout,clearTimeout,latestCompletedMarketSessionDay:()=> '2026-08-28'};vm.createContext(box);vm.runInContext(src,box);const{analyzeEntryTiming,applyEntryTimingGate}=box.module.exports;
 const bars=closes=>closes.map((close,i)=>({date:`2026-07-${String(i+1).padStart(2,'0')}`,open:close*.997,high:close*1.01,low:close*.99,close,volume:1000000}));
 let slow=[];for(let i=0;i<40;i++)slow.push(100+i*.45+(i%4===0?-.35:.15));let t=analyzeEntryTiming('GOOD',bars(slow));assert(t.available&&t.pass,'gradual trend should pass historical timing');
 let chase=[];for(let i=0;i<34;i++)chase.push(100+i*.2);chase.push(107,110,113,116,119,122);t=analyzeEntryTiming('CHASE',bars(chase));assert(!t.pass&&t.chase,'rapid 3/5-day rebound must be blocked');
@@ -10,4 +10,5 @@ let fall=[];for(let i=0;i<32;i++)fall.push(120+i*.05);fall.push(119,117,114,111,
 const strong={action:'Strong Buy',recommendation:{label:'Strong Buy',displayLabel:'Strong Buy',expertDecision:{trendStatus:'Confirmed',metrics:{}}}};let gated=applyEntryTimingGate(strong,{available:true,pass:false,strongPass:false,reason:'too late'});assert(gated.recommendation.label==='Watch','failed timing must downgrade Strong Buy to Watch');assert(gated.recommendation.expertDecision.trendStatus==='Not Confirmed','failed historical timing must be non-overridable by continuity');
 gated=applyEntryTimingGate(strong,{available:false,pass:false,strongPass:false,reason:'history unavailable'});assert(gated.recommendation.label==='Watch','missing history must fail closed for fresh capital');
 gated=applyEntryTimingGate(strong,{available:true,pass:true,strongPass:false,reason:'starter timing only'});assert(gated.recommendation.label==='Buy'&&gated.recommendation.positionSize==='Partial','partial timing must cap Strong Buy at partial Buy, not erase an otherwise valid entry');
+gated=applyEntryTimingGate(strong,{available:true,pass:true,strongPass:true,asOf:'2026-08-27',reason:'old timing'});assert(gated.recommendation.label==='Watch'&&gated.entryTiming.staleVerification,'timing older than the latest completed session must pause fresh capital');
 console.log('ENTRY TIMING REGRESSION PASS: historical timing is independent and fail-closed');

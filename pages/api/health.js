@@ -22,7 +22,13 @@ const requiredFeatures=[
   "canonical-version-integrity",
   "legacy-domain-canonical-redirect",
   "blob-oidc-health-check",
-  "build-time-canonical-integrity"
+  "build-time-canonical-integrity",
+  "us-market-session-persistence",
+  "authoritative-live-refresh",
+  "partial-universe-verification-pause",
+  "bounded-stable-fmp-recovery",
+  "mock-trade-allocation-simulation",
+  "clean-performance-session-basis"
 ];
 
 async function blobAvailable(){

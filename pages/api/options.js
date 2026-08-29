@@ -4,6 +4,7 @@
 // authoritative stock, event-risk, and portfolio context are verified.
 
 import { analyzeOptionContract, buildPutCreditSpreadCandidates, OPTIONS_ANALYSIS_POLICY, summarizeOptionsAnalysis } from '../../lib/optionsAnalysis';
+import { fetchFmpQuote } from '../../lib/fmpQuotes';
 
 const BASE_URL = 'https://api.massive.com/v3/snapshot/options';
 
@@ -31,28 +32,7 @@ function isoDatePlusDays(days, now = new Date()) {
 }
 
 async function fetchUnderlyingPrice(symbol) {
-  const apiKey = process.env.FMP_API_KEY;
-  if (!apiKey) return { price: null, source: null, status: 'FMP_API_KEY unavailable' };
-  const clean = toFmpSymbol(symbol);
-  const urls = [
-    `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(clean)}&apikey=${apiKey}`,
-    `https://financialmodelingprep.com/api/v3/quote/${encodeURIComponent(clean)}?apikey=${apiKey}`,
-  ];
-  let lastStatus = 'No quote returned';
-  for (const url of urls) {
-    try {
-      const response = await fetch(url, { cache: 'no-store' });
-      if (!response.ok) { lastStatus = `FMP ${response.status}`; continue; }
-      const body = await response.json();
-      const row = Array.isArray(body) ? body[0] : body;
-      const price = num(row?.price ?? row?.currentPrice ?? row?.lastPrice);
-      if (price !== null && price > 0) return { price, source: 'FMP', status: 'Fresh quote obtained' };
-      lastStatus = 'FMP quote missing price';
-    } catch (error) {
-      lastStatus = error?.message || 'FMP quote request failed';
-    }
-  }
-  return { price: null, source: null, status: lastStatus };
+  try{const row=await fetchFmpQuote(toFmpSymbol(symbol)),price=num(row?.price??row?.currentPrice??row?.lastPrice);if(price!==null&&price>0)return{price,source:'FMP stable',status:row._fmpQuoteCache==='live'?'Fresh quote obtained':`Quote obtained (${row._fmpQuoteCache})`};return{price:null,source:null,status:'FMP quote missing price'};}catch(error){return{price:null,source:null,status:error?.message||'FMP quote request failed'};}
 }
 
 function strikeBandFor(type, underlyingPrice) {

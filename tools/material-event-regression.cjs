@@ -2,7 +2,7 @@ const fs=require('fs');
 const vm=require('vm');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 let src=fs.readFileSync('lib/expertDecision.js','utf8');
-src=src.replace("import { pacedRelativeVolume, marketSessionProgress } from './marketSession';","const marketSessionProgress=()=>null; const pacedRelativeVolume=s=>{const v=Number(s?.volume),a=Number(s?.avgVolume??s?.averageVolume??s?.avgVolume30Day);return v>0&&a>0?v/a:null;};");
+src=src.replace(/^import .*$/m,"const marketSessionProgress=()=>1; const pacedRelativeVolume=s=>{const v=Number(s?.volume),a=Number(s?.avgVolume??s?.averageVolume??s?.avgVolume30Day);return v>0&&a>0?v/a:null;}; const marketExecutionState=()=>({isOpen:false,sessionDay:'2026-08-28'}); const marketObservationSessionDay=()=> '2026-08-28';");
 src=src.replace(/export function /g,'function ');
 src+='\nmodule.exports={portfolioDecision};';
 const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Date,Set,Map};

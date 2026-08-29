@@ -5,3 +5,8 @@
    a compact audit cue alongside each position instead. */
 .timeReviewBox{display:none!important;}
 .positionBadges .stageBadge::before{content:"Evidence: ";font-weight:900;}
+
+.marketClosedBanner{display:flex;gap:10px;align-items:flex-start;margin:10px 0;padding:10px 12px;border:1px solid #f59e0b;border-radius:10px;background:#fffbeb;color:#78350f;}
+.marketClosedBanner b{white-space:nowrap;text-transform:capitalize;}
+.marketClosedBanner span{line-height:1.35;}
+@media(max-width:700px){.marketClosedBanner{flex-direction:column;gap:4px;}}

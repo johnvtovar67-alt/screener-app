@@ -23,6 +23,7 @@ import { projectedFullDayVolume } from "../../lib/marketSession";
 import {
   finalizeBroadOpportunityDecisions,
   relativeCapitalScore,
+  recentStrongBuySymbols,
 } from "../../lib/opportunityDecision";
 import { seedDurableStrongBuyMemory } from "../../lib/strongBuyPersistence";
 import { applyPersonalCapitalPolicy } from "../../lib/personalCapitalPolicy";
@@ -284,8 +285,8 @@ const QUOTE_TTL_MS = 60 * 1000,
   QUOTE_COOLDOWN_MS = 20 * 1000,
   QUOTE_BATCH_SIZE = 40,
   QUOTE_TIMEOUT_MS = 7000,
-  SINGLE_FALLBACK_LIMIT = 36,
-  SINGLE_CONCURRENCY = 3;
+  SINGLE_FALLBACK_LIMIT = 8,
+  SINGLE_CONCURRENCY = 2;
 const quoteCache = () =>
   globalThis[QUOTE_CACHE_KEY] instanceof Map
     ? globalThis[QUOTE_CACHE_KEY]
@@ -395,7 +396,7 @@ async function emergencySingleQuoteFallback(symbols, key) {
       ),
     );
     for (const row of got) if (row) rows.push(row);
-    if (rows.length >= 24) break;
+    if (rows.length >= SINGLE_FALLBACK_LIMIT) break;
     if (Date.now() < quoteCooldownUntil() && rows.length) break;
   }
   return rows;
@@ -431,6 +432,13 @@ async function fetchQuoteBatchResilient(symbols, key) {
       return rows;
     } catch (e) {
       console.warn("FMP quote batch degraded:", e?.message || e);
+      // Batch failures are provider-wide in practice. Cool the shared path so
+      // one failed batch cannot fan out across every remaining chunk.
+      setQuoteCooldown(
+        [402, 403, 404].includes(e?.status)
+          ? 5 * 60 * 1000
+          : QUOTE_COOLDOWN_MS,
+      );
       return symbols
         .map((s) => cache.get(s))
         .filter((x) => x && now - x.ts < QUOTE_STALE_MS)
@@ -594,7 +602,9 @@ function buildThemeLeadership(rows = []) {
 }
 const CACHE_KEY = "__screenerBroadOpportunityCacheV9",
   CACHE_MS = 60000,
-  STALE_SNAPSHOT_MS = 24 * 60 * 60 * 1000;
+  STALE_SNAPSHOT_MS = 24 * 60 * 60 * 1000,
+  MIN_QUOTE_COVERAGE_PCT = 95,
+  PERFORMANCE_RECORD_KEY = "__screenerPerformanceRecordV1";
 async function buildBroadSnapshot(verificationPass = 0) {
   const now = Date.now(),
     cached = globalThis[CACHE_KEY];
@@ -633,7 +643,10 @@ async function buildBroadSnapshot(verificationPass = 0) {
         cycle,
         { limit: marketMemberSymbols.length, exclude: strategicSymbols },
       ),
-      dynamicSymbols = marketMemberNormalized.map((x) => x.symbol),
+      // The intended dynamic universe is the configured member list, not only
+      // the names the provider happened to return. Otherwise missing quotes
+      // disappear from the denominator and a partial feed falsely looks whole.
+      dynamicSymbols = marketMemberSymbols,
       dynamicTheme = new Map(
         candidateDiscovery.map((x) => [x.symbol, x.marketCycleTheme]),
       );
@@ -648,6 +661,12 @@ async function buildBroadSnapshot(verificationPass = 0) {
       qqq = normalized.find((q) => q.symbol === "QQQ"),
       broadSymbols = [...new Set([...strategicSymbols, ...dynamicSymbols])],
       broadQuotes = normalized.filter((q) => broadSymbols.includes(q.symbol)),
+      quoteCoveragePct =
+        Math.round((broadQuotes.length / Math.max(1, broadSymbols.length)) * 1000) /
+        10,
+      quoteCoverageAdequate =
+        quoteCoveragePct >= MIN_QUOTE_COVERAGE_PCT && Boolean(spy && qqq),
+      staleQuoteCount = broadQuotes.filter((q) => q.staleFallback).length,
       fundamentalPriority = [...broadQuotes]
         .sort(
           (a, b) =>
@@ -677,7 +696,9 @@ async function buildBroadSnapshot(verificationPass = 0) {
     );
     const eventRiskMap = await fetchEventRiskMap(rows.map((r) => r.symbol));
     rows = rows.map((r) => applyEventRiskGate(r, eventRiskMap.get(r.symbol)));
-    const timingCandidates = rows
+    await seedDurableStrongBuyMemory();
+    const recentStrongSymbols = new Set(recentStrongBuySymbols()),
+      timingCandidates = rows
         .filter((r) =>
           ["Buy", "Strong Buy"].includes(
             String(
@@ -685,7 +706,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
                 r.recommendation?.label ||
                 r.action,
             ),
-          ),
+          ) || recentStrongSymbols.has(r.symbol),
         )
         .map((r) => r.symbol),
       timingMap = await fetchEntryTimingMap(timingCandidates);
@@ -694,18 +715,21 @@ async function buildBroadSnapshot(verificationPass = 0) {
         ? applyEntryTimingGate(r, timingMap.get(r.symbol))
         : r,
     );
-    await seedDurableStrongBuyMemory();
     rows = finalizeBroadOpportunityDecisions(rows);
     rows = rows.map(applyPersonalCapitalPolicy);
-    const result = {
+    const snapshotBuiltAt = Date.now(),result = {
       rows,
       cycle,
       strategicCount: strategicSymbols.length,
       dynamicCount: dynamicSymbols.length,
       universeSize: broadSymbols.length,
       staleFeed: false,
+      quoteCoveragePct,
+      quoteCoverageAdequate,
+      staleQuoteCount,
+      snapshotBuiltAt,
     };
-    globalThis[CACHE_KEY] = { ts: Date.now(), ...result, promise: null };
+    globalThis[CACHE_KEY] = { ts: snapshotBuiltAt, ...result, promise: null };
     return result;
   })();
   globalThis[CACHE_KEY] = {
@@ -732,11 +756,21 @@ async function buildBroadSnapshot(verificationPass = 0) {
     throw err;
   }
 }
-async function recordPerformance(req, rows) {
-  try {
+async function recordPerformance(req, rows, snapshotKey) {
+  const key = String(snapshotKey || "unknown"),
+    prior = globalThis[PERFORMANCE_RECORD_KEY];
+  if (prior?.key === key && prior.promise) return prior.promise;
+  if (
+    prior?.key === key &&
+    prior.promise == null &&
+    Date.now() - Number(prior.at || 0) < (prior.ok ? 30000 : 5000)
+  )
+    return prior.ok;
+  const promise = (async () => {
+    try {
     const proto = req.headers["x-forwarded-proto"] || "https",
       host = req.headers.host;
-    if (!host) return;
+    if (!host) return false;
     const response = await fetch(`${proto}://${host}/api/performance`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -747,9 +781,16 @@ async function recordPerformance(req, rows) {
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) throw new Error(`ledger returned ${response.status}`);
+    return true;
   } catch (e) {
     console.warn("performance ledger:", e.message);
+    return false;
   }
+  })();
+  globalThis[PERFORMANCE_RECORD_KEY] = { key, at: Date.now(), promise, ok: false };
+  const ok = await promise;
+  globalThis[PERFORMANCE_RECORD_KEY] = { key, at: Date.now(), promise: null, ok };
+  return ok;
 }
 export default async function handler(req, res) {
   try {
@@ -768,7 +809,18 @@ export default async function handler(req, res) {
       rows = isBroad
         ? broadRows
         : broadRows.filter((r) => selectedSymbols.has(r.symbol));
-    if (isBroad) await recordPerformance(req, broadRows);
+    // Every view is filtered from this same broad snapshot, so record the
+    // authoritative broad state even when the user is looking at one theme.
+    // The ledger de-duplicates within a market session.
+    const snapshotVerificationPaused =
+        broadSnapshot.staleFeed || !broadSnapshot.quoteCoverageAdequate,
+      performanceObservationRecorded = await recordPerformance(
+      req,
+      snapshotVerificationPaused
+        ? broadRows.map((row) => ({ ...row, dataFeedSnapshotStale: true }))
+        : broadRows,
+      `${broadSnapshot.snapshotBuiltAt}:${snapshotVerificationPaused ? "paused" : "live"}`,
+    );
     const fundamentalsComplete = rows.filter(
         (r) => r.fundamentalDataStatus === "complete",
       ).length,
@@ -826,16 +878,10 @@ export default async function handler(req, res) {
             members: g.members,
           })),
           quotesReceived: broadRows.length,
-          coveragePct:
-            Math.round(
-              (broadRows.length /
-                Math.max(
-                  1,
-                  CORE_OPPORTUNITY_SYMBOLS.filter((s) => !EXCLUDED.has(s))
-                    .length,
-                )) *
-                1000,
-            ) / 10,
+          coveragePct: broadSnapshot.quoteCoveragePct,
+          quoteCoverageRequiredPct: MIN_QUOTE_COVERAGE_PCT,
+          quoteCoverageAdequate: broadSnapshot.quoteCoverageAdequate,
+          staleQuoteCount: broadSnapshot.staleQuoteCount,
           returned: rows.length,
           strongBuys: rows.filter(
             (r) => r.finalDecision?.action === "Strong Buy",
@@ -854,7 +900,23 @@ export default async function handler(req, res) {
           fundamentalsIncomplete: rows.length - fundamentalsComplete,
           fundamentalCoveragePct,
           fundamentalFeedStatus,
-          quoteFeedStatus: broadSnapshot.staleFeed ? "stale-verified" : "live",
+          quoteFeedStatus: broadSnapshot.staleFeed
+            ? "stale-verified"
+            : broadSnapshot.quoteCoverageAdequate
+              ? "live"
+              : "incomplete",
+          performanceObservationRecorded,
+          snapshotAsOf: new Date(
+            broadSnapshot.snapshotBuiltAt || broadSnapshot.ts || Date.now(),
+          ).toISOString(),
+          snapshotAgeSeconds: Math.max(
+            0,
+            Math.round(
+              (Date.now() -
+                Number(broadSnapshot.snapshotBuiltAt || broadSnapshot.ts || Date.now())) /
+                1000,
+            ),
+          ),
         },
       });
   } catch (err) {

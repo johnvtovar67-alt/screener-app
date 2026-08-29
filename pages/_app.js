@@ -13,10 +13,8 @@ const LEGACY_HOSTS=new Set([
   "screener-app-hp1w-johnvtovar67-7543s-projects.vercel.app",
   "screener-app-hp1w-git-main-johnvtovar67-7543s-projects.vercel.app"
 ]);
-const CAPITAL_NOTE="Capital actions reflect portfolio fit, not raw opportunity rank. A higher-ranked Buy can be skipped when concentration, correlation, position-size, timing, or risk-budget constraints make cash or another qualified target the better incremental use of capital.";
-const API_TIMEOUT_MS=7000;
-const API_RETRIES=0;
-const TOP5_FRESH_MS=2*60*1000;
+const API_TIMEOUT_MS=15000;
+const TOP5_TIMEOUT_MS=90000;
 const TOP5_STALE_MS=30*60*1000;
 const TOP5_CACHE_PREFIX="screener_top5_response_v2:";
 
@@ -24,8 +22,12 @@ function emitFeedNotice(message=""){try{window.dispatchEvent(new CustomEvent("sc
 function readTop5Cache(key){try{const raw=window.localStorage.getItem(TOP5_CACHE_PREFIX+key);const x=raw?JSON.parse(raw):null;return x&&typeof x.body==="string"?x:null;}catch{return null;}}
 function writeTop5Cache(key,body){try{window.localStorage.setItem(TOP5_CACHE_PREFIX+key,JSON.stringify({ts:Date.now(),body}));}catch{}}
 function clearTop5Cache(){try{for(let i=window.localStorage.length-1;i>=0;i--){const k=window.localStorage.key(i);if(k&&k.startsWith(TOP5_CACHE_PREFIX))window.localStorage.removeItem(k);}}catch{}}
-function cachedResponse(hit,stale=false){return new Response(hit.body,{status:200,headers:{"content-type":"application/json; charset=utf-8","x-screener-cache":stale?"stale":"fresh"}});}
-function forceLiveRefresh(){if(typeof window==="undefined")return;clearTop5Cache();emitFeedNotice("");window.location.reload();}
+function cachedResponse(hit){
+  let body=hit.body;
+  try{const parsed=JSON.parse(body);parsed.meta={...(parsed.meta||{}),clientSnapshotFallback:true,clientSnapshotAgeMs:Math.max(0,Date.now()-Number(hit.ts||0))};body=JSON.stringify(parsed);}catch{}
+  return new Response(body,{status:200,headers:{"content-type":"application/json; charset=utf-8","x-screener-cache":"stale-fallback"}});
+}
+function forceLiveRefresh(){if(typeof window==="undefined")return;clearTop5Cache();emitFeedNotice("");window.dispatchEvent(new CustomEvent("screener-request-live-refresh"));}
 
 function installResilientApiFetch(){
   if(typeof window==="undefined"||window.__screenerResilientFetchInstalled)return;
@@ -37,18 +39,14 @@ function installResilientApiFetch(){
     if(!resilient)return nativeFetch(input,init);
 
     const isTop5=url.pathname==="/api/top5",cacheKey=isTop5?`${url.pathname}${url.search}`:"",hit=isTop5?readTop5Cache(cacheKey):null,age=hit?Date.now()-Number(hit.ts||0):Infinity;
-    if(hit&&age<TOP5_FRESH_MS){emitFeedNotice("");return cachedResponse(hit,false);}
     if(isTop5&&inflight.has(cacheKey)){
-      if(hit&&age<TOP5_STALE_MS){emitFeedNotice("Live refresh is still running; showing the last verified screener snapshot without blocking the desktop app.");return cachedResponse(hit,true);}
-      const active=inflight.get(cacheKey);
-      const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Existing live refresh is still running.")),2500));
-      try{const r=await Promise.race([active,timeout]);return r.clone();}catch{throw new Error("Live refresh is still running. Other tabs remain available.");}
+      const r=await inflight.get(cacheKey);return r.clone();
     }
 
     const run=async()=>{
       const controller=new AbortController(),parentSignal=init?.signal,onAbort=()=>controller.abort(parentSignal?.reason);
       if(parentSignal){if(parentSignal.aborted)controller.abort(parentSignal.reason);else parentSignal.addEventListener("abort",onAbort,{once:true});}
-      const timer=setTimeout(()=>controller.abort(new DOMException("API request timed out","TimeoutError")),API_TIMEOUT_MS);
+      const timer=setTimeout(()=>controller.abort(new DOMException("API request timed out","TimeoutError")),isTop5?TOP5_TIMEOUT_MS:API_TIMEOUT_MS);
       let response=null,error=null;
       try{
         response=await nativeFetch(input,{...init,signal:controller.signal});
@@ -57,7 +55,7 @@ function installResilientApiFetch(){
           return response;
         }
       }catch(e){error=e;}finally{clearTimeout(timer);if(parentSignal)parentSignal.removeEventListener("abort",onAbort);}
-      if(isTop5&&hit&&age<TOP5_STALE_MS){emitFeedNotice("Live FMP refresh is delayed; showing the last verified screener snapshot while the feed recovers.");return cachedResponse(hit,true);}
+      if(isTop5&&hit&&age<TOP5_STALE_MS){emitFeedNotice("Live refresh failed. Showing a clearly paused prior snapshot for continuity; no fresh-capital action may use it.");return cachedResponse(hit);}
       if(response)return response;
       const timedOut=error?.name==="AbortError"||error?.name==="TimeoutError";
       throw new Error(timedOut?"Live refresh timed out. The desktop app remains usable; try Reload again later.":`Live refresh failed${error?.message?`: ${error.message}`:"."}`);
@@ -69,42 +67,6 @@ function installResilientApiFetch(){
   window.__screenerResilientFetchInstalled=true;
 }
 
-function sentenceCase(text=""){const t=String(text||"").trim();return t?t[0].toUpperCase()+t.slice(1):t;}
-function cleanDashboardText(){
-  for(const table of document.querySelectorAll("table")){
-    const headers=[...table.querySelectorAll("thead th")].map(x=>x.textContent?.trim());
-    if(headers.includes("Why Wait")&&headers.includes("Next Trigger")){
-      for(const row of table.querySelectorAll("tbody tr")){
-        const cells=row.querySelectorAll("td");if(cells.length<5)continue;const why=String(cells[3].textContent||"").trim(),lower=why.toLowerCase();
-        if(lower.includes("already too extended")||lower.includes("too impulsive")||lower.includes("chase"))cells[4].textContent="Wait for a controlled pullback or consolidation; then require timing reconfirmation.";
-        else if(lower.includes("macd")||lower.includes("short-term price structure")||lower.includes("timing"))cells[4].textContent="Wait for short-term timing confirmation; do not buy merely because price moves higher.";
-        else if(lower.includes("starter size only")||lower.includes("starter/partial"))cells[4].textContent="Starter only after timing confirms; full size requires Buy-level confirmation.";
-        else if(lower.includes("base entry gate does not currently permit fresh capital"))cells[4].textContent="Wait for the entry gate to clear; a higher price alone is not confirmation.";
-      }
-    }
-    if(headers.includes("Decision")&&headers.includes("Why")){
-      const whyIndex=headers.indexOf("Why");
-      for(const row of table.querySelectorAll("tbody tr")){
-        const cells=row.querySelectorAll("td");if(whyIndex<0||cells.length<=whyIndex)continue;const cell=cells[whyIndex],text=String(cell.textContent||"").trim();if(!text)continue;
-        if(/^thesis,\s*setup,\s*technicals remain supportive/i.test(text))cell.textContent="Thesis and setup remain supportive. Short-term technical/timing confirmation is required before any add.";
-        else if(/^[a-z]/.test(text))cell.textContent=sentenceCase(text);
-      }
-    }
-  }
-  for(const field of document.querySelectorAll(".mobileField")){
-    const label=field.querySelector("small")?.textContent?.trim();if(label!=="Why")continue;const p=field.querySelector("p");if(!p)continue;const text=String(p.textContent||"").trim();if(/^thesis,\s*setup,\s*technicals remain supportive/i.test(text))p.textContent="Thesis and setup remain supportive. Short-term technical/timing confirmation is required before any add.";else if(/^[a-z]/.test(text))p.textContent=sentenceCase(text);
-  }
-  for(const box of document.querySelectorAll('.rotationBox')){
-    let note=box.querySelector('[data-capital-fit-note]');if(!note){note=document.createElement('p');note.dataset.capitalFitNote='true';note.style.margin='8px 0 10px';note.style.fontSize='0.9em';note.style.color='#52647f';note.style.lineHeight='1.35';const heading=box.querySelector('b');if(heading)heading.insertAdjacentElement('afterend',note);else box.prepend(note);}if(note.textContent!==CAPITAL_NOTE)note.textContent=CAPITAL_NOTE;
-  }
-}
-function keepDesktopControlsUsable(){
-  for(const button of document.querySelectorAll('header button')){
-    const text=String(button.textContent||'').trim();
-    if(text==='Reloading...'||text==='Reload')button.removeAttribute('disabled');
-  }
-}
-
 if(typeof window!=="undefined")installResilientApiFetch();
 
 export default function App({ Component, pageProps }) {
@@ -114,11 +76,9 @@ export default function App({ Component, pageProps }) {
     const onNotice=e=>setFeedNotice(String(e?.detail||""));window.addEventListener("screener-feed-notice",onNotice);
     const host=window.location.hostname;if(LEGACY_HOSTS.has(host)){window.location.replace(`https://${CANONICAL_HOST}${window.location.pathname}${window.location.search}${window.location.hash}`);return()=>window.removeEventListener("screener-feed-notice",onNotice);}
     fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
-    const timers=[0,250,1000,2500,5000].map(ms=>setTimeout(()=>{cleanDashboardText();keepDesktopControlsUsable();},ms));
-    const controlTimer=setInterval(keepDesktopControlsUsable,500);
     const onHeaderReload=e=>{const b=e.target?.closest?.('header button');if(!b)return;const text=String(b.textContent||'').trim();if(text==='Reload'||text==='Reloading...'){clearTop5Cache();emitFeedNotice("");}};
     document.addEventListener('click',onHeaderReload,true);
-    return()=>{window.removeEventListener("screener-feed-notice",onNotice);document.removeEventListener('click',onHeaderReload,true);clearInterval(controlTimer);for(const t of timers)clearTimeout(t);};
+    return()=>{window.removeEventListener("screener-feed-notice",onNotice);document.removeEventListener('click',onHeaderReload,true);};
   },[]);
   return <>
     {feedNotice&&<div style={{position:"sticky",top:0,zIndex:10000,padding:"9px 14px",background:"#fff7ed",borderBottom:"1px solid #fb923c",color:"#9a3412",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span>{feedNotice}</span><button type="button" onClick={forceLiveRefresh} style={{border:"1px solid #fb923c",background:"#fff",color:"#9a3412",borderRadius:8,padding:"5px 9px",fontWeight:900,cursor:"pointer",whiteSpace:"nowrap"}}>Force live refresh</button></div>}
