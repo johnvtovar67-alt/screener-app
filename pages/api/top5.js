@@ -38,6 +38,7 @@ import {
   discoverMarketCycleCandidates,
 } from "../../lib/marketCycleUniverse";
 import { getFullMarketDiscovery } from "../../lib/fullMarketDiscovery";
+import { updatePerformanceLedger } from "../../lib/performanceStore";
 
 export const config = { maxDuration: 60 };
 
@@ -857,7 +858,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
     throw err;
   }
 }
-async function recordPerformance(req, rows, snapshotKey) {
+async function recordPerformance(rows, snapshotKey) {
   const key = String(snapshotKey || "unknown"),
     prior = globalThis[PERFORMANCE_RECORD_KEY];
   if (prior?.key === key && prior.promise) return prior.promise;
@@ -869,14 +870,9 @@ async function recordPerformance(req, rows, snapshotKey) {
     return prior.ok;
   const promise = (async () => {
     try {
-    const proto = req.headers["x-forwarded-proto"] || "https",
-      host = req.headers.host;
-    if (!host) return false;
-    const response = await fetch(`${proto}://${host}/api/performance`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        stocks: rows.map((row) => ({
+      const timestamp = new Date().toISOString();
+      const result = await updatePerformanceLedger(
+        rows.map((row) => ({
           symbol: row.symbol,
           price: row.price,
           currentPrice: row.currentPrice,
@@ -922,22 +918,63 @@ async function recordPerformance(req, rows, snapshotKey) {
               }
             : null,
         })),
-        timestamp: new Date().toISOString(),
-      }),
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!response.ok) throw new Error(`ledger returned ${response.status}`);
-    return true;
-  } catch (e) {
-    console.warn("performance ledger:", e.message);
-    return false;
-  }
+        timestamp,
+      );
+      if (!result.ok) throw new Error(result.warning || `ledger returned ${result.status}`);
+      return true;
+    } catch (e) {
+      console.warn("performance ledger:", e.message);
+      return false;
+    }
   })();
   globalThis[PERFORMANCE_RECORD_KEY] = { key, at: Date.now(), promise, ok: false };
   const ok = await promise;
   globalThis[PERFORMANCE_RECORD_KEY] = { key, at: Date.now(), promise: null, ok };
   return ok;
 }
+
+function serializeStockForClient(row = {}) {
+  const {
+      fundamentalSnapshot: _fundamentalSnapshot,
+      preTradeCheck: _duplicatePreTradeCheck,
+      ...publicRow
+    } = row,
+    recommendation = { ...(row.recommendation || {}) };
+
+  // These objects already exist at the top level. Sending them again inside
+  // recommendation made the broad response exceed 5 MB without adding any
+  // browser-visible evidence or changing a decision.
+  for (const key of [
+    "expertDecision",
+    "riskPlan",
+    "entryTiming",
+    "eventRisk",
+    "preTradeCheck",
+    "thesis",
+    "entryNote",
+    "triggerNeeded",
+    "dominantReason",
+    "actionSummary",
+    "context",
+    "categoryRiskNote",
+    "breakoutStructure",
+  ])
+    delete recommendation[key];
+
+  if (recommendation.gateSummary)
+    recommendation.gateSummary = {
+      entryQualityLabel: recommendation.gateSummary.entryQualityLabel,
+    };
+
+  return {
+    ...publicRow,
+    recommendation,
+    technicalSnapshot: row.technicalSnapshot
+      ? { entryQualityLabel: row.technicalSnapshot.entryQualityLabel }
+      : null,
+  };
+}
+
 export default async function handler(req, res) {
   try {
     res.setHeader("Cache-Control", "no-store, max-age=0");
@@ -961,7 +998,6 @@ export default async function handler(req, res) {
     const snapshotVerificationPaused =
         broadSnapshot.staleFeed || !broadSnapshot.quoteCoverageAdequate,
       performanceObservationRecorded = await recordPerformance(
-      req,
       snapshotVerificationPaused
         ? broadRows.map((row) => ({ ...row, dataFeedSnapshotStale: true }))
         : broadRows,
@@ -994,7 +1030,7 @@ export default async function handler(req, res) {
     return res
       .status(200)
       .json({
-        stocks: rows,
+        stocks: rows.map(serializeStockForClient),
         themeLeadership,
         selectedTheme: {
           key: themeKey,
