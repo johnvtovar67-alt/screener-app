@@ -310,6 +310,11 @@ assert(
     discoverySource.includes('response.headers.get("retry-after")'),
   "Transient FMP throttling must use bounded Retry-After backoff.",
 );
+assert(
+  discoverySource.includes("LIQUIDITY_CONCURRENCY = 1") &&
+    discoverySource.includes("EOD_BULK_SPACING_MS = 1_000"),
+  "Bandwidth-heavy EOD bulk history must bootstrap sequentially with spacing.",
+);
 discoverySource +=
   "\nmodule.exports={aggregateEodLiquidity,isUsListedCommonStock,selectFullMarketCandidates};";
 const box = {
