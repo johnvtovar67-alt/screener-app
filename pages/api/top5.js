@@ -790,6 +790,8 @@ async function buildBroadSnapshot(verificationPass = 0) {
         Number(fullMarketDiscovery.liquidityCoveragePct) || 0,
       fullMarketLiquiditySource:
         fullMarketDiscovery.liquiditySource || null,
+      fullMarketLiquidityProxyFloor:
+        Number(fullMarketDiscovery.liquidityProxyFloor) || null,
       fullMarketLiquidityLookbackSessions:
         fullMarketDiscovery.liquidityLookbackSessions != null &&
         Number.isFinite(Number(fullMarketDiscovery.liquidityLookbackSessions))
@@ -830,6 +832,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
     fullMarketEligibleUniverseSize: cached?.fullMarketEligibleUniverseSize,
     fullMarketLiquidityCoveragePct: cached?.fullMarketLiquidityCoveragePct,
     fullMarketLiquiditySource: cached?.fullMarketLiquiditySource,
+    fullMarketLiquidityProxyFloor: cached?.fullMarketLiquidityProxyFloor,
     fullMarketLiquidityLookbackSessions:
       cached?.fullMarketLiquidityLookbackSessions,
     fullMarketProviderCallCeiling: cached?.fullMarketProviderCallCeiling,
@@ -1029,6 +1032,8 @@ export default async function handler(req, res) {
             broadSnapshot.fullMarketLiquidityCoveragePct,
           fullMarketLiquiditySource:
             broadSnapshot.fullMarketLiquiditySource,
+          fullMarketLiquidityProxyFloor:
+            broadSnapshot.fullMarketLiquidityProxyFloor,
           fullMarketLiquidityLookbackSessions:
             broadSnapshot.fullMarketLiquidityLookbackSessions,
           fullMarketProviderCallCeiling:

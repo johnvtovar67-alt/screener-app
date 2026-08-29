@@ -312,12 +312,13 @@ assert(
 );
 assert(
   !discoverySource.includes("stable/eod-bulk") &&
-    discoverySource.includes('liquiditySource: "provider_average_volume"') &&
+    discoverySource.includes('liquiditySource: "latest_completed_session_proxy"') &&
+    discoverySource.includes("config.minAvgDollarVolume * 0.25") &&
     discoverySource.includes("maxProviderCalls: 3 + DISCOVERY_EXCHANGES.length"),
-  "Interactive full-market discovery must use six bounded calls and must not abuse FMP's infrequently refreshed EOD bulk endpoint.",
+  "Interactive full-market discovery must use six bounded calls, disclose a non-authorizing liquidity proxy, and avoid FMP's infrequently refreshed EOD bulk endpoint.",
 );
 discoverySource +=
-  "\nmodule.exports={isUsListedCommonStock,selectFullMarketCandidates};";
+  "\nmodule.exports={isUsListedCommonStock,passesDiscoveryLiquidity,selectFullMarketCandidates};";
 const box = {
   module: { exports: {} },
   exports: {},
@@ -338,6 +339,7 @@ vm.createContext(box);
 vm.runInContext(discoverySource, box, { filename: "lib/fullMarketDiscovery.js" });
 const {
   isUsListedCommonStock,
+  passesDiscoveryLiquidity,
   selectFullMarketCandidates,
 } = box.module.exports;
 assert(
@@ -369,6 +371,21 @@ const liquid = (symbol, sector, priceAvg50, priceAvg200) => ({
   priceAvg200,
   changesPercentage: 0,
 });
+assert(
+  passesDiscoveryLiquidity(
+    {
+      price: 100,
+      marketCap: 2_000_000_000,
+      currentDollarVolume: 3_000_000,
+    },
+    {
+      minPrice: 5,
+      minMarketCap: 300_000_000,
+      minAvgDollarVolume: 10_000_000,
+    },
+  ),
+  "The breadth pass may admit a candidate on the disclosed 25% session proxy; this must remain separate from the exact deployment gate.",
+);
 const selected = selectFullMarketCandidates(
   [
     liquid("T1", "Technology", 90, 80),
