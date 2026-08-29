@@ -13,7 +13,8 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows};";
+let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
   exports: {},
@@ -33,6 +34,58 @@ const box = {
   Response,
   setTimeout,
   clearTimeout,
+  portfolioDecision: () => null,
+  capitalAllowance: () => null,
+  capitalSignalEligible: () => null,
+  portfolioContributionGate: () => null,
+  portfolioRiskSnapshot: () => null,
+  swingTimeReview: () => null,
+  reunderwriteExistingPosition: () => null,
+  recordWinnerTrim: () => null,
+  winnerTrimGate: () => null,
+  simulatePointInTimePortfolio(dataset, options) {
+    simulatedRuns++;
+    const sessions = dataset.sessions.filter(
+      (session) =>
+        session.date >= options.startDate && session.date <= options.endDate,
+    );
+    const thesisBonus =
+      [
+        "live-policy-control",
+        "anti-chase-static-control",
+        "quality-momentum-selection",
+        "quality-momentum-static",
+        "quality-momentum-risk-balanced",
+      ].indexOf(options.thesisId) + 1;
+    return {
+      metrics: {
+        totalReturnPct: thesisBonus,
+        maxDrawdownPct: -2,
+        sharpe: 1,
+        closedTrades: 1,
+        trades: 2,
+        profitFactor: 1.5,
+        benchmarkReturnPct: 0.5,
+        excessReturnPct: thesisBonus - 0.5,
+        exposureMatchedBenchmarkReturnPct: 0.4,
+        exposureMatchedAlphaPct: thesisBonus - 0.4,
+        averageExposurePct: 50,
+        annualizedTurnoverPct: 40,
+        dailyReturns: sessions.map(() => 0.0001),
+      },
+      trades: [
+        {
+          side: "sell",
+          positionClosed: true,
+          roundTripPnl: thesisBonus,
+        },
+      ],
+      skippedOrders: [],
+      curve: sessions.map((session) => ({ date: session.date })),
+      openPositions: [],
+      endingCash: 100_000 + thesisBonus,
+    };
+  },
 };
 vm.createContext(box);
 vm.runInContext(source, box, { filename: "lib/fmpResearchBacktest.js" });
@@ -41,6 +94,7 @@ const {
   normalizeHistoricalBars,
   buildHistoricalFundamentalRows,
   resolvePriceHistoryContract,
+  runProvisionalWindows,
 } = box.module.exports;
 
 const selected = selectResearchUniverse(
@@ -214,6 +268,10 @@ assert(
     rawSource.includes('status: "collecting"') &&
     rawSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
+    rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
+    rawSource.includes("REPLAY_CANDIDATES_PER_RUN = 1") &&
+    rawSource.includes("compactResearchRun") &&
+    rawSource.includes('stage: "replay"') &&
     rawSource.includes("equivalentAcquisitionSignature") &&
     rawSource.includes("equivalentStatementSignature") &&
     rawSource.includes("eligibleForCapitalClaims: false") &&
@@ -259,22 +317,22 @@ const fallbackRows = Array.from({ length: 520 }, (_, index) => ({
   volume: 1_000_000,
 }));
 const contractCalls = [];
-resolvePriceHistoryContract(
-  {
-    async fetchStable(path) {
-      contractCalls.push(path);
-      if (path === "historical-price-eod/dividend-adjusted") {
-        const error = new Error("FMP endpoint not entitled");
-        error.status = 403;
-        throw error;
-      }
-      return fallbackRows;
+(async () => {
+  const result = await resolvePriceHistoryContract(
+    {
+      async fetchStable(path) {
+        contractCalls.push(path);
+        if (path === "historical-price-eod/dividend-adjusted") {
+          const error = new Error("FMP endpoint not entitled");
+          error.status = 403;
+          throw error;
+        }
+        return fallbackRows;
+      },
     },
-  },
-  "2024-01-01",
-  "2026-01-01",
-)
-  .then((result) => {
+    "2024-01-01",
+    "2026-01-01",
+  );
     assert(
       result.contract.id === "fmp-full-adjclose-v1" &&
         result.benchmarkBars.length >= 500 &&
@@ -284,11 +342,43 @@ resolvePriceHistoryContract(
           "historical-price-eod/dividend-adjusted,historical-price-eod/full",
       "The price-contract preflight must fail over once, preserve adjusted provenance, and never fan out provider probes.",
     );
-    console.log(
-      "FMP RESEARCH BACKTEST PASS: bounded acquisition, filing clocks, adjusted bars, diversified cohort and provisional labeling verified.",
+
+  const mockDataset = {
+    sessions: Array.from({ length: 1008 }, (_, index) => ({
+      date: new Date(Date.UTC(2022, 0, 1 + index))
+        .toISOString()
+        .slice(0, 10),
+    })),
+  };
+  let checkpoint = null;
+  for (let completed = 1; completed <= 5; completed++) {
+    const partial = await runProvisionalWindows(mockDataset, {
+      initial: checkpoint,
+      maxCandidates: 1,
+    });
+    assert(
+      partial.status === "collecting" &&
+        partial.progress.completedCandidates === completed &&
+        partial.progress.remainingCandidates === 5 - completed,
+      "Each replay invocation must durably advance exactly one thesis candidate.",
     );
-  })
-  .catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
+    checkpoint = partial.checkpoint;
+  }
+  const completedReplay = await runProvisionalWindows(mockDataset, {
+    initial: checkpoint,
+    maxCandidates: 1,
   });
+  assert(
+    completedReplay.status === "complete" &&
+      completedReplay.replay.candidates.length === 5 &&
+      completedReplay.replay.windows.folds.length === 2 &&
+      simulatedRuns === 31,
+    "The replay must reuse all checkpointed folds, run final selection once, and never recompute completed candidates.",
+  );
+  console.log(
+    "FMP RESEARCH BACKTEST PASS: bounded acquisition, durable replay, filing clocks, adjusted bars, diversified cohort and provisional labeling verified.",
+  );
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
