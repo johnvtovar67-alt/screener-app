@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-08-29-decision-engine-regression"',
+  'release:"2026-08-29-full-market-walk-forward"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',

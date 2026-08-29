@@ -28,7 +28,9 @@ const requiredFeatures=[
   "partial-universe-verification-pause",
   "bounded-stable-fmp-recovery",
   "mock-trade-allocation-simulation",
-  "clean-performance-session-basis"
+  "clean-performance-session-basis",
+  "full-market-daily-discovery",
+  "point-in-time-walk-forward-research"
 ];
 
 async function blobAvailable(){
@@ -56,6 +58,11 @@ export default async function handler(req,res){
     release:RELEASE_MANIFEST.release,
     canonicalProject:RELEASE_MANIFEST.canonicalProject,
     commit:(process.env.VERCEL_GIT_COMMIT_SHA||"local").slice(0,7),
+    capabilities:{
+      fullMarketDiscovery:true,
+      discoverySchedulerConfigured:Boolean(process.env.CRON_SECRET),
+      pointInTimeResearchRunner:true
+    },
     features:RELEASE_MANIFEST.features
   });
 }

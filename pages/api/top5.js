@@ -37,6 +37,11 @@ import {
   discoverMarketCycles,
   discoverMarketCycleCandidates,
 } from "../../lib/marketCycleUniverse";
+import { getFullMarketDiscovery } from "../../lib/fullMarketDiscovery";
+
+export const config = { maxDuration: 60 };
+
+const MAX_AUTOMATIC_VERIFICATION_PASS = 20;
 const normalizeSymbol = (s) =>
     String(s || "")
       .replace("-", ".")
@@ -611,7 +616,16 @@ async function buildBroadSnapshot(verificationPass = 0) {
   if (cached?.rows && now - cached.ts < CACHE_MS) return cached;
   if (cached?.promise) return cached.promise;
   const promise = (async () => {
-    const strategicSymbols = CORE_OPPORTUNITY_SYMBOLS.filter(
+    const fullMarketDiscovery = await getFullMarketDiscovery({
+        refreshIfStale: true,
+      }),
+      fullMarketCandidates = Array.isArray(fullMarketDiscovery?.candidates)
+        ? fullMarketDiscovery.candidates
+        : [],
+      fullMarketBySymbol = new Map(
+        fullMarketCandidates.map((row) => [normalizeSymbol(row.symbol), row]),
+      ),
+      strategicSymbols = CORE_OPPORTUNITY_SYMBOLS.filter(
         (x) => !EXCLUDED.has(x),
       ),
       proxySymbols = marketCycleProxySymbols(),
@@ -629,11 +643,24 @@ async function buildBroadSnapshot(verificationPass = 0) {
         "No verified quote data available after batch and bounded single-quote fallback.",
       );
     const cycle = discoverMarketCycles(seedNormalized),
-      marketMemberSymbols = marketCycleMemberSymbols().filter(
+      configuredMarketMemberSymbols = marketCycleMemberSymbols().filter(
         (x) => !strategicSymbols.includes(x) && !EXCLUDED.has(x),
       ),
-      marketMemberRaw = marketMemberSymbols.length
-        ? await fetchFmpQuotes(marketMemberSymbols)
+      discoveredSymbols = fullMarketCandidates
+        .map((row) => normalizeSymbol(row.symbol))
+        .filter(
+          (symbol) =>
+            symbol &&
+            !strategicSymbols.includes(symbol) &&
+            !configuredMarketMemberSymbols.includes(symbol) &&
+            !EXCLUDED.has(symbol),
+        ),
+      dynamicSymbols = uniqueSymbols([
+        ...configuredMarketMemberSymbols,
+        ...discoveredSymbols,
+      ]),
+      marketMemberRaw = dynamicSymbols.length
+        ? await fetchFmpQuotes(dynamicSymbols)
         : [],
       marketMemberNormalized = marketMemberRaw
         .map(normalizeQuote)
@@ -641,20 +668,27 @@ async function buildBroadSnapshot(verificationPass = 0) {
       candidateDiscovery = discoverMarketCycleCandidates(
         marketMemberNormalized,
         cycle,
-        { limit: marketMemberSymbols.length, exclude: strategicSymbols },
+        {
+          limit: configuredMarketMemberSymbols.length,
+          exclude: strategicSymbols,
+        },
       ),
       // The intended dynamic universe is the configured member list, not only
       // the names the provider happened to return. Otherwise missing quotes
       // disappear from the denominator and a partial feed falsely looks whole.
-      dynamicSymbols = marketMemberSymbols,
       dynamicTheme = new Map(
         candidateDiscovery.map((x) => [x.symbol, x.marketCycleTheme]),
       );
     const dynamicNormalized = marketMemberNormalized
         .filter((q) => dynamicSymbols.includes(q.symbol))
         .map((q) => ({
+          ...(fullMarketBySymbol.get(q.symbol) || {}),
           ...q,
-          marketCycleTheme: dynamicTheme.get(q.symbol) || "Market Cycle",
+          marketCycleTheme:
+            dynamicTheme.get(q.symbol) ||
+            fullMarketBySymbol.get(q.symbol)?.sector ||
+            "Full Market",
+          fullMarketDiscovered: fullMarketBySymbol.has(q.symbol),
         })),
       normalized = [...seedNormalized, ...dynamicNormalized],
       spy = normalized.find((q) => q.symbol === "SPY"),
@@ -694,10 +728,29 @@ async function buildBroadSnapshot(verificationPass = 0) {
         ),
       ),
     );
-    const eventRiskMap = await fetchEventRiskMap(rows.map((r) => r.symbol));
-    rows = rows.map((r) => applyEventRiskGate(r, eventRiskMap.get(r.symbol)));
     await seedDurableStrongBuyMemory();
     const recentStrongSymbols = new Set(recentStrongBuySymbols()),
+      preTradeCandidates = rows
+        .filter((r) =>
+          ["Buy", "Strong Buy"].includes(
+            String(
+              r.recommendation?.displayLabel ||
+                r.recommendation?.label ||
+                r.action,
+            ),
+          ) || recentStrongSymbols.has(r.symbol),
+        )
+        .map((r) => r.symbol),
+      // Earnings/news/M&A verification is mandatory before deployment, but a
+      // multi-thousand-symbol news URL is neither useful nor safe. Only rows that
+      // can still become actionable receive the bounded pre-trade check.
+      eventRiskMap = await fetchEventRiskMap(preTradeCandidates);
+    rows = rows.map((r) =>
+      eventRiskMap.has(r.symbol)
+        ? applyEventRiskGate(r, eventRiskMap.get(r.symbol))
+        : r,
+    );
+    const
       timingCandidates = rows
         .filter((r) =>
           ["Buy", "Strong Buy"].includes(
@@ -722,6 +775,20 @@ async function buildBroadSnapshot(verificationPass = 0) {
       cycle,
       strategicCount: strategicSymbols.length,
       dynamicCount: dynamicSymbols.length,
+      configuredMarketCycleCount: configuredMarketMemberSymbols.length,
+      fullMarketDiscoveryStatus: fullMarketDiscovery.status || "unavailable",
+      fullMarketDiscoveryStale: Boolean(fullMarketDiscovery.stale),
+      fullMarketDiscoveryBuiltAt: fullMarketDiscovery.builtAt || null,
+      fullMarketSourceUniverseSize:
+        Number(fullMarketDiscovery.sourceUniverseSize) || 0,
+      fullMarketEligibleUniverseSize:
+        Number(fullMarketDiscovery.eligibleUniverseSize) || 0,
+      fullMarketCoarseUniverseCapped: Boolean(
+        fullMarketDiscovery.coarseUniverseCapped ||
+          fullMarketDiscovery.sourceUniverseCapped,
+      ),
+      fullMarketCandidateCount: discoveredSymbols.length,
+      fullMarketDiscoveryConfig: fullMarketDiscovery.config || null,
       universeSize: broadSymbols.length,
       staleFeed: false,
       quoteCoveragePct,
@@ -738,6 +805,15 @@ async function buildBroadSnapshot(verificationPass = 0) {
     cycle: cached?.cycle,
     strategicCount: cached?.strategicCount,
     dynamicCount: cached?.dynamicCount,
+    configuredMarketCycleCount: cached?.configuredMarketCycleCount,
+    fullMarketDiscoveryStatus: cached?.fullMarketDiscoveryStatus,
+    fullMarketDiscoveryStale: cached?.fullMarketDiscoveryStale,
+    fullMarketDiscoveryBuiltAt: cached?.fullMarketDiscoveryBuiltAt,
+    fullMarketSourceUniverseSize: cached?.fullMarketSourceUniverseSize,
+    fullMarketEligibleUniverseSize: cached?.fullMarketEligibleUniverseSize,
+    fullMarketCoarseUniverseCapped: cached?.fullMarketCoarseUniverseCapped,
+    fullMarketCandidateCount: cached?.fullMarketCandidateCount,
+    fullMarketDiscoveryConfig: cached?.fullMarketDiscoveryConfig,
     universeSize: cached?.universeSize,
     promise,
   };
@@ -775,7 +851,52 @@ async function recordPerformance(req, rows, snapshotKey) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        stocks: rows,
+        stocks: rows.map((row) => ({
+          symbol: row.symbol,
+          price: row.price,
+          currentPrice: row.currentPrice,
+          dayChangePct: row.dayChangePct,
+          primaryTheme: row.primaryTheme,
+          theme: row.theme,
+          signalSource: row.signalSource,
+          tradeSource: row.tradeSource,
+          fundamentalDataStatus: row.fundamentalDataStatus,
+          dataFeedSnapshotStale: row.dataFeedSnapshotStale,
+          capitalScore: row.capitalScore,
+          tradeSetupScore: row.tradeSetupScore,
+          expertDecision: row.expertDecision
+            ? { metrics: row.expertDecision.metrics }
+            : null,
+          eventRisk: row.eventRisk
+            ? {
+                status: row.eventRisk.status,
+                manualCheckRequired: row.eventRisk.manualCheckRequired,
+                checkComplete: row.eventRisk.checkComplete,
+              }
+            : null,
+          entryTiming: row.entryTiming
+            ? {
+                available: row.entryTiming.available,
+                asOf: row.entryTiming.asOf,
+              }
+            : null,
+          recommendation: row.recommendation
+            ? {
+                displayLabel: row.recommendation.displayLabel,
+                entryQualityLabel: row.recommendation.entryQualityLabel,
+              }
+            : null,
+          technicalSnapshot: row.technicalSnapshot
+            ? { entryQualityLabel: row.technicalSnapshot.entryQualityLabel }
+            : null,
+          finalDecision: row.finalDecision
+            ? {
+                action: row.finalDecision.action,
+                relativeCapitalScore:
+                  row.finalDecision.relativeCapitalScore,
+              }
+            : null,
+        })),
         timestamp: new Date().toISOString(),
       }),
       signal: AbortSignal.timeout(5000),
@@ -798,7 +919,7 @@ export default async function handler(req, res) {
     const themeKey = String(req.query.theme || "opportunities").toLowerCase(),
       config = getThemeConfig(themeKey),
       verificationPass = Math.min(
-        4,
+        MAX_AUTOMATIC_VERIFICATION_PASS,
         Math.max(0, Math.floor(Number(req.query.verificationPass) || 0)),
       ),
       broadSnapshot = await buildBroadSnapshot(verificationPass),
@@ -860,10 +981,28 @@ export default async function handler(req, res) {
         meta: {
           mode: "expert_decision_v14_resilient_fmp_historical_entry_timing",
           universeDesign:
-            "strategic themes plus every configured market-cycle constituent; lightweight quote discovery is universal while fresh capital must independently pass verified fundamentals, event risk, historical entry timing, and relative capital ranking",
+            "all liquid U.S.-listed common stocks are considered by a bounded daily discovery pass; the resulting shortlist, strategic themes, and configured market-cycle constituents must independently pass live quotes, verified fundamentals, event risk, historical entry timing, and relative capital ranking",
           universeSize: broadSnapshot.universeSize,
           strategicUniverseSize: broadSnapshot.strategicCount,
           dynamicUniverseSize: broadSnapshot.dynamicCount,
+          configuredMarketCycleSize:
+            broadSnapshot.configuredMarketCycleCount,
+          fullMarketDiscoveryStatus:
+            broadSnapshot.fullMarketDiscoveryStatus,
+          fullMarketDiscoveryStale:
+            broadSnapshot.fullMarketDiscoveryStale,
+          fullMarketDiscoveryAsOf:
+            broadSnapshot.fullMarketDiscoveryBuiltAt,
+          fullMarketSourceUniverseSize:
+            broadSnapshot.fullMarketSourceUniverseSize,
+          fullMarketEligibleUniverseSize:
+            broadSnapshot.fullMarketEligibleUniverseSize,
+          fullMarketCoarseUniverseCapped:
+            broadSnapshot.fullMarketCoarseUniverseCapped,
+          fullMarketCandidateCount:
+            broadSnapshot.fullMarketCandidateCount,
+          fullMarketLiquidityRules:
+            broadSnapshot.fullMarketDiscoveryConfig,
           marketCycleRadar: broadSnapshot.cycle.groups.map((g) => ({
             name: g.name,
             proxy: g.proxy,

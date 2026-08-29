@@ -1,0 +1,448 @@
+const fs = require("fs");
+const vm = require("vm");
+const assert = (condition, message) => {
+  if (!condition) throw new Error(message);
+};
+const { createResearchModuleLoader } = require("./research-module-loader.cjs");
+
+const loader = createResearchModuleLoader(process.cwd());
+const {
+  createWalkForwardFolds,
+  runWalkForwardBacktest,
+  simulatePointInTimePortfolio,
+  validatePointInTimeDataset,
+} = loader.load("lib/walkForwardBacktest.js");
+const { compilePointInTimeSignals } = loader.load(
+  "lib/historicalSignalEvaluator.js",
+);
+const {
+  capitalAllowance,
+  capitalSignalEligible,
+  portfolioContributionGate,
+  portfolioRiskSnapshot,
+} = loader.load("lib/portfolioGovernor.js");
+
+function metadata(overrides = {}) {
+  return {
+    schema: "screener-pit-v1",
+    pointInTime: true,
+    survivorshipBiasFree: true,
+    universeMembershipPointInTime: true,
+    delistedSecuritiesIncluded: true,
+    delistingReturnsComplete: true,
+    corporateActionsAdjusted: true,
+    fundamentalsPointInTime: true,
+    fundamentalValuesRevisionSafe: true,
+    eventRiskPointInTime: true,
+    materialNewsHistoryComplete: true,
+    portfolioDecisionInputsComplete: true,
+    capitalPolicyInputsComplete: true,
+    fundamentalAvailabilityField: "acceptedDate",
+    dataVendorEntitlementsVerified: true,
+    benchmarkSymbol: "SPY",
+    ...overrides,
+  };
+}
+
+function signal(date, action, extra = {}) {
+  const decisionAt = `${date}T20:00:00.000Z`;
+  return {
+    symbol: "AAA",
+    action,
+    score: 85,
+    listedAt: "2020-01-02",
+    delistedAt: null,
+    marketAvailableAt: decisionAt,
+    fundamentalsAvailableAt: `${date}T12:00:00.000Z`,
+    eventRiskAvailableAt: decisionAt,
+    fundamentalDataVerified: true,
+    fundamentalRevisionSafe: true,
+    eventRiskVerified: true,
+    eventHistoryComplete: true,
+    entryTimingVerified: true,
+    riskPlan: { invalidationPrice: 80 },
+    recommendation: {},
+    ...extra,
+  };
+}
+
+function session(date, action, price = 100, extra = {}) {
+  const decisionAt = `${date}T20:00:00.000Z`;
+  return {
+    date,
+    decisionAt,
+    sourceUniverseCount: 1_500,
+    historicalDelistedMembership: 12,
+    prices: [
+      { symbol: "AAA", open: price, high: price + 2, low: price - 2, close: price, adjusted: true },
+      { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+    ],
+    signals: action ? [signal(date, action)] : [],
+    ...extra,
+  };
+}
+
+const buyDataset = {
+  metadata: metadata(),
+  sessions: [
+    session("2026-08-24", "Buy", 100),
+    session("2026-08-25", "Buy", 101),
+    session("2026-08-26", "Buy", 102),
+  ],
+};
+let run = simulatePointInTimePortfolio(buyDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+});
+assert(
+  run.trades.length === 1 && run.trades[0].date === "2026-08-26",
+  "An ordinary Buy must execute at the next session open only after two distinct Buy sessions.",
+);
+
+const strongDataset = {
+  metadata: metadata(),
+  sessions: [
+    session("2026-08-24", "Strong Buy", 100),
+    session("2026-08-25", "Strong Buy", 103),
+  ],
+};
+run = simulatePointInTimePortfolio(strongDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+});
+assert(
+  run.trades[0]?.date === "2026-08-25" && run.trades[0]?.price === 103,
+  "A verified Strong Buy must remain immediate but fill no earlier than the next session open.",
+);
+
+const governedStrongDataset = JSON.parse(JSON.stringify(strongDataset));
+governedStrongDataset.sessions[0].signals[0].price = 100;
+governedStrongDataset.sessions[0].signals[0].riskPlan = {
+  invalidationPrice: 80,
+  firstTrimPrice: 150,
+};
+let governorCalls = 0;
+run = simulatePointInTimePortfolio(governedStrongDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+  capitalAllowance: (input) => {
+    governorCalls++;
+    return capitalAllowance(input);
+  },
+  capitalSignalEligible: (input) => {
+    governorCalls++;
+    return capitalSignalEligible(input);
+  },
+  portfolioContributionGate: (input) => {
+    governorCalls++;
+    return portfolioContributionGate(input);
+  },
+  portfolioRiskSnapshot: (input) => {
+    governorCalls++;
+    return portfolioRiskSnapshot(input);
+  },
+});
+assert(
+  governorCalls >= 4 && run.trades.some((trade) => trade.side === "buy"),
+  "The research simulator must route entries through the production persistence, sizing, factor-risk and contribution gates.",
+);
+
+const pausedDataset = {
+  metadata: metadata(),
+  sessions: [
+    session("2026-08-24", "Buy", 100),
+    session("2026-08-25", "Paused", 100),
+    session("2026-08-26", "Buy", 101),
+    session("2026-08-27", "Buy", 102),
+  ],
+};
+run = simulatePointInTimePortfolio(pausedDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+});
+assert(
+  run.trades[0]?.date === "2026-08-27",
+  "A provider pause must preserve, not manufacture or erase, Buy persistence.",
+);
+
+let callbackDate = null;
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      session("2026-08-25", "Watch", 100),
+      session("2026-08-26", "Watch", 95),
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 0,
+    positionDecision: ({ now }) => {
+      callbackDate = now.toISOString().slice(0, 10);
+      return { action: "Exit" };
+    },
+  },
+);
+assert(
+  callbackDate === "2026-08-25" &&
+    run.trades.some((trade) => trade.side === "sell" && trade.date === "2026-08-26"),
+  "Production portfolio decisions must receive the historical clock and execute one session later.",
+);
+
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      session("2026-08-25", "Watch", 100),
+      {
+        ...session("2026-08-26", null, 100),
+        corporateActions: [
+          { symbol: "AAA", type: "delisting", valuePerShare: 12 },
+        ],
+      },
+    ],
+  },
+  { minimumTrade: 1, initialCapital: 10_000, slippageBps: 0 },
+);
+assert(
+  run.trades.some(
+    (trade) =>
+      trade.side === "sell" &&
+      trade.reason === "delisting-outcome" &&
+      trade.price === 12,
+  ) && run.openPositions.length === 0,
+  "A delisted holding must realize the supplied recovery value instead of retaining its last mark.",
+);
+
+const lookAhead = JSON.parse(JSON.stringify(buyDataset));
+lookAhead.sessions[0].signals[0].fundamentalsAvailableAt =
+  "2026-08-25T12:00:00.000Z";
+assert(
+  !validatePointInTimeDataset(lookAhead, { minimumSessions: 2 }).valid,
+  "The research contract must reject future-known fundamentals.",
+);
+const restated = JSON.parse(JSON.stringify(buyDataset));
+restated.metadata.fundamentalValuesRevisionSafe = false;
+assert(
+  !validatePointInTimeDataset(restated, { minimumSessions: 2 }).valid,
+  "Retrospectively restated fundamentals must not be labeled point-in-time research.",
+);
+assert(
+  createWalkForwardFolds(
+    Array.from({ length: 756 }, (_, index) =>
+      new Date(Date.UTC(2020, 0, index + 1)).toISOString().slice(0, 10),
+    ),
+  ).length === 1,
+  "A default walk-forward fold must keep 504 train, 126 validation and 126 untouched test sessions.",
+);
+const foldDates = [];
+for (let cursor = new Date("2020-01-02T12:00:00.000Z"); foldDates.length < 756; cursor = new Date(cursor.getTime() + 86_400_000)) {
+  if (![0, 6].includes(cursor.getUTCDay()))
+    foldDates.push(cursor.toISOString().slice(0, 10));
+}
+const endToEnd = runWalkForwardBacktest(
+  {
+    metadata: metadata(),
+    sessions: foldDates.map((date, index) => ({
+      date,
+      decisionAt: `${date}T20:00:00.000Z`,
+      sourceUniverseCount: 1_500,
+      historicalDelistedMembership: 10,
+      corporateActions:
+        index === 0
+          ? [
+              {
+                symbol: "OLD",
+                type: "delisting",
+                valuePerShare: 0,
+              },
+            ]
+          : [],
+      prices: [
+        {
+          symbol: "SPY",
+          open: 300 + index * 0.1,
+          high: 302 + index * 0.1,
+          low: 298 + index * 0.1,
+          close: 301 + index * 0.1,
+          adjusted: true,
+        },
+      ],
+      signals: [],
+    })),
+  },
+  { positionDecision: () => ({ action: "Hold" }), parameterGrid: [{}] },
+);
+assert(
+  endToEnd.foldCount === 1 &&
+    endToEnd.outOfSample.sessions === 126 &&
+    endToEnd.methodology.parameterSelectionUsesTestData === false &&
+    endToEnd.claimStatus === "mechanics-only",
+  "The complete runner must reserve and report the untouched out-of-sample fold.",
+);
+
+let discoverySource = fs
+  .readFileSync("lib/fullMarketDiscovery.js", "utf8")
+  .replace(/^import .*$/gm, "")
+  .replace(/export const /g, "const ")
+  .replace(/export function /g, "function ")
+  .replace(/export async function /g, "async function ");
+discoverySource +=
+  "\nmodule.exports={isUsListedCommonStock,selectFullMarketCandidates};";
+const box = {
+  module: { exports: {} },
+  exports: {},
+  process: { env: {} },
+  console,
+  Date,
+  Math,
+  Number,
+  String,
+  Object,
+  Array,
+  Set,
+  Map,
+  Boolean,
+  RegExp,
+};
+vm.createContext(box);
+vm.runInContext(discoverySource, box, { filename: "lib/fullMarketDiscovery.js" });
+const { isUsListedCommonStock, selectFullMarketCandidates } = box.module.exports;
+assert(
+  isUsListedCommonStock({
+    symbol: "REAL",
+    companyName: "Real Common Stock Inc",
+    exchangeShortName: "NYSE",
+    isEtf: false,
+    isFund: false,
+    isActivelyTrading: true,
+  }) &&
+    !isUsListedCommonStock({
+      symbol: "FAKE",
+      companyName: "Fake Bond ETF",
+      exchangeShortName: "NASDAQ",
+      isEtf: true,
+    }),
+  "Full-market discovery must admit common stocks and reject packaged products.",
+);
+const liquid = (symbol, sector, priceAvg50, priceAvg200) => ({
+  symbol,
+  sector,
+  price: 100,
+  marketCap: 2_000_000_000,
+  avgVolume: 500_000,
+  averageDollarVolume: 50_000_000,
+  volume: 500_000,
+  priceAvg50,
+  priceAvg200,
+  changesPercentage: 0,
+});
+const selected = selectFullMarketCandidates(
+  [
+    liquid("T1", "Technology", 90, 80),
+    liquid("T2", "Technology", 91, 81),
+    liquid("T3", "Technology", 92, 82),
+    liquid("T4", "Technology", 93, 83),
+    liquid("E1", "Energy", 120, 115),
+    liquid("H1", "Healthcare", 121, 116),
+  ],
+  {
+    minPrice: 5,
+    minMarketCap: 300_000_000,
+    minAvgDollarVolume: 10_000_000,
+    maxCandidates: 4,
+    perSectorFloor: 1,
+  },
+);
+assert(
+  new Set(selected.map((row) => row.sector)).size === 3,
+  "The daily shortlist must preserve represented sectors before global-score fill.",
+);
+
+const historicalDates = [];
+for (let cursor = new Date("2026-04-01T12:00:00.000Z"); historicalDates.length < 55; cursor = new Date(cursor.getTime() + 86_400_000)) {
+  if (![0, 6].includes(cursor.getUTCDay()))
+    historicalDates.push(cursor.toISOString().slice(0, 10));
+}
+const compiled = compilePointInTimeSignals({
+  metadata: {
+    ...metadata(),
+    source: "synthetic point-in-time compiler regression",
+  },
+  securities: [
+    {
+      symbol: "AAA",
+      name: "AAA Common Stock",
+      sector: "Technology",
+      listedAt: "2020-01-02",
+      isEtf: false,
+      isFund: false,
+    },
+    {
+      symbol: "OLD",
+      name: "Old Common Stock",
+      sector: "Industrials",
+      listedAt: "2020-01-02",
+      delistedAt: historicalDates[30],
+      isEtf: false,
+      isFund: false,
+    },
+  ],
+  fundamentals: [
+    {
+      symbol: "AAA",
+      availableAt: "2026-03-15T12:00:00.000Z",
+      acceptedDate: "2026-03-15T12:00:00.000Z",
+      sharesOutstanding: 100_000_000,
+      grossMargin: 60,
+      operatingMargin: 25,
+      debtToEquity: 0.2,
+      pe: 20,
+      pb: 3,
+      currentRatio: 2,
+      quickRatio: 1.5,
+      freeCashFlowYield: 5,
+      revenueGrowth: 15,
+      earningsGrowth: 18,
+      fundamentalDataStatus: "complete",
+      fundamentalDataVerified: true,
+      revisionSafe: true,
+    },
+  ],
+  events: [],
+  sessions: historicalDates.map((date, index) => {
+    const decisionAt = `${date}T20:00:00.000Z`;
+    const close = 80 + index * 0.35;
+    return {
+      date,
+      decisionAt,
+      marketAvailableAt: decisionAt,
+      fundamentalCoverageAsOf: decisionAt,
+      eventCoverageAsOf: decisionAt,
+      eventHistoryComplete: true,
+      prices: [
+        { symbol: "AAA", open: close - 0.1, high: close + 0.5, low: close - 0.5, close, volume: 2_000_000, adjusted: true },
+        { symbol: "OLD", open: 20, high: 21, low: 19, close: 20, volume: 1_000_000, adjusted: true },
+        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500 + index * 0.2, volume: 50_000_000, adjusted: true },
+        { symbol: "QQQ", open: 450, high: 452, low: 448, close: 450 + index * 0.25, volume: 40_000_000, adjusted: true },
+      ],
+    };
+  }),
+});
+assert(
+  compiled.sessions.length === historicalDates.length &&
+    compiled.sessions.at(-1).signals.some((row) => row.symbol === "AAA") &&
+    compiled.sessions[0].historicalDelistedMembership === 1,
+  "Historical compilation must replay the production stack and retain delisted membership evidence.",
+);
+
+console.log(
+  "FULL MARKET + WALK-FORWARD PASS: breadth, PIT rejection, session persistence, next-open fills, historical clock and sector coverage verified.",
+);

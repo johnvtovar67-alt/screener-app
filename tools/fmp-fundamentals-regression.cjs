@@ -28,7 +28,8 @@ assert(src.includes('/stable/ratios-ttm?symbol='),'Stable ratios endpoint must r
 assert(src.includes('/stable/income-statement-growth?symbol='),'Stable growth endpoint must remain available');
 assert(src.includes('/stable/income-statement?symbol='),'Stable statement fallback must remain available');
 assert(!src.includes('/api/v3/'),'Retired v3 endpoints must not return');
-assert(!src.includes('ratios-ttm-bulk'),'Restricted bulk-ratios endpoint must not return');
+assert(src.includes('refreshAllFmpFundamentalsBulk')&&src.indexOf('ratios-ttm-bulk')>src.indexOf('refreshAllFmpFundamentalsBulk'),'Bulk ratios may exist only in the isolated scheduled cache warmer, never the interactive per-symbol recovery path');
+assert(src.includes('providerCalls:1+quarters.length')&&src.includes('mapLimited(quarters,2'),'Bulk cache warming must have an explicit request count and bounded partition concurrency');
 assert(src.includes('setCooldown'),'Rate/subscription failures must activate cooldown rather than request storms');
 assert(src.includes('MAX_NEW_SYMBOLS_PER_RUN=24'),'A cold broad refresh must keep fundamental fanout well below the Premium rate ceiling');
 assert(src.includes('missing.slice(0,MAX_NEW_SYMBOLS_PER_RUN)'),'Only the bounded missing-symbol slice may reach FMP');
@@ -42,8 +43,9 @@ assert(src.includes('fundamentalRefreshDeferred:true'),'Previously verified fund
 const top5=fs.readFileSync('pages/api/top5.js','utf8');
 assert(/fundamentalsComplete\s*===\s*0\s*&&\s*fundamentalsUnavailable\s*>\s*0\s*\?\s*"unavailable"/.test(top5),'Deferred breadth must not be misreported as a provider-wide fundamental outage');
 assert(top5.includes('rotatedFundamentalPriority')&&top5.includes('verificationPass'),'Automatic verification passes must rotate through the bounded priority queue');
+assert(top5.includes('MAX_AUTOMATIC_VERIFICATION_PASS = 20')&&top5.includes('Math.min(\n        MAX_AUTOMATIC_VERIFICATION_PASS'),'The API must not silently clamp the expanded-universe verification loop below the UI recovery budget');
 const page=fs.readFileSync('pages/index.js','utf8');
 assert(page.includes('automaticVerificationPass')&&page.includes('75000'),'Degraded fundamental coverage must trigger bounded, spaced automatic rechecks');
-assert(page.includes('automaticVerificationPass.current>=9'),'Automatic recovery must have enough bounded passes to cover the full broad universe without manual reloads');
+assert(page.includes('automaticVerificationPass.current>=20'),'Automatic fallback recovery must have enough bounded passes to cover the expanded broad universe without manual reloads');
 assert(src.includes('statementFallback:Boolean(fallback?.sourceAvailable)'),'Fundamental source diagnostics must expose statement fallback use');
 console.log('FMP FUNDAMENTALS REGRESSION PASS: stable-only, cooldown, low fanout, and fallback checks passed');
