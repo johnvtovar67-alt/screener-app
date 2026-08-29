@@ -318,7 +318,7 @@ assert(
   "Interactive full-market discovery must use six bounded calls, avoid inferring liquidity from rollover-prone breadth data, and never call FMP's infrequently refreshed EOD bulk endpoint.",
 );
 discoverySource +=
-  "\nmodule.exports={isUsListedCommonStock,passesDiscoveryResearchFloor,selectFullMarketCandidates};";
+  "\nmodule.exports={isUsListedCommonStock,mergeDiscoveryRow,passesDiscoveryResearchFloor,selectFullMarketCandidates};";
 const box = {
   module: { exports: {} },
   exports: {},
@@ -339,6 +339,7 @@ vm.createContext(box);
 vm.runInContext(discoverySource, box, { filename: "lib/fullMarketDiscovery.js" });
 const {
   isUsListedCommonStock,
+  mergeDiscoveryRow,
   passesDiscoveryResearchFloor,
   selectFullMarketCandidates,
 } = box.module.exports;
@@ -358,6 +359,16 @@ assert(
       isEtf: true,
     }),
   "Full-market discovery must admit common stocks and reject packaged products.",
+);
+const safelyMerged = mergeDiscoveryRow(
+  { symbol: "SAFE", price: 50, marketCap: 2_000_000_000, volume: 100_000 },
+  { symbol: "SAFE", price: 51, marketCap: null, volume: null },
+);
+assert(
+  safelyMerged.price === 51 &&
+    safelyMerged.marketCap === 2_000_000_000 &&
+    safelyMerged.volume === 100_000,
+  "Null secondary quote fields must never erase verified screener market cap or volume.",
 );
 const liquid = (symbol, sector, priceAvg50, priceAvg200) => ({
   symbol,
