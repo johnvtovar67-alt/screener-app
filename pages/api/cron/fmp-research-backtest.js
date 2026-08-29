@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { runFmpResearchBacktest } from "../../../lib/fmpResearchBacktest";
 
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 800 };
 
 function authorized(req) {
   const secret = process.env.CRON_SECRET;

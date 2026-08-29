@@ -249,7 +249,9 @@ assert(
     rawSource.includes('path: "historical-price-eod/full"') &&
     rawSource.includes("resolvePriceHistoryContract") &&
     rawSource.includes("PRICE_ACQUISITION_SCHEMA = 3") &&
-    rawSource.includes("RUNNING_TTL_MS = 6 * 60 * 1000") &&
+    rawSource.includes("RUNNING_TTL_MS = 15 * 60 * 1000") &&
+    rawSource.includes("existing?.runnerSchema === REPLAY_CHECKPOINT_SCHEMA") &&
+    rawSource.includes("runnerSchema: REPLAY_CHECKPOINT_SCHEMA") &&
     rawSource.includes("existing?.runClaimedAt") &&
     rawSource.includes("runClaimedAt: new Date(now).toISOString()") &&
     rawSource.includes("exhaustedSymbols") &&
@@ -269,7 +271,7 @@ assert(
     rawSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
-    rawSource.includes("REPLAY_WINDOWS_PER_RUN = 1") &&
+    rawSource.includes("REPLAY_WINDOWS_PER_RUN = 3") &&
     rawSource.includes("compactResearchRun") &&
     rawSource.includes('stage: "replay"') &&
     rawSource.includes("equivalentAcquisitionSignature") &&
@@ -293,6 +295,7 @@ const preflight = fs.readFileSync("tools/fmp-research-preflight.cjs", "utf8");
 assert(
   cron.includes("timingSafeEqual") &&
     cron.includes("CRON_SECRET") &&
+    cron.includes("maxDuration: 800") &&
     schedule.crons.some(
       (row) => row.path === "/api/cron/fmp-research-backtest",
     ),
@@ -351,10 +354,10 @@ const contractCalls = [];
     })),
   };
   let checkpoint = null;
-  for (let completed = 1; completed <= 30; completed++) {
+  for (let completed = 3; completed <= 30; completed += 3) {
     const partial = await runProvisionalWindows(mockDataset, {
       initial: checkpoint,
-      maxWindows: 1,
+      maxWindows: 3,
     });
     assert(
       partial.status === "collecting" &&
@@ -362,13 +365,13 @@ const contractCalls = [];
         partial.progress.remainingWindows === 30 - completed &&
         partial.progress.completedFolds === Math.floor(completed / 3) &&
         partial.progress.completedCandidates === Math.floor(completed / 6),
-      "Each replay invocation must durably advance exactly one chronological simulation window.",
+      "Each replay invocation must durably advance its bounded chronological simulation windows.",
     );
     checkpoint = partial.checkpoint;
   }
   const completedReplay = await runProvisionalWindows(mockDataset, {
     initial: checkpoint,
-    maxWindows: 1,
+    maxWindows: 3,
   });
   assert(
     completedReplay.status === "complete" &&
