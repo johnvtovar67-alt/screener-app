@@ -15,6 +15,12 @@ const {
 const { compilePointInTimeSignals } = loader.load(
   "lib/historicalSignalEvaluator.js",
 );
+assert(
+  fs.readFileSync("lib/historicalSignalEvaluator.js", "utf8").includes(
+    "maxCandidates: 500",
+  ),
+  "Historical research must use the same 500-name discovery shortlist as production.",
+);
 const {
   capitalAllowance,
   capitalSignalEligible,
