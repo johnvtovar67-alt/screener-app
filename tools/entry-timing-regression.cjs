@@ -1,10 +1,12 @@
 const fs=require('fs'),vm=require('vm');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 let src=fs.readFileSync('lib/entryTiming.js','utf8').replace(/^import .*$/gm,'').replace(/export function /g,'function ').replace(/export async function /g,'async function ');
-src+='\nmodule.exports={analyzeEntryTiming,applyEntryTimingGate};';
-const box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Date,AbortController,setTimeout,clearTimeout,latestCompletedMarketSessionDay:()=> '2026-08-28'};vm.createContext(box);vm.runInContext(src,box);const{analyzeEntryTiming,applyEntryTimingGate}=box.module.exports;
+src+='\nmodule.exports={analyzeEntryTiming,attachRelativeStrengthContext,applyEntryTimingGate};';
+const box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Date,AbortController,setTimeout,clearTimeout,latestCompletedMarketSessionDay:()=> '2026-08-28'};vm.createContext(box);vm.runInContext(src,box);const{analyzeEntryTiming,attachRelativeStrengthContext,applyEntryTimingGate}=box.module.exports;
 const bars=closes=>closes.map((close,i)=>({date:`2026-07-${String(i+1).padStart(2,'0')}`,open:close*.997,high:close*1.01,low:close*.99,close,volume:1000000}));
 let slow=[];for(let i=0;i<40;i++)slow.push(100+i*.45+(i%4===0?-.35:.15));let t=analyzeEntryTiming('GOOD',bars(slow));assert(t.available&&t.pass,'gradual trend should pass historical timing');
+const history=(start,growth)=>Array.from({length:221},(_,i)=>({date:`D${i}`,open:start*Math.pow(1+growth,i),high:start*Math.pow(1+growth,i)*1.01,low:start*Math.pow(1+growth,i)*.99,close:start*Math.pow(1+growth,i),volume:1000000}));
+const relative=attachRelativeStrengthContext(t,history(100,.0015),history(100,.0005),history(100,.0008));assert(relative.relativeStrengthVerified&&relative.alpha60VsSpy>5&&relative.alpha60VsQqq>4&&relative.benchmarkRegime==='bullish','relative strength must measure point-in-time 20/60/120-session alpha versus both SPY and QQQ');
 let chase=[];for(let i=0;i<34;i++)chase.push(100+i*.2);chase.push(107,110,113,116,119,122);t=analyzeEntryTiming('CHASE',bars(chase));assert(!t.pass&&t.chase,'rapid 3/5-day rebound must be blocked');
 let fall=[];for(let i=0;i<32;i++)fall.push(120+i*.05);fall.push(119,117,114,111,108,105,102,99);t=analyzeEntryTiming('FALL',bars(fall));assert(!t.pass&&t.fallingKnife,'sharp short-term deterioration must be blocked');
 assert(t.liquidityVerified&&t.liquidityPass&&t.liquiditySessions===20,'actionable history must compute and retain an exact trailing-20-session dollar-liquidity check');
