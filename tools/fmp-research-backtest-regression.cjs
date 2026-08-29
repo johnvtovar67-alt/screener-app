@@ -141,9 +141,13 @@ assert(
     rawSource.includes('"cash-flow-statement-bulk"') &&
     rawSource.includes("DEFAULT_SYMBOL_LIMIT = 120") &&
     rawSource.includes("MAX_SYMBOL_LIMIT = 250") &&
+    rawSource.includes("REQUEST_START_SPACING_MS = 300") &&
+    rawSource.includes("PRICE_HISTORY_CONCURRENCY = 3") &&
+    rawSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
+    rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
     rawSource.includes("eligibleForCapitalClaims: false") &&
     !rawSource.includes("api/v3"),
-  "The research job must stay bounded, stable-endpoint-only and incapable of presenting provisional results as capital proof.",
+  "The research job must stay bounded, paced, checkpointed, stable-endpoint-only and incapable of presenting provisional results as capital proof.",
 );
 
 const cron = fs.readFileSync(
