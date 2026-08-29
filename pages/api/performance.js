@@ -1,4 +1,5 @@
 import { put, list, get } from '@vercel/blob';
+import {marketObservationSessionDay} from '../../lib/marketSession';
 
 export const config={api:{bodyParser:{sizeLimit:'8mb'}}};
 const STORE='screener-performance-ledger.json';
@@ -39,7 +40,7 @@ export default async function handler(req,res){
   const ledger=await readLedger();
   if(req.method==='GET')return res.status(200).json({records:ledger.records.slice(-1000),summary:summarize(ledger.records),warning:ledger.warning||null,persistentStorage:!ledger.warning});
   if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
-  const rows=Array.isArray(req.body?.stocks)?req.body.stocks:[],now=req.body?.timestamp||new Date().toISOString(),today=dayKey(now);let records=[...ledger.records];
+  const rows=Array.isArray(req.body?.stocks)?req.body.stocks:[],now=req.body?.timestamp||new Date().toISOString(),today=marketObservationSessionDay(now)||dayKey(now);let records=[...ledger.records];
   for(const s of rows){
     const symbol=String(s.symbol||s.ticker||'').toUpperCase(),action=s.finalDecision?.action||s.recommendation?.displayLabel||s.action,price=n(s.price||s.currentPrice);if(!symbol||!price)continue;
     for(const r of records.filter(x=>x.symbol===symbol&&x.recordType!=='state'&&['Buy','Strong Buy'].includes(x.action))){
@@ -51,8 +52,8 @@ export default async function handler(req,res){
     }
     if(['Buy','Strong Buy'].includes(action)&&!records.some(r=>r.recordType!=='state'&&r.symbol===symbol&&r.day===today&&r.action===action))records.push({id:`${today}:${symbol}:${action}`,recordType:'signal',day:today,timestamp:now,symbol,action,price,theme:s.primaryTheme||s.theme||'Other',source:s.signalSource||s.tradeSource||'screener',capitalScore:n(s.finalDecision?.relativeCapitalScore||s.capitalScore),tradeSetupScore:n(s.tradeSetupScore),entryQuality:s.recommendation?.entryQualityLabel||s.technicalSnapshot?.entryQualityLabel||null,dayChangePct:n(s.dayChangePct),vs50:n(s.expertDecision?.metrics?.vs50||s.recommendation?.expertDecision?.metrics?.vs50),extension:n(s.expertDecision?.metrics?.extension||s.recommendation?.expertDecision?.metrics?.extension),pathMaePct:0,pathMfePct:0,lastMarkPct:0,lastMarkAt:now,daysObserved:0,forward:{}});
     const metrics=s.expertDecision?.metrics||s.recommendation?.expertDecision?.metrics||{},fundamentalStatus=String(s.fundamentalDataStatus||s.recommendation?.fundamentalDataStatus||'').toLowerCase(),systemPaused=action==='Watch'&&(['deferred','unavailable'].includes(fundamentalStatus)||metrics.fundamentalsPass===false||metrics.quoteFreshnessPass===false),stateAction=systemPaused?'Paused':action;
-    const stateRows=records.filter(r=>r.recordType==='state'&&r.signalState===true&&r.symbol===symbol),lastState=stateRows[stateRows.length-1],actionable=['Buy','Strong Buy'].includes(stateAction),dailyConfirmation=actionable&&lastState?.day!==today;
-    if(['Strong Buy','Buy','Watch','Avoid','Paused'].includes(stateAction)&&(!lastState||lastState.action!==stateAction||dailyConfirmation))records.push({id:`state:${now}:${symbol}:${stateAction}`,recordType:'state',signalState:true,day:today,timestamp:now,symbol,action:stateAction,observedAction:action,price,theme:s.primaryTheme||s.theme||'Other',source:'screener-state',pauseReason:systemPaused?'Required market/fundamental data is temporarily incomplete.':null});
+    const stateRows=records.filter(r=>r.recordType==='state'&&r.signalState===true&&r.symbol===symbol),lastState=stateRows[stateRows.length-1],lastSessionDay=lastState?.sessionDay||marketObservationSessionDay(lastState?.timestamp||lastState?.day),actionable=['Buy','Strong Buy'].includes(stateAction),dailyConfirmation=actionable&&lastSessionDay!==today;
+    if(['Strong Buy','Buy','Watch','Avoid','Paused'].includes(stateAction)&&(!lastState||lastState.action!==stateAction||dailyConfirmation))records.push({id:`state:${now}:${symbol}:${stateAction}`,recordType:'state',signalState:true,day:today,sessionDay:today,timestamp:now,symbol,action:stateAction,observedAction:action,price,theme:s.primaryTheme||s.theme||'Other',source:'screener-state',pauseReason:systemPaused?'Required market/fundamental data is temporarily incomplete.':null});
   }
   records=records.slice(-10000);const write=await writeLedger(records);if(!write.ok)console.warn('performance ledger persistence:',write.warning);
   return res.status(200).json({persisted:write.ok,records:records.length,summary:summarize(records),warning:ledger.warning||write.warning||null,persistentStorage:write.ok});

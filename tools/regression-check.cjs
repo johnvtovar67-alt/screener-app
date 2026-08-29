@@ -2,14 +2,15 @@ const fs=require('fs');
 const vm=require('vm');
 const assert=(cond,msg)=>{if(!cond)throw new Error(msg)};
 
-function loadPureModule(path,names){
-  let src=fs.readFileSync(path,'utf8').replace(/export function /g,'function ');
+function loadPureModule(path,names,globals={}){
+  let src=fs.readFileSync(path,'utf8').replace(/^import .*$/gm,'').replace(/export function /g,'function ');
   src+=`\nmodule.exports={${names.join(',')}};`;
-  const sandbox={module:{exports:{}},exports:{},console,Date,Math,Number,String,Object,Array,Set,Map,Boolean,RegExp};
+  const sandbox={module:{exports:{}},exports:{},console,Date,Math,Number,String,Object,Array,Set,Map,Boolean,RegExp,...globals};
   vm.createContext(sandbox);vm.runInContext(src,sandbox,{filename:path});return sandbox.module.exports;
 }
 
-const gov=loadPureModule('lib/portfolioGovernor.js',['factorWeightsFor','factorOverlap','signalPersistence','portfolioRiskSnapshot','capitalAllowance','capitalSignalEligible','rotationGate']);
+const market=loadPureModule('lib/marketSession.js',['marketObservationSessionDay','isUsMarketSessionDay']);
+const gov=loadPureModule('lib/portfolioGovernor.js',['factorWeightsFor','factorOverlap','signalPersistence','portfolioRiskSnapshot','capitalAllowance','capitalSignalEligible','rotationGate'],market);
 const life=loadPureModule('lib/winnerLifecycle.js',['winnerTrimGate','normalizeWinnerLifecycle']);
 
 // 1) WTS must load on the same AI-capex factor instead of escaping as Other.
@@ -37,6 +38,9 @@ let persistence=gov.signalPersistence([state('Buy',3),state('Buy',2)],'OKE');ass
 persistence=gov.signalPersistence([state('Buy',3),state('Buy',2),state('Watch',1),state('Buy',0)],'OKE');assert(!persistence.persistent&&persistence.interrupted&&persistence.actionableDays===1,'An intervening Watch must reset Buy funding confirmation');
 persistence=gov.signalPersistence([state('Buy',3),state('Buy',2),state('Paused',1),state('Buy',0)],'OKE');assert(persistence.persistent&&!persistence.interrupted,'A temporary data-verification pause must not masquerade as stock deterioration or erase an otherwise uninterrupted Buy streak');
 persistence=gov.signalPersistence([{symbol:'OKE',action:'Buy',day:new Date().toISOString().slice(0,10),timestamp:new Date().toISOString()}],'OKE');assert(!persistence.persistent&&!persistence.trackingComplete,'Legacy positive-only history must not qualify without state tracking');
+const friday='2026-08-28T16:58:39.415Z',utcSaturdayButEtFriday='2026-08-29T03:43:56.651Z',saturday='2026-08-29T04:03:00.000Z',mondayPremarket='2026-08-31T13:29:00.000Z',mondayOpen='2026-08-31T13:30:00.000Z';
+assert(market.marketObservationSessionDay(friday)==='2026-08-28'&&market.marketObservationSessionDay(utcSaturdayButEtFriday)==='2026-08-28'&&market.marketObservationSessionDay(saturday)==='2026-08-28'&&market.marketObservationSessionDay(mondayPremarket)==='2026-08-28'&&market.marketObservationSessionDay(mondayOpen)==='2026-08-31','Persistence must use US market sessions, not UTC midnight, weekends, or premarket calendar dates');
+persistence=gov.signalPersistence([state('Watch',4),{recordType:'state',signalState:true,symbol:'OKE',action:'Buy',day:'2026-08-28',timestamp:friday},{recordType:'state',signalState:true,symbol:'OKE',action:'Buy',day:'2026-08-29',timestamp:utcSaturdayButEtFriday}],'OKE');assert(!persistence.persistent&&persistence.actionableDays===1,'UTC midnight must not manufacture a second Buy session');
 
 // 5) Fast churn and correlated rotations need exceptional edge.
 const riskForRotation=gov.portfolioRiskSnapshot([{symbol:'NVT',role:'Swing',value:3000},{symbol:'CGNX',role:'Swing',value:7000}]);

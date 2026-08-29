@@ -2,7 +2,7 @@ const fs=require('fs');
 const vm=require('vm');
 const assert=(cond,msg)=>{if(!cond)throw new Error(msg)};
 
-function loadGovernor(){let src=fs.readFileSync('lib/portfolioGovernor.js','utf8').replace(/export function /g,'function ');src+='\nmodule.exports={swingTimeReview};';const sandbox={module:{exports:{}},exports:{},console,Date,Math,Number,String,Object,Array,Set,Map,Boolean,RegExp};vm.createContext(sandbox);vm.runInContext(src,sandbox,{filename:'lib/portfolioGovernor.js'});return sandbox.module.exports;}
+function loadGovernor(){let src=fs.readFileSync('lib/portfolioGovernor.js','utf8').replace(/^import .*$/gm,'').replace(/export function /g,'function ');src+='\nmodule.exports={swingTimeReview};';const sandbox={module:{exports:{}},exports:{},console,Date,Math,Number,String,Object,Array,Set,Map,Boolean,RegExp,marketObservationSessionDay:()=>null};vm.createContext(sandbox);vm.runInContext(src,sandbox,{filename:'lib/portfolioGovernor.js'});return sandbox.module.exports;}
 const {swingTimeReview}=loadGovernor();
 const now=Date.now();
 const iso=d=>new Date(now-d*86400000).toISOString();

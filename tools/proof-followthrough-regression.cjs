@@ -3,9 +3,9 @@ const vm=require('vm');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 const daysAgo=d=>new Date(Date.now()-d*86400000).toISOString();
 
-let gov=fs.readFileSync('lib/portfolioGovernor.js','utf8').replace(/export function /g,'function ');
+let gov=fs.readFileSync('lib/portfolioGovernor.js','utf8').replace(/^import .*$/gm,'').replace(/export function /g,'function ');
 gov+='\nmodule.exports={swingTimeReview};';
-let box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date};
+let box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,marketObservationSessionDay:()=>null};
 vm.createContext(box);vm.runInContext(gov,box);
 const {swingTimeReview}=box.module.exports;
 
