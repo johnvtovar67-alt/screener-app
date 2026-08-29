@@ -110,10 +110,9 @@ const dividendAdjustedBars = normalizeHistoricalBars(
   [
     {
       date: "2026-08-28",
-      open: 98,
-      high: 102,
-      low: 96,
-      close: 100,
+      adjOpen: 49,
+      adjHigh: 51,
+      adjLow: 48,
       adjClose: 50,
       volume: 1_000_000,
     },
@@ -122,9 +121,11 @@ const dividendAdjustedBars = normalizeHistoricalBars(
 );
 assert(
   dividendAdjustedBars[0]?.adjusted === true &&
-    dividendAdjustedBars[0].open === 98 &&
-    dividendAdjustedBars[0].close === 100,
-  "An explicitly dividend-adjusted FMP source must retain its OHLC values and adjusted-data provenance.",
+    dividendAdjustedBars[0].open === 49 &&
+    dividendAdjustedBars[0].high === 51 &&
+    dividendAdjustedBars[0].low === 48 &&
+    dividendAdjustedBars[0].close === 50,
+  "The FMP dividend-adjusted adjOpen/adjHigh/adjLow/adjClose schema must map to canonical OHLC without discarding valid rows.",
 );
 
 const incomeRows = [];
