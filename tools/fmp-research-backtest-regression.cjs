@@ -269,7 +269,7 @@ assert(
     rawSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
-    rawSource.includes("REPLAY_FOLDS_PER_RUN = 1") &&
+    rawSource.includes("REPLAY_WINDOWS_PER_RUN = 1") &&
     rawSource.includes("compactResearchRun") &&
     rawSource.includes('stage: "replay"') &&
     rawSource.includes("equivalentAcquisitionSignature") &&
@@ -351,23 +351,24 @@ const contractCalls = [];
     })),
   };
   let checkpoint = null;
-  for (let completed = 1; completed <= 10; completed++) {
+  for (let completed = 1; completed <= 30; completed++) {
     const partial = await runProvisionalWindows(mockDataset, {
       initial: checkpoint,
-      maxFolds: 1,
+      maxWindows: 1,
     });
     assert(
       partial.status === "collecting" &&
-        partial.progress.completedFolds === completed &&
-        partial.progress.remainingFolds === 10 - completed &&
-        partial.progress.completedCandidates === Math.floor(completed / 2),
-      "Each replay invocation must durably advance exactly one chronological thesis fold.",
+        partial.progress.completedWindows === completed &&
+        partial.progress.remainingWindows === 30 - completed &&
+        partial.progress.completedFolds === Math.floor(completed / 3) &&
+        partial.progress.completedCandidates === Math.floor(completed / 6),
+      "Each replay invocation must durably advance exactly one chronological simulation window.",
     );
     checkpoint = partial.checkpoint;
   }
   const completedReplay = await runProvisionalWindows(mockDataset, {
     initial: checkpoint,
-    maxFolds: 1,
+    maxWindows: 1,
   });
   assert(
     completedReplay.status === "complete" &&
