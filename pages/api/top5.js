@@ -783,6 +783,12 @@ async function buildBroadSnapshot(verificationPass = 0) {
         Number(fullMarketDiscovery.sourceUniverseSize) || 0,
       fullMarketEligibleUniverseSize:
         Number(fullMarketDiscovery.eligibleUniverseSize) || 0,
+      fullMarketLiquidityCoveragePct:
+        Number(fullMarketDiscovery.liquidityCoveragePct) || 0,
+      fullMarketLiquidityLookbackSessions:
+        Number(fullMarketDiscovery.liquidityLookbackSessions) || 0,
+      fullMarketProviderCallCeiling:
+        Number(fullMarketDiscovery.maxProviderCalls) || 0,
       fullMarketCoarseUniverseCapped: Boolean(
         fullMarketDiscovery.coarseUniverseCapped ||
           fullMarketDiscovery.sourceUniverseCapped,
@@ -811,6 +817,10 @@ async function buildBroadSnapshot(verificationPass = 0) {
     fullMarketDiscoveryBuiltAt: cached?.fullMarketDiscoveryBuiltAt,
     fullMarketSourceUniverseSize: cached?.fullMarketSourceUniverseSize,
     fullMarketEligibleUniverseSize: cached?.fullMarketEligibleUniverseSize,
+    fullMarketLiquidityCoveragePct: cached?.fullMarketLiquidityCoveragePct,
+    fullMarketLiquidityLookbackSessions:
+      cached?.fullMarketLiquidityLookbackSessions,
+    fullMarketProviderCallCeiling: cached?.fullMarketProviderCallCeiling,
     fullMarketCoarseUniverseCapped: cached?.fullMarketCoarseUniverseCapped,
     fullMarketCandidateCount: cached?.fullMarketCandidateCount,
     fullMarketDiscoveryConfig: cached?.fullMarketDiscoveryConfig,
@@ -997,6 +1007,12 @@ export default async function handler(req, res) {
             broadSnapshot.fullMarketSourceUniverseSize,
           fullMarketEligibleUniverseSize:
             broadSnapshot.fullMarketEligibleUniverseSize,
+          fullMarketLiquidityCoveragePct:
+            broadSnapshot.fullMarketLiquidityCoveragePct,
+          fullMarketLiquidityLookbackSessions:
+            broadSnapshot.fullMarketLiquidityLookbackSessions,
+          fullMarketProviderCallCeiling:
+            broadSnapshot.fullMarketProviderCallCeiling,
           fullMarketCoarseUniverseCapped:
             broadSnapshot.fullMarketCoarseUniverseCapped,
           fullMarketCandidateCount:

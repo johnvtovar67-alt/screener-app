@@ -295,7 +295,7 @@ let discoverySource = fs
   .replace(/export function /g, "function ")
   .replace(/export async function /g, "async function ");
 discoverySource +=
-  "\nmodule.exports={isUsListedCommonStock,selectFullMarketCandidates};";
+  "\nmodule.exports={aggregateEodLiquidity,isUsListedCommonStock,selectFullMarketCandidates};";
 const box = {
   module: { exports: {} },
   exports: {},
@@ -314,7 +314,11 @@ const box = {
 };
 vm.createContext(box);
 vm.runInContext(discoverySource, box, { filename: "lib/fullMarketDiscovery.js" });
-const { isUsListedCommonStock, selectFullMarketCandidates } = box.module.exports;
+const {
+  aggregateEodLiquidity,
+  isUsListedCommonStock,
+  selectFullMarketCandidates,
+} = box.module.exports;
 assert(
   isUsListedCommonStock({
     symbol: "REAL",
@@ -364,6 +368,19 @@ const selected = selectFullMarketCandidates(
 assert(
   new Set(selected.map((row) => row.sector)).size === 3,
   "The daily shortlist must preserve represented sectors before global-score fill.",
+);
+const liquidity = aggregateEodLiquidity(
+  Array.from({ length: 20 }, (_, index) => ({
+    date: `session-${index}`,
+    rows: [{ symbol: "REAL", close: 100 + index, volume: 200_000 }],
+  })),
+  ["REAL"],
+).get("REAL");
+assert(
+  liquidity?.liquiditySessions === 20 &&
+    liquidity.avgVolume === 200_000 &&
+    liquidity.averageDollarVolume > 20_000_000,
+  "Daily EOD bulk history must supply trailing dollar liquidity when stable batch quotes omit average volume.",
 );
 
 const historicalDates = [];
