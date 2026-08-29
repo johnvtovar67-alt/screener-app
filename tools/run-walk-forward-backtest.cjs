@@ -31,7 +31,14 @@ const {
   portfolioRiskSnapshot,
   portfolioContributionGate,
   capitalSignalEligible,
+  swingTimeReview,
 } = loader.load("lib/portfolioGovernor.js");
+const { reunderwriteExistingPosition } = loader.load(
+  "lib/positionReunderwrite.js",
+);
+const { winnerTrimGate, recordWinnerTrim } = loader.load(
+  "lib/winnerLifecycle.js",
+);
 const input = JSON.parse(fs.readFileSync(path.resolve(inputPath), "utf8"));
 const dataset =
   input.metadata?.schema === POINT_IN_TIME_SCHEMA
@@ -58,6 +65,10 @@ if (!validation.valid) {
       portfolioRiskSnapshot,
       portfolioContributionGate,
       capitalSignalEligible,
+      swingTimeReview,
+      positionReunderwrite: reunderwriteExistingPosition,
+      winnerTrimGate,
+      recordWinnerTrim,
       slippageBps: 12,
     },
     parameterGrid: [

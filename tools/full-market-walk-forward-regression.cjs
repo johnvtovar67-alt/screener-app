@@ -26,7 +26,11 @@ const {
   capitalSignalEligible,
   portfolioContributionGate,
   portfolioRiskSnapshot,
+  swingTimeReview,
 } = loader.load("lib/portfolioGovernor.js");
+const { reunderwriteExistingPosition } = loader.load(
+  "lib/positionReunderwrite.js",
+);
 
 function metadata(overrides = {}) {
   return {
@@ -43,6 +47,7 @@ function metadata(overrides = {}) {
     materialNewsHistoryComplete: true,
     portfolioDecisionInputsComplete: true,
     capitalPolicyInputsComplete: true,
+    positionDecisionUniverseComplete: true,
     fundamentalAvailabilityField: "acceptedDate",
     dataVendorEntitlementsVerified: true,
     benchmarkSymbol: "SPY",
@@ -84,6 +89,7 @@ function session(date, action, price = 100, extra = {}) {
       { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
     ],
     signals: action ? [signal(date, action)] : [],
+    positionSignals: action ? [signal(date, action)] : [],
     ...extra,
   };
 }
@@ -175,6 +181,86 @@ assert(
   "A provider pause must preserve, not manufacture or erase, Buy persistence.",
 );
 
+const sameDayStopDataset = {
+  metadata: metadata(),
+  sessions: [
+    session("2026-08-24", "Strong Buy", 100),
+    {
+      ...session("2026-08-25", "Watch", 100),
+      prices: [
+        { symbol: "AAA", open: 100, high: 101, low: 79, close: 82, adjusted: true },
+        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+      ],
+    },
+  ],
+};
+run = simulatePointInTimePortfolio(sameDayStopDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+});
+assert(
+  run.trades.some((trade) => trade.side === "buy" && trade.date === "2026-08-25") &&
+    run.trades.some(
+      (trade) =>
+        trade.side === "sell" &&
+        trade.date === "2026-08-25" &&
+        trade.reason === "invalidation-stop" &&
+        trade.positionClosed === true,
+    ) &&
+    run.metrics.closedTrades === 1,
+  "A position opened at the next-session open must honor its invalidation stop during that same session.",
+);
+
+const invalidatedOpenDataset = JSON.parse(JSON.stringify(sameDayStopDataset));
+invalidatedOpenDataset.sessions[1].prices[0] = {
+  symbol: "AAA",
+  open: 75,
+  high: 78,
+  low: 72,
+  close: 76,
+  adjusted: true,
+};
+run = simulatePointInTimePortfolio(invalidatedOpenDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+});
+assert(
+  !run.trades.some((trade) => trade.side === "buy") &&
+    run.skippedOrders.some((order) => order.reason === "entry-invalidated-at-open"),
+  "A next-session gap below the known invalidation level must cancel the entry instead of buying a broken setup.",
+);
+
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      {
+        ...session("2026-08-25", null, 98),
+        positionSignals: [signal("2026-08-25", "Avoid")],
+      },
+      session("2026-08-26", null, 95),
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 0,
+    positionDecision: () => ({ action: "Exit" }),
+  },
+);
+assert(
+  run.trades.some(
+    (trade) =>
+      trade.side === "sell" &&
+      trade.date === "2026-08-26" &&
+      trade.reason === "exit",
+  ),
+  "An owned name outside the fresh-capital shortlist must still receive and execute a portfolio exit decision.",
+);
+
 let callbackDate = null;
 run = simulatePointInTimePortfolio(
   {
@@ -199,6 +285,91 @@ assert(
   callbackDate === "2026-08-25" &&
     run.trades.some((trade) => trade.side === "sell" && trade.date === "2026-08-26"),
   "Production portfolio decisions must receive the historical clock and execute one session later.",
+);
+
+const weakLifecycleSignal = signal("2026-09-15", "Watch", {
+  price: 88,
+  currentPrice: 88,
+  entryTiming: {
+    available: true,
+    pass: false,
+    strongPass: false,
+    shortTermTechnicalScore: 35,
+  },
+  recommendation: {
+    expertDecision: {
+      thesisScore: 55,
+      tradeSetupScore: 42,
+      capitalScore: 48,
+      metrics: {
+        technical: 42,
+        momentum: 38,
+        leadership: 42,
+        risk: 65,
+      },
+    },
+  },
+});
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      session("2026-08-25", "Watch", 100),
+      {
+        ...session("2026-09-15", null, 88),
+        positionSignals: [weakLifecycleSignal],
+      },
+      session("2026-09-16", null, 87),
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 0,
+    positionDecision: () => ({ action: "Hold", reason: "base hold" }),
+    portfolioRiskSnapshot,
+    swingTimeReview,
+    positionReunderwrite: reunderwriteExistingPosition,
+  },
+);
+assert(
+  run.trades.some(
+    (trade) =>
+      trade.side === "sell" &&
+      trade.date === "2026-09-16" &&
+      trade.reason === "exit",
+  ),
+  "The simulator must replay historical time-in-trade re-underwriting instead of leaving a failed Proof position at the base Hold.",
+);
+
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      session("2026-08-25", "Watch", 110),
+      session("2026-08-26", "Watch", 115),
+      session("2026-08-27", "Watch", 112),
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 0,
+    positionDecision: ({ now }) =>
+      now.toISOString().slice(0, 10) === "2026-08-25"
+        ? { action: "Trim" }
+        : { action: "Exit" },
+  },
+);
+const partialSales = run.trades.filter((trade) => trade.side === "sell");
+assert(
+  partialSales.length === 2 &&
+    partialSales[0].positionClosed === false &&
+    partialSales[1].positionClosed === true &&
+    run.metrics.closedTrades === 1,
+  "A trim followed by a final exit must be one aggregated round trip, not two completed trades that inflate win rate.",
 );
 
 run = simulatePointInTimePortfolio(
@@ -282,6 +453,7 @@ const endToEnd = runWalkForwardBacktest(
         },
       ],
       signals: [],
+      positionSignals: [],
     })),
   },
   { positionDecision: () => ({ action: "Hold" }), parameterGrid: [{}] },
@@ -490,8 +662,11 @@ const compiled = compilePointInTimeSignals({
 assert(
   compiled.sessions.length === historicalDates.length &&
     compiled.sessions.at(-1).signals.some((row) => row.symbol === "AAA") &&
+    compiled.sessions.at(-1).positionSignals.some(
+      (row) => row.symbol === "AAA" && row.entryTiming?.available === true,
+    ) &&
     compiled.sessions[0].historicalDelistedMembership === 1,
-  "Historical compilation must replay the production stack and retain delisted membership evidence.",
+  "Historical compilation must replay fresh-capital and holding-timing evidence while retaining delisted membership evidence.",
 );
 
 console.log(
