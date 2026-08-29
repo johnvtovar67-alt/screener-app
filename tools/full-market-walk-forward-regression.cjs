@@ -12,6 +12,9 @@ const {
   simulatePointInTimePortfolio,
   validatePointInTimeDataset,
 } = loader.load("lib/walkForwardBacktest.js");
+const { compactReplaySession } = loader.load(
+  "lib/replayDatasetCompaction.js",
+);
 const { attachCrossSectionalResearchFactors, compilePointInTimeSignals } = loader.load(
   "lib/historicalSignalEvaluator.js",
 );
@@ -203,6 +206,48 @@ assert(
       ?.qualityPercentile === 0,
   "Missing factor inputs must be excluded and observed factor weights rebalanced instead of being imputed as average evidence.",
 );
+const accountingAnomalyProbe = attachCrossSectionalResearchFactors([
+  {
+    symbol: "NEGATIVE_EQUITY",
+    sector: "Consumer Cyclical",
+    bookValue: -100,
+    operatingMargin: 15,
+    freeCashFlowMargin: 10,
+    returnOnEquity: 100,
+    revenueGrowth: 8,
+    operatingIncomeGrowth: 8,
+    debtToEquity: -5,
+  },
+  {
+    symbol: "COMPARABLE_QUALITY",
+    sector: "Consumer Cyclical",
+    bookValue: 100,
+    operatingMargin: 15,
+    freeCashFlowMargin: 10,
+    returnOnEquity: 20,
+    revenueGrowth: 8,
+    operatingIncomeGrowth: 8,
+    debtToEquity: 0.5,
+  },
+  {
+    symbol: "WEAKER_QUALITY",
+    sector: "Consumer Cyclical",
+    bookValue: 100,
+    operatingMargin: 15,
+    freeCashFlowMargin: 10,
+    returnOnEquity: 5,
+    revenueGrowth: 8,
+    operatingIncomeGrowth: 8,
+    debtToEquity: 2,
+  },
+]);
+assert(
+  accountingAnomalyProbe.find((row) => row.symbol === "NEGATIVE_EQUITY")
+    ?.researchFactors?.qualityPercentile <
+    accountingAnomalyProbe.find((row) => row.symbol === "COMPARABLE_QUALITY")
+      ?.researchFactors?.qualityPercentile,
+  "Negative book equity must not turn mechanically negative leverage or extreme ROE into a false quality advantage.",
+);
 
 run = simulatePointInTimePortfolio(factorDataset, {
   minimumTrade: 1,
@@ -300,7 +345,7 @@ governedStrongDataset.sessions[0].signals[0].riskPlan = {
   firstTrimPrice: 150,
 };
 let governorCalls = 0;
-run = simulatePointInTimePortfolio(governedStrongDataset, {
+const governedOptions = {
   minimumTrade: 1,
   initialCapital: 10_000,
   slippageBps: 0,
@@ -320,10 +365,73 @@ run = simulatePointInTimePortfolio(governedStrongDataset, {
     governorCalls++;
     return portfolioRiskSnapshot(input);
   },
-});
+};
+run = simulatePointInTimePortfolio(governedStrongDataset, governedOptions);
 assert(
   governorCalls >= 4 && run.trades.some((trade) => trade.side === "buy"),
   "The research simulator must route entries through the production persistence, sizing, factor-risk and contribution gates.",
+);
+const governedTrades = JSON.stringify(run.trades);
+const compactedGovernedDataset = {
+  ...governedStrongDataset,
+  sessions: governedStrongDataset.sessions.map(compactReplaySession),
+};
+governorCalls = 0;
+run = simulatePointInTimePortfolio(compactedGovernedDataset, governedOptions);
+assert(
+  JSON.stringify(run.trades) === governedTrades &&
+    compactedGovernedDataset.sessions[0].positionSignals.length === 0,
+  "Replay compaction must preserve observable trades while removing narrative payloads and holding-signal rows shadowed by fresh signals.",
+);
+
+const gapDeteriorationDataset = JSON.parse(
+  JSON.stringify(governedStrongDataset),
+);
+gapDeteriorationDataset.sessions[1].prices[0] = {
+  symbol: "AAA",
+  open: 140,
+  high: 142,
+  low: 138,
+  close: 141,
+  adjusted: true,
+};
+run = simulatePointInTimePortfolio(gapDeteriorationDataset, governedOptions);
+assert(
+  !run.trades.some((trade) => trade.side === "buy") &&
+    run.skippedOrders.some(
+      (order) => order.reason === "portfolio-contribution-gate",
+    ),
+  "A next-open gap that destroys forward reward/risk must be rejected using the actual fill rather than the stale signal close.",
+);
+
+const immaterialSizingDataset = JSON.parse(
+  JSON.stringify(governedStrongDataset),
+);
+immaterialSizingDataset.sessions[0].signals[0].price = 20;
+immaterialSizingDataset.sessions[0].signals[0].riskPlan = {
+  invalidationPrice: 16,
+  firstTrimPrice: 30,
+};
+for (const researchSession of immaterialSizingDataset.sessions) {
+  researchSession.prices[0] = {
+    symbol: "AAA",
+    open: 20,
+    high: 21,
+    low: 19,
+    close: 20,
+    adjusted: true,
+  };
+}
+run = simulatePointInTimePortfolio(immaterialSizingDataset, {
+  ...governedOptions,
+  riskBudgetPct: 0.1,
+});
+assert(
+  !run.trades.some((trade) => trade.side === "buy") &&
+    run.skippedOrders.some(
+      (order) => order.reason === "portfolio-contribution-gate",
+    ),
+  "The contribution gate must evaluate final risk-budgeted size so an immaterial stub position cannot slip through on its larger preliminary allowance.",
 );
 
 const pausedDataset = {
@@ -372,7 +480,9 @@ assert(
         trade.reason === "invalidation-stop" &&
         trade.positionClosed === true,
     ) &&
-    run.metrics.closedTrades === 1,
+    run.metrics.closedTrades === 1 &&
+    run.metrics.tradeDiagnostics.expectancyPct < 0 &&
+    run.metrics.tradeDiagnostics.stopOutRatePct === 100,
   "A position opened at the next-session open must honor its invalidation stop during that same session.",
 );
 

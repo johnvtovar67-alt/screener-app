@@ -51,10 +51,12 @@ const box = {
     );
     const thesisBonus =
       [
+        "cash-preservation-control",
         "live-policy-control",
         "anti-chase-static-control",
-        "quality-momentum-selection",
-        "quality-momentum-static",
+        "quality-momentum-balanced",
+        "quality-at-reasonable-price",
+        "momentum-regime-aware",
         "quality-momentum-risk-balanced",
       ].indexOf(options.thesisId) + 1;
     return {
@@ -289,6 +291,9 @@ assert(
     rawSource.includes("equivalentAcquisitionSignature") &&
     rawSource.includes("equivalentStatementSignature") &&
     rawSource.includes("eligibleForCapitalClaims: false") &&
+    rawSource.includes("cash-preservation-control") &&
+    rawSource.includes("quality-at-reasonable-price") &&
+    rawSource.includes("momentum-regime-aware") &&
     rawSource.includes("quality-momentum-risk-balanced") &&
     rawSource.includes("discovery.researchUniverse") &&
     rawSource.includes("rollingRegimeAudit") &&
@@ -366,15 +371,15 @@ const contractCalls = [];
     })),
   };
   let checkpoint = null;
-  for (let completed = 3; completed <= 30; completed += 3) {
+  for (let completed = 3; completed <= 42; completed += 3) {
     const partial = await runProvisionalWindows(mockDataset, {
       initial: checkpoint,
       maxWindows: 3,
     });
     assert(
-      partial.status === "collecting" &&
+        partial.status === "collecting" &&
         partial.progress.completedWindows === completed &&
-        partial.progress.remainingWindows === 30 - completed &&
+        partial.progress.remainingWindows === 42 - completed &&
         partial.progress.completedFolds === Math.floor(completed / 3) &&
         partial.progress.completedCandidates === Math.floor(completed / 6),
       "Each replay invocation must durably advance its bounded chronological simulation windows.",
@@ -387,9 +392,11 @@ const contractCalls = [];
   });
   assert(
     completedReplay.status === "complete" &&
-      completedReplay.replay.candidates.length === 5 &&
+      completedReplay.replay.candidates.length === 7 &&
       completedReplay.replay.windows.folds.length === 2 &&
-      simulatedRuns === 31,
+      completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
+        .capitalClaimAuthorized === false &&
+      simulatedRuns === 43,
     "The replay must reuse all checkpointed folds, run final selection once, and never recompute completed candidates.",
   );
   console.log(
