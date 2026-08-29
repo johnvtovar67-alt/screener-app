@@ -13,7 +13,7 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract};";
 const box = {
   module: { exports: {} },
   exports: {},
@@ -40,6 +40,7 @@ const {
   selectResearchUniverse,
   normalizeHistoricalBars,
   buildHistoricalFundamentalRows,
+  resolvePriceHistoryContract,
 } = box.module.exports;
 
 const selected = selectResearchUniverse(
@@ -190,7 +191,14 @@ assert(
 
 assert(
   rawSource.includes('"historical-price-eod/dividend-adjusted"') &&
-    !rawSource.includes('client.fetchStable("historical-price-eod/full"') &&
+    rawSource.includes('path: "historical-price-eod/full"') &&
+    rawSource.includes("resolvePriceHistoryContract") &&
+    rawSource.includes("PRICE_ACQUISITION_SCHEMA = 3") &&
+    rawSource.includes("RUNNING_TTL_MS = 6 * 60 * 1000") &&
+    rawSource.includes("existing?.runClaimedAt") &&
+    rawSource.includes("runClaimedAt: new Date(now).toISOString()") &&
+    rawSource.includes("exhaustedSymbols") &&
+    rawSource.includes("failureSample") &&
     rawSource.includes('["income-statement", "incomeRows"]') &&
     rawSource.includes('["balance-sheet-statement", "balanceRows"]') &&
     rawSource.includes('["cash-flow-statement", "cashFlowRows"]') &&
@@ -239,6 +247,47 @@ assert(
   "The entitlement preflight must verify the adjusted-price and historical-membership inputs needed for stricter research.",
 );
 
-console.log(
-  "FMP RESEARCH BACKTEST PASS: bounded acquisition, filing clocks, adjusted bars, diversified cohort and provisional labeling verified.",
-);
+const fallbackRows = Array.from({ length: 520 }, (_, index) => ({
+  symbol: "SPY",
+  date: new Date(Date.UTC(2024, 0, 1 + index)).toISOString().slice(0, 10),
+  open: 100,
+  high: 102,
+  low: 99,
+  close: 100,
+  adjClose: 50,
+  volume: 1_000_000,
+}));
+const contractCalls = [];
+resolvePriceHistoryContract(
+  {
+    async fetchStable(path) {
+      contractCalls.push(path);
+      if (path === "historical-price-eod/dividend-adjusted") {
+        const error = new Error("FMP endpoint not entitled");
+        error.status = 403;
+        throw error;
+      }
+      return fallbackRows;
+    },
+  },
+  "2024-01-01",
+  "2026-01-01",
+)
+  .then((result) => {
+    assert(
+      result.contract.id === "fmp-full-adjclose-v1" &&
+        result.benchmarkBars.length >= 500 &&
+        result.benchmarkBars[0].open === 50 &&
+        result.benchmarkBars.every((bar) => bar.adjusted === true) &&
+        contractCalls.join(",") ===
+          "historical-price-eod/dividend-adjusted,historical-price-eod/full",
+      "The price-contract preflight must fail over once, preserve adjusted provenance, and never fan out provider probes.",
+    );
+    console.log(
+      "FMP RESEARCH BACKTEST PASS: bounded acquisition, filing clocks, adjusted bars, diversified cohort and provisional labeling verified.",
+    );
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
