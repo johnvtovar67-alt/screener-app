@@ -300,6 +300,16 @@ let discoverySource = fs
   .replace(/export const /g, "const ")
   .replace(/export function /g, "function ")
   .replace(/export async function /g, "async function ");
+assert(
+  discoverySource.includes("stable/batch-exchange-quote") &&
+    !discoverySource.includes("stable/batch-quote?"),
+  "Full-market discovery must use bounded exchange-wide quotes instead of symbol-metered quote fanout.",
+);
+assert(
+  discoverySource.includes("response.status === 429") &&
+    discoverySource.includes('response.headers.get("retry-after")'),
+  "Transient FMP throttling must use bounded Retry-After backoff.",
+);
 discoverySource +=
   "\nmodule.exports={aggregateEodLiquidity,isUsListedCommonStock,selectFullMarketCandidates};";
 const box = {
