@@ -312,13 +312,13 @@ assert(
 );
 assert(
   !discoverySource.includes("stable/eod-bulk") &&
-    discoverySource.includes('liquiditySource: "latest_completed_session_proxy"') &&
-    discoverySource.includes("config.minAvgDollarVolume * 0.25") &&
+    discoverySource.includes('liquiditySource: "symbol_history_hard_gate_only"') &&
+    discoverySource.includes("passesDiscoveryResearchFloor") &&
     discoverySource.includes("maxProviderCalls: 3 + DISCOVERY_EXCHANGES.length"),
-  "Interactive full-market discovery must use six bounded calls, disclose a non-authorizing liquidity proxy, and avoid FMP's infrequently refreshed EOD bulk endpoint.",
+  "Interactive full-market discovery must use six bounded calls, avoid inferring liquidity from rollover-prone breadth data, and never call FMP's infrequently refreshed EOD bulk endpoint.",
 );
 discoverySource +=
-  "\nmodule.exports={isUsListedCommonStock,passesDiscoveryLiquidity,selectFullMarketCandidates};";
+  "\nmodule.exports={isUsListedCommonStock,passesDiscoveryResearchFloor,selectFullMarketCandidates};";
 const box = {
   module: { exports: {} },
   exports: {},
@@ -339,7 +339,7 @@ vm.createContext(box);
 vm.runInContext(discoverySource, box, { filename: "lib/fullMarketDiscovery.js" });
 const {
   isUsListedCommonStock,
-  passesDiscoveryLiquidity,
+  passesDiscoveryResearchFloor,
   selectFullMarketCandidates,
 } = box.module.exports;
 assert(
@@ -372,11 +372,10 @@ const liquid = (symbol, sector, priceAvg50, priceAvg200) => ({
   changesPercentage: 0,
 });
 assert(
-  passesDiscoveryLiquidity(
+  passesDiscoveryResearchFloor(
     {
       price: 100,
       marketCap: 2_000_000_000,
-      currentDollarVolume: 3_000_000,
     },
     {
       minPrice: 5,
@@ -384,7 +383,7 @@ assert(
       minAvgDollarVolume: 10_000_000,
     },
   ),
-  "The breadth pass may admit a candidate on the disclosed 25% session proxy; this must remain separate from the exact deployment gate.",
+  "The breadth pass must admit research candidates on verified price and market cap without pretending rollover-prone volume proves liquidity.",
 );
 const selected = selectFullMarketCandidates(
   [
