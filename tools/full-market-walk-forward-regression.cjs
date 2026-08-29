@@ -12,7 +12,7 @@ const {
   simulatePointInTimePortfolio,
   validatePointInTimeDataset,
 } = loader.load("lib/walkForwardBacktest.js");
-const { compilePointInTimeSignals } = loader.load(
+const { attachCrossSectionalResearchFactors, compilePointInTimeSignals } = loader.load(
   "lib/historicalSignalEvaluator.js",
 );
 assert(
@@ -127,6 +127,170 @@ run = simulatePointInTimePortfolio(strongDataset, {
 assert(
   run.trades[0]?.date === "2026-08-25" && run.trades[0]?.price === 103,
   "A verified Strong Buy must remain immediate but fill no earlier than the next session open.",
+);
+
+const factorDataset = {
+  metadata: metadata(),
+  sessions: [
+    session("2026-08-24", "Strong Buy", 100, {
+      signals: [
+        signal("2026-08-24", "Strong Buy", {
+          researchFactors: {
+            factorCoverage: 8,
+            qualityPercentile: 35,
+            momentumPercentile: 70,
+            globalCompositePercentile: 45,
+            sectorCompositePercentile: 50,
+            volatility60Pct: 30,
+          },
+        }),
+      ],
+    }),
+    session("2026-08-25", "Strong Buy", 101, {
+      signals: [
+        signal("2026-08-25", "Strong Buy", {
+          researchFactors: {
+            factorCoverage: 8,
+            qualityPercentile: 65,
+            momentumPercentile: 75,
+            globalCompositePercentile: 80,
+            sectorCompositePercentile: 70,
+            volatility60Pct: 30,
+          },
+        }),
+      ],
+    }),
+    session("2026-08-26", "Watch", 102),
+  ],
+};
+
+const coverageProbe = attachCrossSectionalResearchFactors([
+  {
+    symbol: "COVER",
+    sector: "Technology",
+    operatingMargin: 20,
+    freeCashFlowMargin: null,
+    returnOnEquity: undefined,
+    revenueGrowth: 10,
+    operatingIncomeGrowth: null,
+    return120Ex20: null,
+    return60Ex5: 8,
+    volatility60Pct: 25,
+  },
+]);
+assert(
+  coverageProbe[0]?.researchFactors?.factorCoverage === 4,
+  "Missing research factors must not be coerced to zero and falsely counted as verified coverage.",
+);
+const missingFactorProbe = attachCrossSectionalResearchFactors([
+  {
+    symbol: "HIGH",
+    sector: "Technology",
+    operatingMargin: 30,
+    revenueGrowth: 20,
+  },
+  {
+    symbol: "LOW",
+    sector: "Technology",
+    operatingMargin: 10,
+    revenueGrowth: 5,
+  },
+]);
+assert(
+  missingFactorProbe.find((row) => row.symbol === "HIGH")?.researchFactors
+    ?.qualityPercentile === 100 &&
+    missingFactorProbe.find((row) => row.symbol === "LOW")?.researchFactors
+      ?.qualityPercentile === 0,
+  "Missing factor inputs must be excluded and observed factor weights rebalanced instead of being imputed as average evidence.",
+);
+
+run = simulatePointInTimePortfolio(factorDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+  minimumResearchFactorCoverage: 7,
+  minQualityPercentile: 50,
+  minMomentumPercentile: 55,
+  minCompositePercentile: 60,
+  minSectorCompositePercentile: 40,
+});
+assert(
+  run.trades.filter((trade) => trade.side === "buy").length === 1 &&
+    run.trades[0].date === "2026-08-26",
+  "Cross-sectional research gates must reject a weak-quality observation without preventing a later independently qualified signal.",
+);
+
+const sameIssuerSignals = [
+  signal("2026-08-24", "Strong Buy", {
+    symbol: "AAA",
+    companyName: "Alphabet Inc.",
+    capitalEfficiencyScore: 90,
+  }),
+  signal("2026-08-24", "Strong Buy", {
+    symbol: "BBB",
+    companyName: "Alphabet Inc Class A",
+    capitalEfficiencyScore: 85,
+  }),
+];
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", null, 100, {
+        signals: sameIssuerSignals,
+        positionSignals: sameIssuerSignals,
+        prices: [
+          { symbol: "AAA", open: 100, high: 102, low: 98, close: 100, adjusted: true },
+          { symbol: "BBB", open: 100, high: 102, low: 98, close: 100, adjusted: true },
+          { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+        ],
+      }),
+      session("2026-08-25", null, 101, {
+        prices: [
+          { symbol: "AAA", open: 101, high: 103, low: 99, close: 101, adjusted: true },
+          { symbol: "BBB", open: 101, high: 103, low: 99, close: 101, adjusted: true },
+          { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+        ],
+      }),
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 0,
+    maxIssuerPositions: 1,
+  },
+);
+assert(
+  run.trades.filter((trade) => trade.side === "buy").length === 1 &&
+    run.skippedOrders.some(
+      (order) => order.reason === "issuer-concentration-limit",
+    ),
+  "Research portfolios must not buy two share classes of the same issuer when the issuer cap is enabled.",
+);
+
+const volatilitySized = JSON.parse(JSON.stringify(strongDataset));
+volatilitySized.sessions[0].signals[0].riskPlan = { invalidationPrice: 99 };
+volatilitySized.sessions[0].signals[0].researchFactors = {
+  volatility60Pct: 60,
+};
+run = simulatePointInTimePortfolio(volatilitySized, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+  volatilityTargetPct: 30,
+  riskBudgetPct: 0.45,
+  minimumInitialStopPct: 6,
+  maximumInitialStopPct: 10,
+});
+assert(
+  run.trades[0]?.shares === 4 &&
+    Math.abs(run.trades[0].signalSnapshot.stopDistancePct - 6) < 0.001 &&
+    Math.abs(
+      run.openPositions[0].initialStopPrice - run.trades[0].price * 0.94,
+    ) < 0.001 &&
+    Number.isFinite(run.metrics.exposureMatchedAlphaPct),
+  "Research sizing must scale high-volatility entries, preserve the original stop, and report exposure-matched alpha.",
 );
 
 const governedStrongDataset = JSON.parse(JSON.stringify(strongDataset));
@@ -485,6 +649,7 @@ assert(
 assert(
   !discoverySource.includes("stable/eod-bulk") &&
     discoverySource.includes('liquiditySource: "symbol_history_hard_gate_only"') &&
+    discoverySource.includes("researchUniverse: eligibleRows.map") &&
     discoverySource.includes("passesDiscoveryResearchFloor") &&
     discoverySource.includes("maxProviderCalls: 3 + DISCOVERY_EXCHANGES.length"),
   "Interactive full-market discovery must use six bounded calls, avoid inferring liquidity from rollover-prone breadth data, and never call FMP's infrequently refreshed EOD bulk endpoint.",
@@ -663,10 +828,13 @@ assert(
   compiled.sessions.length === historicalDates.length &&
     compiled.sessions.at(-1).signals.some((row) => row.symbol === "AAA") &&
     compiled.sessions.at(-1).positionSignals.some(
-      (row) => row.symbol === "AAA" && row.entryTiming?.available === true,
+      (row) =>
+        row.symbol === "AAA" &&
+        row.entryTiming?.available === true &&
+        Number.isFinite(row.researchFactors?.globalCompositePercentile),
     ) &&
     compiled.sessions[0].historicalDelistedMembership === 1,
-  "Historical compilation must replay fresh-capital and holding-timing evidence while retaining delisted membership evidence.",
+  "Historical compilation must replay fresh-capital, cross-sectional factor and holding-timing evidence while retaining delisted membership evidence.",
 );
 
 console.log(

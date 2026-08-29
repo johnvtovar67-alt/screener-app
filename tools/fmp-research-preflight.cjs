@@ -9,6 +9,7 @@ function argument(name, fallback = null) {
 const key = process.env.FMP_API_KEY || process.env.FMP_KEY;
 const output = argument("output", "research-results/fmp-capability-report.json");
 const sampleDate = argument("date", "2026-08-28");
+const sampleFrom = `${sampleDate.slice(0, 8)}01`;
 if (!key) {
   console.error("FMP_API_KEY is required. The command never prints or stores it.");
   process.exit(2);
@@ -44,6 +45,18 @@ const endpoints = [
     path: "eod-bulk",
     params: { date: sampleDate },
     fields: ["symbol", "date", "open", "high", "low", "close", "volume"],
+  },
+  {
+    id: "dividendAdjustedPrice",
+    path: "historical-price-eod/dividend-adjusted",
+    params: { symbol: "AAPL", from: sampleFrom, to: sampleDate },
+    fields: ["symbol", "date", "open", "high", "low", "close", "volume"],
+  },
+  {
+    id: "historicalSp500",
+    path: "historical-sp500-constituent",
+    params: {},
+    fields: ["dateAdded", "addedSymbol", "removedSymbol"],
   },
   {
     id: "delistedCompanies",
@@ -150,6 +163,10 @@ async function probe(item) {
       liveFundamentalsBulk:
         byId.ratiosTtmBulk?.ok === true && byId.incomeGrowthBulk?.ok === true,
       historicalEodBulk: byId.eodBulk?.ok === true,
+      dividendAdjustedPriceHistory:
+        byId.dividendAdjustedPrice?.ok === true,
+      historicalSp500MembershipChanges:
+        byId.historicalSp500?.ok === true,
       historicalListingsAndDelistings:
         byId.profileBulk?.ok === true && byId.delistedCompanies?.ok === true,
       statementBulk:
@@ -160,7 +177,12 @@ async function probe(item) {
         byId.incomeBulk?.acceptedDatePresent === true ||
         byId.balanceBulk?.acceptedDatePresent === true ||
         byId.cashFlowBulk?.acceptedDatePresent === true,
-      adjustedOhlcObserved: byId.eodBulk?.adjustedClosePresent === true,
+      adjustedOhlcObserved:
+        byId.dividendAdjustedPrice?.ok === true &&
+        ["open", "high", "low", "close"].every(
+          (field) =>
+            byId.dividendAdjustedPrice?.requiredFields?.[field] === true,
+        ),
       revisionSafeFundamentalValues: false,
       pointInTimeMaterialNews: false,
     },
