@@ -136,9 +136,10 @@ assert(
 
 assert(
   rawSource.includes('"historical-price-eod/full"') &&
-    rawSource.includes('"income-statement-bulk"') &&
-    rawSource.includes('"balance-sheet-statement-bulk"') &&
-    rawSource.includes('"cash-flow-statement-bulk"') &&
+    rawSource.includes('["income-statement", "incomeRows"]') &&
+    rawSource.includes('["balance-sheet-statement", "balanceRows"]') &&
+    rawSource.includes('["cash-flow-statement", "cashFlowRows"]') &&
+    !rawSource.includes('statement-bulk"') &&
     rawSource.includes("DEFAULT_SYMBOL_LIMIT = 120") &&
     rawSource.includes("MAX_SYMBOL_LIMIT = 250") &&
     rawSource.includes("REQUEST_START_SPACING_MS = 300") &&
