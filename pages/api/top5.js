@@ -779,6 +779,8 @@ async function buildBroadSnapshot(verificationPass = 0) {
       fullMarketDiscoveryStatus: fullMarketDiscovery.status || "unavailable",
       fullMarketDiscoveryStale: Boolean(fullMarketDiscovery.stale),
       fullMarketDiscoveryBuiltAt: fullMarketDiscovery.builtAt || null,
+      fullMarketDiscoveryIssue: fullMarketDiscovery.refreshIssue || null,
+      fullMarketDiscoveryIssueAt: fullMarketDiscovery.refreshIssueAt || null,
       fullMarketSourceUniverseSize:
         Number(fullMarketDiscovery.sourceUniverseSize) || 0,
       fullMarketEligibleUniverseSize:
@@ -815,6 +817,8 @@ async function buildBroadSnapshot(verificationPass = 0) {
     fullMarketDiscoveryStatus: cached?.fullMarketDiscoveryStatus,
     fullMarketDiscoveryStale: cached?.fullMarketDiscoveryStale,
     fullMarketDiscoveryBuiltAt: cached?.fullMarketDiscoveryBuiltAt,
+    fullMarketDiscoveryIssue: cached?.fullMarketDiscoveryIssue,
+    fullMarketDiscoveryIssueAt: cached?.fullMarketDiscoveryIssueAt,
     fullMarketSourceUniverseSize: cached?.fullMarketSourceUniverseSize,
     fullMarketEligibleUniverseSize: cached?.fullMarketEligibleUniverseSize,
     fullMarketLiquidityCoveragePct: cached?.fullMarketLiquidityCoveragePct,
@@ -1003,6 +1007,10 @@ export default async function handler(req, res) {
             broadSnapshot.fullMarketDiscoveryStale,
           fullMarketDiscoveryAsOf:
             broadSnapshot.fullMarketDiscoveryBuiltAt,
+          fullMarketDiscoveryIssue:
+            broadSnapshot.fullMarketDiscoveryIssue,
+          fullMarketDiscoveryIssueAt:
+            broadSnapshot.fullMarketDiscoveryIssueAt,
           fullMarketSourceUniverseSize:
             broadSnapshot.fullMarketSourceUniverseSize,
           fullMarketEligibleUniverseSize:
