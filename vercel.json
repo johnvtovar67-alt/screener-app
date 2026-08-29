@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/cron/fmp-research-backtest",
-      "schedule": "30 2 * * 6"
+      "schedule": "*/2 * * * *"
     }
   ]
 }
