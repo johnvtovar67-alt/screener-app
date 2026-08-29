@@ -311,12 +311,13 @@ assert(
   "Transient FMP throttling must use bounded Retry-After backoff.",
 );
 assert(
-  discoverySource.includes("LIQUIDITY_CONCURRENCY = 1") &&
-    discoverySource.includes("EOD_BULK_SPACING_MS = 1_000"),
-  "Bandwidth-heavy EOD bulk history must bootstrap sequentially with spacing.",
+  !discoverySource.includes("stable/eod-bulk") &&
+    discoverySource.includes('liquiditySource: "provider_average_volume"') &&
+    discoverySource.includes("maxProviderCalls: 3 + DISCOVERY_EXCHANGES.length"),
+  "Interactive full-market discovery must use six bounded calls and must not abuse FMP's infrequently refreshed EOD bulk endpoint.",
 );
 discoverySource +=
-  "\nmodule.exports={aggregateEodLiquidity,isUsListedCommonStock,selectFullMarketCandidates};";
+  "\nmodule.exports={isUsListedCommonStock,selectFullMarketCandidates};";
 const box = {
   module: { exports: {} },
   exports: {},
@@ -336,7 +337,6 @@ const box = {
 vm.createContext(box);
 vm.runInContext(discoverySource, box, { filename: "lib/fullMarketDiscovery.js" });
 const {
-  aggregateEodLiquidity,
   isUsListedCommonStock,
   selectFullMarketCandidates,
 } = box.module.exports;
@@ -390,20 +390,6 @@ assert(
   new Set(selected.map((row) => row.sector)).size === 3,
   "The daily shortlist must preserve represented sectors before global-score fill.",
 );
-const liquidity = aggregateEodLiquidity(
-  Array.from({ length: 20 }, (_, index) => ({
-    date: `session-${index}`,
-    rows: [{ symbol: "REAL", close: 100 + index, volume: 200_000 }],
-  })),
-  ["REAL"],
-).get("REAL");
-assert(
-  liquidity?.liquiditySessions === 20 &&
-    liquidity.avgVolume === 200_000 &&
-    liquidity.averageDollarVolume > 20_000_000,
-  "Daily EOD bulk history must supply trailing dollar liquidity when stable batch quotes omit average volume.",
-);
-
 const historicalDates = [];
 for (let cursor = new Date("2026-04-01T12:00:00.000Z"); historicalDates.length < 55; cursor = new Date(cursor.getTime() + 86_400_000)) {
   if (![0, 6].includes(cursor.getUTCDay()))

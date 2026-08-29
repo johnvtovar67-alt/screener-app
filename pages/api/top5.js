@@ -788,8 +788,13 @@ async function buildBroadSnapshot(verificationPass = 0) {
         Number(fullMarketDiscovery.eligibleUniverseSize) || 0,
       fullMarketLiquidityCoveragePct:
         Number(fullMarketDiscovery.liquidityCoveragePct) || 0,
+      fullMarketLiquiditySource:
+        fullMarketDiscovery.liquiditySource || null,
       fullMarketLiquidityLookbackSessions:
-        Number(fullMarketDiscovery.liquidityLookbackSessions) || 0,
+        fullMarketDiscovery.liquidityLookbackSessions != null &&
+        Number.isFinite(Number(fullMarketDiscovery.liquidityLookbackSessions))
+          ? Number(fullMarketDiscovery.liquidityLookbackSessions)
+          : null,
       fullMarketProviderCallCeiling:
         Number(fullMarketDiscovery.maxProviderCalls) || 0,
       fullMarketCoarseUniverseCapped: Boolean(
@@ -824,6 +829,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
     fullMarketSourceUniverseSize: cached?.fullMarketSourceUniverseSize,
     fullMarketEligibleUniverseSize: cached?.fullMarketEligibleUniverseSize,
     fullMarketLiquidityCoveragePct: cached?.fullMarketLiquidityCoveragePct,
+    fullMarketLiquiditySource: cached?.fullMarketLiquiditySource,
     fullMarketLiquidityLookbackSessions:
       cached?.fullMarketLiquidityLookbackSessions,
     fullMarketProviderCallCeiling: cached?.fullMarketProviderCallCeiling,
@@ -1021,6 +1027,8 @@ export default async function handler(req, res) {
             broadSnapshot.fullMarketEligibleUniverseSize,
           fullMarketLiquidityCoveragePct:
             broadSnapshot.fullMarketLiquidityCoveragePct,
+          fullMarketLiquiditySource:
+            broadSnapshot.fullMarketLiquiditySource,
           fullMarketLiquidityLookbackSessions:
             broadSnapshot.fullMarketLiquidityLookbackSessions,
           fullMarketProviderCallCeiling:
@@ -1031,6 +1039,15 @@ export default async function handler(req, res) {
             broadSnapshot.fullMarketCandidateCount,
           fullMarketLiquidityRules:
             broadSnapshot.fullMarketDiscoveryConfig,
+          freshCapitalLiquidityRule: {
+            source: "symbol_history",
+            lookbackSessions: 20,
+            minimumVerifiedSessions: 15,
+            minimumAverageDollarVolume:
+              broadSnapshot.fullMarketDiscoveryConfig?.minAvgDollarVolume ||
+              10_000_000,
+            enforcement: "hard_gate_before_buy",
+          },
           marketCycleRadar: broadSnapshot.cycle.groups.map((g) => ({
             name: g.name,
             proxy: g.proxy,
