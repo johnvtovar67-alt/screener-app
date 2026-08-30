@@ -476,6 +476,28 @@ assert(
     run.metrics.averageExposurePct === run.metrics.averageActiveExposurePct,
   "A ranked research book must replace a deteriorating leader at the next open while residual cash remains cash and benchmark-sleeve exposure stays exactly zero.",
 );
+const chaseBlockedDataset = {
+  ...rankedDataset,
+  sessions: rankedDataset.sessions.map((researchSession) => ({
+    ...researchSession,
+    positionSignals: researchSession.positionSignals.map((researchSignal) => ({
+      ...researchSignal,
+      entryTiming: {
+        ...researchSignal.entryTiming,
+        chase: true,
+      },
+    })),
+  })),
+};
+run = simulatePointInTimePortfolio(chaseBlockedDataset, {
+  ...rankedOptions,
+  blockChaseEntries: true,
+  researchRankMode: "momentum-dominant-quality-blend",
+});
+assert(
+  run.trades.every((trade) => trade.side !== "buy"),
+  "A momentum-led rank must not initiate a position when the point-in-time 3/5/10-session timing record identifies a chase entry.",
+);
 const placeboA = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,
   researchRankMode: "random-placebo",
