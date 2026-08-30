@@ -1,5 +1,11 @@
 # Point-in-time walk-forward research
 
+> **V11 status:** This strict runner remains the archived V10 holdout contract.
+> V11 was designed after observing V10 and therefore has no independent holdout
+> in the reused dataset. Its bounded development replay is documented in
+> `V11_MOMENTUM_DOMINANT_BLEND.md`; a V11 strict audit requires genuinely new or
+> forward data and a V11-specific pre-reveal attestation.
+
 The V10 research runner is intentionally separate from the live recommendation
 engine and fail-closed. It evaluates one frozen cross-sectional stock-ranking
 thesis. It will not print a performance result when the input cannot prove what
