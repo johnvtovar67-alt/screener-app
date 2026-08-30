@@ -1,9 +1,10 @@
 # Point-in-time walk-forward research
 
-The live screener and the research runner share the production scoring, expert,
-entry-timing, event-risk, relative-capital and portfolio-decision modules. The
-runner is intentionally fail-closed: it will not print a return when the input
-cannot prove what was knowable at each historical decision timestamp.
+The V10 research runner is intentionally separate from the live recommendation
+engine and fail-closed. It evaluates one frozen cross-sectional stock-ranking
+thesis. It will not print a performance result when the input cannot prove what
+was knowable at each historical decision timestamp or when the holdout was not
+sealed independently before evaluation.
 
 ## Run sequence
 
@@ -16,15 +17,14 @@ cannot prove what was knowable at each historical decision timestamp.
 
 3. Run:
 
-   `npm run research:backtest -- --input data.json --output report.json`
+   `npm run research:backtest -- --input data.json --output report.json --placebo-seeds 1000`
 
-The default walk-forward design uses 504 market sessions for training, 126 for
-validation and 126 untouched sessions for testing. Parameter selection uses the
-weaker of train and validation risk-adjusted scores; it never reads the test
-window. Orders generated at a close fill at the next session's open with whole
-shares and fixed slippage. Position/factor capacity is replayed through the
-production portfolio governor rather than a research-only duplicate. Ordinary Buy requires two distinct
-market-session observations; Strong Buy remains immediate after all hard gates.
+The default design uses 504 market sessions for context, 126 for validation and
+126 sealed sessions for each audit fold. V10 does not select parameters: every
+fold runs the same frozen thesis. Orders generated at a close fill at the next
+session's open with whole shares and fixed slippage. Cash remains cash. The same
+universe, sizing, rebalance clock, exits and costs are also run with simple
+momentum ranks, simple quality ranks and at least 1,000 declared random seeds.
 
 ## Required evidence contract
 
@@ -38,7 +38,11 @@ Every accepted dataset must certify and structurally support:
 - as-known earnings and material-news/event history;
 - complete inputs for replaying the production portfolio exit/review policy;
 - a benchmark on every session; and
-- at least 756 ordered market sessions for the default research claim.
+- at least 1,008 ordered market sessions, producing at least three complete
+  walk-forward audit folds;
+- SPY and QQQ prices on every session; and
+- `v10HoldoutAttestation` certifying `sealedBeforeEvaluation`,
+  `excludedFromV7ThroughV10Development` and `thesisFrozenBeforeReveal`.
 
 An accepted timestamp is not proof that a vendor's numeric values were never
 restated. A retrospective earnings calendar is also not proof of when a future
@@ -48,12 +52,15 @@ in the source dataset. Missing evidence produces `rejected-before-simulation` or
 
 ## Interpretation
 
-`eligible-for-independent-review` means the data contract and mechanical checks
-passed and the production portfolio policy was replayed. It does not mean the
-strategy is profitable, hedge-fund quality, statistically significant, or ready
-for more capital. Those conclusions require review of the untouched folds,
-transaction-cost sensitivity, regime stability, exposure, turnover and the
-underlying vendor evidence.
+`eligible-for-independent-review` requires positive simple total-return alpha
+against both SPY and QQQ, positive expectancy, profit factor above one, alpha in
+most folds, at least 30 closed round trips, at least 80% average active-stock
+exposure, better return than the simple momentum and quality controls, and
+better return than the transparent non-repainting bull-cycle/pullback technical
+control, and return above the 95th percentile of at least 1,000 random
+portfolios. It still does not authorize capital. Independent review and an
+immutable forward paper record remain required before the live recommendation
+engine can adopt V10.
 
-Even with a valid data contract, fewer than 30 closed trades across untouched
-test folds is labeled `insufficient-out-of-sample-trades`, not research-eligible.
+Exposure-matched attribution remains available as a diagnostic, but it is not a
+passing gate and cannot hide the opportunity cost of cash.

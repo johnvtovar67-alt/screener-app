@@ -376,6 +376,121 @@ assert(
   "The production control must continue to reject a Watch label so the V8 source expansion is measurable rather than silently changing the control.",
 );
 
+function rankedSignal(date, symbol, momentumPercentile) {
+  return fullEvidenceSignal(date, {
+    symbol,
+    riskPlan: { invalidationPrice: 60 },
+    researchFactors: {
+      ...fullEvidenceSignal(date).researchFactors,
+      momentumPercentile,
+    },
+  });
+}
+function rankedSession(date, aaaMomentum, bbbMomentum, aaaPrice, bbbPrice) {
+  const positionSignals = [
+    rankedSignal(date, "AAA", aaaMomentum),
+    rankedSignal(date, "BBB", bbbMomentum),
+  ];
+  return session(date, null, aaaPrice, {
+    sourceUniverseCount: 1_500,
+    positionSignals,
+    prices: [
+      {
+        symbol: "AAA",
+        open: aaaPrice,
+        high: aaaPrice + 1,
+        low: aaaPrice - 1,
+        close: aaaPrice,
+        adjusted: true,
+      },
+      {
+        symbol: "BBB",
+        open: bbbPrice,
+        high: bbbPrice + 1,
+        low: bbbPrice - 1,
+        close: bbbPrice,
+        adjusted: true,
+      },
+      {
+        symbol: "SPY",
+        open: 500,
+        high: 502,
+        low: 498,
+        close: 500,
+        adjusted: true,
+      },
+      {
+        symbol: "QQQ",
+        open: 450,
+        high: 452,
+        low: 448,
+        close: 450,
+        adjusted: true,
+      },
+    ],
+  });
+}
+const rankedDataset = {
+  metadata: metadata({ comparisonSymbols: ["SPY", "QQQ"] }),
+  sessions: [
+    rankedSession("2026-08-24", 95, 40, 100, 100),
+    rankedSession("2026-08-25", 35, 98, 101, 101),
+    rankedSession("2026-08-26", 30, 99, 102, 102),
+    rankedSession("2026-08-27", 25, 99, 103, 103),
+    rankedSession("2026-08-28", 25, 99, 104, 104),
+  ],
+};
+const rankedOptions = {
+  ...expandedEvidenceOptions,
+  requireEntryTimingPass: false,
+  minimumQualifiedSessions: 1,
+  selectionMode: "ranked",
+  researchRankMode: "momentum-only",
+  rankedRebalanceSessions: 1,
+  rankedTargetCount: 1,
+  rankedExitBuffer: 1,
+  rankedMinimumHoldSessions: 1,
+  rankedEntryQueueCount: 2,
+  maxPositions: 1,
+  buyTargetPct: 0.9,
+  strongBuyTargetPct: 0.9,
+  buyMaxPositionPct: 0.95,
+  strongBuyMaxPositionPct: 0.95,
+  minimumInitialStopPct: 18,
+  maximumInitialStopPct: 18,
+  ratchetRiskPlanStop: false,
+  benchmarkCompletionSymbol: null,
+  liquidateAtEnd: true,
+};
+run = simulatePointInTimePortfolio(rankedDataset, rankedOptions);
+assert(
+  run.trades.filter((trade) => trade.side === "buy").map((trade) => trade.symbol)
+    .join(",") === "AAA,BBB" &&
+    run.trades.some(
+      (trade) =>
+        trade.side === "sell" &&
+        trade.symbol === "AAA" &&
+        trade.reason === "rank-deterioration",
+    ) &&
+    run.metrics.averageBenchmarkSleevePct === 0 &&
+    run.metrics.averageExposurePct === run.metrics.averageActiveExposurePct,
+  "A ranked research book must replace a deteriorating leader at the next open while residual cash remains cash and benchmark-sleeve exposure stays exactly zero.",
+);
+const placeboA = simulatePointInTimePortfolio(rankedDataset, {
+  ...rankedOptions,
+  researchRankMode: "random-placebo",
+  researchRandomSeed: 17,
+});
+const placeboB = simulatePointInTimePortfolio(rankedDataset, {
+  ...rankedOptions,
+  researchRankMode: "random-placebo",
+  researchRandomSeed: 17,
+});
+assert(
+  JSON.stringify(placeboA.trades) === JSON.stringify(placeboB.trades),
+  "Random-control rankings must be deterministic for a declared seed so a favorable placebo cannot be chosen after seeing returns.",
+);
+
 const delayedRatchetSessions = [
   ["2026-08-24", 100, 102, 98, 100, 99],
   ["2026-08-25", 100, 102, 95, 100, 99],
@@ -889,20 +1004,22 @@ const benchmarkCompletionDataset = {
     ],
   })),
 };
-run = simulatePointInTimePortfolio(benchmarkCompletionDataset, {
-  minimumTrade: 1,
-  initialCapital: 10_000,
-  slippageBps: 0,
-  benchmarkCompletionSymbol: "SPY",
-});
+let completionSleeveRejected = false;
+try {
+  simulatePointInTimePortfolio(benchmarkCompletionDataset, {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 0,
+    benchmarkCompletionSymbol: "SPY",
+  });
+} catch (error) {
+  completionSleeveRejected = String(error?.message).includes(
+    "uninvested capital must remain cash",
+  );
+}
 assert(
-  Math.abs(run.metrics.totalReturnPct - 21) < 0.001 &&
-    Math.abs(run.metrics.benchmarkReturnPct - 21) < 0.001 &&
-    Math.abs(run.metrics.excessReturnPct) < 0.001 &&
-    run.metrics.averageExposurePct === 100 &&
-    run.metrics.averageActiveExposurePct === 0 &&
-    run.metrics.averageBenchmarkSleevePct === 100,
-  "A SPY completion sleeve must make idle capital track SPY exactly, report zero active exposure and never relabel passive beta as alpha.",
+  completionSleeveRejected,
+  "The simulator must reject every attempt to place idle strategy cash in a benchmark-completion sleeve.",
 );
 
 run = simulatePointInTimePortfolio(strongDataset, {

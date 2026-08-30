@@ -1,7 +1,7 @@
 # Investment System Mandate
 
 ## Objective
-Maximize risk-adjusted return of the Swing book by deploying capital only into high-quality, asymmetric opportunities while preserving cash when qualified opportunities do not justify portfolio risk. Core holdings are governed separately.
+Build a Swing stock-selection book whose after-cost total return exceeds both SPY and QQQ over the same dates without relying on leverage, hidden beta, benchmark-completion sleeves or retrospective rule selection. Risk-adjusted return and drawdown remain essential diagnostics, but they cannot substitute for the user's primary benchmark-beating objective. Cash is allowed and must remain cash; its opportunity cost counts fully against performance. Core holdings are governed separately.
 
 ## Non-negotiable decision hierarchy
 1. Data integrity: incomplete/contradictory critical data cannot authorize fresh capital.
@@ -16,6 +16,8 @@ Maximize risk-adjusted return of the Swing book by deploying capital only into h
 10. Opportunity cost: a 4–6 week flat/losing Swing must re-earn capital versus cash and qualified alternatives.
 11. Execution: every final action must resolve to a simple whole-share instruction or explicit Hold/Cash.
 12. Auditability: recommendations are recorded and measured at 1/5/10/20/40/60-day horizons.
+13. Benchmark honesty: the primary comparison is simple total return against fully invested SPY and QQQ. Exposure-matched attribution is secondary and cannot establish alpha.
+14. Research independence: one thesis is frozen before a holdout is opened. Controls cannot enter the selector because there is no post-hoc selector.
 
 ## Invariants
 - Strong Buy is a security/setup judgment, not automatic portfolio permission.
@@ -28,6 +30,8 @@ Maximize risk-adjusted return of the Swing book by deploying capital only into h
 - High share price is not a negative signal.
 - Tiny allocations cannot masquerade as full conviction.
 - No novelty bonus: repeated names are acceptable only if they re-earn rank from the actual scanned universe.
+- Uninvested cash cannot be placed in SPY, QQQ or another passive sleeve inside the active strategy return.
+- A result that fails a point-in-time, holdout, simple-factor or placebo gate cannot be described as validated alpha.
 
 ## Validation standard
 A change is not complete because one example looks correct. It must preserve these invariants, pass adversarial regression scenarios, build cleanly, and produce internally consistent row-level and portfolio-summary actions.
