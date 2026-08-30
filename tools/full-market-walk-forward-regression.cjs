@@ -265,6 +265,165 @@ assert(
   "Cross-sectional research gates must reject a weak-quality observation without preventing a later independently qualified signal.",
 );
 
+function fullEvidenceSignal(date, extra = {}) {
+  return signal(date, "Watch", {
+    price: 100,
+    priceAvg50: 95,
+    priceAvg200: 90,
+    entryTimingVerified: false,
+    entryTiming: {
+      available: true,
+      pass: true,
+      strongPass: true,
+      liquidityVerified: true,
+      liquidityPass: true,
+      averageDollarVolume20: 50_000_000,
+      relativeStrengthVerified: true,
+      shortTermTechnicalScore: 85,
+      alpha20VsSpy: 3,
+      alpha60VsSpy: 7,
+      alpha60VsQqq: 2,
+      alpha120VsSpy: 8,
+      alpha120VsQqq: 1,
+      benchmarkRegime: "bullish",
+    },
+    researchFactors: {
+      factorCoverage: 8,
+      qualityPercentile: 80,
+      sectorQualityPercentile: 75,
+      momentumPercentile: 85,
+      valuePercentile: 55,
+      stabilityPercentile: 70,
+      globalCompositePercentile: 82,
+      sectorCompositePercentile: 78,
+      controlledPullbackScore: 80,
+      volatility60Pct: 30,
+      return120Ex20: 12,
+    },
+    ...extra,
+  });
+}
+
+const expandedEvidenceDataset = {
+  metadata: metadata({ comparisonSymbols: ["SPY", "QQQ"] }),
+  sessions: [
+    session("2026-08-24", null, 100, {
+      positionSignals: [fullEvidenceSignal("2026-08-24")],
+      prices: [
+        { symbol: "AAA", open: 100, high: 102, low: 98, close: 100, adjusted: true },
+        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+        { symbol: "QQQ", open: 450, high: 452, low: 448, close: 450, adjusted: true },
+      ],
+    }),
+    session("2026-08-25", null, 101, {
+      positionSignals: [
+        fullEvidenceSignal("2026-08-25", { price: 101 }),
+      ],
+      prices: [
+        { symbol: "AAA", open: 101, high: 103, low: 99, close: 101, adjusted: true },
+        { symbol: "SPY", open: 501, high: 503, low: 499, close: 502, adjusted: true },
+        { symbol: "QQQ", open: 451, high: 455, low: 450, close: 454, adjusted: true },
+      ],
+    }),
+    session("2026-08-26", null, 102, {
+      positionSignals: [
+        fullEvidenceSignal("2026-08-26", { price: 102 }),
+      ],
+      prices: [
+        { symbol: "AAA", open: 102, high: 104, low: 100, close: 103, adjusted: true },
+        { symbol: "SPY", open: 502, high: 505, low: 501, close: 504, adjusted: true },
+        { symbol: "QQQ", open: 454, high: 458, low: 453, close: 457, adjusted: true },
+      ],
+    }),
+  ],
+};
+const expandedEvidenceOptions = {
+  researchSignalSource: "full-evidence",
+  independentLifecycle: true,
+  ignoreSignalPositionActions: true,
+  minimumQualifiedSessions: 2,
+  requireLiquidityPass: true,
+  requireTrendAlignment: true,
+  requireRelativeStrength: true,
+  minimumResearchFactorCoverage: 7,
+  minQualityPercentile: 60,
+  minMomentumPercentile: 60,
+  minCompositePercentile: 65,
+  benchmarkSymbols: ["SPY", "QQQ"],
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+};
+run = simulatePointInTimePortfolio(
+  expandedEvidenceDataset,
+  expandedEvidenceOptions,
+);
+assert(
+  run.trades.some(
+    (trade) => trade.side === "buy" && trade.date === "2026-08-26",
+  ) &&
+    Number.isFinite(
+      run.metrics.benchmarkComparisons?.QQQ?.exposureMatchedAlphaPct,
+    ),
+  "An independently qualified full-evidence candidate must be actionable even when the legacy production label is Watch, and SPY/QQQ attribution must remain explicit.",
+);
+run = simulatePointInTimePortfolio(expandedEvidenceDataset, {
+  ...expandedEvidenceOptions,
+  researchSignalSource: "production",
+});
+assert(
+  !run.trades.some((trade) => trade.side === "buy"),
+  "The production control must continue to reject a Watch label so the V8 source expansion is measurable rather than silently changing the control.",
+);
+
+const delayedRatchetSessions = [
+  ["2026-08-24", 100, 102, 98, 100, 99],
+  ["2026-08-25", 100, 102, 95, 100, 99],
+  ["2026-08-26", 101, 110, 96, 109, 105],
+  ["2026-08-27", 108, 109, 104, 106, 105],
+  ["2026-08-28", 104, 106, 103, 104, 105],
+].map(([date, open, high, low, close, stop]) =>
+  session(date, null, close, {
+    positionSignals: [
+      fullEvidenceSignal(date, {
+        price: close,
+        riskPlan: { invalidationPrice: stop },
+      }),
+    ],
+    prices: [
+      { symbol: "AAA", open, high, low, close, adjusted: true },
+      { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+      { symbol: "QQQ", open: 450, high: 452, low: 448, close: 450, adjusted: true },
+    ],
+  }),
+);
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata({ comparisonSymbols: ["SPY", "QQQ"] }),
+    sessions: delayedRatchetSessions,
+  },
+  {
+    ...expandedEvidenceOptions,
+    minimumQualifiedSessions: 1,
+    minimumInitialStopPct: 8,
+    maximumInitialStopPct: 14,
+    classifyStopExits: true,
+    ratchetRiskPlanStop: true,
+    stopRatchetMinHoldSessions: 2,
+    stopRatchetMinMfeR: 1,
+    stopCooldownSessions: 10,
+  },
+);
+const delayedBuy = run.trades.find((trade) => trade.side === "buy");
+const delayedExit = run.trades.find((trade) => trade.side === "sell");
+assert(
+  Math.abs(delayedBuy.signalSnapshot.stopDistancePct - 8) < 0.001 &&
+    delayedExit?.date === "2026-08-28" &&
+    delayedExit?.reason === "ratcheted-stop" &&
+    run.metrics.tradeDiagnostics.stopOutRatePct === 100,
+  "V8 must widen a fragile structural stop, delay ratcheting until both time and one-R progress are earned, and classify the eventual stop accurately.",
+);
+
 const sameIssuerSignals = [
   signal("2026-08-24", "Strong Buy", {
     symbol: "AAA",
@@ -975,6 +1134,9 @@ assert(
 assert(
   compiled.sessions.length === historicalDates.length &&
     compiled.sessions.at(-1).signals.some((row) => row.symbol === "AAA") &&
+    compiled.sessions.at(-1).signals.every(
+      (row) => row.entryTiming?.available === true,
+    ) &&
     compiled.sessions.at(-1).positionSignals.some(
       (row) =>
         row.symbol === "AAA" &&
@@ -983,6 +1145,15 @@ assert(
     ) &&
     compiled.sessions[0].historicalDelistedMembership === 1,
   "Historical compilation must replay fresh-capital, cross-sectional factor and holding-timing evidence while retaining delisted membership evidence.",
+);
+const compactedCompilerSession = compactReplaySession(compiled.sessions.at(-1));
+assert(
+  compactedCompilerSession.signals.every(
+    (row) =>
+      row.entryTiming?.available === true &&
+      typeof row.entryTiming?.liquidityPass === "boolean",
+  ),
+  "The V8 compiled checkpoint must preserve full timing and liquidity evidence on fresh rows even when duplicate holding rows are compacted away.",
 );
 
 console.log(

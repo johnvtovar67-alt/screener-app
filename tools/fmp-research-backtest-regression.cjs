@@ -13,7 +13,7 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,equivalentAcquisitionSignature};";
 let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
@@ -34,6 +34,12 @@ const box = {
   Response,
   setTimeout,
   clearTimeout,
+  latestCompletedMarketSessionDay(value) {
+    const date = new Date(value);
+    while ([0, 6].includes(date.getUTCDay()))
+      date.setUTCDate(date.getUTCDate() - 1);
+    return date.toISOString().slice(0, 10);
+  },
   portfolioDecision: () => null,
   capitalAllowance: () => null,
   capitalSignalEligible: () => null,
@@ -51,13 +57,10 @@ const box = {
     );
     const thesisBonus =
       [
-        "cash-preservation-control",
-        "live-policy-control",
-        "anti-chase-static-control",
-        "quality-momentum-balanced",
-        "quality-at-reasonable-price",
-        "momentum-regime-aware",
-        "quality-momentum-risk-balanced",
+        "v7-live-policy-control",
+        "persistent-quality-leadership",
+        "controlled-acceleration-leadership",
+        "quality-reacceleration-value-aware",
       ].indexOf(options.thesisId) + 1;
     return {
       metrics: {
@@ -97,7 +100,28 @@ const {
   buildHistoricalFundamentalRows,
   resolvePriceHistoryContract,
   runProvisionalWindows,
+  equivalentAcquisitionSignature,
 } = box.module.exports;
+
+const acquisitionSignature = (endDate) =>
+  JSON.stringify({
+    schema: 3,
+    fromDate: "2022-01-01",
+    endDate,
+    priceContract: "fmp-dividend-adjusted-v1",
+    symbols: ["AAA", "QQQ", "SPY"],
+  });
+assert(
+  equivalentAcquisitionSignature(
+    acquisitionSignature("2026-08-29"),
+    acquisitionSignature("2026-08-28"),
+  ) &&
+    !equivalentAcquisitionSignature(
+      acquisitionSignature("2026-08-28"),
+      acquisitionSignature("2026-08-31"),
+    ),
+  "Weekend date changes must reuse the same completed-session history, while a new market session must require an update.",
+);
 
 const selected = selectResearchUniverse(
   [
@@ -262,7 +286,7 @@ assert(
     rawSource.includes('["balance-sheet-statement", "balanceRows"]') &&
     rawSource.includes('["cash-flow-statement", "cashFlowRows"]') &&
     !rawSource.includes('statement-bulk"') &&
-    rawSource.includes("REPORT_VERSION = 7") &&
+    rawSource.includes("REPORT_VERSION = 8") &&
     rawSource.includes("DEFAULT_SYMBOL_LIMIT = 250") &&
     rawSource.includes("MAX_SYMBOL_LIMIT = 500") &&
     rawSource.includes("REQUEST_START_SPACING_MS = 300") &&
@@ -277,6 +301,7 @@ assert(
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
     rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 3") &&
     rawSource.includes("COMPILE_SESSIONS_PER_RUN = 20") &&
+    rawSource.includes("REPLAY_CHECKPOINT_SCHEMA = 4") &&
     rawSource.includes("REPLAY_WINDOWS_PER_RUN = 1") &&
     rawSource.includes("persistPrivateGzipJson") &&
     rawSource.includes("readPrivateGzipJson") &&
@@ -290,11 +315,19 @@ assert(
     ) &&
     rawSource.includes("equivalentAcquisitionSignature") &&
     rawSource.includes("equivalentStatementSignature") &&
+    rawSource.includes("latestCompletedMarketSessionDay") &&
+    rawSource.includes("cachedPriceContractUsable") &&
+    rawSource.includes("priceContractCheckpointReused") &&
     rawSource.includes("eligibleForCapitalClaims: false") &&
-    rawSource.includes("cash-preservation-control") &&
-    rawSource.includes("quality-at-reasonable-price") &&
-    rawSource.includes("momentum-regime-aware") &&
-    rawSource.includes("quality-momentum-risk-balanced") &&
+    rawSource.includes("v7-live-policy-control") &&
+    rawSource.includes("selectionEligible: false") &&
+    rawSource.includes("persistent-quality-leadership") &&
+    rawSource.includes("controlled-acceleration-leadership") &&
+    rawSource.includes("quality-reacceleration-value-aware") &&
+    rawSource.includes('researchSignalSource: "full-evidence"') &&
+    rawSource.includes("activeThesesUseIndependentResearchLifecycle") &&
+    rawSource.includes('benchmarkSymbols: ["SPY", "QQQ"]') &&
+    rawSource.includes("benchmarkComparisons") &&
     rawSource.includes("discovery.researchUniverse") &&
     rawSource.includes("rollingRegimeAudit") &&
     rawSource.includes("walkForwardSelectionAudit") &&
@@ -371,7 +404,7 @@ const contractCalls = [];
     })),
   };
   let checkpoint = null;
-  for (let completed = 3; completed <= 42; completed += 3) {
+  for (let completed = 3; completed <= 24; completed += 3) {
     const partial = await runProvisionalWindows(mockDataset, {
       initial: checkpoint,
       maxWindows: 3,
@@ -379,7 +412,7 @@ const contractCalls = [];
     assert(
         partial.status === "collecting" &&
         partial.progress.completedWindows === completed &&
-        partial.progress.remainingWindows === 42 - completed &&
+        partial.progress.remainingWindows === 24 - completed &&
         partial.progress.completedFolds === Math.floor(completed / 3) &&
         partial.progress.completedCandidates === Math.floor(completed / 6),
       "Each replay invocation must durably advance its bounded chronological simulation windows.",
@@ -392,11 +425,16 @@ const contractCalls = [];
   });
   assert(
     completedReplay.status === "complete" &&
-      completedReplay.replay.candidates.length === 7 &&
+      completedReplay.replay.candidates.length === 4 &&
       completedReplay.replay.windows.folds.length === 2 &&
+      completedReplay.replay.selectedParameters.thesisId ===
+        "quality-reacceleration-value-aware" &&
+      completedReplay.replay.walkForwardSelectionAudit.folds.every(
+        (fold) => fold.selectedParameters.selectionEligible === true,
+      ) &&
       completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
         .capitalClaimAuthorized === false &&
-      simulatedRuns === 43,
+      simulatedRuns === 25,
     "The replay must reuse all checkpointed folds, run final selection once, and never recompute completed candidates.",
   );
   console.log(
