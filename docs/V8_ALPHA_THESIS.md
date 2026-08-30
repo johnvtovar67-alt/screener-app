@@ -11,7 +11,7 @@ for the V8 audit windows.
 1. **The active thesis selects independently.** V8 ranks the full historically
    evaluated evidence set. A legacy production Buy label is not an entry
    prerequisite, and the legacy score has zero weight in active-policy ranking.
-   The production policy remains a non-selectable control.
+   The completed V7 audit remains the external comparison baseline.
 2. **Fundamental quality is cross-sectional.** Profitability, free-cash-flow
    margin, return on equity, growth, leverage and dilution are ranked globally
    and within sector. Momentum, value and stability remain separate so a high
@@ -44,8 +44,9 @@ for the V8 audit windows.
 | Controlled acceleration leadership | Does one fully confirmed acceleration session capture leaders earlier without accepting a short-term chase? |
 | Quality re-acceleration, value aware | Can high-quality, lower-volatility companies re-accelerating near the 50-session trend produce better downside-adjusted alpha when valuation is not in the bottom third? |
 
-The V7 live policy is replayed only as a control and cannot be selected as the
-V8 thesis.
+The rejected V7 live policy is not recomputed inside V8. Its completed audit is
+used only as an external baseline, so it cannot consume replay capacity or
+influence selection among the three active theses.
 
 ## Selection and evidence standard
 

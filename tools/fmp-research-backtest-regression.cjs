@@ -57,7 +57,6 @@ const box = {
     );
     const thesisBonus =
       [
-        "v7-live-policy-control",
         "persistent-quality-leadership",
         "controlled-acceleration-leadership",
         "quality-reacceleration-value-aware",
@@ -301,8 +300,12 @@ assert(
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
     rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 3") &&
     rawSource.includes("COMPILE_SESSIONS_PER_RUN = 20") &&
-    rawSource.includes("REPLAY_CHECKPOINT_SCHEMA = 4") &&
+    rawSource.includes("REPLAY_CHECKPOINT_SCHEMA = 5") &&
     rawSource.includes("REPLAY_WINDOWS_PER_RUN = 1") &&
+    rawSource.includes("V8_ACTIVE_CANDIDATE_COUNT = 3") &&
+    rawSource.includes("nextReplaySessionSlice") &&
+    rawSource.includes("requiredChunks") &&
+    rawSource.includes("skipFullPeriodDiagnostic: true") &&
     rawSource.includes("persistPrivateGzipJson") &&
     rawSource.includes("readPrivateGzipJson") &&
     rawSource.includes("compactResearchRun") &&
@@ -319,8 +322,7 @@ assert(
     rawSource.includes("cachedPriceContractUsable") &&
     rawSource.includes("priceContractCheckpointReused") &&
     rawSource.includes("eligibleForCapitalClaims: false") &&
-    rawSource.includes("v7-live-policy-control") &&
-    rawSource.includes("selectionEligible: false") &&
+    rawSource.includes("completedV7ReportIsExternalComparisonBaseline") &&
     rawSource.includes("persistent-quality-leadership") &&
     rawSource.includes("controlled-acceleration-leadership") &&
     rawSource.includes("quality-reacceleration-value-aware") &&
@@ -403,8 +405,22 @@ const contractCalls = [];
         .slice(0, 10),
     })),
   };
+  const subsetProbe = await runProvisionalWindows(
+    { sessions: mockDataset.sessions.slice(250, 630) },
+    {
+      calendarDates: mockDataset.sessions.map((session) => session.date),
+      maxWindows: 1,
+      skipFullPeriodDiagnostic: true,
+    },
+  );
+  assert(
+    subsetProbe.status === "collecting" &&
+      subsetProbe.progress.completedWindows === 1 &&
+      subsetProbe.progress.totalWindows === 18,
+    "A replay invocation must be able to simulate one bounded date slice while deriving folds from the full durable calendar.",
+  );
   let checkpoint = null;
-  for (let completed = 3; completed <= 24; completed += 3) {
+  for (let completed = 3; completed <= 18; completed += 3) {
     const partial = await runProvisionalWindows(mockDataset, {
       initial: checkpoint,
       maxWindows: 3,
@@ -412,7 +428,7 @@ const contractCalls = [];
     assert(
         partial.status === "collecting" &&
         partial.progress.completedWindows === completed &&
-        partial.progress.remainingWindows === 24 - completed &&
+        partial.progress.remainingWindows === 18 - completed &&
         partial.progress.completedFolds === Math.floor(completed / 3) &&
         partial.progress.completedCandidates === Math.floor(completed / 6),
       "Each replay invocation must durably advance its bounded chronological simulation windows.",
@@ -425,7 +441,7 @@ const contractCalls = [];
   });
   assert(
     completedReplay.status === "complete" &&
-      completedReplay.replay.candidates.length === 4 &&
+      completedReplay.replay.candidates.length === 3 &&
       completedReplay.replay.windows.folds.length === 2 &&
       completedReplay.replay.selectedParameters.thesisId ===
         "quality-reacceleration-value-aware" &&
@@ -434,7 +450,7 @@ const contractCalls = [];
       ) &&
       completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
         .capitalClaimAuthorized === false &&
-      simulatedRuns === 25,
+      simulatedRuns === 20,
     "The replay must reuse all checkpointed folds, run final selection once, and never recompute completed candidates.",
   );
   console.log(
