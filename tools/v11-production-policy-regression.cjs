@@ -137,6 +137,20 @@ assert(
   "selected V11 names must retain the audited equal-weight target",
 );
 assert(
+  buys.every(
+    (row) =>
+      !/\bV11\b|production policy|audited|point-in-time/i.test(
+        `${row.finalDecision.reason} ${row.finalDecision.priority} ${row.finalDecision.planText}`,
+      ),
+  ),
+  "investor-facing decisions must not expose version or implementation narration",
+);
+assert(
+  buys[0].finalDecision.priority === "Best Opportunity" &&
+    buys[1].finalDecision.priority === "Priority #2",
+  "priority labels must remain useful without exposing the policy version",
+);
+assert(
   buys.some((row) => row.recommendation.expertDecision.metrics.lateTrend === true),
   "the V12 long-horizon extension veto must not leak into V11 selection",
 );
@@ -173,6 +187,20 @@ assert(
     lifecycle.source === "v11-production-rank-deterioration",
   "a mature Swing outside the frozen top-12 retention buffer must exit",
 );
+assert(
+  !/\bV11\b|frozen|policy/i.test(lifecycle.reason),
+  "holding decisions must use investor-facing language",
+);
+lifecycle = v11ProductionPositionLifecycle({
+  stock: { symbol: "CORE" },
+  position: { role: "Core", gainLossPct: -25 },
+  policy: { id: V11_PRODUCTION_POLICY_ID, status: "ready" },
+  now: new Date("2026-08-30T03:00:00.000Z"),
+});
+assert(
+  lifecycle === null,
+  "Core holdings must remain exempt from the Swing rank, time, and loss lifecycle",
+);
 lifecycle = v11ProductionPositionLifecycle({
   stock: { symbol: "LOSS" },
   position: {
@@ -208,6 +236,29 @@ assert(
     top5.includes("getV11ProductionSnapshot") &&
     top5.includes("v11_momentum_dominant_production_candidate"),
   "the live Opportunities route must consume and identify the promoted V11 policy",
+);
+const page = fs.readFileSync("pages/index.js", "utf8");
+for (const hiddenNarration of [
+  "The promoted V11 cross-sectional rank",
+  "Production policy",
+  "V11 momentum-dominant blend is authoritative",
+  "V11 ranks",
+])
+  assert(
+    !page.includes(hiddenNarration),
+    `the investor UI must hide implementation narration: ${hiddenNarration}`,
+  );
+assert(
+  page.includes(
+    "Current candidates for new capital, ordered from strongest to weakest.",
+  ),
+  "Opportunities must retain a concise investor-facing description",
+);
+assert(
+  page.includes("v11ProductionPositionLifecycle") &&
+    page.includes("currentProductionPolicy") &&
+    page.includes('s.role==="Swing"&&!CASH.includes(sym(s))&&!s.openedAt'),
+  "saved Swing holdings must receive the current lifecycle and an opening-date completeness check",
 );
 
 console.log(
