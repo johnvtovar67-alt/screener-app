@@ -51,3 +51,18 @@ the 25-seed random 95th percentile, and has no independent holdout. The source
 dataset also uses a current cohort, omits delisted securities and historical
 membership, lacks revision-safe fundamentals and complete point-in-time news,
 and is too small for a strong placebo claim.
+
+## Investor interface and existing holdings
+
+The production identifiers, factor weights, source session, and gate details
+remain available in API metadata for auditability, but they are not displayed
+as explanatory copy in the investor interface. Opportunities show the action,
+entry condition, sizing, priority, decision rationale, and trade plan in plain
+language.
+
+My Portfolio revalues every saved position and combines the current market
+ranking with the position's role, weight, gain or loss, opening date, factor
+concentration, technical/fundamental evidence, events, and replacement edge.
+Swing holdings receive the ten-session rank-retention rule, 18% loss limit, and
+126-session maximum hold. Core holdings and cash are intentionally exempt from
+that Swing lifecycle while still receiving their applicable portfolio review.
