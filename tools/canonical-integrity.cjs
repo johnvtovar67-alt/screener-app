@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-08-29-full-market-walk-forward"',
+  'release:"2026-08-30-v11-production-promotion"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',
@@ -53,7 +53,9 @@ hasAll(manifest,[
   '"partial-universe-verification-pause"',
   '"bounded-stable-fmp-recovery"',
   '"mock-trade-allocation-simulation"',
-  '"clean-performance-session-basis"'
+  '"clean-performance-session-basis"',
+  '"v11-momentum-production-policy"',
+  '"durable-v11-policy-snapshot"'
 ],'lib/releaseManifest.js');
 
 const expert=read('lib/expertDecision.js');

@@ -39,6 +39,8 @@ import {
 } from "../../lib/marketCycleUniverse";
 import { getFullMarketDiscovery } from "../../lib/fullMarketDiscovery";
 import { updatePerformanceLedger } from "../../lib/performanceStore";
+import { applyV11ProductionPolicy } from "../../lib/v11ProductionPolicy";
+import { getV11ProductionSnapshot } from "../../lib/v11ProductionSnapshot";
 
 export const config = { maxDuration: 60 };
 
@@ -617,12 +619,20 @@ async function buildBroadSnapshot(verificationPass = 0) {
   if (cached?.rows && now - cached.ts < CACHE_MS) return cached;
   if (cached?.promise) return cached.promise;
   const promise = (async () => {
-    const fullMarketDiscovery = await getFullMarketDiscovery({
-        refreshIfStale: true,
-      }),
+    const [fullMarketDiscovery, productionPolicySnapshot] = await Promise.all([
+        getFullMarketDiscovery({ refreshIfStale: true }),
+        getV11ProductionSnapshot({ refreshIfStale: true }),
+      ]),
       fullMarketCandidates = Array.isArray(fullMarketDiscovery?.candidates)
         ? fullMarketDiscovery.candidates
         : [],
+      productionRankBySymbol = new Map(
+        (productionPolicySnapshot?.candidates || []).map((candidate) => [
+          normalizeSymbol(candidate.symbol),
+          Number(candidate.researchRank) || Number.POSITIVE_INFINITY,
+        ]),
+      ),
+      productionCandidateSymbols = new Set(productionRankBySymbol.keys()),
       fullMarketBySymbol = new Map(
         fullMarketCandidates.map((row) => [normalizeSymbol(row.symbol), row]),
       ),
@@ -659,6 +669,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
       dynamicSymbols = uniqueSymbols([
         ...configuredMarketMemberSymbols,
         ...discoveredSymbols,
+        ...productionCandidateSymbols,
       ]),
       marketMemberRaw = dynamicSymbols.length
         ? await fetchFmpQuotes(dynamicSymbols)
@@ -704,8 +715,18 @@ async function buildBroadSnapshot(verificationPass = 0) {
       staleQuoteCount = broadQuotes.filter((q) => q.staleFallback).length,
       fundamentalPriority = [...broadQuotes]
         .sort(
-          (a, b) =>
-            fundamentalRefreshPriority(b) - fundamentalRefreshPriority(a),
+          (a, b) => {
+            const aRank = productionRankBySymbol.get(a.symbol);
+            const bRank = productionRankBySymbol.get(b.symbol);
+            if (Number.isFinite(aRank) || Number.isFinite(bRank)) {
+              if (!Number.isFinite(aRank)) return 1;
+              if (!Number.isFinite(bRank)) return -1;
+              if (aRank !== bRank) return aRank - bRank;
+            }
+            return (
+              fundamentalRefreshPriority(b) - fundamentalRefreshPriority(a)
+            );
+          },
         )
         .map((q) => q.symbol),
       fundamentalOffset = Math.min(
@@ -731,17 +752,20 @@ async function buildBroadSnapshot(verificationPass = 0) {
     );
     await seedDurableStrongBuyMemory();
     const recentStrongSymbols = new Set(recentStrongBuySymbols()),
-      preTradeCandidates = rows
-        .filter((r) =>
-          ["Buy", "Strong Buy"].includes(
-            String(
-              r.recommendation?.displayLabel ||
-                r.recommendation?.label ||
-                r.action,
-            ),
-          ) || recentStrongSymbols.has(r.symbol),
-        )
-        .map((r) => r.symbol),
+      preTradeCandidates = uniqueSymbols([
+        ...productionCandidateSymbols,
+        ...rows
+          .filter((r) =>
+            ["Buy", "Strong Buy"].includes(
+              String(
+                r.recommendation?.displayLabel ||
+                  r.recommendation?.label ||
+                  r.action,
+              ),
+            ) || recentStrongSymbols.has(r.symbol),
+          )
+          .map((r) => r.symbol),
+      ]),
       // Earnings/news/M&A verification is mandatory before deployment, but a
       // multi-thousand-symbol news URL is neither useful nor safe. Only rows that
       // can still become actionable receive the bounded pre-trade check.
@@ -752,17 +776,21 @@ async function buildBroadSnapshot(verificationPass = 0) {
         : r,
     );
     const
-      timingCandidates = rows
-        .filter((r) =>
-          ["Buy", "Strong Buy"].includes(
-            String(
-              r.recommendation?.displayLabel ||
-                r.recommendation?.label ||
-                r.action,
-            ),
-          ) || recentStrongSymbols.has(r.symbol),
-        )
-        .map((r) => r.symbol),
+      productionTimingCandidates = [...productionCandidateSymbols].slice(0, 24),
+      timingCandidates = uniqueSymbols([
+        ...productionTimingCandidates,
+        ...rows
+          .filter((r) =>
+            ["Buy", "Strong Buy"].includes(
+              String(
+                r.recommendation?.displayLabel ||
+                  r.recommendation?.label ||
+                  r.action,
+              ),
+            ) || recentStrongSymbols.has(r.symbol),
+          )
+          .map((r) => r.symbol),
+      ]).slice(0, 36),
       timingMap = await fetchEntryTimingMap(timingCandidates);
     rows = rows.map((r) =>
       timingMap.has(r.symbol)
@@ -770,6 +798,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
         : r,
     );
     rows = finalizeBroadOpportunityDecisions(rows);
+    rows = applyV11ProductionPolicy(rows, productionPolicySnapshot);
     rows = rows.map(applyPersonalCapitalPolicy);
     const snapshotBuiltAt = Date.now(),result = {
       rows,
@@ -806,6 +835,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
       ),
       fullMarketCandidateCount: discoveredSymbols.length,
       fullMarketDiscoveryConfig: fullMarketDiscovery.config || null,
+      productionPolicySnapshot,
       universeSize: broadSymbols.length,
       staleFeed: false,
       quoteCoveragePct,
@@ -840,6 +870,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
     fullMarketCoarseUniverseCapped: cached?.fullMarketCoarseUniverseCapped,
     fullMarketCandidateCount: cached?.fullMarketCandidateCount,
     fullMarketDiscoveryConfig: cached?.fullMarketDiscoveryConfig,
+    productionPolicySnapshot: cached?.productionPolicySnapshot,
     universeSize: cached?.universeSize,
     promise,
   };
@@ -1040,7 +1071,27 @@ export default async function handler(req, res) {
             "Focused research list filtered from the authoritative broad opportunity decisions.",
         },
         meta: {
-          mode: "expert_decision_v14_resilient_fmp_historical_entry_timing",
+          mode: "v11_momentum_dominant_production_candidate",
+          productionPolicy: {
+            id: broadSnapshot.productionPolicySnapshot?.policyId || null,
+            label: broadSnapshot.productionPolicySnapshot?.policyLabel || null,
+            status:
+              broadSnapshot.productionPolicySnapshot?.status || "unavailable",
+            sourceSessionDate:
+              broadSnapshot.productionPolicySnapshot?.sourceSessionDate || null,
+            snapshotAgeSessions:
+              broadSnapshot.productionPolicySnapshot?.snapshotAgeSessions ?? null,
+            targetCount:
+              broadSnapshot.productionPolicySnapshot?.targetCount || 12,
+            targetWeightPct:
+              broadSnapshot.productionPolicySnapshot?.targetWeightPct || 8.25,
+            weights: broadSnapshot.productionPolicySnapshot?.weights || null,
+            v12HardGovernorEnabled: false,
+            independentlyValidated: false,
+            evidenceStatus:
+              broadSnapshot.productionPolicySnapshot?.evidenceStatus ||
+              "provisional-post-selection-development-candidate",
+          },
           universeDesign:
             "all liquid U.S.-listed common stocks are considered by a bounded daily discovery pass; the resulting shortlist, strategic themes, and configured market-cycle constituents must independently pass live quotes, verified fundamentals, event risk, historical entry timing, and relative capital ranking",
           universeSize: broadSnapshot.universeSize,
