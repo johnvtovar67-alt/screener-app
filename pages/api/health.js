@@ -34,7 +34,8 @@ const requiredFeatures=[
   "v11-momentum-production-policy",
   "durable-v11-policy-snapshot",
   "investor-facing-decision-language",
-  "holding-aware-v11-lifecycle"
+  "holding-aware-v11-lifecycle",
+  "v11-strict-strong-buy-preservation"
 ];
 
 async function blobAvailable(){
