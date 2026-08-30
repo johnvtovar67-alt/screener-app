@@ -424,6 +424,50 @@ assert(
   "V8 must widen a fragile structural stop, delay ratcheting until both time and one-R progress are earned, and classify the eventual stop accurately.",
 );
 
+const breakEvenProtectionDataset = {
+  metadata: metadata({ comparisonSymbols: ["SPY", "QQQ"] }),
+  sessions: [
+    ["2026-09-01", 100, 101, 99, 100, 92],
+    ["2026-09-02", 100, 101, 99, 100, 92],
+    ["2026-09-03", 101, 113, 99, 110, 95],
+    ["2026-09-04", 105, 106, 99, 101, 95],
+  ].map(([date, open, high, low, close, stop]) =>
+    session(date, null, close, {
+      positionSignals: [
+        fullEvidenceSignal(date, {
+          price: close,
+          riskPlan: { invalidationPrice: stop },
+        }),
+      ],
+      prices: [
+        { symbol: "AAA", open, high, low, close, adjusted: true },
+        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+        { symbol: "QQQ", open: 450, high: 452, low: 448, close: 450, adjusted: true },
+      ],
+    }),
+  ),
+};
+run = simulatePointInTimePortfolio(breakEvenProtectionDataset, {
+  ...expandedEvidenceOptions,
+  minimumQualifiedSessions: 1,
+  minimumInitialStopPct: 8,
+  maximumInitialStopPct: 14,
+  classifyStopExits: true,
+  ratchetRiskPlanStop: true,
+  stopRatchetMinHoldSessions: 1,
+  stopRatchetMinMfeR: 1,
+  breakEvenStopMinMfeR: 1.5,
+  breakEvenStopBufferPct: 0,
+});
+const protectedExit = run.trades.find((trade) => trade.side === "sell");
+assert(
+  protectedExit?.reason === "ratcheted-stop" &&
+    protectedExit?.date === "2026-09-04" &&
+    Math.abs(protectedExit.price - 100) < 0.001 &&
+    Math.abs(protectedExit.roundTripPnl) < 0.001,
+  "After a position earns 1.5 initial risk units, a structural ratchet must not turn it into a loss.",
+);
+
 const sameIssuerSignals = [
   signal("2026-08-24", "Strong Buy", {
     symbol: "AAA",
@@ -829,6 +873,90 @@ assert(
       trade.price === 12,
   ) && run.openPositions.length === 0,
   "A delisted holding must realize the supplied recovery value instead of retaining its last mark.",
+);
+
+const benchmarkCompletionDataset = {
+  metadata: metadata({ comparisonSymbols: ["SPY"] }),
+  sessions: [
+    ["2026-08-24", 100, 100],
+    ["2026-08-25", 100, 110],
+    ["2026-08-26", 110, 121],
+  ].map(([date, open, close]) => ({
+    ...session(date, null, 100),
+    prices: [
+      { symbol: "AAA", open: 100, high: 101, low: 99, close: 100, adjusted: true },
+      { symbol: "SPY", open, high: close, low: open, close, adjusted: true },
+    ],
+  })),
+};
+run = simulatePointInTimePortfolio(benchmarkCompletionDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+  benchmarkCompletionSymbol: "SPY",
+});
+assert(
+  Math.abs(run.metrics.totalReturnPct - 21) < 0.001 &&
+    Math.abs(run.metrics.benchmarkReturnPct - 21) < 0.001 &&
+    Math.abs(run.metrics.excessReturnPct) < 0.001 &&
+    run.metrics.averageExposurePct === 100 &&
+    run.metrics.averageActiveExposurePct === 0 &&
+    run.metrics.averageBenchmarkSleevePct === 100,
+  "A SPY completion sleeve must make idle capital track SPY exactly, report zero active exposure and never relabel passive beta as alpha.",
+);
+
+run = simulatePointInTimePortfolio(strongDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+  liquidateAtEnd: true,
+});
+assert(
+  run.trades.some(
+    (trade) =>
+      trade.side === "sell" && trade.reason === "window-end-liquidation",
+  ) &&
+    run.metrics.closedTrades === 1 &&
+    run.openPositions.length === 0,
+  "An isolated research window must close its final marks so trade diagnostics and portfolio return measure the same positions.",
+);
+
+const openSizingDataset = {
+  metadata: metadata(),
+  sessions: [
+    session("2026-08-24", null, 100, {
+      signals: [signal("2026-08-24", "Strong Buy", { symbol: "AAA" })],
+      positionSignals: [signal("2026-08-24", "Strong Buy", { symbol: "AAA" })],
+    }),
+    session("2026-08-25", null, 100, {
+      signals: [signal("2026-08-25", "Strong Buy", { symbol: "BBB", sector: "Energy" })],
+      positionSignals: [signal("2026-08-25", "Strong Buy", { symbol: "BBB", sector: "Energy" })],
+      prices: [
+        { symbol: "AAA", open: 100, high: 101, low: 99, close: 100, adjusted: true },
+        { symbol: "BBB", open: 100, high: 101, low: 99, close: 100, adjusted: true },
+        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+      ],
+    }),
+    session("2026-08-26", null, 1_000, {
+      prices: [
+        { symbol: "AAA", open: 100, high: 1_000, low: 99, close: 1_000, adjusted: true },
+        { symbol: "BBB", open: 100, high: 101, low: 99, close: 100, adjusted: true },
+        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+      ],
+    }),
+  ],
+};
+run = simulatePointInTimePortfolio(openSizingDataset, {
+  minimumTrade: 1,
+  initialCapital: 10_000,
+  slippageBps: 0,
+  strongBuyTargetPct: 0.1,
+  strongBuyMaxPositionPct: 0.1,
+});
+assert(
+  run.trades.find((trade) => trade.side === "buy" && trade.symbol === "BBB")
+    ?.shares === 10,
+  "Next-open sizing must value existing positions at the open and cannot use the same session's closing price.",
 );
 
 const lookAhead = JSON.parse(JSON.stringify(buyDataset));

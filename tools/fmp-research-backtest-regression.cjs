@@ -285,7 +285,7 @@ assert(
     rawSource.includes('["balance-sheet-statement", "balanceRows"]') &&
     rawSource.includes('["cash-flow-statement", "cashFlowRows"]') &&
     !rawSource.includes('statement-bulk"') &&
-    rawSource.includes("REPORT_VERSION = 8") &&
+    rawSource.includes("REPORT_VERSION = 9") &&
     rawSource.includes("DEFAULT_SYMBOL_LIMIT = 250") &&
     rawSource.includes("MAX_SYMBOL_LIMIT = 500") &&
     rawSource.includes("REQUEST_START_SPACING_MS = 300") &&
@@ -300,9 +300,9 @@ assert(
     rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
     rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 3") &&
     rawSource.includes("COMPILE_SESSIONS_PER_RUN = 20") &&
-    rawSource.includes("REPLAY_CHECKPOINT_SCHEMA = 5") &&
+    rawSource.includes("REPLAY_CHECKPOINT_SCHEMA = 6") &&
     rawSource.includes("REPLAY_WINDOWS_PER_RUN = 1") &&
-    rawSource.includes("V8_ACTIVE_CANDIDATE_COUNT = 3") &&
+    rawSource.includes("V9_ACTIVE_CANDIDATE_COUNT = 3") &&
     rawSource.includes("nextReplaySessionSlice") &&
     rawSource.includes("requiredChunks") &&
     rawSource.includes("skipFullPeriodDiagnostic: true") &&
@@ -323,12 +323,16 @@ assert(
     rawSource.includes("priceContractCheckpointReused") &&
     rawSource.includes("eligibleForCapitalClaims: false") &&
     rawSource.includes("completedV7ReportIsExternalComparisonBaseline") &&
+    rawSource.includes("completedV8ReportIsExternalComparisonBaseline") &&
     rawSource.includes("persistent-quality-leadership") &&
     rawSource.includes("controlled-acceleration-leadership") &&
     rawSource.includes("quality-reacceleration-value-aware") &&
     rawSource.includes('researchSignalSource: "full-evidence"') &&
     rawSource.includes("activeThesesUseIndependentResearchLifecycle") &&
     rawSource.includes('benchmarkSymbols: ["SPY", "QQQ"]') &&
+    rawSource.includes('benchmarkCompletionSymbol: "SPY"') &&
+    rawSource.includes("liquidateAtEnd: true") &&
+    rawSource.includes("breakEvenStopMinMfeR: 1.5") &&
     rawSource.includes("benchmarkComparisons") &&
     rawSource.includes("discovery.researchUniverse") &&
     rawSource.includes("rollingRegimeAudit") &&
