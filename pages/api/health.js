@@ -32,7 +32,9 @@ const requiredFeatures=[
   "full-market-daily-discovery",
   "point-in-time-walk-forward-research",
   "v11-momentum-production-policy",
-  "durable-v11-policy-snapshot"
+  "durable-v11-policy-snapshot",
+  "investor-facing-decision-language",
+  "holding-aware-v11-lifecycle"
 ];
 
 async function blobAvailable(){

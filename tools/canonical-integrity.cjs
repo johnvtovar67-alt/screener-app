@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-08-30-v11-production-promotion"',
+  'release:"2026-08-30-v11-investor-ui"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',
@@ -55,7 +55,9 @@ hasAll(manifest,[
   '"mock-trade-allocation-simulation"',
   '"clean-performance-session-basis"',
   '"v11-momentum-production-policy"',
-  '"durable-v11-policy-snapshot"'
+  '"durable-v11-policy-snapshot"',
+  '"investor-facing-decision-language"',
+  '"holding-aware-v11-lifecycle"'
 ],'lib/releaseManifest.js');
 
 const expert=read('lib/expertDecision.js');
