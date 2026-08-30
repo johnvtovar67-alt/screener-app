@@ -8,10 +8,10 @@ const assert = (condition, message) => {
 
 let source = fs.readFileSync("lib/fmpResearchBacktest.js", "utf8");
 const rawSource = source;
-const contractSource = fs.readFileSync("lib/v11ResearchContract.js", "utf8");
+const contractSource = fs.readFileSync("lib/v12ResearchContract.js", "utf8");
 const researchSource = `${rawSource}\n${contractSource}`;
 const contract = createResearchModuleLoader(process.cwd()).load(
-  "lib/v11ResearchContract.js",
+  "lib/v12ResearchContract.js",
 );
 source = source
   .replace(/import[\s\S]*?from\s+["'][^"']+["'];?/g, "")
@@ -328,7 +328,7 @@ assert(
     researchSource.includes('["balance-sheet-statement", "balanceRows"]') &&
     researchSource.includes('["cash-flow-statement", "cashFlowRows"]') &&
     !researchSource.includes('statement-bulk"') &&
-    researchSource.includes("REPORT_VERSION = 11") &&
+    researchSource.includes("REPORT_VERSION = 12") &&
     researchSource.includes("DEFAULT_SYMBOL_LIMIT = 250") &&
     researchSource.includes("MAX_SYMBOL_LIMIT = 500") &&
     researchSource.includes("REQUEST_START_SPACING_MS = 300") &&
@@ -343,11 +343,11 @@ assert(
     researchSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
     researchSource.includes("COMPILED_CHECKPOINT_SCHEMA = 3") &&
     researchSource.includes("COMPILE_SESSIONS_PER_RUN = 20") &&
-    researchSource.includes("REPLAY_CHECKPOINT_SCHEMA = 10") &&
+    researchSource.includes("REPLAY_CHECKPOINT_SCHEMA = 11") &&
     researchSource.includes("REPLAY_WINDOWS_PER_RUN = 3") &&
-    researchSource.includes("V11_ACTIVE_THESIS_COUNT = 1") &&
-    researchSource.includes("V11_DEVELOPMENT_PLACEBO_SEEDS = 25") &&
-    researchSource.includes("V11_STRICT_PLACEBO_SEEDS = 1_000") &&
+    researchSource.includes("V12_ACTIVE_THESIS_COUNT = 1") &&
+    researchSource.includes("V12_DEVELOPMENT_PLACEBO_SEEDS = 25") &&
+    researchSource.includes("V12_STRICT_PLACEBO_SEEDS = 1_000") &&
     researchSource.includes("nextReplaySessionSlice") &&
     researchSource.includes("requiredChunks") &&
     researchSource.includes("skipFullPeriodDiagnostic: true") &&
@@ -373,7 +373,7 @@ assert(
       "completedV9ReportIsRejectedBenchmarkSleeveBaseline",
     ) &&
     researchSource.includes(
-      "v11-predeclared-momentum-dominant-quality-rank",
+      "v12-predeclared-momentum-first-entry-discipline-rank",
     ) &&
     researchSource.includes('researchSignalSource: "full-evidence"') &&
     researchSource.includes("activeThesisUsesIndependentResearchLifecycle") &&
@@ -382,12 +382,22 @@ assert(
     !researchSource.includes('benchmarkCompletionSymbol: "SPY"') &&
     researchSource.includes('selectionMode: "ranked"') &&
     researchSource.includes(
-      'researchRankMode: "momentum-dominant-quality-blend"',
+      'researchRankMode: "momentum-first-entry-disciplined-blend"',
     ) &&
+    researchSource.includes("requireEntryTimingPass: true") &&
+    researchSource.includes("requireTrendAlignment: true") &&
     researchSource.includes("blockChaseEntries: true") &&
+    researchSource.includes("maxPriceVs50Pct: 16") &&
+    researchSource.includes("maxReturn20Pct: 30") &&
+    researchSource.includes("maxReturn60Ex5Pct: 100") &&
+    researchSource.includes("maxReturn120Ex20Pct: 125") &&
+    researchSource.includes("maxMomentumExtensionSigma: 3") &&
     researchSource.includes("maxEntryGapPct: 3") &&
     researchSource.includes('controlId: "simple-momentum-rank"') &&
-    researchSource.includes('controlId: "v10-quality-momentum-blend"') &&
+    researchSource.includes('controlId: "v11-momentum-dominant-blend"') &&
+    researchSource.includes(
+      'controlId: "v12-rank-without-multi-horizon-entry-governor"',
+    ) &&
     researchSource.includes("single-predeclared-thesis-no-selector") &&
     !researchSource.includes("parameterScore") &&
     researchSource.includes("liquidateAtEnd: true") &&
@@ -519,7 +529,7 @@ const contractCalls = [];
       completedReplay.replay.candidates.length === 1 &&
       completedReplay.replay.windows.folds.length === 2 &&
       completedReplay.replay.selectedParameters.thesisId ===
-        "v11-predeclared-momentum-dominant-quality-rank" &&
+        "v12-predeclared-momentum-first-entry-discipline-rank" &&
       completedReplay.replay.walkForwardSelectionAudit.folds.every(
         (fold) => fold.selectedParameters.selectionEligible === true,
       ) &&
@@ -530,6 +540,8 @@ const contractCalls = [];
       completedReplay.replay.walkForwardSelectionAudit.controls.simpleMomentum
         .metrics.totalReturnPct === 3.02 &&
       completedReplay.replay.walkForwardSelectionAudit.controls
+        .ungovernedV12Entry.metrics.totalReturnPct === 6.09 &&
+      completedReplay.replay.walkForwardSelectionAudit.controls
         .transparentBullCyclePullback.metrics.totalReturnPct === 4.04 &&
       completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
         .capitalClaimAuthorized === false &&
@@ -538,10 +550,10 @@ const contractCalls = [];
       completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
         .benchmarkCompletionSleeveUsed === false &&
       completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
-        .postSelectedFromV10Control === true &&
+        .postSelectedFromV11Diagnostics === true &&
       completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
         .pass === false &&
-      simulatedRuns === 66,
+      simulatedRuns === 68,
     "The replay must reuse the frozen thesis, compute matched controls only on audit folds, avoid a selector and never recompute completed windows.",
   );
   console.log(

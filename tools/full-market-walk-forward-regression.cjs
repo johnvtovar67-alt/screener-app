@@ -12,16 +12,13 @@ const {
   simulatePointInTimePortfolio,
   validatePointInTimeDataset,
 } = loader.load("lib/walkForwardBacktest.js");
-const { compactReplaySession } = loader.load(
-  "lib/replayDatasetCompaction.js",
-);
-const { attachCrossSectionalResearchFactors, compilePointInTimeSignals } = loader.load(
-  "lib/historicalSignalEvaluator.js",
-);
+const { compactReplaySession } = loader.load("lib/replayDatasetCompaction.js");
+const { attachCrossSectionalResearchFactors, compilePointInTimeSignals } =
+  loader.load("lib/historicalSignalEvaluator.js");
 assert(
-  fs.readFileSync("lib/historicalSignalEvaluator.js", "utf8").includes(
-    "maxCandidates: 500",
-  ),
+  fs
+    .readFileSync("lib/historicalSignalEvaluator.js", "utf8")
+    .includes("maxCandidates: 500"),
   "Historical research must use the same 500-name discovery shortlist as production.",
 );
 const {
@@ -88,8 +85,22 @@ function session(date, action, price = 100, extra = {}) {
     sourceUniverseCount: 1_500,
     historicalDelistedMembership: 12,
     prices: [
-      { symbol: "AAA", open: price, high: price + 2, low: price - 2, close: price, adjusted: true },
-      { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+      {
+        symbol: "AAA",
+        open: price,
+        high: price + 2,
+        low: price - 2,
+        close: price,
+        adjusted: true,
+      },
+      {
+        symbol: "SPY",
+        open: 500,
+        high: 502,
+        low: 498,
+        close: 500,
+        adjusted: true,
+      },
     ],
     signals: action ? [signal(date, action)] : [],
     positionSignals: action ? [signal(date, action)] : [],
@@ -310,29 +321,88 @@ const expandedEvidenceDataset = {
     session("2026-08-24", null, 100, {
       positionSignals: [fullEvidenceSignal("2026-08-24")],
       prices: [
-        { symbol: "AAA", open: 100, high: 102, low: 98, close: 100, adjusted: true },
-        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
-        { symbol: "QQQ", open: 450, high: 452, low: 448, close: 450, adjusted: true },
+        {
+          symbol: "AAA",
+          open: 100,
+          high: 102,
+          low: 98,
+          close: 100,
+          adjusted: true,
+        },
+        {
+          symbol: "SPY",
+          open: 500,
+          high: 502,
+          low: 498,
+          close: 500,
+          adjusted: true,
+        },
+        {
+          symbol: "QQQ",
+          open: 450,
+          high: 452,
+          low: 448,
+          close: 450,
+          adjusted: true,
+        },
       ],
     }),
     session("2026-08-25", null, 101, {
-      positionSignals: [
-        fullEvidenceSignal("2026-08-25", { price: 101 }),
-      ],
+      positionSignals: [fullEvidenceSignal("2026-08-25", { price: 101 })],
       prices: [
-        { symbol: "AAA", open: 101, high: 103, low: 99, close: 101, adjusted: true },
-        { symbol: "SPY", open: 501, high: 503, low: 499, close: 502, adjusted: true },
-        { symbol: "QQQ", open: 451, high: 455, low: 450, close: 454, adjusted: true },
+        {
+          symbol: "AAA",
+          open: 101,
+          high: 103,
+          low: 99,
+          close: 101,
+          adjusted: true,
+        },
+        {
+          symbol: "SPY",
+          open: 501,
+          high: 503,
+          low: 499,
+          close: 502,
+          adjusted: true,
+        },
+        {
+          symbol: "QQQ",
+          open: 451,
+          high: 455,
+          low: 450,
+          close: 454,
+          adjusted: true,
+        },
       ],
     }),
     session("2026-08-26", null, 102, {
-      positionSignals: [
-        fullEvidenceSignal("2026-08-26", { price: 102 }),
-      ],
+      positionSignals: [fullEvidenceSignal("2026-08-26", { price: 102 })],
       prices: [
-        { symbol: "AAA", open: 102, high: 104, low: 100, close: 103, adjusted: true },
-        { symbol: "SPY", open: 502, high: 505, low: 501, close: 504, adjusted: true },
-        { symbol: "QQQ", open: 454, high: 458, low: 453, close: 457, adjusted: true },
+        {
+          symbol: "AAA",
+          open: 102,
+          high: 104,
+          low: 100,
+          close: 103,
+          adjusted: true,
+        },
+        {
+          symbol: "SPY",
+          open: 502,
+          high: 505,
+          low: 501,
+          close: 504,
+          adjusted: true,
+        },
+        {
+          symbol: "QQQ",
+          open: 454,
+          high: 458,
+          low: 453,
+          close: 457,
+          adjusted: true,
+        },
       ],
     }),
   ],
@@ -464,7 +534,9 @@ const rankedOptions = {
 };
 run = simulatePointInTimePortfolio(rankedDataset, rankedOptions);
 assert(
-  run.trades.filter((trade) => trade.side === "buy").map((trade) => trade.symbol)
+  run.trades
+    .filter((trade) => trade.side === "buy")
+    .map((trade) => trade.symbol)
     .join(",") === "AAA,BBB" &&
     run.trades.some(
       (trade) =>
@@ -498,6 +570,60 @@ assert(
   run.trades.every((trade) => trade.side !== "buy"),
   "A momentum-led rank must not initiate a position when the point-in-time 3/5/10-session timing record identifies a chase entry.",
 );
+const lateRunnerDataset = {
+  ...rankedDataset,
+  sessions: rankedDataset.sessions.map((researchSession) => ({
+    ...researchSession,
+    positionSignals: researchSession.positionSignals.map((researchSignal) => ({
+      ...researchSignal,
+      researchFactors: {
+        ...researchSignal.researchFactors,
+        return20: 34,
+        return60Ex5: 135,
+        return120Ex20: 155,
+        volatility60Pct: 28,
+      },
+    })),
+  })),
+};
+const disciplinedEntryOptions = {
+  ...rankedOptions,
+  researchRankMode: "momentum-first-entry-disciplined-blend",
+  requireEntryTimingPass: true,
+  requireTrendAlignment: true,
+  blockChaseEntries: true,
+  maxPriceVs50Pct: 16,
+  maxReturn20Pct: 30,
+  maxReturn60Ex5Pct: 100,
+  maxReturn120Ex20Pct: 125,
+  maxMomentumExtensionSigma: 3,
+};
+run = simulatePointInTimePortfolio(lateRunnerDataset, disciplinedEntryOptions);
+assert(
+  run.trades.every((trade) => trade.side !== "buy"),
+  "A mature momentum runner must not become a fresh entry merely because its immediate 3/5/10-session path has cooled.",
+);
+const resetRunnerDataset = {
+  ...rankedDataset,
+  sessions: rankedDataset.sessions.map((researchSession) => ({
+    ...researchSession,
+    positionSignals: researchSession.positionSignals.map((researchSignal) => ({
+      ...researchSignal,
+      researchFactors: {
+        ...researchSignal.researchFactors,
+        return20: 8,
+        return60Ex5: 32,
+        return120Ex20: 45,
+        volatility60Pct: 30,
+      },
+    })),
+  })),
+};
+run = simulatePointInTimePortfolio(resetRunnerDataset, disciplinedEntryOptions);
+assert(
+  run.trades.some((trade) => trade.side === "buy"),
+  "The multi-horizon governor must still admit intact momentum after extension has reset below every predeclared limit.",
+);
 const placeboA = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,
   researchRankMode: "random-placebo",
@@ -529,8 +655,22 @@ const delayedRatchetSessions = [
     ],
     prices: [
       { symbol: "AAA", open, high, low, close, adjusted: true },
-      { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
-      { symbol: "QQQ", open: 450, high: 452, low: 448, close: 450, adjusted: true },
+      {
+        symbol: "SPY",
+        open: 500,
+        high: 502,
+        low: 498,
+        close: 500,
+        adjusted: true,
+      },
+      {
+        symbol: "QQQ",
+        open: 450,
+        high: 452,
+        low: 448,
+        close: 450,
+        adjusted: true,
+      },
     ],
   }),
 );
@@ -578,8 +718,22 @@ const breakEvenProtectionDataset = {
       ],
       prices: [
         { symbol: "AAA", open, high, low, close, adjusted: true },
-        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
-        { symbol: "QQQ", open: 450, high: 452, low: 448, close: 450, adjusted: true },
+        {
+          symbol: "SPY",
+          open: 500,
+          high: 502,
+          low: 498,
+          close: 500,
+          adjusted: true,
+        },
+        {
+          symbol: "QQQ",
+          open: 450,
+          high: 452,
+          low: 448,
+          close: 450,
+          adjusted: true,
+        },
       ],
     }),
   ),
@@ -625,16 +779,58 @@ run = simulatePointInTimePortfolio(
         signals: sameIssuerSignals,
         positionSignals: sameIssuerSignals,
         prices: [
-          { symbol: "AAA", open: 100, high: 102, low: 98, close: 100, adjusted: true },
-          { symbol: "BBB", open: 100, high: 102, low: 98, close: 100, adjusted: true },
-          { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+          {
+            symbol: "AAA",
+            open: 100,
+            high: 102,
+            low: 98,
+            close: 100,
+            adjusted: true,
+          },
+          {
+            symbol: "BBB",
+            open: 100,
+            high: 102,
+            low: 98,
+            close: 100,
+            adjusted: true,
+          },
+          {
+            symbol: "SPY",
+            open: 500,
+            high: 502,
+            low: 498,
+            close: 500,
+            adjusted: true,
+          },
         ],
       }),
       session("2026-08-25", null, 101, {
         prices: [
-          { symbol: "AAA", open: 101, high: 103, low: 99, close: 101, adjusted: true },
-          { symbol: "BBB", open: 101, high: 103, low: 99, close: 101, adjusted: true },
-          { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+          {
+            symbol: "AAA",
+            open: 101,
+            high: 103,
+            low: 99,
+            close: 101,
+            adjusted: true,
+          },
+          {
+            symbol: "BBB",
+            open: 101,
+            high: 103,
+            low: 99,
+            close: 101,
+            adjusted: true,
+          },
+          {
+            symbol: "SPY",
+            open: 500,
+            high: 502,
+            low: 498,
+            close: 500,
+            adjusted: true,
+          },
         ],
       }),
     ],
@@ -800,8 +996,22 @@ const sameDayStopDataset = {
     {
       ...session("2026-08-25", "Watch", 100),
       prices: [
-        { symbol: "AAA", open: 100, high: 101, low: 79, close: 82, adjusted: true },
-        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+        {
+          symbol: "AAA",
+          open: 100,
+          high: 101,
+          low: 79,
+          close: 82,
+          adjusted: true,
+        },
+        {
+          symbol: "SPY",
+          open: 500,
+          high: 502,
+          low: 498,
+          close: 500,
+          adjusted: true,
+        },
       ],
     },
   ],
@@ -812,7 +1022,9 @@ run = simulatePointInTimePortfolio(sameDayStopDataset, {
   slippageBps: 0,
 });
 assert(
-  run.trades.some((trade) => trade.side === "buy" && trade.date === "2026-08-25") &&
+  run.trades.some(
+    (trade) => trade.side === "buy" && trade.date === "2026-08-25",
+  ) &&
     run.trades.some(
       (trade) =>
         trade.side === "sell" &&
@@ -842,7 +1054,9 @@ run = simulatePointInTimePortfolio(invalidatedOpenDataset, {
 });
 assert(
   !run.trades.some((trade) => trade.side === "buy") &&
-    run.skippedOrders.some((order) => order.reason === "entry-invalidated-at-open"),
+    run.skippedOrders.some(
+      (order) => order.reason === "entry-invalidated-at-open",
+    ),
   "A next-session gap below the known invalidation level must cancel the entry instead of buying a broken setup.",
 );
 
@@ -897,7 +1111,9 @@ run = simulatePointInTimePortfolio(
 );
 assert(
   callbackDate === "2026-08-25" &&
-    run.trades.some((trade) => trade.side === "sell" && trade.date === "2026-08-26"),
+    run.trades.some(
+      (trade) => trade.side === "sell" && trade.date === "2026-08-26",
+    ),
   "Production portfolio decisions must receive the historical clock and execute one session later.",
 );
 
@@ -1021,7 +1237,14 @@ const benchmarkCompletionDataset = {
   ].map(([date, open, close]) => ({
     ...session(date, null, 100),
     prices: [
-      { symbol: "AAA", open: 100, high: 101, low: 99, close: 100, adjusted: true },
+      {
+        symbol: "AAA",
+        open: 100,
+        high: 101,
+        low: 99,
+        close: 100,
+        adjusted: true,
+      },
       { symbol: "SPY", open, high: close, low: open, close, adjusted: true },
     ],
   })),
@@ -1068,19 +1291,65 @@ const openSizingDataset = {
       positionSignals: [signal("2026-08-24", "Strong Buy", { symbol: "AAA" })],
     }),
     session("2026-08-25", null, 100, {
-      signals: [signal("2026-08-25", "Strong Buy", { symbol: "BBB", sector: "Energy" })],
-      positionSignals: [signal("2026-08-25", "Strong Buy", { symbol: "BBB", sector: "Energy" })],
+      signals: [
+        signal("2026-08-25", "Strong Buy", { symbol: "BBB", sector: "Energy" }),
+      ],
+      positionSignals: [
+        signal("2026-08-25", "Strong Buy", { symbol: "BBB", sector: "Energy" }),
+      ],
       prices: [
-        { symbol: "AAA", open: 100, high: 101, low: 99, close: 100, adjusted: true },
-        { symbol: "BBB", open: 100, high: 101, low: 99, close: 100, adjusted: true },
-        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+        {
+          symbol: "AAA",
+          open: 100,
+          high: 101,
+          low: 99,
+          close: 100,
+          adjusted: true,
+        },
+        {
+          symbol: "BBB",
+          open: 100,
+          high: 101,
+          low: 99,
+          close: 100,
+          adjusted: true,
+        },
+        {
+          symbol: "SPY",
+          open: 500,
+          high: 502,
+          low: 498,
+          close: 500,
+          adjusted: true,
+        },
       ],
     }),
     session("2026-08-26", null, 1_000, {
       prices: [
-        { symbol: "AAA", open: 100, high: 1_000, low: 99, close: 1_000, adjusted: true },
-        { symbol: "BBB", open: 100, high: 101, low: 99, close: 100, adjusted: true },
-        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500, adjusted: true },
+        {
+          symbol: "AAA",
+          open: 100,
+          high: 1_000,
+          low: 99,
+          close: 1_000,
+          adjusted: true,
+        },
+        {
+          symbol: "BBB",
+          open: 100,
+          high: 101,
+          low: 99,
+          close: 100,
+          adjusted: true,
+        },
+        {
+          symbol: "SPY",
+          open: 500,
+          high: 502,
+          low: 498,
+          close: 500,
+          adjusted: true,
+        },
       ],
     }),
   ],
@@ -1120,7 +1389,11 @@ assert(
   "A default walk-forward fold must keep 504 train, 126 validation and 126 untouched test sessions.",
 );
 const foldDates = [];
-for (let cursor = new Date("2020-01-02T12:00:00.000Z"); foldDates.length < 756; cursor = new Date(cursor.getTime() + 86_400_000)) {
+for (
+  let cursor = new Date("2020-01-02T12:00:00.000Z");
+  foldDates.length < 756;
+  cursor = new Date(cursor.getTime() + 86_400_000)
+) {
   if (![0, 6].includes(cursor.getUTCDay()))
     foldDates.push(cursor.toISOString().slice(0, 10));
 }
@@ -1184,10 +1457,14 @@ assert(
 );
 assert(
   !discoverySource.includes("stable/eod-bulk") &&
-    discoverySource.includes('liquiditySource: "symbol_history_hard_gate_only"') &&
+    discoverySource.includes(
+      'liquiditySource: "symbol_history_hard_gate_only"',
+    ) &&
     discoverySource.includes("researchUniverse: eligibleRows.map") &&
     discoverySource.includes("passesDiscoveryResearchFloor") &&
-    discoverySource.includes("maxProviderCalls: 3 + DISCOVERY_EXCHANGES.length"),
+    discoverySource.includes(
+      "maxProviderCalls: 3 + DISCOVERY_EXCHANGES.length",
+    ),
   "Interactive full-market discovery must use six bounded calls, avoid inferring liquidity from rollover-prone breadth data, and never call FMP's infrequently refreshed EOD bulk endpoint.",
 );
 discoverySource +=
@@ -1209,7 +1486,9 @@ const box = {
   RegExp,
 };
 vm.createContext(box);
-vm.runInContext(discoverySource, box, { filename: "lib/fullMarketDiscovery.js" });
+vm.runInContext(discoverySource, box, {
+  filename: "lib/fullMarketDiscovery.js",
+});
 const {
   isUsListedCommonStock,
   mergeDiscoveryRow,
@@ -1291,7 +1570,11 @@ assert(
   "The daily shortlist must preserve represented sectors before global-score fill.",
 );
 const historicalDates = [];
-for (let cursor = new Date("2026-04-01T12:00:00.000Z"); historicalDates.length < 55; cursor = new Date(cursor.getTime() + 86_400_000)) {
+for (
+  let cursor = new Date("2026-04-01T12:00:00.000Z");
+  historicalDates.length < 55;
+  cursor = new Date(cursor.getTime() + 86_400_000)
+) {
   if (![0, 6].includes(cursor.getUTCDay()))
     historicalDates.push(cursor.toISOString().slice(0, 10));
 }
@@ -1352,10 +1635,42 @@ const compilerDataset = {
       eventCoverageAsOf: decisionAt,
       eventHistoryComplete: true,
       prices: [
-        { symbol: "AAA", open: close - 0.1, high: close + 0.5, low: close - 0.5, close, volume: 2_000_000, adjusted: true },
-        { symbol: "OLD", open: 20, high: 21, low: 19, close: 20, volume: 1_000_000, adjusted: true },
-        { symbol: "SPY", open: 500, high: 502, low: 498, close: 500 + index * 0.2, volume: 50_000_000, adjusted: true },
-        { symbol: "QQQ", open: 450, high: 452, low: 448, close: 450 + index * 0.25, volume: 40_000_000, adjusted: true },
+        {
+          symbol: "AAA",
+          open: close - 0.1,
+          high: close + 0.5,
+          low: close - 0.5,
+          close,
+          volume: 2_000_000,
+          adjusted: true,
+        },
+        {
+          symbol: "OLD",
+          open: 20,
+          high: 21,
+          low: 19,
+          close: 20,
+          volume: 1_000_000,
+          adjusted: true,
+        },
+        {
+          symbol: "SPY",
+          open: 500,
+          high: 502,
+          low: 498,
+          close: 500 + index * 0.2,
+          volume: 50_000_000,
+          adjusted: true,
+        },
+        {
+          symbol: "QQQ",
+          open: 450,
+          high: 452,
+          low: 448,
+          close: 450 + index * 0.25,
+          volume: 40_000_000,
+          adjusted: true,
+        },
       ],
     };
   }),
@@ -1371,12 +1686,12 @@ do {
   compilerResume = {
     sessions: batchedCompiled.sessions,
     completedSessions: batchedCompiled.compilerProgress.completedSessions,
-    decisionMemory:
-      batchedCompiled.compilerCheckpoint?.decisionMemory || [],
+    decisionMemory: batchedCompiled.compilerCheckpoint?.decisionMemory || [],
   };
 } while (!batchedCompiled.compilerProgress.complete);
 assert(
-  JSON.stringify(batchedCompiled.sessions) === JSON.stringify(compiled.sessions),
+  JSON.stringify(batchedCompiled.sessions) ===
+    JSON.stringify(compiled.sessions),
   "Bounded compiler checkpoints must reproduce the exact monolithic point-in-time decisions and hysteresis state.",
 );
 const chunkedSessions = [];
@@ -1390,8 +1705,7 @@ do {
   compilerResume = {
     sessions: [],
     completedSessions: batchedCompiled.compilerProgress.completedSessions,
-    decisionMemory:
-      batchedCompiled.compilerCheckpoint?.decisionMemory || [],
+    decisionMemory: batchedCompiled.compilerCheckpoint?.decisionMemory || [],
   };
 } while (!batchedCompiled.compilerProgress.complete);
 assert(
@@ -1401,15 +1715,17 @@ assert(
 assert(
   compiled.sessions.length === historicalDates.length &&
     compiled.sessions.at(-1).signals.some((row) => row.symbol === "AAA") &&
-    compiled.sessions.at(-1).signals.every(
-      (row) => row.entryTiming?.available === true,
-    ) &&
-    compiled.sessions.at(-1).positionSignals.some(
-      (row) =>
-        row.symbol === "AAA" &&
-        row.entryTiming?.available === true &&
-        Number.isFinite(row.researchFactors?.globalCompositePercentile),
-    ) &&
+    compiled.sessions
+      .at(-1)
+      .signals.every((row) => row.entryTiming?.available === true) &&
+    compiled.sessions
+      .at(-1)
+      .positionSignals.some(
+        (row) =>
+          row.symbol === "AAA" &&
+          row.entryTiming?.available === true &&
+          Number.isFinite(row.researchFactors?.globalCompositePercentile),
+      ) &&
     compiled.sessions[0].historicalDelistedMembership === 1,
   "Historical compilation must replay fresh-capital, cross-sectional factor and holding-timing evidence while retaining delisted membership evidence.",
 );
