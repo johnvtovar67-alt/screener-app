@@ -30,7 +30,9 @@ const requiredFeatures=[
   "mock-trade-allocation-simulation",
   "clean-performance-session-basis",
   "full-market-daily-discovery",
-  "point-in-time-walk-forward-research"
+  "point-in-time-walk-forward-research",
+  "v11-momentum-production-policy",
+  "durable-v11-policy-snapshot"
 ];
 
 async function blobAvailable(){
@@ -61,7 +63,8 @@ export default async function handler(req,res){
     capabilities:{
       fullMarketDiscovery:true,
       discoverySchedulerConfigured:Boolean(process.env.CRON_SECRET),
-      pointInTimeResearchRunner:true
+      pointInTimeResearchRunner:true,
+      productionPolicy:"v11-momentum-dominant-production-candidate"
     },
     features:RELEASE_MANIFEST.features
   });
