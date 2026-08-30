@@ -19,7 +19,7 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,equivalentAcquisitionSignature};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature};";
 let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
@@ -71,10 +71,9 @@ const box = {
         ? 1.5
         : options.thesisId === "simple-quality-rank"
           ? 1
-          : options.thesisId ===
-              "transparent-bull-cycle-pullback-rank"
+          : options.thesisId === "transparent-bull-cycle-pullback-rank"
             ? 2
-          : 3;
+            : 3;
     const benchmarkComparisons = {
       SPY: {
         simpleReturnPct: 0.5,
@@ -108,7 +107,7 @@ const box = {
         averageActiveExposurePct: 90,
         averageBenchmarkSleevePct: 0,
         annualizedTurnoverPct: 40,
-        dailyReturns: sessions.map(() => 0.0001),
+        dailyReturns: sessions.slice(1).map(() => 0.0001),
       },
       trades: [
         {
@@ -139,6 +138,7 @@ const {
   buildHistoricalFundamentalRows,
   resolvePriceHistoryContract,
   runProvisionalWindows,
+  nextReplaySessionSlice,
   equivalentAcquisitionSignature,
 } = box.module.exports;
 
@@ -172,7 +172,8 @@ const selected = selectResearchUniverse(
   3,
 );
 assert(
-  selected.length === 3 && new Set(selected.map((row) => row.sector)).size === 3,
+  selected.length === 3 &&
+    new Set(selected.map((row) => row.sector)).size === 3,
   "The provisional cohort must preserve sector breadth before score depth.",
 );
 const scoreIndependentA = selectResearchUniverse(
@@ -315,7 +316,9 @@ assert(
     researchSource.includes("resolvePriceHistoryContract") &&
     researchSource.includes("PRICE_ACQUISITION_SCHEMA = 3") &&
     researchSource.includes("RUNNING_TTL_MS = 15 * 60 * 1000") &&
-    researchSource.includes("existing?.runnerSchema === REPLAY_CHECKPOINT_SCHEMA") &&
+    researchSource.includes(
+      "existing?.runnerSchema === REPLAY_CHECKPOINT_SCHEMA",
+    ) &&
     researchSource.includes("runnerSchema: REPLAY_CHECKPOINT_SCHEMA") &&
     researchSource.includes("existing?.runClaimedAt") &&
     researchSource.includes("runClaimedAt: new Date(now).toISOString()") &&
@@ -340,7 +343,7 @@ assert(
     researchSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
     researchSource.includes("COMPILED_CHECKPOINT_SCHEMA = 3") &&
     researchSource.includes("COMPILE_SESSIONS_PER_RUN = 20") &&
-    researchSource.includes("REPLAY_CHECKPOINT_SCHEMA = 8") &&
+    researchSource.includes("REPLAY_CHECKPOINT_SCHEMA = 9") &&
     researchSource.includes("REPLAY_WINDOWS_PER_RUN = 3") &&
     researchSource.includes("V10_ACTIVE_THESIS_COUNT = 1") &&
     researchSource.includes("V10_DEVELOPMENT_PLACEBO_SEEDS = 25") &&
@@ -366,7 +369,9 @@ assert(
     researchSource.includes("eligibleForCapitalClaims: false") &&
     researchSource.includes("completedV7ReportIsExternalComparisonBaseline") &&
     researchSource.includes("completedV8ReportIsExternalComparisonBaseline") &&
-    researchSource.includes("completedV9ReportIsRejectedBenchmarkSleeveBaseline") &&
+    researchSource.includes(
+      "completedV9ReportIsRejectedBenchmarkSleeveBaseline",
+    ) &&
     researchSource.includes("v10-predeclared-quality-momentum-rank") &&
     researchSource.includes('researchSignalSource: "full-evidence"') &&
     researchSource.includes("activeThesisUsesIndependentResearchLifecycle") &&
@@ -396,10 +401,7 @@ assert(
   "The research job must stay bounded, paced, checkpointed, resumable, stable-endpoint-only, multi-period, factor-aware and incapable of presenting provisional results as capital proof.",
 );
 
-const cron = fs.readFileSync(
-  "pages/api/cron/fmp-research-backtest.js",
-  "utf8",
-);
+const cron = fs.readFileSync("pages/api/cron/fmp-research-backtest.js", "utf8");
 const schedule = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
 const preflight = fs.readFileSync("tools/fmp-research-preflight.cjs", "utf8");
 assert(
@@ -446,23 +448,32 @@ const contractCalls = [];
     "2024-01-01",
     "2026-01-01",
   );
-    assert(
-      result.contract.id === "fmp-full-adjclose-v1" &&
-        result.benchmarkBars.length >= 500 &&
-        result.benchmarkBars[0].open === 50 &&
-        result.benchmarkBars.every((bar) => bar.adjusted === true) &&
-        contractCalls.join(",") ===
-          "historical-price-eod/dividend-adjusted,historical-price-eod/full",
-      "The price-contract preflight must fail over once, preserve adjusted provenance, and never fan out provider probes.",
-    );
+  assert(
+    result.contract.id === "fmp-full-adjclose-v1" &&
+      result.benchmarkBars.length >= 500 &&
+      result.benchmarkBars[0].open === 50 &&
+      result.benchmarkBars.every((bar) => bar.adjusted === true) &&
+      contractCalls.join(",") ===
+        "historical-price-eod/dividend-adjusted,historical-price-eod/full",
+    "The price-contract preflight must fail over once, preserve adjusted provenance, and never fan out provider probes.",
+  );
 
   const mockDataset = {
     sessions: Array.from({ length: 1008 }, (_, index) => ({
-      date: new Date(Date.UTC(2022, 0, 1 + index))
-        .toISOString()
-        .slice(0, 10),
+      date: new Date(Date.UTC(2022, 0, 1 + index)).toISOString().slice(0, 10),
     })),
   };
+  const threeWindowSlice = nextReplaySessionSlice(
+    mockDataset.sessions.map((session) => session.date),
+    0,
+    3,
+  );
+  assert(
+    threeWindowSlice.restoredWindows === 3 &&
+      threeWindowSlice.start === 250 &&
+      threeWindowSlice.end === 882,
+    "A three-window replay invocation must restore the complete train, validation and audit fold plus warmup.",
+  );
   const subsetProbe = await runProvisionalWindows(
     { sessions: mockDataset.sessions.slice(250, 630) },
     {
@@ -484,7 +495,7 @@ const contractCalls = [];
       maxWindows: 3,
     });
     assert(
-        partial.status === "collecting" &&
+      partial.status === "collecting" &&
         partial.progress.completedWindows === completed &&
         partial.progress.remainingWindows === 6 - completed &&
         partial.progress.completedFolds === Math.floor(completed / 3) &&
