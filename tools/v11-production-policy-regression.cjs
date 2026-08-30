@@ -121,9 +121,29 @@ rows[1] = liveRow(readySnapshot.candidates[1], {
   },
 });
 rows[2] = liveRow(readySnapshot.candidates[2], { entryTiming: undefined });
+rows[3] = liveRow(readySnapshot.candidates[3]);
+rows[3].recommendation.expertDecision.strongBuyPass = true;
+rows[4] = liveRow(readySnapshot.candidates[4], {
+  finalDecision: { action: "Strong Buy", reason: "legacy strong result" },
+});
 let applied = applyV11ProductionPolicy(rows, readySnapshot);
 const buys = applied.filter((row) => row.finalDecision.action === "Buy");
-assert(buys.length === 12, "the live policy must fill twelve operationally cleared targets");
+const strongBuys = applied.filter(
+  (row) => row.finalDecision.action === "Strong Buy",
+);
+const actionable = [...strongBuys, ...buys];
+assert(
+  actionable.length === 12,
+  "the live policy must fill twelve operationally cleared targets",
+);
+assert(
+  strongBuys.length === 1 && strongBuys[0].symbol === "S03",
+  "a selected row that clears the strict current strong-buy gate must remain a Strong Buy",
+);
+assert(
+  applied.find((row) => row.symbol === "S04").finalDecision.action === "Buy",
+  "a legacy Strong Buy label must not survive without the current strict strong-buy gate",
+);
 assert(
   applied.find((row) => row.symbol === "S00").finalDecision.action === "Watch",
   "an opening gap above 3% must block a fresh entry",
@@ -133,11 +153,11 @@ assert(
   "the narrow 3/5/10-session chase gate must remain active",
 );
 assert(
-  buys.every((row) => row.finalDecision.size === "Target 8.25%"),
-  "selected V11 names must retain the audited equal-weight target",
+  actionable.every((row) => row.finalDecision.size === "Target 8.25%"),
+  "Buy and Strong Buy selections must retain the audited equal-weight target",
 );
 assert(
-  buys.every(
+  actionable.every(
     (row) =>
       !/\bV11\b|production policy|audited|point-in-time/i.test(
         `${row.finalDecision.reason} ${row.finalDecision.priority} ${row.finalDecision.planText}`,
@@ -146,16 +166,20 @@ assert(
   "investor-facing decisions must not expose version or implementation narration",
 );
 assert(
-  buys[0].finalDecision.priority === "Best Opportunity" &&
-    buys[1].finalDecision.priority === "Priority #2",
+  applied.find((row) => row.symbol === "S02").finalDecision.priority ===
+      "Best Opportunity" &&
+    applied.find((row) => row.symbol === "S03").finalDecision.priority ===
+      "Priority #2",
   "priority labels must remain useful without exposing the policy version",
 );
 assert(
-  buys.some((row) => row.recommendation.expertDecision.metrics.lateTrend === true),
+  actionable.some(
+    (row) => row.recommendation.expertDecision.metrics.lateTrend === true,
+  ),
   "the V12 long-horizon extension veto must not leak into V11 selection",
 );
 assert(
-  buys.some((row) => row.entryTiming?.pass === false),
+  actionable.some((row) => row.entryTiming?.pass === false),
   "V11 must not be changed into V12 by requiring the full timing pass",
 );
 assert(
@@ -262,5 +286,5 @@ assert(
 );
 
 console.log(
-  "V11 PRODUCTION POLICY PASS: exact audited weights, narrow execution gates, twelve targets, and fail-closed snapshot behavior are verified",
+  "V11 PRODUCTION POLICY PASS: strict Strong Buy preservation, exact audited weights, narrow execution gates, twelve targets, and fail-closed snapshot behavior are verified",
 );
