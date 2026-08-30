@@ -66,3 +66,12 @@ concentration, technical/fundamental evidence, events, and replacement edge.
 Swing holdings receive the ten-session rank-retention rule, 18% loss limit, and
 126-session maximum hold. Core holdings and cash are intentionally exempt from
 that Swing lifecycle while still receiving their applicable portfolio review.
+
+## Strong Buy preservation
+
+A selected candidate remains a `Strong Buy` only when its current expert
+decision explicitly clears the stricter `strongBuyPass` standard and every
+production operational gate also passes. A historical or upstream label alone
+cannot create a Strong Buy. Strong Buys keep the same 8.25% target weight as
+ordinary selected Buys; the designation removes the ordinary confirmation
+delay without increasing position size or bypassing portfolio risk controls.
