@@ -1,5 +1,6 @@
 const fs = require("fs");
 const vm = require("vm");
+const { createResearchModuleLoader } = require("./research-module-loader.cjs");
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -7,6 +8,11 @@ const assert = (condition, message) => {
 
 let source = fs.readFileSync("lib/fmpResearchBacktest.js", "utf8");
 const rawSource = source;
+const contractSource = fs.readFileSync("lib/v10ResearchContract.js", "utf8");
+const researchSource = `${rawSource}\n${contractSource}`;
+const contract = createResearchModuleLoader(process.cwd()).load(
+  "lib/v10ResearchContract.js",
+);
 source = source
   .replace(/import[\s\S]*?from\s+["'][^"']+["'];?/g, "")
   .replace(/export const /g, "const ")
@@ -34,6 +40,7 @@ const box = {
   Response,
   setTimeout,
   clearTimeout,
+  ...contract,
   latestCompletedMarketSessionDay(value) {
     const date = new Date(value);
     while ([0, 6].includes(date.getUTCDay()))
@@ -55,12 +62,35 @@ const box = {
       (session) =>
         session.date >= options.startDate && session.date <= options.endDate,
     );
-    const thesisBonus =
-      [
-        "persistent-quality-leadership",
-        "controlled-acceleration-leadership",
-        "quality-reacceleration-value-aware",
-      ].indexOf(options.thesisId) + 1;
+    const placeboMatch = String(options.thesisId || "").match(
+      /^random-placebo-(\d+)$/,
+    );
+    const thesisBonus = placeboMatch
+      ? 0.25 + (Number(placeboMatch[1]) % 7) * 0.1
+      : options.thesisId === "simple-momentum-rank"
+        ? 1.5
+        : options.thesisId === "simple-quality-rank"
+          ? 1
+          : options.thesisId ===
+              "transparent-bull-cycle-pullback-rank"
+            ? 2
+          : 3;
+    const benchmarkComparisons = {
+      SPY: {
+        simpleReturnPct: 0.5,
+        excessReturnPct: thesisBonus - 0.5,
+        exposureMatchedReturnPct: 0.4,
+        exposureMatchedAlphaPct: thesisBonus - 0.4,
+        cashDragPct: -0.1,
+      },
+      QQQ: {
+        simpleReturnPct: 0.8,
+        excessReturnPct: thesisBonus - 0.8,
+        exposureMatchedReturnPct: 0.65,
+        exposureMatchedAlphaPct: thesisBonus - 0.65,
+        cashDragPct: -0.15,
+      },
+    };
     return {
       metrics: {
         totalReturnPct: thesisBonus,
@@ -73,15 +103,25 @@ const box = {
         excessReturnPct: thesisBonus - 0.5,
         exposureMatchedBenchmarkReturnPct: 0.4,
         exposureMatchedAlphaPct: thesisBonus - 0.4,
-        averageExposurePct: 50,
+        benchmarkComparisons,
+        averageExposurePct: 90,
+        averageActiveExposurePct: 90,
+        averageBenchmarkSleevePct: 0,
         annualizedTurnoverPct: 40,
         dailyReturns: sessions.map(() => 0.0001),
       },
       trades: [
         {
+          side: "buy",
+          shares: 10,
+          price: 100,
+          positionId: 1,
+        },
+        {
           side: "sell",
           positionClosed: true,
           roundTripPnl: thesisBonus,
+          positionId: 1,
         },
       ],
       skippedOrders: [],
@@ -270,75 +310,89 @@ assert(
 );
 
 assert(
-  rawSource.includes('"historical-price-eod/dividend-adjusted"') &&
-    rawSource.includes('path: "historical-price-eod/full"') &&
-    rawSource.includes("resolvePriceHistoryContract") &&
-    rawSource.includes("PRICE_ACQUISITION_SCHEMA = 3") &&
-    rawSource.includes("RUNNING_TTL_MS = 15 * 60 * 1000") &&
-    rawSource.includes("existing?.runnerSchema === REPLAY_CHECKPOINT_SCHEMA") &&
-    rawSource.includes("runnerSchema: REPLAY_CHECKPOINT_SCHEMA") &&
-    rawSource.includes("existing?.runClaimedAt") &&
-    rawSource.includes("runClaimedAt: new Date(now).toISOString()") &&
-    rawSource.includes("exhaustedSymbols") &&
-    rawSource.includes("failureSample") &&
-    rawSource.includes('["income-statement", "incomeRows"]') &&
-    rawSource.includes('["balance-sheet-statement", "balanceRows"]') &&
-    rawSource.includes('["cash-flow-statement", "cashFlowRows"]') &&
-    !rawSource.includes('statement-bulk"') &&
-    rawSource.includes("REPORT_VERSION = 9") &&
-    rawSource.includes("DEFAULT_SYMBOL_LIMIT = 250") &&
-    rawSource.includes("MAX_SYMBOL_LIMIT = 500") &&
-    rawSource.includes("REQUEST_START_SPACING_MS = 300") &&
-    rawSource.includes("PRICE_HISTORY_CONCURRENCY = 3") &&
-    rawSource.includes("PRICE_SYMBOLS_PER_RUN = 75") &&
-    rawSource.includes("STATEMENT_SYMBOLS_PER_RUN = 24") &&
-    rawSource.includes('status: "collecting"') &&
-    rawSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
-    rawSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
-    rawSource.includes("FMP_RESEARCH_COMPILED_CHECKPOINT_STORE") &&
-    rawSource.includes("FMP_RESEARCH_COMPILED_CHUNK_PREFIX") &&
-    rawSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
-    rawSource.includes("COMPILED_CHECKPOINT_SCHEMA = 3") &&
-    rawSource.includes("COMPILE_SESSIONS_PER_RUN = 20") &&
-    rawSource.includes("REPLAY_CHECKPOINT_SCHEMA = 6") &&
-    rawSource.includes("REPLAY_WINDOWS_PER_RUN = 1") &&
-    rawSource.includes("V9_ACTIVE_CANDIDATE_COUNT = 3") &&
-    rawSource.includes("nextReplaySessionSlice") &&
-    rawSource.includes("requiredChunks") &&
-    rawSource.includes("skipFullPeriodDiagnostic: true") &&
-    rawSource.includes("persistPrivateGzipJson") &&
-    rawSource.includes("readPrivateGzipJson") &&
-    rawSource.includes("compactResearchRun") &&
-    rawSource.includes('stage: "compiled"') &&
-    rawSource.includes('"compiling"') &&
-    rawSource.includes('stage: "replay"') &&
-    rawSource.includes("compiledDatasetCheckpointReused") &&
-    rawSource.includes(
+  researchSource.includes('"historical-price-eod/dividend-adjusted"') &&
+    researchSource.includes('path: "historical-price-eod/full"') &&
+    researchSource.includes("resolvePriceHistoryContract") &&
+    researchSource.includes("PRICE_ACQUISITION_SCHEMA = 3") &&
+    researchSource.includes("RUNNING_TTL_MS = 15 * 60 * 1000") &&
+    researchSource.includes("existing?.runnerSchema === REPLAY_CHECKPOINT_SCHEMA") &&
+    researchSource.includes("runnerSchema: REPLAY_CHECKPOINT_SCHEMA") &&
+    researchSource.includes("existing?.runClaimedAt") &&
+    researchSource.includes("runClaimedAt: new Date(now).toISOString()") &&
+    researchSource.includes("exhaustedSymbols") &&
+    researchSource.includes("failureSample") &&
+    researchSource.includes('["income-statement", "incomeRows"]') &&
+    researchSource.includes('["balance-sheet-statement", "balanceRows"]') &&
+    researchSource.includes('["cash-flow-statement", "cashFlowRows"]') &&
+    !researchSource.includes('statement-bulk"') &&
+    researchSource.includes("REPORT_VERSION = 10") &&
+    researchSource.includes("DEFAULT_SYMBOL_LIMIT = 250") &&
+    researchSource.includes("MAX_SYMBOL_LIMIT = 500") &&
+    researchSource.includes("REQUEST_START_SPACING_MS = 300") &&
+    researchSource.includes("PRICE_HISTORY_CONCURRENCY = 3") &&
+    researchSource.includes("PRICE_SYMBOLS_PER_RUN = 75") &&
+    researchSource.includes("STATEMENT_SYMBOLS_PER_RUN = 24") &&
+    researchSource.includes('status: "collecting"') &&
+    researchSource.includes("FMP_RESEARCH_PRICE_CHECKPOINT_STORE") &&
+    researchSource.includes("FMP_RESEARCH_STATEMENT_CHECKPOINT_STORE") &&
+    researchSource.includes("FMP_RESEARCH_COMPILED_CHECKPOINT_STORE") &&
+    researchSource.includes("FMP_RESEARCH_COMPILED_CHUNK_PREFIX") &&
+    researchSource.includes("FMP_RESEARCH_REPLAY_CHECKPOINT_STORE") &&
+    researchSource.includes("COMPILED_CHECKPOINT_SCHEMA = 3") &&
+    researchSource.includes("COMPILE_SESSIONS_PER_RUN = 20") &&
+    researchSource.includes("REPLAY_CHECKPOINT_SCHEMA = 8") &&
+    researchSource.includes("REPLAY_WINDOWS_PER_RUN = 3") &&
+    researchSource.includes("V10_ACTIVE_THESIS_COUNT = 1") &&
+    researchSource.includes("V10_DEVELOPMENT_PLACEBO_SEEDS = 25") &&
+    researchSource.includes("V10_STRICT_PLACEBO_SEEDS = 1_000") &&
+    researchSource.includes("nextReplaySessionSlice") &&
+    researchSource.includes("requiredChunks") &&
+    researchSource.includes("skipFullPeriodDiagnostic: true") &&
+    researchSource.includes("persistPrivateGzipJson") &&
+    researchSource.includes("readPrivateGzipJson") &&
+    researchSource.includes("compactResearchRun") &&
+    researchSource.includes('stage: "compiled"') &&
+    researchSource.includes('"compiling"') &&
+    researchSource.includes('stage: "replay"') &&
+    researchSource.includes("compiledDatasetCheckpointReused") &&
+    researchSource.includes(
       "const { candidateRuns: _candidateRuns, ...publicProgress } = checkpoint",
     ) &&
-    rawSource.includes("equivalentAcquisitionSignature") &&
-    rawSource.includes("equivalentStatementSignature") &&
-    rawSource.includes("latestCompletedMarketSessionDay") &&
-    rawSource.includes("cachedPriceContractUsable") &&
-    rawSource.includes("priceContractCheckpointReused") &&
-    rawSource.includes("eligibleForCapitalClaims: false") &&
-    rawSource.includes("completedV7ReportIsExternalComparisonBaseline") &&
-    rawSource.includes("completedV8ReportIsExternalComparisonBaseline") &&
-    rawSource.includes("persistent-quality-leadership") &&
-    rawSource.includes("controlled-acceleration-leadership") &&
-    rawSource.includes("quality-reacceleration-value-aware") &&
-    rawSource.includes('researchSignalSource: "full-evidence"') &&
-    rawSource.includes("activeThesesUseIndependentResearchLifecycle") &&
-    rawSource.includes('benchmarkSymbols: ["SPY", "QQQ"]') &&
-    rawSource.includes('benchmarkCompletionSymbol: "SPY"') &&
-    rawSource.includes("liquidateAtEnd: true") &&
-    rawSource.includes("breakEvenStopMinMfeR: 1.5") &&
-    rawSource.includes("benchmarkComparisons") &&
-    rawSource.includes("discovery.researchUniverse") &&
-    rawSource.includes("rollingRegimeAudit") &&
-    rawSource.includes("walkForwardSelectionAudit") &&
-    rawSource.includes("exposureMatchedAlphaPct") &&
-    !rawSource.includes("api/v3"),
+    researchSource.includes("equivalentAcquisitionSignature") &&
+    researchSource.includes("equivalentStatementSignature") &&
+    researchSource.includes("latestCompletedMarketSessionDay") &&
+    researchSource.includes("cachedPriceContractUsable") &&
+    researchSource.includes("priceContractCheckpointReused") &&
+    researchSource.includes("eligibleForCapitalClaims: false") &&
+    researchSource.includes("completedV7ReportIsExternalComparisonBaseline") &&
+    researchSource.includes("completedV8ReportIsExternalComparisonBaseline") &&
+    researchSource.includes("completedV9ReportIsRejectedBenchmarkSleeveBaseline") &&
+    researchSource.includes("v10-predeclared-quality-momentum-rank") &&
+    researchSource.includes('researchSignalSource: "full-evidence"') &&
+    researchSource.includes("activeThesisUsesIndependentResearchLifecycle") &&
+    researchSource.includes("requiredBenchmarks") &&
+    researchSource.includes("benchmarkCompletionSymbol: null") &&
+    !researchSource.includes('benchmarkCompletionSymbol: "SPY"') &&
+    researchSource.includes('selectionMode: "ranked"') &&
+    researchSource.includes(
+      'researchRankMode: "quality-momentum-leadership"',
+    ) &&
+    researchSource.includes("single-predeclared-thesis-no-selector") &&
+    !researchSource.includes("parameterScore") &&
+    researchSource.includes("liquidateAtEnd: true") &&
+    researchSource.includes("minimumInitialStopPct: 18") &&
+    researchSource.includes("ratchetRiskPlanStop: false") &&
+    researchSource.includes('researchRankMode: "random-placebo"') &&
+    researchSource.includes(
+      'researchRankMode: "bull-cycle-pullback-control"',
+    ) &&
+    researchSource.includes("strictPointInTimePlaceboSeeds") &&
+    researchSource.includes("benchmarkComparisons") &&
+    researchSource.includes("discovery.researchUniverse") &&
+    researchSource.includes("rollingRegimeAudit") &&
+    researchSource.includes("walkForwardSelectionAudit") &&
+    researchSource.includes("exposureMatchedAlphaPct") &&
+    !researchSource.includes("api/v3"),
   "The research job must stay bounded, paced, checkpointed, resumable, stable-endpoint-only, multi-period, factor-aware and incapable of presenting provisional results as capital proof.",
 );
 
@@ -420,11 +474,11 @@ const contractCalls = [];
   assert(
     subsetProbe.status === "collecting" &&
       subsetProbe.progress.completedWindows === 1 &&
-      subsetProbe.progress.totalWindows === 18,
+      subsetProbe.progress.totalWindows === 6,
     "A replay invocation must be able to simulate one bounded date slice while deriving folds from the full durable calendar.",
   );
   let checkpoint = null;
-  for (let completed = 3; completed <= 18; completed += 3) {
+  for (let completed = 3; completed <= 6; completed += 3) {
     const partial = await runProvisionalWindows(mockDataset, {
       initial: checkpoint,
       maxWindows: 3,
@@ -432,7 +486,7 @@ const contractCalls = [];
     assert(
         partial.status === "collecting" &&
         partial.progress.completedWindows === completed &&
-        partial.progress.remainingWindows === 18 - completed &&
+        partial.progress.remainingWindows === 6 - completed &&
         partial.progress.completedFolds === Math.floor(completed / 3) &&
         partial.progress.completedCandidates === Math.floor(completed / 6),
       "Each replay invocation must durably advance its bounded chronological simulation windows.",
@@ -445,17 +499,27 @@ const contractCalls = [];
   });
   assert(
     completedReplay.status === "complete" &&
-      completedReplay.replay.candidates.length === 3 &&
+      completedReplay.replay.candidates.length === 1 &&
       completedReplay.replay.windows.folds.length === 2 &&
       completedReplay.replay.selectedParameters.thesisId ===
-        "quality-reacceleration-value-aware" &&
+        "v10-predeclared-quality-momentum-rank" &&
       completedReplay.replay.walkForwardSelectionAudit.folds.every(
         (fold) => fold.selectedParameters.selectionEligible === true,
       ) &&
+      completedReplay.replay.walkForwardSelectionAudit.selectionPolicy ===
+        "single-predeclared-thesis-no-selector" &&
+      completedReplay.replay.walkForwardSelectionAudit.controls.randomPlacebo
+        .seedCount === 25 &&
+      completedReplay.replay.walkForwardSelectionAudit.controls
+        .transparentBullCyclePullback.metrics.totalReturnPct === 4.04 &&
       completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
         .capitalClaimAuthorized === false &&
-      simulatedRuns === 20,
-    "The replay must reuse all checkpointed folds, run final selection once, and never recompute completed candidates.",
+      completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
+        .selectorUsed === false &&
+      completedReplay.replay.walkForwardSelectionAudit.evidenceAssessment
+        .benchmarkCompletionSleeveUsed === false &&
+      simulatedRuns === 64,
+    "The replay must reuse the frozen thesis, compute matched controls only on audit folds, avoid a selector and never recompute completed windows.",
   );
   console.log(
     "FMP RESEARCH BACKTEST PASS: bounded acquisition, durable replay, filing clocks, adjusted bars, diversified cohort and provisional labeling verified.",

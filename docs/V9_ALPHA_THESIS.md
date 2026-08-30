@@ -1,5 +1,9 @@
 # Version 9 alpha thesis contract
 
+> **Rejected design:** V9's SPY completion sleeve is not a valid test of the
+> screener's stock-selection portfolio. It is retained only as an audit trail and
+> must not be used for live promotion or described as screener-generated alpha.
+
 Version 9 is a structural benchmark-completion test, not a promise of future
 outperformance. Version 8 found positive exposure-matched stock-selection alpha
 but left 86.64% of average capital in cash. It returned 5.51% while SPY returned
