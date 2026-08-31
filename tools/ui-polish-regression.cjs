@@ -12,6 +12,9 @@ const checks=[
   ['visible reload engagement',s.includes('650-(Date.now()-started)')],
   ['theme feed health isolated',s.includes('themeFeedHealth')&&s.includes('feedHealth={themeFeedHealth}')],
   ['data pauses separated from watch list',s.includes('Data Verification Paused')&&s.includes('Paused is a feed condition')&&s.includes('!dataQualityBlocked(s)')]
+  ,['portfolio action details wrap',s.includes('.actionInstruction{display:grid;grid-template-columns:minmax(110px,max-content) minmax(0,1fr)')&&s.includes('.fundingAmount{min-width:0')&&s.includes('overflow-wrap:anywhere')]
+  ,['portfolio actions distinguished from candidates',s.includes('Opportunity cards are candidates, not instructions to buy every displayed stock.')]
+  ,['entry badge follows authoritative chase gate',s.includes('label==="Chase Risk"')&&s.includes('currentGate?.shortHorizonChaseClear===true')&&s.includes('Current Entry Cleared')]
 ];
 const app=fs.readFileSync('pages/_app.js','utf8');
 checks.push(['theme reload preserves client state',app.includes('clearTop5Cache();emitFeedNotice("");')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);
