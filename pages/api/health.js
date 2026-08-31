@@ -37,7 +37,8 @@ const requiredFeatures=[
   "holding-aware-v11-lifecycle",
   "v11-strict-strong-buy-preservation",
   "portfolio-action-wrap",
-  "authoritative-entry-badge"
+  "authoritative-entry-badge",
+  "user-controlled-screen-refresh"
 ];
 
 async function blobAvailable(){

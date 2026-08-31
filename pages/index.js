@@ -115,13 +115,11 @@ export default function Home(){
   const[ns,setNs]=useState(""),[nsh,setNsh]=useState(""),[nc,setNc]=useState(""),[nr,setNr]=useState("Swing"),[symbol,setSymbol]=useState(""),[snap,setSnap]=useState(null),[lastUpdated,setLastUpdated]=useState(null),[portfolioAnalyzedAt,setPortfolioAnalyzedAt]=useState(null),[analysisCapitalReady,setAnalysisCapitalReady]=useState(false);
   const[openedDate,setOpenedDate]=useState("");
   const[marketState,setMarketState]=useState(null);
-  const automaticVerificationPass=useRef(0);
+  const manualVerificationPass=useRef(0);
 
   useEffect(()=>{let local=[];try{const x=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(x)){local=x.map(p=>({...p,role:role(p.symbol,p.role),winnerHistory:winnerHistoryFor(p)}));setPortfolio(local);localStorage.setItem(KEY,JSON.stringify(local));}}catch{}const k=localStorage.getItem(SYNC_KEY)||"";if(k){setSyncKey(k);setSyncInput(k);void pullCloudPortfolio(k,local,true);}load("opportunities");},[]);
-  useEffect(()=>{if(tab!=="opportunities"||feedHealth.status!=="degraded"||feedHealth.deferred<=0||automaticVerificationPass.current>=20)return;const timer=setTimeout(()=>{automaticVerificationPass.current+=1;void load("opportunities",automaticVerificationPass.current);},75000);return()=>clearTimeout(timer);},[tab,feedHealth.status,feedHealth.coverage,feedHealth.deferred]);
-  useEffect(()=>{if(tab==="portfolio"&&portfolio.length>0)void analyze();},[tab,portfolio]);
   useEffect(()=>{const update=()=>setMarketState(marketExecutionState(new Date()));update();const timer=setInterval(update,60000);return()=>clearInterval(timer);},[]);
-  useEffect(()=>{const live=()=>{automaticVerificationPass.current=0;void handleReload();};window.addEventListener("screener-request-live-refresh",live);return()=>window.removeEventListener("screener-request-live-refresh",live);},[tab,selectedTheme,portfolio]);
+  useEffect(()=>{const live=()=>{void handleReload();};window.addEventListener("screener-request-live-refresh",live);return()=>window.removeEventListener("screener-request-live-refresh",live);},[tab,selectedTheme,portfolio]);
 
   async function performanceHistory(){
     try{const r=await fetch('/api/performance',{cache:'no-store'}),d=await r.json();if(r.ok&&d.persistentStorage!==false&&Array.isArray(d.records))return{records:d.records,available:true};}catch{}
@@ -186,7 +184,8 @@ export default function Home(){
     try{let broad=[],broadUnavailable=false;try{const d=await fetchScreen("opportunities");broad=d.stocks||[];setStocks(broad);setFeedHealth(screenHealth(d.meta,d.performance));const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}catch{broadUnavailable=true;}const authoritative=broad.find(s=>sym(s)===key),standalone=authoritative?null:await fetchStock(key);setSnap(authoritative||{...standalone,outsideBroadUniverse:true,...(broadUnavailable?{dataFeedSnapshotStale:true,broadVerificationUnavailable:true}:{} )});if(!authoritative&&!broadUnavailable)setLastUpdated(new Date());}
     catch(e){setErr(e.message);}
   }
-  async function handleReload(){if(tab==="portfolio")return analyze();automaticVerificationPass.current=0;return load(tab==="themes"?selectedTheme:"opportunities");}
+  async function openTab(nextTab){setTab(nextTab);setErr("");manualVerificationPass.current=0;if(nextTab==="portfolio")return portfolio.length>0?analyze():undefined;if(nextTab==="themes")return load(selectedTheme,0);return load("opportunities",0);}
+  async function handleReload(){if(tab==="portfolio")return analyze();manualVerificationPass.current=Math.min(20,manualVerificationPass.current+1);return load(tab==="themes"?selectedTheme:"opportunities",manualVerificationPass.current);}
 
   const portfolioValueForCards=useMemo(()=>results.length?results.reduce((a,r)=>a+(+r.value||0),0):portfolio.reduce((a,p)=>a+(+p.shares||0)*(+p.avgCost||0),0),[results,portfolio]);
   const resultForCards=useMemo(()=>new Map(results.map(r=>[sym(r),r])),[results]);
@@ -296,7 +295,7 @@ export default function Home(){
   const busy=reloading||loading;
   return <main>
     <header><div><h1>🧠 Investment Operating System</h1><p>Expert analysis underneath. Portfolio-level risk governance on top.</p>{lastUpdated&&<small className="updated">Last refreshed {lastUpdated.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}</small>}</div><button disabled={busy} onClick={handleReload}>{busy?"Reloading...":"Reload"}</button></header>
-    <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>setTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
+    <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
     {err&&<p className="error">{err}</p>}
     {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}

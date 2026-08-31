@@ -15,6 +15,8 @@ const checks=[
   ,['portfolio action details wrap',s.includes('.actionInstruction{display:grid;grid-template-columns:minmax(110px,max-content) minmax(0,1fr)')&&s.includes('.fundingAmount{min-width:0')&&s.includes('overflow-wrap:anywhere')]
   ,['portfolio actions distinguished from candidates',s.includes('Opportunity cards are candidates, not instructions to buy every displayed stock.')]
   ,['entry badge follows authoritative chase gate',s.includes('label==="Chase Risk"')&&s.includes('currentGate?.shortHorizonChaseClear===true')&&s.includes('Current Entry Cleared')]
+  ,['screen refresh is user controlled',s.includes('async function openTab(nextTab)')&&s.includes('onClick={()=>openTab(x)}')&&!s.includes('automaticVerificationPass')&&!s.includes('75000')]
+  ,['portfolio changes do not auto analyze',!s.includes('if(tab==="portfolio"&&portfolio.length>0)void analyze()')]
 ];
 const app=fs.readFileSync('pages/_app.js','utf8');
 checks.push(['theme reload preserves client state',app.includes('clearTop5Cache();emitFeedNotice("");')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);
