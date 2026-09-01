@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import {
   runFmpResearchBacktest,
   runV11BoundedReviewExperiment,
+  runV11StressTest,
 } from "../../../lib/fmpResearchBacktest";
 
 export const config = { maxDuration: 800 };
@@ -29,6 +30,8 @@ export default async function handler(req, res) {
       report.status === "complete"
         ? await runV11BoundedReviewExperiment()
         : null;
+    const v11StressTest =
+      report.status === "complete" ? await runV11StressTest() : null;
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
       ...report,
@@ -37,6 +40,13 @@ export default async function handler(req, res) {
             status: boundedReviewExperiment.status,
             implementationPass: boundedReviewExperiment.implementationPass,
             completedAt: boundedReviewExperiment.completedAt,
+          }
+        : null,
+      v11StressTest: v11StressTest
+        ? {
+            status: v11StressTest.status,
+            robustnessPass: v11StressTest.robustnessPass,
+            completedAt: v11StressTest.completedAt,
           }
         : null,
     });
