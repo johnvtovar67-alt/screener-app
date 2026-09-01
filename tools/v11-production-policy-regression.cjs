@@ -215,6 +215,54 @@ assert(
   !/\bV11\b|frozen|policy/i.test(lifecycle.reason),
   "holding decisions must use investor-facing language",
 );
+// Legacy holdings absent from the ranked entry queue carry a null rank. They
+// are outside the retention group, not synthetic rank zero.
+lifecycle = v11ProductionPositionLifecycle({
+  stock: {
+    symbol: "LEGACY",
+    productionPolicy: {
+      id: V11_PRODUCTION_POLICY_ID,
+      status: "ready",
+      researchRank: null,
+      selected: false,
+    },
+  },
+  position: {
+    role: "Swing",
+    openedAt: "2026-08-01T12:00:00.000Z",
+    gainLossPct: 4,
+  },
+  policy: { id: V11_PRODUCTION_POLICY_ID, status: "ready" },
+  now: new Date("2026-08-30T03:00:00.000Z"),
+});
+assert(
+  lifecycle?.action === "Exit" &&
+    lifecycle.source === "v11-production-rank-deterioration" &&
+    lifecycle.researchRank === null,
+  "a mature unranked pre-V11 Swing must exit rather than masquerade as rank zero",
+);
+lifecycle = v11ProductionPositionLifecycle({
+  stock: {
+    symbol: "NEW",
+    productionPolicy: {
+      id: V11_PRODUCTION_POLICY_ID,
+      status: "ready",
+      researchRank: null,
+      selected: false,
+    },
+  },
+  position: {
+    role: "Swing",
+    openedAt: "2026-08-27T12:00:00.000Z",
+    gainLossPct: 1,
+  },
+  policy: { id: V11_PRODUCTION_POLICY_ID, status: "ready" },
+  now: new Date("2026-08-30T03:00:00.000Z"),
+});
+assert(
+  lifecycle === null,
+  "an unranked Swing must retain the audited ten-session minimum hold",
+);
 lifecycle = v11ProductionPositionLifecycle({
   stock: { symbol: "CORE" },
   position: { role: "Core", gainLossPct: -25 },
