@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-09-01-v11-holding-explanations"',
+  'release:"2026-09-01-v11-setup-tolerance"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',
@@ -63,7 +63,9 @@ hasAll(manifest,[
   '"authoritative-entry-badge"',
   '"user-controlled-screen-refresh"',
   '"holding-decision-explanations"',
-  '"reconciled-hold-reunderwrite"'
+  '"reconciled-hold-reunderwrite"',
+  '"setup-window-noise-tolerance"',
+  '"portfolio-rank-hidden"'
 ],'lib/releaseManifest.js');
 
 const expert=read('lib/expertDecision.js');
