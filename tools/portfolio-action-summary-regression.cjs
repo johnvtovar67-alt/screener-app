@@ -11,5 +11,6 @@ assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time
 assert(page.includes('timing:"Await Confirmation"')&&page.includes('size:"Qualified — Not Funded"'),'Buy cards can still imply executable deployment when the portfolio capital signal is not fundable');
 assert(page.includes('timing:"Await Capital"')&&page.includes('bp.blockReason||funded<minFundingAction'),'Buy cards are not reconciled against the final portfolio allocator');
 assert(page.indexOf('if(need<=minFundingAction){bp.toleranceGap=need')<page.indexOf('const initialAllowance=capitalAllowance'),'At-target holdings must be recognized before a zero-dollar capital allowance can emit a false cash shortage');
-assert(page.includes('Current selection')&&page.includes('% of Swing capital')&&page.includes('No add, trim, or exit trigger is active today.'),'Portfolio holdings are missing plain-language selection, sizing, and trigger context');
+assert(!page.includes('Current selection')&&!page.includes('Current #{rankNo}'),'Internal portfolio rank still leaks into holding explanations');
+assert(page.includes('% of Swing capital')&&page.includes('No add, trim, or exit trigger is active today.'),'Portfolio holdings are missing plain-language sizing and trigger context');
 console.log('PORTFOLIO ACTION SUMMARY PASS: lifecycle exits are summarized and time review is compact.');
