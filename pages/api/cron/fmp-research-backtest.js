@@ -1,5 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
-import { runFmpResearchBacktest } from "../../../lib/fmpResearchBacktest";
+import {
+  runFmpResearchBacktest,
+  runV11BoundedReviewExperiment,
+} from "../../../lib/fmpResearchBacktest";
 
 export const config = { maxDuration: 800 };
 
@@ -22,8 +25,21 @@ export default async function handler(req, res) {
   if (!authorized(req)) return res.status(401).json({ error: "Unauthorized" });
   try {
     const report = await runFmpResearchBacktest();
+    const boundedReviewExperiment =
+      report.status === "complete"
+        ? await runV11BoundedReviewExperiment()
+        : null;
     res.setHeader("Cache-Control", "no-store");
-    return res.status(report.status === "complete" ? 200 : 202).json(report);
+    return res.status(report.status === "complete" ? 200 : 202).json({
+      ...report,
+      boundedReviewExperiment: boundedReviewExperiment
+        ? {
+            status: boundedReviewExperiment.status,
+            implementationPass: boundedReviewExperiment.implementationPass,
+            completedAt: boundedReviewExperiment.completedAt,
+          }
+        : null,
+    });
   } catch (error) {
     console.error("FMP research backtest cron:", error);
     return res.status(503).json({
