@@ -30,5 +30,6 @@ r=portfolioDecision({stock:broken,recommendation:rec({score:30,businessQualitySc
 assert(r.action==='Exit','Extreme technical/trade breakdown must still Exit without waiting for a time-in-trade stage');
 
 const page=fs.readFileSync('pages/index.js','utf8');
-assert(page.includes('if(base.action==="Hold"){const rw=reunderwriteExistingPosition'), 'Time-in-trade reunderwrite must only run after the base decision remains Hold');
+assert(page.includes('if(base.action==="Hold")return reviewedHold'), 'Time-in-trade reunderwrite must run after the base decision remains Hold');
+assert(page.includes('decision:{...hold,action:"Hold"}'), 'An Add reconciled to Hold must receive the same existing-position re-underwrite');
 console.log('MATERIAL EVENT PASS: normal noise, immediate Review, thesis-break Exit, technical-break Exit, and time-stage precedence verified.');
