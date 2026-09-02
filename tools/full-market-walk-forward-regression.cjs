@@ -14,6 +14,16 @@ assert(
     walkForwardSource.includes("medianMomentumPercentile < 50"),
   "The adaptive rank must switch causally from current cross-sectional momentum breadth without future returns.",
 );
+assert(
+  walkForwardSource.includes(
+    'researchRankMode === "confirmed-quality-defense"',
+  ) &&
+    walkForwardSource.includes("useConfirmedQualityDefense") &&
+    walkForwardSource.includes("momentumBreadthPct < 50") &&
+    walkForwardSource.includes("rankRegimeDiagnostics") &&
+    walkForwardSource.includes("confirmedQualityDefenseRebalances"),
+  "The prospective challenger must require both weak breadth and observed twenty-session quality leadership, and report how often that regime was used.",
+);
 
 const loader = createResearchModuleLoader(process.cwd());
 const {
@@ -651,6 +661,53 @@ const leadershipContextBuy = run.trades.find(
 assert(
   leadershipContextBuy?.symbol === "Q01",
   `A quality-leadership decision must preserve its causal rank context through next-open order execution (bought ${leadershipContextBuy?.symbol || "none"}; skipped ${JSON.stringify(run.skippedOrders || [])}).`,
+);
+const weakBreadthLeadershipContextDataset = {
+  ...leadershipContextDataset,
+  sessions: leadershipContextDataset.sessions.map((researchSession) => ({
+    ...researchSession,
+    positionSignals: researchSession.positionSignals.map((researchSignal, index) => ({
+      ...researchSignal,
+      entryTiming: {
+        ...researchSignal.entryTiming,
+        alpha60VsSpy: index < 15 ? -2 : 2,
+      },
+    })),
+  })),
+};
+run = simulatePointInTimePortfolio(weakBreadthLeadershipContextDataset, {
+  ...rankedOptions,
+  researchRankMode: "confirmed-quality-defense",
+  rankedRebalanceSessions: 1,
+  rankedMinimumHoldSessions: 1,
+  rankedEntryQueueCount: 20,
+  maxPositions: 1,
+  minQualityPercentile: null,
+  minMomentumPercentile: null,
+});
+const confirmedDefenseBuy = run.trades.find((trade) => trade.side === "buy");
+assert(
+  confirmedDefenseBuy?.symbol === "Q01" &&
+    run.metrics.rankRegimeDiagnostics.confirmedQualityDefenseRebalances === 2,
+  "Weak breadth plus superior twenty-session quality leadership must select the quality leader and record the confirmed defensive regime.",
+);
+run = simulatePointInTimePortfolio(leadershipContextDataset, {
+  ...rankedOptions,
+  researchRankMode: "confirmed-quality-defense",
+  rankedRebalanceSessions: 1,
+  rankedMinimumHoldSessions: 1,
+  rankedEntryQueueCount: 20,
+  maxPositions: 1,
+  minQualityPercentile: null,
+  minMomentumPercentile: null,
+});
+const unconfirmedDefenseBuy = run.trades.find(
+  (trade) => trade.side === "buy",
+);
+assert(
+  unconfirmedDefenseBuy?.symbol === "Q20" &&
+    run.metrics.rankRegimeDiagnostics.confirmedQualityDefenseRebalances === 0,
+  "Quality leadership alone must not override momentum while market breadth remains healthy.",
 );
 run = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,
