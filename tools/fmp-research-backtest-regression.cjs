@@ -47,6 +47,14 @@ assert(
   "The exact quality-confirmed slow-cycle candidate must pass a memory-bounded, multi-fold historical gate before production consideration.",
 );
 assert(
+  rawSource.includes("runFactorLeadershipAudit") &&
+    rawSource.includes('thesisId: "adaptive-factor-leadership"') &&
+    rawSource.includes("pilotEligible: Object.values(checks).every(Boolean)") &&
+    rawSource.includes("historicalBeatsSpyInMajorityOfFolds") &&
+    rawSource.includes("forwardBeatsQqq"),
+  "The causal factor-leadership candidate must pass both prior folds and the bounded forward window before pilot consideration.",
+);
+assert(
   rawSource.includes("const requiredChunks = manifest.chunks.filter") &&
     rawSource.includes('String(chunk?.lastDate || "") >= window.start') &&
     rawSource.includes('String(chunk?.firstDate || "") <= window.end'),
