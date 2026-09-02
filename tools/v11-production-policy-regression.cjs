@@ -95,11 +95,11 @@ function liveRow(candidate, overrides = {}) {
     },
     entryTiming: {
       available: true,
-      pass: false,
+      pass: true,
       chase: false,
       liquidityPass: true,
     },
-    finalDecision: { action: "Watch", reason: "legacy result" },
+    finalDecision: { action: "Buy", reason: "independent buy result" },
     ...overrides,
   };
 }
@@ -166,9 +166,9 @@ assert(
   "investor-facing decisions must not expose version or implementation narration",
 );
 assert(
-  applied.find((row) => row.symbol === "S02").finalDecision.priority ===
+  applied.find((row) => row.symbol === "S03").finalDecision.priority ===
       "Best Opportunity" &&
-    applied.find((row) => row.symbol === "S03").finalDecision.priority ===
+    applied.find((row) => row.symbol === "S04").finalDecision.priority ===
       "Priority #2",
   "priority labels must remain useful without exposing the policy version",
 );
@@ -179,14 +179,38 @@ assert(
   "the V12 long-horizon extension veto must not leak into V11 selection",
 );
 assert(
-  actionable.some((row) => row.entryTiming?.pass === false),
-  "V11 must not be changed into V12 by requiring the full timing pass",
+  actionable.every((row) => row.entryTiming?.pass === true),
+  "a ranking overlay must never manufacture a Buy when current entry timing fails",
 );
 assert(
-  applied.find((row) => row.symbol === "S02").finalDecision.action === "Buy" &&
+  applied.find((row) => row.symbol === "S02").finalDecision.action === "Watch" &&
     applied.find((row) => row.symbol === "S02").productionPolicy.gate.checks
       .timingAvailable === true,
-  "the same-session compiled timing evidence must safely cover a cold live timing cache",
+  "a source-session timing fallback that does not pass must fail closed",
+);
+assert(
+  applied.find((row) => row.symbol === "S15").finalDecision.action === "Watch",
+  "a ranked independent Watch must never be upgraded to Buy",
+);
+
+const contradictionRows = readySnapshot.candidates.slice(0, 2).map(liveRow);
+contradictionRows[0].finalDecision = {
+  action: "Watch",
+  reason: "independent assessment is Watch",
+};
+contradictionRows[1].entryTiming.pass = false;
+const contradictionApplied = applyV11ProductionPolicy(
+  contradictionRows,
+  readySnapshot,
+);
+assert(
+  contradictionApplied.every(
+    (row) =>
+      row.finalDecision.action === "Watch" &&
+      row.productionPolicy.selected === false &&
+      row.finalDecision.capitalConfirmed === false,
+  ),
+  "Watch recommendations and failed entry timing must remain non-actionable even when highly ranked",
 );
 
 let lifecycle = v11ProductionPositionLifecycle({
@@ -334,5 +358,5 @@ assert(
 );
 
 console.log(
-  "V11 PRODUCTION POLICY PASS: strict Strong Buy preservation, exact audited weights, narrow execution gates, twelve targets, and fail-closed snapshot behavior are verified",
+  "V11 PRODUCTION POLICY PASS: independent Buy confirmation, entry-timing confirmation, strict Strong Buy preservation, exact audited weights, twelve-target ceiling, and fail-closed behavior are verified",
 );
