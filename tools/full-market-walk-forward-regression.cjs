@@ -21,7 +21,8 @@ assert(
     walkForwardSource.includes("useConfirmedQualityDefense") &&
     walkForwardSource.includes("momentumBreadthPct < 50") &&
     walkForwardSource.includes("rankRegimeDiagnostics") &&
-    walkForwardSource.includes("confirmedQualityDefenseRebalances"),
+    walkForwardSource.includes("confirmedQualityDefenseRebalances") &&
+    walkForwardSource.includes("observations: rankContextObservations"),
   "The prospective challenger must require both weak breadth and observed twenty-session quality leadership, and report how often that regime was used.",
 );
 
