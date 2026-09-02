@@ -1883,6 +1883,24 @@ const compilerDataset = {
   }),
 };
 const compiled = compilePointInTimeSignals(compilerDataset);
+const membershipFiltered = compilePointInTimeSignals({
+  ...compilerDataset,
+  sessions: compilerDataset.sessions.map((session, index) => ({
+    ...session,
+    universeSymbols: index < 30 ? ["OLD"] : ["AAA"],
+  })),
+});
+assert(
+  membershipFiltered.sessions[20].sourceUniverseCount === 1 &&
+    membershipFiltered.sessions[20].positionSignals.every(
+      (row) => row.symbol === "OLD",
+    ) &&
+    membershipFiltered.sessions.at(-1).sourceUniverseCount === 1 &&
+    membershipFiltered.sessions.at(-1).positionSignals.every(
+      (row) => row.symbol === "AAA",
+    ),
+  "Historical compilation must restrict each session to its explicitly supplied point-in-time membership.",
+);
 let batchedCompiled = null;
 let compilerResume = null;
 do {
