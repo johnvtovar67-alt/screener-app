@@ -85,7 +85,7 @@ assert(
     rawSource.includes("strictOneThousandSeedPlaceboPassed: false") &&
     rawSource.includes("historicalAndPreFreezeResultsContaminated: true") &&
     rawSource.includes("runAlphaRegimeMap") &&
-    rawSource.includes("ALPHA_REGIME_MAP_REPORT_VERSION = 3") &&
+    rawSource.includes("ALPHA_REGIME_MAP_REPORT_VERSION = 4") &&
     rawSource.includes('experiment: "Non-overlapping alpha regime map"') &&
     rawSource.includes("calendar.slice(252)") &&
     rawSource.includes("windowSessions = 126") &&
@@ -97,6 +97,7 @@ assert(
     rawSource.includes('id: "momentum-monthly-buffered-concentrated"') &&
     rawSource.includes('id: "balanced-quality-momentum"') &&
     rawSource.includes('id: "dual-horizon-price-momentum"') &&
+    rawSource.includes('id: "persistent-twenty-session-leadership"') &&
     rawSource.includes('id: "adaptive-leadership-20-monthly-buffered"') &&
     rawSource.includes("rankedExitBuffer: 18") &&
     rawSource.includes('id: "durable-monthly-ten"') &&
