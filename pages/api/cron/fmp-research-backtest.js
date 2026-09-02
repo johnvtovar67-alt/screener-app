@@ -1,11 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
 import {
+  runAlphaCreatorSearch,
   runFmpResearchBacktest,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
   runV11StressTest,
   V11_FORWARD_EXTENSION_TARGET,
 } from "../../../lib/fmpResearchBacktest";
+import { latestCompletedMarketSessionDay } from "../../../lib/marketSession";
 
 export const config = { maxDuration: 800 };
 
@@ -27,8 +29,11 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "CRON_SECRET is not configured" });
   if (!authorized(req)) return res.status(401).json({ error: "Unauthorized" });
   try {
+    const minimumDatasetThrough =
+      latestCompletedMarketSessionDay(new Date()) ||
+      V11_FORWARD_EXTENSION_TARGET;
     const report = await runFmpResearchBacktest({
-      minimumDatasetThrough: V11_FORWARD_EXTENSION_TARGET,
+      minimumDatasetThrough,
     });
     const v11ForwardExtension = await runV11ForwardExtension();
     const boundedReviewExperiment =
@@ -37,6 +42,8 @@ export default async function handler(req, res) {
         : null;
     const v11StressTest =
       report.status === "complete" ? await runV11StressTest() : null;
+    const alphaCreator =
+      report.status === "complete" ? await runAlphaCreatorSearch() : null;
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
       ...report,
@@ -52,6 +59,16 @@ export default async function handler(req, res) {
             status: v11StressTest.status,
             robustnessPass: v11StressTest.robustnessPass,
             completedAt: v11StressTest.completedAt,
+          }
+        : null,
+      alphaCreator: alphaCreator
+        ? {
+            status: alphaCreator.status,
+            completedAt: alphaCreator.completedAt || null,
+            datasetThrough: alphaCreator.datasetThrough || null,
+            forwardWindow: alphaCreator.forwardWindow || null,
+            allEvidenceGatesPassed:
+              alphaCreator.allEvidenceGatesPassed === true,
           }
         : null,
       v11ForwardExtension: v11ForwardExtension

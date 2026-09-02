@@ -66,6 +66,15 @@ assert(
 );
 assert(
   rawSource.includes("runAlphaCreatorSearch") &&
+    rawSource.includes("ALPHA_CREATOR_REPORT_VERSION = 5") &&
+    rawSource.includes("ALPHA_CREATOR_DEVELOPMENT_WINDOWS") &&
+    rawSource.includes('Object.freeze({ start: "2025-01-07", end: "2025-07-10" })') &&
+    rawSource.includes('Object.freeze({ start: "2025-07-11", end: "2026-01-08" })') &&
+    rawSource.includes('start: "2026-01-09"') &&
+    rawSource.includes('end: "2026-07-13"') &&
+    rawSource.includes("String(existing?.datasetThrough || \"\") >= datasetThrough") &&
+    rawSource.includes("end: datasetThrough") &&
+    rawSource.includes("forwardWindowAppendsWithoutCandidateRetuning: true") &&
     rawSource.includes('id: "adaptive-breadth-quality-defense"') &&
     rawSource.includes('id: "adaptive-leadership-20-monthly-buffered"') &&
     rawSource.includes("rankedExitBuffer: 18") &&
@@ -518,16 +527,28 @@ assert(
 );
 
 const cron = fs.readFileSync("pages/api/cron/fmp-research-backtest.js", "utf8");
+const alphaCreatorEndpoint = fs.readFileSync(
+  "pages/api/research/alpha-creator.js",
+  "utf8",
+);
 const schedule = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
 const preflight = fs.readFileSync("tools/fmp-research-preflight.cjs", "utf8");
 assert(
   cron.includes("timingSafeEqual") &&
     cron.includes("CRON_SECRET") &&
     cron.includes("maxDuration: 800") &&
+    cron.includes("latestCompletedMarketSessionDay(new Date())") &&
+    cron.includes("minimumDatasetThrough") &&
+    cron.includes("runAlphaCreatorSearch()") &&
     schedule.crons.some(
       (row) => row.path === "/api/cron/fmp-research-backtest",
     ),
   "The expensive FMP replay must be cron-authenticated rather than exposed as an interactive request storm.",
+);
+assert(
+  alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
+    !alphaCreatorEndpoint.includes("getAlphaCreatorSearch"),
+  "The alpha-creator endpoint must delegate dataset freshness to the runner instead of short-circuiting on any stored complete report.",
 );
 assert(
   preflight.includes('path: "historical-price-eod/dividend-adjusted"') &&
