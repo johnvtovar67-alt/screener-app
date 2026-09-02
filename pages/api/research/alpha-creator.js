@@ -1,7 +1,4 @@
-import {
-  getAlphaCreatorSearch,
-  runAlphaCreatorSearch,
-} from "../../../lib/fmpResearchBacktest";
+import { runAlphaCreatorSearch } from "../../../lib/fmpResearchBacktest";
 
 export const config = { maxDuration: 300 };
 
@@ -13,11 +10,10 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   try {
     const force = String(req.query.force || "") === "1";
-    const stored = await getAlphaCreatorSearch();
-    const report =
-      !force && stored?.status === "complete"
-        ? stored
-        : await runAlphaCreatorSearch({ force });
+    // The runner compares the stored report with the compiled dataset. Keeping
+    // that freshness decision in one place prevents this endpoint from
+    // returning a stale completed snapshot after a new session is compiled.
+    const report = await runAlphaCreatorSearch({ force });
     return res.status(200).json(report);
   } catch (error) {
     return res.status(500).json({
