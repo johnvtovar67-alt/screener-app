@@ -558,6 +558,15 @@ assert(
     run.metrics.averageExposurePct === run.metrics.averageActiveExposurePct,
   "A ranked research book must replace a deteriorating leader at the next open while residual cash remains cash and benchmark-sleeve exposure stays exactly zero.",
 );
+run = simulatePointInTimePortfolio(rankedDataset, {
+  ...rankedOptions,
+  researchRankMode: "adaptive-quality-momentum",
+});
+assert(
+  run.curve.length === rankedDataset.sessions.length &&
+    run.trades.some((trade) => trade.side === "buy"),
+  "The adaptive quality/momentum branch must execute end-to-end instead of passing only a source-presence check.",
+);
 const chaseBlockedDataset = {
   ...rankedDataset,
   sessions: rankedDataset.sessions.map((researchSession) => ({
