@@ -5,6 +5,16 @@ const assert = (condition, message) => {
 };
 const { createResearchModuleLoader } = require("./research-module-loader.cjs");
 
+const walkForwardSource = fs.readFileSync("lib/walkForwardBacktest.js", "utf8");
+assert(
+  walkForwardSource.includes(
+    'researchRankMode === "adaptive-quality-momentum"',
+  ) &&
+    walkForwardSource.includes("momentumBreadthPct < 50") &&
+    walkForwardSource.includes("medianMomentumPercentile < 50"),
+  "The adaptive rank must switch causally from current cross-sectional momentum breadth without future returns.",
+);
+
 const loader = createResearchModuleLoader(process.cwd());
 const {
   createWalkForwardFolds,
