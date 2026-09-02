@@ -557,6 +557,10 @@ const dataCapabilityEndpoint = fs.readFileSync(
   "pages/api/research/data-capabilities.js",
   "utf8",
 );
+const pitUniverseEndpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-universe.js",
+  "utf8",
+);
 const schedule = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
 const preflight = fs.readFileSync("tools/fmp-research-preflight.cjs", "utf8");
 assert(
@@ -571,6 +575,16 @@ assert(
       (row) => row.path === "/api/cron/fmp-research-backtest",
     ),
   "The expensive FMP replay must be cron-authenticated rather than exposed as an interactive request storm.",
+);
+assert(
+  rawSource.includes("runPointInTimeSp500Universe") &&
+    rawSource.includes('client.fetchStable("sp500-constituent"') &&
+    rawSource.includes("pointInTimeMembershipConstructed: true") &&
+    rawSource.includes("privateBlueprint") &&
+    rawSource.includes("initialMembers.delete(change.addedSymbol)") &&
+    rawSource.includes("initialMembers.add(change.removedSymbol)") &&
+    pitUniverseEndpoint.includes("await runPointInTimeSp500Universe()"),
+  "The private S&P 500 blueprint must causally reconstruct historical membership and expose only a bounded summary.",
 );
 assert(
   alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
