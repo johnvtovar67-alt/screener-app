@@ -70,6 +70,8 @@ assert(
     rawSource.includes("rankedExitBuffer: 18") &&
     rawSource.includes('id: "durable-monthly-ten"') &&
     rawSource.includes('id: "quality-safety-monthly"') &&
+    rawSource.includes("tradeLifecycle") &&
+    rawSource.includes("exitsByReason") &&
     rawSource.includes("developmentBeatsPlacebo95") &&
     rawSource.includes("laterWindowsExcludedFromSelection: true") &&
     rawSource.includes("allEvidenceGatesPassed: Object.values(checks).every(Boolean)"),
