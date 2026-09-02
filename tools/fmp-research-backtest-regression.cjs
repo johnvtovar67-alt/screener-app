@@ -78,6 +78,9 @@ assert(
     rawSource.includes("runAlphaProspectiveChallenger") &&
     rawSource.includes('researchRankMode: "confirmed-quality-defense"') &&
     rawSource.includes("candidateFrozenBeforeProspectiveWindow: true") &&
+    rawSource.includes('"rejected-before-prospective-collection"') &&
+    rawSource.includes("prospectiveCollectionActive: historicalScreenPassed") &&
+    rawSource.includes("developmentFolds") &&
     rawSource.includes("minimumSixtyNewSessions") &&
     rawSource.includes("strictOneThousandSeedPlaceboPassed: false") &&
     rawSource.includes("historicalAndPreFreezeResultsContaminated: true") &&
