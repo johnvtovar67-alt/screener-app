@@ -4,6 +4,7 @@ import {
   runAlphaProspectiveChallenger,
   runFmpResearchBacktest,
   runPointInTimeSp500AlphaCreatorV2,
+  runPointInTimeSp500AlphaCreatorV2Integrity,
   runPointInTimeSp500DatasetAcquisition,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
@@ -56,6 +57,10 @@ export default async function handler(req, res) {
     const pointInTimeSp500AlphaCreator =
       pointInTimeSp500Dataset.status === "compiled"
         ? await runPointInTimeSp500AlphaCreatorV2()
+        : null;
+    const pointInTimeSp500AlphaCreatorIntegrity =
+      pointInTimeSp500AlphaCreator?.status === "complete"
+        ? await runPointInTimeSp500AlphaCreatorV2Integrity()
         : null;
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
@@ -120,6 +125,21 @@ export default async function handler(req, res) {
             eligibleForAlphaClaim: false,
           }
         : null,
+      pointInTimeSp500AlphaCreatorIntegrity:
+        pointInTimeSp500AlphaCreatorIntegrity
+          ? {
+              status: pointInTimeSp500AlphaCreatorIntegrity.status,
+              completedAt:
+                pointInTimeSp500AlphaCreatorIntegrity.completedAt || null,
+              adjustedPriceIntegrityPass:
+                pointInTimeSp500AlphaCreatorIntegrity.assessment
+                  ?.adjustedPriceIntegrityPass === true,
+              historicalAuditConcentrationWarning:
+                pointInTimeSp500AlphaCreatorIntegrity.assessment
+                  ?.historicalAuditConcentrationWarning === true,
+              eligibleForAlphaClaim: false,
+            }
+          : null,
     });
   } catch (error) {
     console.error("FMP research backtest cron:", error);
