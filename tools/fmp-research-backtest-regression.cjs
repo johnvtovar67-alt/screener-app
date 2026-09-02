@@ -10,6 +10,12 @@ let source = fs.readFileSync("lib/fmpResearchBacktest.js", "utf8");
 const rawSource = source;
 const contractSource = fs.readFileSync("lib/v12ResearchContract.js", "utf8");
 const researchSource = `${rawSource}\n${contractSource}`;
+assert(
+  /runV11ForwardExtension[\s\S]*startDate:\s*window\.start[\s\S]*endDate:\s*window\.end/.test(
+    rawSource,
+  ),
+  "The V11 forward extension must pass an explicit bounded startDate/endDate to the simulator.",
+);
 const contract = createResearchModuleLoader(process.cwd()).load(
   "lib/v12ResearchContract.js",
 );
