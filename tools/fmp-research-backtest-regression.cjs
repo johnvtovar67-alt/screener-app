@@ -75,6 +75,12 @@ assert(
     rawSource.includes("String(existing?.datasetThrough || \"\") >= datasetThrough") &&
     rawSource.includes("end: datasetThrough") &&
     rawSource.includes("forwardWindowAppendsWithoutCandidateRetuning: true") &&
+    rawSource.includes("runAlphaProspectiveChallenger") &&
+    rawSource.includes('researchRankMode: "confirmed-quality-defense"') &&
+    rawSource.includes("candidateFrozenBeforeProspectiveWindow: true") &&
+    rawSource.includes("minimumSixtyNewSessions") &&
+    rawSource.includes("strictOneThousandSeedPlaceboPassed: false") &&
+    rawSource.includes("historicalAndPreFreezeResultsContaminated: true") &&
     rawSource.includes('id: "adaptive-breadth-quality-defense"') &&
     rawSource.includes('id: "adaptive-leadership-20-monthly-buffered"') &&
     rawSource.includes("rankedExitBuffer: 18") &&
@@ -540,6 +546,7 @@ assert(
     cron.includes("latestCompletedMarketSessionDay(new Date())") &&
     cron.includes("minimumDatasetThrough") &&
     cron.includes("runAlphaCreatorSearch()") &&
+    cron.includes("runAlphaProspectiveChallenger()") &&
     schedule.crons.some(
       (row) => row.path === "/api/cron/fmp-research-backtest",
     ),
