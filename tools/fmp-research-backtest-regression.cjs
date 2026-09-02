@@ -66,6 +66,7 @@ assert(
 );
 assert(
   rawSource.includes("runAlphaCreatorSearch") &&
+    rawSource.includes('id: "adaptive-breadth-quality-defense"') &&
     rawSource.includes('id: "adaptive-leadership-20-monthly-buffered"') &&
     rawSource.includes("rankedExitBuffer: 18") &&
     rawSource.includes('id: "durable-monthly-ten"') &&
