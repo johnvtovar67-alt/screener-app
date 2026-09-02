@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import {
   runAlphaCreatorSearch,
+  runAlphaProspectiveChallenger,
   runFmpResearchBacktest,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
@@ -44,6 +45,10 @@ export default async function handler(req, res) {
       report.status === "complete" ? await runV11StressTest() : null;
     const alphaCreator =
       report.status === "complete" ? await runAlphaCreatorSearch() : null;
+    const alphaProspectiveChallenger =
+      report.status === "complete"
+        ? await runAlphaProspectiveChallenger()
+        : null;
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
       ...report,
@@ -69,6 +74,20 @@ export default async function handler(req, res) {
             forwardWindow: alphaCreator.forwardWindow || null,
             allEvidenceGatesPassed:
               alphaCreator.allEvidenceGatesPassed === true,
+        }
+        : null,
+      alphaProspectiveChallenger: alphaProspectiveChallenger
+        ? {
+            status: alphaProspectiveChallenger.status,
+            completedAt: alphaProspectiveChallenger.completedAt || null,
+            datasetThrough:
+              alphaProspectiveChallenger.datasetThrough || null,
+            prospectiveWindow:
+              alphaProspectiveChallenger.prospectiveWindow || null,
+            prospectiveSessions:
+              alphaProspectiveChallenger.prospectiveSessions || 0,
+            allEvidenceGatesPassed:
+              alphaProspectiveChallenger.allEvidenceGatesPassed === true,
           }
         : null,
       v11ForwardExtension: v11ForwardExtension
