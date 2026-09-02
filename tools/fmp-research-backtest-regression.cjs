@@ -474,6 +474,10 @@ assert(
     researchSource.includes("runnerSchema: REPLAY_CHECKPOINT_SCHEMA") &&
     researchSource.includes("existing?.runClaimedAt") &&
     researchSource.includes("runClaimedAt: new Date(now).toISOString()") &&
+    researchSource.includes('"[pit-sp500-compile] active claim reused"') &&
+    researchSource.includes('"[pit-sp500-compile] chunk started"') &&
+    researchSource.includes('"[pit-sp500-compile] chunk completed"') &&
+    researchSource.includes("now - previousCompilationClaim < RUNNING_TTL_MS") &&
     researchSource.includes("exhaustedSymbols") &&
     researchSource.includes("failureSample") &&
     researchSource.includes('["income-statement", "incomeRows"]') &&
