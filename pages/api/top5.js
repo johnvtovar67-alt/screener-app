@@ -1071,12 +1071,16 @@ export default async function handler(req, res) {
             "Focused research list filtered from the authoritative broad opportunity decisions.",
         },
         meta: {
-          mode: "v11_momentum_dominant_production_candidate",
+          mode: "independent_confirmation_fail_closed",
           productionPolicy: {
             id: broadSnapshot.productionPolicySnapshot?.policyId || null,
             label: broadSnapshot.productionPolicySnapshot?.policyLabel || null,
             status:
-              broadSnapshot.productionPolicySnapshot?.status || "unavailable",
+              broadSnapshot.productionPolicySnapshot?.independentlyValidated ===
+              false
+                ? "suspended-failed-validation"
+                : broadSnapshot.productionPolicySnapshot?.status ||
+                  "unavailable",
             sourceSessionDate:
               broadSnapshot.productionPolicySnapshot?.sourceSessionDate || null,
             snapshotAgeSessions:
