@@ -107,6 +107,7 @@ function liveRow(candidate, overrides = {}) {
 const readySnapshot = {
   ...snapshot,
   status: "ready",
+  independentlyValidated: true,
   requiredSessionDate: "2026-08-28",
   snapshotAgeSessions: 0,
 };
@@ -326,12 +327,27 @@ assert(
   "missing policy data must fail closed instead of falling back to another strategy",
 );
 
+applied = applyV11ProductionPolicy(
+  [
+    {
+      ...liveRow(snapshot.candidates[0]),
+      finalDecision: { action: "Buy", reason: "independent buy" },
+    },
+  ],
+  { ...readySnapshot, independentlyValidated: false },
+);
+assert(
+  applied[0].finalDecision.action === "Watch" &&
+    applied[0].productionPolicy.status === "suspended-failed-validation",
+  "an unvalidated ranked policy must have no live Buy authority even when its snapshot is operationally ready",
+);
+
 const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
 assert(
   top5.includes("applyV11ProductionPolicy") &&
     top5.includes("getV11ProductionSnapshot") &&
-    top5.includes("v11_momentum_dominant_production_candidate"),
-  "the live Opportunities route must consume and identify the promoted V11 policy",
+    top5.includes("independent_confirmation_fail_closed"),
+  "the live Opportunities route must identify the unvalidated V11 policy as fail-closed",
 );
 const page = fs.readFileSync("pages/index.js", "utf8");
 for (const hiddenNarration of [
