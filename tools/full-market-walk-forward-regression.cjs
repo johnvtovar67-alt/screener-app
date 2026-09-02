@@ -569,6 +569,19 @@ assert(
 );
 run = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,
+  researchRankMode: "durable-quality-momentum",
+  rankedRebalanceSessions: 20,
+  rankedMinimumHoldSessions: 20,
+  maxSectorPositions: 2,
+  volatilityTargetPct: 20,
+});
+assert(
+  run.curve.length === rankedDataset.sessions.length &&
+    run.trades.some((trade) => trade.side === "buy"),
+  "The durable quality-momentum rank must execute end-to-end.",
+);
+run = simulatePointInTimePortfolio(rankedDataset, {
+  ...rankedOptions,
   researchRankMode: "adaptive-factor-leadership",
 });
 assert(
