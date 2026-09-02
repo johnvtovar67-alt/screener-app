@@ -19,7 +19,7 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature};";
 let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
@@ -140,6 +140,8 @@ const {
   runProvisionalWindows,
   nextReplaySessionSlice,
   equivalentAcquisitionSignature,
+  appendCompatibleAcquisitionSignature,
+  appendCompatibleStatementSignature,
 } = box.module.exports;
 
 const acquisitionSignature = (endDate) =>
@@ -160,6 +162,30 @@ assert(
       acquisitionSignature("2026-08-31"),
     ),
   "Weekend date changes must reuse the same completed-session history, while a new market session must require an update.",
+);
+assert(
+  appendCompatibleAcquisitionSignature(
+    acquisitionSignature("2026-08-28"),
+    acquisitionSignature("2026-09-01"),
+  ) &&
+    !appendCompatibleAcquisitionSignature(
+      acquisitionSignature("2026-09-01"),
+      acquisitionSignature("2026-08-28"),
+    ),
+  "A forward research refresh must append only when the frozen acquisition contract is unchanged and the end session advances.",
+);
+const statementSignature = (endDate) =>
+  JSON.stringify({
+    source: "stable-per-symbol-quarterly-v1",
+    symbols: ["AAA"],
+    acquisitionSignature: acquisitionSignature(endDate),
+  });
+assert(
+  appendCompatibleStatementSignature(
+    statementSignature("2026-08-28"),
+    statementSignature("2026-09-01"),
+  ),
+  "Unchanged historical statements must be reusable when only the completed price session advances.",
 );
 
 const selected = selectResearchUniverse(

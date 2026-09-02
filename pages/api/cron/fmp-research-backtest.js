@@ -2,7 +2,9 @@ import { timingSafeEqual } from "node:crypto";
 import {
   runFmpResearchBacktest,
   runV11BoundedReviewExperiment,
+  runV11ForwardExtension,
   runV11StressTest,
+  V11_FORWARD_EXTENSION_TARGET,
 } from "../../../lib/fmpResearchBacktest";
 
 export const config = { maxDuration: 800 };
@@ -25,7 +27,10 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "CRON_SECRET is not configured" });
   if (!authorized(req)) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const report = await runFmpResearchBacktest();
+    const report = await runFmpResearchBacktest({
+      minimumDatasetThrough: V11_FORWARD_EXTENSION_TARGET,
+    });
+    const v11ForwardExtension = await runV11ForwardExtension();
     const boundedReviewExperiment =
       report.status === "complete"
         ? await runV11BoundedReviewExperiment()
@@ -47,6 +52,13 @@ export default async function handler(req, res) {
             status: v11StressTest.status,
             robustnessPass: v11StressTest.robustnessPass,
             completedAt: v11StressTest.completedAt,
+          }
+        : null,
+      v11ForwardExtension: v11ForwardExtension
+        ? {
+            status: v11ForwardExtension.status,
+            completedAt: v11ForwardExtension.completedAt || null,
+            window: v11ForwardExtension.window,
           }
         : null,
     });
