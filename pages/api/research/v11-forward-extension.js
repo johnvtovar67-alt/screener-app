@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const stored = await getV11ForwardExtensionReport();
     // Upgrade the durable report once. Subsequent requests are reads only.
     const report =
-      stored?.status === "complete" && Number(stored?.version || 0) < 2
+      stored?.status === "complete" && Number(stored?.version || 0) < 3
         ? await runV11ForwardExtension()
         : stored;
     return res.status(report?.status === "unavailable" ? 503 : 200).json(report);
