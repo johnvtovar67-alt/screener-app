@@ -553,6 +553,10 @@ const alphaCreatorEndpoint = fs.readFileSync(
   "pages/api/research/alpha-creator.js",
   "utf8",
 );
+const dataCapabilityEndpoint = fs.readFileSync(
+  "pages/api/research/data-capabilities.js",
+  "utf8",
+);
 const schedule = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
 const preflight = fs.readFileSync("tools/fmp-research-preflight.cjs", "utf8");
 assert(
@@ -572,6 +576,17 @@ assert(
   alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     !alphaCreatorEndpoint.includes("getAlphaCreatorSearch"),
   "The alpha-creator endpoint must delegate dataset freshness to the runner instead of short-circuiting on any stored complete report.",
+);
+assert(
+  rawSource.includes("runResearchDataCapabilityAudit") &&
+    rawSource.includes('"historical-sp500-constituent"') &&
+    rawSource.includes('"delisted-companies"') &&
+    rawSource.includes("credentialsExposed: false") &&
+    rawSource.includes("revisionSafeFundamentalValues: false") &&
+    rawSource.includes("pointInTimeMaterialNews: false") &&
+    dataCapabilityEndpoint.includes("await runResearchDataCapabilityAudit()") &&
+    !dataCapabilityEndpoint.includes("force"),
+  "The bounded capability audit must check historical membership and delistings once without exposing credentials or overstating data quality.",
 );
 assert(
   preflight.includes('path: "historical-price-eod/dividend-adjusted"') &&
