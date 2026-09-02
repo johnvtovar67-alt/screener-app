@@ -1071,16 +1071,23 @@ export default async function handler(req, res) {
             "Focused research list filtered from the authoritative broad opportunity decisions.",
         },
         meta: {
-          mode: "independent_confirmation_fail_closed",
+          mode: actionable.length
+            ? "independent_limited_pilot"
+            : "independent_confirmation_fail_closed",
           productionPolicy: {
             id: broadSnapshot.productionPolicySnapshot?.policyId || null,
             label: broadSnapshot.productionPolicySnapshot?.policyLabel || null,
             status:
-              broadSnapshot.productionPolicySnapshot?.independentlyValidated ===
-              false
-                ? "suspended-failed-validation"
+              actionable.some((row) => row.productionPolicy?.pilot === true)
+                ? "limited-pilot"
+                : broadSnapshot.productionPolicySnapshot?.independentlyValidated ===
+                    false
+                  ? "suspended-failed-validation"
                 : broadSnapshot.productionPolicySnapshot?.status ||
                   "unavailable",
+            pilotMaxNames: 3,
+            pilotMaxWeightPct: 1,
+            pilotRequiresTwoSessionPersistence: true,
             sourceSessionDate:
               broadSnapshot.productionPolicySnapshot?.sourceSessionDate || null,
             snapshotAgeSessions:

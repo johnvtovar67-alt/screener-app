@@ -332,6 +332,7 @@ applied = applyV11ProductionPolicy(
     {
       ...liveRow(snapshot.candidates[0]),
       finalDecision: { action: "Buy", reason: "independent buy" },
+      entryTiming: { available: true, pass: false, chase: false, liquidityPass: true },
     },
   ],
   { ...readySnapshot, independentlyValidated: false },
@@ -342,12 +343,43 @@ assert(
   "an unvalidated ranked policy must have no live Buy authority even when its snapshot is operationally ready",
 );
 
+applied = applyV11ProductionPolicy(
+  readySnapshot.candidates.slice(0, 5).map((candidate, index) =>
+    liveRow(candidate, {
+      capitalScore: 90 - index,
+      finalDecision: {
+        action: index === 0 ? "Strong Buy" : "Buy",
+        reason: `independent setup ${index + 1}`,
+        relativeCapitalScore: 90 - index,
+      },
+    }),
+  ),
+  { ...readySnapshot, independentlyValidated: false },
+);
+const pilots = applied.filter((row) => row.productionPolicy.pilot === true);
+assert(
+  pilots.length === 3 &&
+    pilots.every(
+      (row) =>
+        ["Strong Buy", "Buy"].includes(row.finalDecision.action) &&
+        row.productionPolicy.selected === false &&
+        row.productionPolicy.status === "limited-pilot" &&
+        row.finalDecision.size === "Pilot Max 1%",
+    ),
+  "an unvalidated V11 rank may expose at most three independent, operationally cleared limited pilots without gaining selection authority",
+);
+assert(
+  applied.filter((row) => ["Strong Buy", "Buy"].includes(row.finalDecision.action)).length === 3,
+  "independent limited-pilot mode must demote every actionable name beyond the three-name cap",
+);
+
 const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
 assert(
   top5.includes("applyV11ProductionPolicy") &&
     top5.includes("getV11ProductionSnapshot") &&
-    top5.includes("independent_confirmation_fail_closed"),
-  "the live Opportunities route must identify the unvalidated V11 policy as fail-closed",
+    top5.includes("independent_confirmation_fail_closed") &&
+    top5.includes("independent_limited_pilot"),
+  "the live Opportunities route must distinguish the bounded pilot from the fail-closed state",
 );
 const page = fs.readFileSync("pages/index.js", "utf8");
 for (const hiddenNarration of [
