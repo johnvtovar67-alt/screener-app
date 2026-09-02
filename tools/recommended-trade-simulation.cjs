@@ -33,6 +33,13 @@ assert(!governor.capitalSignalEligible({action:'Buy',persistence:oneSession}).pa
 assert(!governor.capitalSignalEligible({action:'Buy',persistence:unavailable}).pass,'missing durable history must fail closed');
 assert(governor.capitalSignalEligible({action:'Strong Buy',persistence:oneSession}).pass,'legitimate Strong Buy must not inherit the ordinary-Buy delay');
 
+const pilotTarget={symbol:'PILOT',price:50,primaryTheme:'Other',productionPolicy:{pilot:true},riskPlan:{invalidationPrice:45,firstTrimPrice:62}};
+assert(!governor.capitalSignalEligible({target:pilotTarget,action:'Strong Buy',persistence:{persistent:true,actionableDays:1,historyAvailable:true}}).pass,'a limited-pilot Strong Buy must not bypass two-session confirmation');
+assert(governor.capitalSignalEligible({target:pilotTarget,action:'Buy',persistence:{persistent:true,actionableDays:2,historyAvailable:true}}).pass,'a limited pilot must become eligible after two distinct actionable sessions');
+const pilotRisk=governor.portfolioRiskSnapshot([{symbol:'CASH',role:'Swing',value:20000}]),pilotAllowance=governor.capitalAllowance({target:pilotTarget,action:'Strong Buy',requested:2000,risk:pilotRisk});
+assert(pilotAllowance.maxPositionPct===.01&&pilotAllowance.amount===200,'limited-pilot capital must be hard-capped at 1% of Swing capital');
+assert(governor.portfolioContributionGate({target:pilotTarget,approvedAmount:pilotAllowance.amount,risk:pilotRisk,existingValue:0}).pass,'the contribution gate must admit a properly defined 1% limited pilot');
+
 const candidates=[
   {symbol:'ALL',action:'Strong Buy',score:91,price:260,persistence:oneSession,primaryTheme:'Insurance',riskPlan:{invalidationPrice:245,firstTrimPrice:306}},
   {symbol:'OKE',action:'Buy',score:85,price:95,persistence:persistent,primaryTheme:'Energy',riskPlan:{invalidationPrice:89,firstTrimPrice:112}},
