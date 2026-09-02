@@ -16,6 +16,12 @@ assert(
   ),
   "The V11 forward extension must pass an explicit bounded startDate/endDate to the simulator.",
 );
+assert(
+  rawSource.includes("const requiredChunks = manifest.chunks.filter") &&
+    rawSource.includes('String(chunk?.lastDate || "") >= window.start') &&
+    rawSource.includes('String(chunk?.firstDate || "") <= window.end'),
+  "The V11 forward extension must restore only overlapping compiled chunks.",
+);
 const contract = createResearchModuleLoader(process.cwd()).load(
   "lib/v12ResearchContract.js",
 );
