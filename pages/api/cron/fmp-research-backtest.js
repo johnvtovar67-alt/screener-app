@@ -3,6 +3,7 @@ import {
   runAlphaCreatorSearch,
   runAlphaProspectiveChallenger,
   runFmpResearchBacktest,
+  runPointInTimeSp500DatasetAcquisition,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
   runV11StressTest,
@@ -49,6 +50,8 @@ export default async function handler(req, res) {
       report.status === "complete"
         ? await runAlphaProspectiveChallenger()
         : null;
+    const pointInTimeSp500Dataset =
+      await runPointInTimeSp500DatasetAcquisition();
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
       ...report,
@@ -97,6 +100,7 @@ export default async function handler(req, res) {
             window: v11ForwardExtension.window,
           }
         : null,
+      pointInTimeSp500Dataset,
     });
   } catch (error) {
     console.error("FMP research backtest cron:", error);
