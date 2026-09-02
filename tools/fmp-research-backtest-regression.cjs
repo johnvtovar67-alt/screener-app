@@ -145,7 +145,7 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration};";
 let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
@@ -268,7 +268,76 @@ const {
   equivalentAcquisitionSignature,
   appendCompatibleAcquisitionSignature,
   appendCompatibleStatementSignature,
+  pointInTimePriceIntegrityAudit,
+  summarizePointInTimeTradeConcentration,
 } = box.module.exports;
+
+const cleanPriceIntegrity = pointInTimePriceIntegrityAudit([
+  {
+    sessions: [
+      {
+        date: "2026-01-02",
+        prices: [
+          { symbol: "AAA", open: 99, high: 101, low: 98, close: 100, adjusted: true },
+        ],
+      },
+      {
+        date: "2026-01-05",
+        prices: [
+          { symbol: "AAA", open: 104, high: 111, low: 103, close: 110, adjusted: true },
+        ],
+      },
+    ],
+  },
+]);
+assert(
+  cleanPriceIntegrity.pass === true &&
+    cleanPriceIntegrity.adjustedCoveragePct === 100 &&
+    cleanPriceIntegrity.possibleUnadjustedCorporateActions.length === 0,
+  "The point-in-time integrity audit must accept coherent fully adjusted OHLC rows.",
+);
+const splitLikePriceIntegrity = pointInTimePriceIntegrityAudit([
+  {
+    sessions: [
+      {
+        date: "2026-01-02",
+        prices: [
+          { symbol: "AAA", open: 99, high: 101, low: 98, close: 100, adjusted: true },
+        ],
+      },
+      {
+        date: "2026-01-05",
+        prices: [
+          { symbol: "AAA", open: 50, high: 52, low: 49, close: 51, adjusted: true },
+        ],
+      },
+    ],
+  },
+]);
+assert(
+  splitLikePriceIntegrity.pass === false &&
+    splitLikePriceIntegrity.possibleUnadjustedCorporateActions[0]?.nearestSplitRatio ===
+      0.5,
+  "A common split-ratio discontinuity must fail the adjusted-price integrity audit even when a provider flag says adjusted.",
+);
+const concentratedTrades = summarizePointInTimeTradeConcentration([
+  {
+    trades: [
+      { date: "2026-01-02", symbol: "AAA", side: "buy", shares: 10, price: 100, positionId: 1 },
+      { date: "2026-02-02", symbol: "AAA", side: "sell", price: 110, positionId: 1, positionClosed: true, roundTripPnl: 100, holdingSessions: 20 },
+      { date: "2026-01-03", symbol: "BBB", side: "buy", shares: 10, price: 100, positionId: 2 },
+      { date: "2026-02-03", symbol: "BBB", side: "sell", price: 105, positionId: 2, positionClosed: true, roundTripPnl: 50, holdingSessions: 20 },
+      { date: "2026-01-04", symbol: "CCC", side: "buy", shares: 10, price: 100, positionId: 3 },
+      { date: "2026-02-04", symbol: "CCC", side: "sell", price: 97.5, positionId: 3, positionClosed: true, roundTripPnl: -25, holdingSessions: 20 },
+    ],
+  },
+]);
+assert(
+  concentratedTrades.closedRoundTrips === 3 &&
+    concentratedTrades.topWinnerShareOfGrossProfitPct === 66.667 &&
+    concentratedTrades.concentrationWarning === true,
+  "The post-result audit must disclose when one round trip dominates simulated gross profit.",
+);
 
 const acquisitionSignature = (endDate) =>
   JSON.stringify({
@@ -582,6 +651,10 @@ const pitAlphaV2Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2.js",
   "utf8",
 );
+const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
+  "utf8",
+);
 const dataCapabilityEndpoint = fs.readFileSync(
   "pages/api/research/data-capabilities.js",
   "utf8",
@@ -632,6 +705,19 @@ assert(
     pitAlphaV2Endpoint.includes("eligibleForAlphaClaim: false") &&
     pitAlphaV2Endpoint.includes("maxDuration: 800"),
   "The dedicated V2 endpoint must remain research-only and expose bounded status and execution paths.",
+);
+assert(
+  rawSource.includes("runPointInTimeSp500AlphaCreatorV2Integrity") &&
+    rawSource.includes("postResultDiagnosticOnly: true") &&
+    rawSource.includes("selectionChanged: false") &&
+    rawSource.includes("v2RejectionUnchanged: true") &&
+    cron.includes("await runPointInTimeSp500AlphaCreatorV2Integrity()") &&
+    pitAlphaV2IntegrityEndpoint.includes(
+      "await getPointInTimeSp500AlphaCreatorV2Integrity()",
+    ) &&
+    pitAlphaV2IntegrityEndpoint.includes("productionChanged: false") &&
+    pitAlphaV2IntegrityEndpoint.includes("eligibleForAlphaClaim: false"),
+  "The V2 post-result integrity audit must be cron-run, diagnostic-only and incapable of changing selection or production authority.",
 );
 assert(
   rawSource.includes("runResearchDataCapabilityAudit") &&
