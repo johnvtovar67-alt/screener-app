@@ -567,6 +567,15 @@ assert(
     run.trades.some((trade) => trade.side === "buy"),
   "The adaptive quality/momentum branch must execute end-to-end instead of passing only a source-presence check.",
 );
+run = simulatePointInTimePortfolio(rankedDataset, {
+  ...rankedOptions,
+  researchRankMode: "adaptive-factor-leadership",
+});
+assert(
+  run.curve.length === rankedDataset.sessions.length &&
+    run.trades.some((trade) => trade.side === "buy"),
+  "The causal factor-leadership branch must execute end-to-end.",
+);
 const chaseBlockedDataset = {
   ...rankedDataset,
   sessions: rankedDataset.sessions.map((researchSession) => ({
