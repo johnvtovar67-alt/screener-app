@@ -38,6 +38,15 @@ for (const diagnostic of [
     `The bounded forward component diagnostics must include ${diagnostic}.`,
   );
 assert(
+  rawSource.includes("runQualityConfirmedHistoricalAudit") &&
+    rawSource.includes('thesisId: "quality-confirmed-slow-cycle"') &&
+    rawSource.includes("historicalGatePass: Object.values(checks).every(Boolean)") &&
+    rawSource.includes("positiveReturnInMajorityOfFolds") &&
+    rawSource.includes("beatsSpyInMajorityOfFolds") &&
+    rawSource.includes("beatsQqqInMajorityOfFolds"),
+  "The exact quality-confirmed slow-cycle candidate must pass a memory-bounded, multi-fold historical gate before production consideration.",
+);
+assert(
   rawSource.includes("const requiredChunks = manifest.chunks.filter") &&
     rawSource.includes('String(chunk?.lastDate || "") >= window.start') &&
     rawSource.includes('String(chunk?.firstDate || "") <= window.end'),
