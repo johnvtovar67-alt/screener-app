@@ -115,6 +115,27 @@ assert(
     rawSource.includes('String(chunk?.firstDate || "") <= window.end'),
   "The V11 forward extension must restore only overlapping compiled chunks.",
 );
+assert(
+  rawSource.includes("runPointInTimeSp500AlphaCreatorV2") &&
+    rawSource.includes('"anchored-gradual-leadership-monthly-10"') &&
+    rawSource.includes('researchRankMode: "anchored-gradual-leadership"') &&
+    rawSource.includes("anchor: 0.28") &&
+    rawSource.includes("recency: 0.1") &&
+    rawSource.includes("continuity: 0.22") &&
+    rawSource.includes("intermediate: 0.15") &&
+    rawSource.includes("relativeStrength: 0.14") &&
+    rawSource.includes("drawdownResilience: 0.06") &&
+    rawSource.includes("lowShockVolume: 0.03") &&
+    rawSource.includes("liquidity: 0.02") &&
+    rawSource.includes("candidateCount: 1") &&
+    rawSource.includes("parameterSelectionUsed: false") &&
+    rawSource.includes("requiredGenuinelyNewForwardSessions: 60") &&
+    rawSource.includes("strictPromotionRequirementSeeds: 1_000") &&
+    rawSource.includes("allEvidenceGatesPassed: false") &&
+    rawSource.includes("productionChanged: false") &&
+    rawSource.includes("eligibleForLiveCapital: false"),
+  "The V2 point-in-time program must test one frozen anchored-gradual thesis without selection, relabelled holdouts, or live authority.",
+);
 const contract = createResearchModuleLoader(process.cwd()).load(
   "lib/v12ResearchContract.js",
 );
@@ -553,6 +574,10 @@ const alphaCreatorEndpoint = fs.readFileSync(
   "pages/api/research/alpha-creator.js",
   "utf8",
 );
+const pitAlphaV2Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-creator-v2.js",
+  "utf8",
+);
 const dataCapabilityEndpoint = fs.readFileSync(
   "pages/api/research/data-capabilities.js",
   "utf8",
@@ -587,14 +612,22 @@ assert(
   "The private S&P 500 blueprint must causally reconstruct historical membership and expose only a bounded summary.",
 );
 assert(
-  alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaCreator()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaCreator({ force })") &&
+  alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaCreatorV2({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
     alphaCreatorEndpoint.includes('authority: "legacy-current-survivor-diagnostic"') &&
     alphaCreatorEndpoint.includes("maxDuration: 800"),
   "The public alpha-creator endpoint must default to point-in-time research and quarantine the current-survivor search behind an explicitly labelled legacy diagnostic.",
+);
+assert(
+  pitAlphaV2Endpoint.includes("await getPointInTimeSp500AlphaCreatorV2()") &&
+    pitAlphaV2Endpoint.includes("await runPointInTimeSp500AlphaCreatorV2({") &&
+    pitAlphaV2Endpoint.includes("productionChanged: false") &&
+    pitAlphaV2Endpoint.includes("eligibleForAlphaClaim: false") &&
+    pitAlphaV2Endpoint.includes("maxDuration: 800"),
+  "The dedicated V2 endpoint must remain research-only and expose bounded status and execution paths.",
 );
 assert(
   rawSource.includes("runResearchDataCapabilityAudit") &&

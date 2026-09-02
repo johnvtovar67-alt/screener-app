@@ -1,7 +1,7 @@
 import {
-  getPointInTimeSp500AlphaCreator,
+  getPointInTimeSp500AlphaProgram,
   runAlphaCreatorSearch,
-  runPointInTimeSp500AlphaCreator,
+  runPointInTimeSp500AlphaCreatorV2,
 } from "../../../lib/fmpResearchBacktest";
 
 export const config = { maxDuration: 800 };
@@ -29,8 +29,8 @@ export default async function handler(req, res) {
     // labelled historical diagnostic via ?legacy=1.
     const report =
       String(req.query.run || "") === "1"
-        ? await runPointInTimeSp500AlphaCreator({ force })
-        : await getPointInTimeSp500AlphaCreator();
+        ? await runPointInTimeSp500AlphaCreatorV2({ force })
+        : await getPointInTimeSp500AlphaProgram();
     if (!report)
       return res.status(202).json({
         version: 1,
@@ -43,6 +43,8 @@ export default async function handler(req, res) {
     return res.status(status).json({
       ...report,
       authority: "point-in-time-sp500-research",
+      latestResearchGeneration: report.version || 1,
+      frozenV1Report: "/api/research/pit-sp500-alpha-creator",
       legacyCurrentSurvivorDiagnostic: "/api/research/alpha-creator?legacy=1",
     });
   } catch (error) {

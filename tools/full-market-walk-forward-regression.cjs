@@ -42,6 +42,16 @@ assert(
     walkForwardSource.includes('"full-evidence", "price-only"'),
   "The point-in-time alpha generator must expose an explicit price-only source and multi-horizon rank without altering the production source.",
 );
+assert(
+  walkForwardSource.includes(
+    'researchRankMode === "anchored-gradual-leadership"',
+  ) &&
+    walkForwardSource.includes("anchoredGradualWeights") &&
+    walkForwardSource.includes("highProximityPercentile") &&
+    walkForwardSource.includes("continuousInformationPercentile") &&
+    walkForwardSource.includes("requireAnchoredGradualFactors"),
+  "The V2 research rank must require its causal 52-week anchor, path-continuity, and intermediate-leadership evidence.",
+);
 
 const loader = createResearchModuleLoader(process.cwd());
 const {
@@ -625,6 +635,46 @@ assert(
     .map((trade) => trade.symbol)
     .join(",") === "AAA,BBB",
   "The multi-horizon price rank must causally order and replace leaders using its frozen feature weights.",
+);
+const anchoredGradualDataset = {
+  ...rankedDataset,
+  sessions: rankedDataset.sessions.map((researchSession) => ({
+    ...researchSession,
+    positionSignals: researchSession.positionSignals.map((researchSignal) => ({
+      ...researchSignal,
+      researchFactors: {
+        ...researchSignal.researchFactors,
+        highProximityPercentile: researchSignal.symbol === "AAA" ? 95 : 40,
+        highRecencyPercentile: researchSignal.symbol === "AAA" ? 90 : 45,
+        continuousInformationPercentile:
+          researchSignal.symbol === "AAA" ? 92 : 35,
+        intermediateLeadershipPercentile:
+          researchSignal.symbol === "AAA" ? 88 : 50,
+        drawdownResiliencePercentile:
+          researchSignal.symbol === "AAA" ? 85 : 55,
+        relativeVolume20: researchSignal.symbol === "AAA" ? 1.05 : 2.5,
+      },
+    })),
+  })),
+};
+run = simulatePointInTimePortfolio(anchoredGradualDataset, {
+  ...rankedOptions,
+  researchRankMode: "anchored-gradual-leadership",
+  requireAnchoredGradualFactors: true,
+  anchoredGradualWeights: {
+    anchor: 0.28,
+    recency: 0.1,
+    continuity: 0.22,
+    intermediate: 0.15,
+    relativeStrength: 0.14,
+    drawdownResilience: 0.06,
+    lowShockVolume: 0.03,
+    liquidity: 0.02,
+  },
+});
+assert(
+  run.trades.find((trade) => trade.side === "buy")?.symbol === "AAA",
+  "The anchored-gradual rank must execute end-to-end and prefer the declared near-high, continuous leader without a volume shock.",
 );
 run = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,
@@ -1827,7 +1877,7 @@ assert(
 const historicalDates = [];
 for (
   let cursor = new Date("2026-04-01T12:00:00.000Z");
-  historicalDates.length < 55;
+  historicalDates.length < 260;
   cursor = new Date(cursor.getTime() + 86_400_000)
 ) {
   if (![0, 6].includes(cursor.getUTCDay()))
@@ -1997,7 +2047,12 @@ assert(
         (row) =>
           row.symbol === "AAA" &&
           row.entryTiming?.available === true &&
-          Number.isFinite(row.researchFactors?.globalCompositePercentile),
+          Number.isFinite(row.researchFactors?.globalCompositePercentile) &&
+          Number.isFinite(row.researchFactors?.highProximityPercentile) &&
+          Number.isFinite(row.researchFactors?.highRecencyPercentile) &&
+          Number.isFinite(row.researchFactors?.continuousInformationPercentile) &&
+          Number.isFinite(row.researchFactors?.intermediateLeadershipPercentile) &&
+          Number.isFinite(row.researchFactors?.drawdownResiliencePercentile),
       ) &&
     compiled.sessions[0].historicalDelistedMembership === 1,
   "Historical compilation must replay fresh-capital, cross-sectional factor and holding-timing evidence while retaining delisted membership evidence.",
@@ -2010,6 +2065,18 @@ assert(
       typeof row.entryTiming?.liquidityPass === "boolean",
   ),
   "The V8 compiled checkpoint must preserve full timing and liquidity evidence on fresh rows even when duplicate holding rows are compacted away.",
+);
+assert(
+  [
+    ...compactedCompilerSession.signals,
+    ...compactedCompilerSession.positionSignals,
+  ].some(
+    (row) =>
+      row.symbol === "AAA" &&
+      Number.isFinite(row.researchFactors?.highProximityPercentile) &&
+      Number.isFinite(row.researchFactors?.continuousInformationPercentile),
+  ),
+  "Replay compaction must preserve the V2 anchored-gradual factors required to reproduce research ranks.",
 );
 
 console.log(
