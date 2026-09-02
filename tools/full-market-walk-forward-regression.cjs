@@ -66,7 +66,10 @@ const { attachCrossSectionalResearchFactors, compilePointInTimeSignals } =
 assert(
   fs
     .readFileSync("lib/historicalSignalEvaluator.js", "utf8")
-    .includes("maxCandidates: 500"),
+    .includes("maxCandidates: 500") &&
+    fs
+      .readFileSync("lib/historicalSignalEvaluator.js", "utf8")
+      .includes("const trailingHistory = history.slice(-253)"),
   "Historical research must use the same 500-name discovery shortlist as production.",
 );
 const {
