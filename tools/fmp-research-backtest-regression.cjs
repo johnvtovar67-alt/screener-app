@@ -55,6 +55,16 @@ assert(
   "The causal factor-leadership candidate must pass both prior folds and the bounded forward window before pilot consideration.",
 );
 assert(
+  rawSource.includes("runPricePatternModelSearch") &&
+    rawSource.includes('id: "dual-horizon-momentum"') &&
+    rawSource.includes('id: "low-volatility-momentum"') &&
+    rawSource.includes('id: "benchmark-relative-momentum"') &&
+    rawSource.includes("sealedHistoricalWindowNotUsedForSelection: true") &&
+    rawSource.includes("forwardWindowNotUsedForSelection: true") &&
+    rawSource.includes("pilotEligible: Object.values(checks).every(Boolean)"),
+  "The price-pattern search must freeze its candidate set, select only on development windows, and gate on both later windows.",
+);
+assert(
   rawSource.includes("const requiredChunks = manifest.chunks.filter") &&
     rawSource.includes('String(chunk?.lastDate || "") >= window.start') &&
     rawSource.includes('String(chunk?.firstDate || "") <= window.end'),

@@ -576,6 +576,20 @@ assert(
     run.trades.some((trade) => trade.side === "buy"),
   "The causal factor-leadership branch must execute end-to-end.",
 );
+run = simulatePointInTimePortfolio(rankedDataset, {
+  ...rankedOptions,
+  researchRankMode: "price-pattern",
+  pricePatternWeights: {
+    return120Ex20: 0.5,
+    return60Ex5: 0.35,
+    return5: -0.15,
+  },
+});
+assert(
+  run.curve.length === rankedDataset.sessions.length &&
+    run.trades.some((trade) => trade.side === "buy"),
+  "The causal price-pattern rank must execute end-to-end.",
+);
 const chaseBlockedDataset = {
   ...rankedDataset,
   sessions: rankedDataset.sessions.map((researchSession) => ({
