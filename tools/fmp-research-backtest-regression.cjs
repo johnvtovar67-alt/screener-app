@@ -579,8 +579,11 @@ assert(
 );
 assert(
   rawSource.includes("runResearchDataCapabilityAudit") &&
+    rawSource.includes("number(existing?.version, 0) >= 2") &&
     rawSource.includes('"historical-sp500-constituent"') &&
     rawSource.includes('"delisted-companies"') &&
+    rawSource.includes('removedSymbol: ["removedSymbol", "removedTicker"]') &&
+    rawSource.includes("sampleFields: Object.keys(sample).sort()") &&
     rawSource.includes("credentialsExposed: false") &&
     rawSource.includes("revisionSafeFundamentalValues: false") &&
     rawSource.includes("pointInTimeMaterialNews: false") &&
