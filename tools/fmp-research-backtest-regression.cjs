@@ -85,12 +85,16 @@ assert(
     rawSource.includes("strictOneThousandSeedPlaceboPassed: false") &&
     rawSource.includes("historicalAndPreFreezeResultsContaminated: true") &&
     rawSource.includes("runAlphaRegimeMap") &&
+    rawSource.includes("ALPHA_REGIME_MAP_REPORT_VERSION = 2") &&
     rawSource.includes('experiment: "Non-overlapping alpha regime map"') &&
     rawSource.includes("calendar.slice(252)") &&
     rawSource.includes("windowSessions = 126") &&
     rawSource.includes("candidateSelected: false") &&
     rawSource.includes("descriptiveWinnerId") &&
     rawSource.includes('id: "adaptive-breadth-quality-defense"') &&
+    rawSource.includes('id: "momentum-only"') &&
+    rawSource.includes('id: "balanced-quality-momentum"') &&
+    rawSource.includes('id: "dual-horizon-price-momentum"') &&
     rawSource.includes('id: "adaptive-leadership-20-monthly-buffered"') &&
     rawSource.includes("rankedExitBuffer: 18") &&
     rawSource.includes('id: "durable-monthly-ten"') &&
