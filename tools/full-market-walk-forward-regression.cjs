@@ -8,6 +8,15 @@ const { createResearchModuleLoader } = require("./research-module-loader.cjs");
 const walkForwardSource = fs.readFileSync("lib/walkForwardBacktest.js", "utf8");
 assert(
   walkForwardSource.includes(
+    'researchRankMode === "persistent-factor-leadership-20"',
+  ) &&
+    walkForwardSource.includes("qualityLeadershipMinimumSessions: 40") &&
+    walkForwardSource.includes("persistentQualityLeadershipThrough") &&
+    walkForwardSource.includes("persistentQualityLeadershipRebalances"),
+  "The research-only persistent factor regime must be causal, explicitly time-bounded, and observable.",
+);
+assert(
+  walkForwardSource.includes(
     'researchRankMode === "adaptive-quality-momentum"',
   ) &&
     walkForwardSource.includes("momentumBreadthPct < 50") &&
