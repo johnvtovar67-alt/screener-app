@@ -569,6 +569,16 @@ assert(
 );
 run = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,
+  researchRankMode: "adaptive-factor-leadership-20",
+  rankedRebalanceSessions: 10,
+});
+assert(
+  run.curve.length === rankedDataset.sessions.length &&
+    run.trades.some((trade) => trade.side === "buy"),
+  "The causal 20-session quality/momentum leadership switch must execute end-to-end.",
+);
+run = simulatePointInTimePortfolio(rankedDataset, {
+  ...rankedOptions,
   researchRankMode: "durable-quality-momentum",
   rankedRebalanceSessions: 20,
   rankedMinimumHoldSessions: 20,
