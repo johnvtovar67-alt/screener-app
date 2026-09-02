@@ -17,7 +17,7 @@ assert(
   "The V11 forward extension must pass an explicit bounded startDate/endDate to the simulator.",
 );
 assert(
-  rawSource.includes("V11_FORWARD_EXTENSION_REPORT_VERSION = 4") &&
+  rawSource.includes("V11_FORWARD_EXTENSION_REPORT_VERSION = 5") &&
     rawSource.includes('thesisId: "v11r-confirmed-slow-cycle"') &&
     rawSource.includes('selectionPolicy: "single-predeclared-candidate-no-selector"') &&
     rawSource.includes("limitedPilotEligible: Object.values(checks).every(Boolean)"),
@@ -30,6 +30,8 @@ for (const diagnostic of [
   'id: "entry-disciplined-momentum"',
   'id: "transparent-bull-pullback"',
   'id: "adaptive-quality-momentum"',
+  'id: "quality-confirmed-entry"',
+  'id: "quality-confirmed-slow-cycle"',
 ])
   assert(
     rawSource.includes(diagnostic),
