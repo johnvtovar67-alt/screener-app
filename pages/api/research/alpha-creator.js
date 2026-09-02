@@ -1,6 +1,10 @@
-import { runAlphaCreatorSearch } from "../../../lib/fmpResearchBacktest";
+import {
+  getPointInTimeSp500AlphaCreator,
+  runAlphaCreatorSearch,
+  runPointInTimeSp500AlphaCreator,
+} from "../../../lib/fmpResearchBacktest";
 
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 800 };
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -10,14 +14,44 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   try {
     const force = String(req.query.force || "") === "1";
-    // The runner compares the stored report with the compiled dataset. Keeping
-    // that freshness decision in one place prevents this endpoint from
-    // returning a stale completed snapshot after a new session is compiled.
-    const report = await runAlphaCreatorSearch({ force });
-    return res.status(200).json(report);
+    if (String(req.query.legacy || "") === "1") {
+      const report = await runAlphaCreatorSearch({ force });
+      return res.status(200).json({
+        ...report,
+        authority: "legacy-current-survivor-diagnostic",
+        supersededBy: "/api/research/pit-sp500-alpha-creator",
+      });
+    }
+
+    // The public alpha-creator route is authoritative only when it uses the
+    // compiled point-in-time S&P membership dataset. The previous
+    // current-survivor search remains available solely as an explicitly
+    // labelled historical diagnostic via ?legacy=1.
+    const report =
+      String(req.query.run || "") === "1"
+        ? await runPointInTimeSp500AlphaCreator({ force })
+        : await getPointInTimeSp500AlphaCreator();
+    if (!report)
+      return res.status(202).json({
+        version: 1,
+        status: "pending",
+        authority: "point-in-time-sp500-research",
+        productionChanged: false,
+        eligibleForAlphaClaim: false,
+      });
+    const status = report.status === "failed" ? 500 : report.status === "complete" ? 200 : 202;
+    return res.status(status).json({
+      ...report,
+      authority: "point-in-time-sp500-research",
+      legacyCurrentSurvivorDiagnostic: "/api/research/alpha-creator?legacy=1",
+    });
   } catch (error) {
     return res.status(500).json({
+      version: 1,
       status: "failed",
+      authority: "point-in-time-sp500-research",
+      productionChanged: false,
+      eligibleForAlphaClaim: false,
       error: String(error?.message || error).slice(0, 400),
     });
   }

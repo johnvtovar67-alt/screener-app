@@ -587,9 +587,14 @@ assert(
   "The private S&P 500 blueprint must causally reconstruct historical membership and expose only a bounded summary.",
 );
 assert(
-  alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
-    !alphaCreatorEndpoint.includes("getAlphaCreatorSearch"),
-  "The alpha-creator endpoint must delegate dataset freshness to the runner instead of short-circuiting on any stored complete report.",
+  alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaCreator()") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaCreator({ force })") &&
+    alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
+    alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
+    alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
+    alphaCreatorEndpoint.includes('authority: "legacy-current-survivor-diagnostic"') &&
+    alphaCreatorEndpoint.includes("maxDuration: 800"),
+  "The public alpha-creator endpoint must default to point-in-time research and quarantine the current-survivor search behind an explicitly labelled legacy diagnostic.",
 );
 assert(
   rawSource.includes("runResearchDataCapabilityAudit") &&
