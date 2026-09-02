@@ -3,7 +3,7 @@ import {
   runAlphaCreatorSearch,
   runAlphaProspectiveChallenger,
   runFmpResearchBacktest,
-  runPointInTimeSp500AlphaCreator,
+  runPointInTimeSp500AlphaCreatorV2,
   runPointInTimeSp500DatasetAcquisition,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       await runPointInTimeSp500DatasetAcquisition();
     const pointInTimeSp500AlphaCreator =
       pointInTimeSp500Dataset.status === "compiled"
-        ? await runPointInTimeSp500AlphaCreator()
+        ? await runPointInTimeSp500AlphaCreatorV2()
         : null;
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({

@@ -45,6 +45,14 @@ passes every historical screen may only be frozen for genuinely prospective
 paper tracking; promotion still requires new sessions, at least 1,000 matched
 placebos and independent review.
 
+The rejected version-1 family is immutable. Version 2 is a separate,
+single-thesis anchored gradual-leadership falsification documented in
+`PIT_ALPHA_V2_ANCHORED_GRADUAL_LEADERSHIP.md`. It adds causal trailing-high and
+price-path fields to the compiled dataset without importing revision-unsafe
+fundamentals or historical-news hindsight. `GET
+/api/research/pit-sp500-alpha-creator-v2` exposes its status; the public
+`/api/research/alpha-creator` route shows the latest available generation.
+
 ## Run sequence
 
 1. Check the FMP subscription without exposing the API key:
