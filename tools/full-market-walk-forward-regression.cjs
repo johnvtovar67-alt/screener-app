@@ -577,6 +577,81 @@ assert(
     run.trades.some((trade) => trade.side === "buy"),
   "The causal 20-session quality/momentum leadership switch must execute end-to-end.",
 );
+
+function leadershipContextSession(date, price = 100) {
+  const positionSignals = Array.from({ length: 20 }, (_, index) => {
+    const ordinal = index + 1;
+    const symbol = `Q${String(ordinal).padStart(2, "0")}`;
+    return fullEvidenceSignal(date, {
+      symbol,
+      sector: "Industrials",
+      price,
+      riskPlan: { invalidationPrice: 60 },
+      researchFactors: {
+        ...fullEvidenceSignal(date).researchFactors,
+        qualityPercentile: 101 - ordinal * 5,
+        momentumPercentile: ordinal * 5,
+        return5: 0,
+        return20: ordinal <= 5 ? 15 : ordinal >= 16 ? -5 : 0,
+      },
+    });
+  });
+  return session(date, null, price, {
+    sourceUniverseCount: 1_500,
+    positionSignals,
+    prices: [
+      ...positionSignals.map((row) => ({
+        symbol: row.symbol,
+        open: price,
+        high: price + 1,
+        low: price - 1,
+        close: price,
+        adjusted: true,
+      })),
+      {
+        symbol: "SPY",
+        open: 500,
+        high: 502,
+        low: 498,
+        close: 500,
+        adjusted: true,
+      },
+      {
+        symbol: "QQQ",
+        open: 450,
+        high: 452,
+        low: 448,
+        close: 450,
+        adjusted: true,
+      },
+    ],
+  });
+}
+
+const leadershipContextDataset = {
+  metadata: metadata({ comparisonSymbols: ["SPY", "QQQ"] }),
+  sessions: [
+    leadershipContextSession("2026-08-24"),
+    leadershipContextSession("2026-08-25", 101),
+  ],
+};
+run = simulatePointInTimePortfolio(leadershipContextDataset, {
+  ...rankedOptions,
+  researchRankMode: "adaptive-factor-leadership-20",
+  rankedRebalanceSessions: 1,
+  rankedMinimumHoldSessions: 1,
+  rankedEntryQueueCount: 20,
+  maxPositions: 1,
+  minQualityPercentile: null,
+  minMomentumPercentile: null,
+});
+const leadershipContextBuy = run.trades.find(
+  (trade) => trade.side === "buy",
+);
+assert(
+  leadershipContextBuy?.symbol === "Q01",
+  `A quality-leadership decision must preserve its causal rank context through next-open order execution (bought ${leadershipContextBuy?.symbol || "none"}; skipped ${JSON.stringify(run.skippedOrders || [])}).`,
+);
 run = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,
   researchRankMode: "durable-quality-momentum",
