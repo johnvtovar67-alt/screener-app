@@ -34,6 +34,14 @@ assert(
     walkForwardSource.includes("observations: rankContextObservations"),
   "The prospective challenger must require both weak breadth and observed twenty-session quality leadership, and report how often that regime was used.",
 );
+assert(
+  walkForwardSource.includes(
+    'researchRankMode === "multi-horizon-price-alpha"',
+  ) &&
+    walkForwardSource.includes('config.researchSignalSource === "price-only"') &&
+    walkForwardSource.includes('"full-evidence", "price-only"'),
+  "The point-in-time alpha generator must expose an explicit price-only source and multi-horizon rank without altering the production source.",
+);
 
 const loader = createResearchModuleLoader(process.cwd());
 const {
@@ -475,6 +483,34 @@ assert(
   !run.trades.some((trade) => trade.side === "buy"),
   "The production control must continue to reject a Watch label so the V8 source expansion is measurable rather than silently changing the control.",
 );
+const priceOnlyDataset = {
+  ...expandedEvidenceDataset,
+  sessions: expandedEvidenceDataset.sessions.map((researchSession) => ({
+    ...researchSession,
+    positionSignals: researchSession.positionSignals.map((researchSignal) => ({
+      ...researchSignal,
+      fundamentalDataVerified: false,
+      eventRiskVerified: false,
+    })),
+  })),
+};
+run = simulatePointInTimePortfolio(priceOnlyDataset, {
+  ...expandedEvidenceOptions,
+  researchSignalSource: "price-only",
+  minimumResearchFactorCoverage: 0,
+  minQualityPercentile: null,
+  minMomentumPercentile: null,
+  minCompositePercentile: null,
+});
+assert(
+  run.trades.some((trade) => trade.side === "buy"),
+  "A price-only research run must be able to trade causal market signals when revision-safe fundamentals and historical news are unavailable.",
+);
+run = simulatePointInTimePortfolio(priceOnlyDataset, expandedEvidenceOptions);
+assert(
+  !run.trades.some((trade) => trade.side === "buy"),
+  "The full-evidence source must keep failing closed when fundamental or event verification is absent.",
+);
 
 function rankedSignal(date, symbol, momentumPercentile) {
   return fullEvidenceSignal(date, {
@@ -577,6 +613,18 @@ assert(
     run.metrics.averageBenchmarkSleevePct === 0 &&
     run.metrics.averageExposurePct === run.metrics.averageActiveExposurePct,
   "A ranked research book must replace a deteriorating leader at the next open while residual cash remains cash and benchmark-sleeve exposure stays exactly zero.",
+);
+run = simulatePointInTimePortfolio(rankedDataset, {
+  ...rankedOptions,
+  researchRankMode: "multi-horizon-price-alpha",
+  priceAlphaWeights: { momentum: 1 },
+});
+assert(
+  run.trades
+    .filter((trade) => trade.side === "buy")
+    .map((trade) => trade.symbol)
+    .join(",") === "AAA,BBB",
+  "The multi-horizon price rank must causally order and replace leaders using its frozen feature weights.",
 );
 run = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,

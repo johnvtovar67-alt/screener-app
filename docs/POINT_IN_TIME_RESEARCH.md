@@ -12,6 +12,35 @@ thesis. It will not print a performance result when the input cannot prove what
 was knowable at each historical decision timestamp or when the holdout was not
 sealed independently before evaluation.
 
+## Membership-filtered alpha generator
+
+`GET /api/research/pit-sp500-alpha-creator?run=1` runs the frozen version-1
+candidate generator against the compiled historical S&P 500 membership dataset.
+The scheduled FMP research job also starts it automatically after compilation.
+Its contract is narrower than the strict V10 contract and explicit about that
+distinction:
+
+- 12 price/risk candidate definitions are frozen in source before execution;
+- the first three 126-session windows select one candidate, the next two validate
+  it, and the following two provide a historical audit;
+- the final 36 sessions are a short diagnostic and never enter selection;
+- each decision uses only then-available price, volume, trend, volatility and
+  SPY/QQQ-relative observations;
+- trades fill at the next session open with 12 basis points of slippage, whole
+  shares, sector/issuer caps and cash left as cash;
+- the selected lifecycle is compared with 100 deterministic, matched random-rank
+  portfolios as a bounded development control; and
+- the production recommendation engine is never changed by this runner.
+
+Revision-unsafe fundamental values and incomplete historical material-news data
+are excluded from both rank and entry eligibility. That makes the price-only
+test causal for the fields it uses, but it does not make the already-observed
+calendar an untouched holdout. Consequently the report always sets
+`eligibleForAlphaClaim` and `eligibleForLiveCapital` to `false`. A candidate that
+passes every historical screen may only be frozen for genuinely prospective
+paper tracking; promotion still requires new sessions, at least 1,000 matched
+placebos and independent review.
+
 ## Run sequence
 
 1. Check the FMP subscription without exposing the API key:
