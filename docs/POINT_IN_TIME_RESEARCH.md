@@ -17,6 +17,10 @@ sealed independently before evaluation.
 `GET /api/research/pit-sp500-alpha-creator?run=1` runs the frozen version-1
 candidate generator against the compiled historical S&P 500 membership dataset.
 The scheduled FMP research job also starts it automatically after compilation.
+`GET /api/research/alpha-creator` is the public alias for that authoritative
+point-in-time report. The superseded current-survivor search is retained only
+as a labelled diagnostic at `?legacy=1`; it cannot establish an alpha claim or
+change production trading authority.
 Its contract is narrower than the strict V10 contract and explicit about that
 distinction:
 
