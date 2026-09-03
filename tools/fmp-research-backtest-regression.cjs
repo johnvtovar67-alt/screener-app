@@ -136,6 +136,10 @@ assert(
     rawSource.includes("eligibleForLiveCapital: false"),
   "The V2 point-in-time program must test one frozen anchored-gradual thesis without selection, relabelled holdouts, or live authority.",
 );
+assert(
+  rawSource.includes("POINT_IN_TIME_SP500_COMPILE_SESSIONS_PER_RUN = 100"),
+  "The canonical point-in-time rebuild must advance in bounded 100-session chunks.",
+);
 const contract = createResearchModuleLoader(process.cwd()).load(
   "lib/v12ResearchContract.js",
 );
