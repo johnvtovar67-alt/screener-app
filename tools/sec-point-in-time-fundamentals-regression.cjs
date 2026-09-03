@@ -70,5 +70,39 @@ const snapshot = fundamentals.pointInTimeFilingChangeSnapshot(companyFacts, {
 assert(snapshot.availableFields === 3, "All three causal fields should resolve.");
 assert(snapshot.coveragePct === 100, "Coverage must be explicit.");
 
-console.log("SEC point-in-time fundamentals regression passed.");
+const cumulativeFacts = {
+  facts: {
+    "us-gaap": {
+      NetCashProvidedByUsedInOperatingActivities: {
+        units: {
+          USD: [
+            row("2023-01-01", "2023-03-31", "2023-05-01", 100, "23q1"),
+            row("2023-01-01", "2023-06-30", "2023-08-01", 230, "23q2"),
+            row("2024-01-01", "2024-03-31", "2024-05-01", 120, "24q1"),
+            row("2024-01-01", "2024-06-30", "2024-08-01", 276, "24q2"),
+          ],
+        },
+      },
+    },
+  },
+};
+const cumulativeChange = fundamentals.pointInTimeYearOverYearChange(
+  cumulativeFacts,
+  {
+    concept: "NetCashProvidedByUsedInOperatingActivities",
+    decisionDate: "2024-08-02",
+  },
+);
+assert(cumulativeChange.available, "Cumulative cash flow should resolve.");
+assert(
+  Math.abs(cumulativeChange.current.value - 156) < 1e-9 &&
+    Math.abs(cumulativeChange.prior.value - 130) < 1e-9 &&
+    Math.abs(cumulativeChange.changePct - 20) < 1e-9,
+  "Year-to-date cash flow must be converted into comparable discrete quarters.",
+);
+assert(
+  cumulativeChange.current.derivedFromCumulative === true,
+  "A derived quarter must disclose its cumulative origin.",
+);
 
+console.log("SEC point-in-time fundamentals regression passed.");
