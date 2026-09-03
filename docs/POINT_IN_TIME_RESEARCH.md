@@ -70,6 +70,13 @@ compensation for liquidity provision only inside established dual-benchmark
 uptrends. `GET /api/research/pit-sp500-alpha-research-r4` exposes its status.
 R4 counts all four research generations in its family-wise error correction
 and cannot change production recommendations.
+It failed and remains immutable.
+
+V15/R5 is documented in `V15_INDUSTRY_LEADERSHIP_MOMENTUM.md`. It tests
+sector-first industry momentum with continuous within-sector stock leadership,
+no benchmark sleeve, and no volatility-target cash dilution. `GET
+/api/research/pit-sp500-alpha-research-r5` exposes its status. The five-family
+multiple-testing correction and all existing promotion gates remain binding.
 
 ## Run sequence
 
