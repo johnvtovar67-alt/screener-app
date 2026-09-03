@@ -47,8 +47,11 @@ assert(
       source.includes("rejectUnauthorizedResearchMutation"),
   ) &&
     cronSource.includes("invokeNasdaqR11Workers") &&
-    cronSource.includes("Promise.all"),
-  "Nasdaq mutation must be authenticated POST-only, with real cron-driven serverless fan-out.",
+    cronSource.includes("Promise.all") &&
+    cronSource.includes('response.headers.get("content-type")') &&
+    cronSource.includes("JSON.stringify(rawError)") &&
+    cronSource.includes('console.error("R11 worker request failed"'),
+  "Nasdaq mutation must be authenticated POST-only, with real cron-driven serverless fan-out and actionable worker failure evidence.",
 );
 assert(
   rawSource.includes('client.fetchStable("nasdaq-constituent", {})') &&
