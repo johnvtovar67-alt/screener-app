@@ -320,6 +320,91 @@ assert(
       0.5,
   "A common split-ratio discontinuity must fail the adjusted-price integrity audit even when a provider flag says adjusted.",
 );
+const eventGapPriceIntegrity = pointInTimePriceIntegrityAudit([
+  {
+    sessions: [
+      {
+        date: "2026-01-02",
+        prices: [
+          { symbol: "AAA", open: 99, high: 101, low: 98, close: 100, adjusted: true },
+        ],
+      },
+      {
+        date: "2026-01-05",
+        prices: [
+          { symbol: "AAA", open: 33, high: 42, low: 30, close: 39, adjusted: true },
+        ],
+      },
+    ],
+  },
+]);
+assert(
+  eventGapPriceIntegrity.pass === true &&
+    eventGapPriceIntegrity.extremeOneSessionMoves.length === 1 &&
+    eventGapPriceIntegrity.possibleUnadjustedCorporateActions.length === 0,
+  "A genuine event-like gap must be disclosed without being misclassified as an unadjusted split from its opening ratio alone.",
+);
+const decisionRelevantPriceIntegrity = pointInTimePriceIntegrityAudit(
+  [
+    {
+      sessions: [
+        {
+          date: "2026-01-02",
+          prices: [
+            { symbol: "AAA", open: 99, high: 101, low: 98, close: 100, volume: 1_000, adjusted: true },
+            { symbol: "OLD", open: 99, high: 101, low: 98, close: 100, volume: 10, adjusted: true },
+            { symbol: "SPY", open: 499, high: 501, low: 498, close: 500, volume: 1_000_000, adjusted: true },
+          ],
+          signals: [{ symbol: "AAA" }],
+          positionSignals: [],
+        },
+        {
+          date: "2026-01-05",
+          prices: [
+            { symbol: "AAA", open: 104, high: 111, low: 103, close: 110, volume: 1_100, adjusted: true },
+            { symbol: "OLD", open: 50, high: 52, low: 49, close: 51, volume: 10, adjusted: true },
+            { symbol: "SPY", open: 504, high: 511, low: 503, close: 510, volume: 1_100_000, adjusted: true },
+          ],
+          signals: [{ symbol: "AAA" }],
+          positionSignals: [],
+        },
+      ],
+    },
+  ],
+  { decisionRelevantOnly: true, lookbackSessions: 1 },
+);
+assert(
+  decisionRelevantPriceIntegrity.pass === true &&
+    decisionRelevantPriceIntegrity.totalStoredPriceRows === 6 &&
+    decisionRelevantPriceIntegrity.priceRows === 4 &&
+    decisionRelevantPriceIntegrity.excludedArchivalPriceRows === 2,
+  "The decision-data audit must exclude unused archival rows while retaining active prices, required lookbacks and benchmarks.",
+);
+const duplicateActiveSeriesIntegrity = pointInTimePriceIntegrityAudit(
+  [
+    {
+      sessions: [
+        {
+          date: "2026-01-02",
+          prices: [
+            { symbol: "AAA", open: 99, high: 101, low: 98, close: 100, volume: 1_000, adjusted: true },
+            { symbol: "BBB", open: 99, high: 101, low: 98, close: 100, volume: 1_000, adjusted: true },
+            { symbol: "SPY", open: 499, high: 501, low: 498, close: 500, volume: 1_000_000, adjusted: true },
+          ],
+          signals: [{ symbol: "AAA" }, { symbol: "BBB" }],
+          positionSignals: [],
+        },
+      ],
+    },
+  ],
+  { decisionRelevantOnly: true, lookbackSessions: 1 },
+);
+assert(
+  duplicateActiveSeriesIntegrity.pass === false &&
+    duplicateActiveSeriesIntegrity.possibleDuplicateActiveSeries[0]?.symbols.join(",") ===
+      "AAA,BBB",
+  "Simultaneously active symbols with an identical full OHLCV row must fail closed as a possible ticker-identity collision.",
+);
 const concentratedTrades = summarizePointInTimeTradeConcentration([
   {
     trades: [
