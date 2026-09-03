@@ -143,6 +143,16 @@ assert(
     ),
   "The canonical point-in-time rebuild must stay below the proven memory ceiling and promptly recover abandoned compilation claims.",
 );
+assert(
+  rawSource.includes(
+    'POINT_IN_TIME_SP500_COMPILER_CONTRACT =\n  "historical-signal-evaluator-v10-explicit-membership-anchored-gradual-path-v2"',
+  ) &&
+    rawSource.includes(
+      "String(manifest.signature || \"\").includes(\n      POINT_IN_TIME_SP500_COMPILER_CONTRACT",
+    ) &&
+    !rawSource.includes('includes("anchored-gradual-path-v1")'),
+  "The frozen V2 runner must accept the same canonical-identity compiler contract that the dataset writes.",
+);
 const contract = createResearchModuleLoader(process.cwd()).load(
   "lib/v12ResearchContract.js",
 );
