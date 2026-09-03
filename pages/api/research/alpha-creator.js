@@ -1,7 +1,7 @@
 import {
   getPointInTimeSp500AlphaProgram,
   runAlphaCreatorSearch,
-  runPointInTimeSp500AlphaSizingR9,
+  runPointInTimeSp500AlphaEarningsDriftR10,
 } from "../../../lib/fmpResearchBacktest";
 
 export const config = { maxDuration: 800 };
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     // labelled historical diagnostic via ?legacy=1.
     const report =
       String(req.query.run || "") === "1"
-        ? await runPointInTimeSp500AlphaSizingR9({ force })
+        ? await runPointInTimeSp500AlphaEarningsDriftR10({ force })
         : await getPointInTimeSp500AlphaProgram();
     if (!report)
       return res.status(202).json({
@@ -44,7 +44,8 @@ export default async function handler(req, res) {
       ...report,
       authority: "point-in-time-sp500-research",
       latestResearchGeneration: report.version || 1,
-      latestResearchRoute: "/api/research/pit-sp500-alpha-sizing-r9",
+      latestResearchRoute: "/api/research/pit-sp500-alpha-earnings-drift-r10",
+      frozenR9Report: "/api/research/pit-sp500-alpha-sizing-r9",
       frozenR8Report: "/api/research/pit-sp500-alpha-batch-r8",
       frozenR7Report: "/api/research/pit-sp500-alpha-research-r7",
       frozenR6Report: "/api/research/pit-sp500-alpha-research-r6",

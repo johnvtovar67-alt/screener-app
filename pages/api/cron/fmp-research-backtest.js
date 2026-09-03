@@ -12,6 +12,7 @@ import {
   runPointInTimeSp500AlphaResearchR7,
   runPointInTimeSp500AlphaBatchR8,
   runPointInTimeSp500AlphaSizingR9,
+  runPointInTimeSp500AlphaEarningsDriftR10,
   runPointInTimeSp500DatasetAcquisition,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
@@ -109,6 +110,12 @@ export default async function handler(req, res) {
         .startsWith("rejected-")
         ? await runPointInTimeSp500AlphaSizingR9()
         : null;
+    const pointInTimeSp500AlphaEarningsDriftR10 =
+      pointInTimeSp500AlphaSizingR9?.status === "complete" &&
+      String(pointInTimeSp500AlphaSizingR9?.candidateDisposition || "")
+        .startsWith("rejected-")
+        ? await runPointInTimeSp500AlphaEarningsDriftR10()
+        : null;
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
       ...report,
@@ -158,6 +165,21 @@ export default async function handler(req, res) {
           }
         : null,
       pointInTimeSp500Dataset,
+      pointInTimeSp500AlphaEarningsDriftR10:
+        pointInTimeSp500AlphaEarningsDriftR10
+          ? {
+              status: pointInTimeSp500AlphaEarningsDriftR10.status,
+              completedAt:
+                pointInTimeSp500AlphaEarningsDriftR10.completedAt || null,
+              selectedCandidateId:
+                pointInTimeSp500AlphaEarningsDriftR10.selectedCandidateId ||
+                null,
+              candidateDisposition:
+                pointInTimeSp500AlphaEarningsDriftR10.candidateDisposition ||
+                null,
+              eligibleForAlphaClaim: false,
+            }
+          : null,
       pointInTimeSp500AlphaCreator: pointInTimeSp500AlphaCreator
         ? {
             status: pointInTimeSp500AlphaCreator.status,
