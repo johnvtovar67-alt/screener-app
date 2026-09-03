@@ -962,6 +962,10 @@ const pitAlphaR8Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-batch-r8.js",
   "utf8",
 );
+const pitAlphaR9Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-sizing-r9.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -1001,7 +1005,7 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaBatchR8({ force })") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaSizingR9({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
@@ -1078,6 +1082,16 @@ assert(
     rawSource.includes("auditExcludedFromSelection: true") &&
     rawSource.includes("strictMatchedPlacebosRequired"),
   "R8 must share window restores, narrow 21 candidates to four validation finalists and one audit candidate, and defer strict placebos until deterministic gates pass.",
+);
+assert(
+  pitAlphaR9Endpoint.includes("await getPointInTimeSp500AlphaSizingR9()") &&
+    pitAlphaR9Endpoint.includes("await runPointInTimeSp500AlphaSizingR9({") &&
+    pitAlphaR9Endpoint.includes('productionCandidateVersion: "V19"') &&
+    cron.includes("await runPointInTimeSp500AlphaSizingR9()") &&
+    rawSource.includes("pointInTimeSp500AlphaR9SizingDefinitions") &&
+    walkForwardSource.includes("config.rankedTargetWeights") &&
+    walkForwardSource.includes("order.targetPct"),
+  "R9 must test explicit rank-weighted conviction sizing and replacement stops in one nested batch after R8.",
 );
 assert(
   pitAlphaV2Endpoint.includes("await getPointInTimeSp500AlphaCreatorV2()") &&

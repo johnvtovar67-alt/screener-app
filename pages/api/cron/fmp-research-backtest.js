@@ -11,6 +11,7 @@ import {
   runPointInTimeSp500AlphaResearchR6,
   runPointInTimeSp500AlphaResearchR7,
   runPointInTimeSp500AlphaBatchR8,
+  runPointInTimeSp500AlphaSizingR9,
   runPointInTimeSp500DatasetAcquisition,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
@@ -101,6 +102,12 @@ export default async function handler(req, res) {
       pointInTimeSp500AlphaResearchR7?.candidateDisposition ===
         "rejected-by-historical-screen"
         ? await runPointInTimeSp500AlphaBatchR8()
+        : null;
+    const pointInTimeSp500AlphaSizingR9 =
+      pointInTimeSp500AlphaBatchR8?.status === "complete" &&
+      String(pointInTimeSp500AlphaBatchR8?.candidateDisposition || "")
+        .startsWith("rejected-")
+        ? await runPointInTimeSp500AlphaSizingR9()
         : null;
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
@@ -205,6 +212,18 @@ export default async function handler(req, res) {
                 .allHistoricalScreenGatesPassed === true,
             eligibleForAlphaClaim: false,
         }
+        : null,
+      pointInTimeSp500AlphaSizingR9: pointInTimeSp500AlphaSizingR9
+        ? {
+            status: pointInTimeSp500AlphaSizingR9.status,
+            completedAt:
+              pointInTimeSp500AlphaSizingR9.completedAt || null,
+            selectedCandidateId:
+              pointInTimeSp500AlphaSizingR9.selectedCandidateId || null,
+            candidateDisposition:
+              pointInTimeSp500AlphaSizingR9.candidateDisposition || null,
+            eligibleForAlphaClaim: false,
+          }
         : null,
       pointInTimeSp500AlphaBatchR8: pointInTimeSp500AlphaBatchR8
         ? {
