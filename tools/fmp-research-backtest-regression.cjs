@@ -966,6 +966,10 @@ const pitAlphaR9Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-sizing-r9.js",
   "utf8",
 );
+const pitAlphaR10Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-earnings-drift-r10.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -1005,7 +1009,7 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaSizingR9({ force })") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaEarningsDriftR10({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
@@ -1092,6 +1096,22 @@ assert(
     walkForwardSource.includes("config.rankedTargetWeights") &&
     walkForwardSource.includes("order.targetPct"),
   "R9 must test explicit rank-weighted conviction sizing and replacement stops in one nested batch after R8.",
+);
+assert(
+  pitAlphaR10Endpoint.includes(
+    "await getPointInTimeSp500AlphaEarningsDriftR10()",
+  ) &&
+    pitAlphaR10Endpoint.includes(
+      "await runPointInTimeSp500AlphaEarningsDriftR10({",
+    ) &&
+    pitAlphaR10Endpoint.includes('productionCandidateVersion: "V20"') &&
+    cron.includes("await runPointInTimeSp500AlphaEarningsDriftR10()") &&
+    rawSource.includes("pointInTimeSp500AlphaR10EarningsDriftDefinitions") &&
+    rawSource.includes('"earnings-surprises-bulk"') &&
+    rawSource.includes("firstCalendarIndexAfter") &&
+    walkForwardSource.includes('researchRankMode === "post-earnings-drift"') &&
+    walkForwardSource.includes("requireEarningsSurpriseFactors"),
+  "R10 must test next-session-available earnings surprise and post-announcement drift in one nested batch after R9.",
 );
 assert(
   pitAlphaV2Endpoint.includes("await getPointInTimeSp500AlphaCreatorV2()") &&
