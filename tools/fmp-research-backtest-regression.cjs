@@ -137,8 +137,11 @@ assert(
   "The V2 point-in-time program must test one frozen anchored-gradual thesis without selection, relabelled holdouts, or live authority.",
 );
 assert(
-  rawSource.includes("POINT_IN_TIME_SP500_COMPILE_SESSIONS_PER_RUN = 100"),
-  "The canonical point-in-time rebuild must advance in bounded 100-session chunks.",
+  rawSource.includes("POINT_IN_TIME_SP500_COMPILE_SESSIONS_PER_RUN = 50") &&
+    rawSource.includes(
+      "POINT_IN_TIME_SP500_COMPILATION_CLAIM_TTL_MS = 3 * 60 * 1000",
+    ),
+  "The canonical point-in-time rebuild must stay below the proven memory ceiling and promptly recover abandoned compilation claims.",
 );
 const contract = createResearchModuleLoader(process.cwd()).load(
   "lib/v12ResearchContract.js",
@@ -710,7 +713,9 @@ assert(
     researchSource.includes('"[pit-sp500-compile] active claim reused"') &&
     researchSource.includes('"[pit-sp500-compile] chunk started"') &&
     researchSource.includes('"[pit-sp500-compile] chunk completed"') &&
-    researchSource.includes("now - previousCompilationClaim < RUNNING_TTL_MS") &&
+    researchSource.includes(
+      "POINT_IN_TIME_SP500_COMPILATION_CLAIM_TTL_MS",
+    ) &&
     researchSource.includes("exhaustedSymbols") &&
     researchSource.includes("failureSample") &&
     researchSource.includes('["income-statement", "incomeRows"]') &&
