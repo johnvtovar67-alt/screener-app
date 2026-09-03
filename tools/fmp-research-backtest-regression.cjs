@@ -657,25 +657,6 @@ const probeMembershipSupplements = [
     effectiveDateBasis: "source-verified-supplement",
     sourceVerifiedSupplement: true,
   },
-  {
-    date: "2026-01-14",
-    effectiveDate: "2026-01-14",
-    announcementDate: "",
-    addedSymbol: "",
-    removedSymbol: "VSNT",
-    removedSecurity: "Versant Media Group, Inc.",
-    reason:
-      "Nasdaq's official NDX start-of-day weights show the spin-off present through January 13 and absent January 14",
-    provenance:
-      "Nasdaq NDX methodology, Nasdaq Corporate Action ECA2025-683, and official NDX start-of-day weights",
-    sources: [
-      "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf",
-      "https://www.nasdaqtrader.com/TraderNews.aspx?id=ECA2025-683",
-      "https://indexes.nasdaqomx.com/Index/Weighting/NDX",
-    ],
-    effectiveDateBasis: "source-verified-supplement",
-    sourceVerifiedSupplement: true,
-  },
 ];
 const probeSupplementFingerprint =
   pointInTimeNasdaqMembershipSupplementFingerprint(
@@ -705,6 +686,29 @@ const probeSolsCorrection = {
   effectiveDateBasis: "source-verified-corporate-action",
   sourceVerifiedCorrection: true,
 };
+const probeVsntCorrection = {
+  id: "vsnt-ndx-effective-removal-2026-01-14",
+  date: "2026-01-14",
+  effectiveDate: "2026-01-14",
+  announcementDate: "",
+  addedSymbol: "",
+  removedSymbol: "VSNT",
+  removedSecurity: "Versant Media Group, Inc.",
+  providerEventDate: "2026-01-09",
+  reason:
+    "FMP stamps the removal on January 9; official Nasdaq weights show VSNT present through January 13 and absent January 14",
+  provenance:
+    "Nasdaq NDX methodology, Nasdaq Corporate Action ECA2025-683, and official NDX start-of-day weights",
+  sources: [
+    "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf",
+    "https://www.nasdaqtrader.com/TraderNews.aspx?id=ECA2025-683",
+    "https://indexes.nasdaqomx.com/Index/Weighting/NDX",
+  ],
+  providerEventCorrectionId:
+    "vsnt-ndx-effective-removal-2026-01-14",
+  effectiveDateBasis: "source-verified-corporate-action",
+  sourceVerifiedCorrection: true,
+};
 const universeProbeFor = (symbols) => {
   const normalizedSymbols = [...new Set(symbols)].sort();
   const initialSymbols = normalizedSymbols.filter((symbol) => symbol !== "HONA");
@@ -725,7 +729,7 @@ const universeProbeFor = (symbols) => {
       removedSymbol: "",
       effectiveDateBasis: "dateAdded",
     },
-    probeMembershipSupplements[1],
+    probeVsntCorrection,
     probeMembershipSupplements[0],
   ].map((row) => ({ ...row }));
   const profilesBySymbol = Object.fromEntries(
@@ -741,12 +745,12 @@ const universeProbeFor = (symbols) => {
     changes,
     membershipSupplements: probeMembershipSupplements,
     membershipSupplementContract:
-      "source-verified-nasdaq-spinoff-lifecycle-v2",
+      "source-verified-nasdaq-spinoff-addition-v3",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
-      "source-verified-provider-effective-dates-v2",
+      "source-verified-provider-effective-dates-v3",
     providerEventCorrectionFingerprint: probeCorrectionFingerprint,
-    providerEventCorrections: [probeSolsCorrection],
+    providerEventCorrections: [probeSolsCorrection, probeVsntCorrection],
     unionSymbols,
     profilesBySymbol,
     delistedDates: {},
@@ -762,14 +766,14 @@ const universeProbeFor = (symbols) => {
     universeContract:
       "date-added-effective-inclusive-corporate-action-v5",
     membershipSupplementContract:
-      "source-verified-nasdaq-spinoff-lifecycle-v2",
+      "source-verified-nasdaq-spinoff-addition-v3",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
-      "source-verified-provider-effective-dates-v2",
+      "source-verified-provider-effective-dates-v3",
     providerEventCorrectionFingerprint: probeCorrectionFingerprint,
-    correctedProviderEvents: 3,
+    correctedProviderEvents: 4,
     membershipEffectiveConvention: "effective-date-inclusive",
-    supplementalMembershipEvents: 2,
+    supplementalMembershipEvents: 1,
     currentAnchorCardinalityPlausible: true,
     pointInTimeMembershipConstructed: true,
     currentConstituents: normalizedSymbols.length,
@@ -793,10 +797,10 @@ const currentNasdaqSignature = JSON.stringify({
   minimumSignalHistoryRows: 253,
   universeContract:
     "date-added-effective-inclusive-corporate-action-v5",
-  membershipSupplementContract: "source-verified-nasdaq-spinoff-lifecycle-v2",
+  membershipSupplementContract: "source-verified-nasdaq-spinoff-addition-v3",
   membershipSupplementFingerprint: probeSupplementFingerprint,
   providerEventCorrectionContract:
-    "source-verified-provider-effective-dates-v2",
+    "source-verified-provider-effective-dates-v3",
   providerEventCorrectionFingerprint: probeCorrectionFingerprint,
   membershipEffectiveConvention: "effective-date-inclusive",
   priceAliasContract: "date-bounded-provider-alias-stitch-v1",
@@ -834,10 +838,10 @@ const probeDatasetContractFingerprint = sha256Fingerprint(
     schema: 1,
     universeContract:
       "date-added-effective-inclusive-corporate-action-v5",
-    membershipSupplementContract: "source-verified-nasdaq-spinoff-lifecycle-v2",
+    membershipSupplementContract: "source-verified-nasdaq-spinoff-addition-v3",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
-      "source-verified-provider-effective-dates-v2",
+      "source-verified-provider-effective-dates-v3",
     providerEventCorrectionFingerprint: probeCorrectionFingerprint,
     membershipEffectiveConvention: "effective-date-inclusive",
     compilerContract:
@@ -1085,19 +1089,6 @@ assert(
     ),
   "Any alternate HONA date or same-date conflicting removal must stop the source-backed supplement merge.",
 );
-assert(
-  !pointInTimeNasdaqMembershipSupplementConflict(
-    [
-      { date: "2026-01-14", addedSymbol: "", removedSymbol: "VSNT" },
-    ],
-    probeMembershipSupplements,
-  ) &&
-    pointInTimeNasdaqMembershipSupplementConflict(
-      [{ date: "2026-01-13", addedSymbol: "", removedSymbol: "VSNT" }],
-      probeMembershipSupplements,
-    ),
-  "Exact provider spin-off removals may coalesce with the source registry, but an alternate removal boundary must fail closed.",
-);
 const correctedAcquisitionEvents =
   pointInTimeNasdaqApplyProviderEventCorrections([
     {
@@ -1117,6 +1108,12 @@ const correctedAcquisitionEvents =
       effectiveDate: "2025-11-06",
       addedSymbol: "SOLS",
       removedSymbol: "SOLS",
+    },
+    {
+      date: "2026-01-09",
+      effectiveDate: "2026-01-09",
+      addedSymbol: "",
+      removedSymbol: "VSNT",
     },
   ]);
 assert(
@@ -1140,6 +1137,13 @@ assert(
         row.date === "2025-11-10" &&
         row.removedSymbol === "SOLS" &&
         row.providerEventDate === "2025-11-06" &&
+        row.sourceVerifiedCorrection === true,
+    ) &&
+    correctedAcquisitionEvents.correctionChanges.some(
+      (row) =>
+        row.date === "2026-01-14" &&
+        row.removedSymbol === "VSNT" &&
+        row.providerEventDate === "2026-01-09" &&
         row.sourceVerifiedCorrection === true,
     ),
   "Provider events must move to their source-verified effective dates while any distinct paired additions retain their own dates.",
