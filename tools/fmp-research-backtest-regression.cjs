@@ -183,6 +183,26 @@ assert(
   "The R4 simulator must fail closed on reversal, trend and volatility inputs and enforce the frozen price-pressure band.",
 );
 assert(
+  rawSource.includes("runPointInTimeSp500AlphaResearchR5") &&
+    rawSource.includes('productionCandidateVersion: "V15"') &&
+    rawSource.includes('researchGeneration: "R5"') &&
+    rawSource.includes('researchRankMode: "industry-leadership-momentum"') &&
+    rawSource.includes("sectorTrend: 0.45") &&
+    rawSource.includes("rankedRebalanceSessions: 20") &&
+    rawSource.includes("maxSectorPositions: 5") &&
+    rawSource.includes("POINT_IN_TIME_SP500_ALPHA_R5_RESEARCH_GENERATIONS = 5"),
+  "V15/R5 must test one frozen industry-momentum thesis with five-family correction and no benchmark sleeve.",
+);
+assert(
+  walkForwardSource.includes(
+    'config.researchRankMode === "industry-leadership-momentum"',
+  ) &&
+    walkForwardSource.includes("sectorLeadershipBySymbol") &&
+    walkForwardSource.includes("industryLeadershipFactorsComplete") &&
+    walkForwardSource.includes("continuousInformationPercentile"),
+  "The R5 simulator must causally compute sector leadership and require complete stock-continuity inputs.",
+);
+assert(
   walkForwardSource.includes(
     'config.researchRankMode === "benchmark-residual-momentum"',
   ) &&
@@ -899,6 +919,10 @@ const pitAlphaR4Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-research-r4.js",
   "utf8",
 );
+const pitAlphaR5Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-research-r5.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -938,7 +962,7 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR4({ force })") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR5({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
@@ -955,6 +979,16 @@ assert(
     pitAlphaR4Endpoint.includes("maxDuration: 800") &&
     cron.includes("await runPointInTimeSp500AlphaResearchR4()"),
   "The R4 endpoint and cron must keep V14 research-only and run only after rejected R3.",
+);
+assert(
+  pitAlphaR5Endpoint.includes("await getPointInTimeSp500AlphaResearchR5()") &&
+    pitAlphaR5Endpoint.includes("await runPointInTimeSp500AlphaResearchR5({") &&
+    pitAlphaR5Endpoint.includes('productionCandidateVersion: "V15"') &&
+    pitAlphaR5Endpoint.includes("productionChanged: false") &&
+    pitAlphaR5Endpoint.includes("eligibleForAlphaClaim: false") &&
+    pitAlphaR5Endpoint.includes("maxDuration: 800") &&
+    cron.includes("await runPointInTimeSp500AlphaResearchR5()"),
+  "The R5 endpoint and cron must keep V15 research-only and run only after rejected R4.",
 );
 assert(
   pitAlphaV2Endpoint.includes("await getPointInTimeSp500AlphaCreatorV2()") &&
