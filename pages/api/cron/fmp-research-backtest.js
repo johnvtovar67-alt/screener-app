@@ -201,6 +201,35 @@ export default async function handler(req, res) {
         eligibleForLiveCapital: false,
       });
     }
+    // A completed or failed frozen study is immutable evidence, not a reason
+    // to reload every previously inspected S&P dataset on every cron tick.
+    // Those legacy calls retain several full replay datasets in one process
+    // and have exceeded the function memory limit. More importantly, rerunning
+    // them cannot create a new holdout. Return the stored terminal result and
+    // reserve future work for a separately preregistered research generation.
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(200).json({
+      ok: true,
+      priorityResearch: "R14-data-foundation",
+      pointInTimeNasdaqR11: {
+        stage: pointInTimeNasdaqR11.stage,
+        status: pointInTimeNasdaqR11.report.status,
+        selectedCandidateId:
+          pointInTimeNasdaqR11.report.selectedCandidateId || null,
+        candidateDisposition:
+          pointInTimeNasdaqR11.report.candidateDisposition || null,
+        reportDigest: pointInTimeNasdaqR11.report.reportDigest || null,
+        productionChanged: false,
+        eligibleForAlphaClaim: false,
+        eligibleForLiveCapital: false,
+      },
+      legacyResearchRerun: false,
+      nextStep:
+        "Continue only with a separately preregistered research generation or genuinely new prospective sessions.",
+      productionChanged: false,
+      eligibleForAlphaClaim: false,
+      eligibleForLiveCapital: false,
+    });
     const minimumDatasetThrough =
       latestCompletedMarketSessionDay(new Date()) ||
       V11_FORWARD_EXTENSION_TARGET;

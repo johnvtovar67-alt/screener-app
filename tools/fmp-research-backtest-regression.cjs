@@ -41,6 +41,12 @@ const cronSource = fs.readFileSync(
   "utf8",
 );
 assert(
+  cronSource.indexOf("legacyResearchRerun: false") > 0 &&
+    cronSource.indexOf("legacyResearchRerun: false") <
+      cronSource.indexOf("const report = await runFmpResearchBacktest"),
+  "A terminal Nasdaq study must short-circuit before legacy datasets are reloaded.",
+);
+assert(
   nasdaqMutationRoutes.every(
     (source) =>
       source.includes('["GET", "POST"]') &&
