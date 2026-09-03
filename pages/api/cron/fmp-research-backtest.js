@@ -19,6 +19,7 @@ import {
   getPointInTimeNasdaqPriceIntegrity,
   runPointInTimeNasdaqDatasetAcquisition,
   runPointInTimeNasdaqPriceIntegrity,
+  preparePointInTimeNasdaqR13Earnings,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -133,6 +134,9 @@ async function advancePointInTimeNasdaqR11(req) {
       report: await runPointInTimeNasdaqPriceIntegrity(),
     };
   const current = await getPointInTimeNasdaqAlphaParallelR11();
+  const earnings = await preparePointInTimeNasdaqR13Earnings();
+  if (earnings?.status !== "complete")
+    return { stage: "earnings", report: earnings };
   if (["complete", "failed"].includes(current?.status))
     return { stage: "terminal", report: current };
   if (current?.status === "awaiting-validation") {
