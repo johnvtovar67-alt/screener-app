@@ -14,6 +14,14 @@ import {
   runPointInTimeSp500AlphaSizingR9,
   runPointInTimeSp500AlphaEarningsDriftR10,
   runPointInTimeSp500DatasetAcquisition,
+  getPointInTimeNasdaqAlphaParallelR11,
+  getPointInTimeNasdaqDatasetStatus,
+  getPointInTimeNasdaqPriceIntegrity,
+  runPointInTimeNasdaqDatasetAcquisition,
+  runPointInTimeNasdaqPriceIntegrity,
+  freezePointInTimeNasdaqR11Validation,
+  freezePointInTimeNasdaqR11Audit,
+  finalizePointInTimeNasdaqR11,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
   runV11StressTest,
@@ -32,6 +40,106 @@ function authorized(req) {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
+async function invokeNasdaqR11Workers(req, phase, shardCount) {
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "")
+    .split(",")[0]
+    .trim();
+  if (!/^[a-z0-9.-]+(?::\d+)?$/i.test(host))
+    throw new Error("A valid deployment host is required for R11 fan-out");
+  const protocol =
+    String(req.headers["x-forwarded-proto"] || "https") === "http"
+      ? "http"
+      : "https";
+  const authorization = String(req.headers.authorization || "");
+  const startedAt = new Date().toISOString();
+  const workers = await Promise.all(
+    Array.from({ length: shardCount }, async (_, shard) => {
+      const url = new URL(
+        "/api/research/pit-nasdaq-alpha-parallel-r11",
+        `${protocol}://${host}`,
+      );
+      url.searchParams.set("stage", phase);
+      url.searchParams.set("shard", String(shard));
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: authorization,
+          "Content-Type": "application/json",
+          "X-R11-Coordinator": "window-fanout-v1",
+        },
+        cache: "no-store",
+        signal: AbortSignal.timeout(780_000),
+      });
+      const payload = await response.json();
+      if (!response.ok)
+        throw new Error(
+          `R11 ${phase} shard ${shard} failed: ${payload?.error || response.status}`,
+        );
+      return payload;
+    }),
+  );
+  return {
+    phase,
+    startedAt,
+    completedAt: new Date().toISOString(),
+    workers,
+    allComplete: workers.every((worker) => worker?.status === "complete"),
+  };
+}
+
+async function advancePointInTimeNasdaqR11(req) {
+  const dataset = await getPointInTimeNasdaqDatasetStatus();
+  if (dataset?.status !== "compiled")
+    return {
+      stage: "dataset",
+      report: await runPointInTimeNasdaqDatasetAcquisition(),
+    };
+  const integrity = await getPointInTimeNasdaqPriceIntegrity();
+  if (
+    integrity?.status !== "complete" ||
+    integrity?.assessment?.allDataGatesPassed !== true ||
+    integrity?.datasetFingerprint !== dataset.datasetFingerprint
+  )
+    return {
+      stage: "integrity",
+      report: await runPointInTimeNasdaqPriceIntegrity(),
+    };
+  const current = await getPointInTimeNasdaqAlphaParallelR11();
+  if (["complete", "failed"].includes(current?.status))
+    return { stage: "terminal", report: current };
+  if (current?.status === "awaiting-validation") {
+    const fanout = await invokeNasdaqR11Workers(req, "validation", 2);
+    return {
+      stage: "validation",
+      fanout,
+      report: fanout.allComplete
+        ? await freezePointInTimeNasdaqR11Audit()
+        : current,
+    };
+  }
+  if (current?.status === "awaiting-audit") {
+    const [historicalAudit, forwardDiagnostic] = await Promise.all([
+      invokeNasdaqR11Workers(req, "historicalAudit", 2),
+      invokeNasdaqR11Workers(req, "forwardDiagnostic", 1),
+    ]);
+    const allComplete =
+      historicalAudit.allComplete && forwardDiagnostic.allComplete;
+    return {
+      stage: "audit",
+      fanout: { historicalAudit, forwardDiagnostic, allComplete },
+      report: allComplete ? await finalizePointInTimeNasdaqR11() : current,
+    };
+  }
+  const fanout = await invokeNasdaqR11Workers(req, "development", 3);
+  return {
+    stage: "development",
+    fanout,
+    report: fanout.allComplete
+      ? await freezePointInTimeNasdaqR11Validation()
+      : current,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -41,6 +149,26 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "CRON_SECRET is not configured" });
   if (!authorized(req)) return res.status(401).json({ error: "Unauthorized" });
   try {
+    const pointInTimeNasdaqR11 = await advancePointInTimeNasdaqR11(req);
+    const pointInTimeNasdaqR11Terminal =
+      pointInTimeNasdaqR11.stage === "terminal" ||
+      (pointInTimeNasdaqR11.stage === "integrity" &&
+        pointInTimeNasdaqR11.report?.status === "complete" &&
+        pointInTimeNasdaqR11.report?.assessment?.allDataGatesPassed === false) ||
+      (["development", "validation", "audit"].includes(
+        pointInTimeNasdaqR11.stage,
+      ) && pointInTimeNasdaqR11.report?.status === "complete");
+    if (!pointInTimeNasdaqR11Terminal) {
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(202).json({
+        ok: true,
+        priorityResearch: "R11",
+        pointInTimeNasdaqR11,
+        productionChanged: false,
+        eligibleForAlphaClaim: false,
+        eligibleForLiveCapital: false,
+      });
+    }
     const minimumDatasetThrough =
       latestCompletedMarketSessionDay(new Date()) ||
       V11_FORWARD_EXTENSION_TARGET;
@@ -119,6 +247,17 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
       ...report,
+      pointInTimeNasdaqR11: {
+        stage: pointInTimeNasdaqR11.stage,
+        status: pointInTimeNasdaqR11.report.status,
+        candidateDisposition:
+          pointInTimeNasdaqR11.report.candidateDisposition || null,
+        selectedCandidateId:
+          pointInTimeNasdaqR11.report.selectedCandidateId || null,
+        productionChanged: false,
+        eligibleForAlphaClaim: false,
+        eligibleForLiveCapital: false,
+      },
       boundedReviewExperiment: boundedReviewExperiment
         ? {
             status: boundedReviewExperiment.status,
