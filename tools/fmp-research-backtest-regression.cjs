@@ -958,6 +958,10 @@ const pitAlphaR7Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-research-r7.js",
   "utf8",
 );
+const pitAlphaR8Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-batch-r8.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -997,7 +1001,7 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR7({ force })") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaBatchR8({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
@@ -1053,6 +1057,27 @@ assert(
       'pointInTimeSp500AlphaResearchR6?.candidateDisposition ===',
     ),
   "The R7 endpoint and cron must keep V17 research-only and sequence it only after the frozen R6 rejection.",
+);
+assert(
+  pitAlphaR8Endpoint.includes("await getPointInTimeSp500AlphaBatchR8()") &&
+    pitAlphaR8Endpoint.includes("await runPointInTimeSp500AlphaBatchR8({") &&
+    pitAlphaR8Endpoint.includes('productionCandidateVersion: "V18"') &&
+    pitAlphaR8Endpoint.includes("productionChanged: false") &&
+    pitAlphaR8Endpoint.includes("eligibleForAlphaClaim: false") &&
+    pitAlphaR8Endpoint.includes("maxDuration: 800") &&
+    cron.includes("await runPointInTimeSp500AlphaBatchR8()") &&
+    cron.includes(
+      'pointInTimeSp500AlphaResearchR7?.candidateDisposition ===',
+    ),
+  "The R8 endpoint must batch 21 candidates and sequence only after the frozen R7 rejection.",
+);
+assert(
+  rawSource.includes("pointInTimeSp500AlphaR8BatchDefinitions") &&
+    rawSource.includes("developmentRank.slice(0, 4)") &&
+    rawSource.includes("fullPlaceboRunsAvoided") &&
+    rawSource.includes("auditExcludedFromSelection: true") &&
+    rawSource.includes("strictMatchedPlacebosRequired"),
+  "R8 must share window restores, narrow 21 candidates to four validation finalists and one audit candidate, and defer strict placebos until deterministic gates pass.",
 );
 assert(
   pitAlphaV2Endpoint.includes("await getPointInTimeSp500AlphaCreatorV2()") &&
