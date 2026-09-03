@@ -41,6 +41,14 @@ function authorized(req) {
 }
 
 async function invokeNasdaqR11Workers(req, phase, shardCount) {
+  const protectionBypassSecret = String(
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "",
+  ).trim();
+  if (!protectionBypassSecret) {
+    throw new Error(
+      "VERCEL_AUTOMATION_BYPASS_SECRET is required for protected R11 worker fan-out",
+    );
+  }
   const host = String(req.headers["x-forwarded-host"] || req.headers.host || "")
     .split(",")[0]
     .trim();
@@ -65,6 +73,7 @@ async function invokeNasdaqR11Workers(req, phase, shardCount) {
         headers: {
           Authorization: authorization,
           "Content-Type": "application/json",
+          "x-vercel-protection-bypass": protectionBypassSecret,
           "X-R11-Coordinator": "window-fanout-v1",
         },
         cache: "no-store",
