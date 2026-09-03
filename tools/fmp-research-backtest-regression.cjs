@@ -3120,7 +3120,14 @@ assert(
     pitAlphaR14Endpoint.includes("eligibleForAlphaClaim: false") &&
     pitAlphaR14Endpoint.includes("eligibleForLiveCapital: false") &&
     cron.includes("preparePointInTimeSp500SecFilingR14()") &&
-    cron.includes("runPointInTimeSp500AlphaFilingR14()"),
+    cron.includes("runPointInTimeSp500AlphaFilingR14()") &&
+    cron.includes("getPreservedPointInTimeNasdaqR13Outcome()") &&
+    !cron.includes(
+      "const pointInTimeNasdaqR11 = await advancePointInTimeNasdaqR11(req)",
+    ) &&
+    rawSource.includes(
+      "screener-app-cq5t point-in-time-research johnvtovar67@gmail.com",
+    ),
   "R14 must expose read-only status, require authentication for mutation, remain research-only, and advance through cron.",
 );
 assert(

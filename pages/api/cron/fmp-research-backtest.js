@@ -15,6 +15,7 @@ import {
   runPointInTimeSp500AlphaEarningsDriftR10,
   runPointInTimeSp500DatasetAcquisition,
   getPointInTimeNasdaqAlphaParallelR11,
+  getPreservedPointInTimeNasdaqR13Outcome,
   getPointInTimeNasdaqDatasetStatus,
   getPointInTimeNasdaqPriceIntegrity,
   runPointInTimeNasdaqDatasetAcquisition,
@@ -216,26 +217,12 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "CRON_SECRET is not configured" });
   if (!authorized(req)) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const pointInTimeNasdaqR11 = await advancePointInTimeNasdaqR11(req);
-    const pointInTimeNasdaqR11Terminal =
-      pointInTimeNasdaqR11.stage === "terminal" ||
-      (pointInTimeNasdaqR11.stage === "integrity" &&
-        pointInTimeNasdaqR11.report?.status === "complete" &&
-        pointInTimeNasdaqR11.report?.assessment?.allDataGatesPassed === false) ||
-      (["development", "validation", "audit"].includes(
-        pointInTimeNasdaqR11.stage,
-      ) && pointInTimeNasdaqR11.report?.status === "complete");
-    if (!pointInTimeNasdaqR11Terminal) {
-      res.setHeader("Cache-Control", "no-store");
-      return res.status(202).json({
-        ok: true,
-        priorityResearch: "R11",
-        pointInTimeNasdaqR11,
-        productionChanged: false,
-        eligibleForAlphaClaim: false,
-        eligibleForLiveCapital: false,
-      });
-    }
+    // R13 is immutable inspected evidence. A later deployment SHA must never
+    // restart it or turn its holdouts back into a tuning surface.
+    const pointInTimeNasdaqR11 = {
+      stage: "preserved-terminal",
+      report: await getPreservedPointInTimeNasdaqR13Outcome(),
+    };
     const pointInTimeSp500R14 = await advancePointInTimeSp500R14();
     res.setHeader("Cache-Control", "no-store");
     return res
