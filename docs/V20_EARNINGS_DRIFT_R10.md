@@ -8,9 +8,10 @@ a positive reported earnings surprise.
 The batch freezes 18 candidates: three surprise/relative-strength blends,
 three minimum surprise thresholds and two event windows. A reported event is
 not available to the strategy until the first market session strictly after
-its vendor date. Historical events are acquired in bounded quarterly calendar
-ranges rather than through the provider's restricted bulk route. Portfolios
-fill at the next open, pay 12 basis points of
+its vendor date. Historical events are acquired from the provider's
+per-company earnings-report endpoint for every point-in-time universe symbol;
+the batch cannot score unless at least 80% of those symbols have four usable
+observations. Portfolios fill at the next open, pay 12 basis points of
 slippage, hold residual cash as cash and never use a benchmark sleeve.
 
 All 18 candidates share development restores. Four reach validation and only
