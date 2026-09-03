@@ -1107,7 +1107,7 @@ assert(
     pitAlphaR10Endpoint.includes('productionCandidateVersion: "V20"') &&
     cron.includes("await runPointInTimeSp500AlphaEarningsDriftR10()") &&
     rawSource.includes("pointInTimeSp500AlphaR10EarningsDriftDefinitions") &&
-    rawSource.includes('"earnings-surprises-bulk"') &&
+    rawSource.includes('"earnings-calendar"') &&
     rawSource.includes("firstCalendarIndexAfter") &&
     walkForwardSource.includes('researchRankMode === "post-earnings-drift"') &&
     walkForwardSource.includes("requireEarningsSurpriseFactors"),
