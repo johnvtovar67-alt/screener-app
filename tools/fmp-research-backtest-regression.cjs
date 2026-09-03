@@ -48,6 +48,10 @@ assert(
   ) &&
     cronSource.includes("invokeNasdaqR11Workers") &&
     cronSource.includes("Promise.all") &&
+    cronSource.includes(
+      '"x-vercel-protection-bypass": protectionBypassSecret',
+    ) &&
+    cronSource.includes("VERCEL_AUTOMATION_BYPASS_SECRET is required") &&
     cronSource.includes('response.headers.get("content-type")') &&
     cronSource.includes("JSON.stringify(rawError)") &&
     cronSource.includes('console.error("R11 worker request failed"'),
