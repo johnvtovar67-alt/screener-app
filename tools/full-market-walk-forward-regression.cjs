@@ -52,6 +52,19 @@ assert(
     walkForwardSource.includes("requireAnchoredGradualFactors"),
   "The V2 research rank must require its causal 52-week anchor, path-continuity, and intermediate-leadership evidence.",
 );
+assert(
+  walkForwardSource.includes(
+    'researchRankMode === "attention-shock-breakout-continuation"',
+  ) &&
+    walkForwardSource.includes('researchRankMode === "attention-shock-only"') &&
+    walkForwardSource.includes(
+      'researchRankMode === "breakout-followthrough-only"',
+    ) &&
+    walkForwardSource.includes("requireAttentionShockFactors") &&
+    walkForwardSource.includes("minRelativeVolume20") &&
+    walkForwardSource.includes("minDistanceFromYearHighPct"),
+  "The R6 event study must have explicit causal attention-shock inputs, eligibility gates, and predeclared ablation ranks.",
+);
 
 const loader = createResearchModuleLoader(process.cwd());
 const {
@@ -678,6 +691,72 @@ run = simulatePointInTimePortfolio(anchoredGradualDataset, {
 assert(
   run.trades.find((trade) => trade.side === "buy")?.symbol === "AAA",
   "The anchored-gradual rank must execute end-to-end and prefer the declared near-high, continuous leader without a volume shock.",
+);
+const attentionShockDataset = {
+  ...rankedDataset,
+  sessions: rankedDataset.sessions.map((researchSession) => ({
+    ...researchSession,
+    positionSignals: researchSession.positionSignals.map((researchSignal) => ({
+      ...researchSignal,
+      entryTiming: {
+        ...researchSignal.entryTiming,
+        alpha20VsSpy: researchSignal.symbol === "AAA" ? 8 : 3,
+      },
+      researchFactors: {
+        ...researchSignal.researchFactors,
+        relativeVolume20: researchSignal.symbol === "AAA" ? 2.4 : 1.7,
+        return5: researchSignal.symbol === "AAA" ? 7 : 4,
+        distanceFromYearHighPct: researchSignal.symbol === "AAA" ? -1 : -4,
+      },
+    })),
+  })),
+};
+const attentionShockOptions = {
+  ...rankedOptions,
+  researchRankMode: "attention-shock-breakout-continuation",
+  requireAttentionShockFactors: true,
+  minRelativeVolume20: 1.5,
+  minReturn5Pct: 0,
+  maxReturn5Pct: 12,
+  minDistanceFromYearHighPct: -5,
+  attentionShockWeights: {
+    activityShock: 0.4,
+    breakoutProximity: 0.25,
+    followthrough: 0.2,
+    relativeStrength20: 0.15,
+  },
+};
+run = simulatePointInTimePortfolio(attentionShockDataset, attentionShockOptions);
+assert(
+  run.trades.find((trade) => trade.side === "buy")?.symbol === "AAA",
+  "The R6 event rank must execute end-to-end and prefer the stronger eligible volume-backed breakout using only close-known inputs.",
+);
+const incompleteAttentionShockDataset = {
+  ...attentionShockDataset,
+  sessions: attentionShockDataset.sessions.map((researchSession) => ({
+    ...researchSession,
+    positionSignals: researchSession.positionSignals.map((researchSignal) =>
+      researchSignal.symbol === "AAA"
+        ? {
+            ...researchSignal,
+            researchFactors: {
+              ...researchSignal.researchFactors,
+              relativeVolume20: null,
+            },
+          }
+        : researchSignal,
+    ),
+  })),
+};
+run = simulatePointInTimePortfolio(
+  incompleteAttentionShockDataset,
+  attentionShockOptions,
+);
+assert(
+  !run.trades.some(
+    (trade) => trade.side === "buy" && trade.symbol === "AAA",
+  ),
+  "The R6 event study must fail closed rather than rank a security with a missing volume-shock observation.",
 );
 run = simulatePointInTimePortfolio(rankedDataset, {
   ...rankedOptions,
