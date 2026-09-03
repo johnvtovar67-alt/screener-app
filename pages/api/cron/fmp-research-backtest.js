@@ -20,6 +20,9 @@ import {
   runPointInTimeNasdaqDatasetAcquisition,
   runPointInTimeNasdaqPriceIntegrity,
   preparePointInTimeNasdaqR13Earnings,
+  getPointInTimeSp500SecFilingR14Status,
+  preparePointInTimeSp500SecFilingR14,
+  runPointInTimeSp500AlphaFilingR14,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -172,6 +175,38 @@ async function advancePointInTimeNasdaqR11(req) {
   };
 }
 
+async function advancePointInTimeSp500R14() {
+  const facts = await getPointInTimeSp500SecFilingR14Status();
+  if (facts?.status !== "complete") {
+    const acquisition = await preparePointInTimeSp500SecFilingR14();
+    return {
+      stage: "sec-data",
+      report: {
+        status: acquisition.status,
+        datasetThrough: acquisition.datasetThrough,
+        requestedSymbols: Array.isArray(acquisition.requestedSymbols)
+          ? acquisition.requestedSymbols.length
+          : acquisition.requestedSymbols,
+        completedSymbols: Array.isArray(acquisition.completedSymbols)
+          ? acquisition.completedSymbols.length
+          : acquisition.completedSymbols,
+        coveredSymbols: acquisition.coveredSymbols,
+        remainingSymbols: acquisition.remainingSymbols,
+        coveragePct: acquisition.coveragePct,
+        eventRows: acquisition.eventRows,
+        productionChanged: false,
+        eligibleForAlphaClaim: false,
+        eligibleForLiveCapital: false,
+      },
+    };
+  }
+  const report = await runPointInTimeSp500AlphaFilingR14();
+  return {
+    stage: report.stage || report.status,
+    report,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -201,16 +236,14 @@ export default async function handler(req, res) {
         eligibleForLiveCapital: false,
       });
     }
-    // A completed or failed frozen study is immutable evidence, not a reason
-    // to reload every previously inspected S&P dataset on every cron tick.
-    // Those legacy calls retain several full replay datasets in one process
-    // and have exceeded the function memory limit. More importantly, rerunning
-    // them cannot create a new holdout. Return the stored terminal result and
-    // reserve future work for a separately preregistered research generation.
+    const pointInTimeSp500R14 = await advancePointInTimeSp500R14();
     res.setHeader("Cache-Control", "no-store");
-    return res.status(200).json({
+    return res
+      .status(pointInTimeSp500R14.report?.status === "complete" ? 200 : 202)
+      .json({
       ok: true,
-      priorityResearch: "R14-data-foundation",
+      priorityResearch: "R14-sec-filing-inflection",
+      pointInTimeSp500R14,
       pointInTimeNasdaqR11: {
         stage: pointInTimeNasdaqR11.stage,
         status: pointInTimeNasdaqR11.report.status,
@@ -225,7 +258,8 @@ export default async function handler(req, res) {
       },
       legacyResearchRerun: false,
       nextStep:
-        "Continue only with a separately preregistered research generation or genuinely new prospective sessions.",
+        pointInTimeSp500R14.report?.nextStep ||
+        "Continue the frozen R14 stage without rerunning legacy research.",
       productionChanged: false,
       eligibleForAlphaClaim: false,
       eligibleForLiveCapital: false,

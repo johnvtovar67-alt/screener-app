@@ -1,7 +1,6 @@
 import {
+  getAlphaCreatorSearch,
   getPointInTimeSp500AlphaProgram,
-  runAlphaCreatorSearch,
-  runPointInTimeSp500AlphaEarningsDriftR10,
 } from "../../../lib/fmpResearchBacktest";
 
 export const config = { maxDuration: 800 };
@@ -13,9 +12,8 @@ export default async function handler(req, res) {
   }
   res.setHeader("Cache-Control", "no-store");
   try {
-    const force = String(req.query.force || "") === "1";
     if (String(req.query.legacy || "") === "1") {
-      const report = await runAlphaCreatorSearch({ force });
+      const report = await getAlphaCreatorSearch();
       return res.status(200).json({
         ...report,
         authority: "legacy-current-survivor-diagnostic",
@@ -27,10 +25,7 @@ export default async function handler(req, res) {
     // compiled point-in-time S&P membership dataset. The previous
     // current-survivor search remains available solely as an explicitly
     // labelled historical diagnostic via ?legacy=1.
-    const report =
-      String(req.query.run || "") === "1"
-        ? await runPointInTimeSp500AlphaEarningsDriftR10({ force })
-        : await getPointInTimeSp500AlphaProgram();
+    const report = await getPointInTimeSp500AlphaProgram();
     if (!report)
       return res.status(202).json({
         version: 1,
@@ -44,7 +39,7 @@ export default async function handler(req, res) {
       ...report,
       authority: "point-in-time-sp500-research",
       latestResearchGeneration: report.version || 1,
-      latestResearchRoute: "/api/research/pit-sp500-alpha-earnings-drift-r10",
+      latestResearchRoute: "/api/research/pit-sp500-alpha-sec-filing-r14",
       frozenR9Report: "/api/research/pit-sp500-alpha-sizing-r9",
       frozenR8Report: "/api/research/pit-sp500-alpha-batch-r8",
       frozenR7Report: "/api/research/pit-sp500-alpha-research-r7",

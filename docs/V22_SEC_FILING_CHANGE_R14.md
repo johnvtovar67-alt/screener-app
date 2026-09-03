@@ -1,6 +1,6 @@
 # V22 / R14 SEC filing-change research contract
 
-Status: data engineering and preregistration only. It has no production authority.
+Status: frozen research contract. It has no production authority.
 
 ## Why this is a new research family
 
@@ -31,8 +31,41 @@ historical decision may use only the latest accession filed before that decision
 - execution: signal at close and whole-share fill at next open with 12 bps
   slippage per side and zero commission.
 
-No candidate thresholds or weights will be frozen until coverage, taxonomy
-mapping and issuer-link integrity pass without examining strategy returns.
+## Frozen candidate family
+
+Before any R14 return was calculated, the code froze five active candidates:
+
+1. balanced operating inflection: sales acceleration, profit growth, margin
+   expansion and cash generation;
+2. cash-backed growth: sales acceleration must be confirmed by improving cash
+   conversion;
+3. margin-expansion drift: newly reported margin improvement with limited
+   benchmark-relative price confirmation;
+4. triple-positive confirmation: reported sales, profitability and operating
+   cash flow must all be positive year over year;
+5. delayed confirmation: wait two completed sessions after filing and require
+   residual strength.
+
+The common lifecycle is also frozen: five-session ranking, eight holdings,
+12.25% targets, ten-session minimum holds, a 16% initial invalidation stop,
+60-session maximum holding period, three-name/37.5% sector caps, $30 million
+minimum average dollar volume and a $5 minimum price. Residual capital stays in
+cash. The exact weights, scales and thresholds live in
+`lib/secFilingResearch.js` and are SHA-256 bound to every staged result.
+
+Two non-selecting development controls are frozen: a matched-lifecycle residual
+momentum model and a deterministic random rank (seed 14). Controls cannot be
+selected as R14 winners.
+
+The five active candidates must first clear every development gate. No more
+than two can enter validation. Exactly one unchanged validation survivor may
+enter the historical audit. The audit cannot select or retune. Any deterministic
+audit survivor still requires a separate 1,000-seed maximum-statistic placebo
+test and 60 genuinely new sessions.
+
+The economic premise is filing-information underreaction rather than price
+trend extrapolation. It is informed by Robert Novy-Marx's evidence on
+fundamental momentum: https://www.nber.org/papers/w20984.
 
 ## Evidence boundary
 

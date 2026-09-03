@@ -3058,6 +3058,10 @@ const pitAlphaR10Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-earnings-drift-r10.js",
   "utf8",
 );
+const pitAlphaR14Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-sec-filing-r14.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -3097,13 +3101,27 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaEarningsDriftR10({ force })") &&
+    !alphaCreatorEndpoint.includes("runPointInTimeSp500AlphaEarningsDriftR10") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
-    alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
+    alphaCreatorEndpoint.includes("await getAlphaCreatorSearch()") &&
+    !alphaCreatorEndpoint.includes("runAlphaCreatorSearch") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
     alphaCreatorEndpoint.includes('authority: "legacy-current-survivor-diagnostic"') &&
+    alphaCreatorEndpoint.includes("pit-sp500-alpha-sec-filing-r14") &&
     alphaCreatorEndpoint.includes("maxDuration: 800"),
-  "The public alpha-creator endpoint must default to point-in-time research and quarantine the current-survivor search behind an explicitly labelled legacy diagnostic.",
+  "The public alpha-creator endpoint must be read-only R14 status and quarantine the current-survivor search behind an explicitly labelled legacy diagnostic.",
+);
+assert(
+  pitAlphaR14Endpoint.includes("getPointInTimeSp500AlphaFilingR14") &&
+    pitAlphaR14Endpoint.includes("runPointInTimeSp500AlphaFilingR14") &&
+    pitAlphaR14Endpoint.includes("rejectUnauthorizedResearchMutation") &&
+    pitAlphaR14Endpoint.includes('req.method === "POST"') &&
+    pitAlphaR14Endpoint.includes("productionChanged: false") &&
+    pitAlphaR14Endpoint.includes("eligibleForAlphaClaim: false") &&
+    pitAlphaR14Endpoint.includes("eligibleForLiveCapital: false") &&
+    cron.includes("preparePointInTimeSp500SecFilingR14()") &&
+    cron.includes("runPointInTimeSp500AlphaFilingR14()"),
+  "R14 must expose read-only status, require authentication for mutation, remain research-only, and advance through cron.",
 );
 assert(
   pitAlphaR4Endpoint.includes("await getPointInTimeSp500AlphaResearchR4()") &&
