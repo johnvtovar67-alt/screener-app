@@ -53,6 +53,16 @@ fundamentals or historical-news hindsight. `GET
 /api/research/pit-sp500-alpha-creator-v2` exposes its status; the public
 `/api/research/alpha-creator` route shows the latest available generation.
 
+The next production-policy candidate is V13; its research label is R3 so the
+application-policy sequence is not confused with alpha-generator report
+schemas. R3 is frozen in
+`V13_BENCHMARK_RESIDUAL_VOLATILITY_MANAGED.md`. It tests one benchmark-relative,
+sector-aware, volatility-managed price thesis against matched controls,
+Newey-West significance hurdles, a family-wise repeated-search adjustment and
+the existing placebo gates. `GET
+/api/research/pit-sp500-alpha-research-r3` exposes its status. R3 cannot run
+until the corrected dataset passes the post-V2 adjusted-price integrity audit.
+
 ## Run sequence
 
 1. Check the FMP subscription without exposing the API key:
