@@ -5,6 +5,8 @@ import {
 import { rejectUnauthorizedResearchMutation } from "../../../lib/researchMutationAuth";
 
 export const config = { maxDuration: 800 };
+const RESPONSE_VERSION = 2;
+const RESPONSE_CONTRACT = "observed-history-exact-253-row-requirements-v3";
 
 export default async function handler(req, res) {
   if (!["GET", "POST"].includes(req.method)) {
@@ -26,7 +28,8 @@ export default async function handler(req, res) {
         : await getPointInTimeNasdaqPriceIntegrity();
     if (!report || report.status === "unavailable")
       return res.status(202).json({
-        version: 1,
+        version: RESPONSE_VERSION,
+        integrityContract: RESPONSE_CONTRACT,
         status: "pending",
         productionChanged: false,
         eligibleForAlphaClaim: false,
@@ -34,7 +37,8 @@ export default async function handler(req, res) {
     return res.status(report.status === "failed" ? 500 : 200).json(report);
   } catch (error) {
     return res.status(500).json({
-      version: 1,
+      version: RESPONSE_VERSION,
+      integrityContract: RESPONSE_CONTRACT,
       status: "failed",
       productionChanged: false,
       eligibleForAlphaClaim: false,

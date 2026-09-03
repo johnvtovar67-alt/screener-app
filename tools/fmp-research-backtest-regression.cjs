@@ -58,7 +58,13 @@ assert(
     rawSource.includes("currentAnchorCardinalityPlausible") &&
     rawSource.includes("rawMembershipDigest") &&
     rawSource.includes("currentPointInTimeNasdaqUniverse") &&
-    rawSource.includes("date-added-effective-inclusive-boundary-v2") &&
+    rawSource.includes(
+      "date-added-effective-inclusive-spinoff-supplement-v3",
+    ) &&
+    rawSource.includes("POINT_IN_TIME_NASDAQ_MEMBERSHIP_SUPPLEMENTS") &&
+    rawSource.includes('addedSymbol: "HONA"') &&
+    rawSource.includes('effectiveDateBasis: "source-verified-supplement"') &&
+    rawSource.includes("membershipSupplementContract") &&
     rawSource.includes("row.date >= POINT_IN_TIME_NASDAQ_RESEARCH_FROM"),
   "R11 must use the official FMP Nasdaq membership endpoints behind cardinality and full-history fingerprint gates.",
 );
@@ -79,6 +85,12 @@ assert(
     rawSource.includes("pointInTimeProviderPriceSymbols") &&
     rawSource.includes("pointInTimeCanonicalPriceHistories") &&
     rawSource.includes("date-bounded-provider-alias-stitch-v1") &&
+    rawSource.includes(
+      "historical-signal-evaluator-v11-nasdaq-membership-removal-history-v4",
+    ) &&
+    rawSource.includes(
+      "effective-session-adjusted-open-else-conservative-zero-v2",
+    ) &&
     rawSource.includes('type: "universe-removal"') &&
     rawSource.includes("universeRemovalOpenCoveragePct") &&
     rawSource.includes("universeRemovalOutcomeCoveragePct") &&
@@ -105,13 +117,24 @@ assert(
   rawSource.includes('status: "stale"') &&
     rawSource.includes("signature?.compilerContract ===") &&
     rawSource.includes("signature?.universeContract ===") &&
+    rawSource.includes("signature?.membershipSupplementContract ===") &&
     rawSource.includes("signature?.priceAliasContract ===") &&
     rawSource.includes("signature?.universeRemovalPolicy ===") &&
+    rawSource.includes("pointInTimeNasdaqDatasetContractFingerprint") &&
+    rawSource.includes("currentPointInTimeNasdaqEvidence") &&
+    rawSource.includes("currentPointInTimeNasdaqIntegrity") &&
+    rawSource.includes("observed-history-exact-253-row-requirements-v3") &&
+    rawSource.includes("observedSignalHistoryRequired") &&
+    rawSource.includes("missingRequiredPriceRowsBySymbol") &&
+    nasdaqCompilerSource.includes("membershipChangesEffectiveInclusive: true") &&
     nasdaqIntegritySource.includes(
-      "assertCurrentPointInTimeNasdaqEvidence(manifest, datasetStatus)",
+      "assertCurrentPointInTimeNasdaqEvidence(manifest, datasetStatus, universe)",
+    ) &&
+    nasdaqIntegritySource.includes(
+      "requireExactObservedSignalHistory: true",
     ) &&
     nasdaqR11ContextSource.includes(
-      "assertCurrentPointInTimeNasdaqEvidence(manifest, datasetStatus)",
+      "assertCurrentPointInTimeNasdaqEvidence(manifest, datasetStatus, universe)",
     ),
   "A compiled Nasdaq status must become stale when the compiler, alias, or removal contract changes so the production cron actually rebuilds it.",
 );
@@ -365,13 +388,19 @@ assert(
 const contract = createResearchModuleLoader(process.cwd()).load(
   "lib/v12ResearchContract.js",
 );
+const { compactReplaySession } = createResearchModuleLoader(
+  process.cwd(),
+).load("lib/replayDatasetCompaction.js");
+const { compilePointInTimeSignals } = createResearchModuleLoader(
+  process.cwd(),
+).load("lib/historicalSignalEvaluator.js");
 source = source
   .replace(/import[\s\S]*?from\s+["'][^"']+["'];?/g, "")
   .replace(/export const /g, "const ")
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimeSecuritySymbol,pointInTimeProviderPriceSymbols,pointInTimeCanonicalPriceHistories,pointInTimeSp500RawDatasetFromHistory,pointInTimeIndexRawDatasetFromHistory,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration,reconstructIndexInitialMembers,canonicalIndexMembershipChanges,pointInTimePriceInputFingerprint,pointInTimeNasdaqManifestHasCurrentContract,assertCurrentPointInTimeNasdaqEvidence,buildR11ShardPlan,r11ShardStorePath,mergeR11ShardReports,validateR11ShardReport,r11PhaseChecksPass,r11DeterministicAuditGate,sha256Fingerprint};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimeSecuritySymbol,pointInTimeProviderPriceSymbols,pointInTimeCanonicalPriceHistories,pointInTimeSp500RawDatasetFromHistory,pointInTimeIndexRawDatasetFromHistory,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration,reconstructIndexInitialMembers,canonicalIndexMembershipChanges,pointInTimePriceInputFingerprint,pointInTimeNasdaqExpectedSessionDates,pointInTimeNasdaqExpectedMembershipEvidence,pointInTimeNasdaqManifestHasCurrentContract,currentPointInTimeNasdaqUniverse,currentPointInTimeNasdaqEvidence,currentPointInTimeNasdaqIntegrity,assertCurrentPointInTimeNasdaqEvidence,pointInTimeNasdaqMembershipDigest,pointInTimeNasdaqMembershipSupplementFingerprint,pointInTimeNasdaqMembershipSupplementConflict,pointInTimeNasdaqPriceAcquisitionSignatureMatches,buildR11ShardPlan,r11ShardStorePath,mergeR11ShardReports,validateR11ShardReport,r11PhaseChecksPass,r11DeterministicAuditGate,sha256Fingerprint};";
 let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
@@ -393,6 +422,9 @@ const box = {
   setTimeout,
   clearTimeout,
   createHash: require("crypto").createHash,
+  isUsMarketSessionDay: createResearchModuleLoader(process.cwd()).load(
+    "lib/marketSession.js",
+  ).isUsMarketSessionDay,
   ...contract,
   latestCompletedMarketSessionDay(value) {
     const date = new Date(value);
@@ -505,8 +537,17 @@ const {
   reconstructIndexInitialMembers,
   canonicalIndexMembershipChanges,
   pointInTimePriceInputFingerprint,
+  pointInTimeNasdaqExpectedSessionDates,
+  pointInTimeNasdaqExpectedMembershipEvidence,
   pointInTimeNasdaqManifestHasCurrentContract,
+  currentPointInTimeNasdaqUniverse,
+  currentPointInTimeNasdaqEvidence,
+  currentPointInTimeNasdaqIntegrity,
   assertCurrentPointInTimeNasdaqEvidence,
+  pointInTimeNasdaqMembershipDigest,
+  pointInTimeNasdaqMembershipSupplementFingerprint,
+  pointInTimeNasdaqMembershipSupplementConflict,
+  pointInTimeNasdaqPriceAcquisitionSignatureMatches,
   buildR11ShardPlan,
   r11ShardStorePath,
   mergeR11ShardReports,
@@ -516,29 +557,571 @@ const {
   sha256Fingerprint,
 } = box.module.exports;
 
-const currentNasdaqManifestProbe = {
-  complete: true,
-  chunks: [{}],
-  evidenceDatasetFingerprint: "evidence-1",
-  signature: JSON.stringify({
-    compilerContract:
-      "historical-signal-evaluator-v11-nasdaq-membership-removal-v2",
-    universeContract: "date-added-effective-inclusive-boundary-v2",
-    priceAliasContract: "date-bounded-provider-alias-stitch-v1",
-    universeRemovalPolicy:
-      "next-session-adjusted-open-else-conservative-zero-v1",
+const doubleCompactedListingSession = compactReplaySession(
+  compactReplaySession({
+    date: "2026-07-01",
+    signals: [
+      {
+        symbol: "IPO",
+        listedAt: "2026-06-29",
+        delistedAt: "2026-12-31",
+      },
+    ],
   }),
+);
+assert(
+  doubleCompactedListingSession.signals[0]?.listedAt === "2026-06-29" &&
+    doubleCompactedListingSession.signals[0]?.delistedAt === "2026-12-31",
+  "Root signal listing bounds must survive both chunk compaction and restore-time re-compaction.",
+);
+
+const compilerHistoryDates = Array.from({ length: 253 }, (_, index) =>
+  new Date(Date.UTC(2025, 0, index + 1)).toISOString().slice(0, 10),
+);
+const compilerHistoryDataset = {
+  metadata: { pointInTime: true },
+  securities: [{ symbol: "AAA", listedAt: compilerHistoryDates[0] }],
+  fundamentals: [],
+  events: [],
+  sessions: compilerHistoryDates.map((date, index) => ({
+    date,
+    decisionAt: `${date}T20:00:00.000Z`,
+    fundamentalCoverageAsOf: `${date}T20:00:00.000Z`,
+    eventCoverageAsOf: `${date}T20:00:00.000Z`,
+    universeSymbols: ["AAA"],
+    prices: ["AAA", "SPY", "QQQ"].map((symbol, symbolIndex) => ({
+      symbol,
+      open: 100 + symbolIndex + index / 100,
+      high: 102 + symbolIndex + index / 100,
+      low: 99 + symbolIndex + index / 100,
+      close: 101 + symbolIndex + index / 100,
+      volume: 100_000_000,
+      adjusted: true,
+    })),
+  })),
+};
+const exactHistoryCompiled = compilePointInTimeSignals(
+  compilerHistoryDataset,
+  { minimumHistoryRows: 253 },
+);
+const defaultHistoryCompiled = compilePointInTimeSignals(
+  compilerHistoryDataset,
+  { maxSessions: 1 },
+);
+assert(
+  exactHistoryCompiled.metadata.minimumSignalHistoryRows === 253 &&
+    exactHistoryCompiled.sessions[251].signals.length === 0 &&
+    exactHistoryCompiled.sessions[251].positionSignals.length === 0 &&
+    exactHistoryCompiled.sessions[252].positionSignals.length === 1 &&
+    defaultHistoryCompiled.metadata.minimumSignalHistoryRows === undefined,
+  "Nasdaq compilation must suppress signals until 253 observed rows while the shared compiler default remains unchanged.",
+);
+
+const probePriceFingerprint = "1".repeat(64);
+const probeSessionDates = pointInTimeNasdaqExpectedSessionDates();
+assert(
+  probeSessionDates.length === 1_170 &&
+    probeSessionDates[0] === "2022-01-03" &&
+    probeSessionDates.at(-1) === "2026-09-01" &&
+    !probeSessionDates.includes("2025-01-09"),
+  "The frozen Nasdaq evidence calendar must contain the exact 1,170 exchange sessions, including exceptional closures.",
+);
+const probeInitialSymbols = Array.from({ length: 90 }, (_, index) =>
+  `N${String(index).padStart(3, "0")}`,
+).sort();
+const probeSymbols = ["HONA", ...probeInitialSymbols].sort();
+const probeMembershipObservations =
+  probeInitialSymbols.length * probeSessionDates.length +
+  probeSessionDates.filter((date) => date >= "2026-06-29").length;
+const probeBenchmarkObservations = 2 * probeSessionDates.length;
+const probeRequiredPriceRows =
+  probeMembershipObservations + probeBenchmarkObservations;
+const probeMembershipSupplements = [
+  {
+    date: "2026-06-29",
+    effectiveDate: "2026-06-29",
+    announcementDate: "2026-06-05",
+    addedSymbol: "HONA",
+    removedSymbol: "",
+    addedSecurity: "Honeywell Aerospace Inc.",
+    reason:
+      "Source-backed inference: NDX spin-off rule applied on the verified ex-date",
+    provenance:
+      "Nasdaq NDX methodology (2026) applied to Nasdaq Corporate Action ECA2026-399",
+    sources: [
+      "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf",
+      "https://www.nasdaqtrader.com/TraderNews.aspx?id=ECA2026-399",
+    ],
+    effectiveDateBasis: "source-verified-supplement",
+    sourceVerifiedSupplement: true,
+  },
+];
+const probeSupplementFingerprint =
+  pointInTimeNasdaqMembershipSupplementFingerprint(
+    probeMembershipSupplements,
+  );
+const universeProbeFor = (symbols) => {
+  const normalizedSymbols = [...new Set(symbols)].sort();
+  const initialSymbols = normalizedSymbols.filter((symbol) => symbol !== "HONA");
+  const changes = probeMembershipSupplements.map((row) => ({ ...row }));
+  const profilesBySymbol = Object.fromEntries(
+    normalizedSymbols.map((symbol) => [
+      symbol,
+      { symbol, name: symbol, companyName: symbol },
+    ]),
+  );
+  const privateBlueprint = {
+    currentSymbols: normalizedSymbols,
+    throughSymbols: normalizedSymbols,
+    initialSymbols,
+    changes,
+    membershipSupplements: probeMembershipSupplements,
+    membershipSupplementContract:
+      "source-verified-nasdaq-spinoff-events-v1",
+    membershipSupplementFingerprint: probeSupplementFingerprint,
+    unionSymbols: normalizedSymbols,
+    profilesBySymbol,
+    delistedDates: {},
+  };
+  const rawMembershipDigest = pointInTimeNasdaqMembershipDigest({
+    ...privateBlueprint,
+    fromDate: "2022-01-01",
+    throughDate: "2026-09-01",
+  });
+  return {
+    version: 1,
+    status: "complete",
+    universeContract:
+      "date-added-effective-inclusive-spinoff-supplement-v3",
+    membershipSupplementContract:
+      "source-verified-nasdaq-spinoff-events-v1",
+    membershipSupplementFingerprint: probeSupplementFingerprint,
+    membershipEffectiveConvention: "effective-date-inclusive",
+    supplementalMembershipEvents: 1,
+    currentAnchorCardinalityPlausible: true,
+    pointInTimeMembershipConstructed: true,
+    currentConstituents: normalizedSymbols.length,
+    throughConstituents: normalizedSymbols.length,
+    initialConstituents: initialSymbols.length,
+    normalizedMembershipChanges: changes.length,
+    unionSymbols: normalizedSymbols.length,
+    earliestMembershipEvent: "2026-06-29",
+    latestMembershipEvent: "2026-06-29",
+    fromDate: "2022-01-01",
+    throughDate: "2026-09-01",
+    rawMembershipDigest,
+    privateBlueprint: { ...privateBlueprint, rawMembershipDigest },
+  };
+};
+const currentNasdaqUniverseProbe = universeProbeFor(probeSymbols);
+const currentNasdaqSignature = JSON.stringify({
+  schema: 1,
+  compilerContract:
+    "historical-signal-evaluator-v11-nasdaq-membership-removal-history-v4",
+  minimumSignalHistoryRows: 253,
+  universeContract:
+    "date-added-effective-inclusive-spinoff-supplement-v3",
+  membershipSupplementContract: "source-verified-nasdaq-spinoff-events-v1",
+  membershipSupplementFingerprint: probeSupplementFingerprint,
+  membershipEffectiveConvention: "effective-date-inclusive",
+  priceAliasContract: "date-bounded-provider-alias-stitch-v1",
+  priceAcquisitionContract: "membership-bound-full-symbol-refresh-v2",
+  universeRemovalPolicy:
+    "effective-session-adjusted-open-else-conservative-zero-v2",
+  securityIdentityContract: "canonical-current-ticker-v1",
+  rawMembershipDigest: currentNasdaqUniverseProbe.rawMembershipDigest,
+  fromDate: "2022-01-01",
+  endDate: "2026-09-01",
+  requestedSymbols: probeSymbols,
+  usableSymbols: probeSymbols,
+  priceContract: "fmp-dividend-adjusted-v1",
+  priceInputFingerprint: probePriceFingerprint,
+  sessionDates: probeSessionDates,
+});
+const probeDatasetInputFingerprint = sha256Fingerprint(currentNasdaqSignature);
+const probeChunk = {
+  pathname: `research/pit-nasdaq-index-compiled-v1/${probeDatasetInputFingerprint}/0000-${probeSessionDates.length}.json.gz`,
+  start: 0,
+  end: probeSessionDates.length,
+  firstDate: probeSessionDates[0],
+  lastDate: probeSessionDates.at(-1),
+  contentSha256: "2".repeat(64),
+};
+const probeEvidenceFingerprint = sha256Fingerprint(
+  JSON.stringify({
+    schema: 1,
+    datasetFingerprint: probeDatasetInputFingerprint,
+    chunks: [probeChunk],
+  }),
+);
+const probeDatasetContractFingerprint = sha256Fingerprint(
+  JSON.stringify({
+    schema: 1,
+    universeContract:
+      "date-added-effective-inclusive-spinoff-supplement-v3",
+    membershipSupplementContract: "source-verified-nasdaq-spinoff-events-v1",
+    membershipSupplementFingerprint: probeSupplementFingerprint,
+    membershipEffectiveConvention: "effective-date-inclusive",
+    compilerContract:
+      "historical-signal-evaluator-v11-nasdaq-membership-removal-history-v4",
+    minimumSignalHistoryRows: 253,
+    priceAliasContract: "date-bounded-provider-alias-stitch-v1",
+    priceAcquisitionContract: "membership-bound-full-symbol-refresh-v2",
+    universeRemovalPolicy:
+      "effective-session-adjusted-open-else-conservative-zero-v2",
+    securityIdentityContract: "canonical-current-ticker-v1",
+  }),
+);
+const currentNasdaqManifestProbe = {
+  schema: 1,
+  complete: true,
+  completedSessions: probeSessionDates.length,
+  sessionDates: probeSessionDates,
+  chunks: [probeChunk],
+  signature: currentNasdaqSignature,
+  datasetFingerprint: probeDatasetInputFingerprint,
+  evidenceDatasetFingerprint: probeEvidenceFingerprint,
+  priceInputFingerprint: probePriceFingerprint,
+};
+const currentNasdaqStatusProbe = {
+  status: "compiled",
+  datasetContractFingerprint: probeDatasetContractFingerprint,
+  priceAcquisitionContract: "membership-bound-full-symbol-refresh-v2",
+  rawMembershipDigest: currentNasdaqUniverseProbe.rawMembershipDigest,
+  membershipSupplementFingerprint: probeSupplementFingerprint,
+  datasetFingerprint: probeEvidenceFingerprint,
+  datasetInputFingerprint: probeDatasetInputFingerprint,
+  priceInputFingerprint: probePriceFingerprint,
+  period: { from: "2022-01-01", through: "2026-09-01" },
+  priceContract: {
+    id: "fmp-dividend-adjusted-v1",
+    adjustmentMethod: "provider-dividend-adjusted-ohlc",
+  },
+  productionChanged: false,
+  eligibleForAlphaClaim: false,
+};
+const probeExpectedMembershipEvidence =
+  pointInTimeNasdaqExpectedMembershipEvidence(
+    currentNasdaqUniverseProbe,
+    probeSessionDates,
+  );
+const currentNasdaqIntegrityProbe = {
+  version: 2,
+  integrityContract: "observed-history-exact-253-row-requirements-v3",
+  status: "complete",
+  datasetFingerprint: probeEvidenceFingerprint,
+  datasetInputFingerprint: probeDatasetInputFingerprint,
+  priceInputFingerprint: probePriceFingerprint,
+  rawMembershipDigest: currentNasdaqUniverseProbe.rawMembershipDigest,
+  membershipSupplementFingerprint: probeSupplementFingerprint,
+  assessment: {
+    adjustedPriceIntegrityPass: true,
+    exactObservedSignalHistoryComplete: true,
+    missingPriceAttributionComplete: true,
+    activeMemberDateCoverageComplete: true,
+    universeRemovalExactOpenCoverageComplete: true,
+    universeRemovalOutcomeCoverageComplete: true,
+    membershipCardinalityPlausible: true,
+    membershipPathMatchesUniverse: true,
+    allDataGatesPassed: true,
+  },
+  membershipPathFingerprint:
+    probeExpectedMembershipEvidence.membershipPathFingerprint,
+  expectedMembershipPathFingerprint:
+    probeExpectedMembershipEvidence.membershipPathFingerprint,
+  expectedRequestedMembershipObservations:
+    probeExpectedMembershipEvidence.requestedMembershipObservations,
+  expectedMinimumMembershipCount:
+    probeExpectedMembershipEvidence.minimumMembershipCount,
+  expectedMaximumMembershipCount:
+    probeExpectedMembershipEvidence.maximumMembershipCount,
+  expectedUniverseRemovalActions:
+    probeExpectedMembershipEvidence.universeRemovalActions,
+  membershipObservationCoveragePct: 100,
+  requestedMembershipObservations: probeMembershipObservations,
+  availableMembershipObservations: probeMembershipObservations,
+  missingMembershipObservations: 0,
+  missingMembershipObservationsBySymbol: [],
+  universeRemovalOpenCoveragePct: 100,
+  universeRemovalOpenPrices: 0,
+  universeRemovalZeroRecoveryActions: 0,
+  universeRemovalResolvedOutcomes: 0,
+  universeRemovalOutcomeCoveragePct: 100,
+  universeRemovalActions: 0,
+  universeRemovalMissingOutcomes: 0,
+  universeRemovalPolicy:
+    "effective-session-adjusted-open-else-conservative-zero-v2",
+  productionChanged: false,
+  eligibleForAlphaClaim: false,
+  minimumMembershipCount: 90,
+  maximumMembershipCount: 91,
+  audit: {
+    pass: true,
+    sessions: 1_170,
+    totalStoredPriceRows: probeRequiredPriceRows,
+    priceRows: probeRequiredPriceRows,
+    activeMembershipPriceRows: probeMembershipObservations,
+    lookbackPriceRows: probeBenchmarkObservations,
+    excludedArchivalPriceRows: 0,
+    adjustedRows: probeRequiredPriceRows,
+    adjustedCoveragePct: 100,
+    nonPositiveRows: 0,
+    invalidOhlcRows: 0,
+    requiredPriceRows: probeRequiredPriceRows,
+    observedRequiredPriceRows: probeRequiredPriceRows,
+    missingRequiredPriceRows: 0,
+    missingRequiredPriceRowsBySymbol: [],
+    missingRequiredAttributionComplete: true,
+    possibleUnadjustedCorporateActions: [],
+    possibleDuplicateActiveSeries: [],
+    observedSignalHistoryRequired: true,
+    observedSignalHistoryPass: true,
+    shortSignalHistoryRows: 0,
+    nasdaqMembershipEvidenceApplied: true,
+    membershipPathFingerprint:
+      probeExpectedMembershipEvidence.membershipPathFingerprint,
+    membershipObservationCoveragePct: 100,
+    requestedMembershipObservations: probeMembershipObservations,
+    availableMembershipObservations: probeMembershipObservations,
+    missingMembershipObservations: 0,
+    missingMembershipObservationsBySymbol: [],
+    activeMemberDateCoverageComplete: true,
+    universeRemovalActions: 0,
+    universeRemovalOpenPrices: 0,
+    universeRemovalOpenCoveragePct: 100,
+    universeRemovalZeroRecoveryActions: 0,
+    universeRemovalResolvedOutcomes: 0,
+    universeRemovalMissingOutcomes: 0,
+    universeRemovalOutcomeCoveragePct: 100,
+    universeRemovalOutcomeCoverageComplete: true,
+    minimumMembershipCount: 90,
+    maximumMembershipCount: 91,
+  },
 };
 assert(
-  pointInTimeNasdaqManifestHasCurrentContract(currentNasdaqManifestProbe) &&
-    assertCurrentPointInTimeNasdaqEvidence(currentNasdaqManifestProbe, {
-      status: "compiled",
-      datasetFingerprint: "evidence-1",
-    }),
-  "Current Nasdaq evidence must be accepted only when the compiled status is bound to the same fingerprint.",
+  currentPointInTimeNasdaqUniverse(currentNasdaqUniverseProbe) &&
+    pointInTimeNasdaqManifestHasCurrentContract(currentNasdaqManifestProbe) &&
+    assertCurrentPointInTimeNasdaqEvidence(
+      currentNasdaqManifestProbe,
+      currentNasdaqStatusProbe,
+      currentNasdaqUniverseProbe,
+    ) &&
+    currentPointInTimeNasdaqIntegrity(
+      currentNasdaqIntegrityProbe,
+      currentNasdaqManifestProbe,
+      currentNasdaqStatusProbe,
+      currentNasdaqUniverseProbe,
+    ),
+  "Current Nasdaq evidence must be accepted only when universe, manifest, status, and integrity fingerprints agree.",
+);
+const rehashedUniverseProbe = (privateBlueprint, publicOverrides = {}) => {
+  const rawMembershipDigest = pointInTimeNasdaqMembershipDigest({
+    ...privateBlueprint,
+    fromDate: "2022-01-01",
+    throughDate: "2026-09-01",
+  });
+  return {
+    ...currentNasdaqUniverseProbe,
+    ...publicOverrides,
+    rawMembershipDigest,
+    privateBlueprint: { ...privateBlueprint, rawMembershipDigest },
+  };
+};
+assert(
+  !currentPointInTimeNasdaqUniverse(
+    rehashedUniverseProbe(
+      { ...currentNasdaqUniverseProbe.privateBlueprint, changes: [] },
+      {
+        normalizedMembershipChanges: 0,
+        earliestMembershipEvent: null,
+        latestMembershipEvent: null,
+      },
+    ),
+  ) &&
+    !currentPointInTimeNasdaqUniverse(
+      rehashedUniverseProbe(
+        {
+          ...currentNasdaqUniverseProbe.privateBlueprint,
+          initialSymbols: probeSymbols,
+        },
+        { initialConstituents: probeSymbols.length },
+      ),
+    ),
+  "The frozen HONA supplement must be an applied June 29 transition and HONA must not leak into initial membership.",
+);
+assert(
+  !pointInTimeNasdaqMembershipSupplementConflict(
+    [
+      {
+        date: "2026-06-29",
+        addedSymbol: "HONA",
+        removedSymbol: "",
+      },
+    ],
+    probeMembershipSupplements,
+  ) &&
+    pointInTimeNasdaqMembershipSupplementConflict(
+      [
+        {
+          date: "2025-12-31",
+          addedSymbol: "HONA",
+          removedSymbol: "",
+        },
+      ],
+      probeMembershipSupplements,
+    ) &&
+    pointInTimeNasdaqMembershipSupplementConflict(
+      [
+        {
+          date: "2026-06-29",
+          addedSymbol: "HONA",
+          removedSymbol: "HON",
+        },
+      ],
+      probeMembershipSupplements,
+    ),
+  "Any alternate HONA date or same-date conflicting removal must stop the source-backed supplement merge.",
+);
+const acquisitionMatchOptions = {
+  fromDate: "2022-01-01",
+  endDate: "2026-09-01",
+  priceContract: "fmp-dividend-adjusted-v1",
+  priceSymbols: [...probeSymbols, "QQQ", "SPY"].sort(),
+  rawMembershipDigest: currentNasdaqUniverseProbe.rawMembershipDigest,
+  membershipSupplementFingerprint: probeSupplementFingerprint,
+};
+const currentAcquisitionSignature = JSON.stringify({
+  schema: 3,
+  priceAcquisitionContract: "membership-bound-full-symbol-refresh-v2",
+  rawMembershipDigest: acquisitionMatchOptions.rawMembershipDigest,
+  membershipSupplementFingerprint: probeSupplementFingerprint,
+  fromDate: acquisitionMatchOptions.fromDate,
+  endDate: acquisitionMatchOptions.endDate,
+  priceContract: acquisitionMatchOptions.priceContract,
+  symbols: acquisitionMatchOptions.priceSymbols,
+});
+assert(
+  pointInTimeNasdaqPriceAcquisitionSignatureMatches(
+    currentAcquisitionSignature,
+    acquisitionMatchOptions,
+  ) &&
+    !pointInTimeNasdaqPriceAcquisitionSignatureMatches(
+      JSON.stringify({
+        schema: 3,
+        fromDate: acquisitionMatchOptions.fromDate,
+        endDate: acquisitionMatchOptions.endDate,
+        priceContract: acquisitionMatchOptions.priceContract,
+        symbols: acquisitionMatchOptions.priceSymbols,
+      }),
+      acquisitionMatchOptions,
+    ) &&
+    !pointInTimeNasdaqPriceAcquisitionSignatureMatches(
+      currentAcquisitionSignature,
+      { ...acquisitionMatchOptions, rawMembershipDigest: "f".repeat(64) },
+    ),
+  "A pre-supplement or differently bound Nasdaq price checkpoint must force a full membership-aware refresh.",
+);
+const selfConsistentManifestProbe = (signaturePayload) => {
+  const signature = JSON.stringify(signaturePayload);
+  const datasetFingerprint = sha256Fingerprint(signature);
+  const sessionDates = signaturePayload.sessionDates;
+  const chunk = {
+    ...probeChunk,
+    pathname: `research/pit-nasdaq-index-compiled-v1/${datasetFingerprint}/0000-${sessionDates.length}.json.gz`,
+    end: sessionDates.length,
+    firstDate: sessionDates[0],
+    lastDate: sessionDates.at(-1),
+  };
+  return {
+    ...currentNasdaqManifestProbe,
+    completedSessions: sessionDates.length,
+    sessionDates,
+    chunks: [chunk],
+    signature,
+    datasetFingerprint,
+    evidenceDatasetFingerprint: sha256Fingerprint(
+      JSON.stringify({
+        schema: 1,
+        datasetFingerprint,
+        chunks: [chunk],
+      }),
+    ),
+  };
+};
+const currentSignaturePayload = JSON.parse(currentNasdaqSignature);
+for (const invalidSignature of [
+  { ...currentSignaturePayload, fromDate: "2023-01-01" },
+  { ...currentSignaturePayload, priceContract: "fabricated-adjusted-prices" },
+  (() => {
+    const signature = { ...currentSignaturePayload };
+    delete signature.priceContract;
+    return signature;
+  })(),
+  {
+    ...currentSignaturePayload,
+    sessionDates: probeSessionDates.filter((_, index) => index !== 500),
+  },
+  {
+    ...currentSignaturePayload,
+    sessionDates: probeSessionDates.map((date, index) =>
+      index === 500 ? "2025-02-30" : date,
+    ),
+  },
+])
+  assert(
+    !pointInTimeNasdaqManifestHasCurrentContract(
+      selfConsistentManifestProbe(invalidSignature),
+    ),
+    "A self-consistent manifest with a wrong period, price contract, missing session, or malformed session date must be stale.",
+  );
+const unrelatedRequestedSymbols = Array.from({ length: probeSymbols.length },
+  (_, index) => `X${String(index).padStart(3, "0")}`,
+).sort();
+const unrelatedManifestProbe = selfConsistentManifestProbe({
+  ...currentSignaturePayload,
+  requestedSymbols: unrelatedRequestedSymbols,
+  usableSymbols: unrelatedRequestedSymbols,
+});
+assert(
+  pointInTimeNasdaqManifestHasCurrentContract(unrelatedManifestProbe) &&
+    !currentPointInTimeNasdaqEvidence(
+      unrelatedManifestProbe,
+      {
+        ...currentNasdaqStatusProbe,
+        datasetFingerprint: unrelatedManifestProbe.evidenceDatasetFingerprint,
+        datasetInputFingerprint: unrelatedManifestProbe.datasetFingerprint,
+      },
+      currentNasdaqUniverseProbe,
+    ),
+  "A structurally valid manifest must still be rejected when its requested symbols differ from the bound universe union.",
+);
+const alteredSupplements = probeMembershipSupplements.map((row) => ({
+  ...row,
+  date: "2026-06-30",
+  effectiveDate: "2026-06-30",
+}));
+const alteredUniversePrivate = {
+  ...currentNasdaqUniverseProbe.privateBlueprint,
+  membershipSupplements: alteredSupplements,
+};
+const alteredUniverseDigest = pointInTimeNasdaqMembershipDigest({
+  ...alteredUniversePrivate,
+  fromDate: "2022-01-01",
+  throughDate: "2026-09-01",
+});
+assert(
+  !currentPointInTimeNasdaqUniverse({
+    ...currentNasdaqUniverseProbe,
+    rawMembershipDigest: alteredUniverseDigest,
+    privateBlueprint: {
+      ...alteredUniversePrivate,
+      rawMembershipDigest: alteredUniverseDigest,
+    },
+  }),
+  "A self-hashed universe with a membership supplement different from the frozen source registry must be stale.",
 );
 let staleNasdaqEvidenceRejections = 0;
-for (const [manifest, status] of [
+for (const [manifest, status, universe] of [
   [
     {
       ...currentNasdaqManifestProbe,
@@ -547,20 +1130,127 @@ for (const [manifest, status] of [
         universeContract: "obsolete-universe-contract",
       }),
     },
-    { status: "compiled", datasetFingerprint: "evidence-1" },
+    currentNasdaqStatusProbe,
+    currentNasdaqUniverseProbe,
   ],
-  [currentNasdaqManifestProbe, { status: "collecting", datasetFingerprint: "evidence-1" }],
-  [currentNasdaqManifestProbe, { status: "compiled", datasetFingerprint: "different-evidence" }],
+  [
+    currentNasdaqManifestProbe,
+    { ...currentNasdaqStatusProbe, status: "collecting" },
+    currentNasdaqUniverseProbe,
+  ],
+  [
+    currentNasdaqManifestProbe,
+    { ...currentNasdaqStatusProbe, datasetFingerprint: "different-evidence" },
+    currentNasdaqUniverseProbe,
+  ],
+  [
+    currentNasdaqManifestProbe,
+    currentNasdaqStatusProbe,
+    universeProbeFor([...probeSymbols.slice(0, -1), "ZZZZ"].sort()),
+  ],
 ]) {
   try {
-    assertCurrentPointInTimeNasdaqEvidence(manifest, status);
+    assertCurrentPointInTimeNasdaqEvidence(manifest, status, universe);
   } catch {
     staleNasdaqEvidenceRejections++;
   }
 }
 assert(
-  staleNasdaqEvidenceRejections === 3,
-  "Stale, rebuilding, or fingerprint-mismatched Nasdaq evidence must be rejected before integrity or shard execution.",
+  staleNasdaqEvidenceRejections === 4,
+  "Stale, rebuilding, fingerprint-mismatched, or refreshed-universe Nasdaq evidence must be rejected before integrity or shard execution.",
+);
+assert(
+  !currentPointInTimeNasdaqIntegrity(
+    { ...currentNasdaqIntegrityProbe, integrityContract: "obsolete" },
+    currentNasdaqManifestProbe,
+    currentNasdaqStatusProbe,
+    currentNasdaqUniverseProbe,
+  ) &&
+    !currentPointInTimeNasdaqIntegrity(
+      { ...currentNasdaqIntegrityProbe, datasetInputFingerprint: "obsolete" },
+      currentNasdaqManifestProbe,
+      currentNasdaqStatusProbe,
+      currentNasdaqUniverseProbe,
+    ),
+  "An old integrity contract or mismatched input fingerprint must never authorize the current Nasdaq evidence.",
+);
+assert(
+  !currentPointInTimeNasdaqIntegrity(
+    {
+      ...currentNasdaqIntegrityProbe,
+      audit: { ...currentNasdaqIntegrityProbe.audit, pass: false },
+    },
+    currentNasdaqManifestProbe,
+      currentNasdaqStatusProbe,
+      currentNasdaqUniverseProbe,
+  ) &&
+    !currentPointInTimeNasdaqIntegrity(
+      {
+        ...currentNasdaqIntegrityProbe,
+        audit: {
+          ...currentNasdaqIntegrityProbe.audit,
+          totalStoredPriceRows: 1,
+          priceRows: 1,
+          activeMembershipPriceRows: 1,
+          lookbackPriceRows: 0,
+          adjustedRows: 1,
+          requiredPriceRows: 0,
+          observedRequiredPriceRows: 0,
+          missingRequiredPriceRows: 0,
+          pass: true,
+        },
+      },
+      currentNasdaqManifestProbe,
+      currentNasdaqStatusProbe,
+      currentNasdaqUniverseProbe,
+    ),
+  "A hollow integrity artifact cannot claim passing assessments while its verified audit says it failed.",
+);
+const coherentFailedIntegrityProbe = {
+  ...currentNasdaqIntegrityProbe,
+  assessment: {
+    ...currentNasdaqIntegrityProbe.assessment,
+    adjustedPriceIntegrityPass: false,
+    allDataGatesPassed: false,
+  },
+  audit: {
+    ...currentNasdaqIntegrityProbe.audit,
+    pass: false,
+    totalStoredPriceRows: probeRequiredPriceRows - 1,
+    priceRows: probeRequiredPriceRows - 1,
+    activeMembershipPriceRows: probeMembershipObservations,
+    lookbackPriceRows: probeBenchmarkObservations - 1,
+    adjustedRows: probeRequiredPriceRows - 1,
+    observedRequiredPriceRows: probeRequiredPriceRows - 1,
+    missingRequiredPriceRows: 1,
+    missingRequiredPriceRowsBySymbol: [
+      {
+        symbol: "HONA",
+        total: 1,
+        activeOrExecution: 0,
+        signalLookback: 1,
+        benchmark: 0,
+      },
+    ],
+  },
+};
+assert(
+  currentPointInTimeNasdaqIntegrity(
+    coherentFailedIntegrityProbe,
+    currentNasdaqManifestProbe,
+    currentNasdaqStatusProbe,
+    currentNasdaqUniverseProbe,
+  ),
+  "A coherent current audit failure must remain visible and cacheable while R11 stays blocked.",
+);
+const nasdaqIntegrityRunnerSource = rawSource.slice(
+  rawSource.indexOf("export async function runPointInTimeNasdaqPriceIntegrity"),
+  rawSource.indexOf("function pointInTimeNasdaqAlphaR11Definitions"),
+);
+assert(
+  !nasdaqIntegrityRunnerSource.includes("manifest.datasetMetadata") &&
+    !nasdaqIntegrityRunnerSource.includes("datasetStatus?.coverage"),
+  "Nasdaq integrity authorization metrics must be recomputed from verified chunk sessions, not unbound manifest metadata.",
 );
 
 assert(
@@ -691,7 +1381,7 @@ const anchorBoundary = reconstructIndexInitialMembers(
 );
 assert(
   anchorBoundary.initialSymbols.join(",") === "OLD",
-  "A membership change dated exactly on the research anchor must be reversed because it takes effect only on the next session.",
+  "The reconstructed seed must remain pre-event so inclusive replay can apply an anchor-date change exactly once.",
 );
 assert(
   canonicalIndexMembershipChanges([
@@ -743,6 +1433,7 @@ const nasdaqRawArgs = {
   ),
   fundamentals: [],
   emitUniverseRemovalActions: true,
+  membershipChangesEffectiveInclusive: true,
 };
 const nasdaqMembershipDataset =
   pointInTimeIndexRawDatasetFromHistory(nasdaqRawArgs);
@@ -750,10 +1441,10 @@ assert(
   nasdaqMembershipDataset.sessions[0].universeSymbols.join(",") ===
     "KEEP,OLD" &&
     nasdaqMembershipDataset.sessions[1].universeSymbols.join(",") ===
-      "KEEP,OLD" &&
+      "KEEP,NEW" &&
     nasdaqMembershipDataset.sessions[2].universeSymbols.join(",") ===
       "KEEP,NEW" &&
-    nasdaqMembershipDataset.sessions[2].corporateActions.some(
+    nasdaqMembershipDataset.sessions[1].corporateActions.some(
       (action) =>
         action.type === "universe-removal" && action.symbol === "OLD",
     ) &&
@@ -763,7 +1454,122 @@ assert(
     nasdaqMembershipDataset.metadata.universeRemovalOutcomeCoveragePct === 100 &&
     nasdaqMembershipDataset.metadata.minimumMembershipCount === 2 &&
     nasdaqMembershipDataset.metadata.maximumMembershipCount === 2,
-  "A Nasdaq membership event must take effect only on the next session, emit a removal action, and measure actual prices.",
+  "A Nasdaq membership event must take effect on its declared effective session, emit a removal action, and measure actual prices.",
+);
+const spinoffDates = ["2026-06-26", "2026-06-29", "2026-06-30"];
+const spinoffBars = (symbol, dates = spinoffDates) =>
+  dates.map((date, index) => ({
+    symbol,
+    date,
+    open: 100 + index,
+    high: 102 + index,
+    low: 99 + index,
+    close: 101 + index,
+    volume: 1_000 + index,
+    adjusted: true,
+  }));
+const honaSpinoffDataset = pointInTimeIndexRawDatasetFromHistory({
+  blueprint: {
+    fromDate: spinoffDates[0],
+    throughDate: spinoffDates.at(-1),
+    privateBlueprint: {
+      initialSymbols: ["HON"],
+      changes: [
+        {
+          date: "2026-06-29",
+          addedSymbol: "HONA",
+          removedSymbol: "",
+          effectiveDateBasis: "source-verified-supplement",
+        },
+      ],
+      delistedDates: {},
+    },
+  },
+  profiles: [
+    { symbol: "HON", listedAt: "2022-01-03" },
+    { symbol: "HONA", listedAt: "2026-06-29" },
+  ],
+  histories: new Map([
+    ["SPY", spinoffBars("SPY")],
+    ["QQQ", spinoffBars("QQQ")],
+    ["HON", spinoffBars("HON")],
+    ["HONA", spinoffBars("HONA", spinoffDates.slice(1))],
+  ]),
+  fundamentals: [],
+  membershipChangesEffectiveInclusive: true,
+});
+assert(
+  pointInTimeSecuritySymbol("HON") === "HON" &&
+    pointInTimeSecuritySymbol("HONA") === "HONA" &&
+    honaSpinoffDataset.sessions[0].universeSymbols.join(",") === "HON" &&
+    honaSpinoffDataset.sessions[1].universeSymbols.join(",") ===
+      "HON,HONA" &&
+    honaSpinoffDataset.metadata.activeMemberDateCoverageComplete === true &&
+    honaSpinoffDataset.metadata.missingMembershipObservations === 0,
+  "The verified HONA spin-off event must keep HON and HONA distinct, exclude HONA before the event, and include it on the effective session.",
+);
+const missingPostSpinoffBar = pointInTimeIndexRawDatasetFromHistory({
+  ...{
+    blueprint: {
+      fromDate: spinoffDates[0],
+      throughDate: spinoffDates.at(-1),
+      privateBlueprint: {
+        initialSymbols: ["HON"],
+        changes: [
+          { date: "2026-06-29", addedSymbol: "HONA", removedSymbol: "" },
+        ],
+        delistedDates: {},
+      },
+    },
+    profiles: [{ symbol: "HON" }, { symbol: "HONA" }],
+    fundamentals: [],
+    membershipChangesEffectiveInclusive: true,
+  },
+  histories: new Map([
+    ["SPY", spinoffBars("SPY")],
+    ["QQQ", spinoffBars("QQQ")],
+    ["HON", spinoffBars("HON")],
+    ["HONA", spinoffBars("HONA", ["2026-06-29"])],
+  ]),
+});
+assert(
+  missingPostSpinoffBar.metadata.activeMemberDateCoverageComplete === false &&
+    missingPostSpinoffBar.metadata.missingMembershipObservations === 1 &&
+    missingPostSpinoffBar.metadata.missingMembershipObservationsBySymbol[0]
+      ?.symbol === "HONA" &&
+    missingPostSpinoffBar.metadata.missingMembershipObservationsBySymbol[0]
+      ?.missing === 1,
+  "A source-backed membership event must not excuse any missing HONA price after its effective session.",
+);
+const listingFieldCannotMaskMembershipGap =
+  pointInTimeIndexRawDatasetFromHistory({
+    blueprint: {
+      fromDate: pitDates[0],
+      throughDate: pitDates.at(-1),
+      privateBlueprint: {
+        initialSymbols: ["OLD"],
+        changes: [],
+        delistedDates: {},
+      },
+    },
+    profiles: [{ symbol: "OLD", listedAt: pitDates[1] }],
+    histories: new Map([
+      ["SPY", barsFor("SPY")],
+      ["QQQ", barsFor("QQQ")],
+      ["OLD", barsFor("OLD").slice(1)],
+    ]),
+    fundamentals: [],
+    membershipChangesEffectiveInclusive: true,
+  });
+assert(
+  listingFieldCannotMaskMembershipGap.sessions[0].universeSymbols.includes(
+    "OLD",
+  ) &&
+    listingFieldCannotMaskMembershipGap.metadata
+      .activeMemberDateCoverageComplete === false &&
+    listingFieldCannotMaskMembershipGap.metadata
+      .missingMembershipObservationsBySymbol[0]?.symbol === "OLD",
+  "A price-derived listedAt field must never remove an established member or hide a genuine provider-history gap.",
 );
 const changedPriceHistories = new Map(nasdaqRawArgs.histories);
 changedPriceHistories.set("KEEP", [
@@ -888,12 +1694,12 @@ const delayedRemovalDataset = pointInTimeIndexRawDatasetFromHistory({
     ]),
     [
       "OLD",
-      delayedBarsFor("OLD", ["2026-01-02", "2026-01-05", "2026-01-07"]),
+      delayedBarsFor("OLD", ["2026-01-02", "2026-01-06", "2026-01-07"]),
     ],
   ]),
 });
 assert(
-  delayedRemovalDataset.sessions[2].corporateActions.some(
+  delayedRemovalDataset.sessions[1].corporateActions.some(
     (action) =>
       action.type === "universe-removal" &&
       action.symbol === "OLD" &&
@@ -901,7 +1707,7 @@ assert(
         "conservative-zero-recovery-missing-removal-open-v1" &&
       action.valuePerShare === 0,
   ) &&
-    !delayedRemovalDataset.sessions[3].corporateActions.some(
+    !delayedRemovalDataset.sessions[2].corporateActions.some(
       (action) => action.type === "universe-removal",
     ) &&
     delayedRemovalDataset.metadata.universeRemovalOpenCoveragePct === 0 &&
@@ -920,6 +1726,82 @@ assert(
     developmentPlan.every((job, index) => job.shard === index),
   "R11 development must expose one deterministic shard per frozen development window.",
 );
+const fakeR11Run = (job, seed) => {
+  const dates = probeSessionDates.filter(
+    (date) => date >= job.window.start && date <= job.window.end,
+  );
+  const curve = dates.map((date, index) => ({
+    date,
+    equity: 100_000 + index * (seed + 1),
+    activeExposure: 0.8,
+  }));
+  const endingCash = curve.at(-1).equity;
+  const roundTripPnl = endingCash - 100_000;
+  const expectancyPct =
+    Math.round((roundTripPnl / 100_000) * 100 * 100) / 100;
+  const benchmarkCurves = Object.fromEntries(
+    ["SPY", "QQQ"].map((symbol, symbolIndex) => [
+      symbol,
+      dates.map((date, index) => ({
+        date,
+        value: 100_000 + index * (symbolIndex + 1),
+      })),
+    ]),
+  );
+  const totalReturnPct =
+    Math.round(
+      (curve.at(-1).equity / curve[0].equity - 1) * 100 * 100,
+    ) / 100;
+  const benchmarkComparisons = Object.fromEntries(
+    Object.entries(benchmarkCurves).map(([symbol, rows]) => {
+      const simpleReturnPct =
+        Math.round((rows.at(-1).value / rows[0].value - 1) * 100 * 100) /
+        100;
+      return [
+        symbol,
+        {
+          simpleReturnPct,
+          excessReturnPct:
+            Math.round((totalReturnPct - simpleReturnPct) * 100) / 100,
+        },
+      ];
+    }),
+  );
+  return {
+    metrics: {
+      totalReturnPct,
+      maxDrawdownPct: 0,
+      averageActiveExposurePct: 80,
+      profitFactor: null,
+      closedTrades: 1,
+      tradeDiagnostics: { expectancyPct },
+      dailyReturns: curve
+        .slice(1)
+        .map((row, index) => row.equity / curve[index].equity - 1),
+      benchmarkComparisons,
+    },
+    trades: [
+      {
+        side: "buy",
+        shares: 1,
+        price: 100_000,
+        positionId: 1,
+      },
+      {
+        side: "sell",
+        positionClosed: true,
+        roundTripPnl,
+        positionId: 1,
+      },
+    ],
+    skippedOrders: [],
+    curve,
+    benchmarkCurves,
+    unresolvedUniverseRemovals: [],
+    curveLength: curve.length,
+    endingCash,
+  };
+};
 const shardPath = r11ShardStorePath({
   datasetFingerprint: fakeFingerprint,
   candidateSetFingerprint: candidateFingerprint,
@@ -944,10 +1826,13 @@ const fakeShardReports = developmentPlan.map((job) => {
     results: ["A", "B"].map((candidateId) => ({
       candidateId,
       candidateFingerprint: `${candidateId === "A" ? "1" : "2"}`.repeat(64),
-      run: { metrics: { totalReturnPct: job.shard } },
+      run: fakeR11Run(job, job.shard + (candidateId === "A" ? 0 : 1)),
     })),
   };
   return {
+    version: 11,
+    researchGeneration: "R11",
+    productionCandidateVersion: "V21",
     status: "complete",
     phase: "development",
     shard: job.shard,
@@ -958,6 +1843,9 @@ const fakeShardReports = developmentPlan.map((job) => {
     experimentFingerprint,
     evidence,
     resultDigest: sha256Fingerprint(JSON.stringify(evidence)),
+    productionChanged: false,
+    eligibleForAlphaClaim: false,
+    eligibleForLiveCapital: false,
   };
 });
 const mergedShards = mergeR11ShardReports(fakeShardReports, {
@@ -969,6 +1857,7 @@ const mergedShards = mergeR11ShardReports(fakeShardReports, {
   datasetFingerprint: fakeFingerprint,
   candidateSetFingerprint: candidateFingerprint,
   experimentFingerprint,
+  calendar: probeSessionDates,
 });
 assert(
   mergedShards.get("A").length === 3 &&
@@ -992,6 +1881,7 @@ try {
       datasetFingerprint: fakeFingerprint,
       candidateSetFingerprint: candidateFingerprint,
       experimentFingerprint,
+      calendar: probeSessionDates,
     },
   );
 } catch {
@@ -1025,6 +1915,63 @@ for (const mutate of [
       resultDigest: sha256Fingerprint(JSON.stringify(evidence)),
     };
   },
+  (report) => {
+    const evidence = {
+      ...report.evidence,
+      results: report.evidence.results.map((result, index) =>
+        index === 0
+          ? {
+              ...result,
+              run: {
+                ...result.run,
+                metrics: {
+                  ...result.run.metrics,
+                  averageActiveExposurePct: 100,
+                },
+              },
+            }
+          : result,
+      ),
+    };
+    return {
+      ...report,
+      evidence,
+      resultDigest: sha256Fingerprint(JSON.stringify(evidence)),
+    };
+  },
+  (report) => {
+    const evidence = {
+      ...report.evidence,
+      results: report.evidence.results.map((result, index) => {
+        if (index !== 0) return result;
+        const tamperedPnl = result.run.trades[1].roundTripPnl + 10;
+        return {
+          ...result,
+          run: {
+            ...result.run,
+            metrics: {
+              ...result.run.metrics,
+              tradeDiagnostics: {
+                ...result.run.metrics.tradeDiagnostics,
+                expectancyPct:
+                  Math.round((tamperedPnl / 100_000) * 100 * 100) / 100,
+              },
+            },
+            trades: result.run.trades.map((trade, tradeIndex) =>
+              tradeIndex === 1
+                ? { ...trade, roundTripPnl: tamperedPnl }
+                : trade,
+            ),
+          },
+        };
+      }),
+    };
+    return {
+      ...report,
+      evidence,
+      resultDigest: sha256Fingerprint(JSON.stringify(evidence)),
+    };
+  },
 ]) {
   let rejected = false;
   try {
@@ -1037,6 +1984,7 @@ for (const mutate of [
       datasetFingerprint: fakeFingerprint,
       candidateSetFingerprint: candidateFingerprint,
       experimentFingerprint,
+      calendar: probeSessionDates,
     });
   } catch {
     rejected = true;
@@ -1189,6 +2137,237 @@ assert(
     decisionRelevantPriceIntegrity.excludedArchivalPriceRows === 2,
   "The decision-data audit must exclude unused archival rows while retaining active prices, required lookbacks and benchmarks.",
 );
+
+const historyAuditDates = [
+  "2026-01-02",
+  "2026-01-05",
+  "2026-01-06",
+  "2026-01-07",
+];
+const historyAuditBar = (symbol, date, index) => {
+  const offset = symbol === "SPY" ? 500 : symbol === "QQQ" ? 400 : 100;
+  const close = offset + index;
+  return {
+    symbol,
+    date,
+    open: close - 0.5,
+    high: close + 1,
+    low: close - 1,
+    close,
+    volume: offset * 1_000 + index,
+    adjusted: true,
+  };
+};
+const historyAuditDataset = ({
+  ipoDates = historyAuditDates.slice(1),
+  signalDates = [historyAuditDates.at(-1)],
+} = {}) => ({
+  sessions: historyAuditDates.map((date, index) => ({
+    date,
+    universeSymbols: [],
+    prices: [
+      historyAuditBar("SPY", date, index),
+      historyAuditBar("QQQ", date, index),
+      ...(ipoDates.includes(date) ? [historyAuditBar("IPO", date, index)] : []),
+    ],
+    signals: signalDates.includes(date)
+      ? [{ symbol: "IPO", listedAt: "not-a-listing-proof" }]
+      : [],
+    positionSignals: [],
+  })),
+});
+
+const exactObservedHistory = pointInTimePriceIntegrityAudit(
+  [historyAuditDataset()],
+  {
+    decisionRelevantOnly: true,
+    lookbackSessions: 3,
+    requireExactObservedSignalHistory: true,
+  },
+);
+assert(
+  exactObservedHistory.pass === true &&
+    exactObservedHistory.observedSignalHistoryRequired === true &&
+    exactObservedHistory.observedSignalHistoryPass === true &&
+    exactObservedHistory.shortSignalHistoryRows === 0 &&
+    exactObservedHistory.requiredPriceRows === 11 &&
+    exactObservedHistory.missingRequiredPriceRows === 0,
+  "Nasdaq integrity must audit the exact observed input window without trusting a signal listing field.",
+);
+
+const internalObservedHistoryGap = pointInTimePriceIntegrityAudit(
+  [
+    historyAuditDataset({
+      ipoDates: [
+        historyAuditDates[0],
+        historyAuditDates[2],
+        historyAuditDates[3],
+      ],
+    }),
+  ],
+  {
+    decisionRelevantOnly: true,
+    lookbackSessions: 3,
+    requireExactObservedSignalHistory: true,
+  },
+);
+const internalGapBySymbol =
+  internalObservedHistoryGap.missingRequiredPriceRowsBySymbol.find(
+    (row) => row.symbol === "IPO",
+  );
+assert(
+  internalObservedHistoryGap.pass === false &&
+    internalObservedHistoryGap.missingRequiredPriceRows === 1 &&
+    internalObservedHistoryGap.missingRequiredAttributionComplete === true &&
+    internalGapBySymbol?.total === 1 &&
+    internalGapBySymbol?.signalLookback === 1,
+  "An internal calendar gap inside the 253 observed inputs must remain visible and fail integrity.",
+);
+
+const shortObservedHistory = pointInTimePriceIntegrityAudit(
+  [historyAuditDataset({ ipoDates: historyAuditDates.slice(2) })],
+  {
+    decisionRelevantOnly: true,
+    lookbackSessions: 3,
+    requireExactObservedSignalHistory: true,
+  },
+);
+assert(
+  shortObservedHistory.pass === false &&
+    shortObservedHistory.observedSignalHistoryPass === false &&
+    shortObservedHistory.shortSignalHistoryRows === 1 &&
+    shortObservedHistory.shortSignalHistorySamples[0]?.observedRows === 2,
+  "A Nasdaq signal with fewer than the contract's observed input rows must fail closed.",
+);
+
+const crossChunkObservedHistory = pointInTimePriceIntegrityAudit(
+  [
+    {
+      sessions: historyAuditDates.slice(0, 2).map((date, index) => ({
+        date,
+        universeSymbols: [],
+        prices: [
+          historyAuditBar("SPY", date, index),
+          historyAuditBar("QQQ", date, index),
+          ...(index === 1 ? [historyAuditBar("IPO", date, index)] : []),
+        ],
+        signals: [],
+        positionSignals: [],
+      })),
+    },
+    {
+      sessions: historyAuditDates.slice(2).map((date, localIndex) => {
+        const index = localIndex + 2;
+        return {
+          date,
+          universeSymbols: [],
+          prices: [
+            historyAuditBar("SPY", date, index),
+            historyAuditBar("QQQ", date, index),
+            historyAuditBar("IPO", date, index),
+          ],
+          signals: index === 3 ? [{ symbol: "IPO" }] : [],
+          positionSignals: [],
+        };
+      }),
+    },
+  ],
+  {
+    decisionRelevantOnly: true,
+    lookbackSessions: 3,
+    requireExactObservedSignalHistory: true,
+  },
+);
+assert(
+  crossChunkObservedHistory.pass === true &&
+    crossChunkObservedHistory.requiredPriceRows === 11 &&
+    crossChunkObservedHistory.missingRequiredPriceRows === 0,
+  "Exact observed-history requirements must preserve one global window across durable chunk boundaries.",
+);
+
+const exactLookbackDates = Array.from({ length: 254 }, (_, index) =>
+  new Date(Date.UTC(2025, 0, index + 1)).toISOString().slice(0, 10),
+);
+const exact253RowLookback = pointInTimePriceIntegrityAudit(
+  [
+    {
+      sessions: exactLookbackDates.map((date, index) => ({
+        date,
+        universeSymbols: [],
+        prices: [
+          historyAuditBar("SPY", date, index),
+          historyAuditBar("QQQ", date, index),
+          ...(index > 0 ? [historyAuditBar("IPO", date, index)] : []),
+        ],
+        signals:
+          index === exactLookbackDates.length - 1
+            ? [{ symbol: "IPO" }]
+            : [],
+        positionSignals: [],
+      })),
+    },
+  ],
+  {
+    decisionRelevantOnly: true,
+    lookbackSessions: 253,
+    requireExactObservedSignalHistory: true,
+  },
+);
+assert(
+  exact253RowLookback.pass === true &&
+    exact253RowLookback.requiredPriceRows === 254 * 2 + 253 &&
+    exact253RowLookback.missingRequiredPriceRows === 0,
+  "The Nasdaq contract must mean the current signal row plus exactly 252 prior observed rows.",
+);
+
+const legacyLookbackIsolation = pointInTimePriceIntegrityAudit(
+  [historyAuditDataset({ ipoDates: historyAuditDates })],
+  { decisionRelevantOnly: true, lookbackSessions: 1 },
+);
+assert(
+  legacyLookbackIsolation.pass === true &&
+    legacyLookbackIsolation.observedSignalHistoryRequired === false &&
+    legacyLookbackIsolation.requiredPriceRows === 10,
+  "The shared S&P path must retain its legacy current-plus-one-prior-session semantics.",
+);
+
+const activeMemberGapStillFails = pointInTimePriceIntegrityAudit(
+  [
+    {
+      sessions: [
+        {
+          date: "2026-01-05",
+          universeSymbols: ["ACTIVE"],
+          prices: [
+            historyAuditBar("SPY", "2026-01-05", 0),
+            historyAuditBar("QQQ", "2026-01-05", 0),
+          ],
+          signals: [],
+          positionSignals: [],
+        },
+      ],
+    },
+  ],
+  {
+    decisionRelevantOnly: true,
+    lookbackSessions: 253,
+    requireExactObservedSignalHistory: true,
+  },
+);
+const activeGapBySymbol =
+  activeMemberGapStillFails.missingRequiredPriceRowsBySymbol.find(
+    (row) => row.symbol === "ACTIVE",
+  );
+assert(
+  activeMemberGapStillFails.pass === false &&
+    activeMemberGapStillFails.missingRequiredAttributionComplete === true &&
+    activeGapBySymbol?.total === 1 &&
+    activeGapBySymbol?.activeOrExecution === 1 &&
+    activeGapBySymbol?.signalLookback === 0 &&
+    activeGapBySymbol?.benchmark === 0,
+  "An observed-history window must never excuse a missing same-session active-member or mandatory execution price.",
+);
+
 const missingRequiredPriceIntegrity = pointInTimePriceIntegrityAudit(
   [
     {
