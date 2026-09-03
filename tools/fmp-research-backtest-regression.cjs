@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 31891)
-Total output lines: 3377
-
 const fs = require("fs");
 const vm = require("vm");
 const { createResearchModuleLoader } = require("./research-module-loader.cjs");
@@ -1516,7 +1513,249 @@ const tickerAliasDataset = pointInTimeSp500RawDatasetFromHistory({
       [
         {
           date: "2026-06-22",
-       …1891 tokens truncated…adata
+          open: 50,
+          high: 51,
+          low: 49,
+          close: 50,
+          adjusted: true,
+        },
+      ],
+    ],
+    [
+      "ECHO",
+      [
+        {
+          date: "2026-06-22",
+          open: 50,
+          high: 51,
+          low: 49,
+          close: 50,
+          adjusted: true,
+        },
+      ],
+    ],
+  ]),
+  fundamentals: [],
+});
+assert(
+  tickerAliasDataset.sessions[0].universeSymbols.join(",") === "ECHO" &&
+    tickerAliasDataset.sessions[0].prices.filter(
+      (row) => ["SATS", "ECHO"].includes(row.symbol),
+    ).length === 1 &&
+    tickerAliasDataset.sessions[0].prices.some(
+      (row) => row.symbol === "ECHO",
+    ),
+  "A ticker rename must not create duplicate active membership or duplicate issuer prices.",
+);
+
+const reconstructedNasdaq = reconstructIndexInitialMembers(
+  ["KEEP", "NEW"],
+  [
+    {
+      date: "2026-01-05",
+      addedSymbol: "NEW",
+      removedSymbol: "OLD",
+    },
+  ],
+  { fromDate: "2026-01-01", throughDate: "2026-01-06" },
+);
+assert(
+  reconstructedNasdaq.initialSymbols.join(",") === "KEEP,OLD" &&
+    reconstructedNasdaq.throughSymbols.join(",") === "KEEP,NEW",
+  "Reverse reconstruction must replace a later added member with the removed member at the historical anchor.",
+);
+const anchorBoundary = reconstructIndexInitialMembers(
+  ["NEW"],
+  [{ date: "2026-01-01", addedSymbol: "NEW", removedSymbol: "OLD" }],
+  { fromDate: "2026-01-01", throughDate: "2026-01-06" },
+);
+assert(
+  anchorBoundary.initialSymbols.join(",") === "OLD",
+  "The reconstructed seed must remain pre-event so inclusive replay can apply an anchor-date change exactly once.",
+);
+assert(
+  canonicalIndexMembershipChanges([
+    {
+      date: "2026-06-24",
+      addedSymbol: "ECHO",
+      removedSymbol: "SATS",
+    },
+  ]).length === 0,
+  "A canonicalized SATS-to-ECHO ticker rename must not become an index removal and artificial liquidation.",
+);
+const pitDates = ["2026-01-02", "2026-01-05", "2026-01-06"];
+const barsFor = (symbol, includeLast = true) =>
+  pitDates.slice(0, includeLast ? 3 : 2).map((date, index) => ({
+    symbol,
+    date,
+    open: 100 + index,
+    high: 102 + index,
+    low: 99 + index,
+    close: 101 + index,
+    volume: 1_000,
+    adjusted: true,
+  }));
+const nasdaqRawArgs = {
+  blueprint: {
+    fromDate: "2026-01-01",
+    throughDate: "2026-01-06",
+    privateBlueprint: {
+      initialSymbols: ["KEEP", "OLD"],
+      changes: [
+        {
+          date: "2026-01-05",
+          addedSymbol: "NEW",
+          removedSymbol: "OLD",
+        },
+      ],
+      delistedDates: {},
+    },
+  },
+  profiles: ["KEEP", "OLD", "NEW"].map((symbol) => ({
+    symbol,
+    companyName: symbol,
+  })),
+  histories: new Map(
+    ["SPY", "QQQ", "KEEP", "OLD", "NEW"].map((symbol) => [
+      symbol,
+      barsFor(symbol),
+    ]),
+  ),
+  fundamentals: [],
+  emitUniverseRemovalActions: true,
+  membershipChangesEffectiveInclusive: true,
+};
+const nasdaqMembershipDataset =
+  pointInTimeIndexRawDatasetFromHistory(nasdaqRawArgs);
+assert(
+  nasdaqMembershipDataset.sessions[0].universeSymbols.join(",") ===
+    "KEEP,OLD" &&
+    nasdaqMembershipDataset.sessions[1].universeSymbols.join(",") ===
+      "KEEP,NEW" &&
+    nasdaqMembershipDataset.sessions[2].universeSymbols.join(",") ===
+      "KEEP,NEW" &&
+    nasdaqMembershipDataset.sessions[1].corporateActions.some(
+      (action) =>
+        action.type === "universe-removal" && action.symbol === "OLD",
+    ) &&
+    nasdaqMembershipDataset.metadata.membershipObservationCoveragePct === 100 &&
+    nasdaqMembershipDataset.metadata.universeRemovalOpenCoveragePct === 100 &&
+    nasdaqMembershipDataset.metadata.universeRemovalZeroRecoveryActions === 0 &&
+    nasdaqMembershipDataset.metadata.universeRemovalOutcomeCoveragePct === 100 &&
+    nasdaqMembershipDataset.metadata.minimumMembershipCount === 2 &&
+    nasdaqMembershipDataset.metadata.maximumMembershipCount === 2,
+  "A Nasdaq membership event must take effect on its declared effective session, emit a removal action, and measure actual prices.",
+);
+const spinoffDates = ["2026-06-26", "2026-06-29", "2026-06-30"];
+const spinoffBars = (symbol, dates = spinoffDates) =>
+  dates.map((date, index) => ({
+    symbol,
+    date,
+    open: 100 + index,
+    high: 102 + index,
+    low: 99 + index,
+    close: 101 + index,
+    volume: 1_000 + index,
+    adjusted: true,
+  }));
+const honaSpinoffDataset = pointInTimeIndexRawDatasetFromHistory({
+  blueprint: {
+    fromDate: spinoffDates[0],
+    throughDate: spinoffDates.at(-1),
+    privateBlueprint: {
+      initialSymbols: ["HON"],
+      changes: [
+        {
+          date: "2026-06-29",
+          addedSymbol: "HONA",
+          removedSymbol: "",
+          effectiveDateBasis: "source-verified-supplement",
+        },
+      ],
+      delistedDates: {},
+    },
+  },
+  profiles: [
+    { symbol: "HON", listedAt: "2022-01-03" },
+    { symbol: "HONA", listedAt: "2026-06-29" },
+  ],
+  histories: new Map([
+    ["SPY", spinoffBars("SPY")],
+    ["QQQ", spinoffBars("QQQ")],
+    ["HON", spinoffBars("HON")],
+    ["HONA", spinoffBars("HONA", spinoffDates.slice(1))],
+  ]),
+  fundamentals: [],
+  membershipChangesEffectiveInclusive: true,
+});
+assert(
+  pointInTimeSecuritySymbol("HON") === "HON" &&
+    pointInTimeSecuritySymbol("HONA") === "HONA" &&
+    honaSpinoffDataset.sessions[0].universeSymbols.join(",") === "HON" &&
+    honaSpinoffDataset.sessions[1].universeSymbols.join(",") ===
+      "HON,HONA" &&
+    honaSpinoffDataset.metadata.activeMemberDateCoverageComplete === true &&
+    honaSpinoffDataset.metadata.missingMembershipObservations === 0,
+  "The verified HONA spin-off event must keep HON and HONA distinct, exclude HONA before the event, and include it on the effective session.",
+);
+const missingPostSpinoffBar = pointInTimeIndexRawDatasetFromHistory({
+  ...{
+    blueprint: {
+      fromDate: spinoffDates[0],
+      throughDate: spinoffDates.at(-1),
+      privateBlueprint: {
+        initialSymbols: ["HON"],
+        changes: [
+          { date: "2026-06-29", addedSymbol: "HONA", removedSymbol: "" },
+        ],
+        delistedDates: {},
+      },
+    },
+    profiles: [{ symbol: "HON" }, { symbol: "HONA" }],
+    fundamentals: [],
+    membershipChangesEffectiveInclusive: true,
+  },
+  histories: new Map([
+    ["SPY", spinoffBars("SPY")],
+    ["QQQ", spinoffBars("QQQ")],
+    ["HON", spinoffBars("HON")],
+    ["HONA", spinoffBars("HONA", ["2026-06-29"])],
+  ]),
+});
+assert(
+  missingPostSpinoffBar.metadata.activeMemberDateCoverageComplete === false &&
+    missingPostSpinoffBar.metadata.missingMembershipObservations === 1 &&
+    missingPostSpinoffBar.metadata.missingMembershipObservationsBySymbol[0]
+      ?.symbol === "HONA" &&
+    missingPostSpinoffBar.metadata.missingMembershipObservationsBySymbol[0]
+      ?.missing === 1,
+  "A source-backed membership event must not excuse any missing HONA price after its effective session.",
+);
+const listingFieldCannotMaskMembershipGap =
+  pointInTimeIndexRawDatasetFromHistory({
+    blueprint: {
+      fromDate: pitDates[0],
+      throughDate: pitDates.at(-1),
+      privateBlueprint: {
+        initialSymbols: ["OLD"],
+        changes: [],
+        delistedDates: {},
+      },
+    },
+    profiles: [{ symbol: "OLD", listedAt: pitDates[1] }],
+    histories: new Map([
+      ["SPY", barsFor("SPY")],
+      ["QQQ", barsFor("QQQ")],
+      ["OLD", barsFor("OLD").slice(1)],
+    ]),
+    fundamentals: [],
+    membershipChangesEffectiveInclusive: true,
+  });
+assert(
+  listingFieldCannotMaskMembershipGap.sessions[0].universeSymbols.includes(
+    "OLD",
+  ) &&
+    listingFieldCannotMaskMembershipGap.metadata
       .activeMemberDateCoverageComplete === false &&
     listingFieldCannotMaskMembershipGap.metadata
       .missingMembershipObservationsBySymbol[0]?.symbol === "OLD",
