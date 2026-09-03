@@ -9,6 +9,10 @@ const assert = (condition, message) => {
 let source = fs.readFileSync("lib/fmpResearchBacktest.js", "utf8");
 const rawSource = source;
 const contractSource = fs.readFileSync("lib/v12ResearchContract.js", "utf8");
+const walkForwardSource = fs.readFileSync(
+  "lib/walkForwardBacktest.js",
+  "utf8",
+);
 const researchSource = `${rawSource}\n${contractSource}`;
 assert(
   /runV11ForwardExtension[\s\S]*startDate:\s*window\.start[\s\S]*endDate:\s*window\.end/.test(
@@ -135,6 +139,41 @@ assert(
     rawSource.includes("productionChanged: false") &&
     rawSource.includes("eligibleForLiveCapital: false"),
   "The V2 point-in-time program must test one frozen anchored-gradual thesis without selection, relabelled holdouts, or live authority.",
+);
+assert(
+  rawSource.includes("runPointInTimeSp500AlphaResearchR3") &&
+    rawSource.includes('productionCandidateVersion: "V13"') &&
+    rawSource.includes('researchGeneration: "R3"') &&
+    rawSource.includes('researchRankMode: "benchmark-residual-momentum"') &&
+    rawSource.includes("relative120: 0.35") &&
+    rawSource.includes("relative60: 0.25") &&
+    rawSource.includes("sectorAwareMomentum: 0.2") &&
+    rawSource.includes("volatilityTargetPct: 18") &&
+    rawSource.includes("neweyWestMeanTStatistic") &&
+    rawSource.includes("validationAndAuditNeweyWestTAboveThreeVsSpy") &&
+    rawSource.includes("validationAndAuditNeweyWestTAboveThreeVsQqq") &&
+    rawSource.includes("familyWiseAdjustedPValue") &&
+    rawSource.includes("POINT_IN_TIME_SP500_ALPHA_RESEARCH_GENERATIONS = 3") &&
+    rawSource.includes("strictPromotionPlaceboSeeds: 1_000") &&
+    rawSource.includes("correctedPriceIntegrityPassed") &&
+    rawSource.includes("productionChanged: false") &&
+    rawSource.includes("eligibleForLiveCapital: false"),
+  "V13/R3 must test one frozen benchmark-relative, volatility-managed thesis behind corrected-data, multiple-testing and HAC-significance gates.",
+);
+assert(
+  walkForwardSource.includes(
+    'config.researchRankMode === "benchmark-residual-momentum"',
+  ) &&
+    walkForwardSource.includes("timing.alpha120VsSpy") &&
+    walkForwardSource.includes("timing.alpha120VsQqq") &&
+    walkForwardSource.includes("sectorAwareMomentum") &&
+    walkForwardSource.includes("sectorMomentumPercentileBySymbol") &&
+    walkForwardSource.includes(
+      "0.5 * centeredPercentile(sectorMomentumPercentile)",
+    ) &&
+    walkForwardSource.includes("requireBenchmarkResidualFactors") &&
+    walkForwardSource.includes("benchmarkResidualFactorsComplete"),
+  "The R3 simulator rank must require complete dual-benchmark, sector-aware and risk-control inputs rather than silently filling missing evidence.",
 );
 assert(
   rawSource.includes("POINT_IN_TIME_SP500_COMPILE_SESSIONS_PER_RUN = 50") &&
@@ -830,6 +869,10 @@ const pitAlphaV2Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2.js",
   "utf8",
 );
+const pitAlphaR3Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-research-r3.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -869,7 +912,7 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaCreatorV2({ force })") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR3({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
@@ -884,6 +927,16 @@ assert(
     pitAlphaV2Endpoint.includes("eligibleForAlphaClaim: false") &&
     pitAlphaV2Endpoint.includes("maxDuration: 800"),
   "The dedicated V2 endpoint must remain research-only and expose bounded status and execution paths.",
+);
+assert(
+  pitAlphaR3Endpoint.includes("await getPointInTimeSp500AlphaResearchR3()") &&
+    pitAlphaR3Endpoint.includes("await runPointInTimeSp500AlphaResearchR3({") &&
+    pitAlphaR3Endpoint.includes('productionCandidateVersion: "V13"') &&
+    pitAlphaR3Endpoint.includes("productionChanged: false") &&
+    pitAlphaR3Endpoint.includes("eligibleForAlphaClaim: false") &&
+    pitAlphaR3Endpoint.includes("maxDuration: 800") &&
+    cron.includes("await runPointInTimeSp500AlphaResearchR3()"),
+  "The R3 endpoint and cron must keep V13 research-only and blocked behind the corrected integrity audit.",
 );
 assert(
   rawSource.includes("runPointInTimeSp500AlphaCreatorV2Integrity") &&
