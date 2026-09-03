@@ -154,11 +154,33 @@ assert(
     rawSource.includes("validationAndAuditNeweyWestTAboveThreeVsQqq") &&
     rawSource.includes("familyWiseAdjustedPValue") &&
     rawSource.includes("POINT_IN_TIME_SP500_ALPHA_RESEARCH_GENERATIONS = 3") &&
+    rawSource.includes("POINT_IN_TIME_SP500_ALPHA_R4_RESEARCH_GENERATIONS = 4") &&
     rawSource.includes("strictPromotionPlaceboSeeds: 1_000") &&
     rawSource.includes("correctedPriceIntegrityPassed") &&
     rawSource.includes("productionChanged: false") &&
     rawSource.includes("eligibleForLiveCapital: false"),
   "V13/R3 must test one frozen benchmark-relative, volatility-managed thesis behind corrected-data, multiple-testing and HAC-significance gates.",
+);
+assert(
+  rawSource.includes("runPointInTimeSp500AlphaResearchR4") &&
+    rawSource.includes('productionCandidateVersion: "V14"') &&
+    rawSource.includes('researchGeneration: "R4"') &&
+    rawSource.includes('researchRankMode: "conditional-short-term-reversal"') &&
+    rawSource.includes("reversalPressure: 0.55") &&
+    rawSource.includes("minReturn5Pct: -10") &&
+    rawSource.includes("maxReturn5Pct: -1") &&
+    rawSource.includes("minimumAverageDollarVolume: 50_000_000") &&
+    rawSource.includes("strictPromotionPlaceboSeeds: 1_000"),
+  "V14/R4 must test one frozen liquidity-conditioned reversal thesis with the same corrected-data and significance gates.",
+);
+assert(
+  walkForwardSource.includes(
+    'config.researchRankMode === "conditional-short-term-reversal"',
+  ) &&
+    walkForwardSource.includes("shortTermReversalFactorsComplete") &&
+    walkForwardSource.includes("config.minReturn5Pct") &&
+    walkForwardSource.includes("config.maxReturn5Pct"),
+  "The R4 simulator must fail closed on reversal, trend and volatility inputs and enforce the frozen price-pressure band.",
 );
 assert(
   walkForwardSource.includes(
@@ -873,6 +895,10 @@ const pitAlphaR3Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-research-r3.js",
   "utf8",
 );
+const pitAlphaR4Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-research-r4.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -912,13 +938,23 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR3({ force })") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR4({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
     alphaCreatorEndpoint.includes('authority: "legacy-current-survivor-diagnostic"') &&
     alphaCreatorEndpoint.includes("maxDuration: 800"),
   "The public alpha-creator endpoint must default to point-in-time research and quarantine the current-survivor search behind an explicitly labelled legacy diagnostic.",
+);
+assert(
+  pitAlphaR4Endpoint.includes("await getPointInTimeSp500AlphaResearchR4()") &&
+    pitAlphaR4Endpoint.includes("await runPointInTimeSp500AlphaResearchR4({") &&
+    pitAlphaR4Endpoint.includes('productionCandidateVersion: "V14"') &&
+    pitAlphaR4Endpoint.includes("productionChanged: false") &&
+    pitAlphaR4Endpoint.includes("eligibleForAlphaClaim: false") &&
+    pitAlphaR4Endpoint.includes("maxDuration: 800") &&
+    cron.includes("await runPointInTimeSp500AlphaResearchR4()"),
+  "The R4 endpoint and cron must keep V14 research-only and run only after rejected R3.",
 );
 assert(
   pitAlphaV2Endpoint.includes("await getPointInTimeSp500AlphaCreatorV2()") &&
