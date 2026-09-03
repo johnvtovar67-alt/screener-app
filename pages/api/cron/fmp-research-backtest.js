@@ -9,6 +9,7 @@ import {
   runPointInTimeSp500AlphaResearchR4,
   runPointInTimeSp500AlphaResearchR5,
   runPointInTimeSp500AlphaResearchR6,
+  runPointInTimeSp500AlphaResearchR7,
   runPointInTimeSp500DatasetAcquisition,
   runV11BoundedReviewExperiment,
   runV11ForwardExtension,
@@ -87,6 +88,12 @@ export default async function handler(req, res) {
       pointInTimeSp500AlphaResearchR5?.candidateDisposition ===
         "rejected-by-historical-screen"
         ? await runPointInTimeSp500AlphaResearchR6()
+        : null;
+    const pointInTimeSp500AlphaResearchR7 =
+      pointInTimeSp500AlphaResearchR6?.status === "complete" &&
+      pointInTimeSp500AlphaResearchR6?.candidateDisposition ===
+        "rejected-by-historical-screen"
+        ? await runPointInTimeSp500AlphaResearchR7()
         : null;
     res.setHeader("Cache-Control", "no-store");
     return res.status(report.status === "complete" ? 200 : 202).json({
@@ -191,6 +198,19 @@ export default async function handler(req, res) {
                 .allHistoricalScreenGatesPassed === true,
             eligibleForAlphaClaim: false,
         }
+        : null,
+      pointInTimeSp500AlphaResearchR7: pointInTimeSp500AlphaResearchR7
+        ? {
+            status: pointInTimeSp500AlphaResearchR7.status,
+            completedAt:
+              pointInTimeSp500AlphaResearchR7.completedAt || null,
+            selectedCandidateId:
+              pointInTimeSp500AlphaResearchR7.selectedCandidateId || null,
+            allHistoricalScreenGatesPassed:
+              pointInTimeSp500AlphaResearchR7
+                .allHistoricalScreenGatesPassed === true,
+            eligibleForAlphaClaim: false,
+          }
         : null,
       pointInTimeSp500AlphaResearchR6: pointInTimeSp500AlphaResearchR6
         ? {

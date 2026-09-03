@@ -954,6 +954,10 @@ const pitAlphaR6Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-research-r6.js",
   "utf8",
 );
+const pitAlphaR7Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-research-r7.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -993,7 +997,7 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR6({ force })") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR7({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
@@ -1036,6 +1040,19 @@ assert(
       'pointInTimeSp500AlphaResearchR5?.candidateDisposition ===',
     ),
   "The R6 endpoint and cron must keep V16 research-only and sequence it only after the frozen R5 rejection.",
+);
+assert(
+  pitAlphaR7Endpoint.includes("await getPointInTimeSp500AlphaResearchR7()") &&
+    pitAlphaR7Endpoint.includes("await runPointInTimeSp500AlphaResearchR7({") &&
+    pitAlphaR7Endpoint.includes('productionCandidateVersion: "V17"') &&
+    pitAlphaR7Endpoint.includes("productionChanged: false") &&
+    pitAlphaR7Endpoint.includes("eligibleForAlphaClaim: false") &&
+    pitAlphaR7Endpoint.includes("maxDuration: 800") &&
+    cron.includes("await runPointInTimeSp500AlphaResearchR7()") &&
+    cron.includes(
+      'pointInTimeSp500AlphaResearchR6?.candidateDisposition ===',
+    ),
+  "The R7 endpoint and cron must keep V17 research-only and sequence it only after the frozen R6 rejection.",
 );
 assert(
   pitAlphaV2Endpoint.includes("await getPointInTimeSp500AlphaCreatorV2()") &&
