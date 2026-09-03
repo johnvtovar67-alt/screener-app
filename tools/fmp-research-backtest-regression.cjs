@@ -145,7 +145,7 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimeSecuritySymbol,pointInTimeSp500RawDatasetFromHistory,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration};";
 let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
@@ -268,9 +268,84 @@ const {
   equivalentAcquisitionSignature,
   appendCompatibleAcquisitionSignature,
   appendCompatibleStatementSignature,
+  pointInTimeSecuritySymbol,
+  pointInTimeSp500RawDatasetFromHistory,
   pointInTimePriceIntegrityAudit,
   summarizePointInTimeTradeConcentration,
 } = box.module.exports;
+
+assert(
+  pointInTimeSecuritySymbol("SATS") === "ECHO" &&
+    pointInTimeSecuritySymbol("ECHO") === "ECHO",
+  "Ticker aliases must resolve to one permanent point-in-time security identifier.",
+);
+const tickerAliasDataset = pointInTimeSp500RawDatasetFromHistory({
+  blueprint: {
+    fromDate: "2026-06-22",
+    throughDate: "2026-06-25",
+    privateBlueprint: {
+      initialSymbols: ["SATS", "ECHO"],
+      changes: [],
+      delistedDates: {},
+    },
+  },
+  profiles: [
+    { symbol: "SATS", companyName: "EchoStar" },
+    { symbol: "ECHO", companyName: "EchoStar" },
+  ],
+  histories: new Map([
+    [
+      "SPY",
+      [
+        {
+          date: "2026-06-22",
+          open: 600,
+          high: 601,
+          low: 599,
+          close: 600,
+          adjusted: true,
+        },
+      ],
+    ],
+    [
+      "SATS",
+      [
+        {
+          date: "2026-06-22",
+          open: 50,
+          high: 51,
+          low: 49,
+          close: 50,
+          adjusted: true,
+        },
+      ],
+    ],
+    [
+      "ECHO",
+      [
+        {
+          date: "2026-06-22",
+          open: 50,
+          high: 51,
+          low: 49,
+          close: 50,
+          adjusted: true,
+        },
+      ],
+    ],
+  ]),
+  fundamentals: [],
+});
+assert(
+  tickerAliasDataset.sessions[0].universeSymbols.join(",") === "ECHO" &&
+    tickerAliasDataset.sessions[0].prices.filter(
+      (row) => ["SATS", "ECHO"].includes(row.symbol),
+    ).length === 1 &&
+    tickerAliasDataset.sessions[0].prices.some(
+      (row) => row.symbol === "ECHO",
+    ),
+  "A ticker rename must not create duplicate active membership or duplicate issuer prices.",
+);
 
 const cleanPriceIntegrity = pointInTimePriceIntegrityAudit([
   {
