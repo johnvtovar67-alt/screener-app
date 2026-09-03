@@ -658,24 +658,6 @@ const probeMembershipSupplements = [
     sourceVerifiedSupplement: true,
   },
   {
-    date: "2025-11-10",
-    effectiveDate: "2025-11-10",
-    announcementDate: "2025-11-06",
-    addedSymbol: "",
-    removedSymbol: "SOLS",
-    removedSecurity: "Solstice Advanced Materials Inc.",
-    reason:
-      "Nasdaq removed the spin-off after it failed the NDX minimum-weight requirement; official weights show SOLS present through November 7 and absent November 10",
-    provenance:
-      "Nasdaq Global Indexes 2025 NDX review and official NDX start-of-day weights",
-    sources: [
-      "https://www.nasdaq.com/articles/global-indexes/2025-nasdaq-100-reconstitution-and-performance-highlights",
-      "https://indexes.nasdaqomx.com/Index/Weighting/NDX",
-    ],
-    effectiveDateBasis: "source-verified-supplement",
-    sourceVerifiedSupplement: true,
-  },
-  {
     date: "2026-01-14",
     effectiveDate: "2026-01-14",
     announcementDate: "",
@@ -701,6 +683,28 @@ const probeSupplementFingerprint =
   );
 const probeCorrectionFingerprint =
   pointInTimeNasdaqProviderEventCorrectionFingerprint();
+const probeSolsCorrection = {
+  id: "sols-ndx-effective-removal-2025-11-10",
+  date: "2025-11-10",
+  effectiveDate: "2025-11-10",
+  announcementDate: "2025-11-06",
+  addedSymbol: "",
+  removedSymbol: "SOLS",
+  removedSecurity: "Solstice Advanced Materials Inc.",
+  providerEventDate: "2025-11-06",
+  reason:
+    "FMP stamps the removal on its announcement date; official Nasdaq weights show SOLS present through November 7 and absent November 10",
+  provenance:
+    "Nasdaq Global Indexes 2025 NDX review and official NDX start-of-day weights",
+  sources: [
+    "https://www.nasdaq.com/articles/global-indexes/2025-nasdaq-100-reconstitution-and-performance-highlights",
+    "https://indexes.nasdaqomx.com/Index/Weighting/NDX",
+  ],
+  providerEventCorrectionId:
+    "sols-ndx-effective-removal-2025-11-10",
+  effectiveDateBasis: "source-verified-corporate-action",
+  sourceVerifiedCorrection: true,
+};
 const universeProbeFor = (symbols) => {
   const normalizedSymbols = [...new Set(symbols)].sort();
   const initialSymbols = normalizedSymbols.filter((symbol) => symbol !== "HONA");
@@ -713,7 +717,7 @@ const universeProbeFor = (symbols) => {
       removedSymbol: "",
       effectiveDateBasis: "dateAdded",
     },
-    probeMembershipSupplements[1],
+    probeSolsCorrection,
     {
       date: "2026-01-05",
       effectiveDate: "2026-01-05",
@@ -721,7 +725,7 @@ const universeProbeFor = (symbols) => {
       removedSymbol: "",
       effectiveDateBasis: "dateAdded",
     },
-    probeMembershipSupplements[2],
+    probeMembershipSupplements[1],
     probeMembershipSupplements[0],
   ].map((row) => ({ ...row }));
   const profilesBySymbol = Object.fromEntries(
@@ -740,9 +744,9 @@ const universeProbeFor = (symbols) => {
       "source-verified-nasdaq-spinoff-lifecycle-v2",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
-      "source-verified-acquisition-date-splits-v1",
+      "source-verified-provider-effective-dates-v2",
     providerEventCorrectionFingerprint: probeCorrectionFingerprint,
-    providerEventCorrections: [],
+    providerEventCorrections: [probeSolsCorrection],
     unionSymbols,
     profilesBySymbol,
     delistedDates: {},
@@ -761,11 +765,11 @@ const universeProbeFor = (symbols) => {
       "source-verified-nasdaq-spinoff-lifecycle-v2",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
-      "source-verified-acquisition-date-splits-v1",
+      "source-verified-provider-effective-dates-v2",
     providerEventCorrectionFingerprint: probeCorrectionFingerprint,
-    correctedProviderEvents: 2,
+    correctedProviderEvents: 3,
     membershipEffectiveConvention: "effective-date-inclusive",
-    supplementalMembershipEvents: 3,
+    supplementalMembershipEvents: 2,
     currentAnchorCardinalityPlausible: true,
     pointInTimeMembershipConstructed: true,
     currentConstituents: normalizedSymbols.length,
@@ -792,7 +796,7 @@ const currentNasdaqSignature = JSON.stringify({
   membershipSupplementContract: "source-verified-nasdaq-spinoff-lifecycle-v2",
   membershipSupplementFingerprint: probeSupplementFingerprint,
   providerEventCorrectionContract:
-    "source-verified-acquisition-date-splits-v1",
+    "source-verified-provider-effective-dates-v2",
   providerEventCorrectionFingerprint: probeCorrectionFingerprint,
   membershipEffectiveConvention: "effective-date-inclusive",
   priceAliasContract: "date-bounded-provider-alias-stitch-v1",
@@ -833,7 +837,7 @@ const probeDatasetContractFingerprint = sha256Fingerprint(
     membershipSupplementContract: "source-verified-nasdaq-spinoff-lifecycle-v2",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
-      "source-verified-acquisition-date-splits-v1",
+      "source-verified-provider-effective-dates-v2",
     providerEventCorrectionFingerprint: probeCorrectionFingerprint,
     membershipEffectiveConvention: "effective-date-inclusive",
     compilerContract:
@@ -1084,7 +1088,6 @@ assert(
 assert(
   !pointInTimeNasdaqMembershipSupplementConflict(
     [
-      { date: "2025-11-10", addedSymbol: "", removedSymbol: "SOLS" },
       { date: "2026-01-14", addedSymbol: "", removedSymbol: "VSNT" },
     ],
     probeMembershipSupplements,
@@ -1109,12 +1112,16 @@ const correctedAcquisitionEvents =
       addedSymbol: "TRI",
       removedSymbol: "ANSS",
     },
+    {
+      date: "2025-11-06",
+      effectiveDate: "2025-11-06",
+      addedSymbol: "SOLS",
+      removedSymbol: "SOLS",
+    },
   ]);
 assert(
   correctedAcquisitionEvents.providerChanges.every(
-    (row) =>
-      row.removedSymbol === "" &&
-      row.providerEventCorrectionId,
+    (row) => row.removedSymbol === "" && row.providerEventCorrectionId,
   ) &&
     correctedAcquisitionEvents.correctionChanges.some(
       (row) =>
@@ -1127,8 +1134,15 @@ assert(
         row.date === "2025-07-17" &&
         row.removedSymbol === "ANSS" &&
         row.sourceVerifiedCorrection === true,
+    ) &&
+    correctedAcquisitionEvents.correctionChanges.some(
+      (row) =>
+        row.date === "2025-11-10" &&
+        row.removedSymbol === "SOLS" &&
+        row.providerEventDate === "2025-11-06" &&
+        row.sourceVerifiedCorrection === true,
     ),
-  "Acquired constituents must leave the tradable membership path on their source-verified halt dates while their replacements retain the provider's later effective dates.",
+  "Provider events must move to their source-verified effective dates while any distinct paired additions retain their own dates.",
 );
 let missingCorrectionAnchorRejected = false;
 try {
