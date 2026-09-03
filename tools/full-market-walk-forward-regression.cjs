@@ -1645,6 +1645,137 @@ assert(
   "An index removal must liquidate the holding at that session's open with normal slippage and leave no ghost position.",
 );
 
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      session("2026-08-25", "Watch", 100),
+      session("2026-08-26", null, 100, {
+        prices: [
+          {
+            symbol: "SPY",
+            open: 500,
+            high: 502,
+            low: 498,
+            close: 500,
+            adjusted: true,
+          },
+        ],
+        corporateActions: [{ symbol: "AAA", type: "universe-removal" }],
+      }),
+      session("2026-08-27", null, 80),
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 12,
+    exitOnUniverseRemoval: true,
+    ignoreSignalPositionActions: true,
+  },
+);
+assert(
+  run.trades.some(
+    (trade) =>
+      trade.side === "sell" &&
+      trade.date === "2026-08-27" &&
+      trade.reason === "universe-removal" &&
+      trade.price === 79.904,
+  ) && run.openPositions.length === 0,
+  "A removal exit with no immediate quote must remain pending until the first later observable open instead of leaving a ghost position.",
+);
+
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      session("2026-08-25", "Watch", 100),
+      session("2026-08-26", null, 100, {
+        prices: [
+          {
+            symbol: "SPY",
+            open: 500,
+            high: 502,
+            low: 498,
+            close: 500,
+            adjusted: true,
+          },
+        ],
+        corporateActions: [
+          {
+            symbol: "AAA",
+            type: "universe-removal",
+            treatment:
+              "conservative-zero-recovery-missing-removal-open-v1",
+            valuePerShare: 0,
+          },
+        ],
+      }),
+      session("2026-08-27", null, 1_000),
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 12,
+    exitOnUniverseRemoval: true,
+    ignoreSignalPositionActions: true,
+  },
+);
+assert(
+  run.trades.some(
+    (trade) =>
+      trade.side === "sell" &&
+      trade.date === "2026-08-26" &&
+      trade.reason === "universe-removal-zero-recovery" &&
+      trade.price === 0,
+  ) &&
+    !run.trades.some(
+      (trade) => trade.side === "sell" && trade.date === "2026-08-27"
+    ) &&
+    run.openPositions.length === 0,
+  "A declared missing-open fallback must realize zero on the fixed removal session and must never select a favorable later quote.",
+);
+
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      session("2026-08-25", "Watch", 100),
+      session("2026-08-26", null, 100, {
+        prices: [
+          {
+            symbol: "SPY",
+            open: 500,
+            high: 502,
+            low: 498,
+            close: 500,
+            adjusted: true,
+          },
+        ],
+        corporateActions: [{ symbol: "AAA", type: "universe-removal" }],
+      }),
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 12,
+    exitOnUniverseRemoval: true,
+    ignoreSignalPositionActions: true,
+    liquidateAtEnd: true,
+  },
+);
+assert(
+  run.unresolvedUniverseRemovals.length === 1 &&
+    run.openPositions.length === 1 &&
+    !run.trades.some((trade) => trade.reason === "window-end-liquidation"),
+  "An unrecognized unresolved removal must invalidate evidence and must not be hidden by stale-price window-end liquidation.",
+);
+
 const benchmarkCompletionDataset = {
   metadata: metadata({ comparisonSymbols: ["SPY"] }),
   sessions: [
@@ -2195,6 +2326,28 @@ assert(
       Number.isFinite(row.researchFactors?.lotteryRestraintPercentile),
   ),
   "Replay compaction must preserve the anchored-gradual and Nasdaq path-risk factors required to reproduce research ranks.",
+);
+const compactedRemovalAction = compactReplaySession({
+  date: "2026-08-26",
+  prices: [],
+  signals: [],
+  positionSignals: [],
+  corporateActions: [
+    {
+      symbol: "AAA",
+      type: "universe-removal",
+      effectiveDate: "2026-08-25",
+      treatment: "conservative-zero-recovery-missing-removal-open-v1",
+      valuePerShare: 0,
+    },
+  ],
+}).corporateActions[0];
+assert(
+  compactedRemovalAction.effectiveDate === "2026-08-25" &&
+    compactedRemovalAction.treatment ===
+      "conservative-zero-recovery-missing-removal-open-v1" &&
+    compactedRemovalAction.valuePerShare === 0,
+  "Replay compaction must preserve the exact removal outcome contract used by the simulator and integrity audit.",
 );
 
 console.log(

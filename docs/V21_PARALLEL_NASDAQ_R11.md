@@ -6,18 +6,23 @@ Status: research-only. V11 production remains `2026-09-01-v11-setup-tolerance`.
 
 The earlier S&P point-in-time runs cannot be treated as reliable evidence until
 they are reproduced under the corrected data and execution contract. The audit
-found two defects capable of making a result look better than it was:
+found defects capable of making a result look better than it was:
 
 1. Membership coverage counted the presence of a company profile, not an actual
    adjusted price bar for every member-date observation.
 2. A holding removed from the index could survive because its signal disappeared
    before the ranked-exit path could schedule a sale.
+3. A permanent issuer identifier could discard the pre-change SATS price history
+   when the provider began returning the same EchoStar issuer as ECHO.
 
-R11 fixes both defects. It measures actual member-date price coverage and requires
-100%. It also emits a dated `universe-removal` action and realizes the position at
-the first later session open, with the same 12 bps slippage as every other sale.
-Regression tests cover both behaviors. No earlier headline return is inherited by
-R11.
+R11 fixes these defects. It measures actual member-date price coverage and requires
+100%, requests both provider tickers, and stitches them at the documented
+2026-06-24 cutover into one issuer history. It also emits a dated
+`universe-removal` action. A usable adjusted opening print receives the same 12 bps
+slippage as every other sale; a missing exact print receives an immediate,
+explicit zero recovery so a later favorable quote cannot improve the result.
+Exact-open and resolved-outcome coverage remain separately disclosed. Regression
+tests cover these behaviors. No earlier headline return is inherited by R11.
 
 ## Frozen experiment
 
@@ -33,8 +38,9 @@ R11.
 - Idle capital: cash, never a benchmark completion sleeve
 - Historical membership: effective on the first observable session after the
   provider's effective date
-- Missing member-date or removal-open prices: fail closed before returns are
-  evaluated
+- Missing member-date prices: fail closed before returns are evaluated
+- Missing exact removal open: immediate disclosed zero recovery; never a stale
+  close or selectively chosen later quote
 
 FMP calls the endpoint the “Nasdaq index” without unambiguously identifying NDX.
 The builder therefore preserves that provider label and refuses data whose live
