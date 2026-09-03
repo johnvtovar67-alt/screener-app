@@ -59,10 +59,13 @@ assert(
     rawSource.includes("rawMembershipDigest") &&
     rawSource.includes("currentPointInTimeNasdaqUniverse") &&
     rawSource.includes(
-      "date-added-effective-inclusive-spinoff-supplement-v3",
+      "date-added-effective-inclusive-corporate-action-v4",
     ) &&
     rawSource.includes("POINT_IN_TIME_NASDAQ_MEMBERSHIP_SUPPLEMENTS") &&
     rawSource.includes('addedSymbol: "HONA"') &&
+    rawSource.includes('removedSymbol: "XLNX"') &&
+    rawSource.includes('removedSymbol: "ANSS"') &&
+    rawSource.includes("pointInTimeNasdaqApplyProviderEventCorrections") &&
     rawSource.includes('effectiveDateBasis: "source-verified-supplement"') &&
     rawSource.includes("membershipSupplementContract") &&
     rawSource.includes("row.date >= POINT_IN_TIME_NASDAQ_RESEARCH_FROM"),
@@ -400,7 +403,7 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimeSecuritySymbol,pointInTimeProviderPriceSymbols,pointInTimeCanonicalPriceHistories,pointInTimeSp500RawDatasetFromHistory,pointInTimeIndexRawDatasetFromHistory,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration,reconstructIndexInitialMembers,canonicalIndexMembershipChanges,pointInTimePriceInputFingerprint,pointInTimeNasdaqExpectedSessionDates,pointInTimeNasdaqExpectedMembershipEvidence,pointInTimeNasdaqManifestHasCurrentContract,currentPointInTimeNasdaqUniverse,currentPointInTimeNasdaqEvidence,currentPointInTimeNasdaqIntegrity,assertCurrentPointInTimeNasdaqEvidence,pointInTimeNasdaqMembershipDigest,pointInTimeNasdaqMembershipSupplementFingerprint,pointInTimeNasdaqMembershipSupplementConflict,pointInTimeNasdaqPriceAcquisitionSignatureMatches,buildR11ShardPlan,r11ShardStorePath,mergeR11ShardReports,validateR11ShardReport,r11PhaseChecksPass,r11DeterministicAuditGate,sha256Fingerprint};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimeSecuritySymbol,pointInTimeProviderPriceSymbols,pointInTimeCanonicalPriceHistories,pointInTimeSp500RawDatasetFromHistory,pointInTimeIndexRawDatasetFromHistory,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration,reconstructIndexInitialMembers,canonicalIndexMembershipChanges,pointInTimePriceInputFingerprint,pointInTimeNasdaqExpectedSessionDates,pointInTimeNasdaqExpectedMembershipEvidence,pointInTimeNasdaqManifestHasCurrentContract,currentPointInTimeNasdaqUniverse,currentPointInTimeNasdaqEvidence,currentPointInTimeNasdaqIntegrity,assertCurrentPointInTimeNasdaqEvidence,pointInTimeNasdaqMembershipDigest,pointInTimeNasdaqMembershipSupplementFingerprint,pointInTimeNasdaqProviderEventCorrectionFingerprint,pointInTimeNasdaqMembershipSupplementConflict,pointInTimeNasdaqApplyProviderEventCorrections,pointInTimeNasdaqPriceAcquisitionSignatureMatches,buildR11ShardPlan,r11ShardStorePath,mergeR11ShardReports,validateR11ShardReport,r11PhaseChecksPass,r11DeterministicAuditGate,sha256Fingerprint};";
 let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
@@ -546,7 +549,9 @@ const {
   assertCurrentPointInTimeNasdaqEvidence,
   pointInTimeNasdaqMembershipDigest,
   pointInTimeNasdaqMembershipSupplementFingerprint,
+  pointInTimeNasdaqProviderEventCorrectionFingerprint,
   pointInTimeNasdaqMembershipSupplementConflict,
+  pointInTimeNasdaqApplyProviderEventCorrections,
   pointInTimeNasdaqPriceAcquisitionSignatureMatches,
   buildR11ShardPlan,
   r11ShardStorePath,
@@ -660,6 +665,8 @@ const probeSupplementFingerprint =
   pointInTimeNasdaqMembershipSupplementFingerprint(
     probeMembershipSupplements,
   );
+const probeCorrectionFingerprint =
+  pointInTimeNasdaqProviderEventCorrectionFingerprint();
 const universeProbeFor = (symbols) => {
   const normalizedSymbols = [...new Set(symbols)].sort();
   const initialSymbols = normalizedSymbols.filter((symbol) => symbol !== "HONA");
@@ -679,6 +686,10 @@ const universeProbeFor = (symbols) => {
     membershipSupplementContract:
       "source-verified-nasdaq-spinoff-events-v1",
     membershipSupplementFingerprint: probeSupplementFingerprint,
+    providerEventCorrectionContract:
+      "source-verified-acquisition-date-splits-v1",
+    providerEventCorrectionFingerprint: probeCorrectionFingerprint,
+    providerEventCorrections: [],
     unionSymbols: normalizedSymbols,
     profilesBySymbol,
     delistedDates: {},
@@ -692,10 +703,14 @@ const universeProbeFor = (symbols) => {
     version: 1,
     status: "complete",
     universeContract:
-      "date-added-effective-inclusive-spinoff-supplement-v3",
+      "date-added-effective-inclusive-corporate-action-v4",
     membershipSupplementContract:
       "source-verified-nasdaq-spinoff-events-v1",
     membershipSupplementFingerprint: probeSupplementFingerprint,
+    providerEventCorrectionContract:
+      "source-verified-acquisition-date-splits-v1",
+    providerEventCorrectionFingerprint: probeCorrectionFingerprint,
+    correctedProviderEvents: 2,
     membershipEffectiveConvention: "effective-date-inclusive",
     supplementalMembershipEvents: 1,
     currentAnchorCardinalityPlausible: true,
@@ -720,9 +735,12 @@ const currentNasdaqSignature = JSON.stringify({
     "historical-signal-evaluator-v11-nasdaq-membership-removal-history-v4",
   minimumSignalHistoryRows: 253,
   universeContract:
-    "date-added-effective-inclusive-spinoff-supplement-v3",
+    "date-added-effective-inclusive-corporate-action-v4",
   membershipSupplementContract: "source-verified-nasdaq-spinoff-events-v1",
   membershipSupplementFingerprint: probeSupplementFingerprint,
+  providerEventCorrectionContract:
+    "source-verified-acquisition-date-splits-v1",
+  providerEventCorrectionFingerprint: probeCorrectionFingerprint,
   membershipEffectiveConvention: "effective-date-inclusive",
   priceAliasContract: "date-bounded-provider-alias-stitch-v1",
   priceAcquisitionContract: "membership-bound-full-symbol-refresh-v2",
@@ -758,9 +776,12 @@ const probeDatasetContractFingerprint = sha256Fingerprint(
   JSON.stringify({
     schema: 1,
     universeContract:
-      "date-added-effective-inclusive-spinoff-supplement-v3",
+      "date-added-effective-inclusive-corporate-action-v4",
     membershipSupplementContract: "source-verified-nasdaq-spinoff-events-v1",
     membershipSupplementFingerprint: probeSupplementFingerprint,
+    providerEventCorrectionContract:
+      "source-verified-acquisition-date-splits-v1",
+    providerEventCorrectionFingerprint: probeCorrectionFingerprint,
     membershipEffectiveConvention: "effective-date-inclusive",
     compilerContract:
       "historical-signal-evaluator-v11-nasdaq-membership-removal-history-v4",
@@ -981,6 +1002,58 @@ assert(
       probeMembershipSupplements,
     ),
   "Any alternate HONA date or same-date conflicting removal must stop the source-backed supplement merge.",
+);
+const correctedAcquisitionEvents =
+  pointInTimeNasdaqApplyProviderEventCorrections([
+    {
+      date: "2022-02-22",
+      effectiveDate: "2022-02-22",
+      addedSymbol: "AZN",
+      removedSymbol: "XLNX",
+    },
+    {
+      date: "2025-07-28",
+      effectiveDate: "2025-07-28",
+      addedSymbol: "TRI",
+      removedSymbol: "ANSS",
+    },
+  ]);
+assert(
+  correctedAcquisitionEvents.providerChanges.every(
+    (row) =>
+      row.removedSymbol === "" &&
+      row.providerEventCorrectionId,
+  ) &&
+    correctedAcquisitionEvents.correctionChanges.some(
+      (row) =>
+        row.date === "2022-02-14" &&
+        row.removedSymbol === "XLNX" &&
+        row.sourceVerifiedCorrection === true,
+    ) &&
+    correctedAcquisitionEvents.correctionChanges.some(
+      (row) =>
+        row.date === "2025-07-17" &&
+        row.removedSymbol === "ANSS" &&
+        row.sourceVerifiedCorrection === true,
+    ),
+  "Acquired constituents must leave the tradable membership path on their source-verified halt dates while their replacements retain the provider's later effective dates.",
+);
+let missingCorrectionAnchorRejected = false;
+try {
+  pointInTimeNasdaqApplyProviderEventCorrections([
+    {
+      date: "2022-02-22",
+      effectiveDate: "2022-02-22",
+      addedSymbol: "AZN",
+      removedSymbol: "XLNX",
+    },
+  ]);
+} catch {
+  missingCorrectionAnchorRejected = true;
+}
+assert(
+  missingCorrectionAnchorRejected,
+  "A missing or changed provider anchor for a source correction must fail closed.",
 );
 const acquisitionMatchOptions = {
   fromDate: "2022-01-01",
