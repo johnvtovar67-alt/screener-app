@@ -70,11 +70,30 @@ async function invokeNasdaqR11Workers(req, phase, shardCount) {
         cache: "no-store",
         signal: AbortSignal.timeout(780_000),
       });
-      const payload = await response.json();
-      if (!response.ok)
+      const responseBody = await response.text();
+      let payload;
+      try {
+        payload = responseBody ? JSON.parse(responseBody) : {};
+      } catch {
+        payload = { error: responseBody || `HTTP ${response.status}` };
+      }
+      if (!response.ok) {
+        const rawError = payload?.error ?? payload?.message ?? payload;
+        const workerError =
+          typeof rawError === "string"
+            ? rawError
+            : JSON.stringify(rawError);
+        console.error("R11 worker request failed", {
+          phase,
+          shard,
+          status: response.status,
+          contentType: response.headers.get("content-type"),
+          error: workerError.slice(0, 800),
+        });
         throw new Error(
-          `R11 ${phase} shard ${shard} failed: ${payload?.error || response.status}`,
+          `R11 ${phase} shard ${shard} failed (${response.status}): ${workerError.slice(0, 400)}`,
         );
+      }
       return payload;
     }),
   );
