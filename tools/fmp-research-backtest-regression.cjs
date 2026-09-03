@@ -174,6 +174,33 @@ assert(
   "V14/R4 must test one frozen liquidity-conditioned reversal thesis with the same corrected-data and significance gates.",
 );
 assert(
+  rawSource.includes("runPointInTimeSp500AlphaResearchR6") &&
+    rawSource.includes('productionCandidateVersion: "V16"') &&
+    rawSource.includes('researchGeneration: "R6"') &&
+    rawSource.includes(
+      'researchRankMode: "attention-shock-breakout-continuation"',
+    ) &&
+    rawSource.includes("activityShock: 0.4") &&
+    rawSource.includes("breakoutProximity: 0.25") &&
+    rawSource.includes("followthrough: 0.2") &&
+    rawSource.includes("relativeStrength20: 0.15") &&
+    rawSource.includes("minRelativeVolume20: 1.5") &&
+    rawSource.includes("minDistanceFromYearHighPct: -5") &&
+    rawSource.includes("rankedMinimumHoldSessions: 20") &&
+    rawSource.includes("minimumInitialStopPct: 12") &&
+    rawSource.includes(
+      "POINT_IN_TIME_SP500_ALPHA_R6_RESEARCH_GENERATIONS = 6",
+    ) &&
+    rawSource.includes("specifiedBeforeR4ResultObserved: true") &&
+    rawSource.includes("specifiedBeforeR5ResultObserved: true") &&
+    rawSource.includes("exactMatchedEventUniversePlacebos") &&
+    rawSource.includes("commissionAssumed: 0") &&
+    rawSource.includes("strictPromotionPlaceboSeeds: 1_000") &&
+    rawSource.includes("productionChanged: false") &&
+    rawSource.includes("eligibleForLiveCapital: false"),
+  "V16/R6 must test one frozen high-volume near-high continuation event thesis behind unchanged evidence and promotion gates.",
+);
+assert(
   walkForwardSource.includes(
     'config.researchRankMode === "conditional-short-term-reversal"',
   ) &&
@@ -923,6 +950,10 @@ const pitAlphaR5Endpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-research-r5.js",
   "utf8",
 );
+const pitAlphaR6Endpoint = fs.readFileSync(
+  "pages/api/research/pit-sp500-alpha-research-r6.js",
+  "utf8",
+);
 const pitAlphaV2IntegrityEndpoint = fs.readFileSync(
   "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
   "utf8",
@@ -962,7 +993,7 @@ assert(
 );
 assert(
   alphaCreatorEndpoint.includes("await getPointInTimeSp500AlphaProgram()") &&
-    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR5({ force })") &&
+    alphaCreatorEndpoint.includes("await runPointInTimeSp500AlphaResearchR6({ force })") &&
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await runAlphaCreatorSearch({ force })") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
@@ -987,8 +1018,24 @@ assert(
     pitAlphaR5Endpoint.includes("productionChanged: false") &&
     pitAlphaR5Endpoint.includes("eligibleForAlphaClaim: false") &&
     pitAlphaR5Endpoint.includes("maxDuration: 800") &&
-    cron.includes("await runPointInTimeSp500AlphaResearchR5()"),
-  "The R5 endpoint and cron must keep V15 research-only and run only after rejected R4.",
+    cron.includes("await runPointInTimeSp500AlphaResearchR5()") &&
+    cron.includes(
+      'pointInTimeSp500AlphaResearchR4?.candidateDisposition ===',
+    ),
+  "The R5 endpoint and cron must keep V15 research-only and sequence it only after the frozen R4 rejection.",
+);
+assert(
+  pitAlphaR6Endpoint.includes("await getPointInTimeSp500AlphaResearchR6()") &&
+    pitAlphaR6Endpoint.includes("await runPointInTimeSp500AlphaResearchR6({") &&
+    pitAlphaR6Endpoint.includes('productionCandidateVersion: "V16"') &&
+    pitAlphaR6Endpoint.includes("productionChanged: false") &&
+    pitAlphaR6Endpoint.includes("eligibleForAlphaClaim: false") &&
+    pitAlphaR6Endpoint.includes("maxDuration: 800") &&
+    cron.includes("await runPointInTimeSp500AlphaResearchR6()") &&
+    cron.includes(
+      'pointInTimeSp500AlphaResearchR5?.candidateDisposition ===',
+    ),
+  "The R6 endpoint and cron must keep V16 research-only and sequence it only after the frozen R5 rejection.",
 );
 assert(
   pitAlphaV2Endpoint.includes("await getPointInTimeSp500AlphaCreatorV2()") &&

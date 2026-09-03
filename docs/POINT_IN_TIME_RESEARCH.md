@@ -78,6 +78,15 @@ no benchmark sleeve, and no volatility-target cash dilution. `GET
 /api/research/pit-sp500-alpha-research-r5` exposes its status. The five-family
 multiple-testing correction and all existing promotion gates remain binding.
 
+V16 / research R6 is frozen in `V16_ATTENTION_SHOCK_CONTINUATION.md`. Its
+parameters were specified before R4's result was observed and before R5 was
+run. It is economically distinct from the prior continuous momentum ranks,
+R4 reversal, and R5 sector-first leadership: it tests discrete high-volume
+attention events near a trailing 52-week high with a roughly monthly holding
+horizon. `GET /api/research/pit-sp500-alpha-research-r6` exposes its status. It
+remains research-only and is blocked until R5 is preserved as rejected on the
+same corrected dataset fingerprint.
+
 ## Run sequence
 
 1. Check the FMP subscription without exposing the API key:
