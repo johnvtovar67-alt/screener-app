@@ -19,8 +19,11 @@ historical decision may use only the latest accession filed before that decision
 - issuer key: permanent SEC CIK already carried by the historical universe;
 - forms: 10-Q, 10-K, 20-F and 40-F;
 - quarterly duration: 70–110 days;
+- cumulative six-, nine- and twelve-month facts: converted to discrete quarters
+  only when a same-start prior cumulative filing permits an exact subtraction;
 - comparable prior period: 330–400 days earlier and within 14 duration days;
-- initial fields: revenue, operating income and operating cash flow;
+- initial fields: revenue, profitability (operating income where available,
+  otherwise reported net income) and operating cash flow;
 - availability: filing date strictly earlier than the signal date;
 - missing facts, taxonomy aliases or CIKs: disclosed and failed closed;
 - restatements: usable prospectively only after their own filing date;
