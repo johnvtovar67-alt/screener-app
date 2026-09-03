@@ -53,7 +53,7 @@ fundamentals or historical-news hindsight. `GET
 /api/research/pit-sp500-alpha-creator-v2` exposes its status; the public
 `/api/research/alpha-creator` route shows the latest available generation.
 
-The next production-policy candidate is V13; its research label is R3 so the
+The V13 production-policy candidate used research label R3 so the
 application-policy sequence is not confused with alpha-generator report
 schemas. R3 is frozen in
 `V13_BENCHMARK_RESIDUAL_VOLATILITY_MANAGED.md`. It tests one benchmark-relative,
@@ -62,6 +62,14 @@ Newey-West significance hurdles, a family-wise repeated-search adjustment and
 the existing placebo gates. `GET
 /api/research/pit-sp500-alpha-research-r3` exposes its status. R3 cannot run
 until the corrected dataset passes the post-V2 adjusted-price integrity audit.
+It failed the corrected historical screen and remains immutable.
+
+The next distinct candidate is V14/R4, documented in
+`V14_LIQUIDITY_CONDITIONED_REVERSAL.md`. It tests short-horizon reversal as
+compensation for liquidity provision only inside established dual-benchmark
+uptrends. `GET /api/research/pit-sp500-alpha-research-r4` exposes its status.
+R4 counts all four research generations in its family-wise error correction
+and cannot change production recommendations.
 
 ## Run sequence
 
