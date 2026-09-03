@@ -405,6 +405,37 @@ assert(
   "saved Swing holdings must receive the current lifecycle and an opening-date completeness check",
 );
 
+const releaseManifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
+assert(
+  releaseManifest.includes('release:"2026-09-01-v11-setup-tolerance"'),
+  "Nasdaq R11 research must not rename or replace the frozen V11 production release",
+);
+for (const productionPath of [
+  "lib/v11ProductionPolicy.js",
+  "lib/v11ProductionSnapshot.js",
+  "pages/api/top5.js",
+]) {
+  const productionSource = fs.readFileSync(productionPath, "utf8");
+  assert(
+    !/pit-nasdaq|NasdaqR11|productionCandidateVersion:\s*["']V21/i.test(
+      productionSource,
+    ),
+    `Nasdaq R11 research must remain unreachable from ${productionPath}`,
+  );
+}
+const nasdaqR11Route = fs.readFileSync(
+  "pages/api/research/pit-nasdaq-alpha-parallel-r11.js",
+  "utf8",
+);
+assert(
+  nasdaqR11Route.includes('researchGeneration: "R11"') &&
+    nasdaqR11Route.includes('productionCandidateVersion: "V21"') &&
+    nasdaqR11Route.includes("productionChanged: false") &&
+    nasdaqR11Route.includes("eligibleForAlphaClaim: false") &&
+    nasdaqR11Route.includes("eligibleForLiveCapital: false"),
+  "every fail-closed Nasdaq R11 route response must identify research-only V21 and deny production, alpha, and live-capital authority",
+);
+
 console.log(
   "V11 PRODUCTION POLICY PASS: independent Buy confirmation, entry-timing confirmation, strict Strong Buy preservation, exact audited weights, twelve-target ceiling, and fail-closed behavior are verified",
 );

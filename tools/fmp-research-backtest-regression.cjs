@@ -14,6 +14,51 @@ const walkForwardSource = fs.readFileSync(
   "utf8",
 );
 const researchSource = `${rawSource}\n${contractSource}`;
+const nasdaqMutationRoutes = [
+  "pages/api/research/pit-nasdaq-universe.js",
+  "pages/api/research/pit-nasdaq-dataset-status.js",
+  "pages/api/research/pit-nasdaq-price-integrity.js",
+  "pages/api/research/pit-nasdaq-alpha-parallel-r11.js",
+].map((pathname) => fs.readFileSync(pathname, "utf8"));
+const cronSource = fs.readFileSync(
+  "pages/api/cron/fmp-research-backtest.js",
+  "utf8",
+);
+assert(
+  nasdaqMutationRoutes.every(
+    (source) =>
+      source.includes('["GET", "POST"]') &&
+      source.includes("rejectUnauthorizedResearchMutation"),
+  ) &&
+    cronSource.includes("invokeNasdaqR11Workers") &&
+    cronSource.includes("Promise.all"),
+  "Nasdaq mutation must be authenticated POST-only, with real cron-driven serverless fan-out.",
+);
+assert(
+  rawSource.includes('client.fetchStable("nasdaq-constituent", {})') &&
+    rawSource.includes(
+      'client.fetchStable("historical-nasdaq-constituent", {})',
+    ) &&
+    rawSource.includes("currentAnchorCardinalityPlausible") &&
+    rawSource.includes("rawMembershipDigest"),
+  "R11 must use the official FMP Nasdaq membership endpoints behind cardinality and full-history fingerprint gates.",
+);
+assert(
+  rawSource.includes("runPointInTimeNasdaqR11WindowShard") &&
+    rawSource.includes("freezePointInTimeNasdaqR11Validation") &&
+    rawSource.includes("freezePointInTimeNasdaqR11Audit") &&
+    rawSource.includes("finalizePointInTimeNasdaqR11") &&
+    rawSource.includes("Exactly one frozen R11 candidate may enter audit") &&
+    rawSource.includes("strictMatchedPlacebosRequired"),
+  "R11 must use parallel immutable window shards, nested phase freezes, exactly one audit candidate, and a separate strict-placebo gate.",
+);
+assert(
+  rawSource.includes("membershipObservationCoveragePct") &&
+    rawSource.includes("indexedHistories.get(symbol)?.has(date)") &&
+    rawSource.includes('type: "universe-removal"') &&
+    rawSource.includes("universeRemovalOpenCoveragePct"),
+  "The Nasdaq rebuild must measure actual member-date bars and emit priced universe-removal actions.",
+);
 assert(
   /runV11ForwardExtension[\s\S]*startDate:\s*window\.start[\s\S]*endDate:\s*window\.end/.test(
     rawSource,
@@ -270,7 +315,7 @@ source = source
   .replace(/export async function /g, "async function ")
   .replace(/export function /g, "function ");
 source +=
-  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimeSecuritySymbol,pointInTimeSp500RawDatasetFromHistory,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration};";
+  "\nmodule.exports={selectResearchUniverse,normalizeHistoricalBars,buildHistoricalFundamentalRows,resolvePriceHistoryContract,runProvisionalWindows,nextReplaySessionSlice,equivalentAcquisitionSignature,appendCompatibleAcquisitionSignature,appendCompatibleStatementSignature,pointInTimeSecuritySymbol,pointInTimeSp500RawDatasetFromHistory,pointInTimeIndexRawDatasetFromHistory,pointInTimePriceIntegrityAudit,summarizePointInTimeTradeConcentration,reconstructIndexInitialMembers,canonicalIndexMembershipChanges,pointInTimePriceInputFingerprint,buildR11ShardPlan,r11ShardStorePath,mergeR11ShardReports,validateR11ShardReport,r11PhaseChecksPass,r11DeterministicAuditGate,sha256Fingerprint};";
 let simulatedRuns = 0;
 const box = {
   module: { exports: {} },
@@ -291,6 +336,7 @@ const box = {
   Response,
   setTimeout,
   clearTimeout,
+  createHash: require("crypto").createHash,
   ...contract,
   latestCompletedMarketSessionDay(value) {
     const date = new Date(value);
@@ -395,8 +441,19 @@ const {
   appendCompatibleStatementSignature,
   pointInTimeSecuritySymbol,
   pointInTimeSp500RawDatasetFromHistory,
+  pointInTimeIndexRawDatasetFromHistory,
   pointInTimePriceIntegrityAudit,
   summarizePointInTimeTradeConcentration,
+  reconstructIndexInitialMembers,
+  canonicalIndexMembershipChanges,
+  pointInTimePriceInputFingerprint,
+  buildR11ShardPlan,
+  r11ShardStorePath,
+  mergeR11ShardReports,
+  validateR11ShardReport,
+  r11PhaseChecksPass,
+  r11DeterministicAuditGate,
+  sha256Fingerprint,
 } = box.module.exports;
 
 assert(
@@ -470,6 +527,292 @@ assert(
       (row) => row.symbol === "ECHO",
     ),
   "A ticker rename must not create duplicate active membership or duplicate issuer prices.",
+);
+
+const reconstructedNasdaq = reconstructIndexInitialMembers(
+  ["KEEP", "NEW"],
+  [
+    {
+      date: "2026-01-05",
+      addedSymbol: "NEW",
+      removedSymbol: "OLD",
+    },
+  ],
+  { fromDate: "2026-01-01", throughDate: "2026-01-06" },
+);
+assert(
+  reconstructedNasdaq.initialSymbols.join(",") === "KEEP,OLD" &&
+    reconstructedNasdaq.throughSymbols.join(",") === "KEEP,NEW",
+  "Reverse reconstruction must replace a later added member with the removed member at the historical anchor.",
+);
+const anchorBoundary = reconstructIndexInitialMembers(
+  ["NEW"],
+  [{ date: "2026-01-01", addedSymbol: "NEW", removedSymbol: "OLD" }],
+  { fromDate: "2026-01-01", throughDate: "2026-01-06" },
+);
+assert(
+  anchorBoundary.initialSymbols.join(",") === "OLD",
+  "A membership change dated exactly on the research anchor must be reversed because it takes effect only on the next session.",
+);
+assert(
+  canonicalIndexMembershipChanges([
+    {
+      date: "2026-06-24",
+      addedSymbol: "ECHO",
+      removedSymbol: "SATS",
+    },
+  ]).length === 0,
+  "A canonicalized SATS-to-ECHO ticker rename must not become an index removal and artificial liquidation.",
+);
+const pitDates = ["2026-01-02", "2026-01-05", "2026-01-06"];
+const barsFor = (symbol, includeLast = true) =>
+  pitDates.slice(0, includeLast ? 3 : 2).map((date, index) => ({
+    symbol,
+    date,
+    open: 100 + index,
+    high: 102 + index,
+    low: 99 + index,
+    close: 101 + index,
+    volume: 1_000,
+    adjusted: true,
+  }));
+const nasdaqRawArgs = {
+  blueprint: {
+    fromDate: "2026-01-01",
+    throughDate: "2026-01-06",
+    privateBlueprint: {
+      initialSymbols: ["KEEP", "OLD"],
+      changes: [
+        {
+          date: "2026-01-05",
+          addedSymbol: "NEW",
+          removedSymbol: "OLD",
+        },
+      ],
+      delistedDates: {},
+    },
+  },
+  profiles: ["KEEP", "OLD", "NEW"].map((symbol) => ({
+    symbol,
+    companyName: symbol,
+  })),
+  histories: new Map(
+    ["SPY", "QQQ", "KEEP", "OLD", "NEW"].map((symbol) => [
+      symbol,
+      barsFor(symbol),
+    ]),
+  ),
+  fundamentals: [],
+  emitUniverseRemovalActions: true,
+};
+const nasdaqMembershipDataset =
+  pointInTimeIndexRawDatasetFromHistory(nasdaqRawArgs);
+assert(
+  nasdaqMembershipDataset.sessions[0].universeSymbols.join(",") ===
+    "KEEP,OLD" &&
+    nasdaqMembershipDataset.sessions[1].universeSymbols.join(",") ===
+      "KEEP,OLD" &&
+    nasdaqMembershipDataset.sessions[2].universeSymbols.join(",") ===
+      "KEEP,NEW" &&
+    nasdaqMembershipDataset.sessions[2].corporateActions.some(
+      (action) =>
+        action.type === "universe-removal" && action.symbol === "OLD",
+    ) &&
+    nasdaqMembershipDataset.metadata.membershipObservationCoveragePct === 100 &&
+    nasdaqMembershipDataset.metadata.universeRemovalOpenCoveragePct === 100 &&
+    nasdaqMembershipDataset.metadata.minimumMembershipCount === 2 &&
+    nasdaqMembershipDataset.metadata.maximumMembershipCount === 2,
+  "A Nasdaq membership event must take effect only on the next session, emit a removal action, and measure actual prices.",
+);
+const changedPriceHistories = new Map(nasdaqRawArgs.histories);
+changedPriceHistories.set("KEEP", [
+  ...barsFor("KEEP").slice(0, 2),
+  { ...barsFor("KEEP")[2], close: 999 },
+]);
+assert(
+  pointInTimePriceInputFingerprint(nasdaqRawArgs.histories) !==
+    pointInTimePriceInputFingerprint(changedPriceHistories),
+  "The evidence dataset fingerprint must change when any canonical OHLCV input changes.",
+);
+const missingMemberPriceDataset = pointInTimeIndexRawDatasetFromHistory({
+  ...nasdaqRawArgs,
+  histories: new Map([
+    ...["SPY", "QQQ", "KEEP", "OLD"].map((symbol) => [symbol, barsFor(symbol)]),
+    ["NEW", barsFor("NEW", false)],
+  ]),
+});
+assert(
+  missingMemberPriceDataset.metadata.membershipObservationCoveragePct < 100 &&
+    missingMemberPriceDataset.metadata.survivorshipBiasFree === false,
+  "A profile without an active member-date bar must reduce coverage and fail the survivorship-free label.",
+);
+
+const fakeFingerprint = "a".repeat(64);
+const candidateFingerprint = "b".repeat(64);
+const experimentFingerprint = "c".repeat(64);
+const developmentPlan = buildR11ShardPlan("development", ["A", "B"]);
+assert(
+  developmentPlan.length === 3 &&
+    developmentPlan.every((job, index) => job.shard === index),
+  "R11 development must expose one deterministic shard per frozen development window.",
+);
+const shardPath = r11ShardStorePath({
+  datasetFingerprint: fakeFingerprint,
+  candidateSetFingerprint: candidateFingerprint,
+  experimentFingerprint,
+  phase: "development",
+  shard: 0,
+  shardCount: 3,
+});
+assert(
+  shardPath.includes(fakeFingerprint) &&
+    shardPath.includes(candidateFingerprint) &&
+    shardPath.endsWith("development/window-0-of-3.json"),
+  "An R11 evidence path must bind the dataset, candidate set, experiment, phase, and shard identity.",
+);
+const fakeShardReports = developmentPlan.map((job) => {
+  const evidence = {
+    phase: "development",
+    shard: job.shard,
+    shardCount: 3,
+    window: job.window,
+    candidateIds: ["A", "B"],
+    results: ["A", "B"].map((candidateId) => ({
+      candidateId,
+      candidateFingerprint: `${candidateId === "A" ? "1" : "2"}`.repeat(64),
+      run: { metrics: { totalReturnPct: job.shard } },
+    })),
+  };
+  return {
+    status: "complete",
+    phase: "development",
+    shard: job.shard,
+    shardCount: 3,
+    window: job.window,
+    datasetFingerprint: fakeFingerprint,
+    candidateSetFingerprint: candidateFingerprint,
+    experimentFingerprint,
+    evidence,
+    resultDigest: sha256Fingerprint(JSON.stringify(evidence)),
+  };
+});
+const mergedShards = mergeR11ShardReports(fakeShardReports, {
+  phase: "development",
+  shardCount: 3,
+  candidateIds: ["A", "B"],
+  windows: developmentPlan.map((job) => job.window),
+  candidateFingerprints: { A: "1".repeat(64), B: "2".repeat(64) },
+  datasetFingerprint: fakeFingerprint,
+  candidateSetFingerprint: candidateFingerprint,
+  experimentFingerprint,
+});
+assert(
+  mergedShards.get("A").length === 3 &&
+    mergedShards.get("B").length === 3,
+  "R11 shard aggregation must cover every candidate in every window exactly once.",
+);
+let tamperedShardRejected = false;
+try {
+  mergeR11ShardReports(
+    fakeShardReports.map((report, index) =>
+      index === 0
+        ? { ...report, candidateSetFingerprint: "d".repeat(64) }
+        : report,
+    ),
+    {
+      phase: "development",
+      shardCount: 3,
+      candidateIds: ["A", "B"],
+      windows: developmentPlan.map((job) => job.window),
+      candidateFingerprints: { A: "1".repeat(64), B: "2".repeat(64) },
+      datasetFingerprint: fakeFingerprint,
+      candidateSetFingerprint: candidateFingerprint,
+      experimentFingerprint,
+    },
+  );
+} catch {
+  tamperedShardRejected = true;
+}
+assert(
+  tamperedShardRejected,
+  "A missing, duplicated, or fingerprint-mismatched R11 shard must fail closed.",
+);
+for (const mutate of [
+  (report) => ({ ...report, window: { start: "1900-01-01", end: "1900-01-02" } }),
+  (report) => ({
+    ...report,
+    evidence: { ...report.evidence, shard: 2 },
+    resultDigest: sha256Fingerprint(
+      JSON.stringify({ ...report.evidence, shard: 2 }),
+    ),
+  }),
+  (report) => {
+    const evidence = {
+      ...report.evidence,
+      results: report.evidence.results.map((result, index) =>
+        index === 0
+          ? { ...result, candidateFingerprint: "9".repeat(64) }
+          : result,
+      ),
+    };
+    return {
+      ...report,
+      evidence,
+      resultDigest: sha256Fingerprint(JSON.stringify(evidence)),
+    };
+  },
+]) {
+  let rejected = false;
+  try {
+    mergeR11ShardReports([mutate(fakeShardReports[0]), ...fakeShardReports.slice(1)], {
+      phase: "development",
+      shardCount: 3,
+      candidateIds: ["A", "B"],
+      windows: developmentPlan.map((job) => job.window),
+      candidateFingerprints: { A: "1".repeat(64), B: "2".repeat(64) },
+      datasetFingerprint: fakeFingerprint,
+      candidateSetFingerprint: candidateFingerprint,
+      experimentFingerprint,
+    });
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, "R11 must reject a wrong window, evidence identity, or candidate fingerprint.");
+}
+const allAuditChecks = {
+  positiveReturn: true,
+  beatsSpy: true,
+  beatsQqq: true,
+  positiveExpectancy: true,
+  profitFactorAboveOne: true,
+  positiveAlphaInAtLeastHalfOfWindows: true,
+  maxDrawdownWithin25Pct: true,
+  minimumClosedTrades: true,
+  averageActiveExposureAtLeast70Pct: true,
+};
+assert(
+  r11DeterministicAuditGate({
+    auditChecks: allAuditChecks,
+    spyStatistic: { tStatistic: 3.001 },
+    qqqStatistic: { tStatistic: 3.001 },
+    dataIntegrityPassed: true,
+    tradeConcentration: { concentrationWarning: false },
+  }) === true &&
+    r11DeterministicAuditGate({
+      auditChecks: allAuditChecks,
+      spyStatistic: { tStatistic: 3 },
+      qqqStatistic: { tStatistic: 4 },
+      dataIntegrityPassed: true,
+      tradeConcentration: { concentrationWarning: false },
+    }) === false &&
+    r11PhaseChecksPass({ positiveReturn: true }) === false &&
+    r11DeterministicAuditGate({
+      auditChecks: allAuditChecks,
+      spyStatistic: { tStatistic: 4 },
+      qqqStatistic: { tStatistic: 4 },
+      dataIntegrityPassed: true,
+    }) === false,
+  "The R11 audit must require every explicit phase check, concentration evidence, and a statistic strictly above three against both benchmarks.",
 );
 
 const cleanPriceIntegrity = pointInTimePriceIntegrityAudit([
@@ -579,6 +922,39 @@ assert(
     decisionRelevantPriceIntegrity.priceRows === 4 &&
     decisionRelevantPriceIntegrity.excludedArchivalPriceRows === 2,
   "The decision-data audit must exclude unused archival rows while retaining active prices, required lookbacks and benchmarks.",
+);
+const removalExecutionIntegrity = pointInTimePriceIntegrityAudit(
+  [
+    {
+      sessions: [
+        {
+          date: "2026-01-02",
+          prices: [
+            { symbol: "AAA", open: 99, high: 101, low: 98, close: 100, adjusted: true },
+            { symbol: "SPY", open: 499, high: 501, low: 498, close: 500, adjusted: true },
+            { symbol: "QQQ", open: 399, high: 401, low: 398, close: 400, adjusted: true },
+          ],
+          signals: [{ symbol: "AAA" }],
+        },
+        {
+          date: "2026-01-05",
+          prices: [
+            { symbol: "AAA", open: 50, high: 52, low: 49, close: 51, adjusted: false },
+            { symbol: "SPY", open: 504, high: 511, low: 503, close: 510, adjusted: true },
+            { symbol: "QQQ", open: 404, high: 411, low: 403, close: 410, adjusted: true },
+          ],
+          signals: [],
+          corporateActions: [{ symbol: "AAA", type: "universe-removal" }],
+        },
+      ],
+    },
+  ],
+  { decisionRelevantOnly: true, lookbackSessions: 1 },
+);
+assert(
+  removalExecutionIntegrity.pass === false &&
+    removalExecutionIntegrity.adjustedCoveragePct < 100,
+  "The removal-session open used for liquidation must remain inside the adjusted-price integrity audit after its signal disappears.",
 );
 const duplicateActiveSeriesIntegrity = pointInTimePriceIntegrityAudit(
   [

@@ -1615,6 +1615,36 @@ assert(
   "A delisted holding must realize the supplied recovery value instead of retaining its last mark.",
 );
 
+run = simulatePointInTimePortfolio(
+  {
+    metadata: metadata(),
+    sessions: [
+      session("2026-08-24", "Strong Buy", 100),
+      session("2026-08-25", "Watch", 100),
+      {
+        ...session("2026-08-26", null, 100),
+        corporateActions: [{ symbol: "AAA", type: "universe-removal" }],
+      },
+    ],
+  },
+  {
+    minimumTrade: 1,
+    initialCapital: 10_000,
+    slippageBps: 12,
+    exitOnUniverseRemoval: true,
+  },
+);
+assert(
+  run.trades.some(
+    (trade) =>
+      trade.side === "sell" &&
+      trade.date === "2026-08-26" &&
+      trade.reason === "universe-removal" &&
+      trade.price === 99.88,
+  ) && run.openPositions.length === 0,
+  "An index removal must liquidate the holding at that session's open with normal slippage and leave no ghost position.",
+);
+
 const benchmarkCompletionDataset = {
   metadata: metadata({ comparisonSymbols: ["SPY"] }),
   sessions: [
@@ -2156,9 +2186,15 @@ assert(
     (row) =>
       row.symbol === "AAA" &&
       Number.isFinite(row.researchFactors?.highProximityPercentile) &&
-      Number.isFinite(row.researchFactors?.continuousInformationPercentile),
+      Number.isFinite(row.researchFactors?.continuousInformationPercentile) &&
+      Number.isFinite(row.researchFactors?.maxDailyReturn20Pct) &&
+      Number.isFinite(row.researchFactors?.momentumAccelerationDailyPct) &&
+      Number.isFinite(
+        row.researchFactors?.accelerationRestraintPercentile,
+      ) &&
+      Number.isFinite(row.researchFactors?.lotteryRestraintPercentile),
   ),
-  "Replay compaction must preserve the V2 anchored-gradual factors required to reproduce research ranks.",
+  "Replay compaction must preserve the anchored-gradual and Nasdaq path-risk factors required to reproduce research ranks.",
 );
 
 console.log(

@@ -22,4 +22,4 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Build and run regression suite
-        run: npm run build
+        run: npm run verify && npm run build
