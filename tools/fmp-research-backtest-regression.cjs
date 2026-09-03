@@ -59,10 +59,12 @@ assert(
     rawSource.includes("rawMembershipDigest") &&
     rawSource.includes("currentPointInTimeNasdaqUniverse") &&
     rawSource.includes(
-      "date-added-effective-inclusive-corporate-action-v4",
+      "date-added-effective-inclusive-corporate-action-v5",
     ) &&
     rawSource.includes("POINT_IN_TIME_NASDAQ_MEMBERSHIP_SUPPLEMENTS") &&
     rawSource.includes('addedSymbol: "HONA"') &&
+    rawSource.includes('removedSymbol: "SOLS"') &&
+    rawSource.includes('removedSymbol: "VSNT"') &&
     rawSource.includes('removedSymbol: "XLNX"') &&
     rawSource.includes('removedSymbol: "ANSS"') &&
     rawSource.includes("pointInTimeNasdaqApplyProviderEventCorrections") &&
@@ -634,13 +636,8 @@ assert(
 const probeInitialSymbols = Array.from({ length: 90 }, (_, index) =>
   `N${String(index).padStart(3, "0")}`,
 ).sort();
-const probeSymbols = ["HONA", ...probeInitialSymbols].sort();
-const probeMembershipObservations =
-  probeInitialSymbols.length * probeSessionDates.length +
-  probeSessionDates.filter((date) => date >= "2026-06-29").length;
-const probeBenchmarkObservations = 2 * probeSessionDates.length;
-const probeRequiredPriceRows =
-  probeMembershipObservations + probeBenchmarkObservations;
+const probeCurrentSymbols = ["HONA", ...probeInitialSymbols].sort();
+const probeSymbols = ["HONA", "SOLS", "VSNT", ...probeInitialSymbols].sort();
 const probeMembershipSupplements = [
   {
     date: "2026-06-29",
@@ -660,6 +657,43 @@ const probeMembershipSupplements = [
     effectiveDateBasis: "source-verified-supplement",
     sourceVerifiedSupplement: true,
   },
+  {
+    date: "2025-11-10",
+    effectiveDate: "2025-11-10",
+    announcementDate: "2025-11-06",
+    addedSymbol: "",
+    removedSymbol: "SOLS",
+    removedSecurity: "Solstice Advanced Materials Inc.",
+    reason:
+      "Nasdaq removed the spin-off after it failed the NDX minimum-weight requirement; official weights show SOLS present through November 7 and absent November 10",
+    provenance:
+      "Nasdaq Global Indexes 2025 NDX review and official NDX start-of-day weights",
+    sources: [
+      "https://www.nasdaq.com/articles/global-indexes/2025-nasdaq-100-reconstitution-and-performance-highlights",
+      "https://indexes.nasdaqomx.com/Index/Weighting/NDX",
+    ],
+    effectiveDateBasis: "source-verified-supplement",
+    sourceVerifiedSupplement: true,
+  },
+  {
+    date: "2026-01-14",
+    effectiveDate: "2026-01-14",
+    announcementDate: "",
+    addedSymbol: "",
+    removedSymbol: "VSNT",
+    removedSecurity: "Versant Media Group, Inc.",
+    reason:
+      "Nasdaq's official NDX start-of-day weights show the spin-off present through January 13 and absent January 14",
+    provenance:
+      "Nasdaq NDX methodology, Nasdaq Corporate Action ECA2025-683, and official NDX start-of-day weights",
+    sources: [
+      "https://indexes.nasdaq.com/docs/Methodology_NDX.pdf",
+      "https://www.nasdaqtrader.com/TraderNews.aspx?id=ECA2025-683",
+      "https://indexes.nasdaqomx.com/Index/Weighting/NDX",
+    ],
+    effectiveDateBasis: "source-verified-supplement",
+    sourceVerifiedSupplement: true,
+  },
 ];
 const probeSupplementFingerprint =
   pointInTimeNasdaqMembershipSupplementFingerprint(
@@ -670,9 +704,28 @@ const probeCorrectionFingerprint =
 const universeProbeFor = (symbols) => {
   const normalizedSymbols = [...new Set(symbols)].sort();
   const initialSymbols = normalizedSymbols.filter((symbol) => symbol !== "HONA");
-  const changes = probeMembershipSupplements.map((row) => ({ ...row }));
+  const unionSymbols = [...new Set([...normalizedSymbols, "SOLS", "VSNT"])].sort();
+  const changes = [
+    {
+      date: "2025-10-30",
+      effectiveDate: "2025-10-30",
+      addedSymbol: "SOLS",
+      removedSymbol: "",
+      effectiveDateBasis: "dateAdded",
+    },
+    probeMembershipSupplements[1],
+    {
+      date: "2026-01-05",
+      effectiveDate: "2026-01-05",
+      addedSymbol: "VSNT",
+      removedSymbol: "",
+      effectiveDateBasis: "dateAdded",
+    },
+    probeMembershipSupplements[2],
+    probeMembershipSupplements[0],
+  ].map((row) => ({ ...row }));
   const profilesBySymbol = Object.fromEntries(
-    normalizedSymbols.map((symbol) => [
+    unionSymbols.map((symbol) => [
       symbol,
       { symbol, name: symbol, companyName: symbol },
     ]),
@@ -684,13 +737,13 @@ const universeProbeFor = (symbols) => {
     changes,
     membershipSupplements: probeMembershipSupplements,
     membershipSupplementContract:
-      "source-verified-nasdaq-spinoff-events-v1",
+      "source-verified-nasdaq-spinoff-lifecycle-v2",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
       "source-verified-acquisition-date-splits-v1",
     providerEventCorrectionFingerprint: probeCorrectionFingerprint,
     providerEventCorrections: [],
-    unionSymbols: normalizedSymbols,
+    unionSymbols,
     profilesBySymbol,
     delistedDates: {},
   };
@@ -703,24 +756,24 @@ const universeProbeFor = (symbols) => {
     version: 1,
     status: "complete",
     universeContract:
-      "date-added-effective-inclusive-corporate-action-v4",
+      "date-added-effective-inclusive-corporate-action-v5",
     membershipSupplementContract:
-      "source-verified-nasdaq-spinoff-events-v1",
+      "source-verified-nasdaq-spinoff-lifecycle-v2",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
       "source-verified-acquisition-date-splits-v1",
     providerEventCorrectionFingerprint: probeCorrectionFingerprint,
     correctedProviderEvents: 2,
     membershipEffectiveConvention: "effective-date-inclusive",
-    supplementalMembershipEvents: 1,
+    supplementalMembershipEvents: 3,
     currentAnchorCardinalityPlausible: true,
     pointInTimeMembershipConstructed: true,
     currentConstituents: normalizedSymbols.length,
     throughConstituents: normalizedSymbols.length,
     initialConstituents: initialSymbols.length,
     normalizedMembershipChanges: changes.length,
-    unionSymbols: normalizedSymbols.length,
-    earliestMembershipEvent: "2026-06-29",
+    unionSymbols: unionSymbols.length,
+    earliestMembershipEvent: "2025-10-30",
     latestMembershipEvent: "2026-06-29",
     fromDate: "2022-01-01",
     throughDate: "2026-09-01",
@@ -728,15 +781,15 @@ const universeProbeFor = (symbols) => {
     privateBlueprint: { ...privateBlueprint, rawMembershipDigest },
   };
 };
-const currentNasdaqUniverseProbe = universeProbeFor(probeSymbols);
+const currentNasdaqUniverseProbe = universeProbeFor(probeCurrentSymbols);
 const currentNasdaqSignature = JSON.stringify({
   schema: 1,
   compilerContract:
     "historical-signal-evaluator-v11-nasdaq-membership-removal-history-v4",
   minimumSignalHistoryRows: 253,
   universeContract:
-    "date-added-effective-inclusive-corporate-action-v4",
-  membershipSupplementContract: "source-verified-nasdaq-spinoff-events-v1",
+    "date-added-effective-inclusive-corporate-action-v5",
+  membershipSupplementContract: "source-verified-nasdaq-spinoff-lifecycle-v2",
   membershipSupplementFingerprint: probeSupplementFingerprint,
   providerEventCorrectionContract:
     "source-verified-acquisition-date-splits-v1",
@@ -776,8 +829,8 @@ const probeDatasetContractFingerprint = sha256Fingerprint(
   JSON.stringify({
     schema: 1,
     universeContract:
-      "date-added-effective-inclusive-corporate-action-v4",
-    membershipSupplementContract: "source-verified-nasdaq-spinoff-events-v1",
+      "date-added-effective-inclusive-corporate-action-v5",
+    membershipSupplementContract: "source-verified-nasdaq-spinoff-lifecycle-v2",
     membershipSupplementFingerprint: probeSupplementFingerprint,
     providerEventCorrectionContract:
       "source-verified-acquisition-date-splits-v1",
@@ -826,6 +879,13 @@ const probeExpectedMembershipEvidence =
     currentNasdaqUniverseProbe,
     probeSessionDates,
   );
+const probeMembershipObservations =
+  probeExpectedMembershipEvidence.requestedMembershipObservations;
+const probeBenchmarkObservations = 2 * probeSessionDates.length;
+const probeRequiredPriceRows =
+  probeMembershipObservations + probeBenchmarkObservations;
+const probeRemovalActions =
+  probeExpectedMembershipEvidence.universeRemovalActions;
 const currentNasdaqIntegrityProbe = {
   version: 2,
   integrityContract: "observed-history-exact-253-row-requirements-v3",
@@ -864,11 +924,11 @@ const currentNasdaqIntegrityProbe = {
   missingMembershipObservations: 0,
   missingMembershipObservationsBySymbol: [],
   universeRemovalOpenCoveragePct: 100,
-  universeRemovalOpenPrices: 0,
+  universeRemovalOpenPrices: probeRemovalActions,
   universeRemovalZeroRecoveryActions: 0,
-  universeRemovalResolvedOutcomes: 0,
+  universeRemovalResolvedOutcomes: probeRemovalActions,
   universeRemovalOutcomeCoveragePct: 100,
-  universeRemovalActions: 0,
+  universeRemovalActions: probeRemovalActions,
   universeRemovalMissingOutcomes: 0,
   universeRemovalPolicy:
     "effective-session-adjusted-open-else-conservative-zero-v2",
@@ -907,11 +967,11 @@ const currentNasdaqIntegrityProbe = {
     missingMembershipObservations: 0,
     missingMembershipObservationsBySymbol: [],
     activeMemberDateCoverageComplete: true,
-    universeRemovalActions: 0,
-    universeRemovalOpenPrices: 0,
+    universeRemovalActions: probeRemovalActions,
+    universeRemovalOpenPrices: probeRemovalActions,
     universeRemovalOpenCoveragePct: 100,
     universeRemovalZeroRecoveryActions: 0,
-    universeRemovalResolvedOutcomes: 0,
+    universeRemovalResolvedOutcomes: probeRemovalActions,
     universeRemovalMissingOutcomes: 0,
     universeRemovalOutcomeCoveragePct: 100,
     universeRemovalOutcomeCoverageComplete: true,
@@ -970,6 +1030,24 @@ assert(
     ),
   "The frozen HONA supplement must be an applied June 29 transition and HONA must not leak into initial membership.",
 );
+for (const removedSymbol of ["SOLS", "VSNT"])
+  assert(
+    !currentPointInTimeNasdaqUniverse(
+      rehashedUniverseProbe(
+        {
+          ...currentNasdaqUniverseProbe.privateBlueprint,
+          changes: currentNasdaqUniverseProbe.privateBlueprint.changes.filter(
+            (row) => row.removedSymbol !== removedSymbol,
+          ),
+        },
+        {
+          normalizedMembershipChanges:
+            currentNasdaqUniverseProbe.normalizedMembershipChanges - 1,
+        },
+      ),
+    ),
+    `A missing ${removedSymbol} spin-off removal must fail the current-anchor replay even when the altered blueprint is self-hashed.`,
+  );
 assert(
   !pointInTimeNasdaqMembershipSupplementConflict(
     [
@@ -1002,6 +1080,20 @@ assert(
       probeMembershipSupplements,
     ),
   "Any alternate HONA date or same-date conflicting removal must stop the source-backed supplement merge.",
+);
+assert(
+  !pointInTimeNasdaqMembershipSupplementConflict(
+    [
+      { date: "2025-11-10", addedSymbol: "", removedSymbol: "SOLS" },
+      { date: "2026-01-14", addedSymbol: "", removedSymbol: "VSNT" },
+    ],
+    probeMembershipSupplements,
+  ) &&
+    pointInTimeNasdaqMembershipSupplementConflict(
+      [{ date: "2026-01-13", addedSymbol: "", removedSymbol: "VSNT" }],
+      probeMembershipSupplements,
+    ),
+  "Exact provider spin-off removals may coalesce with the source registry, but an alternate removal boundary must fail closed.",
 );
 const correctedAcquisitionEvents =
   pointInTimeNasdaqApplyProviderEventCorrections([
