@@ -40,6 +40,8 @@ import {
   finalizePointInTimeNasdaqAdaptiveReplacementPlacebo,
   getPointInTimeNasdaqDistinctAlphaR45,
   finalizePointInTimeNasdaqDistinctAlphaDevelopment,
+  getPointInTimeNasdaqEventAlphaR55,
+  finalizePointInTimeNasdaqEventAlphaDevelopment,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -73,6 +75,7 @@ import {
   pointInTimeNasdaqAdaptiveReplacementDefinitions,
 } from "../../../lib/nasdaqAdaptiveReplacementResearch";
 import { pointInTimeNasdaqDistinctAlphaControls, pointInTimeNasdaqDistinctAlphaDefinitions } from "../../../lib/nasdaqDistinctAlphaResearch";
+import { pointInTimeNasdaqEventAlphaControls, pointInTimeNasdaqEventAlphaDefinitions } from "../../../lib/nasdaqEventAlphaResearch";
 import { latestCompletedMarketSessionDay } from "../../../lib/marketSession";
 
 export const config = { maxDuration: 800 };
@@ -737,6 +740,21 @@ async function advanceNasdaqDistinctAlphaProgram(req) {
   return { stage: "parallel-development", report: workers.every((row) => row.status === "complete") ? await finalizePointInTimeNasdaqDistinctAlphaDevelopment() : await getPointInTimeNasdaqDistinctAlphaR45() };
 }
 
+async function advanceNasdaqEventAlphaProgram(req) {
+  const current = await getPointInTimeNasdaqEventAlphaR55();
+  if (current?.status === "complete" || current?.status === "failed") return { stage: "terminal", report: current };
+  const protectionBypassSecret = String(process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "").trim();
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim();
+  const protocol = String(req.headers["x-forwarded-proto"] || "https") === "http" ? "http" : "https";
+  const definitions = [...pointInTimeNasdaqEventAlphaDefinitions(), ...pointInTimeNasdaqEventAlphaControls()];
+  const workers = await Promise.all(definitions.map(async (definition) => {
+    const url = new URL("/api/research/pit-nasdaq-event-alpha-r55-r64-worker", `${protocol}://${host}`); url.searchParams.set("candidateId", definition.id);
+    const response = await fetch(url, { method: "POST", headers: { Authorization: String(req.headers.authorization || ""), "x-vercel-protection-bypass": protectionBypassSecret }, signal: AbortSignal.timeout(780_000) });
+    const payload = await response.json(); if (!response.ok) throw new Error(`${definition.id}: ${payload.error || response.status}`); return payload;
+  }));
+  return { stage: "parallel-development", report: workers.every((row) => row.status === "complete") ? await finalizePointInTimeNasdaqEventAlphaDevelopment() : await getPointInTimeNasdaqEventAlphaR55() };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -779,12 +797,15 @@ export default async function handler(req, res) {
         : null;
     const distinctAlpha = adaptiveReplacement?.report?.candidateDisposition === "rejected-by-strict-placebo"
       ? await advanceNasdaqDistinctAlphaProgram(req) : null;
+    const eventAlpha = distinctAlpha?.report?.candidateDisposition === "rejected-by-development-screen"
+      ? await advanceNasdaqEventAlphaProgram(req) : null;
     res.setHeader("Cache-Control", "no-store");
     return res
-      .status(distinctAlpha?.report?.status === "complete" ? 200 : 202)
+      .status(eventAlpha?.report?.status === "complete" ? 200 : 202)
       .json({
       ok: true,
-      priorityResearch: "R45-R54-parallel-distinct-alpha-mechanisms",
+      priorityResearch: "R55-R64-parallel-event-alpha-mechanisms",
+      eventAlpha,
       distinctAlpha,
       adaptiveReplacement,
       adaptiveRunner,
@@ -877,221 +898,3 @@ export default async function handler(req, res) {
         : null;
     const pointInTimeSp500AlphaBatchR8 =
       pointInTimeSp500AlphaResearchR7?.status === "complete" &&
-      pointInTimeSp500AlphaResearchR7?.candidateDisposition ===
-        "rejected-by-historical-screen"
-        ? await runPointInTimeSp500AlphaBatchR8()
-        : null;
-    const pointInTimeSp500AlphaSizingR9 =
-      pointInTimeSp500AlphaBatchR8?.status === "complete" &&
-      String(pointInTimeSp500AlphaBatchR8?.candidateDisposition || "")
-        .startsWith("rejected-")
-        ? await runPointInTimeSp500AlphaSizingR9()
-        : null;
-    const pointInTimeSp500AlphaEarningsDriftR10 =
-      pointInTimeSp500AlphaSizingR9?.status === "complete" &&
-      String(pointInTimeSp500AlphaSizingR9?.candidateDisposition || "")
-        .startsWith("rejected-")
-        ? await runPointInTimeSp500AlphaEarningsDriftR10()
-        : null;
-    res.setHeader("Cache-Control", "no-store");
-    return res.status(report.status === "complete" ? 200 : 202).json({
-      ...report,
-      pointInTimeNasdaqR11: {
-        stage: pointInTimeNasdaqR11.stage,
-        status: pointInTimeNasdaqR11.report.status,
-        candidateDisposition:
-          pointInTimeNasdaqR11.report.candidateDisposition || null,
-        selectedCandidateId:
-          pointInTimeNasdaqR11.report.selectedCandidateId || null,
-        productionChanged: false,
-        eligibleForAlphaClaim: false,
-        eligibleForLiveCapital: false,
-      },
-      boundedReviewExperiment: boundedReviewExperiment
-        ? {
-            status: boundedReviewExperiment.status,
-            implementationPass: boundedReviewExperiment.implementationPass,
-            completedAt: boundedReviewExperiment.completedAt,
-          }
-        : null,
-      v11StressTest: v11StressTest
-        ? {
-            status: v11StressTest.status,
-            robustnessPass: v11StressTest.robustnessPass,
-            completedAt: v11StressTest.completedAt,
-          }
-        : null,
-      alphaCreator: alphaCreator
-        ? {
-            status: alphaCreator.status,
-            completedAt: alphaCreator.completedAt || null,
-            datasetThrough: alphaCreator.datasetThrough || null,
-            forwardWindow: alphaCreator.forwardWindow || null,
-            allEvidenceGatesPassed:
-              alphaCreator.allEvidenceGatesPassed === true,
-        }
-        : null,
-      alphaProspectiveChallenger: alphaProspectiveChallenger
-        ? {
-            status: alphaProspectiveChallenger.status,
-            completedAt: alphaProspectiveChallenger.completedAt || null,
-            datasetThrough:
-              alphaProspectiveChallenger.datasetThrough || null,
-            prospectiveWindow:
-              alphaProspectiveChallenger.prospectiveWindow || null,
-            prospectiveSessions:
-              alphaProspectiveChallenger.prospectiveSessions || 0,
-            allEvidenceGatesPassed:
-              alphaProspectiveChallenger.allEvidenceGatesPassed === true,
-          }
-        : null,
-      v11ForwardExtension: v11ForwardExtension
-        ? {
-            status: v11ForwardExtension.status,
-            completedAt: v11ForwardExtension.completedAt || null,
-            window: v11ForwardExtension.window,
-          }
-        : null,
-      pointInTimeSp500Dataset,
-      pointInTimeSp500AlphaEarningsDriftR10:
-        pointInTimeSp500AlphaEarningsDriftR10
-          ? {
-              status: pointInTimeSp500AlphaEarningsDriftR10.status,
-              completedAt:
-                pointInTimeSp500AlphaEarningsDriftR10.completedAt || null,
-              selectedCandidateId:
-                pointInTimeSp500AlphaEarningsDriftR10.selectedCandidateId ||
-                null,
-              candidateDisposition:
-                pointInTimeSp500AlphaEarningsDriftR10.candidateDisposition ||
-                null,
-              eligibleForAlphaClaim: false,
-            }
-          : null,
-      pointInTimeSp500AlphaCreator: pointInTimeSp500AlphaCreator
-        ? {
-            status: pointInTimeSp500AlphaCreator.status,
-            completedAt: pointInTimeSp500AlphaCreator.completedAt || null,
-            datasetThrough:
-              pointInTimeSp500AlphaCreator.datasetThrough || null,
-            selectedCandidateId:
-              pointInTimeSp500AlphaCreator.selectedCandidateId || null,
-            allHistoricalScreenGatesPassed:
-              pointInTimeSp500AlphaCreator
-                .allHistoricalScreenGatesPassed === true,
-            eligibleForAlphaClaim: false,
-          }
-        : null,
-      pointInTimeSp500AlphaCreatorIntegrity:
-        pointInTimeSp500AlphaCreatorIntegrity
-          ? {
-              status: pointInTimeSp500AlphaCreatorIntegrity.status,
-              completedAt:
-                pointInTimeSp500AlphaCreatorIntegrity.completedAt || null,
-              adjustedPriceIntegrityPass:
-                pointInTimeSp500AlphaCreatorIntegrity.assessment
-                  ?.adjustedPriceIntegrityPass === true,
-              historicalAuditConcentrationWarning:
-                pointInTimeSp500AlphaCreatorIntegrity.assessment
-                  ?.historicalAuditConcentrationWarning === true,
-              eligibleForAlphaClaim: false,
-            }
-          : null,
-      pointInTimeSp500AlphaResearchR3: pointInTimeSp500AlphaResearchR3
-        ? {
-            status: pointInTimeSp500AlphaResearchR3.status,
-            completedAt:
-              pointInTimeSp500AlphaResearchR3.completedAt || null,
-            selectedCandidateId:
-              pointInTimeSp500AlphaResearchR3.selectedCandidateId || null,
-            allHistoricalScreenGatesPassed:
-              pointInTimeSp500AlphaResearchR3
-                .allHistoricalScreenGatesPassed === true,
-            eligibleForAlphaClaim: false,
-        }
-        : null,
-      pointInTimeSp500AlphaResearchR4: pointInTimeSp500AlphaResearchR4
-        ? {
-            status: pointInTimeSp500AlphaResearchR4.status,
-            completedAt:
-              pointInTimeSp500AlphaResearchR4.completedAt || null,
-            selectedCandidateId:
-              pointInTimeSp500AlphaResearchR4.selectedCandidateId || null,
-            allHistoricalScreenGatesPassed:
-              pointInTimeSp500AlphaResearchR4
-                .allHistoricalScreenGatesPassed === true,
-            eligibleForAlphaClaim: false,
-        }
-        : null,
-      pointInTimeSp500AlphaSizingR9: pointInTimeSp500AlphaSizingR9
-        ? {
-            status: pointInTimeSp500AlphaSizingR9.status,
-            completedAt:
-              pointInTimeSp500AlphaSizingR9.completedAt || null,
-            selectedCandidateId:
-              pointInTimeSp500AlphaSizingR9.selectedCandidateId || null,
-            candidateDisposition:
-              pointInTimeSp500AlphaSizingR9.candidateDisposition || null,
-            eligibleForAlphaClaim: false,
-          }
-        : null,
-      pointInTimeSp500AlphaBatchR8: pointInTimeSp500AlphaBatchR8
-        ? {
-            status: pointInTimeSp500AlphaBatchR8.status,
-            completedAt:
-              pointInTimeSp500AlphaBatchR8.completedAt || null,
-            selectedCandidateId:
-              pointInTimeSp500AlphaBatchR8.selectedCandidateId || null,
-            candidateDisposition:
-              pointInTimeSp500AlphaBatchR8.candidateDisposition || null,
-            eligibleForAlphaClaim: false,
-          }
-        : null,
-      pointInTimeSp500AlphaResearchR7: pointInTimeSp500AlphaResearchR7
-        ? {
-            status: pointInTimeSp500AlphaResearchR7.status,
-            completedAt:
-              pointInTimeSp500AlphaResearchR7.completedAt || null,
-            selectedCandidateId:
-              pointInTimeSp500AlphaResearchR7.selectedCandidateId || null,
-            allHistoricalScreenGatesPassed:
-              pointInTimeSp500AlphaResearchR7
-                .allHistoricalScreenGatesPassed === true,
-            eligibleForAlphaClaim: false,
-          }
-        : null,
-      pointInTimeSp500AlphaResearchR6: pointInTimeSp500AlphaResearchR6
-        ? {
-            status: pointInTimeSp500AlphaResearchR6.status,
-            completedAt:
-              pointInTimeSp500AlphaResearchR6.completedAt || null,
-            selectedCandidateId:
-              pointInTimeSp500AlphaResearchR6.selectedCandidateId || null,
-            allHistoricalScreenGatesPassed:
-              pointInTimeSp500AlphaResearchR6
-                .allHistoricalScreenGatesPassed === true,
-            eligibleForAlphaClaim: false,
-          }
-        : null,
-      pointInTimeSp500AlphaResearchR5: pointInTimeSp500AlphaResearchR5
-        ? {
-            status: pointInTimeSp500AlphaResearchR5.status,
-            completedAt:
-              pointInTimeSp500AlphaResearchR5.completedAt || null,
-            selectedCandidateId:
-              pointInTimeSp500AlphaResearchR5.selectedCandidateId || null,
-            allHistoricalScreenGatesPassed:
-              pointInTimeSp500AlphaResearchR5
-                .allHistoricalScreenGatesPassed === true,
-            eligibleForAlphaClaim: false,
-          }
-        : null,
-    });
-  } catch (error) {
-    console.error("FMP research backtest cron:", error);
-    return res.status(503).json({
-      ok: false,
-      error: error?.message || "Research replay failed",
-    });
-  }
-}
