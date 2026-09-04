@@ -1,0 +1,23 @@
+const fs = require("node:fs");
+const assert = require("node:assert/strict");
+const { createResearchModuleLoader } = require("./research-module-loader.cjs");
+const loader = createResearchModuleLoader();
+
+const source = fs.readFileSync("lib/nasdaqAdaptiveReplacementResearch.js", "utf8");
+const research = loader.load("lib/nasdaqAdaptiveReplacementResearch.js", source);
+const definitions = research.pointInTimeNasdaqAdaptiveReplacementDefinitions();
+const controls = research.pointInTimeNasdaqAdaptiveReplacementControls();
+assert.equal(definitions.length, 5, "R40-R44 must freeze exactly five variants.");
+assert.equal(definitions.map((row) => row.researchGeneration).join(","), "R40,R41,R42,R43,R44");
+assert.equal(controls.length, 2);
+assert(definitions.every((row) => row.overrides.slippageBps === 12 && row.overrides.commissionPerOrder === 0));
+assert(definitions.every((row) => row.overrides.benchmarkCompletionSymbol === null), "Cash must remain cash.");
+assert(definitions.every((row) => row.overrides.rankedAdaptiveRebalanceEnabled === true));
+assert(definitions.every((row) => row.overrides.rankedExitBuffer >= row.overrides.rankedTargetCount));
+const runner = fs.readFileSync("lib/fmpResearchBacktest.js", "utf8");
+const cron = fs.readFileSync("pages/api/cron/fmp-research-backtest.js", "utf8");
+const route = fs.readFileSync("pages/api/research/alpha-creator.js", "utf8");
+assert(runner.includes("runPointInTimeNasdaqAdaptiveReplacementWorker") && runner.includes("getPointInTimeNasdaqAdaptiveRunnerR35"));
+assert(cron.includes("invokeNasdaqAdaptiveReplacementWorkers") && cron.includes("R40-R44-parallel-adaptive-rank-replacement"));
+assert(route.includes("pit-nasdaq-adaptive-replacement-r40-r44") && route.includes("frozenR35R39Report"));
+console.log("R40-R44 adaptive replacement regression passed.");
