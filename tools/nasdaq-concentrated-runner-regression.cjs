@@ -55,10 +55,10 @@ assert(
 );
 assert(
   cron.includes("invokeNasdaqConcentratedRunnerWorkers") &&
-    cron.includes("R25-R29-parallel-concentrated-nasdaq-runners") &&
+    cron.includes("advanceNasdaqConcentratedRunnerProgram") &&
     publicRoute.includes("pit-nasdaq-concentrated-runner-r25-r29") &&
     publicRoute.includes("frozenR20R24Report"),
-  "The concurrent R25-R29 batch must be the latest public research program.",
+  "The concurrent R25-R29 batch must remain preserved in the public research chain.",
 );
 
 console.log("R25-R29 concentrated Nasdaq runner regression passed.");
