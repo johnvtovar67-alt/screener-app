@@ -38,6 +38,8 @@ import {
   getPointInTimeNasdaqAdaptiveReplacementR40,
   finalizePointInTimeNasdaqAdaptiveReplacementDevelopment,
   finalizePointInTimeNasdaqAdaptiveReplacementPlacebo,
+  getPointInTimeNasdaqDistinctAlphaR45,
+  finalizePointInTimeNasdaqDistinctAlphaDevelopment,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -70,6 +72,7 @@ import {
   pointInTimeNasdaqAdaptiveReplacementControls,
   pointInTimeNasdaqAdaptiveReplacementDefinitions,
 } from "../../../lib/nasdaqAdaptiveReplacementResearch";
+import { pointInTimeNasdaqDistinctAlphaControls, pointInTimeNasdaqDistinctAlphaDefinitions } from "../../../lib/nasdaqDistinctAlphaResearch";
 import { latestCompletedMarketSessionDay } from "../../../lib/marketSession";
 
 export const config = { maxDuration: 800 };
@@ -719,6 +722,21 @@ async function invokeNasdaqAdaptiveReplacementPlaceboWorkers(req) {
   return { workers, allComplete: workers.every((worker) => worker.status === "complete") };
 }
 
+async function advanceNasdaqDistinctAlphaProgram(req) {
+  const current = await getPointInTimeNasdaqDistinctAlphaR45();
+  if (current?.status === "complete" || current?.status === "failed") return { stage: "terminal", report: current };
+  const protectionBypassSecret = String(process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "").trim();
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim();
+  const protocol = String(req.headers["x-forwarded-proto"] || "https") === "http" ? "http" : "https";
+  const definitions = [...pointInTimeNasdaqDistinctAlphaDefinitions(), ...pointInTimeNasdaqDistinctAlphaControls()];
+  const workers = await Promise.all(definitions.map(async (definition) => {
+    const url = new URL("/api/research/pit-nasdaq-distinct-alpha-r45-r54-worker", `${protocol}://${host}`); url.searchParams.set("candidateId", definition.id);
+    const response = await fetch(url, { method: "POST", headers: { Authorization: String(req.headers.authorization || ""), "x-vercel-protection-bypass": protectionBypassSecret }, signal: AbortSignal.timeout(780_000) });
+    const payload = await response.json(); if (!response.ok) throw new Error(`${definition.id}: ${payload.error || response.status}`); return payload;
+  }));
+  return { stage: "parallel-development", report: workers.every((row) => row.status === "complete") ? await finalizePointInTimeNasdaqDistinctAlphaDevelopment() : await getPointInTimeNasdaqDistinctAlphaR45() };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -759,12 +777,15 @@ export default async function handler(req, res) {
       adaptiveRunner?.report?.status === "complete"
         ? await advanceNasdaqAdaptiveReplacementProgram(req)
         : null;
+    const distinctAlpha = adaptiveReplacement?.report?.candidateDisposition === "rejected-by-strict-placebo"
+      ? await advanceNasdaqDistinctAlphaProgram(req) : null;
     res.setHeader("Cache-Control", "no-store");
     return res
-      .status(adaptiveReplacement?.report?.status === "complete" ? 200 : 202)
+      .status(distinctAlpha?.report?.status === "complete" ? 200 : 202)
       .json({
       ok: true,
-      priorityResearch: "R40-R44-parallel-adaptive-rank-replacement",
+      priorityResearch: "R45-R54-parallel-distinct-alpha-mechanisms",
+      distinctAlpha,
       adaptiveReplacement,
       adaptiveRunner,
       continuousRunner,
