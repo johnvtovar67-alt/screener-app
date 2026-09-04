@@ -33,6 +33,8 @@ import {
   finalizePointInTimeNasdaqConcentratedRunnerDevelopment,
   getPointInTimeNasdaqContinuousRunnerR30,
   finalizePointInTimeNasdaqContinuousRunnerDevelopment,
+  getPointInTimeNasdaqAdaptiveRunnerR35,
+  finalizePointInTimeNasdaqAdaptiveRunnerDevelopment,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -57,6 +59,10 @@ import {
   pointInTimeNasdaqContinuousRunnerControls,
   pointInTimeNasdaqContinuousRunnerDefinitions,
 } from "../../../lib/nasdaqContinuousRunnerResearch";
+import {
+  pointInTimeNasdaqAdaptiveRunnerControls,
+  pointInTimeNasdaqAdaptiveRunnerDefinitions,
+} from "../../../lib/nasdaqAdaptiveRunnerResearch";
 import { latestCompletedMarketSessionDay } from "../../../lib/marketSession";
 
 export const config = { maxDuration: 800 };
@@ -608,6 +614,44 @@ async function advanceNasdaqContinuousRunnerProgram(req) {
   };
 }
 
+async function invokeNasdaqAdaptiveRunnerWorkers(req) {
+  const protectionBypassSecret = String(process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "").trim();
+  if (!protectionBypassSecret) throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required for R35-R39 worker fan-out");
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim();
+  if (!/^[a-z0-9.-]+(?::\d+)?$/i.test(host)) throw new Error("A valid deployment host is required for R35-R39 fan-out");
+  const protocol = String(req.headers["x-forwarded-proto"] || "https") === "http" ? "http" : "https";
+  const authorization = String(req.headers.authorization || "");
+  const definitions = [...pointInTimeNasdaqAdaptiveRunnerDefinitions(), ...pointInTimeNasdaqAdaptiveRunnerControls()];
+  const workers = await Promise.all(definitions.map(async (definition) => {
+    const url = new URL("/api/research/pit-nasdaq-adaptive-runner-r35-r39-worker", `${protocol}://${host}`);
+    url.searchParams.set("candidateId", definition.id);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: authorization, "Content-Type": "application/json", "x-vercel-protection-bypass": protectionBypassSecret, "X-R35-Coordinator": "parallel-adaptive-runner-fanout-v1" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(780_000),
+    });
+    const responseBody = await response.text();
+    let payload;
+    try { payload = responseBody ? JSON.parse(responseBody) : {}; } catch { payload = { error: responseBody || `HTTP ${response.status}` }; }
+    if (!response.ok) {
+      const rawError = payload?.error ?? payload?.message ?? payload;
+      const workerError = typeof rawError === "string" ? rawError : JSON.stringify(rawError);
+      console.error("R35-R39 worker request failed", { candidateId: definition.id, status: response.status, error: workerError.slice(0, 800) });
+      throw new Error(`${definition.id} worker failed (${response.status}): ${workerError.slice(0, 400)}`);
+    }
+    return { candidateId: definition.id, status: payload.status, startedAt: payload.startedAt, completedAt: payload.completedAt, cached: payload.cached === true };
+  }));
+  return { workers, allComplete: workers.every((worker) => worker.status === "complete") };
+}
+
+async function advanceNasdaqAdaptiveRunnerProgram(req) {
+  const current = await getPointInTimeNasdaqAdaptiveRunnerR35();
+  if (current?.status === "complete" || current?.status === "failed") return { stage: "terminal", report: current };
+  const fanout = await invokeNasdaqAdaptiveRunnerWorkers(req);
+  return { stage: "parallel-development", fanout, report: fanout.allComplete ? await finalizePointInTimeNasdaqAdaptiveRunnerDevelopment() : await getPointInTimeNasdaqAdaptiveRunnerR35() };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -640,12 +684,17 @@ export default async function handler(req, res) {
       concentratedRunner?.report?.status === "complete"
         ? await advanceNasdaqContinuousRunnerProgram(req)
         : null;
+    const adaptiveRunner =
+      continuousRunner?.report?.status === "complete"
+        ? await advanceNasdaqAdaptiveRunnerProgram(req)
+        : null;
     res.setHeader("Cache-Control", "no-store");
     return res
-      .status(continuousRunner?.report?.status === "complete" ? 200 : 202)
+      .status(adaptiveRunner?.report?.status === "complete" ? 200 : 202)
       .json({
       ok: true,
-      priorityResearch: "R30-R34-parallel-continuous-nasdaq-runners",
+      priorityResearch: "R35-R39-parallel-adaptive-nasdaq-runners",
+      adaptiveRunner,
       continuousRunner,
       concentratedRunner,
       nasdaqRunner,
@@ -665,6 +714,7 @@ export default async function handler(req, res) {
       },
       legacyResearchRerun: false,
       nextStep:
+        adaptiveRunner?.report?.nextStep ||
         continuousRunner?.report?.nextStep ||
         concentratedRunner?.report?.nextStep ||
         nasdaqRunner?.report?.nextStep ||
