@@ -31,11 +31,11 @@ const requiredFeatures=[
   "clean-performance-session-basis",
   "full-market-daily-discovery",
   "point-in-time-walk-forward-research",
-  "v11-momentum-production-policy",
-  "durable-v11-policy-snapshot",
+  "c1-active-swing-production-policy",
+  "durable-c1-policy-snapshot",
   "investor-facing-decision-language",
-  "holding-aware-v11-lifecycle",
-  "v11-strict-strong-buy-preservation",
+  "holding-aware-c1-lifecycle",
+  "c1-three-sleeve-risk-contract",
   "portfolio-action-wrap",
   "authoritative-entry-badge",
   "user-controlled-screen-refresh"
@@ -70,7 +70,7 @@ export default async function handler(req,res){
       fullMarketDiscovery:true,
       discoverySchedulerConfigured:Boolean(process.env.CRON_SECRET),
       pointInTimeResearchRunner:true,
-      productionPolicy:"v11-momentum-dominant-production-candidate"
+      productionPolicy:"c1-active-swing-ensemble-20260904"
     },
     features:RELEASE_MANIFEST.features
   });

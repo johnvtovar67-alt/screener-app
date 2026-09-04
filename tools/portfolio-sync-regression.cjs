@@ -14,4 +14,8 @@ assert(page.includes("if(syncKey)void pushCloudPortfolio(x,syncKey)"),'portfolio
 assert(page.includes("void pullCloudPortfolio(k,local,true)"),'paired devices must pull cloud portfolio on load');
 assert(page.includes('openedAt'),'opened date metadata must remain in synchronized portfolio');
 assert(page.includes('winnerHistory'),'winner lifecycle metadata must remain in synchronized portfolio');
-console.log('PORTFOLIO SYNC PASS: private keyed storage, authenticated reads, automatic push/pull, and portfolio metadata verified.');
+assert(api.includes('c1ControlState:cleanC1ControlState(c1ControlState)'),'C1 drawdown state must be sanitized and stored with the cloud portfolio');
+assert(page.includes('JSON.stringify({portfolio:rows,c1ControlState})'),'cloud pushes must carry the C1 drawdown state');
+assert(page.includes("localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(d.c1ControlState))"),'paired devices must restore the shared C1 drawdown state');
+assert(page.includes('pushCloudPortfolio(portfolio,syncKey,nextControl.state)'),'drawdown-state changes must push to paired devices');
+console.log('PORTFOLIO SYNC PASS: private keyed storage, authenticated reads, automatic push/pull, portfolio metadata, and shared C1 drawdown state verified.');

@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import {portfolioDecision} from "../lib/expertDecision";
-import {factorFor,factorWeightsFor,signalPersistence,portfolioRiskSnapshot,swingTargetPct,capitalAllowance,portfolioContributionGate,capitalSignalEligible,rotationGate,swingTimeReview} from "../lib/portfolioGovernor";
+import {factorFor,factorWeightsFor,signalPersistence,portfolioRiskSnapshot,c1DrawdownControl,swingTargetPct,capitalAllowance,portfolioContributionGate,capitalSignalEligible,rotationGate,swingTimeReview} from "../lib/portfolioGovernor";
 import {winnerTrimGate,recordWinnerTrim} from "../lib/winnerLifecycle";
 import {reunderwriteExistingPosition} from "../lib/positionReunderwrite";
 import {marketExecutionState} from "../lib/marketSession";
@@ -9,6 +9,7 @@ import {v11ProductionPositionLifecycle} from "../lib/v11ProductionPolicy";
 
 const KEY="stock_screener_portfolio_v1";
 const SYNC_KEY="stock_screener_portfolio_sync_key_v1";
+const C1_DRAWDOWN_KEY="stock_screener_c1_drawdown_v1";
 const CASH=["CASH","SWVXX","VMFXX","SPAXX","FDRXX","MMF"];
 const ROLES=["Core","Swing"];
 const THEMES=[
@@ -66,7 +67,7 @@ function rank(a,b){
   if(ar)return ar;return (+d2.relativeCapitalScore||0)-(+d1.relativeCapitalScore||0);
 }
 function capitalScore(s){return +(fd(s)?.relativeCapitalScore??rec(s)?.capitalScore??s?.capitalScore??rec(s)?.expertDecision?.capitalScore??s?.expertDecision?.capitalScore??0)||0;}
-function targetPctFor(s,action){const policyTarget=Number(s?.productionPolicy?.targetWeightPct);return s?.productionPolicy?.selected&&policyTarget>0?policyTarget/100:swingTargetPct(action);}
+function targetPctFor(s,action,activeCapitalPct=100){const policyTarget=Number(s?.productionPolicy?.targetWeightPct),scale=Math.max(0,Math.min(1,(+activeCapitalPct||0)/100));return s?.productionPolicy?.selected&&policyTarget>0?policyTarget/100*scale:swingTargetPct(action);}
 function rotationStrength(gap){const g=+gap||0;if(g>=55)return{label:"Exceptional Rotation Edge",tone:"veryStrong"};if(g>=45)return{label:"Strong Rotation Edge",tone:"strong"};return{label:"Below Rotation Hurdle",tone:"meaningful"};}
 function capitalScoreVisual(score){const v=Math.round(+score||0);if(v>=80)return{value:v,label:"Excellent",tone:"excellent"};if(v>=70)return{value:v,label:"Strong",tone:"strong"};if(v>=60)return{value:v,label:"Mixed",tone:"mixed"};return{value:v,label:"Weak",tone:"weak"};}
 function replacementEdgeVisual(gap,eligible){const v=Math.round(+gap||0);if(!eligible||v<=0)return{value:null,label:"None qualified",tone:"none"};if(v>=55)return{value:v,label:"Exceptional",tone:"exceptional"};if(v>=45)return{value:v,label:"Strong edge",tone:"strong"};return{value:v,label:"Below hurdle",tone:"below"};}
@@ -115,6 +116,7 @@ export default function Home(){
   const[ns,setNs]=useState(""),[nsh,setNsh]=useState(""),[nc,setNc]=useState(""),[nr,setNr]=useState("Swing"),[symbol,setSymbol]=useState(""),[snap,setSnap]=useState(null),[lastUpdated,setLastUpdated]=useState(null),[portfolioAnalyzedAt,setPortfolioAnalyzedAt]=useState(null),[analysisCapitalReady,setAnalysisCapitalReady]=useState(false);
   const[openedDate,setOpenedDate]=useState("");
   const[marketState,setMarketState]=useState(null);
+  const[c1Control,setC1Control]=useState({activeCapitalPct:100,cooldown:false,remainingSessions:0,reason:"C1 portfolio drawdown breaker is clear."});
   const manualVerificationPass=useRef(0);
 
   useEffect(()=>{let local=[];try{const x=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(x)){local=x.map(p=>({...p,role:role(p.symbol,p.role),winnerHistory:winnerHistoryFor(p)}));setPortfolio(local);localStorage.setItem(KEY,JSON.stringify(local));}}catch{}const k=localStorage.getItem(SYNC_KEY)||"";if(k){setSyncKey(k);setSyncInput(k);void pullCloudPortfolio(k,local,true);}load("opportunities");},[]);
@@ -138,8 +140,8 @@ export default function Home(){
     catch(e){setErr(e.message);if(t==="opportunities"){setStocks(pausePriorRows);setFeedHealth(h=>({...h,status:"unavailable"}));}else{setThemeStocks(pausePriorRows);setThemeFeedHealth(h=>({...h,status:"unavailable"}));}}finally{const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));setReloading(false);}
   }
   async function fetchStock(s){const r=await fetch(`/api?symbol=${encodeURIComponent(s)}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);const x=extract(d);if(!x)throw new Error(`No usable data for ${s}`);return x;}
-  async function pushCloudPortfolio(rows,key=syncKey){if(!key)return false;try{setSyncStatus('Syncing…');const r=await fetch('/api/portfolio-sync',{method:'PUT',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({portfolio:rows})}),d=await r.json();if(!r.ok)throw new Error(d.error||'Sync failed');setSyncStatus('Synced');return true;}catch(e){setSyncStatus(`Sync error: ${e.message}`);return false;}}
-  async function pullCloudPortfolio(key,fallback=[],quiet=false){try{if(!quiet)setSyncStatus('Loading cloud portfolio…');const r=await fetch('/api/portfolio-sync',{headers:{authorization:`Bearer ${key}`},cache:'no-store'}),d=await r.json();if(r.status===404){if(quiet&&fallback.length){await pushCloudPortfolio(fallback,key);return true;}throw new Error('No portfolio found for this sync key.');}if(!r.ok)throw new Error(d.error||'Sync failed');const rows=Array.isArray(d.portfolio)?d.portfolio:[];setPortfolio(rows);localStorage.setItem(KEY,JSON.stringify(rows));setSyncStatus('Synced');return true;}catch(e){setSyncStatus(`Sync error: ${e.message}`);return false;}}
+  async function pushCloudPortfolio(rows,key=syncKey,riskState=null){if(!key)return false;try{setSyncStatus('Syncing…');let storedRisk={};try{storedRisk=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");}catch{}const c1ControlState=riskState||c1Control?.state||storedRisk;const r=await fetch('/api/portfolio-sync',{method:'PUT',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({portfolio:rows,c1ControlState})}),d=await r.json();if(!r.ok)throw new Error(d.error||'Sync failed');setSyncStatus('Synced');return true;}catch(e){setSyncStatus(`Sync error: ${e.message}`);return false;}}
+  async function pullCloudPortfolio(key,fallback=[],quiet=false){try{if(!quiet)setSyncStatus('Loading cloud portfolio…');const r=await fetch('/api/portfolio-sync',{headers:{authorization:`Bearer ${key}`},cache:'no-store'}),d=await r.json();if(r.status===404){if(quiet&&fallback.length){await pushCloudPortfolio(fallback,key);return true;}throw new Error('No portfolio found for this sync key.');}if(!r.ok)throw new Error(d.error||'Sync failed');const rows=Array.isArray(d.portfolio)?d.portfolio:[];setPortfolio(rows);localStorage.setItem(KEY,JSON.stringify(rows));if(d.c1ControlState&&typeof d.c1ControlState==='object')localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(d.c1ControlState));setSyncStatus('Synced');return true;}catch(e){setSyncStatus(`Sync error: ${e.message}`);return false;}}
   function newSyncKey(){const b=new Uint8Array(24);crypto.getRandomValues(b);return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');}
   async function enableSync(){const k=newSyncKey();setSyncKey(k);setSyncInput(k);localStorage.setItem(SYNC_KEY,k);const ok=await pushCloudPortfolio(portfolio,k);if(ok)setSyncStatus('Sync enabled — use this key on your other device.');}
   async function connectSync(){const k=syncInput.trim();if(k.length<32){setSyncStatus('Enter a valid sync key.');return;}const ok=await pullCloudPortfolio(k,[],false);if(ok){setSyncKey(k);localStorage.setItem(SYNC_KEY,k);}}
@@ -168,14 +170,18 @@ export default function Home(){
       for(const p of portfolio){
         try{
           if(CASH.includes(p.symbol)){rows.push({...p,...calc(p,p.avgCost||1),role:role(p.symbol,p.role)});continue;}
-          let s=bySymbol.get(p.symbol);if(!s){s=await fetchStock(p.symbol);s={...s,productionPolicy:{...currentProductionPolicy,selected:false,researchRank:null,targetWeightPct:currentProductionPolicy.targetWeightPct||8.25}};}
+          let s=bySymbol.get(p.symbol);if(!s){s=await fetchStock(p.symbol);s={...s,productionPolicy:{...currentProductionPolicy,selected:false,researchRank:null,targetWeightPct:currentProductionPolicy.targetWeightPct||33}};}
           rows.push({...s,...calc(p,price(s)),role:role(p.symbol,p.role),winnerHistory:p.winnerHistory||winnerHistoryFor(p),openedAt:p.openedAt||null,lastTradeAt:p.lastTradeAt||p.openedAt||null});
         }catch(e){rows.push({...p,error:e.message});}
       }
       const actionable=(screenLive?snapshot:[]).filter(s=>["Strong Buy","Buy"].includes(act(s))).sort(rank);
       const rotationTargets=actionable.filter(s=>rotationTargetEligible(s)&&capitalSignalEligible({target:s,action:act(s),persistence:s.signalPersistence}).pass).sort(rank),best=rotationTargets[0]||null,bestScore=best?capitalScore(best):0,bestSymbol=best?sym(best):"";
       const total=rows.reduce((a,r)=>a+(+r.value||0),0);
-      setResults(rows.map(r=>{const own=capitalScore(r),same=bestSymbol&&sym(r)===bestSymbol;return{...r,weightPct:total?(+r.value||0)/total*100:0,rotateTarget:same?"":bestSymbol,opportunityGap:same?0:Math.max(0,bestScore-own),rotationTargetEligible:Boolean(best&&!same)};}));
+      const analyzedRows=rows.map(r=>{const own=capitalScore(r),same=bestSymbol&&sym(r)===bestSymbol;return{...r,weightPct:total?(+r.value||0)/total*100:0,rotateTarget:same?"":bestSymbol,opportunityGap:same?0:Math.max(0,bestScore-own),rotationTargetEligible:Boolean(best&&!same)};});
+      setResults(analyzedRows);
+      let priorControl={};try{priorControl=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");}catch{}
+      const nextControl=c1DrawdownControl({swingEquity:portfolioRiskSnapshot(analyzedRows).swingCapital,state:priorControl,now:new Date()});
+      localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(nextControl.state));setC1Control(nextControl);if(syncKey)void pushCloudPortfolio(portfolio,syncKey,nextControl.state);
       const analyzedAt=new Date();setPortfolioAnalyzedAt(analyzedAt);setLastUpdated(analyzedAt);
     }finally{setLoading(false);}
   }
@@ -206,7 +212,7 @@ export default function Home(){
       }
       return marketPlan(d);
     }
-    const risk=portfolioRiskSnapshot(results.length?results:portfolio.map(p=>({...p,value:(+p.shares||0)*(+p.avgCost||0)}))),active=risk.swingCapital||portfolioValueForCards,targetPct=targetPctFor(s,d.action),targetValue=active*targetPct,currentResult=resultForCards.get(sym(s)),currentValue=currentResult?+currentResult.value||0:(+owned.shares||0)*price(s),gap=Math.max(0,targetValue-currentValue),tolerance=Math.max(500,active*.02);
+    const risk=portfolioRiskSnapshot(results.length?results:portfolio.map(p=>({...p,value:(+p.shares||0)*(+p.avgCost||0)}))),active=risk.swingCapital||portfolioValueForCards,targetPct=targetPctFor(s,d.action,c1Control.activeCapitalPct),targetValue=active*targetPct,currentResult=resultForCards.get(sym(s)),currentValue=currentResult?+currentResult.value||0:(+owned.shares||0)*price(s),gap=Math.max(0,targetValue-currentValue),tolerance=Math.max(500,active*.02);
     if(gap<=tolerance)return{...d,action:"Hold",timing:"Hold",size:"At Target",priority:"At Target",reason:`${d.action}-quality setup, but your existing Swing position is already within the active-capital target tolerance. No additional purchase is needed.`};
     const allowance=capitalAllowance({target:s,action:d.action,requested:gap,risk});if(allowance.blocked)return{...d,action:"Hold",timing:"Hold",size:"Risk Capped",priority:"Portfolio Governor",reason:allowance.reason};
     return marketPlan({...d,action:"Add",timing:"Now",priority:"Add to Position",reason:`${d.action}-quality setup and the portfolio governor still permits additional Swing risk.`});
@@ -224,6 +230,7 @@ export default function Home(){
 
   function rawPd(s){
     if(s.error)return{action:"Review",reason:s.error};if(CASH.includes(sym(s)))return{action:"Cash",reason:"Dry powder."};
+    if(s.role==="Swing"&&c1Control.cooldown&&c1Control.activeCapitalPct===0)return{action:"Exit",reason:c1Control.reason,source:"c1-portfolio-drawdown-breaker"};
     const position={role:s.role,gainLossPct:s.gainLossPct,weightPct:s.weightPct,opportunityGap:s.opportunityGap,rotateTarget:s.rotateTarget,rotationTargetEligible:s.rotationTargetEligible,openedAt:s.openedAt};
     const base=portfolioDecision({stock:s,recommendation:rec(s),position});
     const lifecycle=v11ProductionPositionLifecycle({stock:s,position,policy:marketScope?.productionPolicy||{}});
@@ -235,7 +242,7 @@ export default function Home(){
   const portfolioCostBasis=results.reduce((a,s)=>a+(+s.costBasis||0),0),portfolioGainLoss=portfolioValue-portfolioCostBasis,portfolioGainLossPct=portfolioCostBasis?portfolioGainLoss/portfolioCostBasis*100:0;
   const minResidual=Math.max(1000,swingCapital*.05),trimMinResidual=Math.max(750,swingCapital*.04),minFundingAction=Math.max(500,swingCapital*.025);
   const resultBySymbol=new Map(results.map(s=>[sym(s),s]));
-  const buyPlans=(analysisCapitalReady?buyQueue:[]).map((b,index)=>{const action=act(b),size=fd(b).size,targetPct=targetPctFor(b,action),targetValue=swingCapital*targetPct,existingValue=+resultBySymbol.get(sym(b))?.value||0,signal=capitalSignalEligible({target:b,action,persistence:b.signalPersistence});return{stock:b,symbol:sym(b),rank:index+1,score:capitalScore(b),action,size,targetPct,targetValue,existingValue,need:Math.max(0,targetValue-existingValue),signal,funded:0,remainingNeed:0};}).filter(x=>x.targetValue>0);
+  const buyPlans=(analysisCapitalReady?buyQueue:[]).map((b,index)=>{const action=act(b),size=fd(b).size,targetPct=targetPctFor(b,action,c1Control.activeCapitalPct),targetValue=swingCapital*targetPct,existingValue=+resultBySymbol.get(sym(b))?.value||0,signal=capitalSignalEligible({target:b,action,persistence:b.signalPersistence});return{stock:b,symbol:sym(b),rank:index+1,score:capitalScore(b),action,size,targetPct,targetValue,existingValue,need:Math.max(0,targetValue-existingValue),signal,funded:0,remainingNeed:0};}).filter(x=>x.targetValue>0);
 
   const projectedRisk=cloneProjectedRisk(riskSnapshot);
   function applyProjectedBuy(stock,amount){projectBuy(projectedRisk,stock,amount);}

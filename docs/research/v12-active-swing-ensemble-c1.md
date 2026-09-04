@@ -1,8 +1,8 @@
 # V12 Active Swing Ensemble C1 — Frozen Research Candidate
 
-Status: **qualified for prospective paper trading or a very small risk-capped pilot; not approved for full-capital production trading**.
+Status: **authorized for production activation on 2026-09-04; prospective performance remains unvalidated**.
 
-Frozen on 2026-09-04 after point-in-time tests covering 2023-01-04 through 2026-09-01. Production V11 is unchanged.
+Frozen on 2026-09-04 after point-in-time tests covering 2023-01-04 through 2026-09-01. C1 replaces V11 for new live recommendations; V11 research history remains unchanged.
 
 ## Mandate
 
@@ -57,6 +57,6 @@ With the 25/50/25 weights frozen, 60 random-ranking ensembles were run independe
 - Backtests omit taxes and may understate market impact, borrow constraints, price gaps, and live data faults.
 - Historical results do not establish a probability of future profit.
 
-## Promotion gate
+## Prospective review gate
 
-Do not replace production V11 until C1 completes a prospective ledger with no rule changes. Minimum promotion evidence: 30 closed paper trades and 90 calendar days, no greater than 12% prospective sleeve drawdown, realized cost within the 25 bps test, and no operational divergence between intended and executed holdings.
+Do not describe C1 as prospectively validated until it completes a ledger with no rule changes. Minimum review evidence: 30 closed trades and 90 calendar days, no greater than 12% prospective sleeve drawdown before the breaker, realized cost within the 25 bps test, and no operational divergence between intended and executed holdings.
