@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-09-01-v11-setup-tolerance"',
+  'release:"2026-09-04-c1-active-swing"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',
@@ -54,11 +54,11 @@ hasAll(manifest,[
   '"bounded-stable-fmp-recovery"',
   '"mock-trade-allocation-simulation"',
   '"clean-performance-session-basis"',
-  '"v11-momentum-production-policy"',
-  '"durable-v11-policy-snapshot"',
+  '"c1-active-swing-production-policy"',
+  '"durable-c1-policy-snapshot"',
   '"investor-facing-decision-language"',
-  '"holding-aware-v11-lifecycle"',
-  '"v11-strict-strong-buy-preservation"',
+  '"holding-aware-c1-lifecycle"',
+  '"c1-three-sleeve-risk-contract"',
   '"portfolio-action-wrap"',
   '"authoritative-entry-badge"',
   '"user-controlled-screen-refresh"',

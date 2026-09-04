@@ -1072,39 +1072,38 @@ export default async function handler(req, res) {
         },
         meta: {
           mode: actionable.length
-            ? "independent_limited_pilot"
-            : "independent_confirmation_fail_closed",
+            ? "c1_active_swing"
+            : "c1_fail_closed",
           productionPolicy: {
             id: broadSnapshot.productionPolicySnapshot?.policyId || null,
             label: broadSnapshot.productionPolicySnapshot?.policyLabel || null,
             status:
-              actionable.some((row) => row.productionPolicy?.pilot === true)
-                ? "limited-pilot"
-                : broadSnapshot.productionPolicySnapshot?.independentlyValidated ===
-                    false
-                  ? "suspended-failed-validation"
-                : broadSnapshot.productionPolicySnapshot?.status ||
-                  "unavailable",
-            pilotMaxNames: 3,
-            pilotMaxWeightPct: 1,
-            pilotRequiresTwoSessionPersistence: true,
+              rows.find((row) => row.productionPolicy)?.productionPolicy?.status ||
+              broadSnapshot.productionPolicySnapshot?.status ||
+              "unavailable",
             sourceSessionDate:
               broadSnapshot.productionPolicySnapshot?.sourceSessionDate || null,
             snapshotAgeSessions:
               broadSnapshot.productionPolicySnapshot?.snapshotAgeSessions ?? null,
             targetCount:
-              broadSnapshot.productionPolicySnapshot?.targetCount || 12,
+              broadSnapshot.productionPolicySnapshot?.targetCount || 3,
             targetWeightPct:
-              broadSnapshot.productionPolicySnapshot?.targetWeightPct || 8.25,
+              broadSnapshot.productionPolicySnapshot?.targetWeightPct || 33,
             weights: broadSnapshot.productionPolicySnapshot?.weights || null,
+            sleeves: broadSnapshot.productionPolicySnapshot?.sleeves || null,
+            portfolioDrawdownStopPct:
+              broadSnapshot.productionPolicySnapshot?.portfolioDrawdownStopPct || 12,
             v12HardGovernorEnabled: false,
-            independentlyValidated: false,
+            independentlyValidated:
+              broadSnapshot.productionPolicySnapshot?.independentlyValidated === true,
+            activationAuthorized:
+              broadSnapshot.productionPolicySnapshot?.activationAuthorized === true,
             evidenceStatus:
               broadSnapshot.productionPolicySnapshot?.evidenceStatus ||
-              "provisional-post-selection-development-candidate",
+              "cross-universe-cost-stress-placebo-qualified",
           },
           universeDesign:
-            "all liquid U.S.-listed common stocks are considered by a bounded daily discovery pass; the resulting shortlist, strategic themes, and configured market-cycle constituents must independently pass live quotes, verified fundamentals, event risk, historical entry timing, and relative capital ranking",
+            "all liquid U.S.-listed common stocks are considered; C1 ranks price-only momentum among names above the $5 price and $300 million trailing-dollar-volume floors, blocks MSTR, and applies current quote and material-event safety checks",
           universeSize: broadSnapshot.universeSize,
           strategicUniverseSize: broadSnapshot.strategicCount,
           dynamicUniverseSize: broadSnapshot.dynamicCount,

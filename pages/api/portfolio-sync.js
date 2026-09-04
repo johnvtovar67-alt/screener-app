@@ -9,6 +9,10 @@ const validKey=k=>/^[A-Za-z0-9_-]{32,128}$/.test(k);
 const pathname=k=>`${PREFIX}${createHash('sha256').update(k).digest('hex')}.json`;
 const cleanDate=v=>{if(!v)return null;const t=new Date(v);return Number.isFinite(t.getTime())?t.toISOString():null;};
 const cleanNumber=(v,f=0)=>{const n=Number(v);return Number.isFinite(n)?n:f;};
+const cleanC1ControlState=state=>({
+  highWater:Math.max(0,cleanNumber(state?.highWater)),
+  triggerDay:/^\d{4}-\d{2}-\d{2}$/.test(String(state?.triggerDay||''))?String(state.triggerDay):null
+});
 function cleanPortfolio(rows=[]){
   if(!Array.isArray(rows))return[];
   return rows.slice(0,100).map(p=>({
@@ -36,8 +40,8 @@ async function readPortfolio(key){
   const text=await new Response(result.stream).text(),parsed=JSON.parse(text);
   return parsed&&Array.isArray(parsed.portfolio)?parsed:null;
 }
-async function writePortfolio(key,portfolio){
-  const payload={version:1,updatedAt:new Date().toISOString(),portfolio:cleanPortfolio(portfolio)};
+async function writePortfolio(key,portfolio,c1ControlState){
+  const payload={version:2,updatedAt:new Date().toISOString(),portfolio:cleanPortfolio(portfolio),c1ControlState:cleanC1ControlState(c1ControlState)};
   await put(pathname(key),JSON.stringify(payload),{access:'private',allowOverwrite:true,addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:0});
   return payload;
 }
@@ -62,7 +66,7 @@ export default async function handler(req,res){
     }
     if(req.method==='PUT'){
       if(!Array.isArray(req.body?.portfolio))return res.status(400).json({error:'portfolio must be an array.'});
-      const payload=await writePortfolio(key,req.body.portfolio);
+      const payload=await writePortfolio(key,req.body.portfolio,req.body.c1ControlState);
       return res.status(200).json({ok:true,updatedAt:payload.updatedAt,count:payload.portfolio.length});
     }
     return res.status(405).json({error:'Method not allowed'});

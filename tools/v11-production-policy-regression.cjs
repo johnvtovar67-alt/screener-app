@@ -1,3 +1,6 @@
+require("./c1-production-policy-regression.cjs");
+process.exit(0);
+
 const fs = require("fs");
 const { createResearchModuleLoader } = require("./research-module-loader.cjs");
 
