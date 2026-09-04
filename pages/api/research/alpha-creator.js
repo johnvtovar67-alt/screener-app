@@ -40,6 +40,8 @@ export default async function handler(req, res) {
       authority: "point-in-time-index-research",
       latestResearchGeneration: report.version || 1,
       latestResearchRoute:
+        "/api/research/pit-nasdaq-adaptive-replacement-r40-r44",
+      frozenR35R39Report:
         "/api/research/pit-nasdaq-adaptive-runner-r35-r39",
       frozenR30R34Report:
         "/api/research/pit-nasdaq-continuous-runner-r30-r34",
