@@ -37,6 +37,7 @@ import {
   finalizePointInTimeNasdaqAdaptiveRunnerDevelopment,
   getPointInTimeNasdaqAdaptiveReplacementR40,
   finalizePointInTimeNasdaqAdaptiveReplacementDevelopment,
+  finalizePointInTimeNasdaqAdaptiveReplacementPlacebo,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -685,9 +686,37 @@ async function invokeNasdaqAdaptiveReplacementWorkers(req) {
 
 async function advanceNasdaqAdaptiveReplacementProgram(req) {
   const current = await getPointInTimeNasdaqAdaptiveReplacementR40();
-  if (current?.status === "complete" || current?.status === "failed") return { stage: "terminal", report: current };
+  if (current?.status === "failed" || current?.strictPlacebo?.status === "complete" || current?.candidateDisposition === "rejected-by-development-screen") return { stage: "terminal", report: current };
+  if (current?.status === "complete" && current?.candidateDisposition === "frozen-for-strict-placebo-and-prospective-tracking-only") {
+    const fanout = await invokeNasdaqAdaptiveReplacementPlaceboWorkers(req);
+    return { stage: "strict-placebo", fanout, report: fanout.allComplete ? await finalizePointInTimeNasdaqAdaptiveReplacementPlacebo() : await getPointInTimeNasdaqAdaptiveReplacementR40() };
+  }
   const fanout = await invokeNasdaqAdaptiveReplacementWorkers(req);
   return { stage: "parallel-development", fanout, report: fanout.allComplete ? await finalizePointInTimeNasdaqAdaptiveReplacementDevelopment() : await getPointInTimeNasdaqAdaptiveReplacementR40() };
+}
+
+async function invokeNasdaqAdaptiveReplacementPlaceboWorkers(req) {
+  const protectionBypassSecret = String(process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "").trim();
+  if (!protectionBypassSecret) throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required for R40 placebo fan-out");
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim();
+  if (!/^[a-z0-9.-]+(?::\d+)?$/i.test(host)) throw new Error("A valid deployment host is required for R40 placebo fan-out");
+  const protocol = String(req.headers["x-forwarded-proto"] || "https") === "http" ? "http" : "https";
+  const authorization = String(req.headers.authorization || "");
+  const workers = await Promise.all(Array.from({ length: 20 }, async (_, shard) => {
+    const url = new URL("/api/research/pit-nasdaq-adaptive-replacement-r40-r44-placebo-worker", `${protocol}://${host}`);
+    url.searchParams.set("shard", String(shard));
+    const response = await fetch(url, { method: "POST", headers: { Authorization: authorization, "Content-Type": "application/json", "x-vercel-protection-bypass": protectionBypassSecret, "X-R40-Placebo-Coordinator": "1000-seed-family-maximum-v1" }, cache: "no-store", signal: AbortSignal.timeout(780_000) });
+    const responseBody = await response.text();
+    let payload;
+    try { payload = responseBody ? JSON.parse(responseBody) : {}; } catch { payload = { error: responseBody || `HTTP ${response.status}` }; }
+    if (!response.ok) {
+      const rawError = payload?.error ?? payload?.message ?? payload;
+      const workerError = typeof rawError === "string" ? rawError : JSON.stringify(rawError);
+      throw new Error(`R40 placebo shard ${shard} failed (${response.status}): ${workerError.slice(0, 400)}`);
+    }
+    return { shard, status: payload.status, startedAt: payload.startedAt, completedAt: payload.completedAt, cached: payload.cached === true };
+  }));
+  return { workers, allComplete: workers.every((worker) => worker.status === "complete") };
 }
 
 export default async function handler(req, res) {

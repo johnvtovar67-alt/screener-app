@@ -19,5 +19,7 @@ const cron = fs.readFileSync("pages/api/cron/fmp-research-backtest.js", "utf8");
 const route = fs.readFileSync("pages/api/research/alpha-creator.js", "utf8");
 assert(runner.includes("runPointInTimeNasdaqAdaptiveReplacementWorker") && runner.includes("getPointInTimeNasdaqAdaptiveRunnerR35"));
 assert(cron.includes("invokeNasdaqAdaptiveReplacementWorkers") && cron.includes("R40-R44-parallel-adaptive-rank-replacement"));
+assert(runner.includes("POINT_IN_TIME_NASDAQ_RUNNER_R40_PLACEBO_SEEDS = 1_000") && runner.includes("familyWiseEmpiricalPValue") && runner.includes("maximum across the five predeclared lifecycle variants"));
+assert(cron.includes("invokeNasdaqAdaptiveReplacementPlaceboWorkers") && cron.includes("1000-seed-family-maximum-v1"));
 assert(route.includes("pit-nasdaq-adaptive-replacement-r40-r44") && route.includes("frozenR35R39Report"));
 console.log("R40-R44 adaptive replacement regression passed.");
