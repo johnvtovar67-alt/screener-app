@@ -66,9 +66,9 @@ assert(
 assert(
   cron.includes("invokeMomentumSpineWorkers") &&
     cron.includes("Promise.all") &&
-    cron.includes("R15-R19-parallel-momentum-spine") &&
+    cron.includes("advanceMomentumSpineProgram") &&
     publicRoute.includes("pit-sp500-momentum-spine-r15-r19"),
-  "The cron must launch the momentum families concurrently and expose the latest research report.",
+  "The cron must preserve the concurrent R15-R19 program and expose its frozen report.",
 );
 
 console.log("R15-R19 parallel momentum-spine regression passed.");
