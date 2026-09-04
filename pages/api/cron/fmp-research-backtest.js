@@ -24,6 +24,9 @@ import {
   getPointInTimeSp500SecFilingR14Status,
   preparePointInTimeSp500SecFilingR14,
   runPointInTimeSp500AlphaFilingR14,
+  getPointInTimeSp500MomentumSpineR15,
+  finalizePointInTimeSp500MomentumSpineDevelopment,
+  advancePointInTimeSp500MomentumSpineR15,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -32,6 +35,10 @@ import {
   runV11StressTest,
   V11_FORWARD_EXTENSION_TARGET,
 } from "../../../lib/fmpResearchBacktest";
+import {
+  pointInTimeMomentumSpineR15Controls,
+  pointInTimeMomentumSpineR15Definitions,
+} from "../../../lib/momentumSpineResearch";
 import { latestCompletedMarketSessionDay } from "../../../lib/marketSession";
 
 export const config = { maxDuration: 800 };
@@ -208,6 +215,111 @@ async function advancePointInTimeSp500R14() {
   };
 }
 
+async function invokeMomentumSpineWorkers(req) {
+  const protectionBypassSecret = String(
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "",
+  ).trim();
+  if (!protectionBypassSecret)
+    throw new Error(
+      "VERCEL_AUTOMATION_BYPASS_SECRET is required for R15-R19 worker fan-out",
+    );
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "")
+    .split(",")[0]
+    .trim();
+  if (!/^[a-z0-9.-]+(?::\d+)?$/i.test(host))
+    throw new Error("A valid deployment host is required for R15-R19 fan-out");
+  const protocol =
+    String(req.headers["x-forwarded-proto"] || "https") === "http"
+      ? "http"
+      : "https";
+  const authorization = String(req.headers.authorization || "");
+  const definitions = [
+    ...pointInTimeMomentumSpineR15Definitions(),
+    ...pointInTimeMomentumSpineR15Controls(),
+  ];
+  const startedAt = new Date().toISOString();
+  const workers = await Promise.all(
+    definitions.map(async (definition) => {
+      const url = new URL(
+        "/api/research/pit-sp500-momentum-spine-r15-r19-worker",
+        `${protocol}://${host}`,
+      );
+      url.searchParams.set("candidateId", definition.id);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: authorization,
+          "Content-Type": "application/json",
+          "x-vercel-protection-bypass": protectionBypassSecret,
+          "X-R15-Coordinator": "parallel-family-fanout-v1",
+        },
+        cache: "no-store",
+        signal: AbortSignal.timeout(780_000),
+      });
+      const responseBody = await response.text();
+      let payload;
+      try {
+        payload = responseBody ? JSON.parse(responseBody) : {};
+      } catch {
+        payload = { error: responseBody || `HTTP ${response.status}` };
+      }
+      if (!response.ok) {
+        const rawError = payload?.error ?? payload?.message ?? payload;
+        const workerError =
+          typeof rawError === "string" ? rawError : JSON.stringify(rawError);
+        console.error("R15-R19 worker request failed", {
+          candidateId: definition.id,
+          status: response.status,
+          contentType: response.headers.get("content-type"),
+          error: workerError.slice(0, 800),
+        });
+        throw new Error(
+          `${definition.id} worker failed (${response.status}): ${workerError.slice(0, 400)}`,
+        );
+      }
+      return {
+        candidateId: definition.id,
+        status: payload.status,
+        startedAt: payload.startedAt,
+        completedAt: payload.completedAt,
+        cached: payload.cached === true,
+      };
+    }),
+  );
+  return {
+    startedAt,
+    completedAt: new Date().toISOString(),
+    workers,
+    allComplete: workers.every((worker) => worker.status === "complete"),
+  };
+}
+
+async function advanceMomentumSpineProgram(req) {
+  const current = await getPointInTimeSp500MomentumSpineR15();
+  if (current?.status === "complete" || current?.status === "failed")
+    return { stage: "terminal", report: current };
+  if (
+    current?.status === "awaiting-validation" ||
+    current?.status === "awaiting-audit" ||
+    current?.status === "awaiting-strict-placebo"
+  )
+    return {
+      stage: current.status,
+      report:
+        current.status === "awaiting-strict-placebo"
+          ? current
+          : await advancePointInTimeSp500MomentumSpineR15(),
+    };
+  const fanout = await invokeMomentumSpineWorkers(req);
+  return {
+    stage: "parallel-development",
+    fanout,
+    report: fanout.allComplete
+      ? await finalizePointInTimeSp500MomentumSpineDevelopment()
+      : await getPointInTimeSp500MomentumSpineR15(),
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -224,12 +336,17 @@ export default async function handler(req, res) {
       report: await getPreservedPointInTimeNasdaqR13Outcome(),
     };
     const pointInTimeSp500R14 = await advancePointInTimeSp500R14();
+    const momentumSpine =
+      pointInTimeSp500R14.report?.status === "complete"
+        ? await advanceMomentumSpineProgram(req)
+        : null;
     res.setHeader("Cache-Control", "no-store");
     return res
-      .status(pointInTimeSp500R14.report?.status === "complete" ? 200 : 202)
+      .status(momentumSpine?.report?.status === "complete" ? 200 : 202)
       .json({
       ok: true,
-      priorityResearch: "R14-sec-filing-inflection",
+      priorityResearch: "R15-R19-parallel-momentum-spine",
+      momentumSpine,
       pointInTimeSp500R14,
       pointInTimeNasdaqR11: {
         stage: pointInTimeNasdaqR11.stage,
@@ -245,8 +362,9 @@ export default async function handler(req, res) {
       },
       legacyResearchRerun: false,
       nextStep:
+        momentumSpine?.report?.nextStep ||
         pointInTimeSp500R14.report?.nextStep ||
-        "Continue the frozen R14 stage without rerunning legacy research.",
+        "Continue only the frozen parallel momentum program.",
       productionChanged: false,
       eligibleForAlphaClaim: false,
       eligibleForLiveCapital: false,

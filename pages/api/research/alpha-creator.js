@@ -39,7 +39,9 @@ export default async function handler(req, res) {
       ...report,
       authority: "point-in-time-sp500-research",
       latestResearchGeneration: report.version || 1,
-      latestResearchRoute: "/api/research/pit-sp500-alpha-sec-filing-r14",
+      latestResearchRoute:
+        "/api/research/pit-sp500-momentum-spine-r15-r19",
+      frozenR14Report: "/api/research/pit-sp500-alpha-sec-filing-r14",
       frozenR9Report: "/api/research/pit-sp500-alpha-sizing-r9",
       frozenR8Report: "/api/research/pit-sp500-alpha-batch-r8",
       frozenR7Report: "/api/research/pit-sp500-alpha-research-r7",
