@@ -56,9 +56,9 @@ assert(
 );
 assert(
   cron.includes("invokeNasdaqRunnerWorkers") &&
-    cron.includes("R20-R24-parallel-nasdaq-runner-retention") &&
+    cron.includes("advanceNasdaqRunnerProgram") &&
     publicRoute.includes("pit-nasdaq-runner-r20-r24"),
-  "The cron must launch R20-R24 concurrently and expose the latest research report.",
+  "The cron must preserve the concurrent R20-R24 program and expose its frozen report.",
 );
 
 console.log("R20-R24 parallel Nasdaq runner-retention regression passed.");
