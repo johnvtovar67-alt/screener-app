@@ -3107,6 +3107,7 @@ assert(
     !alphaCreatorEndpoint.includes("runAlphaCreatorSearch") &&
     alphaCreatorEndpoint.includes('authority: "point-in-time-index-research"') &&
     alphaCreatorEndpoint.includes('authority: "legacy-current-survivor-diagnostic"') &&
+    alphaCreatorEndpoint.includes("pit-nasdaq-concentrated-runner-r25-r29") &&
     alphaCreatorEndpoint.includes("pit-nasdaq-runner-r20-r24") &&
     alphaCreatorEndpoint.includes("pit-sp500-alpha-sec-filing-r14") &&
     alphaCreatorEndpoint.includes("maxDuration: 800"),
