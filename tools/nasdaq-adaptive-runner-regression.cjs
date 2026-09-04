@@ -20,6 +20,6 @@ const cron = fs.readFileSync("pages/api/cron/fmp-research-backtest.js", "utf8");
 const publicRoute = fs.readFileSync("pages/api/research/alpha-creator.js", "utf8");
 assert(simulator.includes("rankedAdaptiveRebalanceEnabled") && simulator.includes("rankedWeakBreadthTargetCount") && simulator.includes("rankedAdaptiveEqualWeightEnabled"), "The simulator must implement bounded contemporaneous breadth adaptation.");
 assert(runner.includes("runPointInTimeNasdaqAdaptiveRunnerWorker") && runner.includes("getPointInTimeNasdaqContinuousRunnerR30"), "R35 must preserve and follow terminal R30 evidence.");
-assert(cron.includes("invokeNasdaqAdaptiveRunnerWorkers") && cron.includes("R35-R39-parallel-adaptive-nasdaq-runners") && publicRoute.includes("pit-nasdaq-adaptive-runner-r35-r39") && publicRoute.includes("frozenR30R34Report"), "R35 must be the latest parallel public research batch.");
+assert(cron.includes("invokeNasdaqAdaptiveRunnerWorkers") && publicRoute.includes("pit-nasdaq-adaptive-runner-r35-r39") && publicRoute.includes("frozenR30R34Report"), "R35 must remain preserved as frozen evidence.");
 
 console.log("R35-R39 adaptive Nasdaq runner regression passed.");
