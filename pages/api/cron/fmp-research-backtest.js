@@ -40,6 +40,8 @@ import {
   finalizePointInTimeNasdaqAdaptiveReplacementPlacebo,
   getPointInTimeNasdaqDistinctAlphaR45,
   finalizePointInTimeNasdaqDistinctAlphaDevelopment,
+  getPointInTimeNasdaqEventAlphaR55,
+  finalizePointInTimeNasdaqEventAlphaDevelopment,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -73,6 +75,7 @@ import {
   pointInTimeNasdaqAdaptiveReplacementDefinitions,
 } from "../../../lib/nasdaqAdaptiveReplacementResearch";
 import { pointInTimeNasdaqDistinctAlphaControls, pointInTimeNasdaqDistinctAlphaDefinitions } from "../../../lib/nasdaqDistinctAlphaResearch";
+import { pointInTimeNasdaqEventAlphaControls, pointInTimeNasdaqEventAlphaDefinitions } from "../../../lib/nasdaqEventAlphaResearch";
 import { latestCompletedMarketSessionDay } from "../../../lib/marketSession";
 
 export const config = { maxDuration: 800 };
@@ -737,6 +740,21 @@ async function advanceNasdaqDistinctAlphaProgram(req) {
   return { stage: "parallel-development", report: workers.every((row) => row.status === "complete") ? await finalizePointInTimeNasdaqDistinctAlphaDevelopment() : await getPointInTimeNasdaqDistinctAlphaR45() };
 }
 
+async function advanceNasdaqEventAlphaProgram(req) {
+  const current = await getPointInTimeNasdaqEventAlphaR55();
+  if (current?.status === "complete" || current?.status === "failed") return { stage: "terminal", report: current };
+  const protectionBypassSecret = String(process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "").trim();
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim();
+  const protocol = String(req.headers["x-forwarded-proto"] || "https") === "http" ? "http" : "https";
+  const definitions = [...pointInTimeNasdaqEventAlphaDefinitions(), ...pointInTimeNasdaqEventAlphaControls()];
+  const workers = await Promise.all(definitions.map(async (definition) => {
+    const url = new URL("/api/research/pit-nasdaq-event-alpha-r55-r64-worker", `${protocol}://${host}`); url.searchParams.set("candidateId", definition.id);
+    const response = await fetch(url, { method: "POST", headers: { Authorization: String(req.headers.authorization || ""), "x-vercel-protection-bypass": protectionBypassSecret }, signal: AbortSignal.timeout(780_000) });
+    const payload = await response.json(); if (!response.ok) throw new Error(`${definition.id}: ${payload.error || response.status}`); return payload;
+  }));
+  return { stage: "parallel-development", report: workers.every((row) => row.status === "complete") ? await finalizePointInTimeNasdaqEventAlphaDevelopment() : await getPointInTimeNasdaqEventAlphaR55() };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -779,12 +797,15 @@ export default async function handler(req, res) {
         : null;
     const distinctAlpha = adaptiveReplacement?.report?.candidateDisposition === "rejected-by-strict-placebo"
       ? await advanceNasdaqDistinctAlphaProgram(req) : null;
+    const eventAlpha = distinctAlpha?.report?.candidateDisposition === "rejected-by-development-screen"
+      ? await advanceNasdaqEventAlphaProgram(req) : null;
     res.setHeader("Cache-Control", "no-store");
     return res
-      .status(distinctAlpha?.report?.status === "complete" ? 200 : 202)
+      .status(eventAlpha?.report?.status === "complete" ? 200 : 202)
       .json({
       ok: true,
-      priorityResearch: "R45-R54-parallel-distinct-alpha-mechanisms",
+      priorityResearch: "R55-R64-parallel-event-alpha-mechanisms",
+      eventAlpha,
       distinctAlpha,
       adaptiveReplacement,
       adaptiveRunner,
