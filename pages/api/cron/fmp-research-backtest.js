@@ -27,6 +27,8 @@ import {
   getPointInTimeSp500MomentumSpineR15,
   finalizePointInTimeSp500MomentumSpineDevelopment,
   advancePointInTimeSp500MomentumSpineR15,
+  getPointInTimeNasdaqRunnerR20,
+  finalizePointInTimeNasdaqRunnerDevelopment,
   freezePointInTimeNasdaqR11Validation,
   freezePointInTimeNasdaqR11Audit,
   finalizePointInTimeNasdaqR11,
@@ -39,6 +41,10 @@ import {
   pointInTimeMomentumSpineR15Controls,
   pointInTimeMomentumSpineR15Definitions,
 } from "../../../lib/momentumSpineResearch";
+import {
+  pointInTimeNasdaqRunnerControls,
+  pointInTimeNasdaqRunnerDefinitions,
+} from "../../../lib/nasdaqRunnerResearch";
 import { latestCompletedMarketSessionDay } from "../../../lib/marketSession";
 
 export const config = { maxDuration: 800 };
@@ -320,6 +326,98 @@ async function advanceMomentumSpineProgram(req) {
   };
 }
 
+async function invokeNasdaqRunnerWorkers(req) {
+  const protectionBypassSecret = String(
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "",
+  ).trim();
+  if (!protectionBypassSecret)
+    throw new Error(
+      "VERCEL_AUTOMATION_BYPASS_SECRET is required for R20-R24 worker fan-out",
+    );
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "")
+    .split(",")[0]
+    .trim();
+  if (!/^[a-z0-9.-]+(?::\d+)?$/i.test(host))
+    throw new Error("A valid deployment host is required for R20-R24 fan-out");
+  const protocol =
+    String(req.headers["x-forwarded-proto"] || "https") === "http"
+      ? "http"
+      : "https";
+  const authorization = String(req.headers.authorization || "");
+  const definitions = [
+    ...pointInTimeNasdaqRunnerDefinitions(),
+    ...pointInTimeNasdaqRunnerControls(),
+  ];
+  const startedAt = new Date().toISOString();
+  const workers = await Promise.all(
+    definitions.map(async (definition) => {
+      const url = new URL(
+        "/api/research/pit-nasdaq-runner-r20-r24-worker",
+        `${protocol}://${host}`,
+      );
+      url.searchParams.set("candidateId", definition.id);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: authorization,
+          "Content-Type": "application/json",
+          "x-vercel-protection-bypass": protectionBypassSecret,
+          "X-R20-Coordinator": "parallel-nasdaq-runner-fanout-v1",
+        },
+        cache: "no-store",
+        signal: AbortSignal.timeout(780_000),
+      });
+      const responseBody = await response.text();
+      let payload;
+      try {
+        payload = responseBody ? JSON.parse(responseBody) : {};
+      } catch {
+        payload = { error: responseBody || `HTTP ${response.status}` };
+      }
+      if (!response.ok) {
+        const rawError = payload?.error ?? payload?.message ?? payload;
+        const workerError =
+          typeof rawError === "string" ? rawError : JSON.stringify(rawError);
+        console.error("R20-R24 worker request failed", {
+          candidateId: definition.id,
+          status: response.status,
+          error: workerError.slice(0, 800),
+        });
+        throw new Error(
+          `${definition.id} worker failed (${response.status}): ${workerError.slice(0, 400)}`,
+        );
+      }
+      return {
+        candidateId: definition.id,
+        status: payload.status,
+        startedAt: payload.startedAt,
+        completedAt: payload.completedAt,
+        cached: payload.cached === true,
+      };
+    }),
+  );
+  return {
+    startedAt,
+    completedAt: new Date().toISOString(),
+    workers,
+    allComplete: workers.every((worker) => worker.status === "complete"),
+  };
+}
+
+async function advanceNasdaqRunnerProgram(req) {
+  const current = await getPointInTimeNasdaqRunnerR20();
+  if (current?.status === "complete" || current?.status === "failed")
+    return { stage: "terminal", report: current };
+  const fanout = await invokeNasdaqRunnerWorkers(req);
+  return {
+    stage: "parallel-development",
+    fanout,
+    report: fanout.allComplete
+      ? await finalizePointInTimeNasdaqRunnerDevelopment()
+      : await getPointInTimeNasdaqRunnerR20(),
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -340,12 +438,17 @@ export default async function handler(req, res) {
       pointInTimeSp500R14.report?.status === "complete"
         ? await advanceMomentumSpineProgram(req)
         : null;
+    const nasdaqRunner =
+      momentumSpine?.report?.status === "complete"
+        ? await advanceNasdaqRunnerProgram(req)
+        : null;
     res.setHeader("Cache-Control", "no-store");
     return res
-      .status(momentumSpine?.report?.status === "complete" ? 200 : 202)
+      .status(nasdaqRunner?.report?.status === "complete" ? 200 : 202)
       .json({
       ok: true,
-      priorityResearch: "R15-R19-parallel-momentum-spine",
+      priorityResearch: "R20-R24-parallel-nasdaq-runner-retention",
+      nasdaqRunner,
       momentumSpine,
       pointInTimeSp500R14,
       pointInTimeNasdaqR11: {
@@ -362,6 +465,7 @@ export default async function handler(req, res) {
       },
       legacyResearchRerun: false,
       nextStep:
+        nasdaqRunner?.report?.nextStep ||
         momentumSpine?.report?.nextStep ||
         pointInTimeSp500R14.report?.nextStep ||
         "Continue only the frozen parallel momentum program.",

@@ -21,8 +21,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // The public alpha-creator route is authoritative only when it uses the
-    // compiled point-in-time S&P membership dataset. The previous
+    // The public alpha-creator route is authoritative only when it uses a
+    // compiled point-in-time membership dataset. The previous
     // current-survivor search remains available solely as an explicitly
     // labelled historical diagnostic via ?legacy=1.
     const report = await getPointInTimeSp500AlphaProgram();
@@ -30,16 +30,18 @@ export default async function handler(req, res) {
       return res.status(202).json({
         version: 1,
         status: "pending",
-        authority: "point-in-time-sp500-research",
+        authority: "point-in-time-index-research",
         productionChanged: false,
         eligibleForAlphaClaim: false,
       });
     const status = report.status === "failed" ? 500 : report.status === "complete" ? 200 : 202;
     return res.status(status).json({
       ...report,
-      authority: "point-in-time-sp500-research",
+      authority: "point-in-time-index-research",
       latestResearchGeneration: report.version || 1,
       latestResearchRoute:
+        "/api/research/pit-nasdaq-runner-r20-r24",
+      frozenR15R19Report:
         "/api/research/pit-sp500-momentum-spine-r15-r19",
       frozenR14Report: "/api/research/pit-sp500-alpha-sec-filing-r14",
       frozenR9Report: "/api/research/pit-sp500-alpha-sizing-r9",
@@ -57,7 +59,7 @@ export default async function handler(req, res) {
     return res.status(500).json({
       version: 1,
       status: "failed",
-      authority: "point-in-time-sp500-research",
+      authority: "point-in-time-index-research",
       productionChanged: false,
       eligibleForAlphaClaim: false,
       error: String(error?.message || error).slice(0, 400),

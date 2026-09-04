@@ -3105,11 +3105,12 @@ assert(
     alphaCreatorEndpoint.includes('req.query.legacy || ""') &&
     alphaCreatorEndpoint.includes("await getAlphaCreatorSearch()") &&
     !alphaCreatorEndpoint.includes("runAlphaCreatorSearch") &&
-    alphaCreatorEndpoint.includes('authority: "point-in-time-sp500-research"') &&
+    alphaCreatorEndpoint.includes('authority: "point-in-time-index-research"') &&
     alphaCreatorEndpoint.includes('authority: "legacy-current-survivor-diagnostic"') &&
+    alphaCreatorEndpoint.includes("pit-nasdaq-runner-r20-r24") &&
     alphaCreatorEndpoint.includes("pit-sp500-alpha-sec-filing-r14") &&
     alphaCreatorEndpoint.includes("maxDuration: 800"),
-  "The public alpha-creator endpoint must be read-only R14 status and quarantine the current-survivor search behind an explicitly labelled legacy diagnostic.",
+  "The public alpha-creator endpoint must expose the latest point-in-time index research and quarantine the current-survivor search behind an explicitly labelled legacy diagnostic.",
 );
 assert(
   pitAlphaR14Endpoint.includes("getPointInTimeSp500AlphaFilingR14") &&
