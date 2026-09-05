@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-09-05-c1-trade-ticket"',
+  'release:"2026-09-05-c1-mobile-resilience"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',
@@ -61,6 +61,9 @@ hasAll(manifest,[
   '"c1-three-sleeve-risk-contract"',
   '"c1-ranked-allocation-consistency"',
   '"portfolio-trade-ticket"',
+  '"compact-mobile-screen"',
+  '"preserved-verified-fallback"',
+  '"unclassified-factor-isolation"',
   '"c1-legacy-transition"',
   '"portfolio-action-wrap"',
   '"authoritative-entry-badge"',

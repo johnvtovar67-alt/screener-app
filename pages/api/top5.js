@@ -609,7 +609,7 @@ function buildThemeLeadership(rows = []) {
     .sort((a, b) => b.score - a.score);
 }
 const CACHE_KEY = "__screenerBroadOpportunityCacheV9",
-  CACHE_MS = 60000,
+  CACHE_MS = 5 * 60 * 1000,
   STALE_SNAPSHOT_MS = 24 * 60 * 60 * 1000,
   MIN_QUOTE_COVERAGE_PCT = 95,
   PERFORMANCE_RECORD_KEY = "__screenerPerformanceRecordV1";
@@ -1006,6 +1006,33 @@ function serializeStockForClient(row = {}) {
   };
 }
 
+function compactRowsForClient(rows = [], limit = 80) {
+  const required = rows.filter((row) =>
+    row?.productionPolicy?.selected === true ||
+    row?.productionPolicy?.pilot === true ||
+    ["Buy", "Strong Buy"].includes(row?.finalDecision?.action) ||
+    ["Buy", "Strong Buy"].includes(row?.signalChange?.from),
+  );
+  const ranked = [...rows].sort((a, b) => {
+    const score = (row) => Number(
+      row?.finalDecision?.relativeCapitalScore ??
+      row?.finalDecision?.capitalEfficiencyScore ??
+      row?.recommendation?.expertDecision?.capitalScore ??
+      row?.compositeScore ??
+      0,
+    );
+    return score(b) - score(a);
+  });
+  const seen = new Set(), compact = [];
+  for (const row of [...required, ...ranked]) {
+    const key = normalizeSymbol(row?.symbol);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);compact.push(row);
+    if (compact.length >= Math.max(limit, required.length)) break;
+  }
+  return compact;
+}
+
 export default async function handler(req, res) {
   try {
     res.setHeader("Cache-Control", "no-store, max-age=0");
@@ -1022,7 +1049,10 @@ export default async function handler(req, res) {
       selectedSymbols = new Set(config.symbols.filter((s) => !EXCLUDED.has(s))),
       rows = isBroad
         ? broadRows
-        : broadRows.filter((r) => selectedSymbols.has(r.symbol));
+        : broadRows.filter((r) => selectedSymbols.has(r.symbol)),
+      clientRows = isBroad && String(req.query.compact || "") === "1"
+        ? compactRowsForClient(rows)
+        : rows;
     // Every view is filtered from this same broad snapshot, so record the
     // authoritative broad state even when the user is looking at one theme.
     // The ledger de-duplicates within a market session.
@@ -1061,7 +1091,7 @@ export default async function handler(req, res) {
     return res
       .status(200)
       .json({
-        stocks: rows.map(serializeStockForClient),
+        stocks: clientRows.map(serializeStockForClient),
         themeLeadership,
         selectedTheme: {
           key: themeKey,
@@ -1169,6 +1199,7 @@ export default async function handler(req, res) {
           quoteCoverageAdequate: broadSnapshot.quoteCoverageAdequate,
           staleQuoteCount: broadSnapshot.staleQuoteCount,
           returned: rows.length,
+          clientReturned: clientRows.length,
           strongBuys: rows.filter(
             (r) => r.finalDecision?.action === "Strong Buy",
           ).length,
