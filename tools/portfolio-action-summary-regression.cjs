@@ -4,7 +4,11 @@ const page=fs.readFileSync('pages/index.js','utf8');
 assert(page.includes('Lifecycle exits are summarized even when generated after funding-plan construction'),'lifecycle exits are not being added to the summary');
 assert(page.includes('d.action==="Exit"'),'exit decisions are not summarized');
 assert(page.includes('sourceShares'),'exit share count is missing from summary data');
-assert(page.includes('Sell ${g.sourceShares}'),'exit summary is not showing whole-position share count');
+assert(page.includes('const sellActions=')&&page.includes('const buyActions='),'trade actions are not separated into clear sell and buy lists');
+assert(page.includes('Sell or reduce')&&page.includes('Buy in this order'),'trade ticket is missing its execution sequence');
+assert(page.includes('Sell {x.shares}')&&page.includes('Buy {x.shares}'),'trade rows do not label sold and purchased shares unambiguously');
+assert(page.includes('estimatedCashAfterActions')&&page.includes('Cash remaining'),'trade ticket does not reconcile estimated remaining cash');
+assert(!page.includes('→ NTRA')&&!page.includes('g.items.map(x=>tradeLabel'),'legacy source-to-target arrow presentation still exists');
 assert(page.includes('className="timeReviewCompact"'),'time review panel is not compact');
 assert(page.includes('scoreVisual ${v.tone}')&&page.includes('edgeVisual ${v.tone}'),'compact time review lost score or opportunity-gap visuals');
 assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');
@@ -13,4 +17,4 @@ assert(page.includes('timing:"Await Capital"')&&page.includes('bp.blockReason||f
 assert(page.indexOf('if(need<=minFundingAction){bp.toleranceGap=need')<page.indexOf('const initialAllowance=capitalAllowance'),'At-target holdings must be recognized before a zero-dollar capital allowance can emit a false cash shortage');
 assert(!page.includes('Current selection')&&!page.includes('Current #{rankNo}'),'Internal portfolio rank still leaks into holding explanations');
 assert(page.includes('% of Swing capital')&&page.includes('No add, trim, or exit trigger is active today.'),'Portfolio holdings are missing plain-language sizing and trigger context');
-console.log('PORTFOLIO ACTION SUMMARY PASS: lifecycle exits are summarized and time review is compact.');
+console.log('PORTFOLIO ACTION SUMMARY PASS: lifecycle exits, ordered sell/buy ticket, cash reconciliation, and compact time review verified.');
