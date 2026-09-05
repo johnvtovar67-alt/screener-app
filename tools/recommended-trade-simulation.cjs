@@ -58,7 +58,25 @@ assert(orders.reduce((sum,x)=>sum+x.amount,0)<=5000&&cash>=0,'mock recommendatio
 const missingPlan={symbol:'NOPLAN',price:50,primaryTheme:'Other'},noPlan=governor.portfolioContributionGate({target:missingPlan,approvedAmount:1500,risk:allocationProjected,existingValue:0});
 assert(!noPlan.pass,'new position without valid upside and invalidation levels must fail the contribution gate');
 
+const c1Risk=governor.portfolioRiskSnapshot([{symbol:'CASH',role:'Swing',value:13839},{symbol:'LEGACY',role:'Swing',value:20469,primaryTheme:'Other'}]),c1Projected=capital.cloneProjectedRisk(c1Risk),c1Candidates=[
+  {symbol:'NTRA',price:328.18,primaryTheme:'Healthcare',productionPolicy:{id:'c1-active-swing-ensemble-20260904',selected:true,researchRank:1,targetWeightPct:33},riskPlan:{invalidationPrice:286.56,firstTrimPrice:387.25}},
+  {symbol:'FCX',price:72.72,primaryTheme:'Metals & Miners',productionPolicy:{id:'c1-active-swing-ensemble-20260904',selected:true,researchRank:3,targetWeightPct:33},riskPlan:{invalidationPrice:65.24,firstTrimPrice:80.24}},
+  {symbol:'XYZ',price:82.76,primaryTheme:'Technology',productionPolicy:{id:'c1-active-swing-ensemble-20260904',selected:true,researchRank:4,targetWeightPct:33},riskPlan:{invalidationPrice:78.96,firstTrimPrice:97.66}},
+],c1Orders=[];let c1Cash=13839;
+for(const candidate of c1Candidates.sort((a,b)=>a.productionPolicy.researchRank-b.productionPolicy.researchRank)){
+  const target=c1Risk.swingCapital*.33,allowance=governor.capitalAllowance({target:candidate,action:'Buy',requested:Math.min(target,c1Cash),risk:c1Projected}),order=capital.wholeShareExecution(allowance.amount,candidate.price),contribution=governor.portfolioContributionGate({target:candidate,approvedAmount:order.amount,risk:c1Projected,existingValue:0});
+  if(allowance.blocked||!contribution.pass||order.shares<1)continue;c1Orders.push({...order,symbol:candidate.symbol});c1Cash-=order.amount;capital.applyProjectedBuy(c1Projected,candidate,order.amount);
+}
+assert(c1Orders[0]?.symbol==='NTRA','C1 cash must fund the highest-ranked selected candidate before lower-ranked candidates');
+assert(!c1Orders.some(x=>x.symbol==='XYZ'),'a lower-ranked C1 candidate must not jump the queue because of a legacy forward-target hurdle');
+assert(governor.portfolioContributionGate({target:c1Candidates[0],approvedAmount:11000,risk:c1Risk,existingValue:0}).c1RankAuthoritative,'C1 selected names must bypass legacy portfolio contribution ranking');
+
+const page=fs.readFileSync('pages/index.js','utf8');
+assert(page.includes('policyId.startsWith("c1-")')&&page.includes('return "C1 Entry Cleared"'),'C1 cards must not expose a contradictory legacy timing label');
+assert(page.includes('14% loss limit • Rank review after 30 sessions'),'C1 cards must show the frozen C1 exit contract instead of legacy price targets');
+assert(page.includes('startsWith("c1-")')&&page.includes('return ["Strong Buy","Buy"].includes(a)'),'C1 selected targets must not inherit legacy rotation qualification hurdles');
+
 const schw=personal.applyPersonalCapitalPolicy({symbol:'SCHW',finalDecision:{action:'Strong Buy',reason:'analytically qualified'}});
 assert(schw.finalDecision.action==='Avoid'&&schw.finalDecision.personalCapitalBlocked,'personal SCHW concentration block must survive a Strong Buy input');
 
-console.log(`RECOMMENDED TRADE SIMULATION PASS: ${orders.map(x=>`${x.symbol} ${x.shares}sh`).join(', ')} funded; nonpersistent KO excluded; cash and factor risk conserved.`);
+console.log(`RECOMMENDED TRADE SIMULATION PASS: ${orders.map(x=>`${x.symbol} ${x.shares}sh`).join(', ')} funded; C1 priority funded ${c1Orders.map(x=>x.symbol).join(', ')} without a lower-rank jump; nonpersistent KO excluded; cash and factor risk conserved.`);

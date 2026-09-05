@@ -15,6 +15,7 @@ const {
   v11ProductionPositionLifecycle: c1ProductionPositionLifecycle,
   V11_PRODUCTION_POLICY_ID: C1_PRODUCTION_POLICY_ID,
   C1_PRODUCTION_SLEEVES,
+  C1_PRODUCTION_ACTIVATION_DAY,
 } = policy;
 
 function sourceSignal(index, overrides = {}) {
@@ -55,6 +56,7 @@ assert(snapshot.candidates.length === 9, "the retention queue must contain nine 
 assert(!snapshot.candidates.some((row) => row.symbol === "MSTR"), "MSTR must remain outside the system mandate");
 assert(snapshot.targetCount === 3 && snapshot.targetWeightPct === 33, "C1 must target three approximately equal positions");
 assert(C1_PRODUCTION_SLEEVES.map((row) => row.weightPct).join(",") === "25,50,25", "the frozen sleeve allocation must be 25/50/25");
+assert(snapshot.shortHorizonChaseGateEnabled === false, "legacy short-horizon timing must not contradict C1's tested opening-gap entry rule");
 assert(c1ProductionRankScore(sourceSignal(0)) > c1ProductionRankScore(sourceSignal(5)), "higher momentum percentile must rank higher");
 
 function liveRow(candidate, overrides = {}) {
@@ -87,6 +89,14 @@ assert(buys.every((row) => row.productionPolicy.selected), "every actionable row
 assert(buys.every((row) => row.finalDecision.size === "Target 33.00%"), "selected rows must expose the combined target");
 assert(new Set(buys.map((row) => row.sector)).size === 3, "the selector must not choose two names from one sector");
 
+const legacyTimingConflictRows = ready.candidates.map((candidate, index) =>
+  liveRow(candidate, index === 0 ? {
+    entryTiming: { available: true, pass: false, chase: true, liquidityPass: true, averageDollarVolume20: 500_000_000 },
+  } : {}),
+);
+applied = applyC1ProductionPolicy(legacyTimingConflictRows, ready);
+assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Buy", "an obsolete V11 timing label must not override C1's tested momentum and opening-gap entry contract");
+
 applied = applyC1ProductionPolicy(ready.candidates.map(liveRow), { ...ready, status: "stale" });
 assert(applied.every((row) => !["Strong Buy", "Buy"].includes(row.finalDecision.action)), "a stale C1 snapshot must fail closed");
 
@@ -107,6 +117,14 @@ let lifecycle = c1ProductionPositionLifecycle({
   now: new Date("2026-09-04T15:00:00.000Z"),
 });
 assert(lifecycle?.action === "Exit" && lifecycle.source === "c1-production-rank-deterioration", "a mature holding outside rank nine must exit");
+
+lifecycle = c1ProductionPositionLifecycle({
+  stock: { symbol: "LEGACY", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", selected: false, researchRank: null } },
+  position: { role: "Swing", openedAt: "2026-08-31T12:00:00.000Z", gainLossPct: 1 },
+  policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready" },
+  now: new Date("2026-09-05T15:00:00.000Z"),
+});
+assert(C1_PRODUCTION_ACTIVATION_DAY === "2026-09-04" && lifecycle?.source === "c1-legacy-transition-exit", "a pre-C1 Swing outside the selected portfolio must exit without receiving a retroactive 30-session hold");
 
 lifecycle = c1ProductionPositionLifecycle({
   stock: { symbol: "LOSS" },
@@ -135,6 +153,6 @@ assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.state
 const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
 assert(top5.includes("c1_active_swing") && top5.includes("$300 million"), "the live route must identify C1 and its liquidity contract");
 const manifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
-assert(manifest.includes('release:"2026-09-04-c1-active-swing"'), "the release manifest must identify C1");
+assert(manifest.includes('release:"2026-09-05-c1-allocation-consistency"'), "the release manifest must identify the C1 allocation-consistency release");
 
 console.log("C1 PRODUCTION POLICY PASS: momentum rank, 25/50/25 sleeves, three-position selection, liquidity floor, MSTR exclusion, rank-nine lifecycle, 14% stop, stateful 10/15-session drawdown cooldown, and fail-closed behavior verified");

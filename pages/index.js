@@ -34,10 +34,9 @@ const plan=s=>s?.riskPlan??rec(s)?.riskPlan??{};
 const event=s=>specialSituation(s)||s?.eventRisk||s?.preTradeCheck||rec(s)?.eventRisk||rec(s)?.preTradeCheck||null;
 function entry(s){
   const label=String(rec(s)?.entryQualityLabel??rec(s)?.gateSummary?.entryQualityLabel??s?.entryQualityLabel??s?.technicalSnapshot?.entryQualityLabel??"Unknown");
-  const currentGate=s?.productionPolicy?.gate?.checks;
-  return s?.productionPolicy?.selected&&label==="Chase Risk"&&currentGate?.shortHorizonChaseClear===true
-    ?"Current Entry Cleared"
-    :label;
+  const policyId=String(s?.productionPolicy?.id||""),currentGate=s?.productionPolicy?.gate?.checks;
+  if(s?.productionPolicy?.selected&&policyId.startsWith("c1-"))return "C1 Entry Cleared";
+  return s?.productionPolicy?.selected&&label==="Chase Risk"&&currentGate?.shortHorizonChaseClear===true?"Current Entry Cleared":label;
 }
 const role=(s,r)=>r==="Core"?"Core":"Swing";
 function specialSituation(s){return sym(s)==="IRDM"?{type:"Acquisition Pending",label:"Acquisition Pending",buyer:"RKLB",notionalValue:54,cashComponent:27,expectedClose:"mid-2027",blockNewCapital:true}:null;}
@@ -58,6 +57,7 @@ function stageTone(stage){return({"Setup":"setup","Proof":"proof","Re-underwrite
 
 function riskText(s){
   const d=fd(s);if(d.planText)return d.planText;
+  if(s?.productionPolicy?.selected)return "14% loss limit • Rank review after 30 sessions";
   const p=plan(s),inv=+p.invalidationPrice,trim=+p.firstTrimPrice,add=+p.addAbovePrice;
   if(["Strong Buy","Buy"].includes(d.action))return `${Number.isFinite(inv)?`Review below ${money(inv)}`:"Manage risk"}${Number.isFinite(trim)?` • Profit review ${money(trim)}`:""}`;
   return Number.isFinite(add)?`Trigger above ${money(add)}`:"Wait for confirmation";
@@ -76,6 +76,7 @@ function replacementEdgeTargetLabel(s,v){const t=String(s?.rotateTarget||"").toU
 function rotationTargetEligible(s){
   const d=fd(s),a=d.action,e=rec(s)?.expertDecision||s?.expertDecision||{},m=e?.metrics||{};
   const er=event(s);if(er?.blockNewCapital||er?.manualCheckRequired)return false;
+  if(s?.productionPolicy?.selected===true&&String(s?.productionPolicy?.id||"").startsWith("c1-"))return ["Strong Buy","Buy"].includes(a);
   if(a==="Strong Buy")return true;
   if(a!=="Buy")return false;
   const peer=+d.relativeCapitalScore||capitalScore(s),cutoff=+d.relativeCapitalCutoff||0;

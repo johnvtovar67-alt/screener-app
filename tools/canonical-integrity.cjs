@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-09-04-c1-active-swing"',
+  'release:"2026-09-05-c1-allocation-consistency"',
   'canonicalProject:"screener-app-cq5t"',
   'canonicalBranch:"main"',
   '"entry-impulse-anti-chase"',
@@ -59,6 +59,8 @@ hasAll(manifest,[
   '"investor-facing-decision-language"',
   '"holding-aware-c1-lifecycle"',
   '"c1-three-sleeve-risk-contract"',
+  '"c1-ranked-allocation-consistency"',
+  '"c1-legacy-transition"',
   '"portfolio-action-wrap"',
   '"authoritative-entry-badge"',
   '"user-controlled-screen-refresh"',
