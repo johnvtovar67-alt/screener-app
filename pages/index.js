@@ -131,8 +131,8 @@ export default function Home(){
   function screenHealth(meta={},performance={available:false}){const quoteStatus=String(meta?.quoteFeedStatus||"live"),status=meta?.clientSnapshotFallback||quoteStatus==="stale-verified"?"stale":quoteStatus!=="live"?quoteStatus:meta?.fundamentalFeedStatus||"healthy";return{status,coverage:meta?.fundamentalCoveragePct??100,quoteCoverage:meta?.coveragePct??100,deferred:meta?.fundamentalsDeferred??0,persistenceAvailable:performance.available};}
   function pausePriorRows(rows=[]){return rows.map(s=>({...s,clientSnapshotFallback:true,dataFeedSnapshotStale:true}));}
   function decorateSnapshot(rows,performance,meta={}){const clientSnapshotFallback=Boolean(meta?.clientSnapshotFallback),dataFeedSnapshotStale=Boolean(clientSnapshotFallback||meta?.quoteFeedStatus&&meta.quoteFeedStatus!=="live");return(rows||[]).map(s=>({...s,clientSnapshotFallback,dataFeedSnapshotStale:Boolean(s?.dataFeedSnapshotStale||dataFeedSnapshotStale),signalPersistence:{...signalPersistence(performance.records,sym(s)),historyAvailable:performance.available}}));}
-  async function fetchScreen(t,verificationPass=0){
-    const r=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${verificationPass}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);const performance=await performanceHistory();return{...d,stocks:decorateSnapshot(d.stocks||[],performance,d.meta),performance};
+  async function fetchScreen(t,verificationPass=0,{full=false}={}){
+    const r=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${verificationPass}${full?"":"&compact=1"}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);const performance=await performanceHistory();return{...d,stocks:decorateSnapshot(d.stocks||[],performance,d.meta),performance};
   }
 
   async function load(t,verificationPass=0){
@@ -188,7 +188,7 @@ export default function Home(){
   }
   async function check(e){
     e.preventDefault();setErr("");const key=symbol.trim().toUpperCase();if(!key)return;
-    try{let broad=[],broadUnavailable=false;try{const d=await fetchScreen("opportunities");broad=d.stocks||[];setStocks(broad);setFeedHealth(screenHealth(d.meta,d.performance));const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}catch{broadUnavailable=true;}const authoritative=broad.find(s=>sym(s)===key),standalone=authoritative?null:await fetchStock(key);setSnap(authoritative||{...standalone,outsideBroadUniverse:true,...(broadUnavailable?{dataFeedSnapshotStale:true,broadVerificationUnavailable:true}:{} )});if(!authoritative&&!broadUnavailable)setLastUpdated(new Date());}
+    try{let broad=[],broadUnavailable=false;try{const d=await fetchScreen("opportunities",0,{full:true});broad=d.stocks||[];setStocks(broad);setFeedHealth(screenHealth(d.meta,d.performance));const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}catch{broadUnavailable=true;}const authoritative=broad.find(s=>sym(s)===key),standalone=authoritative?null:await fetchStock(key);setSnap(authoritative||{...standalone,outsideBroadUniverse:true,...(broadUnavailable?{dataFeedSnapshotStale:true,broadVerificationUnavailable:true}:{} )});if(!authoritative&&!broadUnavailable)setLastUpdated(new Date());}
     catch(e){setErr(e.message);}
   }
   async function openTab(nextTab){setTab(nextTab);setErr("");manualVerificationPass.current=0;if(nextTab==="portfolio")return portfolio.length>0?analyze():undefined;if(nextTab==="themes")return load(selectedTheme,0);return load("opportunities",0);}

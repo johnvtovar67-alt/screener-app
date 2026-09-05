@@ -153,6 +153,6 @@ assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.state
 const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
 assert(top5.includes("c1_active_swing") && top5.includes("$300 million"), "the live route must identify C1 and its liquidity contract");
 const manifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
-assert(manifest.includes('release:"2026-09-05-c1-trade-ticket"'), "the release manifest must identify the C1 trade-ticket release");
+assert(manifest.includes('release:"2026-09-05-c1-mobile-resilience"'), "the release manifest must identify the C1 mobile-resilience release");
 
 console.log("C1 PRODUCTION POLICY PASS: momentum rank, 25/50/25 sleeves, three-position selection, liquidity floor, MSTR exclusion, rank-nine lifecycle, 14% stop, stateful 10/15-session drawdown cooldown, and fail-closed behavior verified");

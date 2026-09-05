@@ -19,7 +19,7 @@ const checks=[
   ,['portfolio changes do not auto analyze',!s.includes('if(tab==="portfolio"&&portfolio.length>0)void analyze()')]
 ];
 const app=fs.readFileSync('pages/_app.js','utf8');
-checks.push(['theme reload preserves client state',app.includes('clearTop5Cache();emitFeedNotice("");')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);
+checks.push(['theme reload preserves client state',app.includes('cacheParams.delete("verificationPass")')&&!app.includes('clearTop5Cache();')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);
 const failed=checks.filter(([,ok])=>!ok);
 if(failed.length){for(const [name] of failed)console.error('FAIL:',name);process.exit(1);}
 console.log(`UI POLISH PASS: ${checks.length} market-leadership/date-control checks passed.`);

@@ -15,6 +15,9 @@ const life=loadPureModule('lib/winnerLifecycle.js',['winnerTrimGate','normalizeW
 
 // 1) WTS must load on the same AI-capex factor instead of escaping as Other.
 const wts=gov.factorWeightsFor({symbol:'WTS'});assert(wts['AI Capex & Data Center']>=.5,'WTS factor leakage regression');
+const unknownRisk=gov.portfolioRiskSnapshot([{symbol:'JNJ',role:'Swing',value:3000},{symbol:'ALL',role:'Swing',value:3000},{symbol:'BX',role:'Swing',value:3000},{symbol:'MET',role:'Swing',value:3000},{symbol:'CASH',role:'Swing',value:8000}]);
+assert(!unknownRisk.concentrations.some(([factor])=>factor==='Other'||factor.startsWith('Unclassified:')),'Unclassified holdings must not be collapsed into a false shared concentration');
+assert(gov.factorOverlap({symbol:'JNJ'},{symbol:'ALL'})===0,'Different unclassified tickers must not be treated as one correlated factor');
 
 // 2) Core capital must not dilute Swing sizing/concentration math.
 const snap=gov.portfolioRiskSnapshot([

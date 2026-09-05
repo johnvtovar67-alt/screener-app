@@ -21,13 +21,12 @@ const TOP5_CACHE_PREFIX="screener_top5_response_v2:";
 function emitFeedNotice(message=""){try{window.dispatchEvent(new CustomEvent("screener-feed-notice",{detail:message}));}catch{}}
 function readTop5Cache(key){try{const raw=window.localStorage.getItem(TOP5_CACHE_PREFIX+key);const x=raw?JSON.parse(raw):null;return x&&typeof x.body==="string"?x:null;}catch{return null;}}
 function writeTop5Cache(key,body){try{window.localStorage.setItem(TOP5_CACHE_PREFIX+key,JSON.stringify({ts:Date.now(),body}));}catch{}}
-function clearTop5Cache(){try{for(let i=window.localStorage.length-1;i>=0;i--){const k=window.localStorage.key(i);if(k&&k.startsWith(TOP5_CACHE_PREFIX))window.localStorage.removeItem(k);}}catch{}}
 function cachedResponse(hit){
   let body=hit.body;
   try{const parsed=JSON.parse(body);parsed.meta={...(parsed.meta||{}),clientSnapshotFallback:true,clientSnapshotAgeMs:Math.max(0,Date.now()-Number(hit.ts||0))};body=JSON.stringify(parsed);}catch{}
   return new Response(body,{status:200,headers:{"content-type":"application/json; charset=utf-8","x-screener-cache":"stale-fallback"}});
 }
-function forceLiveRefresh(){if(typeof window==="undefined")return;clearTop5Cache();emitFeedNotice("");window.dispatchEvent(new CustomEvent("screener-request-live-refresh"));}
+function forceLiveRefresh(){if(typeof window==="undefined")return;emitFeedNotice("");window.dispatchEvent(new CustomEvent("screener-request-live-refresh"));}
 
 function installResilientApiFetch(){
   if(typeof window==="undefined"||window.__screenerResilientFetchInstalled)return;
@@ -38,7 +37,7 @@ function installResilientApiFetch(){
     const method=String(init?.method||(typeof input!=="string"&&input?.method)||"GET").toUpperCase(),sameOrigin=url.origin===window.location.origin,resilient=sameOrigin&&url.pathname.startsWith("/api/")&&method==="GET";
     if(!resilient)return nativeFetch(input,init);
 
-    const isTop5=url.pathname==="/api/top5",cacheKey=isTop5?`${url.pathname}${url.search}`:"",hit=isTop5?readTop5Cache(cacheKey):null,age=hit?Date.now()-Number(hit.ts||0):Infinity;
+    const cacheParams=new URLSearchParams(url.search);cacheParams.delete("verificationPass");const isTop5=url.pathname==="/api/top5",cacheKey=isTop5?`${url.pathname}?${cacheParams.toString()}`:"",hit=isTop5?readTop5Cache(cacheKey):null,age=hit?Date.now()-Number(hit.ts||0):Infinity;
     if(isTop5&&inflight.has(cacheKey)){
       const r=await inflight.get(cacheKey);return r.clone();
     }
@@ -76,7 +75,7 @@ export default function App({ Component, pageProps }) {
     const onNotice=e=>setFeedNotice(String(e?.detail||""));window.addEventListener("screener-feed-notice",onNotice);
     const host=window.location.hostname;if(LEGACY_HOSTS.has(host)){window.location.replace(`https://${CANONICAL_HOST}${window.location.pathname}${window.location.search}${window.location.hash}`);return()=>window.removeEventListener("screener-feed-notice",onNotice);}
     fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
-    const onHeaderReload=e=>{const b=e.target?.closest?.('header button');if(!b)return;const text=String(b.textContent||'').trim();if(text==='Reload'||text==='Reloading...'){clearTop5Cache();emitFeedNotice("");}};
+    const onHeaderReload=e=>{const b=e.target?.closest?.('header button');if(!b)return;const text=String(b.textContent||'').trim();if(text==='Reload'||text==='Reloading...')emitFeedNotice("");};
     document.addEventListener('click',onHeaderReload,true);
     return()=>{window.removeEventListener("screener-feed-notice",onNotice);document.removeEventListener('click',onHeaderReload,true);};
   },[]);
