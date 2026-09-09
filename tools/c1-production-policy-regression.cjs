@@ -56,7 +56,8 @@ const snapshot = buildC1ProductionSnapshot(
   new Date("2026-09-04T15:00:00.000Z"),
 );
 assert(snapshot.policyId === C1_PRODUCTION_POLICY_ID, "policy identity must be C1");
-assert(snapshot.activationAuthorized === true, "authorized activation must be explicit");
+assert(snapshot.activationAuthorized === false, "unvalidated C1 must not claim full-size activation authority");
+assert(snapshot.independentlyValidated === false, "C1 must remain explicitly unvalidated until every promotion gate passes");
 assert(snapshot.candidates.length === 9, "the retention queue must contain nine ranks");
 assert(!snapshot.candidates.some((row) => row.symbol === "MSTR"), "MSTR must remain outside the system mandate");
 assert(snapshot.targetCount === 3 && snapshot.targetWeightPct === 33, "C1 must target three approximately equal positions");
@@ -89,39 +90,58 @@ const ready = {
 };
 let applied = applyC1ProductionPolicy(ready.candidates.map(liveRow), ready);
 let buys = applied.filter((row) => ["Strong Buy", "Buy"].includes(row.finalDecision.action));
-assert(buys.length === 3, "C1 must select exactly three liquid momentum leaders");
-assert(buys.every((row) => row.productionPolicy.selected), "every actionable row must be selected by C1");
-assert(buys.every((row) => row.finalDecision.size === "Target 33.00%"), "selected rows must expose the combined target");
-assert(new Set(buys.map((row) => row.sector)).size === 3, "the selector must not choose two names from one sector");
+assert(buys.length === 0, "an unvalidated C1 rank must not manufacture actionable entries");
+assert(applied.every((row) => !row.productionPolicy.selected), "an unvalidated C1 rank must not claim selection authority");
+
+const independentlyActionable = ready.candidates.map((candidate, index) =>
+  liveRow(candidate, {
+    capitalScore: 90 - index,
+    finalDecision: {
+      action: index < 5 ? "Buy" : "Watch",
+      reason: `independent setup ${index + 1}`,
+      relativeCapitalScore: 90 - index,
+    },
+  }),
+);
+applied = applyC1ProductionPolicy(independentlyActionable, ready);
+buys = applied.filter((row) => ["Strong Buy", "Buy"].includes(row.finalDecision.action));
+assert(buys.length === 3, "the bounded pilot must expose at most three independently actionable names");
+assert(buys.every((row) => row.productionPolicy.pilot && !row.productionPolicy.selected), "pilot names must never be relabeled as validated policy selections");
+assert(buys.every((row) => row.productionPolicy.status === "limited-pilot" && row.finalDecision.size === "Pilot Max 1%"), "every actionable pilot must carry the explicit 1% cap");
 
 applied = applyC1ProductionPolicy(
   ready.candidates.map((candidate, index) =>
-    liveRow(candidate, index === 0 ? { eventRisk: {} } : {}),
+    liveRow(candidate, index === 0 ? {
+      eventRisk: {},
+      finalDecision: { action: "Buy", reason: "independent setup" },
+    } : {}),
   ),
   ready,
 );
-assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Watch", "missing event verification must fail closed");
+assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Watch" && applied.find((row) => row.symbol === ready.candidates[0].symbol).productionPolicy.pilot === false, "missing event verification must fail closed instead of admitting a pilot");
 
 const legacyTimingConflictRows = ready.candidates.map((candidate, index) =>
   liveRow(candidate, index === 0 ? {
+    finalDecision: { action: "Buy", reason: "independent setup" },
     entryTiming: { available: true, pass: false, chase: true, liquidityPass: true, averageDollarVolume20: 500_000_000 },
   } : {}),
 );
 applied = applyC1ProductionPolicy(legacyTimingConflictRows, ready);
-assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Buy", "an obsolete V11 timing label must not override C1's tested momentum and opening-gap entry contract");
+assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).productionPolicy.pilot === true, "an independently actionable name may enter only the bounded pilot path");
 
-applied = applyC1ProductionPolicy(ready.candidates.map(liveRow), { ...ready, status: "stale" });
+applied = applyC1ProductionPolicy(independentlyActionable, { ...ready, status: "stale" });
 assert(applied.every((row) => !["Strong Buy", "Buy"].includes(row.finalDecision.action)), "a stale C1 snapshot must fail closed");
 
 applied = applyC1ProductionPolicy(
   ready.candidates.map((candidate, index) =>
     liveRow(candidate, index === 0 ? {
       entryTiming: { available: true, liquidityPass: true, averageDollarVolume20: 100_000_000 },
+      finalDecision: { action: "Buy", reason: "independent setup" },
     } : {}),
   ),
   ready,
 );
-assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Watch", "a candidate below the $300 million liquidity floor must not receive capital");
+assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Watch" && applied.find((row) => row.symbol === ready.candidates[0].symbol).productionPolicy.pilot === false, "a candidate below the $300 million liquidity floor must not receive pilot capital");
 
 let lifecycle = c1ProductionPositionLifecycle({
   stock: { symbol: "S10", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", selected: false, researchRank: 10 } },
@@ -171,8 +191,8 @@ drawdown = c1DrawdownControl({ swingEquity: 70_000, state: { highWater: 100_000,
 assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.baselineReset, "unsafe legacy dollar-only drawdown state must migrate without forcing liquidation");
 
 const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
-assert(top5.includes("c1_active_swing") && top5.includes("$300 million"), "the live route must identify C1 and its liquidity contract");
+assert(top5.includes("independent_limited_pilot") && top5.includes("pilotRequiresTwoSessionPersistence") && top5.includes("$300 million"), "the live route must identify the bounded pilot and its liquidity contract");
 const manifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
 assert(manifest.includes('release:"2026-09-05-c1-mobile-resilience"'), "the release manifest must identify the C1 mobile-resilience release");
 
-console.log("C1 PRODUCTION POLICY PASS: momentum rank, 25/50/25 sleeves, three-position selection, liquidity floor, MSTR exclusion, rank-nine lifecycle, 14% stop, stateful 10/15-session drawdown cooldown, and fail-closed behavior verified");
+console.log("C1 PRODUCTION POLICY PASS: unvalidated rank has no full-size authority; three-name, 1%, two-session pilot, liquidity floor, lifecycle, drawdown control, and fail-closed behavior verified");
