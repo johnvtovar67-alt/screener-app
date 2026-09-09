@@ -18,6 +18,8 @@ const checks=[
   ,['screen refresh is user controlled',s.includes('const openedTabs=useRef(new Set(["opportunities"]))')&&s.includes('if(openedTabs.current.has(nextTab))return;')&&s.includes('openedTabs.current.add(nextTab)')&&s.includes('onClick={()=>openTab(x)}')&&!s.includes('automaticVerificationPass')&&!s.includes('75000')]
   ,['returning to an opened page does not fetch again',/async function openTab\(nextTab\)\{[^}]*if\(openedTabs\.current\.has\(nextTab\)\)return;/.test(s)]
   ,['portfolio changes do not auto analyze',!s.includes('if(tab==="portfolio"&&portfolio.length>0)void analyze()')]
+  ,['single-symbol analyze has visible progress',s.includes('[checking,setChecking]=useState(false)')&&s.includes('disabled={checking}')&&s.includes('checking?"Analyzing...":"Analyze"')]
+  ,['single-symbol reload analyzes the entered ticker',s.includes('if(tab==="single")return check();')]
 ];
 const app=fs.readFileSync('pages/_app.js','utf8');
 checks.push(['theme reload preserves client state',app.includes('cacheParams.delete("verificationPass")')&&!app.includes('clearTop5Cache();')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);
