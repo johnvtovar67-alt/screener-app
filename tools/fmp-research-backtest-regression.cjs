@@ -52,6 +52,7 @@ assert(
   rawSource.includes("compileOnly = false") &&
     rawSource.includes('mode: "compiled-dataset-refresh"') &&
     rawSource.includes("const persistRunProgress = compileOnly") &&
+    (rawSource.match(/!compileOnly &&/g) || []).length >= 2 &&
     rawSource.includes("if (compileOnly)"),
   "The production refresh must compile data without replaying or overwriting inspected research evidence.",
 );
