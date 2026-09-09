@@ -92,6 +92,9 @@ let applied = applyC1ProductionPolicy(ready.candidates.map(liveRow), ready);
 let buys = applied.filter((row) => ["Strong Buy", "Buy"].includes(row.finalDecision.action));
 assert(buys.length === 0, "an unvalidated C1 rank must not manufacture actionable entries");
 assert(applied.every((row) => !row.productionPolicy.selected), "an unvalidated C1 rank must not claim selection authority");
+assert(applied.every((row) => row.productionPolicy.activationAuthorized === false), "effective row metadata must revoke stale full-size authorization");
+assert(applied.every((row) => row.productionPolicy.targetWeightPct === 0), "a suspended policy must advertise no live allocation target");
+assert(applied.every((row) => row.productionPolicy.evidenceStatus === "provisional-post-selection-development-candidate"), "unvalidated evidence must never retain a legacy qualified label");
 
 const independentlyActionable = ready.candidates.map((candidate, index) =>
   liveRow(candidate, {
@@ -108,6 +111,7 @@ buys = applied.filter((row) => ["Strong Buy", "Buy"].includes(row.finalDecision.
 assert(buys.length === 3, "the bounded pilot must expose at most three independently actionable names");
 assert(buys.every((row) => row.productionPolicy.pilot && !row.productionPolicy.selected), "pilot names must never be relabeled as validated policy selections");
 assert(buys.every((row) => row.productionPolicy.status === "limited-pilot" && row.finalDecision.size === "Pilot Max 1%"), "every actionable pilot must carry the explicit 1% cap");
+assert(buys.every((row) => row.productionPolicy.targetWeightPct === 1 && row.productionPolicy.activationAuthorized === false), "pilot metadata must expose only the 1% cap and no full-size authority");
 
 applied = applyC1ProductionPolicy(
   ready.candidates.map((candidate, index) =>

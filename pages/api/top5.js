@@ -1169,22 +1169,31 @@ export default async function handler(req, res) {
               broadSnapshot.productionPolicySnapshot?.sourceSessionDate || null,
             snapshotAgeSessions:
               broadSnapshot.productionPolicySnapshot?.snapshotAgeSessions ?? null,
-            targetCount:
-              broadSnapshot.productionPolicySnapshot?.targetCount || 3,
+            targetCount: rows.some(
+              (row) => row.productionPolicy?.activationAuthorized === true,
+            )
+              ? broadSnapshot.productionPolicySnapshot?.targetCount || 3
+              : actionable.some((row) => row.productionPolicy?.pilot === true)
+                ? 3
+                : 0,
             targetWeightPct:
-              broadSnapshot.productionPolicySnapshot?.targetWeightPct || 33,
+              rows.find((row) => row.productionPolicy)?.productionPolicy
+                ?.targetWeightPct ?? 0,
             weights: broadSnapshot.productionPolicySnapshot?.weights || null,
             sleeves: broadSnapshot.productionPolicySnapshot?.sleeves || null,
             portfolioDrawdownStopPct:
               broadSnapshot.productionPolicySnapshot?.portfolioDrawdownStopPct || 12,
             v12HardGovernorEnabled: false,
             independentlyValidated:
-              broadSnapshot.productionPolicySnapshot?.independentlyValidated === true,
+              rows.find((row) => row.productionPolicy)?.productionPolicy
+                ?.independentlyValidated === true,
             activationAuthorized:
-              broadSnapshot.productionPolicySnapshot?.activationAuthorized === true,
+              rows.find((row) => row.productionPolicy)?.productionPolicy
+                ?.activationAuthorized === true,
             evidenceStatus:
-              broadSnapshot.productionPolicySnapshot?.evidenceStatus ||
-              "cross-universe-cost-stress-placebo-qualified",
+              rows.find((row) => row.productionPolicy)?.productionPolicy
+                ?.evidenceStatus ||
+              "provisional-post-selection-development-candidate",
           },
           universeDesign:
             "all liquid U.S.-listed common stocks are considered; C1 ranks price-only momentum among names above the $5 price and $300 million trailing-dollar-volume floors, blocks MSTR, and applies current quote and material-event safety checks",

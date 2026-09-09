@@ -173,7 +173,7 @@ export default function Home(){
       for(const p of portfolio){
         try{
           if(CASH.includes(p.symbol)){rows.push({...p,...calc(p,p.avgCost||1),role:role(p.symbol,p.role)});continue;}
-          let s=bySymbol.get(p.symbol);if(!s){s=await fetchStock(p.symbol);s={...s,productionPolicy:{...currentProductionPolicy,selected:false,researchRank:null,targetWeightPct:currentProductionPolicy.targetWeightPct||33}};}
+          let s=bySymbol.get(p.symbol);if(!s){s=await fetchStock(p.symbol);s={...s,productionPolicy:{...currentProductionPolicy,selected:false,researchRank:null,targetWeightPct:currentProductionPolicy.targetWeightPct??0}};}
           rows.push({...s,...calc(p,price(s)),role:role(p.symbol,p.role),winnerHistory:p.winnerHistory||winnerHistoryFor(p),openedAt:p.openedAt||null,lastTradeAt:p.lastTradeAt||p.openedAt||null});
         }catch(e){rows.push({...p,error:e.message});}
       }
