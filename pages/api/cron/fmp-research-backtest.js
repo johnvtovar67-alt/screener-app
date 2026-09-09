@@ -775,6 +775,14 @@ export default async function handler(req, res) {
       minimumDatasetThrough,
       compileOnly: true,
     });
+    console.log("C1 production dataset refresh", {
+      requiredSessionDate: minimumDatasetThrough,
+      status: productionDatasetRefresh.status,
+      stage: productionDatasetRefresh.progress?.stage || null,
+      datasetThrough: productionDatasetRefresh.datasetThrough || null,
+      remainingSymbols:
+        productionDatasetRefresh.progress?.remainingSymbols ?? null,
+    });
     const c1ProductionSnapshot =
       productionDatasetRefresh.status === "complete"
         ? await refreshV11ProductionSnapshot(new Date())
