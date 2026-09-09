@@ -44,12 +44,12 @@ let records=ledger.applyPerformanceObservation([], [buyRow()], fridayClose);
 records=ledger.applyPerformanceObservation(records,[buyRow(101)],fridayLate);
 records=ledger.applyPerformanceObservation(records,[buyRow(102)],saturday);
 records=ledger.applyPerformanceObservation(records,[buyRow(103)],mondayPre);
-let p=governor.signalPersistence(records,'TEST');
+let p=governor.signalPersistence(records,'TEST',30);
 assert(p.actionableDays===1&&!p.persistent,'after-hours/weekend/premarket refreshes must not satisfy two-session Buy persistence');
 const fridaySignal=records.find(r=>r.recordType==='signal');
 assert(fridaySignal.daysObserved===0&&fridaySignal.forward?.[1]==null,'weekend refresh must not create a one-day forward return');
 records=ledger.applyPerformanceObservation(records,[buyRow(104)],mondayOpen);
-p=governor.signalPersistence(records,'TEST');
+p=governor.signalPersistence(records,'TEST',30);
 assert(p.actionableDays===2&&p.persistent,'the next open market session must satisfy ordinary Buy persistence');
 assert(Math.abs(records.find(r=>r.recordType==='signal').forward?.[1]-4)<1e-9,'one-session performance must use the Monday observation');
 
@@ -64,14 +64,14 @@ assert(cleanSummary.signals===1&&cleanSummary.excludedLegacySignals===1&&cleanSu
 let paused=ledger.applyPerformanceObservation([], [buyRow()], fridayClose);
 paused=ledger.applyPerformanceObservation(paused,[buyRow(100,{finalDecision:{action:'Watch'},fundamentalDataStatus:'unavailable',fundamentalDataVerified:false,expertDecision:{metrics:{fundamentalsPass:false,quoteFreshnessPass:true}}})],saturday);
 paused=ledger.applyPerformanceObservation(paused,[buyRow()],mondayOpen);
-assert(governor.signalPersistence(paused,'TEST').persistent,'temporary provider pause must not erase a valid Buy streak');
+assert(governor.signalPersistence(paused,'TEST',30).persistent,'temporary provider pause must not erase a valid Buy streak');
 let interrupted=ledger.applyPerformanceObservation([], [buyRow()], fridayClose);
 interrupted=ledger.applyPerformanceObservation(interrupted,[buyRow(99,{finalDecision:{action:'Watch'}})],saturday);
 interrupted=ledger.applyPerformanceObservation(interrupted,[buyRow()],mondayOpen);
-assert(!governor.signalPersistence(interrupted,'TEST').persistent,'a genuine Watch observation must reset Buy persistence');
+assert(!governor.signalPersistence(interrupted,'TEST',30).persistent,'a genuine Watch observation must reset Buy persistence');
 
 const strong=ledger.applyPerformanceObservation([], [{...buyRow(),finalDecision:{action:'Strong Buy'}}],fridayClose);
-assert(governor.signalPersistence(strong,'TEST').persistent,'Strong Buy must remain immediately eligible when all hard gates pass');
+assert(governor.signalPersistence(strong,'TEST',30).persistent,'Strong Buy must remain immediately eligible when all hard gates pass');
 const staleSnapshot=ledger.applyPerformanceObservation([], [{...buyRow(),dataFeedSnapshotStale:true}],fridayClose);
 assert(!staleSnapshot.some(r=>r.recordType==='signal')&&staleSnapshot.some(r=>r.recordType==='state'&&r.action==='Paused'),'stale broad snapshot must not create a Buy record or satisfy persistence');
 
