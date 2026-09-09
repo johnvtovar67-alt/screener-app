@@ -119,6 +119,7 @@ export default function Home(){
   const[marketState,setMarketState]=useState(null);
   const[c1Control,setC1Control]=useState({activeCapitalPct:100,cooldown:false,remainingSessions:0,reason:"C1 portfolio drawdown breaker is clear."});
   const manualVerificationPass=useRef(0);
+  const openedTabs=useRef(new Set(["opportunities"]));
 
   useEffect(()=>{let local=[];try{const x=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(x)){local=x.map(p=>({...p,role:role(p.symbol,p.role),winnerHistory:winnerHistoryFor(p)}));setPortfolio(local);localStorage.setItem(KEY,JSON.stringify(local));}}catch{}const k=localStorage.getItem(SYNC_KEY)||"";if(k){setSyncKey(k);setSyncInput(k);void pullCloudPortfolio(k,local,true);}load("opportunities");},[]);
   useEffect(()=>{const update=()=>setMarketState(marketExecutionState(new Date()));update();const timer=setInterval(update,60000);return()=>clearInterval(timer);},[]);
@@ -192,7 +193,7 @@ export default function Home(){
     try{let broad=[],broadUnavailable=false;try{const d=await fetchScreen("opportunities",0,{full:true});broad=d.stocks||[];setStocks(broad);setFeedHealth(screenHealth(d.meta,d.performance));const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}catch{broadUnavailable=true;}const authoritative=broad.find(s=>sym(s)===key),standalone=authoritative?null:await fetchStock(key);setSnap(authoritative||{...standalone,outsideBroadUniverse:true,...(broadUnavailable?{dataFeedSnapshotStale:true,broadVerificationUnavailable:true}:{} )});if(!authoritative&&!broadUnavailable)setLastUpdated(new Date());}
     catch(e){setErr(e.message);}
   }
-  async function openTab(nextTab){setTab(nextTab);setErr("");manualVerificationPass.current=0;if(nextTab==="portfolio")return portfolio.length>0?analyze():undefined;if(nextTab==="themes")return load(selectedTheme,0);return load("opportunities",0);}
+  async function openTab(nextTab){setTab(nextTab);setErr("");manualVerificationPass.current=0;if(openedTabs.current.has(nextTab))return;openedTabs.current.add(nextTab);if(nextTab==="portfolio")return portfolio.length>0?analyze():undefined;if(nextTab==="themes")return load(selectedTheme,0);}
   async function handleReload(){if(tab==="portfolio")return analyze();manualVerificationPass.current=Math.min(20,manualVerificationPass.current+1);return load(tab==="themes"?selectedTheme:"opportunities",manualVerificationPass.current);}
 
   const portfolioValueForCards=useMemo(()=>results.length?results.reduce((a,r)=>a+(+r.value||0),0):portfolio.reduce((a,p)=>a+(+p.shares||0)*(+p.avgCost||0),0),[results,portfolio]);
