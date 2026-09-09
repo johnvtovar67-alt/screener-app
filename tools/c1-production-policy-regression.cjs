@@ -12,7 +12,7 @@ assert(
   "rank snapshots must match the latest completed session",
 );
 const policy = loader.load("lib/v11ProductionPolicy.js");
-const { c1DrawdownControl } = loader.load("lib/portfolioGovernor.js");
+const { c1DrawdownControl, portfolioCompositionSignature } = loader.load("lib/portfolioGovernor.js");
 const {
   applyV11ProductionPolicy: applyC1ProductionPolicy,
   buildV11ProductionSnapshot: buildC1ProductionSnapshot,
@@ -154,14 +154,21 @@ lifecycle = c1ProductionPositionLifecycle({
 });
 assert(lifecycle === null, "MSTR Core must remain outside C1 lifecycle advice");
 
-let drawdown = c1DrawdownControl({ swingEquity: 100_000, state: {}, now: new Date("2026-09-01T20:00:00.000Z") });
+const originalComposition = portfolioCompositionSignature([{ symbol: "CASH", shares: 25_000, role: "Swing" }, { symbol: "NTRA", shares: 230, role: "Swing" }]);
+const changedComposition = portfolioCompositionSignature([{ symbol: "CASH", shares: 12_000, role: "Swing" }, { symbol: "NTRA", shares: 100, role: "Swing" }, { symbol: "FCX", shares: 170, role: "Swing" }]);
+let drawdown = c1DrawdownControl({ swingEquity: 100_000, state: {}, portfolioSignature: originalComposition, now: new Date("2026-09-01T20:00:00.000Z") });
 assert(drawdown.activeCapitalPct === 100 && drawdown.state.highWater === 100_000, "the live drawdown ledger must initialize at current Swing equity");
-drawdown = c1DrawdownControl({ swingEquity: 87_900, state: drawdown.state, now: new Date("2026-09-02T20:00:00.000Z") });
+drawdown = c1DrawdownControl({ swingEquity: 87_900, state: drawdown.state, portfolioSignature: originalComposition, now: new Date("2026-09-02T20:00:00.000Z") });
 assert(drawdown.activeCapitalPct === 0 && drawdown.state.triggerDay, "a 12% drawdown must trigger the full-cash phase");
-drawdown = c1DrawdownControl({ swingEquity: 90_000, state: drawdown.state, now: new Date("2026-09-17T20:00:00.000Z") });
+drawdown = c1DrawdownControl({ swingEquity: 90_000, state: drawdown.state, portfolioSignature: originalComposition, now: new Date("2026-09-17T20:00:00.000Z") });
 assert(drawdown.activeCapitalPct === 50 && drawdown.cooldown, "the two 10-session sleeves must reactivate before the 15-session sleeve");
-drawdown = c1DrawdownControl({ swingEquity: 92_000, state: drawdown.state, now: new Date("2026-09-24T20:00:00.000Z") });
+drawdown = c1DrawdownControl({ swingEquity: 92_000, state: drawdown.state, portfolioSignature: originalComposition, now: new Date("2026-09-24T20:00:00.000Z") });
 assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.state.highWater === 92_000, "all sleeves must reactivate after 15 sessions with a reset high-water mark");
+
+drawdown = c1DrawdownControl({ swingEquity: 70_000, state: { version: 2, highWater: 100_000, triggerDay: null, portfolioSignature: originalComposition }, portfolioSignature: changedComposition, now: new Date("2026-09-02T20:00:00.000Z") });
+assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.baselineReset && drawdown.state.highWater === 70_000, "a trade, cash edit, or role change must reset the capital base instead of masquerading as drawdown");
+drawdown = c1DrawdownControl({ swingEquity: 70_000, state: { highWater: 100_000, triggerDay: "2026-09-02" }, portfolioSignature: changedComposition, now: new Date("2026-09-02T20:00:00.000Z") });
+assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.baselineReset, "unsafe legacy dollar-only drawdown state must migrate without forcing liquidation");
 
 const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
 assert(top5.includes("c1_active_swing") && top5.includes("$300 million"), "the live route must identify C1 and its liquidity contract");
