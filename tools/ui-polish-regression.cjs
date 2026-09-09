@@ -20,7 +20,10 @@ const checks=[
   ,['portfolio changes do not auto analyze',!s.includes('if(tab==="portfolio"&&portfolio.length>0)void analyze()')]
   ,['single-symbol analyze has visible progress',s.includes('[checking,setChecking]=useState(false)')&&s.includes('disabled={checking}')&&s.includes('checking?"Analyzing...":"Analyze"')]
   ,['single-symbol reload analyzes the entered ticker',s.includes('if(tab==="single")return check();')]
+  ,['single-symbol analysis uses bounded authoritative payload',s.includes('fetchScreen("opportunities",0,{includeSymbol:key})')&&!s.includes('fetchScreen("opportunities",0,{full:true})')]
 ];
+const top5=fs.readFileSync('pages/api/top5.js','utf8');
+checks.push(['requested single symbol is retained in compact broad results',top5.includes('compactRowsForClient(rows = [], limit = 80, includeSymbol = "")')&&top5.includes('normalizeSymbol(row?.symbol) === requestedSymbol')&&top5.includes('compactRowsForClient(rows, 80, req.query.symbol)')]);
 const app=fs.readFileSync('pages/_app.js','utf8');
 checks.push(['theme reload preserves client state',app.includes('cacheParams.delete("verificationPass")')&&!app.includes('clearTop5Cache();')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);
 const failed=checks.filter(([,ok])=>!ok);
