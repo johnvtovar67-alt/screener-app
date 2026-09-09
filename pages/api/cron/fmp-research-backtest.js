@@ -77,6 +77,7 @@ import {
 import { pointInTimeNasdaqDistinctAlphaControls, pointInTimeNasdaqDistinctAlphaDefinitions } from "../../../lib/nasdaqDistinctAlphaResearch";
 import { pointInTimeNasdaqEventAlphaControls, pointInTimeNasdaqEventAlphaDefinitions } from "../../../lib/nasdaqEventAlphaResearch";
 import { latestCompletedMarketSessionDay } from "../../../lib/marketSession";
+import { refreshV11ProductionSnapshot } from "../../../lib/v11ProductionSnapshot";
 
 export const config = { maxDuration: 800 };
 
@@ -764,6 +765,20 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "CRON_SECRET is not configured" });
   if (!authorized(req)) return res.status(401).json({ error: "Unauthorized" });
   try {
+    // Keep C1's point-in-time inputs current independently of the terminal
+    // research program. This mode compiles new completed sessions only: it
+    // neither replays inspected holdouts nor changes the frozen C1 policy.
+    const minimumDatasetThrough =
+      latestCompletedMarketSessionDay(new Date()) ||
+      V11_FORWARD_EXTENSION_TARGET;
+    const productionDatasetRefresh = await runFmpResearchBacktest({
+      minimumDatasetThrough,
+      compileOnly: true,
+    });
+    const c1ProductionSnapshot =
+      productionDatasetRefresh.status === "complete"
+        ? await refreshV11ProductionSnapshot(new Date())
+        : null;
     // R13 is immutable inspected evidence. A later deployment SHA must never
     // restart it or turn its holdouts back into a tuning surface.
     const pointInTimeNasdaqR11 = {
@@ -805,6 +820,15 @@ export default async function handler(req, res) {
       .json({
       ok: true,
       priorityResearch: "R55-R64-parallel-event-alpha-mechanisms",
+      productionDatasetRefresh,
+      c1ProductionSnapshot: c1ProductionSnapshot
+        ? {
+            status: c1ProductionSnapshot.status,
+            sourceSessionDate: c1ProductionSnapshot.sourceSessionDate,
+            requiredSessionDate: c1ProductionSnapshot.requiredSessionDate,
+            snapshotAgeSessions: c1ProductionSnapshot.snapshotAgeSessions,
+          }
+        : null,
       eventAlpha,
       distinctAlpha,
       adaptiveReplacement,
@@ -839,11 +863,11 @@ export default async function handler(req, res) {
       eligibleForAlphaClaim: false,
       eligibleForLiveCapital: false,
     });
-    const minimumDatasetThrough =
+    const legacyMinimumDatasetThrough =
       latestCompletedMarketSessionDay(new Date()) ||
       V11_FORWARD_EXTENSION_TARGET;
     const report = await runFmpResearchBacktest({
-      minimumDatasetThrough,
+      minimumDatasetThrough: legacyMinimumDatasetThrough,
     });
     const v11ForwardExtension = await runV11ForwardExtension();
     const boundedReviewExperiment =

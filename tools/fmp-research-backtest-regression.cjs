@@ -41,10 +41,19 @@ const cronSource = fs.readFileSync(
   "utf8",
 );
 assert(
-  cronSource.indexOf("legacyResearchRerun: false") > 0 &&
-    cronSource.indexOf("legacyResearchRerun: false") <
-      cronSource.indexOf("const report = await runFmpResearchBacktest"),
-  "A terminal Nasdaq study must short-circuit before legacy datasets are reloaded.",
+  cronSource.includes("productionDatasetRefresh") &&
+    cronSource.includes("compileOnly: true") &&
+    cronSource.includes("refreshV11ProductionSnapshot(new Date())") &&
+    cronSource.indexOf("productionDatasetRefresh") <
+      cronSource.indexOf("const pointInTimeNasdaqR11"),
+  "The cron must refresh completed-session C1 inputs before terminal research handling.",
+);
+assert(
+  rawSource.includes("compileOnly = false") &&
+    rawSource.includes('mode: "compiled-dataset-refresh"') &&
+    rawSource.includes("const persistRunProgress = compileOnly") &&
+    rawSource.includes("if (compileOnly)"),
+  "The production refresh must compile data without replaying or overwriting inspected research evidence.",
 );
 assert(
   nasdaqMutationRoutes.every(
