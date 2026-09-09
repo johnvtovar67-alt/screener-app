@@ -41,8 +41,9 @@ const cronSource = fs.readFileSync(
   "utf8",
 );
 assert(
-  cronSource.includes("productionDatasetRefresh") &&
+    cronSource.includes("productionDatasetRefresh") &&
     cronSource.includes("compileOnly: true") &&
+    cronSource.includes('console.log("C1 production dataset refresh"') &&
     cronSource.includes("refreshV11ProductionSnapshot(new Date())") &&
     cronSource.indexOf("productionDatasetRefresh") <
       cronSource.indexOf("const pointInTimeNasdaqR11"),
