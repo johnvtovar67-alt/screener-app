@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import {portfolioDecision} from "../lib/expertDecision";
-import {factorFor,factorWeightsFor,signalPersistence,portfolioRiskSnapshot,c1DrawdownControl,swingTargetPct,capitalAllowance,portfolioContributionGate,capitalSignalEligible,rotationGate,swingTimeReview} from "../lib/portfolioGovernor";
+import {factorFor,factorWeightsFor,signalPersistence,portfolioRiskSnapshot,portfolioCompositionSignature,c1DrawdownControl,swingTargetPct,capitalAllowance,portfolioContributionGate,capitalSignalEligible,rotationGate,swingTimeReview} from "../lib/portfolioGovernor";
 import {winnerTrimGate,recordWinnerTrim} from "../lib/winnerLifecycle";
 import {reunderwriteExistingPosition} from "../lib/positionReunderwrite";
 import {marketExecutionState} from "../lib/marketSession";
@@ -183,7 +183,7 @@ export default function Home(){
       const analyzedRows=rows.map(r=>{const own=capitalScore(r),same=bestSymbol&&sym(r)===bestSymbol;return{...r,weightPct:total?(+r.value||0)/total*100:0,rotateTarget:same?"":bestSymbol,opportunityGap:same?0:Math.max(0,bestScore-own),rotationTargetEligible:Boolean(best&&!same)};});
       setResults(analyzedRows);
       let priorControl={};try{priorControl=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");}catch{}
-      const nextControl=c1DrawdownControl({swingEquity:portfolioRiskSnapshot(analyzedRows).swingCapital,state:priorControl,now:new Date()});
+      const nextControl=c1DrawdownControl({swingEquity:portfolioRiskSnapshot(analyzedRows).swingCapital,state:priorControl,portfolioSignature:portfolioCompositionSignature(portfolio),now:new Date()});
       localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(nextControl.state));setC1Control(nextControl);if(syncKey)void pushCloudPortfolio(portfolio,syncKey,nextControl.state);
       const analyzedAt=new Date();setPortfolioAnalyzedAt(analyzedAt);setLastUpdated(analyzedAt);
     }finally{setLoading(false);}
