@@ -70,7 +70,7 @@ function liveRow(candidate, overrides = {}) {
     sector: candidate.sector,
     price: candidate.sourcePrice,
     recommendation: { expertDecision: { metrics: { quoteFreshnessPass: true } } },
-    eventRisk: { status: "Passed", blockNewCapital: false },
+    eventRisk: { status: "Passed", blockNewCapital: false, checkComplete: true, manualCheckRequired: false },
     entryTiming: {
       available: true,
       liquidityPass: true,
@@ -93,6 +93,14 @@ assert(buys.length === 3, "C1 must select exactly three liquid momentum leaders"
 assert(buys.every((row) => row.productionPolicy.selected), "every actionable row must be selected by C1");
 assert(buys.every((row) => row.finalDecision.size === "Target 33.00%"), "selected rows must expose the combined target");
 assert(new Set(buys.map((row) => row.sector)).size === 3, "the selector must not choose two names from one sector");
+
+applied = applyC1ProductionPolicy(
+  ready.candidates.map((candidate, index) =>
+    liveRow(candidate, index === 0 ? { eventRisk: {} } : {}),
+  ),
+  ready,
+);
+assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Watch", "missing event verification must fail closed");
 
 const legacyTimingConflictRows = ready.candidates.map((candidate, index) =>
   liveRow(candidate, index === 0 ? {

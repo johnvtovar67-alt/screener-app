@@ -19,7 +19,10 @@ import {
   fetchEntryTimingMap,
   applyEntryTimingGate,
 } from "../../lib/entryTiming";
-import { projectedFullDayVolume } from "../../lib/marketSession";
+import {
+  latestCompletedMarketSessionDay,
+  projectedFullDayVolume,
+} from "../../lib/marketSession";
 import {
   finalizeBroadOpportunityDecisions,
   relativeCapitalScore,
@@ -615,9 +618,21 @@ const CACHE_KEY = "__screenerBroadOpportunityCacheV9",
   PERFORMANCE_RECORD_KEY = "__screenerPerformanceRecordV1";
 async function buildBroadSnapshot(verificationPass = 0) {
   const now = Date.now(),
+    requiredSessionDate = latestCompletedMarketSessionDay(new Date(now)),
     cached = globalThis[CACHE_KEY];
-  if (cached?.rows && now - cached.ts < CACHE_MS) return cached;
-  if (cached?.promise) return cached.promise;
+  if (
+    verificationPass === 0 &&
+    cached?.rows &&
+    cached?.requiredSessionDate === requiredSessionDate &&
+    now - cached.ts < CACHE_MS
+  )
+    return cached;
+  if (
+    verificationPass === 0 &&
+    cached?.promise &&
+    cached?.requiredSessionDate === requiredSessionDate
+  )
+    return cached.promise;
   const promise = (async () => {
     const [fullMarketDiscovery, productionPolicySnapshot] = await Promise.all([
         getFullMarketDiscovery({ refreshIfStale: true }),
@@ -842,6 +857,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
       quoteCoverageAdequate,
       staleQuoteCount,
       snapshotBuiltAt,
+      requiredSessionDate,
     };
     globalThis[CACHE_KEY] = { ts: snapshotBuiltAt, ...result, promise: null };
     return result;
@@ -871,6 +887,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
     fullMarketCandidateCount: cached?.fullMarketCandidateCount,
     fullMarketDiscoveryConfig: cached?.fullMarketDiscoveryConfig,
     productionPolicySnapshot: cached?.productionPolicySnapshot,
+    requiredSessionDate,
     universeSize: cached?.universeSize,
     promise,
   };
@@ -888,6 +905,32 @@ async function buildBroadSnapshot(verificationPass = 0) {
     }
     throw err;
   }
+}
+
+function failClosedRows(rows = [], reason = "Live market verification is stale or incomplete.") {
+  return rows.map((row) => {
+    const decision = row.finalDecision || {};
+    const actionable = ["Strong Buy", "Buy"].includes(decision.action);
+    return {
+      ...row,
+      dataFeedSnapshotStale: true,
+      finalDecision: actionable
+        ? {
+            ...decision,
+            action: "Watch",
+            timing: "Wait for Live Verification",
+            size: "None",
+            priority: "Verification Paused",
+            reason,
+            capitalConfirmed: false,
+            source: "server-integrity-pause",
+          }
+        : decision,
+      productionPolicy: row.productionPolicy
+        ? { ...row.productionPolicy, selected: false, status: "verification-paused" }
+        : row.productionPolicy,
+    };
+  });
 }
 async function recordPerformance(rows, snapshotKey) {
   const key = String(snapshotKey || "unknown"),
@@ -1043,7 +1086,11 @@ export default async function handler(req, res) {
         Math.max(0, Math.floor(Number(req.query.verificationPass) || 0)),
       ),
       broadSnapshot = await buildBroadSnapshot(verificationPass),
-      broadRows = broadSnapshot.rows,
+      snapshotVerificationPaused =
+        broadSnapshot.staleFeed || !broadSnapshot.quoteCoverageAdequate,
+      broadRows = snapshotVerificationPaused
+        ? failClosedRows(broadSnapshot.rows)
+        : broadSnapshot.rows,
       themeLeadership = buildThemeLeadership(broadRows),
       isBroad = themeKey === "opportunities" || themeKey === "broad",
       selectedSymbols = new Set(config.symbols.filter((s) => !EXCLUDED.has(s))),
@@ -1056,9 +1103,7 @@ export default async function handler(req, res) {
     // Every view is filtered from this same broad snapshot, so record the
     // authoritative broad state even when the user is looking at one theme.
     // The ledger de-duplicates within a market session.
-    const snapshotVerificationPaused =
-        broadSnapshot.staleFeed || !broadSnapshot.quoteCoverageAdequate,
-      performanceObservationRecorded = await recordPerformance(
+    const performanceObservationRecorded = await recordPerformance(
       snapshotVerificationPaused
         ? broadRows.map((row) => ({ ...row, dataFeedSnapshotStale: true }))
         : broadRows,
