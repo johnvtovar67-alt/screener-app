@@ -6,6 +6,11 @@ const assert = (condition, message) => {
 };
 
 const loader = createResearchModuleLoader(process.cwd());
+const policySource = fs.readFileSync("lib/v11ProductionPolicy.js", "utf8");
+assert(
+  policySource.includes("V11_PRODUCTION_MAX_SNAPSHOT_AGE_SESSIONS = 0"),
+  "rank snapshots must match the latest completed session",
+);
 const policy = loader.load("lib/v11ProductionPolicy.js");
 const { c1DrawdownControl } = loader.load("lib/portfolioGovernor.js");
 const {
