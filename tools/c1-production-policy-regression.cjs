@@ -160,17 +160,17 @@ applied = applyC1ProductionPolicy(
 assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Watch" && applied.find((row) => row.symbol === ready.candidates[0].symbol).productionPolicy.pilot === false, "a candidate below the $300 million liquidity floor must not receive pilot capital");
 
 let lifecycle = c1ProductionPositionLifecycle({
-  stock: { symbol: "S7", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", selected: false, researchRank: 7 } },
+  stock: { symbol: "S7", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", independentlyValidated: true, activationAuthorized: true, selected: false, researchRank: 7 } },
   position: { role: "Swing", openedAt: "2026-07-01T12:00:00.000Z", gainLossPct: 2 },
-  policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready" },
+  policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", independentlyValidated: true, activationAuthorized: true },
   now: new Date("2026-09-04T15:00:00.000Z"),
 });
 assert(lifecycle?.action === "Exit" && lifecycle.source === "c1-production-rank-deterioration", "rank seven must trigger the tested top-six retention rule");
 
 lifecycle = c1ProductionPositionLifecycle({
-  stock: { symbol: "LEGACY", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", selected: false, researchRank: null } },
+  stock: { symbol: "LEGACY", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", independentlyValidated: true, activationAuthorized: true, selected: false, researchRank: null } },
   position: { role: "Swing", openedAt: "2026-08-31T12:00:00.000Z", gainLossPct: 1 },
-  policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready" },
+  policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", independentlyValidated: true, activationAuthorized: true },
   now: new Date("2026-09-05T15:00:00.000Z"),
 });
 assert(C1_PRODUCTION_ACTIVATION_DAY === "2026-09-04" && lifecycle?.source === "c1-legacy-transition-exit", "a pre-C1 Swing outside the selected portfolio must exit without receiving a retroactive 30-session hold");
@@ -185,10 +185,28 @@ assert(lifecycle?.source === "c1-production-catastrophic-stop", "the 14% positio
 lifecycle = c1ProductionPositionLifecycle({
   stock: { symbol: "MSTR" },
   position: { role: "Core", gainLossPct: -30 },
-  policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready" },
+  policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", independentlyValidated: true, activationAuthorized: true },
   now: new Date("2026-09-04T15:00:00.000Z"),
 });
 assert(lifecycle === null, "MSTR Core must remain outside C1 lifecycle advice");
+
+// Missing, suspended, or conflicting receipts must never fall through to
+// the legacy portfolio model, even when a stale row still says ready.
+for (const policy of [{}, { id: C1_PRODUCTION_POLICY_ID, status: "ready" },
+  { id: C1_PRODUCTION_POLICY_ID, status: "suspended", independentlyValidated: true, activationAuthorized: false }]) {
+  const result = c1ProductionPositionLifecycle({
+    stock: { symbol: "FCX", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", independentlyValidated: true, activationAuthorized: true, researchRank: 9 } },
+    position: { role: "Swing", openedAt: "2026-07-01", gainLossPct: 1 },
+    policy, now: new Date("2026-09-10T21:00:00Z"),
+  });
+  assert(result?.action === "Review" && result.source === "c1-portfolio-authority-unavailable", "unverified global authority must block legacy fallback and rank exits");
+}
+const conflictingRow = c1ProductionPositionLifecycle({
+  stock: { symbol: "STX", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", activationAuthorized: false } },
+  position: { role: "Swing", gainLossPct: -2 },
+  policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", independentlyValidated: true, activationAuthorized: true },
+});
+assert(conflictingRow?.action === "Review", "global authority cannot override an unauthorized holding receipt");
 
 const originalComposition = portfolioCompositionSignature([{ symbol: "CASH", shares: 25_000, role: "Swing" }, { symbol: "NTRA", shares: 230, role: "Swing" }]);
 const changedComposition = portfolioCompositionSignature([{ symbol: "CASH", shares: 12_000, role: "Swing" }, { symbol: "NTRA", shares: 100, role: "Swing" }, { symbol: "FCX", shares: 170, role: "Swing" }]);
