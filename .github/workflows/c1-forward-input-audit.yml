@@ -1,0 +1,57 @@
+name: C1 Forward Input Audit
+on:
+  push:
+    branches: [fix/c1-forward-input-audit]
+    paths: [.github/workflows/c1-forward-input-audit.yml]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Compare research records without writes
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        shell: bash
+        run: |
+          node <<'NODE'
+          const {get}=require('@vercel/blob');
+          const {gunzipSync}=require('node:zlib');
+          const {createHash}=require('node:crypto');
+          async function read(path,gzip=false){const r=await get(path,{access:'private',useCache:false});if(!r||r.statusCode!==200)throw Error('Required research record unavailable');const b=Buffer.from(await new Response(r.stream).arrayBuffer());return JSON.parse((gzip?gunzipSync(b):b).toString());}
+          const hash=x=>createHash('sha256').update(JSON.stringify(x)??'undefined').digest('hex');
+          (async()=>{
+          const prior=await read('research/c1-forward-accounting-production-v1.json.gz',true);
+          const checkpoint=await read('research/fmp-provisional-compiled-checkpoint-v1.json');
+          if(!checkpoint.complete)throw Error('Compiled checkpoint incomplete');
+          const chunk=[...checkpoint.chunks].sort((a,b)=>b.end-a.end)[0];
+          const current=await read(chunk.pathname,true);
+          for(const old of prior.sessions){
+          const next=current.sessions.find(s=>s.date===old.date);if(!next){console.log(JSON.stringify({date:old.date,status:'outside-latest-chunk'}));continue;}
+          const fields=[...new Set([...Object.keys(old),...Object.keys(next)])];
+          const changed=fields.filter(k=>hash(old[k])!==hash(next[k]));
+          const detail={};
+          for(const k of changed){
+          const a=old[k],b=next[k];
+          detail[k]={oldType:typeof a,newType:typeof b,oldHash:hash(a),newHash:hash(b)};
+          if(Array.isArray(a)&&Array.isArray(b)){
+          detail[k].oldCount=a.length;detail[k].newCount=b.length;
+          if(a.every(x=>x&&typeof x==='object'&&x.symbol)&&b.every(x=>x&&typeof x==='object'&&x.symbol)){
+          const am=new Map(a.map(x=>[x.symbol,x])),bm=new Map(b.map(x=>[x.symbol,x]));
+          detail[k].removed=[...am.keys()].filter(s=>!bm.has(s)).length;
+          detail[k].added=[...bm.keys()].filter(s=>!am.has(s)).length;
+          const changedFields={};let changedRows=0;
+          for(const [s,x] of am){const y=bm.get(s);if(!y)continue;if(hash(x)!==hash(y)){changedRows++;for(const f of new Set([...Object.keys(x),...Object.keys(y)])){if(hash(x[f])!==hash(y[f]))changedFields[f]=(changedFields[f]||0)+1;}}}
+          detail[k].changedRows=changedRows;detail[k].changedFields=changedFields;
+          }
+          }
+          }
+          console.log(JSON.stringify({date:old.date,changed,detail}));
+          }
+          })().catch(e=>{console.error(e.message);process.exitCode=1;});
+          NODE
