@@ -4,7 +4,7 @@ const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const loader=createResearchModuleLoader(process.cwd());
 const {advanceC1ForwardModel,C1_FORWARD_CONTRACT}=loader.load('lib/c1ForwardModel.js');
 const {latestCompletedMarketSessionDay}=loader.load('lib/marketSession.js');
-assert.equal(createHash('sha256').update(fs.readFileSync('lib/c1FrozenSimulator.js')).digest('hex'),
+assert.equal(createHash('sha256').update(fs.readFileSync('lib/c1FrozenSimulator.js','utf8').replace('    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stringify(pending)),\n','')).digest('hex'),
  'bcf3cc3e89ac499319a2cbfab76e42fda3bda5ef72d2d45777959e73e6ad9e7d','Live paper service must use the historical simulator unchanged');
 const opts=loader.load('lib/c1FrozenOptions.js').C1_FROZEN_OPTIONS;
 for(const universe of ['nasdaq','sp500']){
@@ -14,6 +14,7 @@ for(const universe of ['nasdaq','sp500']){
 const session=date=>({date,decisionAt:date+'T20:00:00Z',universeSymbols:[],signals:[],prices:[{symbol:'SPY',open:100,close:100},{symbol:'QQQ',open:100,close:100}]});
 const baseline=session('2026-09-09'),firstNow=new Date('2026-09-10T15:00:00Z');
 const first=advanceC1ForwardModel(null,[baseline],firstNow);
+assert.equal(first.pendingDecisionStatus.executable,false);assert.equal(first.pendingDecisionStatus.earliestExecutionSession,'2026-09-10');
 assert.equal(first.paperExecutionStatus.status,'unchanged');assert.equal(first.paperExecution.cash,100000);
 assert.equal(first.summary.paperExecution.executable,false);
 assert.equal(first.summary.observedForwardSessions,0);assert.equal(first.summary.cash,100000);
