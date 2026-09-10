@@ -6,6 +6,9 @@ const {simulatePointInTimePortfolio:simulate}=loader.load('lib/c1FrozenSimulator
 const options=loader.load('lib/c1FrozenOptions.js').C1_FROZEN_OPTIONS;
 const weights={base:.25,cooldown15:.5,sector40:.25};
 const directory=process.argv[2],output=process.argv[3];
+const shard=process.argv[4]?JSON.parse(process.argv[4]):null;
+const prior=shard?fs.readFileSync(process.argv[5],'utf8').trim().split('\n').map(JSON.parse):null;
+if(shard&&(!Number.isInteger(shard.start)||!Number.isInteger(shard.end)||shard.start<0||shard.end>1000||shard.start>=shard.end))throw Error('Invalid shard');
 if(!directory||!output)throw Error('Expected dataset directory and new output JSONL path');
 const manifest=JSON.parse(fs.readFileSync(path.join(directory,'manifest.json')));
 const hash=crypto.createHash('sha256');let checksums=0;
@@ -25,7 +28,8 @@ function evaluate(seed){
  let peak=100000,maxDrawdownPct=0;for(const p of curve){peak=Math.max(peak,p.equity);maxDrawdownPct=Math.min(maxDrawdownPct,100*(p.equity/peak-1));}
  return{seed,totalReturnPct:100*(curve.at(-1).equity/100000-1),maxDrawdownPct,componentReturns:returns};
 }
-const candidate=evaluate(null);append({type:'candidate',...candidate});process.stdout.write('Candidate complete\n');
+if(prior){const contract=JSON.parse(fs.readFileSync(output,'utf8').trim());for(const key of ['weights','options','dataSha256','statistic','rankRandomization'])if(JSON.stringify(contract[key])!==JSON.stringify(prior[0][key]))throw Error('Shard contract mismatch: '+key);}
+const candidate=prior?prior.find(r=>r.type==='candidate'):evaluate(null);if(!candidate)throw Error('Missing candidate');append({...candidate,type:'candidate'});process.stdout.write('Candidate complete\n');
 let exceedances=0;
-for(let seed=0;seed<1000;seed++){const r=evaluate(seed);if(r.totalReturnPct>=candidate.totalReturnPct)exceedances++;append({type:'control',...r});if(seed%10===0)process.stdout.write(`${seed+1}/1000 complete; ${exceedances} exceedances\n`);}
-append({type:'complete',completedAt:new Date().toISOString(),seeds:1000,exceedances,fixedCandidatePValue:(exceedances+1)/1001,eligibleForLiveCapital:false});fs.closeSync(fd);
+for(let seed=shard?.start??0;seed<(shard?.end??1000);seed++){const r=evaluate(seed);if(r.totalReturnPct>=candidate.totalReturnPct)exceedances++;append({type:'control',...r});if(process.send)process.send({type:'control',...r});if(seed%10===0)process.stdout.write(`${seed+1}/1000 complete; ${exceedances} exceedances\n`);}
+append(shard?{type:'shard-complete',...shard}:{type:'complete',completedAt:new Date().toISOString(),seeds:1000,exceedances,fixedCandidatePValue:(exceedances+1)/1001,eligibleForLiveCapital:false});fs.closeSync(fd);
