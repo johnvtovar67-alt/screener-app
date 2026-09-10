@@ -1,0 +1,41 @@
+{
+  "purpose": "Historical implementation reconciliation, not new evidence",
+  "generatedAt": "2026-09-10T13:02:37.842Z",
+  "dataSha256": "a383f020bd00ce12c016e5be0350320a4082f6766a9f7b6ac3a273cd2a343359",
+  "manifestChecksumCoverage": "6/6",
+  "limitations": [],
+  "simulatorSha256": "bcf3cc3e89ac499319a2cbfab76e42fda3bda5ef72d2d45777959e73e6ad9e7d",
+  "passed": true,
+  "results": [
+    {
+      "id": "base",
+      "archivedOrders": 154,
+      "replayedOrders": 154,
+      "ordersMatch": true,
+      "curveMatches": true,
+      "firstMismatches": [],
+      "archivedReturnPct": 421.17,
+      "replayedReturnPct": 421.17
+    },
+    {
+      "id": "cooldown15",
+      "archivedOrders": 164,
+      "replayedOrders": 164,
+      "ordersMatch": true,
+      "curveMatches": true,
+      "firstMismatches": [],
+      "archivedReturnPct": 158.89,
+      "replayedReturnPct": 158.89
+    },
+    {
+      "id": "sector40",
+      "archivedOrders": 150,
+      "replayedOrders": 150,
+      "ordersMatch": true,
+      "curveMatches": true,
+      "firstMismatches": [],
+      "archivedReturnPct": 335.66,
+      "replayedReturnPct": 335.66
+    }
+  ]
+}
