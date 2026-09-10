@@ -1,0 +1,76 @@
+name: C1 Persistent Controls
+on:
+  push:
+    branches: [research/c1-1000-seed-control]
+    paths: [.github/workflows/c1-controls.yml]
+permissions:
+  contents: read
+concurrency:
+  group: c1-frozen-controls
+  cancel-in-progress: false
+jobs:
+  access:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require private data access
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          if [ -z "$BLOB_READ_WRITE_TOKEN" ]; then
+            echo 'Missing GitHub Actions secret BLOB_READ_WRITE_TOKEN'
+            exit 1
+          fi
+  controls:
+    needs: access
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        universe: [nasdaq, sp500]
+        batch: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Download private frozen data
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: node tools/c1-actions-data.cjs ${{ matrix.universe }}
+      - name: Evaluate only unfinished seeds
+        env:
+          UNIVERSE: ${{ matrix.universe }}
+          BATCH: ${{ matrix.batch }}
+        run: |
+          mkdir -p audit-results
+          START=$((BATCH * 50))
+          END=$((START + 50))
+          node --max-old-space-size=4096 tools/c1-placebo-audit.cjs "audit-data/$UNIVERSE" "audit-results/$UNIVERSE-$BATCH.jsonl" "{\"start\":$START,\"end\":$END}" "docs/research/c1-actions/$UNIVERSE-checkpoint.jsonl"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c1-${{ matrix.universe }}-${{ matrix.batch }}
+          path: audit-results/*.jsonl
+          if-no-files-found: warn
+          retention-days: 30
+  merge:
+    needs: controls
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: c1-*
+          path: artifacts
+      - run: node tools/c1-actions-merge.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: c1-complete-results
+          path: audit-results/*.jsonl
+          retention-days: 90
