@@ -6,6 +6,7 @@ const fs = require("fs");
 require("./c1-sleeve-accounting-regression.cjs");
 require("./c1-historical-ledger-regression.cjs");
 require("./c1-forward-model-regression.cjs");
+require("./c1-input-archive-regression.cjs");
 const { createResearchModuleLoader } = require("./research-module-loader.cjs");
 
 const assert = (condition, message) => {
