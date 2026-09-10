@@ -190,9 +190,9 @@ drawdown = c1DrawdownControl({ swingEquity: 92_000, state: drawdown.state, portf
 assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.state.highWater === 92_000, "all sleeves must reactivate after 15 sessions with a reset high-water mark");
 
 drawdown = c1DrawdownControl({ swingEquity: 70_000, state: { version: 2, highWater: 100_000, triggerDay: null, portfolioSignature: originalComposition }, portfolioSignature: changedComposition, now: new Date("2026-09-02T20:00:00.000Z") });
-assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.baselineReset && drawdown.state.highWater === 70_000, "a trade, cash edit, or role change must reset the capital base instead of masquerading as drawdown");
+assert(drawdown.activeCapitalPct === 0 && !drawdown.cooldown && drawdown.reconciliationRequired && drawdown.state.highWater === 100_000, "unclassified capital changes must preserve loss history without generating an exit");
 drawdown = c1DrawdownControl({ swingEquity: 70_000, state: { highWater: 100_000, triggerDay: "2026-09-02" }, portfolioSignature: changedComposition, now: new Date("2026-09-02T20:00:00.000Z") });
-assert(drawdown.activeCapitalPct === 100 && !drawdown.cooldown && drawdown.baselineReset, "unsafe legacy dollar-only drawdown state must migrate without forcing liquidation");
+assert(drawdown.activeCapitalPct === 0 && !drawdown.cooldown && drawdown.reconciliationRequired && drawdown.state.triggerDay === "2026-09-02", "legacy history must remain unresolved rather than silently reset");
 
 const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
 assert(top5.includes("independent_limited_pilot") && top5.includes("pilotRequiresTwoSessionPersistence") && top5.includes("$300 million"), "the live route must identify the bounded pilot and its liquidity contract");
