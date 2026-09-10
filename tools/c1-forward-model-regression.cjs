@@ -30,6 +30,14 @@ const second=advanceC1ForwardModel(first,[baseline,next],nextNow);
 assert.equal(second.summary.observedForwardSessions,1);assert.equal(first.sessions.length,1);
 baseline.prices[0].close=101;
 assert.throws(()=>advanceC1ForwardModel(first,[baseline,next],nextNow),/input changed/);
+assert.throws(()=>advanceC1ForwardModel(first,[baseline,next],nextNow),error=>{
+ assert.equal(error.inputRevision.date,'2026-09-09');
+ assert.equal(JSON.stringify(error.inputRevision.changedFields),JSON.stringify(['prices']));
+ assert.equal(error.inputRevision.originalPreserved,true);
+ assert.equal(error.inputRevision.validationEligible,false);
+ return true;
+});
+assert.equal(first.sessions[0].prices[0].close,100,'Rejected revisions must leave the original price untouched');
 assert.throws(()=>advanceC1ForwardModel(first,[session('2026-09-11')],new Date('2026-09-11T21:00:00Z')),/Missing/);
 assert.throws(()=>advanceC1ForwardModel(first,[next],firstNow),/future|not current/);
 assert.equal(advanceC1ForwardModel(null,[session('2026-09-04')],new Date('2026-09-07T21:00:00Z')).firstDecisionSession,'2026-09-08');
