@@ -16,3 +16,29 @@ const future={...data,sessions:[data.sessions[0],session('2026-09-02',999)]};ass
 const second=run(data,{...cfg,endDate:'2026-09-02'});assert.ok(second.trades.some(t=>t.side==='buy'&&t.date==='2026-09-02'));
 assert.equal(run(data,{...cfg,liquidateAtEnd:true}).pendingDecisions.length,0);
 console.log('PASS: read-only pending decisions, original source identity, result parity, next-open timing and future-data isolation');
+
+// Synthetic execution scenarios: no historical holdout is evaluated or retuned.
+for (const [sleeve, frozen] of Object.entries(l.load('lib/c1FrozenOptions.js').C1_FROZEN_OPTIONS)) {
+  const execute=(a,b)=>run({metadata:{},sessions:[a,b]}, {...frozen,startDate:a.date,endDate:b.date,liquidateAtEnd:false});
+  const a=session('2026-09-01'), b=session('2026-09-02');
+  const baseline=execute(a,b), buys=baseline.trades.filter(t=>t.side==='buy');
+  assert.ok(buys.length>0 && buys.length<=3, sleeve+': candidate queue respects position cap');
+  assert.ok(baseline.endingCash>=0, sleeve+': no borrowing');
+  for(const t of buys){assert.equal(t.date,b.date);assert.ok(Number.isInteger(t.shares)&&t.shares>0);assert.ok(Math.abs(t.price-100.12)<1e-8,'12bps buy cost applied');}
+  const changed=JSON.parse(JSON.stringify(b));
+  changed.prices.forEach(p=>{p.close=125;p.high=130;p.low=95;});
+  changed.signals.reverse();
+  assert.equal(JSON.stringify(execute(a,changed).trades.filter(t=>t.side==='buy')),JSON.stringify(buys),sleeve+': later bar/closing signals cannot change opening purchases');
+  const gap=session('2026-09-02',104);
+  gap.prices.forEach(p=>{p.close=104;p.high=105;p.low=103;});
+  const rejected=execute(a,gap);
+  assert.equal(rejected.trades.filter(t=>t.side==='buy').length,0,sleeve+': 4% gap rejected');
+  assert.ok(rejected.skippedOrders.some(t=>t.reason==='entry-gap-limit'));
+  const absent=JSON.parse(JSON.stringify(b));absent.prices=absent.prices.filter(p=>!p.symbol.startsWith('S')||p.symbol==='SPY');
+  assert.equal(execute(a,absent).trades.filter(t=>t.side==='buy').length,0,sleeve+': missing open cannot fill');
+  const concentrated=JSON.parse(JSON.stringify(a));concentrated.signals.forEach(s=>s.sector='Only sector');
+  const capped=execute(concentrated,b);
+  assert.ok(capped.trades.filter(t=>t.side==='buy').length<=2,sleeve+': sector name cap');
+  assert.ok(capped.endingCash>=frozen.initialCapital*(1-frozen.maxSectorPct)-200,sleeve+': sector capital cap');
+}
+console.log('PASS: all three frozen sleeves — opening timing, cash, whole shares, costs, future-bar isolation, gaps, missing prices and concentration');
