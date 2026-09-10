@@ -1,0 +1,116 @@
+{
+  "purpose": "Historical C1 cost sensitivity on previously inspected data; not fresh holdout evidence",
+  "period": "2023-01-04 through 2026-09-01",
+  "blend": "25% base, 50% cooldown15, 25% sector40",
+  "eligibleForLiveCapital": false,
+  "limitations": [
+    "Previously inspected data and selected model; not independent validation",
+    "S&P manifest has no chunk hashes; all sizes and session boundaries checked",
+    "Costs modeled as adverse slippage per side; no actual broker fills",
+    "No 1000-seed placebo or prospective gate completed by this test"
+  ],
+  "universes": {
+    "nasdaq": {
+      "dataSha256": "74d443bc492c8a63d4c0dfb470517d0d5ec08a26fca6d9217c0116a51ad87c22",
+      "checksumCoverage": "6/6",
+      "results": [
+        {
+          "slippageBps": 12,
+          "totalReturnPct": 268.65228,
+          "maxDrawdownPct": -20.171899936355675,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 161.06228000000002
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 96.91228000000001
+            }
+          }
+        },
+        {
+          "slippageBps": 25,
+          "totalReturnPct": 260.0128925,
+          "maxDrawdownPct": -20.500081788353153,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 152.42289250000002
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 88.27289250000001
+            }
+          }
+        },
+        {
+          "slippageBps": 50,
+          "totalReturnPct": 232.87903,
+          "maxDrawdownPct": -21.089523086527528,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 125.28903
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 61.13902999999999
+            }
+          }
+        }
+      ]
+    },
+    "sp500": {
+      "dataSha256": "0e874429191b0748528bbb30340f87858a287c7a2da8127a7e73ce8c73514e49",
+      "checksumCoverage": "0/24",
+      "results": [
+        {
+          "slippageBps": 12,
+          "totalReturnPct": 380.7204925,
+          "maxDrawdownPct": -20.701051498725377,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 273.13049249999995
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 208.98049249999997
+            }
+          }
+        },
+        {
+          "slippageBps": 25,
+          "totalReturnPct": 314.20182000000005,
+          "maxDrawdownPct": -24.174085740821948,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 206.61182000000005
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 142.46182000000005
+            }
+          }
+        },
+        {
+          "slippageBps": 50,
+          "totalReturnPct": 260.62695999999994,
+          "maxDrawdownPct": -22.925781010669667,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 153.03695999999994
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 88.88695999999993
+            }
+          }
+        }
+      ]
+    }
+  }
+}
