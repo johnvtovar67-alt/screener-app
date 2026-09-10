@@ -31,5 +31,6 @@ function evaluate(seed){
 if(prior){const contract=JSON.parse(fs.readFileSync(output,'utf8').trim());for(const key of ['weights','options','dataSha256','statistic','rankRandomization'])if(JSON.stringify(contract[key])!==JSON.stringify(prior[0][key]))throw Error('Shard contract mismatch: '+key);}
 const candidate=prior?prior.find(r=>r.type==='candidate'):evaluate(null);if(!candidate)throw Error('Missing candidate');append({...candidate,type:'candidate'});process.stdout.write('Candidate complete\n');
 let exceedances=0;
-for(let seed=shard?.start??0;seed<(shard?.end??1000);seed++){const r=evaluate(seed);if(r.totalReturnPct>=candidate.totalReturnPct)exceedances++;append({type:'control',...r});if(process.send)process.send({type:'control',...r});if(seed%10===0)process.stdout.write(`${seed+1}/1000 complete; ${exceedances} exceedances\n`);}
+const preserved=new Set((prior||[]).filter(r=>r.type==='control').map(r=>r.seed));
+for(let seed=shard?.start??0;seed<(shard?.end??1000);seed++){if(preserved.has(seed))continue;const r=evaluate(seed);if(r.totalReturnPct>=candidate.totalReturnPct)exceedances++;append({type:'control',...r});if(process.send)process.send({type:'control',...r});if(seed%10===0)process.stdout.write(`${seed+1}/1000 complete; ${exceedances} exceedances\n`);}
 append(shard?{type:'shard-complete',...shard}:{type:'complete',completedAt:new Date().toISOString(),seeds:1000,exceedances,fixedCandidatePValue:(exceedances+1)/1001,eligibleForLiveCapital:false});fs.closeSync(fd);
