@@ -1,3 +1,4 @@
+require("./c1-service-equivalence-regression.cjs");
 require("./c1-pending-decisions-regression.cjs");
 require("./c1-execution-adapter-regression.cjs");
 require("./brokerage-reconciliation-regression.cjs");
