@@ -35,6 +35,19 @@ const {advanceStoredC1ForwardModel:advanceStore,c1ForwardSummary,c1ForwardStoreP
 assert.notEqual(c1ForwardStorePath('production'),c1ForwardStorePath('preview','a'.repeat(40)));
 assert.equal(c1ForwardSummary(first,nextNow).status,'stale');
 (async()=>{
+ const snapshotSource=fs.readFileSync('lib/v11ProductionSnapshot.js','utf8')
+  .replace(/import\s+[\s\S]*?from\s+["'][^"']+["'];/g,'').replace(/export /g,'');
+ let snapshotWrites=0;
+ const snapshotBox={process:{env:{VERCEL_ENV:'preview'}},
+  put:async()=>{snapshotWrites++;},latestCompletedMarketSessionDay,
+  marketSessionDistance:loader.load('lib/marketSession.js').marketSessionDistance,
+  V11_PRODUCTION_POLICY_ID:'test',V11_PRODUCTION_MAX_SNAPSHOT_AGE_SESSIONS:0};
+ vm.createContext(snapshotBox);vm.runInContext(snapshotSource+'\nglobalThis.testApi={persistSnapshot,assessSnapshot};',snapshotBox);
+ await snapshotBox.testApi.persistSnapshot({});assert.equal(snapshotWrites,0,'Preview must not overwrite the production snapshot');
+ snapshotBox.process.env.VERCEL_ENV='production';
+ await snapshotBox.testApi.persistSnapshot({});assert.equal(snapshotWrites,1);
+ assert.equal(snapshotBox.testApi.assessSnapshot({forwardAccounting:{environment:'preview'}},firstNow).forwardAccounting,null,
+  'Preview accounting cannot satisfy production initialization');
  let record=null,etag=null,writes=0;
  const store={read:async()=>record?{record,etag}:null,write:async(path,next,expected)=>{
   assert.equal(expected,etag??undefined);record=next;etag='revision-'+(++writes);
