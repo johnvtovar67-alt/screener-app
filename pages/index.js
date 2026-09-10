@@ -226,7 +226,12 @@ export default function Home(){
   const resultForCards=useMemo(()=>new Map(results.map(r=>[sym(r),r])),[results]);
   function marketPlan(d){if(!d||marketState?.isOpen||!["Strong Buy","Buy","Add"].includes(d.action))return d;return{...d,timing:"Revalidate Next Open",reason:`${d.reason} The U.S. market is currently ${marketState?.phase||"closed"}; this is a plan, not an executable order. Re-run the screener after regular trading opens.`};}
   function opportunityDecision(s){
-    const d=fd(s),special=specialSituation(s);if(special?.blockNewCapital)return{...d,action:"Watch",timing:"Wait",size:"None",reason:"Acquisition pending — ordinary Swing Buy/Strong Buy signals are disabled. Evaluate the merger spread, closing risk, RKLB collar exposure, and opportunity cost instead."};if((s?.clientSnapshotFallback||s?.dataFeedSnapshotStale)&&["Strong Buy","Buy"].includes(d.action))return{...d,action:"Watch",timing:"Wait for Live Verification",size:"None",priority:"Verification Paused",reason:"This result is from a stale or incomplete broad-screen snapshot. Keep it visible for continuity, but do not deploy capital until a complete live refresh independently reconfirms it."};if(!["Strong Buy","Buy"].includes(d.action))return d;
+    const d=fd(s),special=specialSituation(s);if(special?.blockNewCapital)return{...d,action:"Watch",timing:"Wait",size:"None",reason:"Acquisition pending — ordinary Swing Buy/Strong Buy signals are disabled. Evaluate the merger spread, closing risk, RKLB collar exposure, and opportunity cost instead."};if((s?.clientSnapshotFallback||s?.dataFeedSnapshotStale)&&["Strong Buy","Buy"].includes(d.action))return{...d,action:"Watch",timing:"Wait for Live Verification",size:"None",priority:"Verification Paused",reason:"This result is from a stale or incomplete broad-screen snapshot. Keep it visible for continuity, but do not deploy capital until a complete live refresh independently reconfirms it."};
+    // After portfolio analysis, an owned name must display the identical final
+    // holding decision on both pages. Do not independently recompute it from
+    // the fresh-capital signal and accidentally contradict sizing/lifecycle.
+    const held=resultForCards.get(sym(s));if(held){const final=pd(held),time=swingTimeReview(held);return marketPlan({...final,reason:holdingReason(held,final,time)});}
+    if(!["Strong Buy","Buy"].includes(d.action))return d;
     const signal=capitalSignalEligible({target:s,action:d.action,persistence:s.signalPersistence});
     const owned=portfolio.find(p=>p.symbol===sym(s));
     if(!owned&&!signal.pass)return{...d,timing:"Await Confirmation",size:"Qualified — Not Funded",reason:`${d.reason} Portfolio action: ${signal.reason}`};
