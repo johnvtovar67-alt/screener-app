@@ -1,0 +1,23 @@
+TRANSACTION BALANCE CHECK
+
+This is an explicit normalized CSV format, not an automatic reader of arbitrary brokerage exports. Unrecognized columns and actions are rejected; broker-specific formats must be mapped first.
+
+Required columns: id,date,type,symbol,shares,price,cash_amount,fee
+Use one account, USD, unique transaction IDs and chronological YYYY-MM-DD dates. Same-day rows must be in actual event order. No currency symbols or thousands separators. Blank fee means zero; cash_amount is signed net cash movement including fees.
+
+Start with OPEN_CASH, even if zero. Declare every pre-existing holding, including Core, using OPEN_POSITION. All opening rows share the opening date and precede activity. Never assume an empty starting portfolio without records.
+
+OPEN_CASH: nonnegative cash_amount; symbol/shares/price blank; fee zero.
+OPEN_POSITION: symbol and positive shares; price blank; cash_amount and fee zero.
+BUY: symbol, positive shares and price, negative cash_amount (shares times price plus fee).
+SELL: symbol, positive shares and price, cash_amount equals proceeds less fee.
+DEPOSIT/DIVIDEND/INTEREST: positive cash_amount; symbol/shares/price blank; fee zero.
+WITHDRAWAL/FEE: negative cash_amount; symbol/shares/price blank; fee zero.
+
+Splits, options, shorting, margin, security transfers and corporate actions are unsupported. Do not relabel these as ordinary trades.
+
+Enter all ending Core and Swing holdings and explicit cash, including zero, in My Portfolio. Activity and holdings must cover the same account and cutoff. This tool cannot establish completeness, identity, settlement timing, cost basis, tax lots or investment merit. Money-market shares follow the app's $1 cash-equivalent convention.
+
+Files are processed locally, not saved or synced. Portfolio edits invalidate the displayed check. A match never enables C1, clears risk controls or generates an order.
+
+The example uses fictional TEST data, not recommendations or your holdings.
