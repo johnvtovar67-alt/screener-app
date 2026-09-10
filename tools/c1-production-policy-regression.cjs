@@ -1,4 +1,5 @@
 const fs = require("fs");
+require("./c1-sleeve-accounting-regression.cjs");
 const { createResearchModuleLoader } = require("./research-module-loader.cjs");
 
 const assert = (condition, message) => {
