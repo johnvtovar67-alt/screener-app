@@ -14,12 +14,16 @@ for(const universe of ['nasdaq','sp500']){
 const session=date=>({date,decisionAt:date+'T20:00:00Z',universeSymbols:[],signals:[],prices:[{symbol:'SPY',open:100,close:100},{symbol:'QQQ',open:100,close:100}]});
 const baseline=session('2026-09-09'),firstNow=new Date('2026-09-10T15:00:00Z');
 const first=advanceC1ForwardModel(null,[baseline],firstNow);
+assert.equal(first.paperExecutionStatus.status,'unchanged');assert.equal(first.paperExecution.cash,100000);
+assert.equal(first.summary.paperExecution.executable,false);
 assert.equal(first.summary.observedForwardSessions,0);assert.equal(first.summary.cash,100000);
 assert.equal(first.summary.executable,false);assert.equal(first.firstDecisionSession,'2026-09-10');
 const provisional=advanceC1ForwardModel(null,[{...baseline,universeSymbols:null}],firstNow);
 assert.equal(provisional.summary.pointInTimeMembershipAvailable,false);
 assert.equal(provisional.summary.eligibleForAlphaClaim,false,'Current-cohort paper records cannot be relabeled point-in-time evidence');
 assert.equal(advanceC1ForwardModel(first,[baseline],firstNow),first,'Refresh retry cannot advance time');
+const legacy=JSON.parse(JSON.stringify(first));delete legacy.paperExecution;delete legacy.paperExecutionStatus;
+const migrated=advanceC1ForwardModel(legacy,[session('2026-09-09')],firstNow);assert.equal(migrated.paperExecution.cash,100000);assert.equal(migrated.summary.observedForwardSessions,0);
 const next=session('2026-09-10'),nextNow=new Date('2026-09-10T21:00:00Z');
 const second=advanceC1ForwardModel(first,[baseline,next],nextNow);
 assert.equal(second.summary.observedForwardSessions,1);assert.equal(first.sessions.length,1);
