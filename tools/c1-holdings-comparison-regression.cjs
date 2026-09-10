@@ -30,3 +30,16 @@ vm.createContext(box);vm.runInContext(code+'\nglobalThis.handle=handler;',box);
  assert.equal(r.code,200);assert.equal(r.body.executable,false);assert.equal(r.body.status,'model-not-ready');assert.equal(r.headers['Cache-Control'],'no-store');
  console.log('C1 comparison route: server-owned model, input validation, no client authority override');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+// Execute the actual page's comparison block with snapshots used by Analyze.
+const page=fs.readFileSync('pages/index.js','utf8');
+const block=page.slice(page.indexOf('      // Reuse this analysis'),page.indexOf('      let priorControl={}'));
+assert.ok(block.includes('compareC1Holdings'));
+let captured;
+const ui={portfolio:[{symbol:'TEST',shares:2,role:'Swing'},{symbol:'CASH',shares:100,role:'Swing'}],CASH:['CASH'],role:(s,r)=>r,compareC1Holdings:compare,screenLive:true,currentProductionPolicy:{forwardAccounting:model},setHoldingsComparison:r=>{captured=r;}};
+vm.createContext(ui);vm.runInContext(block,ui);
+assert.equal(captured.positions.length,1);assert.equal(captured.executable,false);assert.equal(captured.portfolioSignature,JSON.stringify(ui.portfolio));
+ui.portfolio[0].shares=3;assert.notEqual(captured.portfolioSignature,JSON.stringify(ui.portfolio),'Edited holdings must invalidate the visible comparison');
+ui.screenLive=false;ui.currentProductionPolicy.forwardAccounting={...model,observedForwardSessions:4,virtualShares:{TEST:2}};vm.runInContext(block,ui);assert.equal(captured.status,'model-not-ready','Cached screen fallback cannot look verified');
+assert.ok(page.includes('holdingsComparison.portfolioSignature===JSON.stringify(portfolio)'));
+assert.ok(!page.includes('fetch("/api/research/c1-holdings-comparison'));
+console.log('C1 portfolio integration: same snapshot, edit invalidation, no additional holdings upload');
