@@ -71,3 +71,20 @@ assert.equal(c1ForwardSummary(first,nextNow).status,'stale');
  assert.equal(attempts,1);assert.equal(recovered.observedForwardSessions,0);
  console.log('PASS: unchanged simulator/options, forward-only clock, immutable inputs, gap detection, idempotence, conditional writes and preview isolation.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
+// Multi-session fills must append chronologically across all three sleeves.
+{
+ const symbols=Array.from({length:10},(_,i)=>'S'+i);
+ const active=(date,price=100)=>({date,decisionAt:date+'T20:00:00Z',universeSymbols:symbols,
+ prices:[...symbols,'SPY','QQQ'].map(symbol=>({symbol,open:price,close:price,high:price,low:price,volume:10000000})),
+ signals:symbols.map((symbol,i)=>({symbol,sector:'Sector'+i%5,price,researchFactors:{momentumPercentile:100-i,volatility60Pct:20,coverage:1,return60Ex5:20,return120Ex5:30,return252Ex21:40},entryTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000}}))});
+ let r=null,previous=null;
+ for(const [date,price] of [['2026-09-01',100],['2026-09-02',100],['2026-09-03',100],['2026-09-04',80]]){
+  previous=r;r=advanceC1ForwardModel(r,[active(date,price)],new Date(date+'T21:00:00Z'));
+  if(previous)assert.equal(JSON.stringify(r.ledger.fills.slice(0,previous.ledger.fills.length)),JSON.stringify(previous.ledger.fills),'New sleeve fills cannot reorder recorded history');
+  assert.notEqual(r.paperExecutionStatus.status,'blocked',r.paperExecutionStatus.reason);
+ }
+ assert.ok(previous.ledger.fills.some(f=>f.side==='buy'));
+ assert.ok(r.ledger.fills.some(f=>f.side==='sell'));
+ assert.equal(r.summary.executable,false);
+}
