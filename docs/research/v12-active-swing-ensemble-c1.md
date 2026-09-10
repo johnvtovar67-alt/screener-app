@@ -1,8 +1,8 @@
 # V12 Active Swing Ensemble C1 — Frozen Research Candidate
 
-Status: **authorized for production activation on 2026-09-04; prospective performance remains unvalidated**.
+Status: **ARCHIVED research description. Full C1 trading authority is suspended.** See [the September 10 readiness assessment](../C1_READINESS.md). The historical activation statement was not proof that all evidence gates passed.
 
-Frozen on 2026-09-04 after point-in-time tests covering 2023-01-04 through 2026-09-01. C1 replaces V11 for new live recommendations; V11 research history remains unchanged.
+Frozen on 2026-09-04 after point-in-time tests covering 2023-01-04 through 2026-09-01. This records the historical proposal, not current authorization. V11 research history remains unchanged.
 
 ## Mandate
 
@@ -26,7 +26,7 @@ Shared rules:
 - Rank daily using price-only momentum.
 - Hold the top 3 names; at most 2 positions per sector.
 - Minimum hold: 30 sessions.
-- Exit when a holding falls outside the top 9 after the minimum hold.
+- Recovered frozen simulator exits outside the top 6 after the minimum hold. The prior top-9 description matched the divergent recommendation code, not the recovered test configuration.
 - Initial position stop: 14%.
 - Portfolio drawdown breaker: 12% followed by the sleeve cooldown above.
 - Minimum price: $5; minimum 20-day average dollar volume: $300 million.
@@ -57,6 +57,8 @@ With the 25/50/25 weights frozen, 60 random-ranking ensembles were run independe
 - Backtests omit taxes and may understate market impact, borrow constraints, price gaps, and live data faults.
 - Historical results do not establish a probability of future profit.
 
-## Prospective review gate
+## Archived prospective review proposal (superseded)
 
 Do not describe C1 as prospectively validated until it completes a ledger with no rule changes. Minimum review evidence: 30 closed trades and 90 calendar days, no greater than 12% prospective sleeve drawdown before the breaker, realized cost within the 25 bps test, and no operational divergence between intended and executed holdings.
+
+Current full-promotion requirements include every unchanged evidence gate, strict 1,000-seed placebo analysis and at least 60 eligible genuinely new forward sessions. The archived 90-calendar-day/30-trade proposal is not a substitute.
