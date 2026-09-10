@@ -23,10 +23,24 @@ not establish the suitability of the user's NTRA, FCX or STX purchases. It does
 not restore C1 authority or create prospective performance evidence. It accepts
 no external deposits, withdrawals or automatic rebalance between sleeves.
 
+Historical accounting reconciliation completed:
+
+- Reconstructed the three frozen runs in each universe using the original
+  simulator and configuration source, both checked by SHA-256 identity.
+- All 976 trades and 5,508 daily cash, marked-equity and position-count checks
+  passed. Maximum absolute difference was $0.002499, within the original
+  simulator's cent-rounded export tolerance.
+- Nasdaq input checksums passed for all six chunks. The older S&P archive has
+  no chunk hashes; compressed size, decompression and session ranges were
+  checked for all 24 chunks. This remains a source-integrity limitation.
+- Compressed trade/mark fixtures are retained in `tools/fixtures`. Required
+  build/verify checks replay those fixtures through the current accounting
+  implementation. Receipts are in `docs/research/c1-*-ledger-parity.json`.
+- This is reconstruction from previously inspected frozen data, not an
+  untouched holdout, new performance evidence or broker-fill verification.
+
 Remaining integration work:
 
-- Feed the frozen simulator's actual fill stream through the same accounting
-  module and compare every cash/position checkpoint to the archived simulation.
 - Keep model sleeve history separate from the user's brokerage transaction
   history. Existing aggregate holdings must never be assigned invented fills.
 - Add validated persistence and concurrency control for model events before
@@ -34,7 +48,8 @@ Remaining integration work:
 - Integrate signal retention, sleeve cooldowns and actual fill reconciliation
   before enabling any recommendation path; unchanged promotion gates still apply.
 
-Run `node tools/c1-sleeve-accounting-regression.cjs` for accounting regressions.
+Run `node tools/c1-sleeve-accounting-regression.cjs` for accounting regressions
+and `node tools/c1-historical-ledger-regression.cjs` for full fixture parity.
 Archived replay receipts are retained on the `docs/c1-replay-evidence` branch;
-those earlier receipts prove historical reproducibility, not this module's
-full historical parity or independent prospective validation.
+those earlier receipts prove historical reproducibility, not independent
+prospective validation. The new receipts establish accounting parity only.
