@@ -1,3 +1,4 @@
+require("./c1-execution-adapter-regression.cjs");
 require("./brokerage-reconciliation-regression.cjs");
 require("./c1-holdings-comparison-regression.cjs");
 const fs = require("fs");
