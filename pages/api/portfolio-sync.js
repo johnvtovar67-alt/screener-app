@@ -1,5 +1,6 @@
 import {put,list,get} from '@vercel/blob';
 import {createHash} from 'crypto';
+import {cleanC1ControlState} from '../../lib/c1CapitalState';
 
 // Redeployed after the project Blob store was connected so production picks up storage credentials.
 export const config={api:{bodyParser:{sizeLimit:'1mb'}}};
@@ -9,10 +10,6 @@ const validKey=k=>/^[A-Za-z0-9_-]{32,128}$/.test(k);
 const pathname=k=>`${PREFIX}${createHash('sha256').update(k).digest('hex')}.json`;
 const cleanDate=v=>{if(!v)return null;const t=new Date(v);return Number.isFinite(t.getTime())?t.toISOString():null;};
 const cleanNumber=(v,f=0)=>{const n=Number(v);return Number.isFinite(n)?n:f;};
-const cleanC1ControlState=state=>({
-  highWater:Math.max(0,cleanNumber(state?.highWater)),
-  triggerDay:/^\d{4}-\d{2}-\d{2}$/.test(String(state?.triggerDay||''))?String(state.triggerDay):null
-});
 function cleanPortfolio(rows=[]){
   if(!Array.isArray(rows))return[];
   return rows.slice(0,100).map(p=>({

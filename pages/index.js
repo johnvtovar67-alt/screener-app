@@ -184,6 +184,7 @@ export default function Home(){
       setResults(analyzedRows);
       let priorControl={};try{priorControl=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");}catch{}
       const nextControl=c1DrawdownControl({swingEquity:portfolioRiskSnapshot(analyzedRows).swingCapital,state:priorControl,portfolioSignature:portfolioCompositionSignature(portfolio),now:new Date()});
+      if(nextControl.reconciliationRequired){setAnalysisCapitalReady(false);setErr(nextControl.reason);}
       localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(nextControl.state));setC1Control(nextControl);if(syncKey)void pushCloudPortfolio(portfolio,syncKey,nextControl.state);
       const analyzedAt=new Date();setPortfolioAnalyzedAt(analyzedAt);setLastUpdated(analyzedAt);
     }finally{setLoading(false);}
@@ -234,6 +235,7 @@ export default function Home(){
 
   function rawPd(s){
     if(s.error)return{action:"Review",reason:s.error};if(CASH.includes(sym(s)))return{action:"Cash",reason:"Dry powder."};
+    if(s.role==="Swing"&&c1Control.reconciliationRequired)return{action:"Review",reason:c1Control.reason,source:"c1-capital-reconciliation"};
     if(s.role==="Swing"&&c1Control.cooldown&&c1Control.activeCapitalPct===0)return{action:"Exit",reason:c1Control.reason,source:"c1-portfolio-drawdown-breaker"};
     const position={role:s.role,gainLossPct:s.gainLossPct,weightPct:s.weightPct,opportunityGap:s.opportunityGap,rotateTarget:s.rotateTarget,rotationTargetEligible:s.rotationTargetEligible,openedAt:s.openedAt};
     const base=portfolioDecision({stock:s,recommendation:rec(s),position});
