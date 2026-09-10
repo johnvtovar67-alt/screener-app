@@ -1,3 +1,4 @@
+require("./c1-holdings-comparison-regression.cjs");
 const fs = require("fs");
 require("./c1-sleeve-accounting-regression.cjs");
 require("./c1-historical-ledger-regression.cjs");
