@@ -19,6 +19,10 @@ assert(
   "rank snapshots must match the latest completed session",
 );
 const policy = loader.load("lib/v11ProductionPolicy.js");
+const frozen = loader.load("lib/c1FrozenOptions.js").C1_FROZEN_OPTIONS.base;
+assert(policy.V11_PRODUCTION_EXIT_RANK === frozen.rankedExitBuffer, "retention rank must match the tested model");
+assert(policy.V11_PRODUCTION_MAX_SECTOR_POSITIONS === frozen.maxSectorPositions, "sector name limit must match the tested sleeve");
+assert(policy.V11_PRODUCTION_MAX_POSITION_PCT === frozen.buyMaxPositionPct * 100, "position ceiling must match the tested sleeve");
 const { c1DrawdownControl, portfolioCompositionSignature } = loader.load("lib/portfolioGovernor.js");
 const {
   applyV11ProductionPolicy: applyC1ProductionPolicy,
@@ -155,12 +159,12 @@ applied = applyC1ProductionPolicy(
 assert(applied.find((row) => row.symbol === ready.candidates[0].symbol).finalDecision.action === "Watch" && applied.find((row) => row.symbol === ready.candidates[0].symbol).productionPolicy.pilot === false, "a candidate below the $300 million liquidity floor must not receive pilot capital");
 
 let lifecycle = c1ProductionPositionLifecycle({
-  stock: { symbol: "S10", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", selected: false, researchRank: 10 } },
+  stock: { symbol: "S7", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", selected: false, researchRank: 7 } },
   position: { role: "Swing", openedAt: "2026-07-01T12:00:00.000Z", gainLossPct: 2 },
   policy: { id: C1_PRODUCTION_POLICY_ID, status: "ready" },
   now: new Date("2026-09-04T15:00:00.000Z"),
 });
-assert(lifecycle?.action === "Exit" && lifecycle.source === "c1-production-rank-deterioration", "a mature holding outside rank nine must exit");
+assert(lifecycle?.action === "Exit" && lifecycle.source === "c1-production-rank-deterioration", "rank seven must trigger the tested top-six retention rule");
 
 lifecycle = c1ProductionPositionLifecycle({
   stock: { symbol: "LEGACY", productionPolicy: { id: C1_PRODUCTION_POLICY_ID, status: "ready", selected: false, researchRank: null } },
