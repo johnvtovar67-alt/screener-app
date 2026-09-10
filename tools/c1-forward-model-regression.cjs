@@ -12,7 +12,19 @@ for(const universe of ['nasdaq','sp500']){
  for(const run of fixture)assert.equal(JSON.stringify(opts[run.id]),JSON.stringify(run.options),'Frozen options must match both historical fixtures');
 }
 const session=date=>({date,decisionAt:date+'T20:00:00Z',universeSymbols:[],signals:[],prices:[{symbol:'SPY',open:100,close:100},{symbol:'QQQ',open:100,close:100}]});
-const baseline=session('2026-09-09'),firstNow=new Date('2026-09-10T15:00:00Z');
+// Reproduce the actual production baseline captured after September 10 opened.
+for(const [time,expected] of [['2026-09-10T13:29:59Z','2026-09-10'],['2026-09-10T13:30:00Z','2026-09-11'],['2026-09-10T15:59:42.924Z','2026-09-11']]) {
+ const record=advanceC1ForwardModel(null,[session('2026-09-09')],new Date(time));
+ assert.equal(record.firstDecisionSession,expected);
+ assert.equal(record.pendingDecisionStatus.earliestExecutionSession,expected);
+ assert.equal(record.summary.observedForwardSessions,0);
+}
+const invalidBaseline=advanceC1ForwardModel(null,[session('2026-09-09')],new Date('2026-09-10T15:59:42.924Z'));
+invalidBaseline.firstDecisionSession='2026-09-10';
+const originalBaseline=JSON.stringify(invalidBaseline);
+assert.throws(()=>advanceC1ForwardModel(invalidBaseline,[session('2026-09-09'),session('2026-09-10')],new Date('2026-09-10T21:00:00Z')),/predates observation/);
+assert.equal(JSON.stringify(invalidBaseline),originalBaseline,'An invalid historical baseline must not be silently reset');
+const baseline=session('2026-09-09'),firstNow=new Date('2026-09-09T21:00:00Z');
 const first=advanceC1ForwardModel(null,[baseline],firstNow);
 assert.equal(first.pendingDecisionStatus.executable,false);assert.equal(first.pendingDecisionStatus.earliestExecutionSession,'2026-09-10');
 assert.equal(first.paperExecutionStatus.status,'unchanged');assert.equal(first.paperExecution.cash,100000);
