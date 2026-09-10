@@ -1,0 +1,43 @@
+{
+  "purpose": "Historical implementation reconciliation, not new evidence",
+  "generatedAt": "2026-09-10T13:04:03.677Z",
+  "dataSha256": "396358bedf03bcf2a80150f6376bb0271e31233134cf85b9fe44c6cc9c70b53a",
+  "manifestChecksumCoverage": "0/24",
+  "limitations": [
+    "Historical manifest lacks some content checksums; size and session ranges were checked. A new local digest does not prove historical provenance."
+  ],
+  "simulatorSha256": "bcf3cc3e89ac499319a2cbfab76e42fda3bda5ef72d2d45777959e73e6ad9e7d",
+  "passed": true,
+  "results": [
+    {
+      "id": "base",
+      "archivedOrders": 176,
+      "replayedOrders": 176,
+      "ordersMatch": true,
+      "curveMatches": true,
+      "firstMismatches": [],
+      "archivedReturnPct": 271.93,
+      "replayedReturnPct": 271.93
+    },
+    {
+      "id": "cooldown15",
+      "archivedOrders": 154,
+      "replayedOrders": 154,
+      "ordersMatch": true,
+      "curveMatches": true,
+      "firstMismatches": [],
+      "archivedReturnPct": 516.88,
+      "replayedReturnPct": 516.88
+    },
+    {
+      "id": "sector40",
+      "archivedOrders": 178,
+      "replayedOrders": 178,
+      "ordersMatch": true,
+      "curveMatches": true,
+      "firstMismatches": [],
+      "archivedReturnPct": 217.2,
+      "replayedReturnPct": 217.2
+    }
+  ]
+}
