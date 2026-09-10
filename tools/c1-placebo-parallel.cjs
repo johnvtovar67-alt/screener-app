@@ -1,14 +1,16 @@
 // Resume a stopped audit without changing seeds, simulator, options, or statistic.
 const fs=require('node:fs'),{fork}=require('node:child_process');
 const [directory,output]=process.argv.slice(2);
+const workerCount=Number(process.argv[4]||6);
+if(!Number.isInteger(workerCount)||workerCount<1||workerCount>6)throw Error('Invalid worker count');
 const rows=fs.readFileSync(output,'utf8').trim().split('\n').map(JSON.parse);
 const candidate=rows.find(r=>r.type==='candidate');
 const seen=new Map(rows.filter(r=>r.type==='control').map(r=>[r.seed,r]));
 if(!candidate||rows.some(r=>r.type==='complete')||seen.size!==rows.filter(r=>r.type==='control').length)throw Error('Invalid resume checkpoint');
 const ranges=[];
 for(let seed=0;seed<1000;){if(seen.has(seed)){seed++;continue;}const start=seed;while(seed<1000&&!seen.has(seed))seed++;ranges.push({start,end:seed});}
-while(ranges.length<6){ranges.sort((a,b)=>(b.end-b.start)-(a.end-a.start));const r=ranges.shift();if(!r||r.end-r.start<2)throw Error('Insufficient work for six workers');const mid=Math.floor((r.start+r.end)/2);ranges.push({start:r.start,end:mid},{start:mid,end:r.end});}
-if(ranges.length!==6)throw Error('Unexpected fragmented checkpoint');
+while(ranges.length<workerCount){ranges.sort((a,b)=>(b.end-b.start)-(a.end-a.start));const r=ranges.shift();if(!r||r.end-r.start<2)throw Error('Insufficient work for workers');const mid=Math.floor((r.start+r.end)/2);ranges.push({start:r.start,end:mid},{start:mid,end:r.end});}
+if(ranges.length!==workerCount)throw Error('Unexpected fragmented checkpoint');
 const assigned=new Set(seen.keys());for(const r of ranges)for(let s=r.start;s<r.end;s++){if(assigned.has(s))throw Error('Overlapping assignment');assigned.add(s);}if(assigned.size!==1000||[...assigned].some(s=>!Number.isInteger(s)||s<0||s>=1000))throw Error('Invalid seed coverage');
 const checkpoint=output+'.parallel-prefix-'+Date.now();
 fs.copyFileSync(output,checkpoint,fs.constants.COPYFILE_EXCL);
