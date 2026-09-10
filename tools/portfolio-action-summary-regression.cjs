@@ -16,5 +16,7 @@ assert(page.includes('timing:"Await Confirmation"')&&page.includes('size:"Qualif
 assert(page.includes('timing:"Await Capital"')&&page.includes('bp.blockReason||funded<minFundingAction'),'Buy cards are not reconciled against the final portfolio allocator');
 assert(page.indexOf('if(need<=minFundingAction){bp.toleranceGap=need')<page.indexOf('const initialAllowance=capitalAllowance'),'At-target holdings must be recognized before a zero-dollar capital allowance can emit a false cash shortage');
 assert(!page.includes('Current selection')&&!page.includes('Current #{rankNo}'),'Internal portfolio rank still leaks into holding explanations');
+assert(page.includes('const held=resultForCards.get(sym(s));if(held){const final=pd(held),time=swingTimeReview(held);return marketPlan({...final,reason:holdingReason(held,final,time)});'),
+  'Owned Opportunities cards must reuse the exact finalized Portfolio decision');
 assert(page.includes('% of Swing capital')&&page.includes('No add, trim, or exit trigger is active today.'),'Portfolio holdings are missing plain-language sizing and trigger context');
 console.log('PORTFOLIO ACTION SUMMARY PASS: lifecycle exits, ordered sell/buy ticket, cash reconciliation, and compact time review verified.');
