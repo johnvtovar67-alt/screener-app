@@ -1,0 +1,3 @@
+At 2026-09-10 18:48 UTC both prior execution sessions were unavailable. Canonical files had last advanced at approximately 18:42 UTC, containing 110 Nasdaq and 51 S&P unique controls. There was no complete record. Cause of session termination is unconfirmed. No results were discarded or treated as new independent evidence.
+
+Resumed from those saved controls using the identical contract: S&P six workers in coordinator session 64387, Nasdaq one worker in session 29102. Original canonical JSONL paths remain authoritative. Check actual advancing outputs, rather than assuming an exec session remains alive. Historical snapshots and this restart note do not establish completion or live authority.
