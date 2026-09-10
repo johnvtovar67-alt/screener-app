@@ -1,0 +1,38 @@
+{
+  "purpose": "Frozen historical accounting reconciliation; not prospective evidence",
+  "simulatorSha256": "bcf3cc3e89ac499319a2cbfab76e42fda3bda5ef72d2d45777959e73e6ad9e7d",
+  "configurationSourceSha256": "3e4eb7c0bacc3383e3c72330931e9b59534e460c9678ee67b8cf7fc0b4d2764e",
+  "manifestSha256": "f1fe06112a5d4603f53d2d17c54521159ba6e8aecd687118ca27934b3e35df4f",
+  "checksumCoverage": "6/6",
+  "results": [
+    {
+      "id": "base",
+      "orders": 154,
+      "checkpoints": 918,
+      "maxCashError": 0.0012263805729162414,
+      "maxEquityError": 0.0012263805838301778,
+      "passed": true,
+      "firstMismatches": []
+    },
+    {
+      "id": "cooldown15",
+      "orders": 164,
+      "checkpoints": 918,
+      "maxCashError": 0.002484135668055387,
+      "maxEquityError": 0.0024841356789693236,
+      "passed": true,
+      "firstMismatches": []
+    },
+    {
+      "id": "sector40",
+      "orders": 150,
+      "checkpoints": 918,
+      "maxCashError": 0.001213977442603209,
+      "maxEquityError": 0.0012139774480601773,
+      "passed": true,
+      "firstMismatches": []
+    }
+  ],
+  "passed": true,
+  "generatedAt": "2026-09-10T15:33:15.013Z"
+}
