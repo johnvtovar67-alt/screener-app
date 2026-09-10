@@ -9,9 +9,11 @@ if(!directory||!output)throw Error('Usage: node tools/c1-cost-audit.cjs DATA_DIR
 const manifest=JSON.parse(fs.readFileSync(path.join(directory,'manifest.json')));
 const files=fs.readdirSync(directory).filter(x=>x.endsWith('.json.gz')).sort();
 const hash=crypto.createHash('sha256');
-const sessions=files.flatMap(name=>{const b=fs.readFileSync(path.join(directory,name));hash.update(b);return JSON.parse(zlib.gunzipSync(b)).sessions;});
+let checksumCount=0;
+const sessions=files.flatMap(name=>{const b=fs.readFileSync(path.join(directory,name));hash.update(b);const raw=zlib.gunzipSync(b),payload=JSON.parse(raw),chunk=manifest.chunks.find(x=>path.basename(x.pathname)===name);if(!chunk||b.length!==chunk.compressedBytes||payload.sessions.length!==chunk.end-chunk.start||payload.sessions[0].date!==chunk.firstDate||payload.sessions.at(-1).date!==chunk.lastDate)throw Error('Chunk integrity failure: '+name);if(chunk.contentSha256){if(crypto.createHash('sha256').update(raw).digest('hex')!==chunk.contentSha256)throw Error('Chunk checksum failure: '+name);checksumCount++;}return payload.sessions;});
+if(files.length!==manifest.chunks.length)throw Error('Missing dataset chunks');
 if(sessions.some((s,i)=>i&&s.date<=sessions[i-1].date))throw Error('Unordered dataset');
-const report={purpose:'Previously inspected historical cost sensitivity; not independent validation',generatedAt:new Date().toISOString(),dataSha256:hash.digest('hex'),start:'2023-01-04',end:'2026-09-01',parametersRetuned:false,eligibleForLiveCapital:false,results:[]};
+const report={purpose:'Previously inspected historical cost sensitivity; not independent validation',generatedAt:new Date().toISOString(),dataSha256:hash.digest('hex'),checksumCoverage:checksumCount+'/'+files.length,start:'2023-01-04',end:'2026-09-01',parametersRetuned:false,eligibleForLiveCapital:false,results:[]};
 for(const slippageBps of [12,25,50]){
  const runs=Object.entries(weights).map(([id,weight])=>{const run=simulate({metadata:manifest.datasetMetadata,sessions},{...options[id],slippageBps});process.stderr.write(`${slippageBps}bps ${id} complete\n`);return{id,weight,run};});
  const curve=runs[0].run.curve.map((p,i)=>{if(runs.some(r=>r.run.curve[i]?.date!==p.date))throw Error('Curve dates differ');return{date:p.date,equity:runs.reduce((a,r)=>a+r.weight*r.run.curve[i].equity,0)};});
