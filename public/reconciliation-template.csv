@@ -1,0 +1,4 @@
+id,date,type,symbol,shares,price,cash_amount,fee
+opening-cash,2026-09-01,OPEN_CASH,,,,1000,0
+opening-stock,2026-09-01,OPEN_POSITION,TEST,2,,0,0
+example-buy,2026-09-02,BUY,TEST,1,100,-100,0
