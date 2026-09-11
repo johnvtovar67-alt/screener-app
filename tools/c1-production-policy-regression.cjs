@@ -7,6 +7,7 @@ require("./c1-pending-decisions-regression.cjs");
 require("./c1-execution-adapter-regression.cjs");
 require("./brokerage-reconciliation-regression.cjs");
 require("./c1-account-reconciliation-regression.cjs");
+require("./c1-account-seed-regression.cjs");
 require("./c1-holdings-comparison-regression.cjs");
 const fs = require("fs");
 require("./c1-sleeve-accounting-regression.cjs");
