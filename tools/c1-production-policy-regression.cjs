@@ -236,3 +236,4 @@ assert(manifest.includes('release:"2026-09-05-c1-mobile-resilience"'), "the rele
 
 console.log("C1 PRODUCTION POLICY PASS: unvalidated rank has no full-size authority; three-name, 1%, two-session pilot, liquidity floor, lifecycle, drawdown control, and fail-closed behavior verified");
 require("./c1-decision-snapshot-regression.cjs");
+require("./c1-holding-risk-regression.cjs");
