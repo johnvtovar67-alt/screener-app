@@ -27,6 +27,9 @@ for(let day=0;day<sessions.length;day++){
  const prior=record, before=record?JSON.stringify(record):null;
  record=advanceC1ForwardModel(record,[sessions[day]],new Date(sessions[day].date+'T22:00:00Z'));
  if(prior)assert.equal(JSON.stringify(prior),before,'Advancing must not mutate the saved record');
+ assert.equal(record.summary.combinedPortfolio.contract,'c1-combined-holdings-v1');
+ assert.ok(Math.abs(record.summary.combinedPortfolio.equity-record.summary.equity)<.0001);
+ assert.deepEqual(Object.fromEntries(record.summary.combinedPortfolio.positions.map(p=>[p.symbol,p.virtualShares])),Object.fromEntries(Object.entries(record.summary.virtualShares).sort(([a],[b])=>a.localeCompare(b))));
  assert.equal(record.summary.executable,false);assert.equal(record.summary.eligibleForLiveCapital,false);
  assert.equal(record.summary.eligibleForAlphaClaim,false);
  assert.notEqual(record.paperExecutionStatus.status,'blocked',record.paperExecutionStatus.reason);
