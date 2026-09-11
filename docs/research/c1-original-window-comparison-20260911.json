@@ -1,0 +1,98 @@
+{
+  "baselineConvention": "First included close to last included close, matching slicePointInTimePortfolioRun; no reset, no boundary liquidation. Adjacent windows omit boundary-day returns under this original reporting convention.",
+  "beatsBoth": {
+    "nasdaq": 6,
+    "sp500": 7
+  },
+  "independentValidation": false,
+  "rows": [
+    {
+      "QQQ": 38.689,
+      "SPY": 15.4295,
+      "end": "2023-07-06",
+      "nasdaq": 42.2077,
+      "nasdaqBeatsBoth": true,
+      "sp500": 46.168,
+      "sp500BeatsBoth": true,
+      "start": "2023-01-04"
+    },
+    {
+      "QQQ": 8.6343,
+      "SPY": 7.3608,
+      "end": "2024-01-04",
+      "nasdaq": 18.2098,
+      "nasdaqBeatsBoth": true,
+      "sp500": -5.8678,
+      "sp500BeatsBoth": false,
+      "start": "2023-07-07"
+    },
+    {
+      "QQQ": 25.719,
+      "SPY": 19.4197,
+      "end": "2024-07-08",
+      "nasdaq": 4.1017,
+      "nasdaqBeatsBoth": false,
+      "sp500": 28.289,
+      "sp500BeatsBoth": true,
+      "start": "2024-01-05"
+    },
+    {
+      "QQQ": 5.6962,
+      "SPY": 7.8052,
+      "end": "2025-01-06",
+      "nasdaq": 15.3102,
+      "nasdaqBeatsBoth": true,
+      "sp500": 26.3707,
+      "sp500BeatsBoth": true,
+      "start": "2024-07-09"
+    },
+    {
+      "QQQ": 8.0977,
+      "SPY": 6.9532,
+      "end": "2025-07-10",
+      "nasdaq": 11.4952,
+      "nasdaqBeatsBoth": true,
+      "sp500": 16.9985,
+      "sp500BeatsBoth": true,
+      "start": "2025-01-07"
+    },
+    {
+      "QQQ": 12.231,
+      "SPY": 11.2015,
+      "end": "2026-01-08",
+      "nasdaq": 35.579,
+      "nasdaqBeatsBoth": true,
+      "sp500": 37.2907,
+      "sp500BeatsBoth": true,
+      "start": "2025-07-11"
+    },
+    {
+      "QQQ": 13.8456,
+      "SPY": 8.5109,
+      "end": "2026-07-13",
+      "nasdaq": 29.1221,
+      "nasdaqBeatsBoth": true,
+      "sp500": 24.5266,
+      "sp500BeatsBoth": true,
+      "start": "2026-01-09"
+    },
+    {
+      "QQQ": -1.6743,
+      "SPY": 1.3234,
+      "end": "2026-09-01",
+      "nasdaq": -7.0169,
+      "nasdaqBeatsBoth": false,
+      "sp500": 4.3039,
+      "sp500BeatsBoth": true,
+      "start": "2026-07-14"
+    }
+  ],
+  "scope": "Saved equity curve arithmetic across original windows; no historical simulation",
+  "sectorImpactMeasured": false,
+  "selectionAdjusted": false,
+  "sourceHashes": {
+    "nasdaqFixture": "9e486707592769542d61f374ae04474577672369a761a4fceb23864d619b121c",
+    "sp500Fixture": "817fa451af5b17fa695092a68226add3166f25cee2bc65e51305826728b9e5bc",
+    "sp500Manifest": "c7c25ea0f80ffb5722cc833d80643adef7bf192da6854e4e50c725a6accde5a6"
+  }
+}
