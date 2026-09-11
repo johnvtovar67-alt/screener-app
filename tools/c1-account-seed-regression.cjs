@@ -201,3 +201,21 @@ const openView=applyC1OpeningPlan(initialView,{...plan,providerVerified:true});
 assert.ok(openView.decisionId.includes(plan.observedAt));
 for(const p of openView.positions)if(plan.orders.some(o=>o.symbol===p.symbol&&o.side==='sell'&&!o.condition))assert.equal(positionDecision(openView,p.symbol).action,'Exit candidate');
 console.log('PASS: observed opening prices retain their identity; stale quotes and changed membership/basis fail, and Portfolio uses the same opening proposal as Opportunities.');
+
+// Legacy V1 never recorded opening holdings. Prospective adoption must retain
+// known risk values without claiming that historical activity was reconciled.
+const {adoptLegacyC1Capital}=loader.load('lib/c1LegacyCapitalAdoption.js');
+const legacyCapital={version:null,observedPortfolioSignature:signature(portfolio),highWater:capitalRecord.highWater*1.25,triggerDay:null,reconciliationRequired:true};
+const legacyBefore=JSON.stringify(legacyCapital);
+assert.throws(()=>adoptService({portfolio,capitalRecord:legacyCapital,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')}),/Reconcile/);
+const migratedAccount=adoptService({portfolio,capitalRecord:legacyCapital,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z'),prospectiveLegacyAdoptionConfirmed:true});
+assert.equal(JSON.stringify(legacyCapital),legacyBefore,'Original risk state is unchanged');
+assert.equal(migratedAccount.adoption.capitalHistory.historyReconciled,false);
+assert.equal(migratedAccount.adoption.capitalHistory.retainedPeak,legacyCapital.highWater);
+for(const seed of Object.values(migratedAccount.adoption.seeds))assert(seed.highWater>=124999.99,'Retained loss is not reset to current equity');
+assert.throws(()=>adoptLegacyC1Capital({portfolio,record:{...legacyCapital,version:2,portfolioSignature:signature(portfolio)},confirmed:true,asOfSession:baseline.date}),/Only a legacy/);
+assert.throws(()=>adoptLegacyC1Capital({portfolio,record:{...legacyCapital,observedPortfolioSignature:'OTHER'},confirmed:true,asOfSession:baseline.date}),/Analyze/);
+assert.throws(()=>adoptLegacyC1Capital({portfolio,record:{...legacyCapital,highWater:0},confirmed:true,asOfSession:baseline.date}),/positive retained/);
+const withBreaker=adoptLegacyC1Capital({portfolio,record:{...legacyCapital,triggerDay:baseline.date},confirmed:true,asOfSession:baseline.date});
+assert.equal(withBreaker.capitalRecord.triggerDay,baseline.date);
+console.log('PASS: explicit prospective legacy adoption retains peak, breaker and original record, cannot clear V2 reconciliation, and never claims prior history was reconciled.');

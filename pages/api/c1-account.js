@@ -27,7 +27,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    if(req.method==='POST'){
     if(req.body?.operation==='adopt'){
      if(saved)return res.status(409).json({error:'The existing C1 account cannot be reset.'});
-     account=adoptC1Account({portfolio:req.body.portfolio,capitalRecord:req.body.capitalRecord,book,now});
+     account=adoptC1Account({portfolio:req.body.portfolio,capitalRecord:req.body.capitalRecord,book,now,prospectiveLegacyAdoptionConfirmed:req.body.prospectiveLegacyAdoptionConfirmed===true});
     }else if(req.body?.operation==='record-session'&&saved){
      account=appendC1AccountSession({account,record:req.body.record,book,expectedRevision:req.body.expectedRevision,now});
     }else return res.status(400).json({error:'Valid account operation required.'});
