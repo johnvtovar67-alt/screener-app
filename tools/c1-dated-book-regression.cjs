@@ -49,5 +49,20 @@ assert.notEqual(path('nasdaq','preview','a'.repeat(40)),path('sp500','preview','
  const b=await connect(retry,{store,path:'test',holdings,now:new Date(retry.observedAt)});
  assert.equal(a.decisionSnapshot.decisionId,b.decisionSnapshot.decisionId);assert.equal(writes,1);
  assert.ok(!JSON.stringify(saved.record).includes('2500.43'),'Account balances must never be persisted in the model');
+ // Exercise the existing shared snapshot boundary used by both page APIs.
+ const indexInput={...firstInput,universe:'sp500'},indexRecord=accept(null,indexInput,firstNow);
+ const indexView=view(indexRecord,[],firstNow);
+ let reads=0;
+ const bridge={...imports,...loader.load('lib/v11ProductionPolicy.js'),Date,
+  process:{env:{VERCEL_ENV:'preview'}},
+  readStoredC1DatedBook:async universe=>{assert.equal(universe,'sp500');reads++;return {record:indexRecord,view:indexView,path:'preview/index'};}};
+ vm.createContext(bridge);
+ vm.runInContext(fs.readFileSync('lib/v11ProductionSnapshot.js','utf8').replace(/import\s+[\s\S]*?\s+from\s+["'][^"']+["'];/g,'').replace(/export /g,'')+'\nglobalThis.api={getV11ProductionSnapshot};',bridge);
+ const snapshot=await bridge.api.getV11ProductionSnapshot({now:firstNow});
+ assert.equal(snapshot.decisionSnapshot.decisionId,indexView.decisionSnapshot.decisionId);
+ assert.equal(snapshot.decisionSnapshot.universe,'sp500');assert.equal(snapshot.activationAuthorized,false);assert.equal(reads,1);
+ bridge.readStoredC1DatedBook=async()=>{throw new Error('Not prepared');};
+ const unavailable=await bridge.api.getV11ProductionSnapshot({now:firstNow});
+ assert.equal(unavailable.status,'unavailable');assert.equal(unavailable.forwardAccounting,null,'No fallback to a different broad model');
  console.log('PASS: dated source → immutable book → frozen model → shared decision → account comparison; retries, revisions, corporate-action anchors, missing sessions and privacy');
 })().catch(e=>{console.error(e);process.exitCode=1;});
