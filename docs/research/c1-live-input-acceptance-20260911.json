@@ -1,0 +1,42 @@
+{
+  "status": "compiled-input-only",
+  "contract": "c1-dated-index-input-v1",
+  "universe": "nasdaq",
+  "sourceSessionDate": "2026-09-10",
+  "observedAt": "2026-09-11T02:58:14.576Z",
+  "memberCount": 102,
+  "evaluatedMembers": 100,
+  "shortHistorySymbols": [
+    "HONA",
+    "SPCX"
+  ],
+  "sourceReceipt": {
+    "provider": "FMP",
+    "membershipEndpoint": "nasdaq-constituent",
+    "membershipSha256": "c466c53387eea8b2b052ac8bbbe54dad3fc464b33039fb910815b6b7dcd99fbf",
+    "membershipCheckedTwice": true,
+    "priceEndpoint": "historical-price-eod/dividend-adjusted",
+    "fromDate": "2025-03-09",
+    "throughDate": "2026-09-10",
+    "priceResponsesSha256": "bcab2681935737b1f6ee05bc88278868a6258b18a6e714934135987aeee10d00",
+    "compilerSource": "historicalSignalEvaluator.compilePointInTimeSignals",
+    "sessionSha256": "49a916264a447b4aa5c46f05cb8c2021980ae70a79819cd067072787323b9890",
+    "collectedSymbols": 104,
+    "productionChanged": false
+  },
+  "executable": false,
+  "eligibleForLiveCapital": false,
+  "eligibleForAlphaClaim": false,
+  "productionChanged": false,
+  "limitations": [
+    "Current index membership is observed at collection time, not independently certified historical membership.",
+    "Current sector observations do not repair the saved backtest sector-history limitation.",
+    "No historical holdings, live model book, corporate-action transition, or account-specific orders are inferred."
+  ],
+  "verifiedCommit": "39f40a7fe07f9625ef122576775f3ce36d4b38f5",
+  "verifiedDeployment": "dpl_5jjbwhpZwhr5unQe53SKuhcYQQmY",
+  "httpStatus": 200,
+  "compilerSha256": "81276d9dc0d449bf26e607a598602094d35bfe85252afc83544967a582748c33",
+  "replayCompactorSha256": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+  "compilerHashesMatchPreservedArchivedReplay": true
+}
