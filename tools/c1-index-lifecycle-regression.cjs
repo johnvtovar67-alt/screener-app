@@ -7,19 +7,29 @@ const box = { ...market, Date }; vm.createContext(box);
 vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1Index;', box);
 (async () => {
   const now = new Date('2026-09-11T22:00:00Z');
-  let collections = 0, connections = 0; const stages = [];
+  let collections = 0, connections = 0; const stages = [], archived = [];
   const dependencies = { now, onStage: stage => stages.push(stage), prepare: async () => ({sourceSessionDate:'2026-09-11'}),
     collect: async () => {collections++;return {sourceSessionDate:'2026-09-11'};},
+    archive: async input => {archived.push(input); return {contract:'c1-index-observation-receipt-v1', observationHash:'a'.repeat(64),sourceSessionDate:input.sourceSessionDate,acceptedModelInput:false};},
     connect: async input => {connections++;return input;} };
   const cached = await box.run(dependencies);
   assert.equal(cached.status,'already-current');assert.equal(collections,0);assert.equal(connections,0);
   const advanced = await box.run({...dependencies,prepare:async()=>({sourceSessionDate:'2026-09-10'})});
   assert.equal(advanced.status,'advanced');assert.equal(collections,1);assert.equal(connections,1);
-  assert.equal(stages.join(','),'prepare,prepare,collect,connect');
+  assert.equal(stages.join(','),'prepare,prepare,collect,archive,connect');
+  assert.equal(archived.length,1);
   await assert.rejects(()=>box.run({...dependencies,prepare:async()=>{throw new Error('Changed seed');}}),/Changed seed/);
   assert.equal(collections,1,'Seed integrity is checked before provider calls');
   await assert.rejects(()=>box.run({...dependencies,prepare:async()=>({sourceSessionDate:'2026-09-10'}),collect:async()=>{throw new Error('Provider unavailable');}}),/Provider unavailable/);
   assert.equal(connections,1,'Failed acquisition never advances a book');
+  let rejected;
+  try { await box.run({...dependencies,prepare:async()=>({sourceSessionDate:'2026-09-10'}),connect:async()=>{throw new Error('Price reconciliation required');}}); }
+  catch(error){rejected=error;}
+  assert.equal(rejected.message,'Price reconciliation required');
+  assert.equal(rejected.indexObservation.observationHash,'a'.repeat(64));
+  assert.equal(archived.length,2,'Rejected transitions retain their actual observed input');
+  await assert.rejects(()=>box.run({...dependencies,prepare:async()=>({sourceSessionDate:'2026-09-10'}),archive:async()=>{throw new Error('Index observation archive unavailable');}}),/archive unavailable/);
+  assert.equal(connections,1,'An unarchived observation is not connected');
 
   let calls=0; const logs=[];
   const route={Buffer,timingSafeEqual,console:{info:(...args)=>logs.push(args.join(' ')),error:(...args)=>logs.push(args.join(' '))},process:{env:{CRON_SECRET:'test-secret'}},refreshC1Index:async()=>{calls++;return {status:'advanced',decisionSnapshot:{decisionId:'same'}};}};
@@ -62,6 +72,9 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
   assert.ok(!logs.join(' ').includes('test-secret'));
   assert.equal(route.anchorDiagnostic({priceAnchorMismatch:{previousSessionDate:'2026-09-10',currentSessionDate:'2026-09-11',
     mismatchCount:1,mismatches:[{symbol:'https://private',previousClose:100,observedPriorClose:99}]}}),undefined);
+  const receipt=route.observationDiagnostic({contract:'c1-index-observation-receipt-v1',observationHash:'a'.repeat(64),sourceSessionDate:'2026-09-11',acceptedModelInput:false,privateKey:'test-secret'});
+  assert.equal(receipt.observationHash,'a'.repeat(64));assert.ok(!JSON.stringify(receipt).includes('test-secret'));
+  assert.equal(route.observationDiagnostic({contract:'c1-index-observation-receipt-v1',observationHash:'https://secret',sourceSessionDate:'2026-09-11',acceptedModelInput:false}),undefined);
   const config=JSON.parse(fs.readFileSync('vercel.json','utf8'));
   assert.ok(config.crons.some(c=>c.path==='/api/cron/c1-index'),'Scheduled advancement must ship with the handler');
   assert.ok(!config.crons.some(c=>c.path==='/api/cron/fmp-research-backtest'),'Frozen research must not restart every minute');

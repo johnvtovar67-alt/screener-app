@@ -23,6 +23,8 @@ function failureDetail(error) {
     'Missing observed index session; no historical membership backfill',
     'Previous-session adjusted price anchors are required',
     'Dated model write conflict',
+    'Current provider observation required for archive',
+    'Index observation archive unavailable',
     'Index membership count is outside the declared range',
     'Invalid or duplicate index member',
     'Input observation timestamp is required',
@@ -73,6 +75,13 @@ function anchorDiagnostic(error) {
 }
 
 export const config = { maxDuration: 300 };
+
+function observationDiagnostic(receipt) {
+  if (receipt?.contract !== 'c1-index-observation-receipt-v1' ||
+      !/^[a-f0-9]{64}$/.test(receipt.observationHash || '') ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(receipt.sourceSessionDate || '') || receipt.acceptedModelInput !== false) return undefined;
+  return { observationHash: receipt.observationHash, sourceSessionDate: receipt.sourceSessionDate, acceptedModelInput: false };
+}
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') {
@@ -99,10 +108,10 @@ export default async function handler(req, res) {
       sourceSessionDate: result.sourceSessionDate, sourceHash: result.sourceHash,
       recordHash: result.recordHash, decisionId: result.decisionSnapshot.decisionId,
       executable: false, activationAuthorized: false };
-    console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate }));
+    console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate, observation: observationDiagnostic(result.observationReceipt) }));
     return res.status(200).json(body);
   } catch (error) {
-    console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error), priceAnchors: anchorDiagnostic(error) }));
+    console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error), priceAnchors: anchorDiagnostic(error), observation: observationDiagnostic(error?.indexObservation) }));
     return res.status(503).json({ status: 'index-unavailable', executable: false,
       error: String(error?.message || 'Index collection failed').slice(0, 220) });
   }
