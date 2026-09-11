@@ -121,7 +121,7 @@ export default function Home(){
   const[tab,setTab]=useState("opportunities"),[stocks,setStocks]=useState([]),[themeStocks,setThemeStocks]=useState([]),[selectedTheme,setSelectedTheme]=useState("ai_compute");
   const[portfolio,setPortfolio]=useState([]),[results,setResults]=useState([]);
   const[holdingsComparison,setHoldingsComparison]=useState(null);
-  const[accountView,setAccountView]=useState(null),[accountBusy,setAccountBusy]=useState(false);
+  const[accountView,setAccountView]=useState(null),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
   const accountRequestId=useRef(0);
   async function refreshC1Account(body=null){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
@@ -129,9 +129,9 @@ export default function Home(){
     const r=await fetch('/api/c1-account',{method:body?'POST':'GET',headers:{authorization:`Bearer ${key}`,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'}),d=await r.json();
     if(requestId!==accountRequestId.current)return;
     if(!r.ok){setAccountView(null);if(r.status!==404||body)throw new Error(d.error||"C1 account refresh failed.");return;}
-    setAccountView(d);return d;
+    setAccountView(d);setAccountError("");return d;
   }
-  async function startC1Account(){setAccountBusy(true);setErr("");try{const capitalRecord=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");await refreshC1Account({operation:'adopt',portfolio:portfolio.map(p=>({...p,shares:Number(p.shares),avgCost:Number(p.avgCost)})),capitalRecord,prospectiveLegacyAdoptionConfirmed:capitalRecord.version===null&&capitalRecord.portfolioSignature==null&&capitalRecord.reconciliationRequired===true});}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
+  async function startC1Account(){setAccountBusy(true);setAccountError("");setErr("");try{const capitalRecord=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");await refreshC1Account({operation:'adopt',portfolio:portfolio.map(p=>({...p,shares:Number(p.shares),avgCost:Number(p.avgCost)})),capitalRecord,prospectiveLegacyAdoptionConfirmed:capitalRecord.version===null&&capitalRecord.portfolioSignature==null&&capitalRecord.reconciliationRequired===true});}catch(e){setAccountError(e.message);}finally{setAccountBusy(false);}}
   async function saveC1Activity(record,expectedRevision){setAccountBusy(true);setErr("");try{const d=await refreshC1Account({operation:'record-session',record,expectedRevision});if(d){const updated=[...portfolio.filter(p=>p.role==='Core'&&!CASH.includes(p.symbol)),...d.decision.positions.map(p=>({symbol:p.symbol,shares:p.shares,avgCost:p.avgCost,openedAt:p.openedAt,role:'Swing'})),{symbol:'CASH',shares:d.decision.actualCash,avgCost:1,role:'Swing'}];localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);await pushCloudPortfolio(updated);await analyze(updated);}}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
 
   const[transactionCheck,setTransactionCheck]=useState(null),[importingTransactions,setImportingTransactions]=useState(false);
@@ -414,7 +414,8 @@ export default function Home(){
     <header><div><h1>🧠 Investment Operating System</h1><p>Expert analysis underneath. Portfolio-level risk governance on top.</p>{lastUpdated&&<small className="updated">Last refreshed {lastUpdated.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}</small>}</div><button disabled={busy} onClick={handleReload}>{busy?"Reloading...":"Reload"}</button></header>
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
-    {err&&<p className="error">{err}</p>}
+    {accountError&&<p className="error" role="alert"><b>C1 account activation:</b> {accountError}</p>}
+    {err&&!accountError&&<p className="error">{err}</p>}
     {tab==="portfolio"&&!accountView&&err&&<C1ReconciliationDetails portfolio={portfolio} capitalStorageKey={C1_DRAWDOWN_KEY}/>}
     {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
