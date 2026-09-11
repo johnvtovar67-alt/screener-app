@@ -1,4 +1,4 @@
-# C1 continuation acceptance — September 12, 2026 UTC
+# C1 continuation acceptance — September 11, 2026
 
 Base: `dfeafdd701774e5ef262ac83ea31c1dce47f7893` (PR #159).
 Disposition: diagnostic-only. No C1 trading release or alpha certification.
