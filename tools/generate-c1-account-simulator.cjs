@@ -56,5 +56,9 @@ replace('      const todaysOrders = pending.splice(0, pending.length);',`      i
       }
       const todaysOrders = pending.splice(0, pending.length);`);
 replace('    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stringify(pending)),',`    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stringify(actualReplay ? [...pending.filter(o=>o.side!=='sell'||!pendingActualRiskExits.has(o.symbol)),...pendingActualRiskExits.values()] : pending)),`);
+// Inherited nonmembers retain their cash/position risk but have no rank signal.
+// This account-only exception never admits them to the entry pool.
+replace('            heldSessions >= config.rankedMinimumHoldSessions &&',
+ '            position.inheritedRiskOnly !== true &&\n            heldSessions >= config.rankedMinimumHoldSessions &&');
 if(process.argv.includes('--check'))assert.equal(fs.readFileSync(path,'utf8'),source,'Generated account simulator changed outside declared seams');
 else fs.writeFileSync(path,source);

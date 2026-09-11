@@ -185,9 +185,9 @@ vm.createContext(context);vm.runInContext(route,context);
 
  const testPortfolio=[...portfolio,{symbol:'OUT',shares:2,avgCost:1,role:'Swing'}],originalBook=JSON.stringify(baselineBook);
  let requests=0;
- const fetcher=async(url)=>{requests++;assert(url.includes('symbol=OUT'));return {ok:true,json:async()=>[{symbol:'OUT',date:baseline.date,adjOpen:100,adjHigh:102,adjLow:99,adjClose:101,volume:1000}]};};
+ const fetcher=async(url)=>{requests++;assert(url.includes('symbol=OUT'));if(url.includes('/profile?'))return {ok:true,json:async()=>[{symbol:'OUT',sector:'Healthcare',cik:'fixture-issuer'}]};return {ok:true,json:async()=>[{symbol:'OUT',date:baseline.date,adjOpen:100,adjHigh:102,adjLow:99,adjClose:101,volume:1000}]};};
  const covered=await holdingBox.holdingExports.collectC1HoldingCoverage({portfolio:testPortfolio,baseline,now:new Date(baseline.date+'T21:00:00Z'),fetcher,apiKey:'test-secret'});
- assert.equal(requests,1);assert.equal(covered.rows[0].status,'verified');assert.equal(covered.rows[0].price.close,101);assert.equal(covered.rows[0].inDecisionUniverse,false);
+ assert.equal(requests,2);assert.equal(covered.rows[0].status,'verified');assert.equal(covered.rows[0].price.close,101);assert.equal(covered.rows[0].inDecisionUniverse,false);
  assert.equal(JSON.stringify(baselineBook),originalBook,'Supplemental holdings cannot mutate index membership or prices');assert(!JSON.stringify(covered).includes('test-secret'));
  const bad=await holdingBox.holdingExports.collectC1HoldingCoverage({portfolio:testPortfolio,baseline,now:new Date(baseline.date+'T21:00:00Z'),fetcher:async()=>({ok:true,json:async()=>[{symbol:'WRONG',date:baseline.date,open:100,high:102,low:99,close:101}]}),apiKey:'test-secret'});
  assert.equal(bad.rows[0].status,'unavailable');
@@ -216,11 +216,58 @@ vm.createContext(context);vm.runInContext(route,context);
  const {c1AccountBook}=loader.load('lib/c1AccountInput.js');
  assert.throws(()=>c1AccountBook(baselineBook,supplement),/cannot replace/);
  assert.throws(()=>c1AccountBook(gapBook,{...supplement,rows:[supplement.rows[0],supplement.rows[0]]}),/Invalid verified/);
- assert.throws(()=>c1AccountBook({...gapBook,model:{sessions:[{...gapBook.model.sessions[0],universeSymbols:symbols.filter(s=>s!=='T4')}]}},supplement),/outside/);
+ assert.throws(()=>c1AccountBook({...gapBook,model:{sessions:[{...gapBook.model.sessions[0],universeSymbols:symbols.filter(s=>s!=='T4')}]}},supplement),/classification/);
  const gapNext={...updatedBook,model:{sessions:[gapBook.model.sessions[0],opening]}};
  const gapContinued=appendService({account:gapSaved.record,record:records[0],book:gapNext,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
  assert.equal(evaluateService({account:gapContinued,book:gapNext,now:new Date(opening.date+'T21:00:00Z')}).decisionId,shared.decisionId);
- console.log('PASS: verified missing constituent price activates, persists, reloads and continues actual fills without changing the accepted index or admitting outside holdings.');
+ // Nonmembers use a distinct inherited-risk path, never fabricated ranks.
+ const inheritedPortfolio=[{symbol:'OUT',shares:8,avgCost:101,openedAt:sessions[0].date,role:'Swing'},{symbol:'CASH',shares:10000,avgCost:1,role:'Swing'}];
+ const inheritedCapital={version:2,portfolioSignature:signature(inheritedPortfolio),highWater:10808,triggerDay:null,reconciliationRequired:false};
+ const inherited=adoptService({portfolio:inheritedPortfolio,capitalRecord:inheritedCapital,book:baselineBook,holdingCoverage:covered,now:new Date(baseline.date+'T21:00:00Z')});
+ const inheritedView=evaluateService({account:inherited,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')});
+ assert.equal(inheritedView.positions[0].shares,8);
+ assert.equal(inheritedView.positions[0].action,'Risk monitoring');
+ assert.equal(inherited.adoption.actualSwingEquity,10808);
+ assert.ok(inheritedView.positions[0].exits.length===0,'Being outside rankings cannot cause an inherited rank exit after 30 sessions');
+ assert.ok(inheritedView.opportunities.every(p=>p.symbol!=='OUT'));
+ const inheritedBook=c1AccountBook(baselineBook,covered);
+ assert.equal(inheritedBook.model.sessions[0].universeSymbols.includes('OUT'),false);
+ assert.equal(inheritedBook.model.sessions[0].signals.some(s=>s.symbol==='OUT'),false);
+ const futureCoverage={...covered,sourceSessionDate:opening.date,rows:covered.rows.map(r=>({...r,date:opening.date,price:{...r.price,date:opening.date,open:101,high:102,low:99,close:101}}))};
+ const inheritedFuture={...inherited,holdingCoverages:[covered,futureCoverage]};
+ const inheritedPending=pendingService({account:inheritedFuture,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
+ assert.ok(!inheritedPending.plan.orders.some(o=>o.symbol==='OUT'&&!o.condition));
+ const inheritedRecord={date:opening.date,openingObservedAt:inheritedPending.openingObservedAt,complete:true,fills:[]};
+ const inheritedNext=appendService({account:inheritedFuture,record:inheritedRecord,book:updatedBook,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
+ assert.equal(evaluateService({account:inheritedNext,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')}).positions[0].shares,8);
+ for(const [id,seed] of Object.entries(inherited.adoption.seeds)){
+  const falling={...inheritedBook.model.sessions[0],date:opening.date,prices:[...opening.prices,{symbol:'OUT',date:opening.date,open:80,high:81,low:79,close:80,adjusted:true}]};
+  const stoppedLegacy=account({sessions:[inheritedBook.model.sessions[0],falling]},{...options[id],startDate:baseline.date,endDate:opening.date,liquidateAtEnd:false},seed);
+  assert.ok(stoppedLegacy.trades.some(t=>t.symbol==='OUT'&&['initial-stop','portfolio-drawdown-stop'].includes(t.reason)),'Inherited stop remains effective');
+ }
+ let inheritedSaved=null,inheritedApiBook=baselineBook,coverageCalls=0;
+ const inheritedHandler=context.factory({clock:()=>new Date(opening.date+'T21:00:00Z'),readBook:async()=>({record:inheritedApiBook}),collectHoldings:async({baseline:b})=>{coverageCalls++;return b.date===baseline.date?covered:futureCoverage;},
+  store:{read:async()=>inheritedSaved,write:async(path,record)=>{inheritedSaved={record,etag:'1'};}}
+ });
+ // Adoption uses a clock matching its current completed source session.
+ const inheritedAdoptHandler=context.factory({clock:()=>new Date(baseline.date+'T21:00:00Z'),readBook:async()=>({record:baselineBook}),collectHoldings:async()=>covered,
+  store:{read:async()=>inheritedSaved,write:async(path,record)=>{inheritedSaved={record,etag:'1'};}}
+ });
+ async function inheritedRequest(handler,method,body){const res={setHeader(){},status(code){this.code=code;return this;},json(value){this.body=value;return this;}};await handler({method,body,headers:{authorization:'Bearer '+'fixture'.repeat(6)}},res);return res;}
+ const inheritedActivated=await inheritedRequest(inheritedAdoptHandler,'POST',{operation:'adopt',portfolio:inheritedPortfolio,capitalRecord:inheritedCapital});
+ assert.equal(inheritedActivated.code,200,JSON.stringify(inheritedActivated.body));
+ inheritedApiBook=updatedBook;
+ const inheritedGet=await inheritedRequest(inheritedHandler,'GET');
+ assert.equal(inheritedGet.code,200,JSON.stringify(inheritedGet.body));assert.equal(inheritedGet.body.pendingSession.date,opening.date);
+ assert.equal(inheritedSaved.record.revision,0,'A GET cannot record transactions');
+ const inheritedPost=await inheritedRequest(inheritedHandler,'POST',{operation:'record-session',record:inheritedRecord,expectedRevision:0});
+ assert.equal(inheritedPost.code,200,JSON.stringify(inheritedPost.body));assert.equal(inheritedSaved.record.revision,1);
+ assert.equal(inheritedSaved.record.holdingCoverages.length,2,'Posted activity retains the verified continuation price');
+ assert.equal(inheritedPost.body.decision.positions[0].shares,8);
+ assert.equal((await inheritedRequest(inheritedHandler,'GET')).code,200);
+ assert.equal(coverageCalls,2,'Committed supplemental observations are reused, not silently revised');
+ console.log('PASS: inherited nonmember retains real equity and shares across sessions, never enters C1 rankings, avoids false rank exits and retains stop protection.');
+ console.log('PASS: verified missing constituent price activates, persists, reloads and continues actual fills without changing the accepted index or admitting outside holdings to entry rankings.');
  console.log('PASS: actual account API rejects unauthenticated access, preserves failed writes and existing accounts, and performs no provider initialization.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
 const stopOrder=plan.orders.find(o=>o.condition==='stop-triggered'&&planFills.some(f=>f.side==='buy'&&f.symbol===o.symbol&&plan.orders.find(x=>x.id===f.orderId).sleeve===o.sleeve));

@@ -26,6 +26,21 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    // Read only: this endpoint cannot initialize or refresh the index provider.
    const {record:book}=await readBook('sp500',{now});
    let account=saved?.record;
+   // Complete only the next account session's holding observations. These
+   // remain private account inputs and cannot initialize or alter index data.
+   if(account){
+    const previous=evaluateC1Account({account,book,now});
+    const next=book.model.sessions.find(s=>s.date>previous.sourceSessionDate);
+    if(next&&missingC1HoldingPrices(previous.positions.map(p=>({...p,role:'Swing'})),next).length){
+     const existing=account.holdingCoverages||[account.holdingCoverage].filter(Boolean);
+     if(!existing.some(c=>c.sourceSessionDate===next.date)){
+      const supplement=await collectHoldings({portfolio:previous.positions.map(p=>({...p,role:'Swing'})),baseline:next,now});
+      if(supplement.rows.some(r=>r.status!=='verified'))throw new Error('Next-session holding prices or classifications unavailable');
+      account={...account,holdingCoverages:[...existing,supplement]};
+      c1AccountBook(book,account.holdingCoverages);
+     }
+    }
+   }
    if(req.method==='POST'){
     if(req.body?.operation==='adopt'){
      if(saved)return res.status(409).json({error:'The existing C1 account cannot be reset.'});
@@ -34,11 +49,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      if(missingC1HoldingPrices(req.body.portfolio,baseline).length){
       holdingCoverage=await collectHoldings({portfolio:req.body.portfolio,baseline,now});
       const unavailable=holdingCoverage.rows.filter(r=>r.status!=='verified').map(r=>r.symbol);
-      const outside=holdingCoverage.rows.filter(r=>!r.inDecisionUniverse).map(r=>r.symbol);
-      if(unavailable.length||outside.length)return res.status(409).json({holdingCoverage,executable:false,error:unavailable.length?
-       'Dated adjusted holding prices unavailable: '+unavailable.join(', '):outside.length?
-       'Holding prices verified, but these holdings are outside the dated C1 universe: '+outside.join(', ')+'. No sell instruction is implied.':
-       'Holding prices verified separately. The accepted C1 input still requires a reconciled data correction; original account preserved.'});
+      if(unavailable.length)return res.status(409).json({holdingCoverage,executable:false,error:'Dated adjusted holding prices or classifications unavailable: '+unavailable.join(', ')});
      }
      account=adoptC1Account({portfolio:req.body.portfolio,capitalRecord:req.body.capitalRecord,book,holdingCoverage,now,prospectiveLegacyAdoptionConfirmed:req.body.prospectiveLegacyAdoptionConfirmed===true});
     }else if(req.body?.operation==='record-session'&&saved){
@@ -51,7 +62,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    let openingPlan=null,openingError=null;
    if(!pendingSession&&decision.current){
     try{
-     const sessions=c1AccountBook(book,account.holdingCoverage).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
+     const sessions=c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
      const symbols=decision.requiredOpeningSymbols;
      const opening=await collectOpening({baseline,symbols,now});
      if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:account.records,opening,observedAt:opening.receipt.observedAt});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;decision=applyC1OpeningPlan(decision,openingPlan);}
