@@ -416,7 +416,7 @@ export default function Home(){
     {err&&<p className="error">{err}</p>}
     {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
-    {tab==="opportunities"&&accountView&&<C1AccountOpportunities decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,opportunities:[],explanation:"Entered holdings differ from the recorded C1 account. Record actual activity before using these candidates."}}/>}
+    {tab==="opportunities"&&accountView&&<C1AccountOpportunities openingPlan={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null} openingError={accountView.openingError} decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,opportunities:[],explanation:"Entered holdings differ from the recorded C1 account. Record actual activity before using these candidates."}}/>}
     {tab==="portfolio"&&accountView?.pendingSession&&<C1AccountActivity key={accountView.pendingSession.date} pending={accountView.pendingSession} onSave={saveC1Activity} busy={accountBusy}/>}
     {tab==="portfolio"&&!accountView&&<button disabled={accountBusy||loading||!portfolio.length} onClick={startC1Account}>{accountBusy?"Starting C1…":"Start C1 with current portfolio"}</button>}
     {tab==="opportunities"&&!accountView&&<>

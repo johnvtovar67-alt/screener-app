@@ -159,7 +159,7 @@ assert.throws(()=>evaluateService({account:updatedAccount,book:{...updatedBook,c
 console.log('PASS: shared account decisions bind original inputs, accepted activity and revision; stale ownership cannot reuse candidates, and forbidden purchases remain excluded.');
 const vm=require('node:vm'),fs=require('node:fs');
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
-const context={createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+const context={applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -186,3 +186,18 @@ const stopped=continueAccount({adoption,sessions:[baseline,stopSession],records:
 assert.equal(stopped.books[stopOrder.sleeve].positions[stopOrder.symbol],undefined);
 assert.ok(stopped.sleeves[stopOrder.sleeve].trades.some(t=>t.symbol===stopOrder.symbol&&t.reason==='initial-stop'));
 console.log('PASS: a partial actual entry can trigger its recorded standing stop later in the session; untriggered stops do not become fabricated exits.');
+
+const openingProviderSource=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
+const providerBox={...loader.load('lib/marketSession.js'),Date};vm.createContext(providerBox);vm.runInContext(openingProviderSource+'\nglobalThis.validate=validateC1OpeningObservations;',providerBox);
+const observedSymbols=['T4','SPY','QQQ'],memberRows=symbols.map(symbol=>({symbol,sector:baseline.signals.find(s=>s.symbol===symbol).sector}));
+const observationRows=Object.fromEntries(observedSymbols.map(symbol=>[symbol,{quote:{symbol,open:100,price:101,timestamp:Date.parse(observedAt)/1000},anchor:baseline.prices.find(p=>p.symbol===symbol)&&{...baseline.prices.find(p=>p.symbol===symbol),date:baseline.date}}]));
+const observedInput={baseline,symbols:observedSymbols,membersBefore:memberRows,membersAfter:memberRows,observations:observationRows,now:new Date(observedAt)};
+const verifiedOpening=providerBox.validate(observedInput);assert.equal(verifiedOpening.receipt.previousAdjustedClosesUnchanged,true);assert.equal(verifiedOpening.prices[0].open,100);
+assert.throws(()=>providerBox.validate({...observedInput,observations:{...observationRows,T4:{...observationRows.T4,quote:{...observationRows.T4.quote,timestamp:Date.parse(observedAt)/1000-121}}}}),/Fresh opening quote/);
+assert.throws(()=>providerBox.validate({...observedInput,observations:{...observationRows,T4:{...observationRows.T4,anchor:{...observationRows.T4.anchor,close:50}}}}),/price basis changed/);
+assert.throws(()=>providerBox.validate({...observedInput,membersAfter:[]}),/membership/);
+const {applyC1OpeningPlan}=loader.load('lib/c1AccountDecision.js');
+const openView=applyC1OpeningPlan(initialView,{...plan,providerVerified:true});
+assert.ok(openView.decisionId.includes(plan.observedAt));
+for(const p of openView.positions)if(plan.orders.some(o=>o.symbol===p.symbol&&o.side==='sell'&&!o.condition))assert.equal(positionDecision(openView,p.symbol).action,'Exit candidate');
+console.log('PASS: observed opening prices retain their identity; stale quotes and changed membership/basis fail, and Portfolio uses the same opening proposal as Opportunities.');

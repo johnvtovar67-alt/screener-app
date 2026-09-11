@@ -21,7 +21,7 @@ Opportunities and Portfolio use one account decision. Portfolio Hold/exit-candid
 ## Remaining release work
 
 - The browser URL security policy blocked the separate dated-provider initialization acceptance. That blocked action has not been retried through another channel.
-- Verify live provider observations and the opening-price path end to end before treating proposed opening orders as current trade instructions. The current account API displays completed-session analysis; the tested opening planner is not a verified intraday feed.
+- Verify live provider observations and the opening-price path end to end. The account API now connects the opening planner to server-side quote and adjusted-anchor collection, checks membership twice, rejects stale quotes and changed price bases, and applies the same opening proposal to both views. This connector has controlled-input tests but has not passed live acceptance. Opening prices are explicitly distinguished from current execution prices.
 - Complete hosted build and browser acceptance of the combined release. These changes are a draft, not a production trading release.
 
 Account-specific screenshots, holdings and transactions are not embedded in this public repository. They are separate private input records.
