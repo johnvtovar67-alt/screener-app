@@ -16,6 +16,14 @@ assert.throws(()=>compare([...holdings,holdings[0]],model),/duplicate/);
 assert.throws(()=>compare([{symbol:'NTRA',shares:NaN,role:'Swing'}],model),/shares/);
 assert.throws(()=>compare([{symbol:'NTRA',shares:34}],model),/role/);
 assert.equal(compare(holdings,{...model,observedForwardSessions:1,virtualShares:{NTRA:NaN}}).status,'model-not-ready');
+const cashOnly=compare([{symbol:'CASH',shares:250,role:'Swing'},
+  {symbol:'SWVXX',shares:1000,cashValue:1000,role:'Swing'},
+  {symbol:'VMFXX',shares:500,cashValue:500,role:'Core'}],model);
+assert.equal(cashOnly.cash,1250,'Include declared Swing cash and cash-equivalent value, excluding Core cash');
+assert.equal(cashOnly.positions.length,0,'Cash equivalents cannot become model stock positions');
+assert.equal(cashOnly.executable,false);
+assert.throws(()=>compare([{symbol:'SWVXX',shares:1000,role:'Swing'}],model),/cash value/);
+assert.throws(()=>compare([{symbol:'CASH',shares:250,cashValue:NaN,role:'Swing'}],model),/cash value/);
 console.log('C1 holdings comparison: no inferred orders, no invented fill history, empty/stale models fail closed');
 const fs=require('node:fs'),vm=require('node:vm');
 const code=fs.readFileSync('pages/api/research/c1-holdings-comparison.js','utf8').replace(/^import .*;\n/gm,'').replace('export const config','const config').replace('export default async function handler','async function handler');
@@ -35,9 +43,15 @@ const page=fs.readFileSync('pages/index.js','utf8');
 const block=page.slice(page.indexOf('      // Reuse this analysis'),page.indexOf('      let priorControl={}'));
 assert.ok(block.includes('compareC1Holdings'));
 let captured;
-const ui={portfolio:[{symbol:'TEST',shares:2,role:'Swing'},{symbol:'CASH',shares:100,role:'Swing'}],CASH:['CASH'],role:(s,r)=>r,compareC1Holdings:compare,screenLive:true,currentProductionPolicy:{forwardAccounting:model},setHoldingsComparison:r=>{captured=r;}};
+const ui={portfolio:[{symbol:'TEST',shares:2,role:'Swing'},{symbol:'CASH',shares:100,role:'Swing'}],CASH:['CASH','SWVXX','VMFXX','SPAXX','FDRXX','MMF'],role:(s,r)=>r,compareC1Holdings:compare,screenLive:true,currentProductionPolicy:{forwardAccounting:model},setHoldingsComparison:r=>{captured=r;}};
 vm.createContext(ui);vm.runInContext(block,ui);
 assert.equal(captured.positions.length,1);assert.equal(captured.executable,false);assert.equal(captured.portfolioSignature,JSON.stringify(ui.portfolio));
+assert.equal(captured.cash,100,'Portfolio Analyze must pass entered cash to C1, not filter it out');
+ui.portfolio.push({symbol:'SWVXX',shares:400,avgCost:1,role:'Swing'},
+  {symbol:'VMFXX',shares:900,avgCost:1,role:'Core'});
+vm.runInContext(block,ui);
+assert.equal(captured.cash,500,'The page must preserve Swing cash-equivalent values and exclude Core cash');
+assert.equal(captured.positions.length,1);
 ui.portfolio[0].shares=3;assert.notEqual(captured.portfolioSignature,JSON.stringify(ui.portfolio),'Edited holdings must invalidate the visible comparison');
 ui.screenLive=false;ui.currentProductionPolicy.forwardAccounting={...model,observedForwardSessions:4,virtualShares:{TEST:2}};vm.runInContext(block,ui);assert.equal(captured.status,'model-not-ready','Cached screen fallback cannot look verified');
 assert.ok(page.includes('holdingsComparison.portfolioSignature===JSON.stringify(portfolio)'));

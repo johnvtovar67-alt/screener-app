@@ -204,7 +204,7 @@ export default function Home(){
       setResults(analyzedRows);
       // Reuse this analysis's server model; no separate request or portfolio upload.
       try{
-        const comparisonRows=portfolio.filter(p=>!CASH.includes(p.symbol)).map(p=>({symbol:p.symbol,shares:Number(p.shares),role:role(p.symbol,p.role)}));
+        const comparisonRows=portfolio.map(p=>({symbol:p.symbol,shares:Number(p.shares),role:role(p.symbol,p.role),...(CASH.includes(p.symbol)?{cashValue:Number(p.shares)*Number(p.avgCost||1)}:{})}));
         const comparison=compareC1Holdings(comparisonRows,screenLive?currentProductionPolicy.forwardAccounting:null,screenLive?currentProductionPolicy.decisionSnapshot:null);
         setHoldingsComparison({...comparison,portfolioSignature:JSON.stringify(portfolio)});
       }catch{setHoldingsComparison({status:"unavailable",positions:[],portfolioSignature:JSON.stringify(portfolio)});}
