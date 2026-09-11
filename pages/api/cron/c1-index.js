@@ -22,11 +22,29 @@ function failureDetail(error) {
     'Previously accepted index input changed; original preserved',
     'Missing observed index session; no historical membership backfill',
     'Previous-session adjusted price anchors are required',
-    'Dated model write conflict'
+    'Dated model write conflict',
+    'Index membership count is outside the declared range',
+    'Invalid or duplicate index member',
+    'Input observation timestamp is required',
+    'Price history start date is required',
+    'At least 253 benchmark sessions are required',
+    'Current-session compilation did not complete',
+    'Cannot determine next market session',
+    'Incomplete forward session',
+    'Invalid forward prices',
+    'Forward observation timestamp unavailable',
+    'No completed input sessions',
+    'Forward decision timestamp unavailable or in the future',
+    'Forward inputs are unordered or not current',
+    'Unsupported forward model record',
+    'Forward baseline execution predates observation or identity changed; original preserved',
+    'Invalid diagnostic initialization window',
+    'Missing forward session',
+    'Execution before first eligible opening'
   ];
   if (known.includes(message)) return message;
   if (/^Market data provider returned HTTP [1-5][0-9]{2}$/.test(message)) return message;
-  if (/^(Corporate action, removal, or price revision requires reconciliation: |Provider returned malformed price rows for )[A-Z0-9.^-]{1,20}$/.test(message)) return message;
+  if (/^(Corporate action, removal, or price revision requires reconciliation: |Provider returned malformed price rows for |Current sector is missing for |Price history is missing for |Invalid, unordered, or unadjusted price history for |Current completed price is missing for |Price history contains a session gap for )[A-Z0-9.^-]{1,20}$/.test(message)) return message;
   const name = ['BlobError', 'BlobAccessError', 'BlobNotFoundError', 'BlobStoreNotFoundError',
     'BlobStoreSuspendedError', 'BlobServiceNotAvailable', 'BlobRequestAbortedError',
     'BlobPreconditionFailedError', 'SyntaxError', 'TypeError', 'AbortError'].includes(error?.name)
