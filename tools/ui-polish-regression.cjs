@@ -14,7 +14,7 @@ const checks=[
   ['data pauses separated from watch list',s.includes('Data Verification Paused')&&s.includes('Paused is a feed condition')&&s.includes('!dataQualityBlocked(s)')]
   ,['portfolio action details wrap',s.includes('.tradeRow{display:grid;grid-template-columns:minmax(90px,.7fr) minmax(0,1.3fr)')&&s.includes('@media(max-width:700px)')&&s.includes('.tradeRow{grid-template-columns:minmax(72px,.6fr) minmax(0,1.4fr);padding-left:0}')]
   ,['portfolio actions distinguished from candidates',s.includes('Complete the sells first, then place the buys in priority order.')]
-  ,['entry badges follow authoritative policy',s.includes('policyId.startsWith("c1-")')&&s.includes('C1 Entry Cleared')&&s.includes('label==="Chase Risk"')&&s.includes('currentGate?.shortHorizonChaseClear===true')&&s.includes('Current Entry Cleared')]
+  ,['entry badges follow authoritative policy',s.includes('const authority=c1Presentation(s);if(authority)return authority.entryLabel')&&s.includes('label==="Chase Risk"')&&s.includes('currentGate?.shortHorizonChaseClear===true')&&s.includes('Current Entry Cleared')]
   ,['screen refresh is user controlled',s.includes('const openedTabs=useRef(new Set(["opportunities"]))')&&s.includes('if(openedTabs.current.has(nextTab))return;')&&s.includes('openedTabs.current.add(nextTab)')&&s.includes('onClick={()=>openTab(x)}')&&!s.includes('automaticVerificationPass')&&!s.includes('75000')]
   ,['returning to an opened page does not fetch again',/async function openTab\(nextTab\)\{[^}]*if\(openedTabs\.current\.has\(nextTab\)\)return;/.test(s)]
   ,['portfolio changes do not auto analyze',!s.includes('if(tab==="portfolio"&&portfolio.length>0)void analyze()')]
