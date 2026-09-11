@@ -27,6 +27,7 @@ const portfolio=compareC1Holdings([{symbol:'AAA',shares:3,role:'Swing'}],record.
 assert.equal(JSON.stringify(portfolio.positions[0].modelDecision),JSON.stringify(c1SymbolModelView(decision,'AAA')),'Both page interpretations must use the identical model result');
 assert.equal(portfolio.decisionId,decision.decisionId);
 assert.equal(buildC1DecisionSnapshot(request).decisionId,decision.decisionId,'Refresh alone cannot change decision identity');
+assert.notEqual(buildC1DecisionSnapshot({...request,model:{...record.summary,modelIdentity:'another-book'}}).decisionId,decision.decisionId,'Different book initializations cannot share a decision identity');
 for(const patch of [{model:{...record.summary,status:'stale'}},{inputArchive:{...inputArchive,status:'revision-quarantined'}},{now:new Date('2026-09-11T22:00:00Z')}]){
  const blocked=buildC1DecisionSnapshot({...request,...patch});assert.equal(blocked.status,'unavailable');assert.equal(blocked.symbols.length,0);assert.equal(blocked.orders.length,0);
 }
