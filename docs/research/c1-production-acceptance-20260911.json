@@ -103,5 +103,15 @@
         "R11 rankings use only adjusted prices, point-in-time membership, and benchmark histories; current profile sectors cannot affect selection."
       ]
     }
+  },
+  "documentationFollowup": {
+    "pullRequest": 146,
+    "productionCommit": "0b4d7f574f9a206c97744384ca5116e59e688764",
+    "changedRuntimeFiles": 0,
+    "previewVerified": true,
+    "productionVerified": true,
+    "originalReportPreservedWithSupersededNotice": true,
+    "modelIdentityAndRevisionPreservedAcrossDeployment": true,
+    "checkedAt": "2026-09-11T02:37:02.280353+00:00"
   }
 }
