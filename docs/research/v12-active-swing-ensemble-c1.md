@@ -1,3 +1,13 @@
+> **Superseded — September 11, 2026. C1 is not authorized for trading reactivation.**
+>
+> The original September 4 report below is retained as an archive. Its authorization and statistical-certification statements are withdrawn; they must not override runtime controls or the [current readiness decision](https://github.com/johnvtovar67-alt/screener-app/blob/research/c1-historical-release-audit/docs/research/c1-readiness-decision-20260911.md).
+>
+> Corrections: the saved engine exits below rank **6** after its minimum hold; rank **9** is its candidate queue depth. The original report conflated these. The 60 fixed-candidate controls were **not family-wise correction**; the later 1,000-seed controls also remain post-selection historical diagnostics. The historical compiler's sector labels lack dated provenance, while C1 uses sector caps. The live provisional broad universe is different from the tested index universes.
+>
+> Saved return arithmetic is preserved below, but it does not establish that all release gates passed. The user has since waived the 60-new-session wait in favor of historical evaluation; this is not trading authorization. No new waiting period is imposed here.
+
+---
+
 # V12 Active Swing Ensemble C1 — Frozen Research Candidate
 
 Status: **authorized for production activation on 2026-09-04; prospective performance remains unvalidated**.
