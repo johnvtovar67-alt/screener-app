@@ -3,7 +3,7 @@ export default function C1ModelStatus({decision}) {
   const labels={base:'Base',cooldown15:'Extended cooldown',sector40:'Sector cap'};
   return <section className="card" aria-label="Shared C1 model status">
     <h2>C1 model status</h2>
-    <p><b>Trading release incomplete.</b> {decision.explanation}</p>
+    <p><b>Diagnostic model — initialize your private account for manual recommendations.</b> {decision.explanation}</p>
     <p>Completed session: {decision.sourceSessionDate||'Unavailable'}. Opportunities and Portfolio use this same model result.</p>
     <ul>{decision.issues.map(issue=><li key={issue.code}>{issue.message}</li>)}</ul>
     {decision.status==='diagnostic-only'&&<details><summary>View diagnostic model holdings and queue</summary>

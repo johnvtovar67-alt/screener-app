@@ -165,7 +165,7 @@ const barNormalizer=fmpSource.slice(fmpSource.indexOf('export function normalize
 const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
 const holdingBox={...loader.load('lib/marketSession.js'),Date,URLSearchParams,AbortSignal,process:{env:{}}};
 vm.createContext(holdingBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
-const context={...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+const context={...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -180,7 +180,7 @@ vm.createContext(context);vm.runInContext(route,context);
  fail=true;assert.equal((await request('POST',body)).code,409);assert.equal(stored,null);
  fail=false;assert.equal((await request('POST',body)).code,200);assert.equal(writes,1);
  assert.equal((await request('POST',body)).code,409);assert.equal(writes,1,'Existing account cannot reset');
- const response=await request('GET');assert.equal(response.code,200);assert.equal(response.body.decision.decisionId,initialView.decisionId);
+ const response=await request('GET');assert.equal(response.code,200);assert.equal(response.body.decision.decisionId,initialView.decisionId);assert.equal(response.body.manualRecommendations.enabled,true);assert.equal(response.body.manualRecommendations.status,'waiting');assert.equal(response.body.manualRecommendations.brokerageExecutionAuthorized,false);
  assert.equal((await request('DELETE')).code,405);
 
  const testPortfolio=[...portfolio,{symbol:'OUT',shares:2,avgCost:1,role:'Swing'}],originalBook=JSON.stringify(baselineBook);
