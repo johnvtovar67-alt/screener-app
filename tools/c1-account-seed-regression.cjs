@@ -196,6 +196,10 @@ const verifiedOpening=providerBox.validate(observedInput);assert.equal(verifiedO
 assert.throws(()=>providerBox.validate({...observedInput,observations:{...observationRows,T4:{...observationRows.T4,quote:{...observationRows.T4.quote,timestamp:Date.parse(observedAt)/1000-121}}}}),/Fresh opening quote/);
 assert.throws(()=>providerBox.validate({...observedInput,observations:{...observationRows,T4:{...observationRows.T4,anchor:{...observationRows.T4.anchor,close:50}}}}),/price basis changed/);
 assert.throws(()=>providerBox.validate({...observedInput,membersAfter:[]}),/membership/);
+const renamedMembers=memberRows.map((row,index)=>({...row,name:'Updated display name '+index})).reverse();
+assert.equal(providerBox.validate({...observedInput,membersAfter:renamedMembers}).prices.length,observedSymbols.length,'Names and row order cannot create a membership change');
+assert.throws(()=>providerBox.validate({...observedInput,membersBefore:memberRows.slice(1),membersAfter:memberRows.slice(1)}),/Index membership changed: added none; removed T0/);
+assert.throws(()=>providerBox.validate({...observedInput,membersAfter:memberRows.map((row,i)=>i?row:{...row,sector:'Changed'})}),/sector classification changed during collection: T0/);
 const {applyC1OpeningPlan}=loader.load('lib/c1AccountDecision.js');
 const openView=applyC1OpeningPlan(initialView,{...plan,providerVerified:true});
 assert.ok(openView.decisionId.includes(plan.observedAt));
