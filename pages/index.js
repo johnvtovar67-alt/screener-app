@@ -1,3 +1,4 @@
+import {mergeC1AccountPortfolio} from "../lib/c1AccountPortfolio";
 import C1AccountOpportunities from "../components/C1AccountOpportunities";
 import C1AccountActivity from "../components/C1AccountActivity";
 import C1ReconciliationDetails from "../components/C1ReconciliationDetails";
@@ -125,14 +126,19 @@ export default function Home(){
   const accountRequestId=useRef(0);
   async function refreshC1Account(body=null){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
-    if(!key){if(body)throw new Error("Connect your existing portfolio sync key first.");return;}
-    const r=await fetch('/api/c1-account',{method:body?'POST':'GET',headers:{authorization:`Bearer ${key}`,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'}),d=await r.json();
-    if(requestId!==accountRequestId.current)return;
-    if(!r.ok){setAccountView(null);if(r.status!==404||body)throw new Error(d.error||"C1 account refresh failed.");return;}
-    setAccountView(d);setAccountError("");return d;
+    if(!key){setAccountView(null);if(body)throw new Error("Connect your existing portfolio sync key first.");return;}
+    try{
+      const r=await fetch('/api/c1-account',{method:body?'POST':'GET',headers:{authorization:`Bearer ${key}`,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'}),d=await r.json();
+      if(requestId!==accountRequestId.current)return;
+      if(!r.ok){setAccountView(null);if(r.status!==404||body)throw new Error(d.error||"C1 account refresh failed.");return;}
+      setAccountView(d);setAccountError("");return d;
+    }catch(error){
+      if(requestId!==accountRequestId.current)return;
+      setAccountView(null);throw error;
+    }
   }
   async function startC1Account(){setAccountBusy(true);setAccountError("");setErr("");try{const capitalRecord=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");await refreshC1Account({operation:'adopt',portfolio:portfolio.map(p=>({...p,shares:Number(p.shares),avgCost:Number(p.avgCost)})),capitalRecord,prospectiveLegacyAdoptionConfirmed:capitalRecord.version===null&&capitalRecord.portfolioSignature==null&&capitalRecord.reconciliationRequired===true});}catch(e){setAccountError(e.message);}finally{setAccountBusy(false);}}
-  async function saveC1Activity(record,expectedRevision){setAccountBusy(true);setErr("");try{const d=await refreshC1Account({operation:'record-session',record,expectedRevision});if(d){const updated=[...portfolio.filter(p=>p.role==='Core'&&!CASH.includes(p.symbol)),...d.decision.positions.map(p=>({symbol:p.symbol,shares:p.shares,avgCost:p.avgCost,openedAt:p.openedAt,role:'Swing'})),{symbol:'CASH',shares:d.decision.actualCash,avgCost:1,role:'Swing'}];localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);await pushCloudPortfolio(updated);await analyze(updated);}}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
+  async function saveC1Activity(record,expectedRevision){setAccountBusy(true);setErr("");try{const d=await refreshC1Account({operation:'record-session',record,expectedRevision});if(d){const updated=mergeC1AccountPortfolio(portfolio,d.decision);localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);await pushCloudPortfolio(updated);await analyze(updated);}}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
 
   const[transactionCheck,setTransactionCheck]=useState(null),[importingTransactions,setImportingTransactions]=useState(false);
   const transactionImportId=useRef(0);
@@ -175,8 +181,8 @@ export default function Home(){
   async function pullCloudPortfolio(key,fallback=[],quiet=false){try{if(!quiet)setSyncStatus('Loading cloud portfolio…');const r=await fetch('/api/portfolio-sync',{headers:{authorization:`Bearer ${key}`},cache:'no-store'}),d=await r.json();if(r.status===404){if(quiet&&fallback.length){await pushCloudPortfolio(fallback,key);return true;}throw new Error('No portfolio found for this sync key.');}if(!r.ok)throw new Error(d.error||'Sync failed');const rows=Array.isArray(d.portfolio)?d.portfolio:[];setPortfolio(rows);localStorage.setItem(KEY,JSON.stringify(rows));if(d.c1ControlState&&typeof d.c1ControlState==='object')localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(d.c1ControlState));setSyncStatus('Synced');return true;}catch(e){setSyncStatus(`Sync error: ${e.message}`);return false;}}
   function newSyncKey(){const b=new Uint8Array(24);crypto.getRandomValues(b);return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');}
   async function enableSync(){const k=newSyncKey();setSyncKey(k);setSyncInput(k);localStorage.setItem(SYNC_KEY,k);const ok=await pushCloudPortfolio(portfolio,k);if(ok)setSyncStatus('Sync enabled — use this key on your other device.');}
-  async function connectSync(){const k=syncInput.trim();if(k.length<32){setSyncStatus('Enter a valid sync key.');return;}const ok=await pullCloudPortfolio(k,[],false);if(ok){setSyncKey(k);localStorage.setItem(SYNC_KEY,k);}}
-  function disconnectSync(){localStorage.removeItem(SYNC_KEY);setSyncKey('');setSyncInput('');setSyncStatus('Sync disconnected on this device.');}
+  async function connectSync(){const k=syncInput.trim();if(k.length<32){setSyncStatus('Enter a valid sync key.');return;}const ok=await pullCloudPortfolio(k,[],false);if(ok){accountRequestId.current++;setAccountView(null);setAccountError('');setSyncKey(k);localStorage.setItem(SYNC_KEY,k);}}
+  function disconnectSync(){accountRequestId.current++;setAccountView(null);setAccountError('');localStorage.removeItem(SYNC_KEY);setSyncKey('');setSyncInput('');setSyncStatus('Sync disconnected on this device.');}
   async function copySyncKey(){if(!syncKey)return;try{await navigator.clipboard.writeText(syncKey);setSyncStatus('Sync key copied.');}catch{setSyncStatus('Copy failed — select the key manually.');}}
   function save(x){setPortfolio(x);localStorage.setItem(KEY,JSON.stringify(x));if(syncKey)void pushCloudPortfolio(x,syncKey);}
   async function add(){
