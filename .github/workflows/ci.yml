@@ -21,5 +21,7 @@ jobs:
           node-version: '24'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Check C1 collection lifecycle and diagnostic privacy
+        run: node tools/c1-index-lifecycle-regression.cjs
       - name: Build and run regression suite
         run: npm run verify && npm run build
