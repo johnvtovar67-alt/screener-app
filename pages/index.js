@@ -1,6 +1,5 @@
 import {c1Presentation,c1DisplayDecision} from "../lib/c1Presentation";
 import C1ModelStatus from "../components/C1ModelStatus";
-import C1HoldingRisk from "../components/C1HoldingRisk";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {reconcileBrokerageCSV} from "../lib/brokerageReconciliation";
 import {compareC1Holdings} from "../lib/c1HoldingsComparison";
@@ -364,7 +363,6 @@ export default function Home(){
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
     {err&&<p className="error">{err}</p>}
-    {["opportunities","portfolio"].includes(tab)&&<C1HoldingRisk positions={results} current={holdingsComparison?.portfolioSignature===JSON.stringify(portfolio)}/>}
     {["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {tab==="opportunities"&&<>
