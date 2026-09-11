@@ -1,3 +1,4 @@
+import {c1Presentation,c1DisplayDecision} from "../lib/c1Presentation";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {reconcileBrokerageCSV} from "../lib/brokerageReconciliation";
 import {compareC1Holdings} from "../lib/c1HoldingsComparison";
@@ -37,7 +38,7 @@ const event=s=>specialSituation(s)||s?.eventRisk||s?.preTradeCheck||rec(s)?.even
 function entry(s){
   const label=String(rec(s)?.entryQualityLabel??rec(s)?.gateSummary?.entryQualityLabel??s?.entryQualityLabel??s?.technicalSnapshot?.entryQualityLabel??"Unknown");
   const policyId=String(s?.productionPolicy?.id||""),currentGate=s?.productionPolicy?.gate?.checks;
-  if(s?.productionPolicy?.selected&&policyId.startsWith("c1-"))return "C1 Entry Cleared";
+  const authority=c1Presentation(s);if(authority)return authority.entryLabel;
   return s?.productionPolicy?.selected&&label==="Chase Risk"&&currentGate?.shortHorizonChaseClear===true?"Current Entry Cleared":label;
 }
 const role=(s,r)=>r==="Core"?"Core":"Swing";
@@ -48,7 +49,7 @@ function fallbackDecision(s){
   const action=a==="Strong Buy"?"Strong Buy":a==="Buy"?"Buy":a==="Watch"?"Watch":"Avoid";
   return {action,timing:r.decisionTiming||(["Strong Buy","Buy"].includes(action)?"Now":"Wait"),size:r.positionSize||(action==="Strong Buy"?"Full":action==="Buy"?"Partial":"None"),reason:r.decisionWhy||"Wait for a better setup.",priority:action==="Strong Buy"?"Top Tier":action==="Buy"?"Actionable":action==="Watch"?"Watch":"Avoid",planText:"",nextTrigger:"",relativeCapitalScore:0};
 }
-const fd=s=>s?.finalDecision||fallbackDecision(s);
+const fd=s=>c1DisplayDecision(s,s?.finalDecision||fallbackDecision(s));
 const act=s=>{const raw=CASH.includes(sym(s))?"Cash":specialSituation(s)?.blockNewCapital?"Watch":fd(s).action;return (s?.clientSnapshotFallback||s?.dataFeedSnapshotStale)&&["Strong Buy","Buy"].includes(raw)?"Watch":raw;};
 function dataQualityBlocked(s){const e=rec(s)?.expertDecision||s?.expertDecision||{},m=e?.metrics||{},raw=fd(s).action,timing=s?.entryTiming||rec(s)?.entryTiming||{},eventRisk=event(s)||{};if((s?.clientSnapshotFallback||s?.dataFeedSnapshotStale)&&["Strong Buy","Buy"].includes(raw))return true;const verificationBlocked=m.fundamentalsPass===false||m.quoteFreshnessPass===false||timing.available===false||(eventRisk.manualCheckRequired===true&&eventRisk.checkComplete===false);return raw==="Watch"&&verificationBlocked&&((+e.tradeSetupScore||0)>=78||(+e.capitalScore||0)>=72||(+fd(s).relativeCapitalScore||0)>=75);}
 function priorActionableSignal(s){return ["Strong Buy","Buy"].includes(s.signalChange?.from);}
@@ -58,6 +59,7 @@ const cls=a=>["Strong Buy","Buy","Add"].includes(a)?"green":["Trim","Rotate","Re
 function stageTone(stage){return({"Setup":"setup","Proof":"proof","Re-underwrite":"reunderwrite","Opportunity Cost":"opportunity","Long Swing Review":"long"})[stage]||"unknown";}
 
 function riskText(s){
+  const authority=c1Presentation(s);if(authority&&!authority.authorized)return "No C1 purchase is authorized.";
   const d=fd(s);if(d.planText)return d.planText;
   if(s?.productionPolicy?.selected)return "14% loss limit • Rank review after 30 sessions";
   const p=plan(s),inv=+p.invalidationPrice,trim=+p.firstTrimPrice,add=+p.addAbovePrice;
@@ -69,7 +71,7 @@ function rank(a,b){
   if(ar)return ar;return (+d2.relativeCapitalScore||0)-(+d1.relativeCapitalScore||0);
 }
 function capitalScore(s){return +(fd(s)?.relativeCapitalScore??rec(s)?.capitalScore??s?.capitalScore??rec(s)?.expertDecision?.capitalScore??s?.expertDecision?.capitalScore??0)||0;}
-function targetPctFor(s,action,activeCapitalPct=100){const policyTarget=Number(s?.productionPolicy?.targetWeightPct),scale=Math.max(0,Math.min(1,(+activeCapitalPct||0)/100));return s?.productionPolicy?.selected&&policyTarget>0?policyTarget/100*scale:swingTargetPct(action);}
+function targetPctFor(s,action,activeCapitalPct=100){const authority=c1Presentation(s);if(authority)return authority.targetWeightPct/100*Math.max(0,Math.min(1,(+activeCapitalPct||0)/100));const policyTarget=Number(s?.productionPolicy?.targetWeightPct),scale=Math.max(0,Math.min(1,(+activeCapitalPct||0)/100));return s?.productionPolicy?.selected&&policyTarget>0?policyTarget/100*scale:swingTargetPct(action);}
 function rotationStrength(gap){const g=+gap||0;if(g>=55)return{label:"Exceptional Rotation Edge",tone:"veryStrong"};if(g>=45)return{label:"Strong Rotation Edge",tone:"strong"};return{label:"Below Rotation Hurdle",tone:"meaningful"};}
 function capitalScoreVisual(score){const v=Math.round(+score||0);if(v>=80)return{value:v,label:"Excellent",tone:"excellent"};if(v>=70)return{value:v,label:"Strong",tone:"strong"};if(v>=60)return{value:v,label:"Mixed",tone:"mixed"};return{value:v,label:"Weak",tone:"weak"};}
 function replacementEdgeVisual(gap,eligible){const v=Math.round(+gap||0);if(!eligible||v<=0)return{value:null,label:"None qualified",tone:"none"};if(v>=55)return{value:v,label:"Exceptional",tone:"exceptional"};if(v>=45)return{value:v,label:"Strong edge",tone:"strong"};return{value:v,label:"Below hurdle",tone:"below"};}
@@ -78,7 +80,7 @@ function replacementEdgeTargetLabel(s,v){const t=String(s?.rotateTarget||"").toU
 function rotationTargetEligible(s){
   const d=fd(s),a=d.action,e=rec(s)?.expertDecision||s?.expertDecision||{},m=e?.metrics||{};
   const er=event(s);if(er?.blockNewCapital||er?.manualCheckRequired)return false;
-  if(s?.productionPolicy?.selected===true&&String(s?.productionPolicy?.id||"").startsWith("c1-"))return ["Strong Buy","Buy"].includes(a);
+  const authority=c1Presentation(s);if(authority)return authority.authorized&&["Strong Buy","Buy"].includes(a);
   if(a==="Strong Buy")return true;
   if(a!=="Buy")return false;
   const peer=+d.relativeCapitalScore||capitalScore(s),cutoff=+d.relativeCapitalCutoff||0;
@@ -365,7 +367,7 @@ export default function Home(){
       <section className="card">
         <h2>🔥 Opportunities</h2>
         <p className="sub">Current candidates for new capital, ordered from strongest to weakest.</p>
-        {marketScope?.productionPolicy&&marketScope.productionPolicy.status!=="ready"&&<div className="universeStatus warning"><b>Fresh entries paused</b><span>The current market ranking is unavailable or stale. Existing positions can still be reviewed, but no new Buy should be funded until it refreshes.</span></div>}
+        {marketScope?.productionPolicy&&marketScope.productionPolicy.status!=="ready"&&<div className="universeStatus warning"><b>Fresh entries paused</b><span>C1 is not currently authorized for full-size entries. Existing positions remain available for review. A price refresh does not replace model validation.</span></div>}
         {marketScope&&(!["ready","stale"].includes(marketScope.fullMarketDiscoveryStatus)||marketScope.fullMarketCoarseUniverseCapped)&&<div className="universeStatus warning"><b>Market coverage limited</b><span>{fullMarketCoverageFallback(marketScope)}</span></div>}
         {[["Strong Buy",strong],["Buy",buys]].map(([h,rows])=>rows.length?<div key={h}><h3>{h}</h3><div className="grid">{rows.map(s=><Card key={sym(s)} s={s} decision={opportunityDecision(s)}/>)}</div></div>:null)}
         {!strong.length&&!buys.length&&<div className="emptyState"><b>No verified Buy or Strong Buy currently qualifies.</b><span>Reload completed successfully; the engine is holding cash rather than forcing an opportunity.</span></div>}

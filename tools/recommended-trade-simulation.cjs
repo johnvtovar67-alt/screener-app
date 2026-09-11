@@ -72,9 +72,13 @@ assert(!c1Orders.some(x=>x.symbol==='XYZ'),'a lower-ranked C1 candidate must not
 assert(governor.portfolioContributionGate({target:c1Candidates[0],approvedAmount:11000,risk:c1Risk,existingValue:0}).c1RankAuthoritative,'C1 selected names must bypass legacy portfolio contribution ranking');
 
 const page=fs.readFileSync('pages/index.js','utf8');
-assert(page.includes('policyId.startsWith("c1-")')&&page.includes('return "C1 Entry Cleared"'),'C1 cards must not expose a contradictory legacy timing label');
-assert(page.includes('14% loss limit • Rank review after 30 sessions'),'C1 cards must show the frozen C1 exit contract instead of legacy price targets');
-assert(page.includes('startsWith("c1-")')&&page.includes('return ["Strong Buy","Buy"].includes(a)'),'C1 selected targets must not inherit legacy rotation qualification hurdles');
+const presentation=load('lib/c1Presentation.js',{exports:['c1Presentation','c1DisplayDecision']});
+assert(page.includes('if(authority)return authority.entryLabel'),'cards must consume the shared authority result');
+assert(presentation.c1Presentation(c1Candidates[0]).authorized===false,'selected-only legacy fixture cannot clear entry');
+const authorized={...c1Candidates[0],productionPolicy:{...c1Candidates[0].productionPolicy,status:'ready',independentlyValidated:true,activationAuthorized:true}};
+assert(presentation.c1Presentation(authorized).entryLabel==='C1 Entry Cleared','authorized selection retains C1 entry label');
+assert(page.includes('authority.authorized&&["Strong Buy","Buy"].includes(a)'),'rotation must require explicit C1 authority');
+assert(page.includes('14% loss limit • Rank review after 30 sessions'),'authorized C1 cards retain their exit contract');
 
 const schw=personal.applyPersonalCapitalPolicy({symbol:'SCHW',finalDecision:{action:'Strong Buy',reason:'analytically qualified'}});
 assert(schw.finalDecision.action==='Avoid'&&schw.finalDecision.personalCapitalBlocked,'personal SCHW concentration block must survive a Strong Buy input');
