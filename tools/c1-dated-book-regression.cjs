@@ -23,7 +23,19 @@ assert.throws(()=>accept(first,revised,new Date(retry.observedAt)),/input change
 assert.throws(()=>accept(first,{...retry,universe:'sp500'},new Date(retry.observedAt)),/switch index/);
 const next=make('2026-09-10','2026-09-09'),nextNow=new Date(next.observedAt);
 const changed=JSON.parse(JSON.stringify(next));changed.priorSessionPrices.closes.AAA=50;
-assert.throws(()=>accept(first,changed,nextNow),/Corporate action/);
+const beforeMismatch=JSON.stringify(first);
+delete changed.priorSessionPrices.closes.BBB;
+assert.throws(()=>accept(first,changed,nextNow), error=>{
+ assert.match(error.message,/Corporate action/);
+ assert.equal(error.priceAnchorMismatch.mismatchCount,2);
+ assert.equal(error.priceAnchorMismatch.previousSessionDate,'2026-09-09');
+ assert.equal(error.priceAnchorMismatch.currentSessionDate,'2026-09-10');
+ assert.equal(JSON.stringify(error.priceAnchorMismatch.mismatches),JSON.stringify([
+  {symbol:'AAA',previousClose:100,observedPriorClose:50},
+  {symbol:'BBB',previousClose:100,observedPriorClose:null}]));
+ return true;
+});
+assert.equal(JSON.stringify(first),beforeMismatch,'Rejecting all mismatches must preserve the full original record');
 const second=accept(first,next,nextNow);
 assert.ok(second.model.ledger.fills.length>0,'Consecutive observed input must execute the unchanged frozen engine');
 assert.equal(first.model.ledger.fills.length,0,'Prior record must remain immutable');
