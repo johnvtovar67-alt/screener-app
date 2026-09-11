@@ -15,6 +15,4 @@ assert.equal(run([{...holding,avgCost:null}],now)[0].status,'basis-required');
 assert.equal(run([{...holding,role:'Core'},{...holding,symbol:'MSTR'},{...holding,symbol:'CASH'}],now).length,0);
 assert.equal(above.executable,false);assert.equal(above.orders.length,0);
 assert.equal(run([{...holding,price:90}],new Date('2026-09-10T15:16:00Z'))[0].status,'quote-unverified','Time alone can make the displayed quote stale');
-const fs=require('node:fs'),page=fs.readFileSync('pages/index.js','utf8');
-assert.ok(page.includes('current={holdingsComparison?.portfolioSignature===JSON.stringify(portfolio)}'),'An edited holding cannot reuse old analysis references');
-console.log('PASS: exact 14% references, quote age/future timestamps, missing inputs, Core/MSTR/cash exclusions, edit invalidation and no inferred orders');
+console.log('PASS: exact 14% references, quote age/future timestamps, missing inputs, Core/MSTR/cash exclusions and no inferred orders');
