@@ -12,9 +12,18 @@ assert.equal(plan({before:initial,after:next,account:r.nextAccount,prices:{TEST:
 assert.equal(plan({before:initial,after:next,account:{...account,positions:{TEST:1}},prices:{TEST:100}}).status,'blocked','Unexpected or partial fills cannot become automatic exits');
 assert.equal(plan({before:initial,after:next,account,prices:{}}).status,'blocked');
 assert.equal(plan({before:initial,after:next,account,prices:{TEST:10000}}).status,'blocked','Gap price cannot overdraw cash');
-let exited=fill(next,event('c','base','sell',1.6,'2026-09-03'));exited=fill(exited,event('d','cooldown15','sell',1.6,'2026-09-03'));
+let exited=fill(next,{...event('c','base','sell',1.6,'2026-09-03'),price:90});exited=fill(exited,{...event('d','cooldown15','sell',1.6,'2026-09-03'),price:90});
 const sale=plan({before:next,after:exited,account:r.nextAccount,prices:{TEST:90},slippageBps:0});assert.equal(sale.orders[0].side,'sell');assert.equal(sale.orders[0].shares,3);assert.equal(sale.projectedCash,9970);
 assert.equal(plan({before:initial,after:exited,account,prices:{TEST:100}}).status,'blocked','Skipped sessions fail closed');
 assert.equal(plan({before:next,after:initial,account:r.nextAccount,prices:{TEST:100}}).status,'blocked');
 assert.throws(()=>init(next));assert.equal(account.cash,10000);assert.equal(initial.fills.length,0);
 console.log('PASS: frozen-ledger paper mapping, shared-symbol rounding, exits, cash gaps, duplicate/partial fills and history binding');
+
+const legacyAccount={...account};delete legacyAccount.priceBasis;
+const originalLegacy=JSON.stringify(legacyAccount);
+assert.equal(plan({before:initial,after:next,account:legacyAccount,prices:{TEST:100}}).status,'blocked','Old close-price account cannot be silently treated as opening-price history');
+assert.equal(JSON.stringify(legacyAccount),originalLegacy);
+assert.equal(account.priceBasis,'session-open-v1');
+
+assert.equal(plan({before:initial,after:next,account,prices:{TEST:105},slippageBps:0}).status,'blocked','A closing mark cannot silently replace the model opening fill');
+assert.equal(plan({before:next,after:exited,account:r.nextAccount,prices:{TEST:100},slippageBps:0}).status,'blocked','Intraday stop fills cannot be repriced at the opening quote');

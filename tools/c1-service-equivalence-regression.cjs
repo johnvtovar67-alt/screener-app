@@ -22,13 +22,29 @@ for(let t=Date.parse('2026-03-02T12:00:00Z');sessions.length<80;t+=86400000){
    researchFactors:{momentumPercentile:100-((i+Math.floor(day/18)*4)%12),volatility60Pct:20,coverage:1,return60Ex5:20,return120Ex5:30,return252Ex21:40},
    entryTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000}}))});
 }
-let record=null,checkpoints=0,divergent=false,tradeCount=0;
+let record=null,checkpoints=0,divergent=false,tradeCount=0,openingChecks=0,eventBlocks=0;
 for(let day=0;day<sessions.length;day++){
  const prior=record, before=record?JSON.stringify(record):null;
  record=advanceC1ForwardModel(record,[sessions[day]],new Date(sessions[day].date+'T22:00:00Z'));
  if(prior)assert.equal(JSON.stringify(prior),before,'Advancing must not mutate the saved record');
  assert.equal(record.summary.executable,false);assert.equal(record.summary.eligibleForLiveCapital,false);
  assert.equal(record.summary.eligibleForAlphaClaim,false);
+ if(record.paperExecutionStatus.status==='blocked'&&/event-level/.test(record.paperExecutionStatus.reason)){
+  assert.equal(JSON.stringify(record.paperExecution),JSON.stringify(prior.paperExecution),'Unsupported model events preserve the original execution account');eventBlocks++;
+ }
+ if(record.paperExecutionStatus.status==='proposed'){
+  const old=prior.paperExecution, next=record.paperExecution;
+  let expectedCash=old.cash;
+  for(const symbol of new Set([...Object.keys(old.positions),...Object.keys(next.positions)])){
+   const delta=(next.positions[symbol]||0)-(old.positions[symbol]||0);
+   if(!delta)continue;
+   const open=sessions[day].prices.find(p=>p.symbol===symbol).open;
+   expectedCash-=delta*open*(1+(delta>0?1:-1)*.0012);
+  }
+  assert.ok(Math.abs(next.cash-expectedCash)<1e-7,'Paper account must reconcile at opening prices, never closing marks');
+  assert.equal(next.priceBasis,'session-open-v1');openingChecks++;
+ }
+
  assert.equal(record.summary.observedForwardSessions,day);
  if(day%10!==0&&day!==sessions.length-1)continue;
  const states=[];
@@ -52,5 +68,7 @@ for(let day=0;day<sessions.length;day++){
  assert.equal(advanceC1ForwardModel(record,[sessions[day]],new Date(sessions[day].date+'T22:00:00Z')),record,'Same-session retry must preserve identity');
  assert.equal(JSON.stringify(record),copy);
 }
+assert.ok(eventBlocks>0,'Exercise intraday event mismatch rejection');
+assert.ok(openingChecks>0,'Exercise opening-price cash reconciliation');
 assert.ok(divergent,'Exercise different sleeve holdings');assert.ok(tradeCount>0,'Must exercise actual fills');
-console.log(`PASS: service equivalence across ${sessions.length} synthetic sessions, ${checkpoints} independent sleeve checkpoints; exact fills, pending queues, cash, retry identity and no live authority`);
+console.log(`PASS: service equivalence across ${sessions.length} synthetic sessions, ${checkpoints} independent sleeve checkpoints, ${openingChecks} opening-price cash reconciliations; exact fills, pending queues, cash, retry identity and no live authority`);
