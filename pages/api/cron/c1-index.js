@@ -52,6 +52,26 @@ function failureDetail(error) {
   return 'Unclassified ' + name;
 }
 
+
+// Log only typed index-price diagnostics, never arbitrary exception properties.
+function anchorDiagnostic(error) {
+  const detail = error?.priceAnchorMismatch;
+  const date = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  if (!detail || !date(detail.previousSessionDate) || !date(detail.currentSessionDate) ||
+      !Array.isArray(detail.mismatches) || detail.mismatches.length > 600 ||
+      detail.mismatchCount !== detail.mismatches.length) return undefined;
+  const rows = detail.mismatches.filter(row =>
+    typeof row?.symbol === 'string' && /^[A-Z][A-Z0-9.-]{0,15}$/.test(row.symbol) &&
+    Number.isFinite(row.previousClose) && row.previousClose > 0 &&
+    (row.observedPriorClose === null || (Number.isFinite(row.observedPriorClose) && row.observedPriorClose > 0)));
+  if (rows.length !== detail.mismatches.length) return undefined;
+  return { previousSessionDate: detail.previousSessionDate, currentSessionDate: detail.currentSessionDate,
+    mismatchCount: rows.length, sample: rows.slice(0, 20).map(row => ({
+      symbol: row.symbol, previousClose: row.previousClose, observedPriorClose: row.observedPriorClose,
+      kind: row.observedPriorClose === null ? 'missing-anchor' : 'changed-price'
+    })) };
+}
+
 export const config = { maxDuration: 300 };
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -82,7 +102,7 @@ export default async function handler(req, res) {
     console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate }));
     return res.status(200).json(body);
   } catch (error) {
-    console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error) }));
+    console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error), priceAnchors: anchorDiagnostic(error) }));
     return res.status(503).json({ status: 'index-unavailable', executable: false,
       error: String(error?.message || 'Index collection failed').slice(0, 220) });
   }

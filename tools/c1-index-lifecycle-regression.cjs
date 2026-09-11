@@ -47,6 +47,21 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
   assert.ok(!logs.join(' ').includes('test-secret'));
   assert.ok(!logs.join(' ').includes('private-account'));
   assert.ok(!logs.join(' ').includes('https://'));
+  route.refreshC1Index=async ({onStage})=>{
+    onStage('connect'); const error=new Error('Corporate action, removal, or price revision requires reconciliation: ABBV');
+    error.priceAnchorMismatch={previousSessionDate:'2026-09-10',currentSessionDate:'2026-09-11',
+      mismatchCount:2,mismatches:[{symbol:'ABBV',previousClose:200,observedPriorClose:199.5,ignored:'test-secret'},
+        {symbol:'AAA',previousClose:100,observedPriorClose:null}]};
+    throw error;
+  };
+  assert.equal((await request('GET','Bearer test-secret')).code,503);
+  const diagnostic=JSON.parse(logs.at(-1).slice('[c1-index] '.length));
+  assert.equal(diagnostic.priceAnchors.mismatchCount,2);
+  assert.equal(diagnostic.priceAnchors.sample[0].observedPriorClose,199.5);
+  assert.equal(diagnostic.priceAnchors.sample[1].kind,'missing-anchor');
+  assert.ok(!logs.join(' ').includes('test-secret'));
+  assert.equal(route.anchorDiagnostic({priceAnchorMismatch:{previousSessionDate:'2026-09-10',currentSessionDate:'2026-09-11',
+    mismatchCount:1,mismatches:[{symbol:'https://private',previousClose:100,observedPriorClose:99}]}}),undefined);
   const config=JSON.parse(fs.readFileSync('vercel.json','utf8'));
   assert.ok(config.crons.some(c=>c.path==='/api/cron/c1-index'),'Scheduled advancement must ship with the handler');
   assert.ok(!config.crons.some(c=>c.path==='/api/cron/fmp-research-backtest'),'Frozen research must not restart every minute');
