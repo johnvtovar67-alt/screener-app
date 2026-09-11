@@ -1154,6 +1154,7 @@ export default async function handler(req, res) {
               ? "c1_active_swing"
               : "independent_confirmation_fail_closed",
           productionPolicy: {
+            decisionSnapshot: broadSnapshot.productionPolicySnapshot?.decisionSnapshot || null,
             forwardAccounting: broadSnapshot.productionPolicySnapshot?.forwardAccounting || null,
             id: broadSnapshot.productionPolicySnapshot?.policyId || null,
             label: broadSnapshot.productionPolicySnapshot?.policyLabel || null,

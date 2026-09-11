@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const l=createResearchModuleLoader(process.cwd());
+const {createC1SleeveAccounting:create}=l.load('lib/c1SleeveAccounting.js');
+const {initializeC1EventAccount:init}=l.load('lib/c1PaperEvents.js');
+const {reconcileC1Execution:reconcile}=l.load('lib/c1ExecutionReconciliation.js');
+const ledger=create(10000,'2026-09-01'),record={ledger,paperExecution:init(ledger)};
+const plan={status:'opening-projection-only',date:'2026-09-02',orders:[{modelEventId:'base:0',sessionDate:'2026-09-02',phase:3,symbol:'TEST',side:'buy',shares:10,price:100}],projectedCash:9000,projectedPositions:{TEST:10}};
+const fill={id:'exec-1',modelEventId:'base:0',symbol:'TEST',side:'buy',shares:4,price:100,fee:0,executedAt:'2026-09-02T13:30:00Z'};
+const req={record,plan,observedAt:'2026-09-02T14:00:00Z'};
+const partial=reconcile({...req,fills:[fill]});assert.equal(partial.status,'partial');assert.equal(partial.cash,9600);assert.equal(partial.positions.TEST,4);assert.equal(partial.remaining[0].unfilledShares,6);
+const remainder={...fill,id:'exec-2',shares:6,executedAt:'2026-09-02T13:31:00Z'};
+const complete=reconcile({...req,fills:[fill,remainder,fill]});assert.equal(complete.status,'matches-model-projection');assert.equal(complete.uniqueFillCount,2);assert.equal(complete.modelAdvanceAuthorized,false);
+assert.equal(reconcile({...req,fills:[fill,{...remainder,price:101,fee:1}]}).status,'execution-variance');
+for(const fills of [[{...fill,shares:11}],[{...fill,price:3000}],[fill,{...fill,price:101}],[{...fill,executedAt:'2026-09-02T15:00:00Z'}],[{...fill,modelEventId:'unknown'}]])assert.equal(reconcile({...req,fills}).status,'blocked');
+assert.equal(record.paperExecution.cash,10000);assert.equal(record.ledger.fills.length,0);
+console.log('PASS: partial/complete fills, deduplication, cash/price variance, overfills, unfunded fills, timestamps, event identity and no model mutation');
