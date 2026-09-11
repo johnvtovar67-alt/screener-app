@@ -75,3 +75,21 @@ function client(fetcher){
  assert.equal(JSON.stringify(portfolio),before);
  console.log('PASS: Core cash/holdings preserved through account save; failed refreshes invalidate stale decisions; superseded errors and disconnected responses cannot replace current account state. Synthetic client checks only.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
+
+
+// Exercise the actual JSX visibility condition. An initialized account must
+// retain an explicit diagnostic notice on both pages, including stale output.
+const noticeLine=page.split('\n').find(line=>line.includes('aria-label="C1 account status"'));
+assert.ok(noticeLine,'The private account view needs a diagnostic status region');
+const condition=noticeLine.slice(noticeLine.indexOf('{')+1,noticeLine.indexOf('&&<section'));
+const noticeVisible=new Function('accountView','tab','return Boolean('+condition+');');
+for(const tab of ['opportunities','portfolio']){
+ for(const current of [true,false]){
+  assert.equal(noticeVisible({decision:{current,executable:false}},tab),true);
+ }
+ assert.equal(noticeVisible(null,tab),false);
+}
+for(const tab of ['single','themes'])assert.equal(noticeVisible({decision:{}},tab),false);
+assert.ok(noticeLine.includes('Diagnostic only — trading release incomplete.'));
+assert.ok(noticeLine.includes('not instructions to buy, hold or sell.'));
+console.log('PASS: Private C1 account analysis retains diagnostic disclosure on both account views.');
