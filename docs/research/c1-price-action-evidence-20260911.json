@@ -1,0 +1,219 @@
+{
+  "contract": "c1-price-reconciliation-evidence-v1",
+  "collectedOn": "2026-09-11",
+  "productionInvocation": "2026-09-11T21:00:47Z",
+  "deployment": "dpl_5BZ68Sdrhamjb8uvfPCVpjMnZmqE",
+  "comparedPriceDate": "2026-09-10",
+  "incomingSessionDate": "2026-09-11",
+  "executable": false,
+  "transitionAuthorized": false,
+  "prices": [
+    {
+      "symbol": "ABBV",
+      "savedClose": 254.98,
+      "observedPriorClose": 255,
+      "classification": "unresolved",
+      "reconciled": false
+    },
+    {
+      "symbol": "ADP",
+      "savedClose": 267.33,
+      "observedPriorClose": 265.63,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "ALB",
+      "savedClose": 122.11,
+      "observedPriorClose": 121.7,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "BKNG",
+      "savedClose": 174.33,
+      "observedPriorClose": 173.91,
+      "classification": "unresolved",
+      "reconciled": false
+    },
+    {
+      "symbol": "CB",
+      "savedClose": 338.67,
+      "observedPriorClose": 337.65,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "CVX",
+      "savedClose": 212.75,
+      "observedPriorClose": 212.76,
+      "classification": "unresolved",
+      "reconciled": false
+    },
+    {
+      "symbol": "FIS",
+      "savedClose": 38.52,
+      "observedPriorClose": 38.08,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "GPN",
+      "savedClose": 88.55,
+      "observedPriorClose": 88.3,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "GRMN",
+      "savedClose": 272.2,
+      "observedPriorClose": 271.15,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "LLY",
+      "savedClose": 1123.04,
+      "observedPriorClose": 1123,
+      "classification": "unresolved",
+      "reconciled": false
+    },
+    {
+      "symbol": "MS",
+      "savedClose": 212.73,
+      "observedPriorClose": 212.66,
+      "classification": "unresolved",
+      "reconciled": false
+    },
+    {
+      "symbol": "NDAQ",
+      "savedClose": 92.01,
+      "observedPriorClose": 91.7,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "ORCL",
+      "savedClose": 153.17,
+      "observedPriorClose": 152.94,
+      "classification": "unresolved",
+      "reconciled": false
+    },
+    {
+      "symbol": "PG",
+      "savedClose": 143,
+      "observedPriorClose": 142.97,
+      "classification": "unresolved",
+      "reconciled": false
+    },
+    {
+      "symbol": "REG",
+      "savedClose": 75.31,
+      "observedPriorClose": 74.55,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "TXT",
+      "savedClose": 79.2,
+      "observedPriorClose": 79.18,
+      "classification": "unresolved",
+      "reconciled": false
+    },
+    {
+      "symbol": "WM",
+      "savedClose": 214.77,
+      "observedPriorClose": 213.82,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    },
+    {
+      "symbol": "WMB",
+      "savedClose": 72.82,
+      "observedPriorClose": 72.29,
+      "classification": "issuer-dividend-consistent-review-required",
+      "reconciled": false
+    }
+  ],
+  "issuerEvents": [
+    {
+      "symbol": "ADP",
+      "dividend": 1.7,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-10-01",
+      "source": "https://investors.adp.com/news/news-details/2026/ADP-Declares-Regular-Quarterly-Dividend-a7157c3eb/default.aspx"
+    },
+    {
+      "symbol": "ALB",
+      "dividend": 0.41,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-10-01",
+      "source": "https://www.albemarle.com/us/en/news/albemarle-announces-quarterly-common-stock-dividend-7"
+    },
+    {
+      "symbol": "CB",
+      "dividend": 1.02,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-10-02",
+      "source": "https://news.chubb.com/2026-08-13-Chubb-Limited-Board-Declares-Quarterly-Dividend"
+    },
+    {
+      "symbol": "FIS",
+      "dividend": 0.44,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-09-25",
+      "source": "https://www.investor.fisglobal.com/news-releases/news-release-details/fis-announces-quarterly-dividend-53"
+    },
+    {
+      "symbol": "GPN",
+      "dividend": 0.25,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-09-25",
+      "source": "https://investors.globalpayments.com/financial-information/all-sec-filings/content/0001123360-26-000084/gpn-20260630.htm"
+    },
+    {
+      "symbol": "GRMN",
+      "dividend": 1.05,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-09-25",
+      "source": "https://www.garmin.com/en-US/newsroom/press-release/corporate/garmin-shareholders-approve-quarterly-dividend-through-march-2027/"
+    },
+    {
+      "symbol": "NDAQ",
+      "dividend": 0.31,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-09-25",
+      "source": "https://ir.nasdaq.com/news-releases/news-release-details/nasdaq-announces-quarterly-dividend-031-share"
+    },
+    {
+      "symbol": "REG",
+      "dividend": 0.755,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-10-02",
+      "source": "https://investors.regencycenters.com/news-releases/news-release-details/regency-centers-declares-quarterly-dividends-2"
+    },
+    {
+      "symbol": "WM",
+      "dividend": 0.945,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-09-25",
+      "source": "https://investors.wm.com/news-releases/news-release-details/wm-announces-cash-dividend-19"
+    },
+    {
+      "symbol": "WMB",
+      "dividend": 0.525,
+      "recordDate": "2026-09-11",
+      "paymentDate": "2026-09-28",
+      "source": "https://investor.williams.com/stock-information/dividend-history",
+      "exDate": "2026-09-11"
+    }
+  ],
+  "limitations": [
+    "Record dates are not independently asserted to be ex-dates except where explicitly sourced.",
+    "Matching announced dividends and observed reductions supports an adjustment hypothesis; it is not an accounting transition.",
+    "Displayed prices are rounded; no production tolerance is changed by this report.",
+    "BKNG's 0.42 reduction remains unresolved here because a precise primary-source document was not retrieved.",
+    "Do not alter accepted inputs, model decisions, real holdings or fills using this report.",
+    "Raw provider vintages, adjustment basis, and the effects on model shares/stops/cash still require reconciliation."
+  ]
+}
