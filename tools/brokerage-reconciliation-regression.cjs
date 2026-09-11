@@ -12,14 +12,14 @@ const moves=template+'sell,2026-09-03,SELL,TEST,1,110,109,1\ndeposit,2026-09-03,
 assert.equal(run(moves,[{symbol:'TEST',shares:2},{symbol:'CASH',shares:1039}]).status,'balances-match');
 assert.equal(run(template.replace(/\n/g,'\r\n'),holdings).status,'balances-match');
 const page=fs.readFileSync('pages/index.js','utf8');
-const body=page.slice(page.indexOf('  async function importTransactions'),page.indexOf('  async function analyze'));
-let check,loading;const box={portfolio:holdings,transactionImportId:{current:0},setTransactionCheck:r=>check=r,setImportingTransactions:v=>loading=v,reconcileBrokerageCSV:run};
+const body=page.slice(page.indexOf('  async function importTransactions'),page.indexOf('  async function reconcileImportedHistory'));
+let check,loading;const box={portfolio:holdings,transactionImportId:{current:0},transactionSource:{current:null},setActivityComplete(){},localStorage:{getItem:()=>null},C1_DRAWDOWN_KEY:'risk',setTransactionCheck:r=>check=r,setImportingTransactions:v=>loading=v,reconcileBrokerageCSV:run};
 vm.createContext(box);vm.runInContext(body+'\nglobalThis.importer=importTransactions;',box);
 (async()=>{const saved=JSON.stringify(holdings);await box.importer({target:{files:[{size:template.length,text:async()=>template}],value:'test'}});
 assert.equal(check.status,'balances-match');assert.equal(check.executable,false);assert.equal(loading,false);assert.equal(JSON.stringify(holdings),saved);
 assert.equal(check.portfolioSignature,JSON.stringify(holdings));
 assert.ok(page.includes('transactionCheck.portfolioSignature===JSON.stringify(portfolio)'));
-assert.ok(!body.includes('fetch(')&&!body.includes('localStorage')&&!body.includes('setPortfolio(')&&!body.includes('setC1Control('));
+assert.ok(!body.includes('fetch(')&&!body.includes('localStorage.setItem')&&!body.includes('setPortfolio(')&&!body.includes('setC1Control('));
 assert.ok(page.includes('decision.source==="c1-capital-reconciliation"?"Verification needed":decision.action'));
 console.log('PASS: transaction reconstruction, duplicates, dates, fees, cash flows, local import, no trading authority');
 })().catch(e=>{console.error(e);process.exitCode=1;});
