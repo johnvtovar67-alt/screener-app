@@ -19,7 +19,7 @@ The completed fixed-candidate controls on research/c1-1000-seed-control had 27/1
 
 ## Remaining release blockers
 
-1. Historical data provenance: establish actual historical membership, delisted outcomes, corporate-action handling and information availability at decision dates. The current provisional source explicitly disclaims survivorship-free, point-in-time membership and revision-safe values. Attractive arithmetic does not repair that limitation.
+1. Historical data integrity: assess the actual frozen historical Nasdaq and S&P manifests, separately from the current provisional production compiler. The frozen manifests declare point-in-time historical membership and adjusted prices; Nasdaq records 100% membership observations and resolved removal outcomes. Nasdaq has six chunk hashes; S&P has no per-chunk hashes, though the cost receipt verifies sizes/boundaries and records an aggregate data hash. The live compiler limitations do not by themselves invalidate these historical datasets. Manifest declarations still require audit support; they are not independent certification.
 2. Compare with both benchmarks across original evaluation folds, and account for model selection. Descriptive calendar returns cannot silently replace the frozen fold-stability contract.
 3. Complete live recommendation equivalence: synthetic frozen-service and model-event paper tests pass, but do not establish that both interactive pages produce the tested three-book strategy and executable brokerage quantities for every supported scenario.
 4. Reconcile user holdings and cash through actual execution records before producing position-specific orders. A paper model event is not a brokerage fill.

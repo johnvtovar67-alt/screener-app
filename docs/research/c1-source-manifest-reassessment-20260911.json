@@ -1,0 +1,104 @@
+{
+  "scope": "Read-only manifest reassessment; metadata declarations are not independent certification",
+  "source": {
+    "nasdaq": {
+      "checksumCount": 6,
+      "chunkCount": 6,
+      "firstSession": "2022-01-03",
+      "lastSession": "2026-09-01",
+      "metadata": {
+        "activeMemberDateCoverageComplete": true,
+        "availableMembershipObservations": 117068,
+        "benchmarkSymbol": "SPY",
+        "capitalPolicyInputsComplete": true,
+        "comparisonSymbols": [
+          "SPY",
+          "QQQ"
+        ],
+        "compilerContract": "historical-signal-evaluator-v11-nasdaq-membership-removal-history-v4",
+        "corporateActionsAdjusted": true,
+        "dataVendorEntitlementsVerified": true,
+        "datasetFingerprint": "9745512ca9d11503feb2c60779f7a7574ab784095c4f6f1361eedfb6e8120175",
+        "delistedSecuritiesIncluded": false,
+        "delistingReturnsComplete": true,
+        "eventRiskPointInTime": false,
+        "fundamentalAvailabilityField": "acceptedDate",
+        "fundamentalValuesRevisionSafe": false,
+        "fundamentalsPointInTime": true,
+        "generatedAt": "2026-09-03T17:12:18.372Z",
+        "guaranteedSymbols": [],
+        "liquidityRules": {
+          "maxCandidates": 150,
+          "minAvgDollarVolume": 10000000,
+          "minMarketCap": 300000000,
+          "minPrice": 5
+        },
+        "materialNewsHistoryComplete": false,
+        "maximumMembershipCount": 102,
+        "membershipEffectiveConvention": "effective-date-inclusive",
+        "membershipObservationCoveragePct": 100,
+        "membershipSupplementContract": "source-verified-nasdaq-spinoff-addition-v3",
+        "minimumMembershipCount": 99,
+        "minimumSignalHistoryRows": 253,
+        "missingMembershipObservations": 0,
+        "missingMembershipObservationsBySymbol": [],
+        "pointInTime": true,
+        "portfolioDecisionInputsComplete": true,
+        "positionDecisionUniverseComplete": true,
+        "requestedMembershipObservations": 117068,
+        "schema": "screener-pit-v1",
+        "source": "FMP historical Nasdaq index membership price-only dataset",
+        "survivorshipBiasFree": true,
+        "universeMembershipPointInTime": true,
+        "universeRemovalActions": 44,
+        "universeRemovalMissingOutcomes": 0,
+        "universeRemovalOpenCoveragePct": 97.73,
+        "universeRemovalOutcomeCoverageComplete": true,
+        "universeRemovalOutcomeCoveragePct": 100,
+        "universeRemovalPolicy": "effective-session-adjusted-open-else-conservative-zero-v2",
+        "universeRemovalResolvedOutcomes": 44,
+        "universeRemovalZeroRecoveryActions": 1
+      },
+      "sourceUrl": "https://github.com/johnvtovar67-alt/screener-app/blob/research/c1-1000-seed-control/docs/research/c1-actions/nasdaq-manifest.json"
+    },
+    "sp500": {
+      "checksumCount": 0,
+      "chunkCount": 24,
+      "firstSession": "2022-01-03",
+      "lastSession": "2026-09-01",
+      "metadata": {
+        "benchmarkSymbol": "SPY",
+        "capitalPolicyInputsComplete": true,
+        "comparisonSymbols": [
+          "SPY",
+          "QQQ"
+        ],
+        "corporateActionsAdjusted": true,
+        "dataVendorEntitlementsVerified": true,
+        "delistedSecuritiesIncluded": true,
+        "delistingReturnsComplete": true,
+        "eventRiskPointInTime": false,
+        "fundamentalAvailabilityField": "acceptedDate",
+        "fundamentalValuesRevisionSafe": false,
+        "fundamentalsPointInTime": true,
+        "generatedAt": "2026-09-03T01:48:18.576Z",
+        "guaranteedSymbols": [],
+        "liquidityRules": {
+          "maxCandidates": 500,
+          "minAvgDollarVolume": 10000000,
+          "minMarketCap": 300000000,
+          "minPrice": 5
+        },
+        "materialNewsHistoryComplete": false,
+        "pointInTime": true,
+        "portfolioDecisionInputsComplete": true,
+        "positionDecisionUniverseComplete": true,
+        "schema": "screener-pit-v1",
+        "source": "FMP historical S&P 500 membership research dataset",
+        "survivorshipBiasFree": true,
+        "universeMembershipPointInTime": true
+      },
+      "sourceUrl": "https://github.com/johnvtovar67-alt/screener-app/blob/research/c1-1000-seed-control/docs/research/c1-actions/sp500-manifest.json"
+    }
+  }
+}
