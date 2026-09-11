@@ -1,4 +1,5 @@
 import {applyC1OpeningPlan} from '../../lib/c1AccountDecision';
+import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
 import {collectC1AccountOpening} from '../../lib/c1AccountOpeningProvider';
 import {planC1ContinuedAccountOpening} from '../../lib/c1AccountExecution';
 import {createHash} from 'node:crypto';
@@ -10,7 +11,7 @@ const storage={
  async read(path){const r=await get(path,{access:'private',useCache:false});if(!r)return null;if(r.statusCode!==200||!r.blob?.etag)throw new Error('Account storage unavailable');return {record:JSON.parse(await new Response(r.stream).text()),etag:r.blob.etag};},
  async write(path,record,etag){return put(path,JSON.stringify(record),{access:'private',addRandomSuffix:false,allowOverwrite:Boolean(etag),...(etag?{ifMatch:etag}:{}),contentType:'application/json',cacheControlMaxAge:0});}
 };
-export function createC1AccountHandler({store=storage,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local'}={}){
+export function createC1AccountHandler({store=storage,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,collectHoldings=collectC1HoldingCoverage,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local'}={}){
  return async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'Method not allowed'});}
@@ -27,6 +28,16 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    if(req.method==='POST'){
     if(req.body?.operation==='adopt'){
      if(saved)return res.status(409).json({error:'The existing C1 account cannot be reset.'});
+     const baseline=book.model.sessions.at(-1);
+     if(missingC1HoldingPrices(req.body.portfolio,baseline).length){
+      const holdingCoverage=await collectHoldings({portfolio:req.body.portfolio,baseline,now});
+      const unavailable=holdingCoverage.rows.filter(r=>r.status!=='verified').map(r=>r.symbol);
+      const outside=holdingCoverage.rows.filter(r=>!r.inDecisionUniverse).map(r=>r.symbol);
+      return res.status(409).json({holdingCoverage,executable:false,error:unavailable.length?
+       'Dated adjusted holding prices unavailable: '+unavailable.join(', '):outside.length?
+       'Holding prices verified, but these holdings are outside the dated C1 universe: '+outside.join(', ')+'. No sell instruction is implied.':
+       'Holding prices verified separately. The accepted C1 input still requires a reconciled data correction; original account preserved.'});
+     }
      account=adoptC1Account({portfolio:req.body.portfolio,capitalRecord:req.body.capitalRecord,book,now,prospectiveLegacyAdoptionConfirmed:req.body.prospectiveLegacyAdoptionConfirmed===true});
     }else if(req.body?.operation==='record-session'&&saved){
      account=appendC1AccountSession({account,record:req.body.record,book,expectedRevision:req.body.expectedRevision,now});

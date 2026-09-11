@@ -159,7 +159,13 @@ assert.throws(()=>evaluateService({account:updatedAccount,book:{...updatedBook,c
 console.log('PASS: shared account decisions bind original inputs, accepted activity and revision; stale ownership cannot reuse candidates, and forbidden purchases remain excluded.');
 const vm=require('node:vm'),fs=require('node:fs');
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
-const context={applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+const fmpSource=fs.readFileSync('lib/fmpResearchBacktest.js','utf8');
+const barHelpers=fmpSource.slice(fmpSource.indexOf('const asArray ='),fmpSource.indexOf('const usableAdjustedOhlcBar ='));
+const barNormalizer=fmpSource.slice(fmpSource.indexOf('export function normalizeHistoricalBars('),fmpSource.indexOf('export async function resolvePriceHistoryContract(')).replace('export function','function');
+const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
+const holdingBox={...loader.load('lib/marketSession.js'),Date,URLSearchParams,AbortSignal,process:{env:{}}};
+vm.createContext(holdingBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
+const context={...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -176,6 +182,16 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.equal((await request('POST',body)).code,409);assert.equal(writes,1,'Existing account cannot reset');
  const response=await request('GET');assert.equal(response.code,200);assert.equal(response.body.decision.decisionId,initialView.decisionId);
  assert.equal((await request('DELETE')).code,405);
+
+ const testPortfolio=[...portfolio,{symbol:'OUT',shares:2,avgCost:1,role:'Swing'}],originalBook=JSON.stringify(baselineBook);
+ let requests=0;
+ const fetcher=async(url)=>{requests++;assert(url.includes('symbol=OUT'));return {ok:true,json:async()=>[{symbol:'OUT',date:baseline.date,adjOpen:100,adjHigh:102,adjLow:99,adjClose:101,volume:1000}]};};
+ const covered=await holdingBox.holdingExports.collectC1HoldingCoverage({portfolio:testPortfolio,baseline,now:new Date(baseline.date+'T21:00:00Z'),fetcher,apiKey:'test-secret'});
+ assert.equal(requests,1);assert.equal(covered.rows[0].status,'verified');assert.equal(covered.rows[0].price.close,101);assert.equal(covered.rows[0].inDecisionUniverse,false);
+ assert.equal(JSON.stringify(baselineBook),originalBook,'Supplemental holdings cannot mutate index membership or prices');assert(!JSON.stringify(covered).includes('test-secret'));
+ const bad=await holdingBox.holdingExports.collectC1HoldingCoverage({portfolio:testPortfolio,baseline,now:new Date(baseline.date+'T21:00:00Z'),fetcher:async()=>({ok:true,json:async()=>[{symbol:'WRONG',date:baseline.date,open:100,high:102,low:99,close:101}]}),apiKey:'test-secret'});
+ assert.equal(bad.rows[0].status,'unavailable');
+ console.log('PASS: outside-index holdings receive independently verified adjusted closes; wrong-symbol data rejects, credentials stay private, and accepted index data remains unchanged.');
  console.log('PASS: actual account API rejects unauthenticated access, preserves failed writes and existing accounts, and performs no provider initialization.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
 const stopOrder=plan.orders.find(o=>o.condition==='stop-triggered'&&planFills.some(f=>f.side==='buy'&&f.symbol===o.symbol&&plan.orders.find(x=>x.id===f.orderId).sleeve===o.sleeve));
