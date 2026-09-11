@@ -35,6 +35,10 @@ const provisional=advanceC1ForwardModel(null,[{...baseline,universeSymbols:null}
 assert.equal(provisional.summary.pointInTimeMembershipAvailable,false);
 assert.equal(provisional.summary.eligibleForAlphaClaim,false,'Current-cohort paper records cannot be relabeled point-in-time evidence');
 assert.equal(advanceC1ForwardModel(first,[baseline],firstNow),first,'Refresh retry cannot advance time');
+const corruptCash=JSON.parse(JSON.stringify(first));corruptCash.paperExecution.cash+=1;
+const rejectedCash=advanceC1ForwardModel(corruptCash,[session('2026-09-09')],firstNow);
+assert.equal(rejectedCash.paperExecutionStatus.status,'blocked','Same-session service retry must validate cached execution cash');
+assert.equal(corruptCash.paperExecution.cash,100001,'Do not silently repair a conflicting balance');
 const legacy=JSON.parse(JSON.stringify(first));delete legacy.paperExecution;delete legacy.paperExecutionStatus;
 const migrated=advanceC1ForwardModel(legacy,[session('2026-09-09')],firstNow);assert.equal(migrated.paperExecution.cash,100000);assert.equal(migrated.summary.observedForwardSessions,0);
 const next=session('2026-09-10'),nextNow=new Date('2026-09-10T21:00:00Z');

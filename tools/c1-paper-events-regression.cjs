@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const l=createResearchModuleLoader(process.cwd());
+const {createC1SleeveAccounting:create,applyC1SleeveFill:fill}=l.load('lib/c1SleeveAccounting.js');
+const {planC1PaperEvents:plan,initializeC1EventAccount:init}=l.load('lib/c1PaperEvents.js');
+const before=create(10000,'2026-09-01'),account=init(before);
+const a={id:'a',sleeve:'base',date:'2026-09-02',symbol:'TEST',side:'buy',shares:1.6,price:100,fee:0};
+const b={...a,id:'b',side:'sell',price:90};
+const c={...a,id:'c',sleeve:'cooldown15'};
+const after=[a,b,c].reduce(fill,before);
+const meta=after.fills.map(f=>({id:f.id,fill:f,reason:f.side==='buy'?'Buy':'initial-stop'}));
+const result=plan({before,after,account,eventMetadata:meta});
+assert.equal(result.status,'proposed');assert.equal(result.executable,false);
+assert.equal(JSON.stringify(result.orders.map(o=>[o.modelEventId,o.shares,o.price])),JSON.stringify([['a',1,100],['c',2,100],['b',2,90]]),'All opening buys precede intraday stops across books');
+assert.equal(result.nextAccount.cash,9880);assert.equal(result.nextAccount.positions.TEST,1);
+assert.equal(plan({before:after,after,account:result.nextAccount,eventMetadata:[]}).status,'unchanged');
+for(const broken of [meta.slice(1),[meta[0],meta[0],meta[2]],meta.map((m,i)=>i===0?{...m,reason:'unknown'}:m),meta.map((m,i)=>i===0?{...m,fill:{...m.fill,price:101}}:m)])assert.equal(plan({before,after,account,eventMetadata:broken}).status,'blocked');
+assert.equal(plan({before,after,account:{...account,priceBasis:'session-open-v1'},eventMetadata:meta}).status,'blocked');
+assert.equal(plan({before,after,account:{...account,positions:{TEST:1}},eventMetadata:meta}).status,'blocked');
+assert.equal(account.cash,10000);assert.equal(before.fills.length,0);
+console.log('PASS: model event phases, exact stop prices, aggregate share rounding, cash, identities, legacy-account rejection and immutable inputs');
+
+assert.equal(plan({before:after,after,account:{...result.nextAccount,cash:9999},eventMetadata:[]}).status,'blocked','Cached cash must reconcile from exact model events');
+assert.equal(plan({before:after,after,account:{...result.nextAccount,eventHistory:[]},eventMetadata:[]}).status,'blocked','Missing execution history cannot pass a same-session retry');
