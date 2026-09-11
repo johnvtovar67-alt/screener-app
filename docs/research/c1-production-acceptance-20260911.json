@@ -1,0 +1,107 @@
+{
+  "contract": "c1-consolidated-production-acceptance-v1",
+  "checkedAt": "2026-09-11T02:29:53.620908+00:00",
+  "scope": "Diagnostic ledger recovery and shared page status; not trading reactivation",
+  "productionCommit": "c4e15835af7389601bacf64bb42cb831d3a7c6ac",
+  "previewCommit": "52fa5ef394b84d2ebc9023f0a9387c6184c3f159",
+  "pullRequest": 145,
+  "checks": {
+    "regressions": "passed",
+    "productionBuild": "passed",
+    "vercelPreview": "ready-and-verified",
+    "vercelProduction": "ready-and-verified",
+    "productionHealth": true,
+    "identicalForwardAndTop5Decision": true,
+    "repeatPreservesDecisionAndRevision": true,
+    "browserOpportunitiesAndPortfolioSharePanel": true,
+    "browserNavigationPreservesRefreshTimestamp": true,
+    "browserAllNineQueueNamesPreserved": true,
+    "applicationErrorsObserved": false,
+    "browserLogLimitation": "Chrome extension metadata errors observed; no application runtime errors observed during this flow.",
+    "hostedHoldingsPost": "not-executed-auto-review-rejected",
+    "hostedHoldingsPostLimitation": "Automatic approval review classified a synthetic AAPL/MSTR holdings POST to the Vercel preview as potential sensitive disclosure. It was not retried through another route. Local holdings-comparison tests passed; no hosted POST acceptance is claimed."
+  },
+  "model": {
+    "sourceSessionDate": "2026-09-10",
+    "modelIdentity": "2026-09-11T02:27:24.495Z:2026-09-11:2026-09-10",
+    "modelRevision": 1,
+    "observedForwardSessions": 0,
+    "tradeCount": 0,
+    "conditionalQueueEntries": 27,
+    "distinctQueueSymbols": 9,
+    "firstDecisionSession": "2026-09-11",
+    "recovery": {
+      "contract": "c1-diagnostic-recovery-v1",
+      "reason": "invalid-original-baseline-clock",
+      "originalRecordSha256": "def69a574f5912b627c5106afb2aac404f587d97cb0e2005ba7afc72f045e563",
+      "originalPath": "research/c1-forward-accounting-production-v1.json.gz",
+      "originalPreserved": true,
+      "newValidationEvidence": false,
+      "eligibleForLiveCapital": false
+    },
+    "inputArchive": {
+      "contract": "c1-observed-input-v1",
+      "status": "captured",
+      "sessionDate": "2026-09-10",
+      "firstObservedAt": "2026-09-10T22:53:28.076Z",
+      "firstHash": "b09cc369c75a4aecb0cd70708e1711505259f348fa06360199b8ba0e7299c4ac",
+      "observedHash": "b09cc369c75a4aecb0cd70708e1711505259f348fa06360199b8ba0e7299c4ac",
+      "originalPreserved": true,
+      "sourcePointInTime": false,
+      "executable": false,
+      "eligibleForLiveCapital": false,
+      "eligibleForAlphaClaim": false
+    }
+  },
+  "authority": {
+    "independentlyValidated": false,
+    "activationAuthorized": false,
+    "targetCount": 0,
+    "targetWeightPct": 0,
+    "executable": false,
+    "orders": []
+  },
+  "readiness": "not-established",
+  "sixtySessionWaitRequired": false,
+  "remaining": [
+    {
+      "gate": "historical-sector-integrity",
+      "status": "not-established",
+      "evidence": "Nasdaq status explicitly says historical sectors unavailable. Both historical compilers copy undated profile/discovery labels. Frozen C1 sector caps affect fills in a return-blind synthetic dependency check. Actual return bias has not been quantified."
+    },
+    {
+      "gate": "tested-universe-to-live-input-binding",
+      "status": "not-established",
+      "evidence": "Production uses the provisional broad compiler. Historical Nasdaq status is frozen through 2026-09-01. The two datasets cannot be treated as the same validated input."
+    },
+    {
+      "gate": "original-fold-and-selection-interpretation",
+      "status": "not-established",
+      "evidence": "Saved fixed-candidate 1000-seed controls remain post-selection diagnostics. No family-wise correction, new holdout, or prospective evidence is claimed."
+    },
+    {
+      "gate": "account-specific-order-path",
+      "status": "not-established",
+      "evidence": "Shared diagnostic status is wired. Provider timestamp/price identity and declared account state must still support a full manual-order flow; synthetic replay is not hosted end-to-end acceptance. A broker connection itself is not required; manually confirmed transaction/holding records may establish account state."
+    }
+  ],
+  "sourceStatus": {
+    "universe": {
+      "sha256": "f0ec814e4823241e1df41ea45eb31141f46b4c0eef23ec1184d0778e313847c6",
+      "endpoint": "https://screener-app-cq5t.vercel.app/api/research/pit-nasdaq-universe",
+      "throughDate": "2026-09-01",
+      "sectorLimitation": [
+        "Historical sector labels are unavailable, so R11 does not use sector-relative ranks or sector constraints."
+      ]
+    },
+    "dataset": {
+      "sha256": "3568bc95e0e2d62adf33b8e3e16c00c43140983dfc953384d6507b2ceb0e125c",
+      "endpoint": "https://screener-app-cq5t.vercel.app/api/research/pit-nasdaq-dataset-status",
+      "throughDate": "2026-09-01",
+      "sectorLimitation": [
+        "Historical sector labels are unavailable, so R11 does not use sector-relative ranks or sector constraints.",
+        "R11 rankings use only adjusted prices, point-in-time membership, and benchmark histories; current profile sectors cannot affect selection."
+      ]
+    }
+  }
+}
