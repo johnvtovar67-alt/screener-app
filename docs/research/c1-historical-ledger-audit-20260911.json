@@ -1,0 +1,95 @@
+{
+  "scope": "frozen historical ledger audit",
+  "newBacktest": false,
+  "newHoldout": false,
+  "prospectiveRequirementWaivedByUser": true,
+  "eligibleForLiveCapital": false,
+  "methodology": "Weighted book cash P&L; average-cost lot accounting; costs already embedded in fill prices. Book realizations overlap across sleeves and are not independent trades. Calendar returns are descriptive, not new evaluation folds. Terminal liquidation is included.",
+  "unresolved": [
+    "Historical data provenance and survivorship/revision safety",
+    "Benchmark superiority by original evaluation fold",
+    "Post-selection and multiple-testing evidence",
+    "Live recommendation/model equivalence",
+    "Brokerage execution reconciliation"
+  ],
+  "results": {
+    "nasdaq": {
+      "fixtureSha256": "9b5a19a7f13ac5adacbeb6d2edff4e9038ead6f645ef3207056212b9a0751ee8",
+      "start": "2023-01-04",
+      "end": "2026-09-01",
+      "sessions": 918,
+      "totalReturnPct": 268.65228,
+      "maxDrawdownPct": -20.171899936355675,
+      "weightedRealizedProfitFactor": 2.5307193632049434,
+      "bookRealizations": 234,
+      "weightedDollarsPerBookRealization": 1148.0866635168863,
+      "meanBookRealizationReturnPct": 6.57444530181822,
+      "averageInvestedPct": 75.37107232778243,
+      "annualDiagnostic": [
+        {
+          "year": "2023",
+          "start": "2023-01-04",
+          "end": "2023-12-29",
+          "returnPct": 72.449815
+        },
+        {
+          "year": "2024",
+          "start": "2024-01-02",
+          "end": "2024-12-31",
+          "returnPct": 17.97728081065206
+        },
+        {
+          "year": "2025",
+          "start": "2025-01-02",
+          "end": "2025-12-31",
+          "returnPct": 39.51396131175719
+        },
+        {
+          "year": "2026",
+          "start": "2026-01-02",
+          "end": "2026-09-01",
+          "returnPct": 29.878761665015354
+        }
+      ]
+    },
+    "sp500": {
+      "fixtureSha256": "06959bc52f6fb6f4ec664ff3f8aa3fa36a3778e76c993a619208ffd81dd039b5",
+      "start": "2023-01-04",
+      "end": "2026-09-01",
+      "sessions": 918,
+      "totalReturnPct": 380.7204925,
+      "maxDrawdownPct": -20.701051498725377,
+      "weightedRealizedProfitFactor": 2.613488671647383,
+      "bookRealizations": 254,
+      "weightedDollarsPerBookRealization": 1498.8995827073277,
+      "meanBookRealizationReturnPct": 6.559639212544515,
+      "averageInvestedPct": 76.82553130115673,
+      "annualDiagnostic": [
+        {
+          "year": "2023",
+          "start": "2023-01-04",
+          "end": "2023-12-29",
+          "returnPct": 40.35462249999999
+        },
+        {
+          "year": "2024",
+          "start": "2024-01-02",
+          "end": "2024-12-31",
+          "returnPct": 59.96986490416445
+        },
+        {
+          "year": "2025",
+          "start": "2025-01-02",
+          "end": "2025-12-31",
+          "returnPct": 49.45119721581239
+        },
+        {
+          "year": "2026",
+          "start": "2026-01-02",
+          "end": "2026-09-01",
+          "returnPct": 43.261118989424844
+        }
+      ]
+    }
+  }
+}
