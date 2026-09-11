@@ -1,0 +1,125 @@
+{
+  "scope": "historical aggregate exposure audit",
+  "newBacktest": false,
+  "eligibleForLiveCapital": false,
+  "results": {
+    "nasdaq": {
+      "fixtureSha256": "9b5a19a7f13ac5adacbeb6d2edff4e9038ead6f645ef3207056212b9a0751ee8",
+      "reconciledBookCheckpoints": 2754,
+      "sessions": 918,
+      "maxDistinctNames": 6,
+      "sessionsAboveThreeNames": 515,
+      "largestClosingSymbolWeightPct": 43.657253839138534,
+      "recordCountExamples": [
+        {
+          "date": "2023-01-05",
+          "distinctNames": 3,
+          "weightsPct": {
+            "PDD": 34.19057314864667,
+            "NFLX": 32.52979296167588,
+            "ASML": 32.165239097449955
+          }
+        },
+        {
+          "date": "2023-04-26",
+          "distinctNames": 4,
+          "weightsPct": {
+            "NVDA": 33.735868000299696,
+            "BKNG": 31.84974923858835,
+            "META": 16.69024582757554,
+            "ALGN": 16.562848285977072
+          }
+        },
+        {
+          "date": "2023-04-27",
+          "distinctNames": 5,
+          "weightsPct": {
+            "NVDA": 33.64930356314632,
+            "META": 18.77745976116994,
+            "SGEN": 16.207633321232496,
+            "ALGN": 14.657590684414085,
+            "BKNG": 16.005711701295994
+          }
+        },
+        {
+          "date": "2024-09-05",
+          "distinctNames": 6,
+          "weightsPct": {
+            "NVDA": 8.43940113734994,
+            "TSLA": 36.12390683616372,
+            "ISRG": 8.564310814475684,
+            "AAPL": 16.929686728014577,
+            "CHTR": 13.555618363036595,
+            "CTAS": 9.994815784396023
+          }
+        }
+      ]
+    },
+    "sp500": {
+      "fixtureSha256": "06959bc52f6fb6f4ec664ff3f8aa3fa36a3778e76c993a619208ffd81dd039b5",
+      "reconciledBookCheckpoints": 2754,
+      "sessions": 918,
+      "maxDistinctNames": 7,
+      "sessionsAboveThreeNames": 568,
+      "largestClosingSymbolWeightPct": 49.77428234368856,
+      "recordCountExamples": [
+        {
+          "date": "2023-01-05",
+          "distinctNames": 3,
+          "weightsPct": {
+            "STLD": 32.86260729324707,
+            "NFLX": 33.00093374576048,
+            "FCX": 14.742984058792471
+          }
+        },
+        {
+          "date": "2023-08-17",
+          "distinctNames": 4,
+          "weightsPct": {
+            "NVDA": 47.808093705194906,
+            "CCL": 24.710055393779562,
+            "ADBE": 1.354080164516757,
+            "TSLA": 3.751587417090476
+          }
+        },
+        {
+          "date": "2023-10-19",
+          "distinctNames": 5,
+          "weightsPct": {
+            "LLY": 17.115041683055004,
+            "MPC": 8.1822817425269,
+            "CHTR": 7.938326649248448,
+            "BX": 7.444319749233035,
+            "ETN": 8.19546874800518
+          }
+        },
+        {
+          "date": "2023-11-10",
+          "distinctNames": 6,
+          "weightsPct": {
+            "LLY": 25.01491510042714,
+            "MPC": 32.3528074054251,
+            "ADBE": 8.182230754608087,
+            "MCK": 8.849208627620577,
+            "PANW": 8.409183645785044,
+            "ANET": 1.7338489900500798
+          }
+        },
+        {
+          "date": "2023-12-04",
+          "distinctNames": 7,
+          "weightsPct": {
+            "ADBE": 8.107260576876453,
+            "PGR": 7.912714103285374,
+            "ANET": 5.589297459539535,
+            "MPC": 25.23930472574163,
+            "LLY": 16.227169074253382,
+            "MCK": 8.488850879252803,
+            "PANW": 9.30562281233147
+          }
+        }
+      ]
+    }
+  },
+  "conclusion": "The frozen strategy uses three independent books. A single top-three list with equal aggregate allocations is not established as equivalent. Closing weights include market drift; they are not entry target limits."
+}
