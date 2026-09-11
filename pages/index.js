@@ -1,5 +1,6 @@
 import C1AccountOpportunities from "../components/C1AccountOpportunities";
 import C1AccountActivity from "../components/C1AccountActivity";
+import C1ReconciliationDetails from "../components/C1ReconciliationDetails";
 import {c1AccountPositionDecision,c1AccountMatchesPortfolio} from "../lib/c1AccountDecision";
 import {c1Presentation,c1DisplayDecision} from "../lib/c1Presentation";
 import C1ModelStatus from "../components/C1ModelStatus";
@@ -414,6 +415,7 @@ export default function Home(){
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
     {err&&<p className="error">{err}</p>}
+    {tab==="portfolio"&&!accountView&&err&&<C1ReconciliationDetails portfolio={portfolio} capitalStorageKey={C1_DRAWDOWN_KEY}/>}
     {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {tab==="opportunities"&&accountView&&<C1AccountOpportunities openingPlan={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null} openingError={accountView.openingError} decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,opportunities:[],explanation:"Entered holdings differ from the recorded C1 account. Record actual activity before using these candidates."}}/>}
