@@ -49,6 +49,11 @@ assert.notEqual(path('nasdaq','preview','a'.repeat(40)),path('sp500','preview','
  const b=await connect(retry,{store,path:'test',holdings,now:new Date(retry.observedAt)});
  assert.equal(a.decisionSnapshot.decisionId,b.decisionSnapshot.decisionId);assert.equal(writes,1);
  assert.ok(!JSON.stringify(saved.record).includes('2500.43'),'Account balances must never be persisted in the model');
+ let raceSaved=null;
+ const raceStore={read:async()=>raceSaved,write:async(p,record)=>{raceSaved={etag:'winner',record};throw new Error('Vercel Blob: This blob already exists');}};
+ const raced=await connect(firstInput,{store:raceStore,path:'race',holdings,now:firstNow});
+ assert.equal(raced.sourceHash,a.sourceHash,'A generic SDK conflict requires a verified matching saved winner');
+ await assert.rejects(()=>connect(firstInput,{store:{read:async()=>null,write:async()=>{throw new Error('Write failed');}},path:'failed',now:firstNow}),/Write failed/);
  // Exercise the existing shared snapshot boundary used by both page APIs.
  const indexInput={...firstInput,universe:'sp500'},indexRecord=accept(null,indexInput,firstNow);
  const indexView=view(indexRecord,[],firstNow);
