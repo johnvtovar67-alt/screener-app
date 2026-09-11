@@ -6,7 +6,7 @@ import {planC1ContinuedAccountOpening} from '../../lib/c1AccountExecution';
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
-import {adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession} from '../../lib/c1AccountService';
+import {correctC1AccountOpenedAt,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession} from '../../lib/c1AccountService';
 export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
 const storage={
  async read(path){const r=await get(path,{access:'private',useCache:false});if(!r)return null;if(r.statusCode!==200||!r.blob?.etag)throw new Error('Account storage unavailable');return {record:JSON.parse(await new Response(r.stream).text()),etag:r.blob.etag};},
@@ -52,6 +52,8 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
       if(unavailable.length)return res.status(409).json({holdingCoverage,executable:false,error:'Dated adjusted holding prices or classifications unavailable: '+unavailable.join(', ')});
      }
      account=adoptC1Account({portfolio:req.body.portfolio,capitalRecord:req.body.capitalRecord,book,holdingCoverage,now,prospectiveLegacyAdoptionConfirmed:req.body.prospectiveLegacyAdoptionConfirmed===true});
+    }else if(req.body?.operation==='correct-opening-date'&&saved){
+     account=correctC1AccountOpenedAt({account,symbol:req.body.symbol,openedAt:req.body.openedAt,expectedRevision:req.body.expectedRevision,book,now});
     }else if(req.body?.operation==='record-session'&&saved){
      account=appendC1AccountSession({account,record:req.body.record,book,expectedRevision:req.body.expectedRevision,now});
     }else return res.status(400).json({error:'Valid account operation required.'});
