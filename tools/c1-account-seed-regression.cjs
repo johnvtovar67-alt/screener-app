@@ -165,7 +165,7 @@ const barNormalizer=fmpSource.slice(fmpSource.indexOf('export function normalize
 const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
 const holdingBox={...loader.load('lib/marketSession.js'),Date,URLSearchParams,AbortSignal,process:{env:{}}};
 vm.createContext(holdingBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
-const context={...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+const context={...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -266,6 +266,19 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.equal(inheritedPost.body.decision.positions[0].shares,8);
  assert.equal((await inheritedRequest(inheritedHandler,'GET')).code,200);
  assert.equal(coverageCalls,2,'Committed supplemental observations are reused, not silently revised');
+ const {correctC1AccountOpenedAt}=loader.load('lib/c1AccountService.js');
+ const originalAccount=JSON.stringify(inheritedSaved.record);
+ const corrected=correctC1AccountOpenedAt({account:inheritedSaved.record,symbol:'OUT',openedAt:sessions[1].date,expectedRevision:1,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
+ assert.equal(JSON.stringify(inheritedSaved.record),originalAccount,'Correction cannot mutate the original account');
+ assert.equal(corrected.revision,2);assert.equal(corrected.corrections[0].previousDates[0],sessions[0].date);
+ assert.equal(JSON.stringify(corrected.records),JSON.stringify(inheritedSaved.record.records));
+ for(const [id,seed] of Object.entries(corrected.adoption.seeds)){assert.equal(seed.highWater,inheritedSaved.record.adoption.seeds[id].highWater);assert.equal(seed.actualDollarsPerModelDollar,inheritedSaved.record.adoption.seeds[id].actualDollarsPerModelDollar);}
+ const correctedApi=await inheritedRequest(inheritedHandler,'POST',{operation:'correct-opening-date',symbol:'OUT',openedAt:sessions[1].date,expectedRevision:1});
+ assert.equal(correctedApi.code,200,JSON.stringify(correctedApi.body));assert.equal(correctedApi.body.decision.positions[0].openedAt,sessions[1].date);
+ assert.equal(correctedApi.body.decision.positions[0].shares,8);
+ assert.equal((await inheritedRequest(inheritedHandler,'POST',{operation:'correct-opening-date',symbol:'OUT',openedAt:baseline.date,expectedRevision:1})).code,409,'Concurrent stale date updates cannot overwrite the correction');
+ assert.throws(()=>correctC1AccountOpenedAt({account:corrected,symbol:'OUT',openedAt:'2026-02-31',expectedRevision:2,book:updatedBook}),/valid first-purchase/);
+ console.log('PASS: audited opening-date correction preserves holdings, cash, fills, capital peaks and sleeve units; stale revisions and invalid dates reject.');
  console.log('PASS: inherited nonmember retains real equity and shares across sessions, never enters C1 rankings, avoids false rank exits and retains stop protection.');
  console.log('PASS: verified missing constituent price activates, persists, reloads and continues actual fills without changing the accepted index or admitting outside holdings to entry rankings.');
  console.log('PASS: actual account API rejects unauthenticated access, preserves failed writes and existing accounts, and performs no provider initialization.');
