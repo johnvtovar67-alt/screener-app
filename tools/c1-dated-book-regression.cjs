@@ -4,7 +4,7 @@ const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const loader=createResearchModuleLoader(process.cwd());
 const imports={createHash,...loader.load('lib/c1ForwardModel.js'),...loader.load('lib/c1DecisionSnapshot.js'),
  ...loader.load('lib/c1HoldingsComparison.js'),...loader.load('lib/marketSession.js'),...loader.load('lib/c1LiveInput.js')};
-const box={...imports,Date,process};vm.createContext(box);
+const box={...imports,...loader.load('lib/c1BaselineReconciliation.js'),Date,process};vm.createContext(box);
 vm.runInContext(fs.readFileSync('lib/c1DatedBook.js','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'')+'\nglobalThis.api={acceptC1DatedInput,c1DatedBookView};',box);
 const {acceptC1DatedInput:accept,c1DatedBookView:view}=box.api;
 const symbols=['AAA','BBB','CCC','DDD'];
