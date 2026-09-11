@@ -200,6 +200,10 @@ const renamedMembers=memberRows.map((row,index)=>({...row,name:'Updated display 
 assert.equal(providerBox.validate({...observedInput,membersAfter:renamedMembers}).prices.length,observedSymbols.length,'Names and row order cannot create a membership change');
 assert.throws(()=>providerBox.validate({...observedInput,membersBefore:memberRows.slice(1),membersAfter:memberRows.slice(1)}),/Index membership changed: added none; removed T0/);
 assert.throws(()=>providerBox.validate({...observedInput,membersAfter:memberRows.map((row,i)=>i?row:{...row,sector:'Changed'})}),/sector classification changed during collection: T0/);
+const aliasBaseline={...baseline,universeSymbols:[...baseline.universeSymbols,'BRK.B','BF.B']};
+const aliasMembers=[...memberRows,{symbol:'BRK-B',sector:'Financial Services'},{symbol:'BF-B',sector:'Consumer Defensive'}];
+assert.equal(providerBox.validate({...observedInput,baseline:aliasBaseline,membersBefore:aliasMembers,membersAfter:aliasMembers}).prices.length,observedSymbols.length,'Explicit share-class aliases preserve membership identity');
+assert.throws(()=>providerBox.validate({...observedInput,baseline:aliasBaseline,membersBefore:[...aliasMembers,{symbol:'BRK.B',sector:'Financial Services'}],membersAfter:aliasMembers}),/Duplicate index membership/);
 const {applyC1OpeningPlan}=loader.load('lib/c1AccountDecision.js');
 const openView=applyC1OpeningPlan(initialView,{...plan,providerVerified:true});
 assert.ok(openView.decisionId.includes(plan.observedAt));
