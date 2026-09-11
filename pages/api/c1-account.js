@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
 import {adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession} from '../../lib/c1AccountService';
-export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:60};
+export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
 const storage={
  async read(path){const r=await get(path,{access:'private',useCache:false});if(!r)return null;if(r.statusCode!==200||!r.blob?.etag)throw new Error('Account storage unavailable');return {record:JSON.parse(await new Response(r.stream).text()),etag:r.blob.etag};},
  async write(path,record,etag){return put(path,JSON.stringify(record),{access:'private',addRandomSuffix:false,allowOverwrite:Boolean(etag),...(etag?{ifMatch:etag}:{}),contentType:'application/json',cacheControlMaxAge:0});}
