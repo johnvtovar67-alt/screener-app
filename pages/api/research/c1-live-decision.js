@@ -2,6 +2,7 @@ import { collectC1LiveInput } from '../../../lib/c1LiveInputProvider';
 import { connectStoredC1DatedInput } from '../../../lib/c1DatedBookStore';
 import { compareC1Holdings } from '../../../lib/c1HoldingsComparison';
 import { latestCompletedMarketSessionDay } from '../../../lib/marketSession';
+import { refreshC1Index } from '../../../lib/c1IndexLifecycle';
 
 export const config = { maxDuration: 300, api: { bodyParser: { sizeLimit: '128kb' } } };
 const cache = new Map(), inflight = new Map();
@@ -17,6 +18,12 @@ export default async function handler(req, res) {
   catch { return res.status(400).json({ error: 'Valid explicit holdings and roles required' }); }
   const key = universe + ':' + latestCompletedMarketSessionDay(new Date());
   try {
+    if (universe === 'sp500') {
+      const connected = await refreshC1Index();
+      return res.status(200).json({ status: 'connected-diagnostic-only', ...connected,
+        holdingsComparison: compareC1Holdings(holdings, connected.model, connected.decisionSnapshot),
+        accountStored: false, productionChanged: false });
+    }
     const saved = cache.get(key);
     let input = saved && Date.now() - saved.at < 300000 ? saved.input : null;
     if (!input) {

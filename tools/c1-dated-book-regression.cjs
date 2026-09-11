@@ -38,9 +38,10 @@ assert.equal(view(second,holdings,new Date('2026-09-11T22:00:00Z')).decisionSnap
 const corrupt=JSON.parse(JSON.stringify(second));corrupt.model.summary.cash+=1;
 assert.throws(()=>view(corrupt,holdings,nextNow),/integrity/);
 const storeBox={...box.api,Date,process};vm.createContext(storeBox);
-vm.runInContext(fs.readFileSync('lib/c1DatedBookStore.js','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'')+'\nglobalThis.api={connectStoredC1DatedInput,c1DatedBookPath};',storeBox);
-const {connectStoredC1DatedInput:connect,c1DatedBookPath:path}=storeBox.api;
-assert.throws(()=>path('nasdaq','production'),/preview/);
+vm.runInContext(fs.readFileSync('lib/c1DatedBookStore.js','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'')+'\nglobalThis.api={connectStoredC1DatedInput,c1DatedBookPath,prepareStoredC1DatedBook,C1_ACCEPTED_INDEX_SEED};',storeBox);
+const {connectStoredC1DatedInput:connect,c1DatedBookPath:path,prepareStoredC1DatedBook:prepare,C1_ACCEPTED_INDEX_SEED:seedPolicy}=storeBox.api;
+assert.throws(()=>path('nasdaq','production'),/S&P 500/);
+assert.equal(path('sp500','production','a'.repeat(40)),path('sp500','production','b'.repeat(40)),'Production history must survive deployment commits');
 assert.notEqual(path('nasdaq','preview','a'.repeat(40)),path('sp500','preview','a'.repeat(40)));
 (async()=>{
  let saved=null,writes=0;
@@ -57,15 +58,27 @@ assert.notEqual(path('nasdaq','preview','a'.repeat(40)),path('sp500','preview','
  // Exercise the existing shared snapshot boundary used by both page APIs.
  const indexInput={...firstInput,universe:'sp500'},indexRecord=accept(null,indexInput,firstNow);
  const indexView=view(indexRecord,[],firstNow);
+ // A restart must preserve a present book and refuse any unaccepted baseline.
+ let seedWrites=0;
+ const preserved=await prepare({now:firstNow,path:'production',store:{read:async()=>({record:indexRecord}),write:async()=>{seedWrites++;}}});
+ assert.equal(preserved.recordHash,indexRecord.recordHash);assert.equal(seedWrites,0);
+ await assert.rejects(()=>prepare({now:firstNow,path:'missing',store:{read:async()=>null,write:async()=>{seedWrites++;}}}),/seed is missing/);
+ await assert.rejects(()=>prepare({now:firstNow,path:'new',store:{read:async p=>p===seedPolicy.path?{record:indexRecord}:null,write:async()=>{seedWrites++;}}}),/seed is missing or changed/);
+ assert.equal(seedWrites,0,'A missing or different seed must never initialize a new book');
  let reads=0;
  const bridge={...imports,...loader.load('lib/v11ProductionPolicy.js'),Date,
   process:{env:{VERCEL_ENV:'preview'}},
   readStoredC1DatedBook:async universe=>{assert.equal(universe,'sp500');reads++;return {record:indexRecord,view:indexView,path:'preview/index'};}};
  vm.createContext(bridge);
- vm.runInContext(fs.readFileSync('lib/v11ProductionSnapshot.js','utf8').replace(/import\s+[\s\S]*?\s+from\s+["'][^"']+["'];/g,'').replace(/export /g,'')+'\nglobalThis.api={getV11ProductionSnapshot};',bridge);
+ vm.runInContext(fs.readFileSync('lib/v11ProductionSnapshot.js','utf8').replace(/import\s+[\s\S]*?\s+from\s+["'][^"']+["'];/g,'').replace(/export /g,'')+'\nglobalThis.api={getV11ProductionSnapshot,refreshV11ProductionSnapshot};',bridge);
  const snapshot=await bridge.api.getV11ProductionSnapshot({now:firstNow});
  assert.equal(snapshot.decisionSnapshot.decisionId,indexView.decisionSnapshot.decisionId);
  assert.equal(snapshot.decisionSnapshot.universe,'sp500');assert.equal(snapshot.activationAuthorized,false);assert.equal(reads,1);
+ bridge.process.env.VERCEL_ENV='production';
+ const production=await bridge.api.refreshV11ProductionSnapshot(firstNow);
+ assert.equal(production.decisionSnapshot.decisionId,snapshot.decisionSnapshot.decisionId);
+ assert.equal(production.forwardAccounting.environment,'production');
+ assert.equal(production.activationAuthorized,false);assert.equal(reads,2,'Legacy cron must also read the index book');
  bridge.readStoredC1DatedBook=async()=>{throw new Error('Not prepared');};
  const unavailable=await bridge.api.getV11ProductionSnapshot({now:firstNow});
  assert.equal(unavailable.status,'unavailable');assert.equal(unavailable.forwardAccounting,null,'No fallback to a different broad model');

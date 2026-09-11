@@ -1,5 +1,6 @@
 require("./c1-live-input-regression.cjs");
 require("./c1-dated-book-regression.cjs");
+require("./c1-index-lifecycle-regression.cjs");
 require("./c1-execution-reconciliation-regression.cjs");
 require("./c1-combined-portfolio-regression.cjs");
 require("./c1-paper-events-regression.cjs");
