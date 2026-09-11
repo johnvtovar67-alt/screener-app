@@ -1,3 +1,4 @@
+require("./c1-execution-reconciliation-regression.cjs");
 require("./c1-combined-portfolio-regression.cjs");
 require("./c1-paper-events-regression.cjs");
 require("./c1-presentation-regression.cjs");
@@ -234,3 +235,4 @@ const manifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
 assert(manifest.includes('release:"2026-09-05-c1-mobile-resilience"'), "the release manifest must identify the C1 mobile-resilience release");
 
 console.log("C1 PRODUCTION POLICY PASS: unvalidated rank has no full-size authority; three-name, 1%, two-session pilot, liquidity floor, lifecycle, drawdown control, and fail-closed behavior verified");
+require("./c1-decision-snapshot-regression.cjs");

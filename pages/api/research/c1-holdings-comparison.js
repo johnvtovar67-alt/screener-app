@@ -9,7 +9,7 @@ export default async function handler(req,res) {
   catch(error){return res.status(400).json({error:error.message,executable:false,orders:[]});}
   try {
     const snapshot=await getV11ProductionSnapshot({refreshIfStale:true});
-    return res.status(200).json(compareC1Holdings(req.body.holdings,snapshot.forwardAccounting));
+    return res.status(200).json(compareC1Holdings(req.body.holdings,snapshot.forwardAccounting,snapshot.decisionSnapshot));
   } catch(error) {
     return res.status(503).json({status:'unavailable',executable:false,orders:[],error:'Paper model unavailable'});
   }

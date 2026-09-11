@@ -61,7 +61,7 @@ assert.equal(advanceC1ForwardModel(null,[session('2026-09-04')],new Date('2026-0
 // Execute the production storage coordinator with fake storage, not a second
 // implementation of its conditional-write behavior.
 const source=fs.readFileSync('lib/c1ForwardStore.js','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
-const box={advanceC1ForwardModel,C1_FORWARD_CONTRACT,latestCompletedMarketSessionDay,process,Buffer,Response};
+const box={advanceC1ForwardModel,C1_FORWARD_CONTRACT,latestCompletedMarketSessionDay,createHash,process,Buffer,Response};
 vm.createContext(box);vm.runInContext(source+'\nglobalThis.api={advanceStoredC1ForwardModel,c1ForwardSummary,c1ForwardStorePath};',box);
 const {advanceStoredC1ForwardModel:advanceStore,c1ForwardSummary,c1ForwardStorePath}=box.api;
 assert.notEqual(c1ForwardStorePath('production'),c1ForwardStorePath('preview','a'.repeat(40)));
@@ -71,6 +71,7 @@ assert.equal(c1ForwardSummary(first,nextNow).status,'stale');
   .replace(/import\s+[\s\S]*?from\s+["'][^"']+["'];/g,'').replace(/export /g,'');
  let snapshotWrites=0;
  const snapshotBox={process:{env:{VERCEL_ENV:'preview'}},
+  buildC1DecisionSnapshot:loader.load('lib/c1DecisionSnapshot.js').buildC1DecisionSnapshot,
   put:async()=>{snapshotWrites++;},latestCompletedMarketSessionDay,
   marketSessionDistance:loader.load('lib/marketSession.js').marketSessionDistance,
   V11_PRODUCTION_POLICY_ID:'test',V11_PRODUCTION_MAX_SNAPSHOT_AGE_SESSIONS:0};
@@ -80,6 +81,7 @@ assert.equal(c1ForwardSummary(first,nextNow).status,'stale');
  await snapshotBox.testApi.persistSnapshot({});assert.equal(snapshotWrites,1);
  assert.equal(snapshotBox.testApi.assessSnapshot({forwardAccounting:{environment:'preview'}},firstNow).forwardAccounting,null,
   'Preview accounting cannot satisfy production initialization');
+ for(const field of ['independentlyValidated','activationAuthorized'])assert.equal(snapshotBox.testApi.assessSnapshot({[field]:true},firstNow)[field],false,'Stored metadata cannot restore the legacy full-size recommender');
  let record=null,etag=null,writes=0;
  const store={read:async()=>record?{record,etag}:null,write:async(path,next,expected)=>{
   assert.equal(expected,etag??undefined);record=next;etag='revision-'+(++writes);
@@ -93,6 +95,20 @@ assert.equal(c1ForwardSummary(first,nextNow).status,'stale');
  }};
  const recovered=await advanceStore([session('2026-09-09')],firstNow,race,'test');
  assert.equal(attempts,1);assert.equal(recovered.observedForwardSessions,0);
+ const preserved=JSON.stringify(invalidBaseline),data=new Map([['original',{record:invalidBaseline,etag:'original-etag'}]]),writePaths=[];
+ const recoveryStore={read:async p=>data.get(p)||null,write:async(p,r,e)=>{assert.equal(e,data.get(p)?.etag);writePaths.push(p);data.set(p,{record:r,etag:'saved-'+writePaths.length});}};
+ const diagnostic=await advanceStore([session('2026-09-09'),next],nextNow,recoveryStore,'original');
+ assert.equal(diagnostic.recovery.originalPreserved,true);assert.equal(diagnostic.observedForwardSessions,0);
+ assert.equal(diagnostic.recovery.originalRecordSha256,createHash('sha256').update(preserved).digest('hex'));
+ assert.equal(JSON.stringify(data.get('original').record),preserved);assert.deepEqual(writePaths,['original-diagnostic-v1.json.gz']);
+ await advanceStore([next],nextNow,recoveryStore,'original');assert.equal(writePaths.length,1,'Refreshing cannot create a new diagnostic book');
+ const changed=JSON.parse(JSON.stringify(next));changed.prices[0].close=99;
+ await assert.rejects(advanceStore([changed],nextNow,recoveryStore,'original'),/input changed/);
+ invalidBaseline.revision++;await assert.rejects(advanceStore([next],nextNow,recoveryStore,'original'),/lineage changed/);
+ invalidBaseline.revision--;
+ const lostInput={...invalidBaseline,firstDecisionSession:'2026-09-11'};
+ data.set('other',{record:lostInput,etag:'other'});
+ await assert.rejects(advanceStore([baseline,next],nextNow,recoveryStore,'other'),/input changed/,'Input revisions must never trigger recovery');
  console.log('PASS: unchanged simulator/options, forward-only clock, immutable inputs, gap detection, idempotence, conditional writes and preview isolation.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
 

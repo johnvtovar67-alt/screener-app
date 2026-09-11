@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-11",
+  "scope": "Synthetic dependency audit plus source inspection; not a performance test",
+  "newHistoricalEvidence": false,
+  "eligibleForLiveCapital": false,
+  "results": {
+    "base": {
+      "fundamentalFlagPerturbationChangesFills": false,
+      "sectorLabelPerturbationChangesFills": true
+    },
+    "cooldown15": {
+      "fundamentalFlagPerturbationChangesFills": false,
+      "sectorLabelPerturbationChangesFills": true
+    },
+    "sector40": {
+      "fundamentalFlagPerturbationChangesFills": false,
+      "sectorLabelPerturbationChangesFills": true
+    }
+  },
+  "compilerSha256": "c0008a435852b2e6eb036d29e958eaff87fea84a999ba56cc1f78d224c79c7de",
+  "finding": "Nasdaq compiler copies a profile sector without a decision-date sector lookup. C1 uses sector caps. Historical membership and price-only ranking do not establish point-in-time sector provenance.",
+  "impact": "The direction or size of any historical return effect is not established. Published arithmetic is not changed by this audit.",
+  "required": "Verify historical sector assignments for the tested member-dates, or retain a documented data-integrity limitation. Do not silently disable sector caps or relabel a corrected replay as new holdout evidence."
+}

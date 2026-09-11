@@ -1,4 +1,5 @@
 import {c1Presentation,c1DisplayDecision} from "../lib/c1Presentation";
+import C1ModelStatus from "../components/C1ModelStatus";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {reconcileBrokerageCSV} from "../lib/brokerageReconciliation";
 import {compareC1Holdings} from "../lib/c1HoldingsComparison";
@@ -204,7 +205,7 @@ export default function Home(){
       // Reuse this analysis's server model; no separate request or portfolio upload.
       try{
         const comparisonRows=portfolio.filter(p=>!CASH.includes(p.symbol)).map(p=>({symbol:p.symbol,shares:Number(p.shares),role:role(p.symbol,p.role)}));
-        const comparison=compareC1Holdings(comparisonRows,screenLive?currentProductionPolicy.forwardAccounting:null);
+        const comparison=compareC1Holdings(comparisonRows,screenLive?currentProductionPolicy.forwardAccounting:null,screenLive?currentProductionPolicy.decisionSnapshot:null);
         setHoldingsComparison({...comparison,portfolioSignature:JSON.stringify(portfolio)});
       }catch{setHoldingsComparison({status:"unavailable",positions:[],portfolioSignature:JSON.stringify(portfolio)});}
 
@@ -362,6 +363,7 @@ export default function Home(){
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
     {err&&<p className="error">{err}</p>}
+    {["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {tab==="opportunities"&&<>
       <section className="card">
@@ -370,7 +372,7 @@ export default function Home(){
         {marketScope?.productionPolicy&&marketScope.productionPolicy.status!=="ready"&&<div className="universeStatus warning"><b>Fresh entries paused</b><span>C1 is not currently authorized for full-size entries. Existing positions remain available for review. A price refresh does not replace model validation.</span></div>}
         {marketScope&&(!["ready","stale"].includes(marketScope.fullMarketDiscoveryStatus)||marketScope.fullMarketCoarseUniverseCapped)&&<div className="universeStatus warning"><b>Market coverage limited</b><span>{fullMarketCoverageFallback(marketScope)}</span></div>}
         {[["Strong Buy",strong],["Buy",buys]].map(([h,rows])=>rows.length?<div key={h}><h3>{h}</h3><div className="grid">{rows.map(s=><Card key={sym(s)} s={s} decision={opportunityDecision(s)}/>)}</div></div>:null)}
-        {!strong.length&&!buys.length&&<div className="emptyState"><b>No verified Buy or Strong Buy currently qualifies.</b><span>Reload completed successfully; the engine is holding cash rather than forcing an opportunity.</span></div>}
+        {!strong.length&&!buys.length&&<div className="emptyState"><b>No verified Buy or Strong Buy currently qualifies.</b><span>No purchase is authorized by this screen. Check the model status above for the reason.</span></div>}
       </section>
       <VerificationPaused rows={paused}/><OnDeck rows={deck} feedHealth={feedHealth}/><RecentSignalChanges rows={recentDowngrades}/>
     </>}
