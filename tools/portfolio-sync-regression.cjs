@@ -17,6 +17,6 @@ assert(page.includes('winnerHistory'),'winner lifecycle metadata must remain in 
 assert(api.includes('c1ControlState:cleanC1ControlState(c1ControlState)'),'C1 drawdown state must be sanitized and stored with the cloud portfolio');
 assert(page.includes('JSON.stringify({portfolio:rows,c1ControlState})'),'cloud pushes must carry the C1 drawdown state');
 assert(page.includes("localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(d.c1ControlState))"),'paired devices must restore the shared C1 drawdown state');
-assert(page.includes('pushCloudPortfolio(portfolio,syncKey,nextControl.state)'),'drawdown-state changes must push to paired devices');
+assert(page.includes('pushCloudPortfolio(analysisPortfolio,syncKey,nextControl.state)'),'drawdown-state changes must push to paired devices');
 console.log('PORTFOLIO SYNC PASS: private keyed storage, authenticated reads, automatic push/pull, portfolio metadata, and shared C1 drawdown state verified.');
 require('./c1-sync-state-regression.cjs');

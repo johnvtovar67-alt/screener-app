@@ -40,11 +40,11 @@ vm.createContext(box);vm.runInContext(code+'\nglobalThis.handle=handler;',box);
 })().catch(e=>{console.error(e);process.exitCode=1;});
 // Execute the actual page's comparison block with snapshots used by Analyze.
 const page=fs.readFileSync('pages/index.js','utf8');
-const block=page.slice(page.indexOf('      // Reuse this analysis'),page.indexOf('      let priorControl={}'));
+const block=page.slice(page.indexOf('      // Reuse this analysis'),page.indexOf('      if(!accountView){'));
 assert.ok(block.includes('compareC1Holdings'));
 let captured;
 const ui={portfolio:[{symbol:'TEST',shares:2,role:'Swing'},{symbol:'CASH',shares:100,role:'Swing'}],CASH:['CASH','SWVXX','VMFXX','SPAXX','FDRXX','MMF'],role:(s,r)=>r,compareC1Holdings:compare,screenLive:true,currentProductionPolicy:{forwardAccounting:model},setHoldingsComparison:r=>{captured=r;}};
-vm.createContext(ui);vm.runInContext(block,ui);
+ui.analysisPortfolio=ui.portfolio;vm.createContext(ui);vm.runInContext(block,ui);
 assert.equal(captured.positions.length,1);assert.equal(captured.executable,false);assert.equal(captured.portfolioSignature,JSON.stringify(ui.portfolio));
 assert.equal(captured.cash,100,'Portfolio Analyze must pass entered cash to C1, not filter it out');
 ui.portfolio.push({symbol:'SWVXX',shares:400,avgCost:1,role:'Swing'},

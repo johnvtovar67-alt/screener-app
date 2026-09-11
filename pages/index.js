@@ -1,3 +1,7 @@
+import C1AccountOpportunities from "../components/C1AccountOpportunities";
+import C1AccountActivity from "../components/C1AccountActivity";
+import C1ReconciliationDetails from "../components/C1ReconciliationDetails";
+import {c1AccountPositionDecision,c1AccountMatchesPortfolio} from "../lib/c1AccountDecision";
 import {c1Presentation,c1DisplayDecision} from "../lib/c1Presentation";
 import C1ModelStatus from "../components/C1ModelStatus";
 import {useEffect,useMemo,useRef,useState} from "react";
@@ -117,6 +121,19 @@ export default function Home(){
   const[tab,setTab]=useState("opportunities"),[stocks,setStocks]=useState([]),[themeStocks,setThemeStocks]=useState([]),[selectedTheme,setSelectedTheme]=useState("ai_compute");
   const[portfolio,setPortfolio]=useState([]),[results,setResults]=useState([]);
   const[holdingsComparison,setHoldingsComparison]=useState(null);
+  const[accountView,setAccountView]=useState(null),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
+  const accountRequestId=useRef(0);
+  async function refreshC1Account(body=null){
+    const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
+    if(!key){if(body)throw new Error("Connect your existing portfolio sync key first.");return;}
+    const r=await fetch('/api/c1-account',{method:body?'POST':'GET',headers:{authorization:`Bearer ${key}`,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'}),d=await r.json();
+    if(requestId!==accountRequestId.current)return;
+    if(!r.ok){setAccountView(null);if(r.status!==404||body)throw new Error(d.error||"C1 account refresh failed.");return;}
+    setAccountView(d);setAccountError("");return d;
+  }
+  async function startC1Account(){setAccountBusy(true);setAccountError("");setErr("");try{const capitalRecord=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");await refreshC1Account({operation:'adopt',portfolio:portfolio.map(p=>({...p,shares:Number(p.shares),avgCost:Number(p.avgCost)})),capitalRecord,prospectiveLegacyAdoptionConfirmed:capitalRecord.version===null&&capitalRecord.portfolioSignature==null&&capitalRecord.reconciliationRequired===true});}catch(e){setAccountError(e.message);}finally{setAccountBusy(false);}}
+  async function saveC1Activity(record,expectedRevision){setAccountBusy(true);setErr("");try{const d=await refreshC1Account({operation:'record-session',record,expectedRevision});if(d){const updated=[...portfolio.filter(p=>p.role==='Core'&&!CASH.includes(p.symbol)),...d.decision.positions.map(p=>({symbol:p.symbol,shares:p.shares,avgCost:p.avgCost,openedAt:p.openedAt,role:'Swing'})),{symbol:'CASH',shares:d.decision.actualCash,avgCost:1,role:'Swing'}];localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);await pushCloudPortfolio(updated);await analyze(updated);}}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
+
   const[transactionCheck,setTransactionCheck]=useState(null),[importingTransactions,setImportingTransactions]=useState(false);
   const transactionImportId=useRef(0);
   const transactionSource=useRef(null);
@@ -149,6 +166,7 @@ export default function Home(){
 
   async function load(t,verificationPass=0){
     const started=Date.now();setReloading(true);setErr("");
+    if(t==="opportunities")try{await refreshC1Account();}catch(e){setErr(e.message);}
     try{const d=await fetchScreen(t,verificationPass),health=screenHealth(d.meta,d.performance);if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth(health);setMarketScope(d.meta||null);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{setThemeStocks(d.stocks||[]);setThemeFeedHealth(health);}const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}
     catch(e){setErr(e.message);if(t==="opportunities"){setStocks(pausePriorRows);setFeedHealth(h=>({...h,status:"unavailable"}));}else{setThemeStocks(pausePriorRows);setThemeFeedHealth(h=>({...h,status:"unavailable"}));}}finally{const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));setReloading(false);}
   }
@@ -209,16 +227,17 @@ export default function Home(){
     finally{setReconcilingAccount(false);}
   }
 
-  async function analyze(){
-    setLoading(true);setErr("");setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
+  async function analyze(inputPortfolio){
+    const analysisPortfolio=Array.isArray(inputPortfolio)?inputPortfolio:portfolio;
+    setLoading(true);setErr("");try{await refreshC1Account();}catch(e){setErr(e.message);}setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
     try{
       try{const sd=await fetchScreen("opportunities");snapshot=sd.stocks||[];performance=sd.performance.records;currentProductionPolicy=sd.meta?.productionPolicy||{};screenLive=!sd.meta?.clientSnapshotFallback&&String(sd.meta?.quoteFeedStatus||"live")==="live";setFeedHealth(screenHealth(sd.meta,sd.performance));setMarketScope(sd.meta||null);setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}
       catch(e){setErr(`Portfolio positions were analyzed, but fresh-capital allocation is paused because the broad screen failed: ${e.message}`);setFeedHealth(h=>({...h,status:"unavailable"}));}
       let heldTimingVerified=true;
-      try{const heldSymbols=portfolio.filter(p=>role(p.symbol,p.role)==="Swing").map(p=>sym(p)).filter(s=>s&&!CASH.includes(s));if(heldSymbols.length){const tr=await fetch(`/api/entry-timing?symbols=${encodeURIComponent(heldSymbols.join(','))}`,{cache:'no-store'}),td=await tr.json();if(!tr.ok||!td.timing||typeof td.timing!=="object")throw new Error(td.error||"holding timing verification failed");timingBySymbol=new Map(Object.entries(td.timing));heldTimingVerified=heldSymbols.every(symbol=>timingBySymbol.has(symbol));if(!heldTimingVerified)throw new Error("holding timing verification was incomplete");}}catch(e){heldTimingVerified=false;screenLive=false;setErr(`Portfolio positions remain visible, but all capital actions are paused because held-position verification failed: ${e.message}`);}
+      try{const heldSymbols=analysisPortfolio.filter(p=>role(p.symbol,p.role)==="Swing").map(p=>sym(p)).filter(s=>s&&!CASH.includes(s));if(heldSymbols.length){const tr=await fetch(`/api/entry-timing?symbols=${encodeURIComponent(heldSymbols.join(','))}`,{cache:'no-store'}),td=await tr.json();if(!tr.ok||!td.timing||typeof td.timing!=="object")throw new Error(td.error||"holding timing verification failed");timingBySymbol=new Map(Object.entries(td.timing));heldTimingVerified=heldSymbols.every(symbol=>timingBySymbol.has(symbol));if(!heldTimingVerified)throw new Error("holding timing verification was incomplete");}}catch(e){heldTimingVerified=false;screenLive=false;setErr(`Portfolio positions remain visible, but all capital actions are paused because held-position verification failed: ${e.message}`);}
       snapshot=snapshot.map(s=>({...s,...(timingBySymbol.has(sym(s))?{entryTiming:timingBySymbol.get(sym(s))}:{}),signalPersistence:s.signalPersistence||{...signalPersistence(performance,sym(s)),historyAvailable:performance.length>0}}));setStocks(snapshot);setAnalysisCapitalReady(screenLive);
       const bySymbol=new Map(snapshot.map(s=>[sym(s),s]));
-      for(const p of portfolio){
+      for(const p of analysisPortfolio){
         try{
           if(CASH.includes(p.symbol)){rows.push({...p,...calc(p,p.avgCost||1),role:role(p.symbol,p.role)});continue;}
           let s=bySymbol.get(p.symbol);if(!s){s=await fetchStock(p.symbol);s={...s,productionPolicy:{...currentProductionPolicy,selected:false,researchRank:null,targetWeightPct:currentProductionPolicy.targetWeightPct??0}};}
@@ -232,15 +251,17 @@ export default function Home(){
       setResults(analyzedRows);
       // Reuse this analysis's server model; no separate request or portfolio upload.
       try{
-        const comparisonRows=portfolio.map(p=>({symbol:p.symbol,shares:Number(p.shares),role:role(p.symbol,p.role),...(CASH.includes(p.symbol)?{cashValue:Number(p.shares)*Number(p.avgCost||1)}:{})}));
+        const comparisonRows=analysisPortfolio.map(p=>({symbol:p.symbol,shares:Number(p.shares),role:role(p.symbol,p.role),...(CASH.includes(p.symbol)?{cashValue:Number(p.shares)*Number(p.avgCost||1)}:{})}));
         const comparison=compareC1Holdings(comparisonRows,screenLive?currentProductionPolicy.forwardAccounting:null,screenLive?currentProductionPolicy.decisionSnapshot:null);
-        setHoldingsComparison({...comparison,portfolioSignature:JSON.stringify(portfolio)});
-      }catch{setHoldingsComparison({status:"unavailable",positions:[],portfolioSignature:JSON.stringify(portfolio)});}
+        setHoldingsComparison({...comparison,portfolioSignature:JSON.stringify(analysisPortfolio)});
+      }catch{setHoldingsComparison({status:"unavailable",positions:[],portfolioSignature:JSON.stringify(analysisPortfolio)});}
 
+      if(!accountView){
       let priorControl={};try{priorControl=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");}catch{}
-      const nextControl=c1DrawdownControl({swingEquity:portfolioRiskSnapshot(analyzedRows).swingCapital,state:priorControl,portfolioSignature:portfolioCompositionSignature(portfolio),now:new Date()});
+      const nextControl=c1DrawdownControl({swingEquity:portfolioRiskSnapshot(analyzedRows).swingCapital,state:priorControl,portfolioSignature:portfolioCompositionSignature(analysisPortfolio),now:new Date()});
       if(nextControl.reconciliationRequired){setAnalysisCapitalReady(false);setErr(nextControl.reason);}
-      localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(nextControl.state));setC1Control(nextControl);if(syncKey)void pushCloudPortfolio(portfolio,syncKey,nextControl.state);
+      localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(nextControl.state));setC1Control(nextControl);if(syncKey)void pushCloudPortfolio(analysisPortfolio,syncKey,nextControl.state);
+      }
       const analyzedAt=new Date();setPortfolioAnalyzedAt(analyzedAt);setLastUpdated(analyzedAt);
     }finally{setLoading(false);}
   }
@@ -294,6 +315,8 @@ export default function Home(){
   const buyQueue=useMemo(()=>stocks.filter(s=>["Strong Buy","Buy"].includes(act(s))).sort(rank),[stocks]);
 
   function rawPd(s){
+    if(s.role==="Swing"&&accountView&&!c1AccountMatchesPortfolio(accountView.decision,portfolio))return {action:"Review",reason:"Entered holdings differ from the recorded C1 account. Record the actual activity before using this analysis.",source:"c1-actual-account"};
+    if(s.role==="Swing"){const accountDecision=c1AccountPositionDecision(accountView?.decision,sym(s));if(accountDecision)return accountDecision;}
     if(s.error)return{action:"Review",reason:s.error};if(CASH.includes(sym(s)))return{action:"Cash",reason:"Dry powder."};
     if(s.role==="Swing"&&c1Control.reconciliationRequired)return{action:"Review",reason:c1Control.reason,source:"c1-capital-reconciliation"};
     if(s.role==="Swing"&&c1Control.cooldown&&c1Control.activeCapitalPct===0)return{action:"Exit",reason:c1Control.reason,source:"c1-portfolio-drawdown-breaker"};
@@ -354,6 +377,7 @@ export default function Home(){
   }
   function pd(s){
     const base=rawPd(s),bp=buyPlans.find(x=>x.symbol===sym(s)),time=swingTimeReview(s);
+    if(base.source==="c1-actual-account")return base;
     if(base.action==="Add"){if(!bp)return reviewedHold(s,base,time,"The current market ranking does not include this holding as a fresh-capital candidate.");if(bp.need<=minFundingAction)return reviewedHold(s,base,time,"The position is already within its active-capital target tolerance, so no additional purchase is needed.");if(bp.blockReason)return reviewedHold(s,base,time,bp.blockReason);if(fundedFor(sym(s))<minFundingAction)return reviewedHold(s,base,time,"The setup qualifies, but no additional purchase cleared the portfolio risk and whole-share sizing checks today.");}
     if(base.action==="Trim"&&!trimPlans.has(sym(s))){const blocked=trimBlocks.get(sym(s));return{...base,action:"Hold",reason:blocked?.reason||"This winner is stretched, but a partial sale would be too small to matter or would leave an immaterial residual position."};}
     if(base.action==="Rotate"&&!fundedRotationSymbols.has(sym(s)))return{...base,action:"Hold",reason:"Rotation did not clear the persistence, turnover, concentration, and replacement-edge hurdles. Hold rather than churn."};
@@ -361,7 +385,7 @@ export default function Home(){
     return base;
   }
   function holdingReason(s,d,time){
-    if(CASH.includes(sym(s)))return d.reason;
+    if(d.source==="c1-actual-account"||CASH.includes(sym(s)))return d.reason;
     const bp=buyPlans.find(x=>x.symbol===sym(s)),policy=s.productionPolicy||{},selected=Boolean(bp||policy.selected),pos=riskSnapshot.positions?.[sym(s)]||{},pctSwing=Number(pos.pctSwing),targetPct=Number(bp?.targetPct??(selected?Number(policy.targetWeightPct||0)/100:NaN)),parts=[];
     if(Number.isFinite(pctSwing))parts.push(`${(pctSwing*100).toFixed(1)}% of Swing capital${Number.isFinite(targetPct)&&targetPct>0?` versus a ${(targetPct*100).toFixed(2)}% target`:""}.`);
     parts.push(time.held!==null?`${time.stage} stage (${time.held} ${time.held===1?"day":"days"} held).`:`Technical, fundamental, momentum, event, and portfolio-risk checks are active; time-based checks need an open date.`);
@@ -385,15 +409,20 @@ export default function Home(){
   const timeReviewRows=results.filter(s=>s.role==="Swing"&&!CASH.includes(sym(s))).map(s=>({s,time:swingTimeReview(s),decision:pd(s)})).filter(x=>x.time.held!==null&&x.time.held>=42).sort((a,b)=>(b.time.held||0)-(a.time.held||0));
   const missingOpenDateSymbols=results.filter(s=>s.role==="Swing"&&!CASH.includes(sym(s))&&!s.openedAt).map(sym);
 
-  const busy=reloading||loading||checking;
+  const busy=reloading||loading||checking||accountBusy;
   return <main>
     <header><div><h1>🧠 Investment Operating System</h1><p>Expert analysis underneath. Portfolio-level risk governance on top.</p>{lastUpdated&&<small className="updated">Last refreshed {lastUpdated.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}</small>}</div><button disabled={busy} onClick={handleReload}>{busy?"Reloading...":"Reload"}</button></header>
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
-    {err&&<p className="error">{err}</p>}
-    {["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
+    {accountError&&<p className="error" role="alert"><b>C1 account activation:</b> {accountError}</p>}
+    {err&&!accountError&&<p className="error">{err}</p>}
+    {tab==="portfolio"&&!accountView&&err&&<C1ReconciliationDetails portfolio={portfolio} capitalStorageKey={C1_DRAWDOWN_KEY}/>}
+    {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
-    {tab==="opportunities"&&<>
+    {tab==="opportunities"&&accountView&&<C1AccountOpportunities openingPlan={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null} openingError={accountView.openingError} decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,opportunities:[],explanation:"Entered holdings differ from the recorded C1 account. Record actual activity before using these candidates."}}/>}
+    {tab==="portfolio"&&accountView?.pendingSession&&<C1AccountActivity key={accountView.pendingSession.date} pending={accountView.pendingSession} onSave={saveC1Activity} busy={accountBusy}/>}
+    {tab==="portfolio"&&!accountView&&<button disabled={accountBusy||loading||!portfolio.length} onClick={startC1Account}>{accountBusy?"Starting C1…":"Start C1 with current portfolio"}</button>}
+    {tab==="opportunities"&&!accountView&&<>
       <section className="card">
         <h2>🔥 Opportunities</h2>
         <p className="sub">Current candidates for new capital, ordered from strongest to weakest.</p>
