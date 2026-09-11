@@ -1,3 +1,4 @@
+import {buildC1ManualRecommendations} from '../../lib/c1ManualRecommendations';
 import {applyC1OpeningPlan} from '../../lib/c1AccountDecision';
 import {c1AccountBook} from '../../lib/c1AccountInput';
 import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
@@ -70,7 +71,8 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:account.records,opening,observedAt:opening.receipt.observedAt});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;decision=applyC1OpeningPlan(decision,openingPlan);}
     }catch(error){openingError=String(error?.message||'Opening plan unavailable').slice(0,200);}
    }
-   return res.status(200).json({decision,pendingSession,openingPlan,openingError});
+   const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession,openingPlan,openingError,now:clock()});
+   return res.status(200).json({decision,pendingSession,openingPlan,openingError,manualRecommendations});
   }catch(error){return res.status(409).json({error:String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
  };
 }

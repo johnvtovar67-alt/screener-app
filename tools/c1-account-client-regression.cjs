@@ -90,6 +90,7 @@ for(const tab of ['opportunities','portfolio']){
  assert.equal(noticeVisible(null,tab),false);
 }
 for(const tab of ['single','themes'])assert.equal(noticeVisible({decision:{}},tab),false);
-assert.ok(noticeLine.includes('Diagnostic only — trading release incomplete.'));
-assert.ok(noticeLine.includes('not instructions to buy, hold or sell.'));
+assert.ok(noticeLine.includes('Manual C1 recommendations enabled.'));
+assert.ok(noticeLine.includes('alpha is not certified.'));
 console.log('PASS: Private C1 account analysis retains diagnostic disclosure on both account views.');
+

@@ -24,6 +24,7 @@ jobs:
       - name: Check C1 collection lifecycle and diagnostic privacy
         run: node tools/c1-index-lifecycle-regression.cjs && node tools/c1-dated-book-regression.cjs && node tools/c1-price-anchors-regression.cjs && node tools/c1-observation-archive-regression.cjs && node tools/c1-baseline-reconciliation-regression.cjs
       - name: Check C1 private-account client state
-        run: node tools/c1-account-client-regression.cjs
+        run: node tools/c1-account-client-regression.cjs && node tools/c1-manual-recommendations-regression.cjs && node tools/c1-account-seed-regression.cjs
       - name: Build and run regression suite
         run: npm run verify && npm run build
+
