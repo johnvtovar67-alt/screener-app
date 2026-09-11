@@ -3095,10 +3095,10 @@ assert(
     cron.includes("minimumDatasetThrough") &&
     cron.includes("runAlphaCreatorSearch()") &&
     cron.includes("runAlphaProspectiveChallenger()") &&
-    schedule.crons.some(
+    !schedule.crons.some(
       (row) => row.path === "/api/cron/fmp-research-backtest",
     ),
-  "The expensive FMP replay must be cron-authenticated rather than exposed as an interactive request storm.",
+  "The preserved FMP research endpoint must remain authenticated and must not restart on a recurring schedule.",
 );
 assert(
   rawSource.includes("runPointInTimeSp500Universe") &&

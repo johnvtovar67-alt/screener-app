@@ -44,7 +44,7 @@ assert.throws(()=>account({sessions},opts,{...seed,positions:[{...holding,symbol
 assert.throws(()=>account({sessions},opts,{...seed,positions:[{...holding,openedAt:'2026-02-31'}]}),/holding date/);
 assert.throws(()=>account({sessions},{...opts,rankedExitBuffer:9},seed),/frozen C1 options/);
 const portfolio=[{symbol:'T4',role:'Swing',shares:3,avgCost:close,openedAt:sessions[0].date},{symbol:'MSTR',role:'Core',shares:2},{symbol:'CASH',role:'Swing',shares:1234.56,avgCost:1}];
-const capitalRecord={version:2,highWater:2000,triggerDay:null,portfolioSignature:signature(portfolio),reconciliationRequired:false};
+const capitalRecord={version:2,highWater:1234.56+3*close,triggerDay:null,portfolioSignature:signature(portfolio),reconciliationRequired:false};
 const adoption=create({portfolio,baseline,capitalRecord,adoptionConfirmed:true});
 let cash=0,shares=0;
 for(const s of Object.values(adoption.seeds)){cash+=s.cash*s.actualDollarsPerModelDollar;shares+=s.positions[0].shares*s.actualDollarsPerModelDollar;account({sessions},{...options[s.sleeve],startDate:baseline.date,endDate:baseline.date,liquidateAtEnd:false},s);}
@@ -85,3 +85,104 @@ assert.throws(()=>reconcile({plan:fixture,fills:[buy,sell],observedAt}),/executi
 assert.throws(()=>reconcile({plan:fixture,fills:[{...buy,symbol:'MSTR'}],observedAt}),/does not match/);
 assert.equal(actual.modelAdvanceAuthorized,false);
 console.log('PASS: partial fills, posted fees, original dates, independent sleeve cash, duplicate handling and oversell/overspend rejection.');
+const next=sessions[37];
+const noFills={contract:'c1-actual-fill-replay-v1',sessions:[{date:opening.date,fills:[]},{date:next.date,fills:[]}]};
+const unfilled=account({sessions},{...opts,endDate:next.date},seed,noFills);
+assert.equal(unfilled.trades.length,0);
+assert.equal(unfilled.openPositions[0].shares,10);
+assert.equal(unfilled.openPositions[0].enteredAt,sessions[0].date);
+assert.equal(unfilled.actualCash,seed.cash);
+assert.throws(()=>account({sessions},{...opts,endDate:next.date},seed,{...noFills,sessions:[]}),/Missing/);
+const partialRecord={date:opening.date,fills:[{symbol:'T4',side:'sell',reason:'rank-deterioration',shares:2,price:91,fee:.5}]};
+const stableRanks=sessions.map(s=>s.date>baseline.date?{...s,signals:baseline.signals}:s);
+const partialReplay=account({sessions:stableRanks},{...opts,endDate:next.date},seed,{...noFills,sessions:[partialRecord,{date:next.date,fills:[]}]});
+assert.equal(partialReplay.openPositions.find(p=>p.symbol==='T4').shares,8);
+assert.equal(partialReplay.actualCash,seed.cash+181.5);
+assert.equal(partialReplay.trades.length,1);
+assert.ok(partialReplay.pendingDecisions.some(p=>p.symbol==='T4'&&p.side==='sell'));
+assert.throws(()=>account({sessions},{...opts,endDate:opening.date},seed,{...noFills,sessions:[{date:opening.date,fills:[{...partialRecord.fills[0],symbol:'ABSENT'}]}]}),/could not be applied/);
+console.log('PASS: actual fills advance subsequent strategy sessions; unfilled ownership, original dates, cash and pending exits persist; missing/unmatched records fail without adopting a modeled account.');
+// Real account orders are converted back with the original fixed scale; fees
+// must match the independently reconciled ledger, including small partial buys.
+const planFills=plan.orders.filter(o=>!o.condition).map((o,i)=>({id:'actual-'+i,orderId:o.id,symbol:o.symbol,side:o.side,shares:o.side==='buy'?1:o.shares,price:o.estimatedPrice,fee:.01,executedAt:opening.date+'T13:31:00Z'}));
+assert.ok(planFills.some(f=>f.side==='buy'),'Fixture must exercise actual partial buys');
+const planActual=reconcile({plan,fills:planFills,observedAt});
+for(const id of ['base','cooldown15','sector40']){
+ const aseed=adoption.seeds[id],scale=aseed.actualDollarsPerModelDollar;
+ const fills=planFills.filter(f=>plan.orders.find(o=>o.id===f.orderId).sleeve===id).map(f=>({...f,reason:plan.orders.find(o=>o.id===f.orderId).reason,shares:f.shares/scale,fee:f.fee/scale}));
+ const run=account({sessions},{...options[id],startDate:baseline.date,endDate:next.date,liquidateAtEnd:false},aseed,{...noFills,sessions:[{date:opening.date,fills},{date:next.date,fills:[]}]});
+ assert.ok(Math.abs(run.actualCash*scale-planActual.books[id].cash)<1e-6);
+ const held=Object.fromEntries(run.openPositions.map(p=>[p.symbol,Math.round(p.shares*scale)]));
+ const ledgerHeld=Object.fromEntries(Object.entries(planActual.books[id].positions).map(([s,p])=>[s,p.shares]));
+ assert.equal(JSON.stringify(Object.entries(held).sort()),JSON.stringify(Object.entries(ledgerHeld).sort()));
+ for(const p of run.openPositions)if(p.enteredAt===opening.date)assert.ok(Math.abs(p.initialStopPrice-p.entryPrice*.86)<1e-7);
+}
+console.log('PASS: all three continuing sleeves match independently reconciled whole shares and actual cash after partial buys and fees, with actual execution-price stops.');
+const {continueC1ActualAccount:continueAccount,planC1ContinuedAccountOpening:planContinued}=loader.load('lib/c1AccountExecution.js');
+const records=[{date:opening.date,complete:true,openingObservedAt:observedAt,fills:planFills}];
+const closedSessions=[baseline,opening];
+const continued=continueAccount({adoption,sessions:closedSessions,records,observedAt:opening.date+'T21:00:00Z'});
+assert.ok(Math.abs(continued.actualCash-planActual.actualCash)<1e-6);
+assert.equal(JSON.stringify(continued.books),JSON.stringify(planActual.books));
+const laterPlan=planContinued({adoption,sessions:closedSessions,records,opening:{...next,corporateActions:[]},observedAt:next.date+'T14:00:00Z'});
+assert.equal(JSON.stringify(laterPlan.openingBooks),JSON.stringify(planActual.books));
+assert.ok(laterPlan.orders.every(o=>Number.isSafeInteger(o.shares)));
+assert.throws(()=>continueAccount({adoption,sessions:closedSessions,records:[{...records[0],complete:false}],observedAt:opening.date+'T21:00:00Z'}),/Confirm complete/);
+assert.throws(()=>continueAccount({adoption,sessions:closedSessions,records,observedAt}),/completed sessions/);
+console.log('PASS: account coordinator regenerates order identities from actual history, reconciles all three sleeves and plans the following opening without resetting account units.');
+const lossSeed={...seed,highWater:120000,positions:[{...holding,openedAt:baseline.date}]};
+const pausedUnfilled=account({sessions},{...opts,endDate:next.date},lossSeed,noFills);
+assert.equal(pausedUnfilled.trades.length,0);
+assert.equal(pausedUnfilled.openPositions[0].shares,10);
+assert.ok(pausedUnfilled.pendingDecisions.some(o=>o.symbol==='T4'&&o.reason==='portfolio-drawdown-stop'),'An unfilled breaker exit must persist during the cooldown');
+assert.ok(pausedUnfilled.accountRisk.pausedThrough>pausedUnfilled.accountRisk.activeSessionNumber);
+console.log('PASS: a triggered but unfilled risk exit remains pending through cooldown instead of disappearing.');
+const {adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService}=loader.load('lib/c1AccountService.js');
+const {c1AccountPositionDecision:positionDecision,c1AccountMatchesPortfolio:matchesPortfolio}=loader.load('lib/c1AccountDecision.js');
+const baselineBook={universe:'sp500',model:{sessions:[baseline]},captures:[{sessionDate:baseline.date,hash:'baseline-fixture',observedAt:baseline.date+'T21:00:00Z'}]};
+const privateAccount=adoptService({portfolio,capitalRecord,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')});
+const initialView=evaluateService({account:privateAccount,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')});
+assert.equal(matchesPortfolio(initialView,portfolio),true);
+assert.equal(matchesPortfolio(initialView,portfolio.map(p=>p.symbol==='T4'?{...p,shares:2}:p)),false);
+assert.equal(positionDecision(initialView,'T4').decisionId,initialView.decisionId);
+const updatedBook={...baselineBook,model:{sessions:[baseline,opening]},captures:[...baselineBook.captures,{sessionDate:opening.date,hash:'opening-fixture',observedAt:opening.date+'T21:00:00Z'}]};
+const pending=pendingService({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
+assert.equal(pending.date,opening.date);
+const updatedAccount=appendService({account:privateAccount,record:records[0],book:updatedBook,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
+const shared=evaluateService({account:updatedAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
+assert.equal(shared.current,true);
+assert.equal(shared.revision,1);
+assert.equal(shared.executable,false);
+assert.ok(shared.opportunities.every(p=>!['MSTR','SCHW'].includes(p.symbol)));
+assert.throws(()=>appendService({account:updatedAccount,record:records[0],book:updatedBook,expectedRevision:0}),/Account changed/);
+assert.throws(()=>evaluateService({account:updatedAccount,book:{...updatedBook,captures:[{...updatedBook.captures[0],hash:'changed'},updatedBook.captures[1]]}}),/input changed/);
+console.log('PASS: shared account decisions bind original inputs, accepted activity and revision; stale ownership cannot reuse candidates, and forbidden purchases remain excluded.');
+const vm=require('node:vm'),fs=require('node:fs');
+const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
+const context={createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+vm.createContext(context);vm.runInContext(route,context);
+(async()=>{
+ let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
+ const handler=context.factory({environment:'preview',commit:'fixture',clock:()=>new Date(baseline.date+'T21:00:00Z'),
+  readBook:async()=>{reads++;return {record:book};},
+  store:{read:async()=>stored,write:async(path,record,etag)=>{if(fail)throw new Error('Storage write rejected');if(stored&&etag!==stored.etag)throw new Error('Conflicting account revision');stored={record,etag:String(++writes)};}}
+ });
+ async function request(method,body,authorized=true){const response={setHeader(){},status(code){this.code=code;return this;},json(value){this.body=value;return this;}};await handler({method,body,headers:authorized?{authorization:'Bearer '+'fixture'.repeat(6)}:{}},response);return response;}
+ assert.equal((await request('POST',{},false)).code,401);assert.equal(reads,0);
+ assert.equal((await request('GET')).code,404);assert.equal(reads,0,'An empty account read cannot start provider initialization');
+ const body={operation:'adopt',portfolio,capitalRecord};
+ fail=true;assert.equal((await request('POST',body)).code,409);assert.equal(stored,null);
+ fail=false;assert.equal((await request('POST',body)).code,200);assert.equal(writes,1);
+ assert.equal((await request('POST',body)).code,409);assert.equal(writes,1,'Existing account cannot reset');
+ const response=await request('GET');assert.equal(response.code,200);assert.equal(response.body.decision.decisionId,initialView.decisionId);
+ assert.equal((await request('DELETE')).code,405);
+ console.log('PASS: actual account API rejects unauthenticated access, preserves failed writes and existing accounts, and performs no provider initialization.');
+})().catch(error=>{console.error(error);process.exitCode=1;});
+const stopOrder=plan.orders.find(o=>o.condition==='stop-triggered'&&planFills.some(f=>f.side==='buy'&&f.symbol===o.symbol&&plan.orders.find(x=>x.id===f.orderId).sleeve===o.sleeve));
+assert.ok(stopOrder,'Opening plans include standing stops without assuming a sale');
+const stoppedFill={id:'actual-stop',orderId:stopOrder.id,symbol:stopOrder.symbol,side:'sell',shares:1,price:stopOrder.estimatedPrice*.999,fee:.01,executedAt:opening.date+'T15:00:00Z'};
+const stopSession={...opening,prices:opening.prices.map(p=>p.symbol===stopOrder.symbol?{...p,low:stopOrder.estimatedPrice*.99,close:stopOrder.estimatedPrice}:p)};
+const stopped=continueAccount({adoption,sessions:[baseline,stopSession],records:[{...records[0],fills:[...planFills,stoppedFill]}],observedAt:opening.date+'T21:00:00Z'});
+assert.equal(stopped.books[stopOrder.sleeve].positions[stopOrder.symbol],undefined);
+assert.ok(stopped.sleeves[stopOrder.sleeve].trades.some(t=>t.symbol===stopOrder.symbol&&t.reason==='initial-stop'));
+console.log('PASS: a partial actual entry can trigger its recorded standing stop later in the session; untriggered stops do not become fabricated exits.');
