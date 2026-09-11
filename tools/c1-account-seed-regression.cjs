@@ -165,7 +165,7 @@ const barNormalizer=fmpSource.slice(fmpSource.indexOf('export function normalize
 const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
 const holdingBox={...loader.load('lib/marketSession.js'),Date,URLSearchParams,AbortSignal,process:{env:{}}};
 vm.createContext(holdingBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
-const context={...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+const context={...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -192,6 +192,35 @@ vm.createContext(context);vm.runInContext(route,context);
  const bad=await holdingBox.holdingExports.collectC1HoldingCoverage({portfolio:testPortfolio,baseline,now:new Date(baseline.date+'T21:00:00Z'),fetcher:async()=>({ok:true,json:async()=>[{symbol:'WRONG',date:baseline.date,open:100,high:102,low:99,close:101}]}),apiKey:'test-secret'});
  assert.equal(bad.rows[0].status,'unavailable');
  console.log('PASS: outside-index holdings receive independently verified adjusted closes; wrong-symbol data rejects, credentials stay private, and accepted index data remains unchanged.');
+ // Exercise the full previously blocked branch, including a persisted reload.
+ const gapBook=JSON.parse(JSON.stringify(baselineBook));
+ gapBook.model.sessions[0].prices=gapBook.model.sessions[0].prices.filter(p=>p.symbol!=='T4');
+ const supplement={contract:'c1-held-price-coverage-v1',sourceSessionDate:baseline.date,rows:[{
+  symbol:'T4',status:'verified',date:baseline.date,inDecisionUniverse:true,
+  price:{...baseline.prices.find(p=>p.symbol==='T4'),date:baseline.date},
+  source:{provider:'FMP',endpoint:'historical-price-eod/dividend-adjusted',observedAt:baseline.date+'T21:00:00Z'}
+ }]};
+ let gapSaved=null,gapWrites=0;
+ const beforeGap=JSON.stringify(gapBook);
+ const gapHandler=context.factory({environment:'preview',commit:'gap-fixture',clock:()=>new Date(baseline.date+'T21:00:00Z'),
+  readBook:async()=>({record:gapBook}),collectHoldings:async()=>supplement,
+  store:{read:async()=>gapSaved,write:async(path,record)=>{gapWrites++;gapSaved={record,etag:'1'};}}
+ });
+ async function gapRequest(method,body){const res={setHeader(){},status(code){this.code=code;return this;},json(value){this.body=value;return this;}};await gapHandler({method,body,headers:{authorization:'Bearer '+'fixture'.repeat(6)}},res);return res;}
+ const activated=await gapRequest('POST',body);
+ assert.equal(activated.code,200,JSON.stringify(activated.body));assert.equal(gapWrites,1);
+ assert.equal(activated.body.decision.decisionId,initialView.decisionId);
+ assert.equal((await gapRequest('GET')).body.decision.decisionId,activated.body.decision.decisionId);
+ assert.equal(JSON.stringify(gapBook),beforeGap,'Activation must not mutate the source book');
+ assert.equal(gapSaved.record.holdingCoverage.rows[0].price.close,close);
+ const {c1AccountBook}=loader.load('lib/c1AccountInput.js');
+ assert.throws(()=>c1AccountBook(baselineBook,supplement),/cannot replace/);
+ assert.throws(()=>c1AccountBook(gapBook,{...supplement,rows:[supplement.rows[0],supplement.rows[0]]}),/Invalid verified/);
+ assert.throws(()=>c1AccountBook({...gapBook,model:{sessions:[{...gapBook.model.sessions[0],universeSymbols:symbols.filter(s=>s!=='T4')}]}},supplement),/outside/);
+ const gapNext={...updatedBook,model:{sessions:[gapBook.model.sessions[0],opening]}};
+ const gapContinued=appendService({account:gapSaved.record,record:records[0],book:gapNext,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
+ assert.equal(evaluateService({account:gapContinued,book:gapNext,now:new Date(opening.date+'T21:00:00Z')}).decisionId,shared.decisionId);
+ console.log('PASS: verified missing constituent price activates, persists, reloads and continues actual fills without changing the accepted index or admitting outside holdings.');
  console.log('PASS: actual account API rejects unauthenticated access, preserves failed writes and existing accounts, and performs no provider initialization.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
 const stopOrder=plan.orders.find(o=>o.condition==='stop-triggered'&&planFills.some(f=>f.side==='buy'&&f.symbol===o.symbol&&plan.orders.find(x=>x.id===f.orderId).sleeve===o.sleeve));
