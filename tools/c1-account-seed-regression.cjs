@@ -188,7 +188,7 @@ const barNormalizer=fmpSource.slice(fmpSource.indexOf('export function normalize
 const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
 const holdingBox={...loader.load('lib/marketSession.js'),Date,URLSearchParams,AbortSignal,process:{env:{}}};
 vm.createContext(holdingBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
-const context={...loader.load('lib/c1HeldRankReview.js'),collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+const context={...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1HeldRankReview.js'),collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -315,6 +315,46 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.equal((await rankRequest('POST',{operation:'record-position-context',context:purchaseContext,expectedRevision:importedRevision})).code,200);
  assert.equal(rankSaved.record.revision,importedRevision);assert.equal(rankWrites,2);
  assert.equal((await rankRequest('POST',{operation:'record-position-context',context:purchaseContext,expectedRevision:0})).code,409);
+ // Reproduce overlapping refresh/import writes with the real API handler
+ // and ETag compare-and-swap behavior, in both completion orders.
+ function conflict(){return Object.assign(new Error('Vercel Blob: Precondition failed: ETag mismatch.'),{name:'BlobPreconditionFailedError'});}
+ function gate(){let release;return {promise:new Promise(resolve=>{release=resolve;}),release:()=>release()};}
+ async function raceCase(importWins){
+  let current={record:JSON.parse(JSON.stringify(inherited)),etag:'0'},writes=0,attempts=0,rankCalls=0;
+  const paused=gate(),started=gate();let blocked=false;
+  const handler=context.factory({clock:()=>new Date(baseline.date+'T21:00:00Z'),readBook:async()=>({record:apiRankBook}),
+   collectRanks:async()=>{rankCalls++;if(importWins){started.release();await paused.promise;}return {...receipt,unavailable:[]};},
+   store:{read:async()=>JSON.parse(JSON.stringify(current)),write:async(path,record,etag)=>{
+    attempts++;
+    if(!importWins&&record.positionContext&&!blocked){blocked=true;started.release();await paused.promise;}
+    if(etag!==current.etag)throw conflict();current={record,etag:String(++writes)};
+   }}});
+  async function send(body){const response={setHeader(){},status(code){this.code=code;return this;},json(value){this.body=value;return this;}};await handler({method:'POST',body,headers:{authorization:'Bearer '+'fixture'.repeat(6)}},response);return response;}
+  const refreshBody={operation:'refresh-analysis'},importBody={operation:'record-position-context',context:purchaseContext,expectedRevision:0};
+  const first=send(importWins?refreshBody:importBody);await started.promise;
+  const second=await send(importWins?importBody:refreshBody);paused.release();const firstResult=await first;
+  assert.equal(second.code,200,JSON.stringify(second.body));assert.equal(firstResult.code,200,JSON.stringify(firstResult.body));
+  assert.ok(current.record.positionContext[0].purchases.length===2);
+  assert.equal(rankCalls,1,'Metadata import must not start another market-data write');
+  assert.equal(JSON.stringify(current.record.records),JSON.stringify(inherited.records));
+  assert.equal(JSON.stringify(current.record.adoption),JSON.stringify(inherited.adoption));
+  assert.equal(current.record.revision,importWins?1:2);
+  if(!importWins)assert.equal(current.record.holdingRankReviews[0].sourceHash,sourceHash);
+  assert.equal(attempts,importWins?2:3);assert.equal(writes,importWins?1:2);
+ }
+ await raceCase(true);await raceCase(false);
+ const {saveC1AccountUpdate}=loader.load('lib/c1AccountSave.js');
+ for(const changed of [
+  {...inherited,revision:1,records:[{date:opening.date,complete:true,fills:[]}]},
+  {...inherited,revision:1,adoption:{...inherited.adoption,actualCash:999}},
+  {...inherited,revision:1,corrections:[{type:'first-purchase-date',openedAt:sessions[1].date}]},
+  {...inherited,revision:1,positionContext:[{symbol:'OUT',stage:'half'}]}
+ ]){
+  let attempts=0;
+  await assert.rejects(saveC1AccountUpdate({store:{read:async()=>({record:changed,etag:'new'}),write:async()=>{attempts++;throw conflict();}},path:'fixture',saved:{record:inherited,etag:'old'},account:withContext,operation:'record-position-context',context:purchaseContext,book:apiRankBook,now:new Date(baseline.date+'T21:00:00Z')}),/ETag mismatch/);
+  assert.equal(attempts,1,'A competing capital, fill, date or context edit cannot be overwritten');
+ }
+ console.log('PASS: concurrent account refresh/import succeeds in either order; ETag guards and newer ownership, dates, fills and context are retained.');
  const providerSource=fs.readFileSync('lib/c1HeldRankProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export async function /g,'async function ');
  const providerBox={...holdingBox,createHash:require('node:crypto').createHash,compileC1HeldRankReview,Date,URLSearchParams,AbortSignal,process:{env:{}}};
  vm.createContext(providerBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+providerSource+'\nthis.collect=collectC1HeldRankReviews;',providerBox);

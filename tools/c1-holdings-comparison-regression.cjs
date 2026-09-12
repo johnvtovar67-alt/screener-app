@@ -40,7 +40,10 @@ vm.createContext(box);vm.runInContext(code+'\nglobalThis.handle=handler;',box);
 })().catch(e=>{console.error(e);process.exitCode=1;});
 // Execute the actual page's comparison block with snapshots used by Analyze.
 const page=fs.readFileSync('pages/index.js','utf8');
-const block=page.slice(page.indexOf('      // Reuse this analysis'),page.indexOf('      if(!accountView){'));
+const blockStart=page.indexOf('      // Reuse this analysis');
+const blockEnd=page.indexOf('      if(!freshAccount&&!accountRefreshFailed){',blockStart);
+assert.ok(blockStart>=0&&blockEnd>blockStart,'Locate the comparison before the legacy capital fallback');
+const block=page.slice(blockStart,blockEnd);
 assert.ok(block.includes('compareC1Holdings'));
 let captured;
 const ui={portfolio:[{symbol:'TEST',shares:2,role:'Swing'},{symbol:'CASH',shares:100,role:'Swing'}],CASH:['CASH','SWVXX','VMFXX','SPAXX','FDRXX','MMF'],role:(s,r)=>r,compareC1Holdings:compare,screenLive:true,currentProductionPolicy:{forwardAccounting:model},setHoldingsComparison:r=>{captured=r;}};
