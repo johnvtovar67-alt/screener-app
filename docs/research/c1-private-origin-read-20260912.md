@@ -9,3 +9,5 @@ Pin Blob to 2.8.0. Add a prebuild integration check using the real SDK with an i
 Validation: actual SDK fresh-read integration and synthetic account regression passed locally. Full CI/build required before merge. Private account persistence and UI success must still be confirmed after deployment through the normal authenticated account request. No historical experiments, cron changes, model changes, account resets, fabricated fills or new UI controls.
 
 Source: https://github.com/vercel/storage/blob/main/packages/blob/CHANGELOG.md (2.5.0, 2.6.0).
+
+Preview build evidence: the cached install reported up to date, and the real-SDK test confirmed 2.8.0. This weakens the cached-old-version hypothesis; pinning is a compatibility guard, not proof that the persistence failure is fixed. The save-conflict diagnostic also records whether the supplied validator is weak, without recording the validator itself. The private persistence result remains the blocker.
