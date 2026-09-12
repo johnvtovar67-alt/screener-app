@@ -77,20 +77,8 @@ function client(fetcher){
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 
-// Exercise the actual JSX visibility condition. An initialized account must
-// retain an explicit diagnostic notice on both pages, including stale output.
-const noticeLine=page.split('\n').find(line=>line.includes('aria-label="C1 account status"'));
-assert.ok(noticeLine,'The private account view needs a diagnostic status region');
-const condition=noticeLine.slice(noticeLine.indexOf('{')+1,noticeLine.indexOf('&&<section'));
-const noticeVisible=new Function('accountView','tab','return Boolean('+condition+');');
-for(const tab of ['opportunities','portfolio']){
- for(const current of [true,false]){
-  assert.equal(noticeVisible({decision:{current,executable:false}},tab),true);
- }
- assert.equal(noticeVisible(null,tab),false);
-}
-for(const tab of ['single','themes'])assert.equal(noticeVisible({decision:{}},tab),false);
-assert.ok(noticeLine.includes('Manual C1 recommendations enabled.'));
-assert.ok(noticeLine.includes('alpha is not certified.'));
-console.log('PASS: Private C1 account analysis retains diagnostic disclosure on both account views.');
-
+// Owner-requested presentation: no repeated research disclosures in the account UI.
+assert.ok(!page.includes('aria-label="C1 account status"'));
+assert.ok(!page.includes('alpha is not certified.'));
+assert.ok(page.includes('<C1AccountDifferences decision={accountView.decision}'));
+console.log('PASS: Research disclosures removed; actionable account differences remain visible.');
