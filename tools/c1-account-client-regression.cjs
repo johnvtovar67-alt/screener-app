@@ -57,6 +57,35 @@ function client(fetcher){
  resolveOld({ok:true,json:async()=>latest});await inflight;
  assert.equal(switched.state.view,null,'Disconnect must cancel a pending account response');
 
+ // A rejected write recovers a freshly read view, never the stale order
+ // payload. The caller still receives a failure and can retry the pending edit.
+ const methods=[];
+ const recovery=client(async(url,options)=>{methods.push(options.method);return options.method==='GET'?{ok:true,json:async()=>latest}:{ok:false,status:409,json:async()=>({code:'ACCOUNT_SAVE_CONFLICT',error:'Conflict'})};});
+ await assert.rejects(recovery.box.refresh({operation:'record-position-context'}),/saved account was reloaded/);
+ assert.deepEqual(methods,['POST','GET']);assert.deepEqual(recovery.state.view,latest);assert.equal(recovery.state.writes,0);
+ const readOnly=client(async(url,options)=>{assert.equal(options.method,'GET');assert.equal(options.body,undefined);return {ok:true,json:async()=>latest};});
+ await readOnly.box.refresh(null,{readOnly:true});assert.deepEqual(readOnly.state.view,latest);
+ let finishRecovery;
+ const recovering=client(async(url,options)=>options.method==='GET'?new Promise(resolve=>{finishRecovery=resolve;}):{ok:false,status:409,json:async()=>({error:'Conflict'})});
+ const pendingRecovery=recovering.box.refresh({operation:'record-position-context'});
+ while(!finishRecovery)await Promise.resolve();recovering.box.disconnect();finishRecovery({ok:true,json:async()=>latest});await pendingRecovery;
+ assert.equal(recovering.state.view,null,'Disconnect also cancels conflict recovery');
+
+ // Run the actual analysis with an initially absent React account view. A
+ // fresh account result must prevent the obsolete capital path from executing.
+ const analyzeSource=extract('  async function analyze(','  async function check(');
+ for(const result of ['fresh','failure','superseded']){
+  let capitalWrites=0;
+  const noop=()=>{},analysisBox={portfolio:[],accountView:null,KEY:'portfolio',C1_DRAWDOWN_KEY:'risk',
+   refreshC1Account:async()=>{if(result==='failure')throw new Error('Account unavailable');return result==='fresh'?latest:undefined;},
+   fetchScreen:async()=>({stocks:[],performance:{records:[]},meta:{}}),screenHealth:()=>({}),
+   setLoading:noop,setErr:noop,setAnalysisCapitalReady:noop,setHoldingsComparison:noop,setFeedHealth:noop,setMarketScope:noop,setMarketRadar:noop,setStocks:noop,setResults:noop,setPortfolioAnalyzedAt:noop,setLastUpdated:noop,
+   CASH:[],compareC1Holdings:()=>({}),rank:()=>0,localStorage:{getItem:()=>'{"highWater":12345}',setItem:()=>{capitalWrites++;}},Date};
+  vm.createContext(analysisBox);vm.runInContext(analyzeSource+'\nthis.analyze=analyze;',analysisBox);
+  await analysisBox.analyze([]);assert.equal(capitalWrites,0,'Fresh, failed or superseded account analysis cannot rewrite legacy capital');
+ }
+ console.log('PASS: save conflicts restore a fresh account view; recovery survives retry and cancels on disconnect; current analysis cannot fall through to obsolete capital reconciliation.');
+
  // Execute the actual Save handler with confirmed synthetic account output.
  // No real account, API, storage credential, model replay or provider is used.
  const writes=[],synced=[],analyzed=[];
@@ -73,6 +102,28 @@ function client(fetcher){
  }
  assert.equal(writes.length,1);assert.equal(writes[0].k,'portfolio','The save must not reset the capital-risk record');
  assert.equal(JSON.stringify(portfolio),before);
+ // A recovered import reads the saved revision and synchronizes dates and
+ // context only, including rows already visible on Portfolio.
+ const importSource=extract('  async function importPositionContext(','  const[transactionCheck');
+ const requests=[],importWrites=[],importSync=[],busyStates=[];
+ let visibleRows=[{symbol:'TEST',openedAt:'2026-09-01',price:108,shares:5}];
+ const importDecision={...decision,revision:8,positions:[{symbol:'TEST',shares:5,avgCost:100,openedAt:'2026-08-31',entryContext:{stage:'full',purchases:[]}}]};
+ const importBox={portfolio:plain(portfolio),accountView:{decision:{revision:1}},KEY:'portfolio',sym:r=>r.symbol,
+  setAccountBusy:b=>busyStates.push(b),setErr(){},setPortfolio(){},setResults:fn=>{visibleRows=fn(visibleRows);},
+  localStorage:{getItem:()=>JSON.stringify(portfolio),setItem:(key,value)=>importWrites.push({key,value:JSON.parse(value)})},
+  refreshC1Account:async(body,options)=>{requests.push({body,options});return {decision:body?importDecision:{revision:7}};},
+  pushCloudPortfolio:async rows=>{importSync.push(plain(rows));return true;}};
+ vm.createContext(importBox);vm.runInContext(importSource+'\nthis.apply=importPositionContext;',importBox);
+ await importBox.apply({contract:'fixture'});
+ assert.equal(requests[0].options.readOnly,true);assert.equal(requests[1].body.expectedRevision,7);
+ assert.deepEqual(busyStates,[true,false]);
+ assert.equal(importWrites.length,1);assert.equal(importWrites[0].key,'portfolio');
+ const updated=importWrites[0].value;
+ assert.deepEqual(updated.filter(p=>p.role==='Core'),core);
+ assert.equal(updated.find(p=>p.symbol==='TEST').shares,5);assert.equal(updated.find(p=>p.symbol==='TEST').avgCost,100);
+ assert.equal(updated.find(p=>p.symbol==='VMFXX').shares,1500);
+ assert.equal(visibleRows[0].openedAt,'2026-08-31');assert.equal(visibleRows[0].price,108);
+ assert.deepEqual(importSync[0],updated);
  console.log('PASS: Core cash/holdings preserved through account save; failed refreshes invalidate stale decisions; superseded errors and disconnected responses cannot replace current account state. Synthetic client checks only.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
 

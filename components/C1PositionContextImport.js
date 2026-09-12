@@ -1,8 +1,8 @@
 import {useEffect,useRef,useState} from 'react';
 
 const PENDING='c1-position-context-import';
-export default function C1PositionContextImport({decision,portfolio,onImport,ready=false}){
- const [context,setContext]=useState(null),[status,setStatus]=useState(''),[error,setError]=useState('');
+export default function C1PositionContextImport({decision,portfolio,onImport,onRefresh,refreshing=false,ready=false}){
+ const [context,setContext]=useState(null),[status,setStatus]=useState(''),[error,setError]=useState(''),[working,setWorking]=useState(false);
  const busy=useRef(false);
  const matched=Boolean(context&&decision&&context.positions.every(p=>{const entered=portfolio.find(r=>r.symbol===p.symbol&&r.role==='Swing'),saved=decision.positions.find(r=>r.symbol===p.symbol);return entered&&saved&&Math.abs(Number(entered.shares)-saved.shares)<1e-7&&Math.abs(Number(entered.avgCost)-saved.avgCost)<=.02;}));
  useEffect(()=>{
@@ -23,10 +23,10 @@ export default function C1PositionContextImport({decision,portfolio,onImport,rea
  },[]);
  async function apply(){
   if(busy.current||!ready||!matched)return;
-  busy.current=true;setError('');setStatus('Applying purchase history…');
+  busy.current=true;setWorking(true);setError('');setStatus('Applying purchase history…');
   try{await onImport(context);sessionStorage.removeItem(PENDING);setContext(null);setStatus('Purchase history restored.');}
   catch(e){setError(e.message);setStatus('');}
-  finally{busy.current=false;}
+  finally{busy.current=false;setWorking(false);}
  }
  useEffect(()=>{
   if(context)setStatus(ready&&matched?'Purchase history is ready to restore.':'Waiting for the matching saved portfolio.');
@@ -34,6 +34,7 @@ export default function C1PositionContextImport({decision,portfolio,onImport,rea
  if(!status&&!error)return null;
  return <section className="card" aria-label="Restore purchase history"><p role="status">{error||status}</p>{context&&<>
   <ul>{context.positions.map(p=><li key={p.symbol}><b>{p.symbol}</b> · {p.stage} position · {(p.purchases||[]).map(t=>`${t.shares} shares on ${t.date}`).join('; ')}</li>)}</ul>
-  <button onClick={apply} disabled={!ready||!matched||busy.current}>{busy.current?'Applying…':'Apply purchase history'}</button>
+  <button onClick={apply} disabled={!ready||!matched||working}>{working?'Applying…':'Apply purchase history'}</button>
+  {(!decision||error)&&onRefresh&&<button onClick={onRefresh} disabled={refreshing||working}>{refreshing?'Refreshing account…':'Refresh saved account'}</button>}
  </>}</section>;
 }

@@ -1,3 +1,4 @@
+import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
 import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
 import {c1AccountReviewBook} from '../../lib/c1HeldRankReview';
 import {buildC1ManualRecommendations} from '../../lib/c1ManualRecommendations';
@@ -66,7 +67,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     }else return res.status(400).json({error:'Valid account operation required.'});
    }
    let holdingReviewError=null;
-   if(req.method==='POST'){
+   if(req.method==='POST'&&['refresh-analysis','adopt','record-session'].includes(req.body?.operation)){
     const through=account.records.at(-1)?.date||account.adoption.sourceSessionDate;
     const input=c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),baseline=input.model.sessions.find(s=>s.date===through);
     const reviews=account.holdingRankReviews||[],existing=reviews.find(r=>r.sourceSessionDate===through);
@@ -84,9 +85,9 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      }catch{holdingReviewError='Holding momentum history is unavailable; recorded prices and stops remain under review.';}
     }
    }
+   if(req.method==='POST')account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});
    let decision=evaluateC1Account({account,book,now});
    const pendingSession=pendingC1AccountSession({account,book,now});
-   if(req.method==='POST'&&account!==saved?.record)await store.write(path,account,saved?.etag);
    let openingPlan=null,openingError=null;
    if(!pendingSession&&decision.current){
     try{
@@ -98,7 +99,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    }
    const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession,openingPlan,openingError,now:clock()});
    return res.status(200).json({decision,pendingSession,openingPlan,openingError,manualRecommendations,holdingReviewError});
-  }catch(error){return res.status(409).json({error:String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
+  }catch(error){const conflict=isC1AccountSaveConflict(error);return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
  };
 }
 export default createC1AccountHandler();

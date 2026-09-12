@@ -127,18 +127,32 @@ export default function Home(){
   const[holdingsComparison,setHoldingsComparison]=useState(null);
   const[accountView,setAccountView]=useState(null),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
   const accountRequestId=useRef(0);
-  async function refreshC1Account(body=null){
+  async function refreshC1Account(body=null,{readOnly=false}={}){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
-    if(!key){setAccountView(null);if(body)throw new Error("Connect your existing portfolio sync key first.");return;}
+    if(!key){setAccountView(null);if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
+    let recovered=false;
     try{
-      const r=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify(body||{operation:'refresh-analysis'}),cache:'no-store'}),d=await r.json();
+      const r=await fetch('/api/c1-account',{method:readOnly?'GET':'POST',headers:{authorization:`Bearer ${key}`,...(readOnly?{}:{'content-type':'application/json'})},...(readOnly?{}:{body:JSON.stringify(body||{operation:'refresh-analysis'})}),cache:'no-store'}),d=await r.json();
       if(requestId!==accountRequestId.current)return;
-      if(!r.ok){setAccountView(null);if(r.status!==404||body)throw new Error(d.error||"C1 account refresh failed.");return;}
+      if(!r.ok){
+        setAccountView(null);
+        if(r.status===409&&!readOnly){
+          const latest=await fetch('/api/c1-account',{method:'GET',headers:{authorization:`Bearer ${key}`},cache:'no-store'}),view=await latest.json();
+          if(requestId!==accountRequestId.current)return;
+          if(latest.ok){setAccountView(view);recovered=true;}
+        }
+        if(r.status!==404||body)throw new Error(recovered?'Your saved account was reloaded. Please retry the change.':d.error||"C1 account refresh failed.");
+        return null;
+      }
       setAccountView(d);setAccountError("");return d;
     }catch(error){
       if(requestId!==accountRequestId.current)return;
-      setAccountView(null);throw error;
+      if(!recovered)setAccountView(null);throw error;
     }
+  }
+  async function recoverC1Account(){
+    setAccountBusy(true);setErr('');setAccountError('');
+    try{await refreshC1Account(null,{readOnly:true});}catch(error){setAccountError(error.message);}finally{setAccountBusy(false);}
   }
   async function correctEnteredC1Date(symbol,openedAt){
     const issues=c1AccountDifferences(accountView?.decision,portfolio);
@@ -151,15 +165,24 @@ export default function Home(){
   async function saveC1Activity(record,expectedRevision){setAccountBusy(true);setErr("");try{const d=await refreshC1Account({operation:'record-session',record,expectedRevision});if(d){const updated=mergeC1AccountPortfolio(portfolio,d.decision);localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);await pushCloudPortfolio(updated);await analyze(updated);}}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
 
   async function importPositionContext(context){
-    const d=await refreshC1Account({operation:'record-position-context',context,expectedRevision:accountView.decision.revision});
-    if(!d)throw new Error('Account refresh changed; retry purchase history.');
-    // Correct only the evidenced first date and entry metadata. Retain current
-    // entered shares, cost, cash, Core rows and capital memory exactly.
-    const updated=portfolio.map(p=>{
-      const row=d.decision.positions.find(r=>r.symbol===p.symbol);
-      return p.role==='Swing'&&row?.entryContext?{...p,openedAt:row.openedAt,entryContext:row.entryContext}:p;
-    });
-    localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);if(!await pushCloudPortfolio(updated))throw new Error('Purchase history is saved; portfolio synchronization needs a retry.');
+    setAccountBusy(true);setErr('');
+    try{
+      // The displayed revision may predate a background observation. Load the
+      // saved account without creating another competing observation write.
+      const latest=await refreshC1Account(null,{readOnly:true});
+      if(!latest)throw new Error('Reload the saved account before applying purchase history.');
+      const d=await refreshC1Account({operation:'record-position-context',context,expectedRevision:latest.decision.revision});
+      if(!d)throw new Error('Account refresh changed; retry purchase history.');
+      if(JSON.stringify(JSON.parse(localStorage.getItem(KEY)||'[]'))!==JSON.stringify(portfolio))throw new Error('Purchase history is saved; entered holdings changed during the import. Refresh before syncing dates.');
+      // Update only evidenced dates and metadata, retaining all entered capital.
+      const updated=portfolio.map(p=>{
+        const row=d.decision.positions.find(r=>r.symbol===p.symbol);
+        return p.role==='Swing'&&row?.entryContext?{...p,openedAt:row.openedAt,entryContext:row.entryContext}:p;
+      });
+      localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);
+      setResults(current=>current.map(row=>{const held=updated.find(p=>p.symbol===sym(row));return held?.entryContext?{...row,openedAt:held.openedAt,entryContext:held.entryContext}:row;}));
+      if(!await pushCloudPortfolio(updated))throw new Error('Purchase history is saved; portfolio synchronization needs a retry.');
+    }finally{setAccountBusy(false);}
   }
 
   const[transactionCheck,setTransactionCheck]=useState(null),[importingTransactions,setImportingTransactions]=useState(false);
@@ -262,7 +285,7 @@ export default function Home(){
 
   async function analyze(inputPortfolio){
     const analysisPortfolio=Array.isArray(inputPortfolio)?inputPortfolio:portfolio;
-    setLoading(true);setErr("");try{await refreshC1Account();}catch(e){setErr(e.message);}setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
+    setLoading(true);setErr("");let freshAccount=null,accountRefreshFailed=false;try{freshAccount=await refreshC1Account();accountRefreshFailed=freshAccount===undefined;}catch(e){accountRefreshFailed=true;setErr(e.message);}setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
     try{
       try{const sd=await fetchScreen("opportunities");snapshot=sd.stocks||[];performance=sd.performance.records;currentProductionPolicy=sd.meta?.productionPolicy||{};screenLive=!sd.meta?.clientSnapshotFallback&&String(sd.meta?.quoteFeedStatus||"live")==="live";setFeedHealth(screenHealth(sd.meta,sd.performance));setMarketScope(sd.meta||null);setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}
       catch(e){setErr(`Portfolio positions were analyzed, but fresh-capital allocation is paused because the broad screen failed: ${e.message}`);setFeedHealth(h=>({...h,status:"unavailable"}));}
@@ -289,7 +312,7 @@ export default function Home(){
         setHoldingsComparison({...comparison,portfolioSignature:JSON.stringify(analysisPortfolio)});
       }catch{setHoldingsComparison({status:"unavailable",positions:[],portfolioSignature:JSON.stringify(analysisPortfolio)});}
 
-      if(!accountView){
+      if(!freshAccount&&!accountRefreshFailed){
       let priorControl={};try{priorControl=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");}catch{}
       const nextControl=c1DrawdownControl({swingEquity:portfolioRiskSnapshot(analyzedRows).swingCapital,state:priorControl,portfolioSignature:portfolioCompositionSignature(analysisPortfolio),now:new Date()});
       if(nextControl.reconciliationRequired){setAnalysisCapitalReady(false);setErr(nextControl.reason);}
@@ -449,7 +472,7 @@ export default function Home(){
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
     {accountError&&<p className="error" role="alert"><b>C1 account activation:</b> {accountError}</p>}
     {err&&!accountError&&<p className="error">{err}</p>}
-    <C1PositionContextImport ready={syncStatus==='Synced'&&!reloading&&!loading&&!accountBusy} decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext}/>
+    <C1PositionContextImport ready={syncStatus==='Synced'&&!reloading&&!loading&&!accountBusy} decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext} onRefresh={recoverC1Account} refreshing={accountBusy}/>
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {tab==="portfolio"&&!accountView&&err&&<C1ReconciliationDetails portfolio={portfolio} capitalStorageKey={C1_DRAWDOWN_KEY}/>}
     {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
