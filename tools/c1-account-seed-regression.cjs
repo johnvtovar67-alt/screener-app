@@ -152,7 +152,7 @@ assert.ok(youngReason.includes('2 of 30 trading sessions'));
 assert.ok(youngReason.includes('Recorded stop: $86.00'));
 assert.ok(youngReason.includes('Latest account close: $97.00 (2026-09-11)'));
 const riskReason=explainHolding({...explanationFixture,avgCost:96,inheritedRiskOnly:true},'2026-09-11');
-assert.ok(riskReason.includes('The account model excludes this holding from its current ranking universe'));
+assert.ok(riskReason.includes('A verified momentum review is not available for this holding'));
 assert.ok(riskReason.startsWith('Up 1.04%'));
 assert.ok(riskReason.includes('not a sell signal'));
 assert.ok(!riskReason.includes('Inherited holding'));
