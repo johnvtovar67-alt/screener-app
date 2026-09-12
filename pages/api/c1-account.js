@@ -82,7 +82,13 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
        c1AccountReviewBook(input,account.holdingRankReviews);
       }
       if(review.unavailable.length)holdingReviewError=review.unavailable.map(r=>r.symbol+': '+r.reason).join(' ');
-     }catch{holdingReviewError='Holding momentum history is unavailable; recorded prices and stops remain under review.';}
+     }catch(error){
+      const code=error?.message==='Holding momentum data provider is not configured'?'PROVIDER_NOT_CONFIGURED':error?.message==='Current bounded holding review required'?'REVIEW_SESSION_MISMATCH':'ACCOUNT_REVIEW_FAILURE';
+      console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code,stage:'account-review'}));
+      holdingReviewError='Holding momentum history is unavailable; recorded prices and stops remain under review.';
+     }
+    }else if(symbols.length){
+     console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code:'ACCOUNT_SESSION_BEHIND',stage:'account-review'}));
     }
    }
    if(req.method==='POST')account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});
