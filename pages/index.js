@@ -1,3 +1,4 @@
+import C1PositionContextImport from '../components/C1PositionContextImport';
 import C1AccountDifferences from '../components/C1AccountDifferences';
 import {c1AccountDifferences} from '../lib/c1AccountDifferences';
 import {mergeC1AccountPortfolio} from "../lib/c1AccountPortfolio";
@@ -130,7 +131,7 @@ export default function Home(){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
     if(!key){setAccountView(null);if(body)throw new Error("Connect your existing portfolio sync key first.");return;}
     try{
-      const r=await fetch('/api/c1-account',{method:body?'POST':'GET',headers:{authorization:`Bearer ${key}`,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{}),cache:'no-store'}),d=await r.json();
+      const r=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify(body||{operation:'refresh-analysis'}),cache:'no-store'}),d=await r.json();
       if(requestId!==accountRequestId.current)return;
       if(!r.ok){setAccountView(null);if(r.status!==404||body)throw new Error(d.error||"C1 account refresh failed.");return;}
       setAccountView(d);setAccountError("");return d;
@@ -148,6 +149,18 @@ export default function Home(){
   }
   async function startC1Account(){setAccountBusy(true);setAccountError("");setErr("");try{const capitalRecord=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");await refreshC1Account({operation:'adopt',portfolio:portfolio.map(p=>({...p,shares:Number(p.shares),avgCost:Number(p.avgCost)})),capitalRecord,prospectiveLegacyAdoptionConfirmed:capitalRecord.version===null&&capitalRecord.portfolioSignature==null&&capitalRecord.reconciliationRequired===true});}catch(e){setAccountError(e.message);}finally{setAccountBusy(false);}}
   async function saveC1Activity(record,expectedRevision){setAccountBusy(true);setErr("");try{const d=await refreshC1Account({operation:'record-session',record,expectedRevision});if(d){const updated=mergeC1AccountPortfolio(portfolio,d.decision);localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);await pushCloudPortfolio(updated);await analyze(updated);}}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
+
+  async function importPositionContext(context){
+    const d=await refreshC1Account({operation:'record-position-context',context,expectedRevision:accountView.decision.revision});
+    if(!d)throw new Error('Account refresh changed; retry purchase history.');
+    // Correct only the evidenced first date and entry metadata. Retain current
+    // entered shares, cost, cash, Core rows and capital memory exactly.
+    const updated=portfolio.map(p=>{
+      const row=d.decision.positions.find(r=>r.symbol===p.symbol);
+      return p.role==='Swing'&&row?.entryContext?{...p,openedAt:row.openedAt,entryContext:row.entryContext}:p;
+    });
+    localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);if(!await pushCloudPortfolio(updated))throw new Error('Purchase history is saved; portfolio synchronization needs a retry.');
+  }
 
   const[transactionCheck,setTransactionCheck]=useState(null),[importingTransactions,setImportingTransactions]=useState(false);
   const transactionImportId=useRef(0);
@@ -436,6 +449,8 @@ export default function Home(){
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
     {accountError&&<p className="error" role="alert"><b>C1 account activation:</b> {accountError}</p>}
     {err&&!accountError&&<p className="error">{err}</p>}
+    <C1PositionContextImport ready={syncStatus==='Synced'&&!reloading&&!loading&&!accountBusy} decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext}/>
+    {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {tab==="portfolio"&&!accountView&&err&&<C1ReconciliationDetails portfolio={portfolio} capitalStorageKey={C1_DRAWDOWN_KEY}/>}
     {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
