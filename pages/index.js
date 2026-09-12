@@ -438,8 +438,7 @@ export default function Home(){
     {err&&!accountError&&<p className="error">{err}</p>}
     {tab==="portfolio"&&!accountView&&err&&<C1ReconciliationDetails portfolio={portfolio} capitalStorageKey={C1_DRAWDOWN_KEY}/>}
     {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
-    {accountView&&["opportunities","portfolio"].includes(tab)&&<section className="card" aria-label="C1 account status"><h2>C1 account status</h2><p><b>Manual C1 recommendations enabled.</b> Review account-specific holdings and trade candidates below. Orders remain manual and require the account and opening-price checks.</p><p>Account session: {accountView.decision.sourceSessionDate}. Historical sector provenance and strategy-selection uncertainty remain unresolved; alpha is not certified.</p></section>}
-    {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
+    {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountDifferences decision={accountView.decision} portfolio={portfolio} onCorrectDate={correctEnteredC1Date} busy={accountBusy}/>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} manualRecommendations={accountView.manualRecommendations} openingPlan={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null} openingError={accountView.openingError} decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the account differences shown above to restore candidates and checked quantities."}}/>}
     {tab==="portfolio"&&accountView?.pendingSession&&<C1AccountActivity key={accountView.pendingSession.date} pending={accountView.pendingSession} onSave={saveC1Activity} busy={accountBusy}/>}
@@ -448,10 +447,10 @@ export default function Home(){
       <section className="card">
         <h2>🔥 Opportunities</h2>
         <p className="sub">Current candidates for new capital, ordered from strongest to weakest.</p>
-        {marketScope?.productionPolicy&&marketScope.productionPolicy.status!=="ready"&&<div className="universeStatus warning"><b>Fresh entries paused</b><span>C1 is not currently authorized for full-size entries. Existing positions remain available for review. A price refresh does not replace model validation.</span></div>}
+        {marketScope?.productionPolicy&&marketScope.productionPolicy.status!=="ready"&&<div className="universeStatus warning"><b>Fresh entries paused</b><span>Connect your portfolio to review account-specific buys.</span></div>}
         {marketScope&&(!["ready","stale"].includes(marketScope.fullMarketDiscoveryStatus)||marketScope.fullMarketCoarseUniverseCapped)&&<div className="universeStatus warning"><b>Market coverage limited</b><span>{fullMarketCoverageFallback(marketScope)}</span></div>}
         {[["Strong Buy",strong],["Buy",buys]].map(([h,rows])=>rows.length?<div key={h}><h3>{h}</h3><div className="grid">{rows.map(s=><Card key={sym(s)} s={s} decision={opportunityDecision(s)}/>)}</div></div>:null)}
-        {!strong.length&&!buys.length&&<div className="emptyState"><b>No verified Buy or Strong Buy currently qualifies.</b><span>No purchase is authorized by this screen. Check the model status above for the reason.</span></div>}
+        {!strong.length&&!buys.length&&<div className="emptyState"><b>No verified Buy or Strong Buy currently qualifies.</b><span>No purchase is authorized by this screen. Connect your portfolio to review account-specific buys.</span></div>}
       </section>
       <VerificationPaused rows={paused}/><OnDeck rows={deck} feedHealth={feedHealth}/><RecentSignalChanges rows={recentDowngrades}/>
     </>}
