@@ -280,6 +280,9 @@ vm.createContext(context);vm.runInContext(route,context);
   const run=account({sessions:rankedInput.model.sessions},{...options[id],startDate:baseline.date,endDate:baseline.date,liquidateAtEnd:false},seed);
   assert.ok(run.pendingDecisions.some(o=>o.symbol==='OUT'&&o.reason==='rank-deterioration'),'Verified supplemental rank must actually participate in holding exits');
   assert.ok(!run.pendingDecisions.some(o=>o.symbol==='OUT'&&o.side==='buy'));
+  const ineligibleSession={...rankedInput.model.sessions[0],accountHoldingRanks:{OUT:{[id]:{rank:1,eligible:false,eligibleCount:0}}}};
+  const ineligible=account({sessions:[ineligibleSession]},{...options[id],startDate:baseline.date,endDate:baseline.date,liquidateAtEnd:false},seed);
+  assert.ok(ineligible.pendingDecisions.some(o=>o.symbol==='OUT'&&o.reason==='rank-deterioration'),'An ineligible holding cannot retain a slot when the eligible pool is small');
   const young=account({sessions:rankedInput.model.sessions},{...options[id],startDate:baseline.date,endDate:baseline.date,liquidateAtEnd:false},{...seed,positions:seed.positions.map(p=>({...p,openedAt:baseline.date}))});
   assert.ok(!young.pendingDecisions.some(o=>o.symbol==='OUT'&&o.reason==='rank-deterioration'),'Existing minimum hold still applies');
  }

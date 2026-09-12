@@ -60,7 +60,7 @@ replace('    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stri
 // members, fresh-entry pools and every frozen strategy parameter stay intact.
 replace('            !retainedRankSymbols.has(symbol)',
  `            (position.inheritedRiskOnly === true
-              ? Number.isFinite(session.accountHoldingRanks?.[symbol]?.[accountSeed.sleeve]?.rank) && session.accountHoldingRanks[symbol][accountSeed.sleeve].rank > rankedExitBuffer
+              ? Number.isFinite(session.accountHoldingRanks?.[symbol]?.[accountSeed.sleeve]?.rank) && (session.accountHoldingRanks[symbol][accountSeed.sleeve].eligible === false || session.accountHoldingRanks[symbol][accountSeed.sleeve].rank > rankedExitBuffer)
               : !retainedRankSymbols.has(symbol))`);
 replace('        [...(session.positionSignals || []), ...(session.signals || [])].map(',
  '        [...(session.accountHoldingSignals || []), ...(session.positionSignals || []), ...(session.signals || [])].map(');
