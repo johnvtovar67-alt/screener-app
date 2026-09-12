@@ -36,6 +36,7 @@ assert.ok(decision.issues.some(i=>i.code==='PRODUCTION_UNIVERSE'),'PIT historica
 const midnight=advanceC1ForwardModel(null,[session],new Date('2026-09-11T14:00:00Z'),{completedCloseQueue:true});
 assert.equal(midnight.simulationStartSession,undefined,'A missed opening cannot be backfilled by diagnostic initialization');
 const page=fs.readFileSync('pages/index.js','utf8'),api=fs.readFileSync('pages/api/top5.js','utf8');
-assert.ok(page.includes('["opportunities","portfolio"].includes(tab)&&<C1ModelStatus'));
+assert.ok(!page.includes('<C1ModelStatus'),'Setup/model status does not occupy the trading header');
+assert.ok(page.includes('["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab}'),'Both trading pages still use the same private-account view');
 assert.ok(api.includes('decisionSnapshot: broadSnapshot.productionPolicySnapshot?.decisionSnapshot'));
 console.log('PASS: one C1 model snapshot, baseline queue without fills, same portfolio interpretation, all names retained, stale/revised inputs blocked and no metadata-based promotion');

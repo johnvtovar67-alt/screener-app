@@ -156,7 +156,7 @@ assert.ok(riskReason.includes('A verified momentum review is not available for t
 assert.ok(riskReason.startsWith('Up 1.04%'));
 assert.ok(riskReason.includes('not a sell signal'));
 assert.ok(!riskReason.includes('Inherited holding'));
-assert.ok(!riskReason.includes('rank-based selling is eligible'));
+assert.ok(riskReason.includes('2 of 30 trading sessions'),'Known holding age remains visible when momentum data is unavailable');
 const missingStop=explainHolding({...explanationFixture,stops:[{price:null}]},'2026-09-11');
 assert.ok(missingStop.includes('No recorded stop price'));
 assert.ok(!missingStop.includes('$0.00'));

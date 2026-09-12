@@ -15,7 +15,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const watch=decision.current&&!decision.accountMismatch?(decision.opportunities||[]).filter(row=>!buys.some(order=>order.symbol===row.symbol)):[];
  const otherOrders=orders.filter(order=>order.side!=='buy'||order.condition);
  if(portfolioOnly&&!buys.length)return null;
- const waitingReason=decision.accountMismatch?'Resolve the account differences above.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
+ const waitingReason=decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
  return <><section className="card" aria-label="C1 account opportunities">
   <h2>{portfolioOnly?'Buys to review':'Opportunities'}</h2>
   <p className="sub">Session: {decision.sourceSessionDate} · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
