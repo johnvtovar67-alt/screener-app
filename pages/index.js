@@ -159,7 +159,7 @@ export default function Home(){
       const row=d.decision.positions.find(r=>r.symbol===p.symbol);
       return p.role==='Swing'&&row?.entryContext?{...p,openedAt:row.openedAt,entryContext:row.entryContext}:p;
     });
-    localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);await pushCloudPortfolio(updated);
+    localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);if(!await pushCloudPortfolio(updated))throw new Error('Purchase history is saved; portfolio synchronization needs a retry.');
   }
 
   const[transactionCheck,setTransactionCheck]=useState(null),[importingTransactions,setImportingTransactions]=useState(false);
@@ -449,7 +449,7 @@ export default function Home(){
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
     {accountError&&<p className="error" role="alert"><b>C1 account activation:</b> {accountError}</p>}
     {err&&!accountError&&<p className="error">{err}</p>}
-    <C1PositionContextImport decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext}/>
+    <C1PositionContextImport ready={syncStatus==='Synced'&&!reloading&&!loading&&!accountBusy} decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext}/>
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {tab==="portfolio"&&!accountView&&err&&<C1ReconciliationDetails portfolio={portfolio} capitalStorageKey={C1_DRAWDOWN_KEY}/>}
     {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}

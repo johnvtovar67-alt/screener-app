@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 
 const PENDING='c1-position-context-import';
-export default function C1PositionContextImport({decision,portfolio,onImport}){
+export default function C1PositionContextImport({decision,portfolio,onImport,ready=false}){
  const [context,setContext]=useState(null),[status,setStatus]=useState(''),[error,setError]=useState('');
  const attempted=useRef(false),busy=useRef(false);
  useEffect(()=>{
@@ -28,14 +28,14 @@ export default function C1PositionContextImport({decision,portfolio,onImport}){
   finally{busy.current=false;}
  }
  useEffect(()=>{
-  if(attempted.current||!context||!decision||!portfolio.length)return;
+  if(attempted.current||!ready||!context||!decision||!portfolio.length)return;
   const matched=context.positions.every(p=>{
    const entered=portfolio.find(r=>r.symbol===p.symbol&&r.role==='Swing'),saved=decision.positions.find(r=>r.symbol===p.symbol);
    return entered&&saved&&Math.abs(Number(entered.shares)-saved.shares)<1e-7&&Math.abs(Number(entered.avgCost)-saved.avgCost)<=.02;
   });
   if(matched)void apply();
   else setStatus('Purchase history is waiting for the matching saved holdings.');
- },[context,decision,portfolio]);
+ },[context,decision,portfolio,ready]);
  if(!status&&!error)return null;
  return <div className="card" role="status"><p>{error||status}</p>{error&&context&&<button onClick={apply} disabled={!decision||busy.current}>Retry purchase history</button>}</div>;
 }
