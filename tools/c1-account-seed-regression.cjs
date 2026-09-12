@@ -143,6 +143,25 @@ const baselineBook={universe:'sp500',model:{sessions:[baseline]},captures:[{sess
 const privateAccount=adoptService({portfolio,capitalRecord,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')});
 const initialView=evaluateService({account:privateAccount,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')});
 assert.equal(matchesPortfolio(initialView,portfolio),true);
+const {c1AccountHoldingExplanation:explainHolding}=loader.load('lib/c1AccountDecision.js');
+const explanationFixture={exits:[],stops:[{price:86}],reviewRules:[{heldSessions:2,minimumHold:30,exitBuffer:6,close:97}]};
+const youngReason=explainHolding(explanationFixture,'2026-09-11');
+assert.ok(youngReason.includes('2 of 30 trading sessions'));
+assert.ok(youngReason.includes('Recorded stop: $86.00'));
+assert.ok(youngReason.includes('Latest account close: $97.00 (2026-09-11)'));
+const riskReason=explainHolding({...explanationFixture,inheritedRiskOnly:true},'2026-09-11');
+assert.ok(riskReason.includes('Current momentum-ranking data does not cover this holding'));
+assert.ok(!riskReason.includes('Inherited holding'));
+assert.ok(!riskReason.includes('rank-based selling is eligible'));
+const missingStop=explainHolding({...explanationFixture,stops:[{price:null}]},'2026-09-11');
+assert.ok(missingStop.includes('No recorded stop price'));
+assert.ok(!missingStop.includes('$0.00'));
+const matureReason=explainHolding({...explanationFixture,reviewRules:[{heldSessions:31,minimumHold:30,exitBuffer:6,close:97}],exits:[{reason:'rank-deterioration'}]},'2026-09-11');
+assert.ok(matureReason.includes('outside the C1 holding range'));
+assert.ok(matureReason.includes('fall outside the top 6'));
+assert.ok(initialView.positions.every(p=>p.reason.includes('Recorded stop:')||p.reason.includes('Recorded stops:')));
+console.log('PASS: Holding explanations use actual dates, stops and closing marks; ranking coverage never implies purchase provenance.');
+
 assert.equal(matchesPortfolio(initialView,portfolio.map(p=>p.symbol==='T4'?{...p,shares:2}:p)),false);
 assert.equal(positionDecision(initialView,'T4').decisionId,initialView.decisionId);
 const updatedBook={...baselineBook,model:{sessions:[baseline,opening]},captures:[...baselineBook.captures,{sessionDate:opening.date,hash:'opening-fixture',observedAt:opening.date+'T21:00:00Z'}]};
