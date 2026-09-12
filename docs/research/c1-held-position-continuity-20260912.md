@@ -20,7 +20,9 @@ It validates against adopted balances, uses the existing audited date correction
 where necessary, retains prior context, and is idempotent. The import never
 infers fees, transaction sequence, a future target quantity or completed orders.
 A same-origin fragment handoff lets the owner apply already supplied evidence
-using their existing browser authentication. The fragment is removed from the
+using their existing browser authentication. The prepared dates and stages are
+shown for an explicit Apply action; opening an arbitrary link cannot silently
+alter an authenticated account. The fragment is removed from the
 address immediately; account credentials and private purchase evidence are not
 stored in repository fixtures. Client synchronization changes only the evidenced
 first date and purchase metadata, preserving entered shares, cost and cash.
