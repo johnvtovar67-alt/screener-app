@@ -7,7 +7,6 @@ import C1AccountActivity from "../components/C1AccountActivity";
 import C1ReconciliationDetails from "../components/C1ReconciliationDetails";
 import {c1AccountPositionDecision,c1AccountMatchesPortfolio} from "../lib/c1AccountDecision";
 import {c1Presentation,c1DisplayDecision} from "../lib/c1Presentation";
-import C1ModelStatus from "../components/C1ModelStatus";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {reconcileBrokerageCSV} from "../lib/brokerageReconciliation";
 import {reconcileC1AccountHistory} from "../lib/c1AccountReconciliation";
@@ -484,7 +483,6 @@ export default function Home(){
       {holdingsComparison&&holdingsComparison.portfolioSignature===JSON.stringify(portfolio)&&<details className="holdingsVerification"><summary>Holdings verification — transaction history not verified</summary><p>This comparison does not confirm earlier purchases or recommend buying, holding, or selling. Complete transaction records are needed to verify your account against the model.</p>{holdingsComparison.status==="informational-only"?<><p>Paper-model session: {holdingsComparison.sourceSessionDate}. Share counts below are the holdings you entered.</p><ul>{holdingsComparison.positions.map(p=><li key={p.symbol}>{p.symbol}: {p.shares} shares — {p.modelPresence==="present"?"also present in the paper model":"not present in the paper model; this is not a sell signal"}</li>)}</ul></>:<p>A current, established paper-model comparison is not available yet. No holding classification can be inferred from it.</p>}</details>}
     </div>
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
-    {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&!c1AccountMatchesPortfolio(accountView.decision,portfolio)&&<p role="status">Account details need attention. <button onClick={()=>setTab("account-tools")}>Open Account settings</button></p>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} manualRecommendations={accountView.manualRecommendations} openingPlan={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null} openingError={accountView.openingError} decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the differences in Account settings to restore candidates and checked quantities."}}/>}
