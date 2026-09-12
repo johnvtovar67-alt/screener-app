@@ -1,3 +1,5 @@
+import C1AccountDifferences from '../components/C1AccountDifferences';
+import {c1AccountDifferences} from '../lib/c1AccountDifferences';
 import {mergeC1AccountPortfolio} from "../lib/c1AccountPortfolio";
 import C1AccountOpportunities from "../components/C1AccountOpportunities";
 import C1AccountActivity from "../components/C1AccountActivity";
@@ -137,6 +139,13 @@ export default function Home(){
       setAccountView(null);throw error;
     }
   }
+  async function correctEnteredC1Date(symbol,openedAt){
+    const issues=c1AccountDifferences(accountView?.decision,portfolio);
+    if(!issues.length||!issues.every(row=>row.dateOnly)||!issues.some(row=>row.symbol===symbol&&row.entered===openedAt))return;
+    setAccountBusy(true);setAccountError('');
+    try{await refreshC1Account({operation:'correct-opening-date',symbol,openedAt,expectedRevision:accountView.decision.revision});}
+    catch(e){setAccountError(e.message);}finally{setAccountBusy(false);}
+  }
   async function startC1Account(){setAccountBusy(true);setAccountError("");setErr("");try{const capitalRecord=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");await refreshC1Account({operation:'adopt',portfolio:portfolio.map(p=>({...p,shares:Number(p.shares),avgCost:Number(p.avgCost)})),capitalRecord,prospectiveLegacyAdoptionConfirmed:capitalRecord.version===null&&capitalRecord.portfolioSignature==null&&capitalRecord.reconciliationRequired===true});}catch(e){setAccountError(e.message);}finally{setAccountBusy(false);}}
   async function saveC1Activity(record,expectedRevision){setAccountBusy(true);setErr("");try{const d=await refreshC1Account({operation:'record-session',record,expectedRevision});if(d){const updated=mergeC1AccountPortfolio(portfolio,d.decision);localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);await pushCloudPortfolio(updated);await analyze(updated);}}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
 
@@ -192,7 +201,7 @@ export default function Home(){
     let winnerHistory=prior?.winnerHistory||winnerHistoryFor(prior||{});
     if(prior&&shares<+prior.shares){const sold=Math.max(0,Math.floor(+prior.shares-shares));winnerHistory=recordWinnerTrim(winnerHistory,{shares:sold,at:now,remainingShares:shares,originalShares:Math.max(+winnerHistory.originalShares||0,+prior.shares+(+winnerHistory.trimmedShares||0))});}
     const p={symbol,shares,avgCost,role:nr,winnerHistory,openedAt:openedAtInput||prior?.openedAt||now,lastTradeAt:changed?now:(prior?.lastTradeAt||prior?.openedAt||now)};
-    if(accountView&&prior&&!changed&&nr===prior.role&&openedAtInput&&openedAtInput.slice(0,10)!==String(prior.openedAt||'').slice(0,10)){
+    if(accountView&&prior&&!changed&&nr==="Swing"&&nr===prior.role&&openedAtInput&&openedAtInput.slice(0,10)!==accountView.decision.positions.find(row=>row.symbol===symbol)?.openedAt){
       setAccountBusy(true);setAccountError('');
       try{const corrected=await refreshC1Account({operation:'correct-opening-date',symbol,openedAt:openedAtInput.slice(0,10),expectedRevision:accountView.decision.revision});if(!corrected)throw new Error('Date correction was superseded; refresh the account before retrying');}
       catch(e){setAccountError(e.message);return;}finally{setAccountBusy(false);}
@@ -431,7 +440,8 @@ export default function Home(){
     {!accountView&&["opportunities","portfolio"].includes(tab)&&<C1ModelStatus decision={marketScope?.productionPolicy?.decisionSnapshot}/>}
     {accountView&&["opportunities","portfolio"].includes(tab)&&<section className="card" aria-label="C1 account status"><h2>C1 account status</h2><p><b>Manual C1 recommendations enabled.</b> Review account-specific holdings and trade candidates below. Orders remain manual and require the account and opening-price checks.</p><p>Account session: {accountView.decision.sourceSessionDate}. Historical sector provenance and strategy-selection uncertainty remain unresolved; alpha is not certified.</p></section>}
     {marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
-    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} manualRecommendations={accountView.manualRecommendations} openingPlan={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null} openingError={accountView.openingError} decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,opportunities:[],explanation:"Entered holdings differ from the recorded C1 account. Record actual activity before using these candidates."}}/>}
+    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountDifferences decision={accountView.decision} portfolio={portfolio} onCorrectDate={correctEnteredC1Date} busy={accountBusy}/>}
+    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} manualRecommendations={accountView.manualRecommendations} openingPlan={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null} openingError={accountView.openingError} decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the account differences shown above to restore candidates and checked quantities."}}/>}
     {tab==="portfolio"&&accountView?.pendingSession&&<C1AccountActivity key={accountView.pendingSession.date} pending={accountView.pendingSession} onSave={saveC1Activity} busy={accountBusy}/>}
     {tab==="portfolio"&&!accountView&&<button disabled={accountBusy||loading||!portfolio.length} onClick={startC1Account}>{accountBusy?"Starting C1…":"Start C1 with current portfolio"}</button>}
     {tab==="opportunities"&&!accountView&&<>

@@ -21,3 +21,13 @@ assert.equal(ordersForView({...viewArgs,view:'opportunities'}).length,3);
 for(const patch of [{openingPlan:null},{decision:{...decision,current:false}},{review:{...mixed,status:'waiting'}},{now:new Date('2026-09-14T14:02:00Z')},{review:{...mixed,orders:[sell,conditionalBuy]}}])assert.equal(ordersForView({...viewArgs,...patch}).length,0);
 assert(page.includes('<C1AccountOpportunities view={tab}'));
 console.log('PASS: Portfolio excludes candidates, conditional buys, sells, expired and mismatched reviews; Opportunities retains checked orders.');
+
+const {c1AccountDifferences:differences}=createResearchModuleLoader(process.cwd()).load('lib/c1AccountDifferences.js');
+const held=[{symbol:'AAA',role:'Swing',shares:34,avgCost:325.65,openedAt:'2026-09-08T17:00:00Z'},{symbol:'CASH',role:'Swing',shares:14314,avgCost:1}];
+const recorded={positions:[{symbol:'AAA',shares:34,avgCost:325.6470588,openedAt:'2026-09-09'}],actualCash:14314};
+assert.deepEqual(JSON.parse(JSON.stringify(differences(recorded,held))),[{symbol:'AAA',field:'First purchase date',entered:'2026-09-08',recorded:'2026-09-09',dateOnly:true}]);
+assert.equal(differences({...recorded,positions:[{...recorded.positions[0],openedAt:'2026-09-08'}]},held).length,0);
+assert.equal(differences(recorded,[{...held[0],shares:35},held[1]]).every(r=>r.dateOnly),false);
+assert.equal(differences({...recorded,actualCash:14315},held).some(r=>r.field==='Cash balance'),true);
+assert.equal(differences(recorded,[held[1]]).some(r=>r.field==='Holding rows'),true);
+console.log('PASS: Exact account differences distinguish date-only corrections from ownership/cash changes.');

@@ -24,9 +24,9 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
     <p>{o.condition?'Stop price':'Estimated opening price'}: ${o.estimatedPrice.toFixed(2)}</p>
     <p>{o.condition?'Only if the stop is triggered.':'Confirm the current execution price before placing your order.'}</p>
    </article>)}</div>:<p>No opening trades are recommended for this account.</p>}
-  </div>:<p>{manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices before reviewing quantities.':manualRecommendations?.reason||'Refresh for the current manual account review.'}</p>}
+  </div>:<p>{decision.accountMismatch?'Account details must match before quantities are available.':manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices before reviewing quantities.':manualRecommendations?.reason||'Refresh for the current manual account review.'}</p>}
   {openingError&&<p>Opening plan unavailable: {openingError}</p>}
-  {!portfolioOnly&&(!decision.current?<p>Record outstanding session activity and refresh to update C1.</p>:decision.opportunities.length?
+  {!portfolioOnly&&(!decision.current?<p>{decision.accountMismatch?'Review the differences above; a date correction does not require a trade record.':'Record outstanding session activity and refresh to update C1.'}</p>:decision.opportunities.length?
    <div className="c1Tiles">{decision.opportunities.map(row=><article className="c1Tile" key={row.symbol}>
     <div className="c1TileHead"><h3>{row.symbol}</h3><span className="c1Label">Entry candidate</span></div>
     <p>Selected in {row.sleeves.length} C1 {row.sleeves.length===1?'sleeve':'sleeves'}.</p>
