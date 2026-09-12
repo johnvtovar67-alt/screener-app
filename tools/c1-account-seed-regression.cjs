@@ -188,7 +188,7 @@ const barNormalizer=fmpSource.slice(fmpSource.indexOf('export function normalize
 const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
 const holdingBox={...loader.load('lib/marketSession.js'),Date,URLSearchParams,AbortSignal,process:{env:{}}};
 vm.createContext(holdingBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
-const context={...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+const context={...loader.load('lib/c1HeldRankReview.js'),collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -256,6 +256,71 @@ vm.createContext(context);vm.runInContext(route,context);
  const inheritedBook=c1AccountBook(baselineBook,covered);
  assert.equal(inheritedBook.model.sessions[0].universeSymbols.includes('OUT'),false);
  assert.equal(inheritedBook.model.sessions[0].signals.some(s=>s.symbol==='OUT'),false);
+ // The held-stock review is account-only, and drives the actual rank exit
+ // after the existing minimum hold. It cannot enter the index buy queue.
+ const {compileC1HeldRankReview,c1AccountReviewBook}=loader.load('lib/c1HeldRankReview.js');
+ const rankBaseline=JSON.parse(JSON.stringify(inheritedBook.model.sessions[0]));
+ rankBaseline.signals=rankBaseline.signals.map((p,i)=>({...p,researchFactors:{...p.researchFactors,return120Ex20:40-i,return60Ex5:25-i}}));
+ const rankBook={...inheritedBook,model:{sessions:[rankBaseline]}};
+ const history=[];
+ for(let t=Date.parse(baseline.date+'T12:00:00Z');history.length<253;t-=86400000){const date=new Date(t).toISOString().slice(0,10);if(isUsMarketSessionDay(date))history.unshift({date,open:100,high:102,low:99,close:101,volume:10000000,adjusted:true});}
+ history[history.length-1]={...rankBaseline.prices.find(p=>p.symbol==='OUT')};
+ history[history.length-1].date=baseline.date;
+ const sourceHash=rankBook.captures[0].hash;
+ const heldReview=compileC1HeldRankReview({baseline:rankBaseline,sourceHash,symbol:'OUT',history,observedAt:baseline.date+'T21:00:00Z'});
+ assert.ok(heldReview.ranks.base.rank>6);
+ const receipt={sourceSessionDate:baseline.date,sourceHash,rows:[heldReview]};
+ const rankedInput=c1AccountReviewBook(rankBook,[receipt]);
+ assert.equal(JSON.stringify(rankedInput.model.sessions[0].signals),JSON.stringify(rankBaseline.signals));
+ assert.equal(rankedInput.model.sessions[0].universeSymbols.includes('OUT'),false);
+ assert.throws(()=>c1AccountReviewBook(rankBook,[{...receipt,sourceHash:'changed'}]),/input changed/);
+ assert.throws(()=>compileC1HeldRankReview({baseline:rankBaseline,sourceHash,symbol:'OUT',history:history.slice(1),observedAt:baseline.date+'T21:00:00Z'}),/Complete adjusted/);
+ assert.throws(()=>compileC1HeldRankReview({baseline:rankBaseline,sourceHash,symbol:'OUT',history:history.map((b,i)=>i===252?{...b,close:100}:b),observedAt:baseline.date+'T21:00:00Z'}),/differs/);
+ for(const [id,seed] of Object.entries(inherited.adoption.seeds)){
+  const run=account({sessions:rankedInput.model.sessions},{...options[id],startDate:baseline.date,endDate:baseline.date,liquidateAtEnd:false},seed);
+  assert.ok(run.pendingDecisions.some(o=>o.symbol==='OUT'&&o.reason==='rank-deterioration'),'Verified supplemental rank must actually participate in holding exits');
+  assert.ok(!run.pendingDecisions.some(o=>o.symbol==='OUT'&&o.side==='buy'));
+  const young=account({sessions:rankedInput.model.sessions},{...options[id],startDate:baseline.date,endDate:baseline.date,liquidateAtEnd:false},{...seed,positions:seed.positions.map(p=>({...p,openedAt:baseline.date}))});
+  assert.ok(!young.pendingDecisions.some(o=>o.symbol==='OUT'&&o.reason==='rank-deterioration'),'Existing minimum hold still applies');
+ }
+ const {recordC1PositionContext}=loader.load('lib/c1PositionContext.js');
+ const purchaseContext={contract:'c1-position-context-v1',positions:[{symbol:'OUT',stage:'full',purchases:[{date:sessions[0].date,shares:5,cost:505},{date:sessions[1].date,shares:3,cost:303}]}]};
+ const withContext=recordC1PositionContext({account:inherited,context:purchaseContext,expectedRevision:0});
+ assert.equal(JSON.stringify(withContext.adoption),JSON.stringify(inherited.adoption));assert.equal(JSON.stringify(withContext.records),JSON.stringify(inherited.records));
+ assert.equal(recordC1PositionContext({account:withContext,context:purchaseContext,expectedRevision:1}),withContext,'Repeated import is idempotent');
+ assert.throws(()=>recordC1PositionContext({account:inherited,context:{...purchaseContext,positions:[{...purchaseContext.positions[0],purchases:[{date:sessions[0].date,shares:9,cost:909}]}]},expectedRevision:0}),/does not match/);
+ const contextView=evaluateService({account:withContext,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')});
+ assert.ok(contextView.positions[0].reason.includes('Full position: 2 recorded purchases'));
+ const half=recordC1PositionContext({account:inherited,context:{...purchaseContext,positions:[{symbol:'OUT',stage:'half',purchases:[{date:sessions[0].date,shares:8,cost:808}]}]},expectedRevision:0});
+ assert.ok(evaluateService({account:half,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')}).positions[0].reason.includes('Half position: 1 recorded purchase'));
+ // Refresh persists verified observations once; GET and subsequent refresh
+ // reuse them. A forged client rank is not an accepted operation.
+ const apiRankBook={...baselineBook,model:{sessions:[{...baseline,signals:rankBaseline.signals}]}};
+ let rankSaved={record:inherited,etag:'original'},rankWrites=0,rankCalls=0;
+ const rankHandler=context.factory({clock:()=>new Date(baseline.date+'T21:00:00Z'),readBook:async()=>({record:apiRankBook}),collectRanks:async()=>{rankCalls++;return {...receipt,unavailable:[]};},store:{read:async()=>rankSaved,write:async(path,record,etag)=>{assert.equal(etag,rankSaved.etag);rankSaved={record,etag:String(++rankWrites)};}}});
+ async function rankRequest(method,body){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await rankHandler({method,body,headers:{authorization:'Bearer '+'fixture'.repeat(6)}},res);return res;}
+ const reviewed=await rankRequest('POST',{operation:'refresh-analysis'});
+ assert.equal(reviewed.code,200,JSON.stringify(reviewed.body));assert.equal(rankCalls,1);assert.equal(rankWrites,1);
+ assert.ok(reviewed.body.decision.positions[0].holdingRank);assert.equal(reviewed.body.decision.positions[0].action,'Exit candidate');
+ assert.equal(JSON.stringify(rankSaved.record.adoption),JSON.stringify(inherited.adoption));
+ assert.equal((await rankRequest('GET')).body.decision.decisionId,reviewed.body.decision.decisionId);
+ assert.equal((await rankRequest('POST',{operation:'refresh-analysis'})).code,200);assert.equal(rankCalls,1);assert.equal(rankWrites,1);
+ assert.equal((await rankRequest('POST',{operation:'record-rank',rank:1})).code,400);
+ const imported=await rankRequest('POST',{operation:'record-position-context',context:purchaseContext,expectedRevision:1});
+ assert.equal(imported.code,200,JSON.stringify(imported.body));assert.ok(imported.body.decision.positions[0].reason.includes('2 recorded purchases'));
+ const importedRevision=rankSaved.record.revision;
+ assert.equal((await rankRequest('POST',{operation:'record-position-context',context:purchaseContext,expectedRevision:importedRevision})).code,200);
+ assert.equal(rankSaved.record.revision,importedRevision);assert.equal(rankWrites,2);
+ assert.equal((await rankRequest('POST',{operation:'record-position-context',context:purchaseContext,expectedRevision:0})).code,409);
+ const providerSource=fs.readFileSync('lib/c1HeldRankProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export async function /g,'async function ');
+ const providerBox={...holdingBox,createHash:require('node:crypto').createHash,compileC1HeldRankReview,Date,URLSearchParams,AbortSignal,process:{env:{}}};
+ vm.createContext(providerBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+providerSource+'\nthis.collect=collectC1HeldRankReviews;',providerBox);
+ let providerCalls=0;
+ const collected=await providerBox.collect({baseline:rankBaseline,sourceHash,symbols:['OUT'],now:new Date(baseline.date+'T21:00:00Z'),apiKey:'synthetic-secret',fetcher:async(url)=>{providerCalls++;assert.ok(url.includes('historical-price-eod/dividend-adjusted'));return {ok:true,json:async()=>history.map(b=>({...b,symbol:'OUT',adjOpen:b.open,adjHigh:b.high,adjLow:b.low,adjClose:b.close}))};}});
+ assert.equal(collected.rows.length,1,JSON.stringify(collected));assert.equal(providerCalls,1);assert.equal(collected.rows[0].historyHash.length,64);assert.ok(!JSON.stringify(collected).includes('synthetic-secret'));
+ const unavailable=await providerBox.collect({baseline:rankBaseline,sourceHash,symbols:['OUT'],now:new Date(baseline.date+'T21:00:00Z'),apiKey:'synthetic-secret',fetcher:async()=>({ok:false,status:403})});
+ assert.equal(unavailable.rows.length,0);assert.equal(unavailable.unavailable.length,1);
+ console.log('PASS: verified outside-holding rank drives age-gated exits without new entries or index changes; full/half purchase history preserves ownership and records.');
  const futureCoverage={...covered,sourceSessionDate:opening.date,rows:covered.rows.map(r=>({...r,date:opening.date,price:{...r.price,date:opening.date,open:101,high:102,low:99,close:101}}))};
  const inheritedFuture={...inherited,holdingCoverages:[covered,futureCoverage]};
  const inheritedPending=pendingService({account:inheritedFuture,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
@@ -302,7 +367,7 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.equal((await inheritedRequest(inheritedHandler,'POST',{operation:'correct-opening-date',symbol:'OUT',openedAt:baseline.date,expectedRevision:1})).code,409,'Concurrent stale date updates cannot overwrite the correction');
  assert.throws(()=>correctC1AccountOpenedAt({account:corrected,symbol:'OUT',openedAt:'2026-02-31',expectedRevision:2,book:updatedBook}),/valid first-purchase/);
  console.log('PASS: audited opening-date correction preserves holdings, cash, fills, capital peaks and sleeve units; stale revisions and invalid dates reject.');
- console.log('PASS: inherited nonmember retains real equity and shares across sessions, never enters C1 rankings, avoids false rank exits and retains stop protection.');
+ console.log('PASS: inherited nonmember retains real equity and shares across sessions, never enters fresh-entry rankings, avoids unsupported rank exits and retains stop protection.');
  console.log('PASS: verified missing constituent price activates, persists, reloads and continues actual fills without changing the accepted index or admitting outside holdings to entry rankings.');
  console.log('PASS: actual account API rejects unauthenticated access, preserves failed writes and existing accounts, and performs no provider initialization.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
