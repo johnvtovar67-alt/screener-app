@@ -11,3 +11,13 @@ assert.equal(current(review,{...decision,revision:8},now),false);assert.equal(cu
 const fs=require('node:fs');const page=fs.readFileSync('pages/index.js','utf8');assert(page.includes('["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities'));assert(page.includes('c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null'));assert(page.includes('alpha is not certified.'));
 const api=fs.readFileSync('pages/api/c1-account.js','utf8');assert(api.includes('buildC1ManualRecommendations({decision,pendingSession,openingPlan,openingError,now:clock()})'));
 console.log('PASS: manual authorization retains source/revision, market hours, freshness, provider verification, restricted purchases, and both-page account matching; no automatic brokerage authority or alpha certification.');
+
+const {c1ManualOrdersForView:ordersForView}=createResearchModuleLoader(process.cwd()).load('lib/c1ManualRecommendations.js');
+const sell={...review.orders[0],id:'sell',side:'sell'},conditionalBuy={...review.orders[0],id:'conditional',condition:'trigger'};
+const mixed={...review,orders:[...review.orders,sell,conditionalBuy]};
+const viewArgs={review:mixed,decision,openingPlan,now,view:'portfolio'};
+assert.deepEqual(ordersForView(viewArgs).map(o=>o.id),review.orders.map(o=>o.id));
+assert.equal(ordersForView({...viewArgs,view:'opportunities'}).length,3);
+for(const patch of [{openingPlan:null},{decision:{...decision,current:false}},{review:{...mixed,status:'waiting'}},{now:new Date('2026-09-14T14:02:00Z')},{review:{...mixed,orders:[sell,conditionalBuy]}}])assert.equal(ordersForView({...viewArgs,...patch}).length,0);
+assert(page.includes('<C1AccountOpportunities view={tab}'));
+console.log('PASS: Portfolio excludes candidates, conditional buys, sells, expired and mismatched reviews; Opportunities retains checked orders.');
