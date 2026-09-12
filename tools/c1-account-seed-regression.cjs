@@ -269,6 +269,21 @@ vm.createContext(context);vm.runInContext(route,context);
  const sourceHash=rankBook.captures[0].hash;
  const heldReview=compileC1HeldRankReview({baseline:rankBaseline,sourceHash,symbol:'OUT',history,observedAt:baseline.date+'T21:00:00Z'});
  assert.ok(heldReview.ranks.base.rank>6);
+ const revisedVolumeHistory=history.map((b,i)=>i===252?{...b,volume:b.volume+123}:b);
+ const originals=JSON.stringify({rankBaseline,revisedVolumeHistory});
+ const volumeReview=compileC1HeldRankReview({baseline:rankBaseline,sourceHash,symbol:'OUT',history:revisedVolumeHistory,observedAt:baseline.date+'T21:00:00Z'});
+ assert.equal(JSON.stringify(volumeReview.ranks),JSON.stringify(heldReview.ranks));
+ assert.equal(JSON.stringify(volumeReview.signal),JSON.stringify(heldReview.signal));
+ assert.equal(volumeReview.volumeReconciliation.acceptedVolume,history.at(-1).volume);
+ assert.equal(volumeReview.volumeReconciliation.observedVolume,revisedVolumeHistory.at(-1).volume);
+ assert.equal(JSON.stringify({rankBaseline,revisedVolumeHistory}),originals,'Both original inputs remain unchanged');
+ for(const field of ['open','high','low','close']){
+  const changed=history.map((b,i)=>i===252?{...b,[field]:b[field]+(field==='low'?-0.001:0.001)}:b);
+  assert.throws(()=>compileC1HeldRankReview({baseline:rankBaseline,sourceHash,symbol:'OUT',history:changed,observedAt:baseline.date+'T21:00:00Z'}),error=>error.message.includes('differs')&&error.mismatchFields.includes(field));
+ }
+ const missingVolume={...rankBaseline,prices:rankBaseline.prices.map(p=>p.symbol==='OUT'?{...p,volume:undefined}:p)};
+ assert.throws(()=>compileC1HeldRankReview({baseline:missingVolume,sourceHash,symbol:'OUT',history,observedAt:baseline.date+'T21:00:00Z'}),/Accepted holding volume unavailable/);
+
  const receipt={sourceSessionDate:baseline.date,sourceHash,rows:[heldReview]};
  const rankedInput=c1AccountReviewBook(rankBook,[receipt]);
  assert.equal(JSON.stringify(rankedInput.model.sessions[0].signals),JSON.stringify(rankBaseline.signals));
@@ -371,8 +386,15 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.equal(diagnostics.at(-1).code,'PROVIDER_NETWORK');
  await inspectFailure(async()=>({ok:true,status:200,json:async()=>history.slice(1)}));
  assert.equal(diagnostics.at(-1).code,'HISTORY_ROW_COUNT');assert.equal(diagnostics.at(-1).normalizedRows,252);
- await inspectFailure(async()=>({ok:true,status:200,json:async()=>history.map((b,i)=>i===252?{...b,volume:b.volume+1}:b)}));
+ await inspectFailure(async()=>({ok:true,status:200,json:async()=>history.map((b,i)=>i===252?{...b,high:b.high+1}:b)}));
  assert.equal(diagnostics.at(-1).code,'ACCEPTED_PRICE_MISMATCH');
+ assert.equal(JSON.stringify(diagnostics.at(-1).mismatchFields),JSON.stringify(['high']));
+ const revisedResult=await inspectFailure(async()=>({ok:true,status:200,json:async()=>revisedVolumeHistory}));
+ assert.equal(revisedResult.rows.length,1);assert.equal(revisedResult.unavailable.length,0);
+ assert.equal(diagnostics.at(-1).code,'VERIFIED_ACCEPTED_VOLUME');
+ assert.equal(revisedResult.rows[0].historyHash,require('node:crypto').createHash('sha256').update(JSON.stringify(providerBox.normalizeHistoricalBars(revisedVolumeHistory,{sourceAdjusted:true}))).digest('hex'));
+ assert.ok(revisedResult.rows[0].volumeReconciliation);
+
  assert.ok(!JSON.stringify(diagnostics).includes('synthetic-secret'));assert.ok(!JSON.stringify(diagnostics).includes('provider.invalid'));assert.ok(!JSON.stringify(diagnostics).includes('OUT'));
  console.log('PASS: held-rank diagnostics distinguish HTTP, network, incomplete history and accepted-price mismatch without logging credentials or holdings.');
 
