@@ -64,7 +64,7 @@ function dataQualityBlocked(s){const e=rec(s)?.expertDecision||s?.expertDecision
 function priorActionableSignal(s){return ["Strong Buy","Buy"].includes(s.signalChange?.from);}
 function onDeckReason(s,systemBlocked=false){const reason=s?.clientSnapshotFallback?"Live refresh failed. This prior device snapshot is visible only for continuity and cannot authorize fresh capital.":s?.dataFeedSnapshotStale?"The server snapshot is paused because broad market-data verification is stale or incomplete. It cannot authorize fresh capital.":dataQualityBlocked(s)?(systemBlocked?"Awaiting data-feed recovery; current technical/market evidence is retained, but this is not a fresh Buy qualification.":`Required data are being verified automatically; no repeated manual refresh is needed. ${fd(s).reason}`):fd(s).reason;return priorActionableSignal(s)?`Recent ${s.signalChange.from} downgraded on the latest refresh. ${reason}`:reason;}
 function deckRank(a,b){const recent=Number(priorActionableSignal(b))-Number(priorActionableSignal(a));return recent||rank(a,b);}
-const cls=a=>["Strong Buy","Buy","Add"].includes(a)?"green":["Trim","Rotate","Reduce"].includes(a)?"orange":["Watch","Hold","Review"].includes(a)?"yellow":["Cash","Ranking unavailable"].includes(a)?"gray":"red";
+const cls=a=>["Strong Buy","Buy","Add"].includes(a)?"green":["Trim","Rotate","Reduce"].includes(a)?"orange":["Watch","Hold","Review"].includes(a)?"yellow":["Cash","Price/stop review"].includes(a)?"gray":"red";
 function stageTone(stage){return({"Setup":"setup","Proof":"proof","Re-underwrite":"reunderwrite","Opportunity Cost":"opportunity","Long Swing Review":"long"})[stage]||"unknown";}
 
 function riskText(s){
