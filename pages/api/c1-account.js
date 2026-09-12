@@ -12,8 +12,11 @@ import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
 import {importC1PositionContext,correctC1AccountOpenedAt,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession} from '../../lib/c1AccountService';
 export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
+// Read the uncompressed representation: compressed responses can carry weak
+// ETags, which cannot satisfy the strong comparison required by ifMatch.
+// Never strip W/ or replace the read version with a separately fetched tag.
 const storage={
- async read(path){const r=await get(path,{access:'private',useCache:false});if(!r)return null;if(r.statusCode!==200||!r.blob?.etag)throw new Error('Account storage unavailable');return {record:JSON.parse(await new Response(r.stream).text()),etag:r.blob.etag};},
+ async read(path){const r=await get(path,{access:'private',useCache:false,headers:{'accept-encoding':'identity'}});if(!r)return null;if(r.statusCode!==200||!r.blob?.etag)throw new Error('Account storage unavailable');return {record:JSON.parse(await new Response(r.stream).text()),etag:r.blob.etag};},
  async write(path,record,etag){return put(path,JSON.stringify(record),{access:'private',addRandomSuffix:false,allowOverwrite:Boolean(etag),...(etag?{ifMatch:etag}:{}),contentType:'application/json',cacheControlMaxAge:0});}
 };
 export function createC1AccountHandler({store=storage,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,collectHoldings=collectC1HoldingCoverage,collectRanks=collectC1HeldRankReviews,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local'}={}){
