@@ -19,7 +19,6 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  return <><section className="card" aria-label="C1 account opportunities">
   <h2>{portfolioOnly?'Buys to review':'Opportunities'}</h2>
   <p className="sub">Session: {decision.sourceSessionDate} · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
-  <p className="sub"><b>Limited pilot:</b> no more than three names, 1% of opening Swing equity per name, after confirmation in two completed market sessions. Existing larger holdings are monitored but cannot receive additional pilot capital.</p>
   {buys.length?<>
    <div className="grid buyGrid">{buys.map(o=><article className="idea green" key={o.id}>
     <div className="top"><h3>{o.symbol}</h3><b className="pill green">Buy</b></div>
