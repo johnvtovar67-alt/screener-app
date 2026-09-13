@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Check approved C1 release freeze
+        run: node tools/c1-release-freeze-check.cjs
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Check C1 collection lifecycle and diagnostic privacy
