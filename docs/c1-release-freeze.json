@@ -164,7 +164,6 @@
     "pages/api/top5.js": "9bf1308f5e6ab11a4c1d98889e0ac6ec139cba86",
     "pages/api/version.js": "76d9d808fe0153a18b139acb29545b92ea901734",
     "pages/index.js": "1f5db3b2f645c45455b6525b7619eeab0b0376b2",
-    "styles/card-layout.css": "6e8d38ae8506fc7a3e080de6282bddd60662bfac",
-    "vercel.json": "b04c47aa21e2b9cd2dc24937818197a05d3d22ff"
+    "styles/card-layout.css": "6e8d38ae8506fc7a3e080de6282bddd60662bfac"
   }
 }
