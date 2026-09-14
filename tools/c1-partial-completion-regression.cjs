@@ -108,3 +108,18 @@ assert.throws(()=>parseImport(JSON.stringify({...entryStatus,positions:[{...entr
 parseImport(JSON.stringify({contract:'c1-position-context-v1',positions:[{symbol:'AAA',stage:'half',purchases:[{date:sessions[0].date,shares:15,cost:1500}]}]}),value=>{received=value;},()=>{});
 assert.equal(received.contract,'c1-position-context-v1');
 console.log('PASS: browser restore parser accepts status-only and existing history links and rejects invalid status quantities.');
+const {c1WatchPresentation}=loader.load('lib/c1EntryReview.js');
+const watchData=c1WatchPresentation({rows:[{symbol:'DDD',entryEvidence:{sector:'Energy',momentumScore:98.75,close:123.45}},{symbol:'EEE',entryEvidence:{sector:'Tech',momentumScore:96,close:80}}],plan:p,ready:true});
+assert.match(watchData.shared.why,/three position slots/);
+assert.equal(watchData.rows[0].momentum,'98.8/100');
+assert.equal(watchData.rows[1].priority,2);
+assert.equal(watchData.rows[0].close,'$123.45');
+assert.equal(c1WatchPresentation({rows:[{symbol:'XXX'}],ready:false}).rows[0].momentum,'Unavailable');
+const {portfolioDateDisplay}=loader.load('lib/portfolioDateDisplay.js');
+const oldTZ=process.env.TZ;
+try{for(const zone of ['America/Chicago','America/Los_Angeles','Pacific/Auckland']){process.env.TZ=zone;assert.equal(portfolioDateDisplay('2026-09-09'),'Sep 9, 2026');assert.equal(portfolioDateDisplay('2026-09-08'),'Sep 8, 2026');}}finally{if(oldTZ===undefined)delete process.env.TZ;else process.env.TZ=oldTZ;}
+console.log('PASS: Watch displays sourced momentum/price/sector and one shared blocker; missing evidence stays unavailable. Account calendar dates survive timezone changes.');
+const {buildC1AccountDecision:buildEvidenceDecision}=loader.load('lib/c1AccountDecision.js');
+const evidenceDecision=buildEvidenceDecision({continued:advance({adoption,sessions:[sessions[0]],records:[],observedAt:args.observedAt}),sourceHash:'fixture',revision:0,now:new Date(args.observedAt)});
+assert.equal(evidenceDecision.opportunities.find(o=>o.symbol==='DDD').entryEvidence.momentumScore,97,'Display uses the original 0–100 momentum percentile, not the centered internal ranking value');
+assert.equal(evidenceDecision.opportunities.find(o=>o.symbol==='DDD').entryEvidence.close,100);

@@ -1,16 +1,16 @@
 {
   "baselineCommit": "8007dc84820a9f2cb52266fe616df5406768815f",
-  "authorization": "Owner supplied the missing-status screenshot and previously authorized restoring FCX/STX partial and NTRA full entry status. Status-only restoration matches adopted shares/basis and preserves all transactions and dates. See docs/research/c1-entry-status-restore-20260914.md.",
+  "authorization": "Owner requested meaningful Watch information and accurate Portfolio display on 2026-09-14. Show sourced candidate evidence and one shared blocker; fix date-only timezone display. No strategy/order changes. See docs/research/c1-watch-evidence-20260914.md.",
   "files": {
     "components/C1AccountActivity.js": "60b3267974d04634756bc296510c5ac1cd1986b5",
     "components/C1AccountDifferences.js": "7cb9f6cf5abb429907d507863d9b05497e236f10",
-    "components/C1AccountOpportunities.js": "72743e172d4dfa7672c2d5f379aae0d3244fd778",
+    "components/C1AccountOpportunities.js": "6eb95507bbf2cd4f83b1ee016efc29bc577a3096",
     "components/C1HoldingRisk.js": "c4c81c73e0901bbb90639140201ee312540cd28e",
     "components/C1ModelStatus.js": "a2de5f2d8f63d5c9aa38bd33e9bd450175eda835",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
-    "lib/c1AccountDecision.js": "3729192c56d1befdfff5526ed78716f27925ff1a",
+    "lib/c1AccountDecision.js": "45a30e107dd699f69b7539de0a512c6a2c31548a",
     "lib/c1AccountDifferences.js": "e52d36812c4eba4a5770d5450f1566e21d327b11",
     "lib/c1AccountExecution.js": "28df09d3e248a92a4cc26c04df599908fed568f5",
     "lib/c1AccountInput.js": "42eaa8f183a637a531e3d75b1f4969eeafd9671f",
@@ -163,9 +163,10 @@
     "pages/api/research/v11-stress-test.js": "c6923fcd7d54f9250b498e9273caffe0ca6c2c38",
     "pages/api/top5.js": "9bf1308f5e6ab11a4c1d98889e0ac6ec139cba86",
     "pages/api/version.js": "76d9d808fe0153a18b139acb29545b92ea901734",
-    "pages/index.js": "6fc34fb316dfcb3c405213456db0cc8b201bd324",
+    "pages/index.js": "2ae5d3680e3384f64627eb49a9e221ef62bf5751",
     "styles/card-layout.css": "6e8d38ae8506fc7a3e080de6282bddd60662bfac",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
-    "lib/c1EntryReview.js": "f7896702c136c5f33fda09794960b3602b7f5721"
+    "lib/c1EntryReview.js": "f66b41880420c8b1b17cc005d3f2bb13f750e730",
+    "lib/portfolioDateDisplay.js": "d2709ae4acbcac9cfa74396039848c9e0917c1be"
   }
 }

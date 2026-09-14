@@ -1,4 +1,4 @@
-import {c1EntryReviewText} from '../lib/c1EntryReview';
+import {c1WatchPresentation} from '../lib/c1EntryReview';
 import {useEffect,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
@@ -19,6 +19,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const exits=positionOrders;
  if(portfolioOnly&&!buys.length&&!positionOrders.length)return null;
  const waitingReason=decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
+ const watchView=c1WatchPresentation({rows:watch,plan:openingPlan,ready,waitingReason});
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
   <p className="sub">Model close: {decision.sourceSessionDate} · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
@@ -36,8 +37,10 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  </section>
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">
   <h2>🟡 Watch</h2>
-  <p className="sub">Candidates waiting to qualify for a purchase.</p>
-  {watch.length?<div className="scroll"><table><thead><tr><th>Symbol</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{watch.map(row=>{const review=ready?c1EntryReviewText((openingPlan.entryReviews||[]).filter(r=>r.symbol===row.symbol)): {why:waitingReason,next:'Refresh when the account and opening review are available.'};return <tr key={row.symbol}><td><b>{row.symbol}</b></td><td>{review.why}</td><td>{review.next}</td></tr>;})}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
+  <p className="sub">C1 momentum candidates · {decision.sourceSessionDate}</p>
+  {watchView.shared&&<p className="sub"><b>{watchView.shared.why}</b> {watchView.shared.next}</p>}
+  {watch.length?<div className="scroll"><table><thead><tr><th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Model close</th>{!watchView.shared&&<th>Entry check</th>}</tr></thead><tbody>{watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td><td><b>{row.symbol}</b><div>{row.sector}</div></td><td>{row.momentum}</td><td>{row.close}</td>{!watchView.shared&&<td>{row.review.why} {row.review.next}</td>}</tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
+
  </section>}
  <style jsx>{`.buyGrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.price small{font-size:12px;color:#64748b}`}</style>
  </>;
