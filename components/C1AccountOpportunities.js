@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
 export default function C1AccountOpportunities({decision,openingPlan,openingError,manualRecommendations,view="opportunities"}){
  const [,expire]=useState(0);
@@ -11,14 +12,15 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const ready=Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,decision);
  const portfolioOnly=view==='portfolio';
  const orders=c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view});
- const buys=orders.filter(order=>order.side==='buy'&&!order.condition);
+ const buys=c1OrderDisplayGroups(orders.filter(order=>order.side==='buy'&&!order.condition));
  const watch=decision.current&&!decision.accountMismatch?(decision.opportunities||[]).filter(row=>!buys.some(order=>order.symbol===row.symbol)):[];
- const otherOrders=orders.filter(order=>order.side!=='buy'||order.condition);
- if(portfolioOnly&&!buys.length)return null;
+ const positionOrders=portfolioOnly?c1OrderDisplayGroups(c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view:'opportunities'}).filter(order=>order.side==='sell')):[];
+ const exits=positionOrders.filter(order=>!order.condition),stops=positionOrders.filter(order=>order.condition);
+ if(portfolioOnly&&!buys.length&&!positionOrders.length)return null;
  const waitingReason=decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
  return <><section className="card" aria-label="C1 account opportunities">
-  <h2>{portfolioOnly?'Buys to review':'Opportunities'}</h2>
-  <p className="sub">Session: {decision.sourceSessionDate} · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
+  <h2>{portfolioOnly?'Position actions':'Opportunities'}</h2>
+  <p className="sub">Model close: {decision.sourceSessionDate} · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
   {buys.length?<>
    <div className="grid buyGrid">{buys.map(o=><article className="idea green" key={o.id}>
     <div className="top"><h3>{o.symbol}</h3><b className="pill green">Buy</b></div>
@@ -27,9 +29,10 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
     <div className="decision"><div><small>Timing</small><b>Review now</b></div><div><small>Size</small><b>{o.shares} {o.shares===1?'share':'shares'}</b></div><div><small>Execution</small><b>Manual</b></div></div>
     <div className="plan"><small>Plan</small><b>Confirm the current execution price and available cash before placing your order.</b></div>
    </article>)}</div>
-  </>:<div className="emptyState"><b>No Buy recommendation is ready.</b><span>{ready?'No new purchase passed the account opening checks.':waitingReason}</span></div>}
-  {!portfolioOnly&&otherOrders.length>0&&<div><h3>Existing position actions</h3><ul>{otherOrders.map(o=><li key={o.id}>{o.symbol}: {o.condition?'conditional stop — only if triggered, ':''}{o.side==='sell'?'sell':'buy'} {o.shares} {o.shares===1?'share':'shares'} at {o.condition?'stop':'estimated opening'} price ${o.estimatedPrice.toFixed(2)}.</li>)}</ul></div>}
-  {ready&&orders.length>0&&<p className="sub">Review expires {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'})}. Refresh to recheck. Orders are placed manually.</p>}
+  </>:!portfolioOnly&&<div className="emptyState"><b>No buys right now.</b>{!ready&&<span>{waitingReason}</span>}</div>}
+  {exits.length>0&&<div><h3>Exits to review</h3><ul>{exits.map(o=><li key={o.id}><b>{o.symbol}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; estimated opening price ${o.estimatedPrice.toFixed(2)}. Check the current broker price.</li>)}</ul></div>}
+  {stops.length>0&&<details><summary>Recorded stops ({stops.length})</summary><p className="sub">These are conditional levels, not immediate sell instructions or confirmation that a broker order exists. Execution price can differ from the stop level.</p><table><thead><tr><th>Stock</th><th>Shares</th><th>Stop</th></tr></thead><tbody>{stops.map(o=><tr key={o.id}><td><b>{o.symbol}</b></td><td>{o.shares}</td><td>${o.estimatedPrice.toFixed(2)}</td></tr>)}</tbody></table></details>}
+  {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Checked quantities expire {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}. Refresh to recheck.</p>}
  </section>
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">
   <h2>🟡 Watch</h2>
