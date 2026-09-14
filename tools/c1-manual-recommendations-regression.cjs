@@ -31,3 +31,5 @@ assert.equal(differences(recorded,[{...held[0],shares:35},held[1]]).every(r=>r.d
 assert.equal(differences({...recorded,actualCash:14315},held).some(r=>r.field==='Cash balance'),true);
 assert.equal(differences(recorded,[held[1]]).some(r=>r.field==='Holding rows'),true);
 console.log('PASS: Exact account differences distinguish date-only corrections from ownership/cash changes.');
+
+require('./c1-live-display-regression.cjs');
