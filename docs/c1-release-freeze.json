@@ -1,8 +1,8 @@
 {
   "baselineCommit": "8007dc84820a9f2cb52266fe616df5406768815f",
-  "authorization": "Owner requested cash display cleanup on September 14. See docs/research/c1-cash-chip-format-20260914.md. All prior approved repairs retained.",
+  "authorization": "Owner explicitly requested removal of daily no-trade confirmation on September 14, plus purchase-date and stop-explanation repairs. See docs/research/c1-recorded-holdings-refresh-20260914.md. All prior approved repairs retained.",
   "files": {
-    "components/C1AccountActivity.js": "60b3267974d04634756bc296510c5ac1cd1986b5",
+    "components/C1AccountActivity.js": "e931a7eb6ed1ad1f5f4f14e3f3e5d9c11abc3ce4",
     "components/C1AccountDifferences.js": "7cb9f6cf5abb429907d507863d9b05497e236f10",
     "components/C1AccountOpportunities.js": "94419c293a9a515850a793c7bc687a2ba16cb804",
     "components/C1HoldingRisk.js": "c4c81c73e0901bbb90639140201ee312540cd28e",
@@ -10,7 +10,7 @@
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
-    "lib/c1AccountDecision.js": "45a30e107dd699f69b7539de0a512c6a2c31548a",
+    "lib/c1AccountDecision.js": "4aa7ba06c51c087389535ab6a0eeba7efd6357df",
     "lib/c1AccountDifferences.js": "e52d36812c4eba4a5770d5450f1566e21d327b11",
     "lib/c1AccountExecution.js": "28df09d3e248a92a4cc26c04df599908fed568f5",
     "lib/c1AccountInput.js": "7719ac3b745067b2b42434999b7bc06fa510b8b8",
@@ -19,7 +19,7 @@
     "lib/c1AccountReconciliation.js": "fc05613dbe81f860396a35672aa92b47d1d46b84",
     "lib/c1AccountSave.js": "237ddd0b26977a00c6b157a914eab0afdc16007b",
     "lib/c1AccountSeed.js": "45b327714e4b5b2a0eef85429aee1c8b535a6b43",
-    "lib/c1AccountService.js": "4a0d7597f8cf0ca9135bd5557e0b21593d7ab66e",
+    "lib/c1AccountService.js": "4279488bd9b01bb9e18e7c9beb48fb3b4d4cdf40",
     "lib/c1AccountSimulator.js": "09a72cfd08ed77981a243b312ee41407e5a265eb",
     "lib/c1ActualFillReplay.js": "04ed0d7a3cbc39c10d4aac0fcf432a486bd5b2cd",
     "lib/c1BaselineReconciliation.js": "59cb615b6cfff87e3b4ea7b3e9fe1881d4ea2af5",
@@ -96,7 +96,7 @@
     "lib/walkForwardBacktest.js": "9e294411566722e93632d88c9b5a127d29df1535",
     "lib/winnerLifecycle.js": "b588870fec4cd4ef60f4fbab626db3ccace96df2",
     "pages/_app.js": "4260ebaf86e75b7e4f7cb115a17944a7dafe74cd",
-    "pages/api/c1-account.js": "9835a478cf3d037bed8eae4342370a7fbbd2e4b9",
+    "pages/api/c1-account.js": "8a4dfaf8b10406555e8a8ae8c181d7afd278d6da",
     "pages/api/catalysts.js": "b570d0f77ccd14505fe840f2d6a4c63968e7e086",
     "pages/api/cron/c1-index.js": "a58798611188ce87a6796fca25a315261f1533e6",
     "pages/api/cron/fmp-research-backtest.js": "4ce2d0302bd451103c86f0412ee197ffb4d50f72",
@@ -163,11 +163,11 @@
     "pages/api/research/v11-stress-test.js": "c6923fcd7d54f9250b498e9273caffe0ca6c2c38",
     "pages/api/top5.js": "468c42d40f544b86da386e92fc4313195f5208d6",
     "pages/api/version.js": "76d9d808fe0153a18b139acb29545b92ea901734",
-    "pages/index.js": "ad4d8250c2f71015b0595f5e81391720512da8af",
+    "pages/index.js": "db358d046bc51d06b1da33de9d29991760da9977",
     "styles/card-layout.css": "6e8d38ae8506fc7a3e080de6282bddd60662bfac",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
     "lib/c1EntryReview.js": "96bef8b3e99c301c64b618854d36dbabbd602ea3",
-    "lib/portfolioDateDisplay.js": "d2709ae4acbcac9cfa74396039848c9e0917c1be",
+    "lib/portfolioDateDisplay.js": "50382f05065b9263e14e7c112ac1ffc037860ac9",
     "lib/c1StockClassification.js": "1ccd215b931efbc60b2cc7534d8c2a4300b5d5e6"
   }
 }
