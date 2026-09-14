@@ -14,12 +14,12 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const orders=c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view});
  const buys=c1OrderDisplayGroups(orders.filter(order=>order.side==='buy'&&!order.condition));
  const watch=decision.current&&!decision.accountMismatch?(decision.opportunities||[]).filter(row=>!buys.some(order=>order.symbol===row.symbol)):[];
- const positionOrders=portfolioOnly?c1OrderDisplayGroups(c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view:'opportunities'}).filter(order=>order.side==='sell')):[];
- const exits=positionOrders.filter(order=>!order.condition),stops=positionOrders.filter(order=>order.condition);
+ const positionOrders=portfolioOnly?c1OrderDisplayGroups(c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view:'opportunities'}).filter(order=>order.side==='sell'&&!order.condition)):[];
+ const exits=positionOrders;
  if(portfolioOnly&&!buys.length&&!positionOrders.length)return null;
  const waitingReason=decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
- return <><section className="card" aria-label="C1 account opportunities">
-  <h2>{portfolioOnly?'Position actions':'Opportunities'}</h2>
+ return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
+  <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
   <p className="sub">Model close: {decision.sourceSessionDate} · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
   {buys.length?<>
    <div className="grid buyGrid">{buys.map(o=><article className="idea green" key={o.id}>
@@ -31,7 +31,6 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
    </article>)}</div>
   </>:!portfolioOnly&&<div className="emptyState"><b>No buys right now.</b>{!ready&&<span>{waitingReason}</span>}</div>}
   {exits.length>0&&<div><h3>Exits to review</h3><ul>{exits.map(o=><li key={o.id}><b>{o.symbol}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; estimated opening price ${o.estimatedPrice.toFixed(2)}. Check the current broker price.</li>)}</ul></div>}
-  {stops.length>0&&<details><summary>Recorded stops ({stops.length})</summary><p className="sub">These are conditional levels, not immediate sell instructions or confirmation that a broker order exists. Execution price can differ from the stop level.</p><table><thead><tr><th>Stock</th><th>Shares</th><th>Stop</th></tr></thead><tbody>{stops.map(o=><tr key={o.id}><td><b>{o.symbol}</b></td><td>{o.shares}</td><td>${o.estimatedPrice.toFixed(2)}</td></tr>)}</tbody></table></details>}
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Checked quantities expire {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}. Refresh to recheck.</p>}
  </section>
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">

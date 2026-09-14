@@ -1,10 +1,10 @@
 {
   "baselineCommit": "8007dc84820a9f2cb52266fe616df5406768815f",
-  "authorization": "Owner reported stale intraday explanations and duplicated Opportunities stop instructions on 2026-09-14. Presentation repair only; frozen trading rules preserved.",
+  "authorization": "Owner requested restoring the orange Portfolio action box only for actual checked actions on 2026-09-14. Standing stops remain in holding explanations; no trading rule change.",
   "files": {
     "components/C1AccountActivity.js": "1ed175cb5e77e29c7f492ba063d00af0f11b4ccd",
     "components/C1AccountDifferences.js": "7cb9f6cf5abb429907d507863d9b05497e236f10",
-    "components/C1AccountOpportunities.js": "4e2fe4512f823469755f694f8a135a6277b5eb46",
+    "components/C1AccountOpportunities.js": "4f5978117b609a26786be46f831e4e5f56731cf9",
     "components/C1HoldingRisk.js": "c4c81c73e0901bbb90639140201ee312540cd28e",
     "components/C1ModelStatus.js": "a2de5f2d8f63d5c9aa38bd33e9bd450175eda835",
     "components/C1PositionContextImport.js": "07e4f54a1ea2f19be445bec323a9f8af977540d4",
