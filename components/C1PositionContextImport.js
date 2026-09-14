@@ -18,7 +18,7 @@ export default function C1PositionContextImport({decision,portfolio,onImport,onR
     raw=atob(encoded.replace(/-/g,'+').replace(/_/g,'/'));
     sessionStorage.setItem(PENDING,raw);
    }
-   if(raw){const value=JSON.parse(raw);if(value?.contract!=='c1-position-context-v1'||!Array.isArray(value.positions)||!value.positions.length||value.positions.length>20||value.positions.some(p=>!p||typeof p.symbol!=='string'||!/^[A-Z][A-Z0-9.-]{0,14}$/.test(p.symbol)||!['half','full'].includes(p.stage)||!Array.isArray(p.purchases)||!p.purchases.length||p.purchases.length>30||p.purchases.some(t=>!t||typeof t.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(t.date)||!Number.isSafeInteger(t.shares)||t.shares<=0||!Number.isFinite(t.cost)||t.cost<=0)))throw new Error('Invalid purchase history link.');setContext(value);setStatus('Waiting for your saved portfolio to apply purchase history.');}
+   if(raw){const value=JSON.parse(raw);if(!['c1-position-context-v1','c1-position-stage-v1'].includes(value?.contract)||!Array.isArray(value.positions)||!value.positions.length||value.positions.length>20||value.positions.some(p=>!p||typeof p.symbol!=='string'||!/^[A-Z][A-Z0-9.-]{0,14}$/.test(p.symbol)||!['half','full'].includes(p.stage)||(value.contract==='c1-position-stage-v1'?(!Number.isSafeInteger(p.shares)||p.shares<=0||!Number.isFinite(p.avgCost)||p.avgCost<=0):(!Array.isArray(p.purchases)||!p.purchases.length||p.purchases.length>30||p.purchases.some(t=>!t||typeof t.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(t.date)||!Number.isSafeInteger(t.shares)||t.shares<=0||!Number.isFinite(t.cost)||t.cost<=0)))))throw new Error('Invalid purchase history link.');setContext(value);setStatus('Waiting for your saved portfolio to apply purchase history.');}
   }catch{sessionStorage.removeItem(PENDING);setError('The purchase history link could not be read.');}
  },[]);
  async function apply(){
@@ -34,7 +34,7 @@ export default function C1PositionContextImport({decision,portfolio,onImport,onR
  if(!status&&!error)return null;
  return <section className="card" aria-label="Restore purchase history"><p role="status">{error||status}</p>{context&&<>
   <ul>{context.positions.map(p=><li key={p.symbol}><b>{p.symbol}</b> · {p.stage} position · {(p.purchases||[]).map(t=>`${t.shares} shares on ${t.date}`).join('; ')}</li>)}</ul>
-  <button onClick={apply} disabled={!ready||!matched||working}>{working?'Applying…':'Apply purchase history'}</button>
+  <button onClick={apply} disabled={!ready||!matched||working}>{working?'Applying…':context.contract==='c1-position-stage-v1'?'Apply entry status':'Apply purchase history'}</button>
   {(!decision||error)&&onRefresh&&<button onClick={onRefresh} disabled={refreshing||working}>{refreshing?'Refreshing account…':'Refresh saved account'}</button>}
  </>}</section>;
 }
