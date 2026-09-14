@@ -48,3 +48,5 @@ assert.ok(compact(crowded,80,'','X99,X98').some(x=>x.symbol==='X99'),'Every requ
 assert.ok(compact(crowded,80,'','X99,X98').some(x=>x.symbol==='X98'));
 assert.equal(compact(crowded,80,'','X99,X98').length,80);
 console.log('PASS: compact responses retain required screen candidates without extra provider calls or downloading the full universe.');
+
+assert.ok(compact(crowded,80,'X97','X99,X98').some(x=>x.symbol==='X97'),'Single-stock inclusion remains compatible with candidate inclusion');
