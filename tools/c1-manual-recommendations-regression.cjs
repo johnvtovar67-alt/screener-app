@@ -33,3 +33,5 @@ assert.equal(differences(recorded,[held[1]]).some(r=>r.field==='Holding rows'),t
 console.log('PASS: Exact account differences distinguish date-only corrections from ownership/cash changes.');
 
 require('./c1-live-display-regression.cjs');
+
+require('./c1-partial-completion-regression.cjs');

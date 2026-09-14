@@ -6,7 +6,7 @@ import {applyC1OpeningPlan} from '../../lib/c1AccountDecision';
 import {c1AccountBook} from '../../lib/c1AccountInput';
 import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
 import {collectC1AccountOpening} from '../../lib/c1AccountOpeningProvider';
-import {planC1ContinuedAccountOpening} from '../../lib/c1AccountExecution';
+import {planC1ContinuedAccountOpening,c1CompletionPolicy} from '../../lib/c1AccountExecution';
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
@@ -103,7 +103,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      const sessions=c1AccountReviewBook(c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)),account.holdingRankReviews).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
      const symbols=decision.requiredOpeningSymbols;
      const opening=await collectOpening({baseline,symbols,now});
-     if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:account.records,opening,observedAt:opening.receipt.observedAt});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();decision=applyC1OpeningPlan(decision,openingPlan);}
+     if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:account.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();decision=applyC1OpeningPlan(decision,openingPlan);}
     }catch(error){openingError=String(error?.message||'Opening plan unavailable').slice(0,200);}
    }
    const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession,openingPlan,openingError,now:clock()});

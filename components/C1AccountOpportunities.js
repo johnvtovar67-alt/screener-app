@@ -23,7 +23,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
   <p className="sub">Model close: {decision.sourceSessionDate} · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
   {buys.length?<>
    <div className="grid buyGrid">{buys.map(o=><article className="idea green" key={o.id}>
-    <div className="top"><h3>{o.symbol}</h3><b className="pill green">Buy</b></div>
+    <div className="top"><h3>{o.symbol}</h3><b className="pill green">{decision.positions.some(p=>p.symbol===o.symbol)?'Add':'Buy'}</b></div>
     <div className="price"><b>${o.estimatedPrice.toFixed(2)}</b><small>Opening price</small></div>
     <p className="why">Account, cash and opening checks passed for this quantity.</p>
     <div className="decision"><div><small>Timing</small><b>Review now</b></div><div><small>Size</small><b>{o.shares} {o.shares===1?'share':'shares'}</b></div><div><small>Execution</small><b>Manual</b></div></div>
