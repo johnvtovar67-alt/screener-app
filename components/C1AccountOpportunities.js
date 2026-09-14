@@ -1,3 +1,4 @@
+import {c1EntryReviewText} from '../lib/c1EntryReview';
 import {useEffect,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
@@ -36,7 +37,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">
   <h2>🟡 Watch</h2>
   <p className="sub">Candidates waiting to qualify for a purchase.</p>
-  {watch.length?<div className="scroll"><table><thead><tr><th>Symbol</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{watch.map(row=><tr key={row.symbol}><td><b>{row.symbol}</b></td><td>Entry candidate; no checked buy quantity yet.</td><td>Regular-session prices, available cash and position limits must pass.</td></tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
+  {watch.length?<div className="scroll"><table><thead><tr><th>Symbol</th><th>Why Wait</th><th>Next Trigger</th></tr></thead><tbody>{watch.map(row=>{const review=ready?c1EntryReviewText((openingPlan.entryReviews||[]).filter(r=>r.symbol===row.symbol)): {why:waitingReason,next:'Refresh when the account and opening review are available.'};return <tr key={row.symbol}><td><b>{row.symbol}</b></td><td>{review.why}</td><td>{review.next}</td></tr>;})}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
  </section>}
  <style jsx>{`.buyGrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.price small{font-size:12px;color:#64748b}`}</style>
  </>;

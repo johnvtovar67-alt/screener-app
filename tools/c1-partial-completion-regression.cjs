@@ -69,3 +69,14 @@ assert.equal(second.openingBooks[initialBuy.sleeve].positions.AAA.openedAt,sessi
 const invalid=structuredClone(sessions[1]);invalid.signals.find(s=>s.symbol==='AAA').researchFactors.momentumPercentile=-100;
 assert.ok(!plan({...args,adoption:cashAdoption,sessions:[sessions[0],invalid],records:[firstLeg],opening:sessions[2],observedAt:sessions[2].date+'T14:00:00Z',completionPolicy:c1CompletionPolicy()}).orders.some(o=>o.side==='buy'&&o.symbol==='AAA'),'A saved unfilled target never overrides a lost C1 ranking');
 console.log('PASS: new full Buy with an actual partial fill and fee yields only the still-qualified remainder on the next session; no two-day entry mandate.');
+const {c1EntryReviewText}=loader.load('lib/c1EntryReview.js');
+assert.ok(p.entryReviews.some(r=>r.symbol==='DDD'&&r.reason==='position-limit'),'Watch records the actual full-slot rejection');
+assert.match(c1EntryReviewText(p.entryReviews.filter(r=>r.symbol==='DDD')).why,/three position slots/);
+assert.ok(plan({...args,opening:gap}).entryReviews.some(r=>r.symbol==='AAA'&&r.reason==='entry-gap-limit'));
+assert.ok(plan({...args,sessions:[changed]}).entryReviews.some(r=>r.symbol==='AAA'&&r.reason==='not-in-entry-queue'));
+const missing=plan({...args,completionPolicy:c1CompletionPolicy()});
+assert.ok(missing.entryReviews.some(r=>r.symbol==='AAA'&&r.reason==='purchase-target-missing'),'Missing purchase history is distinguished from failed qualification');
+assert.match(c1EntryReviewText([{reason:'purchase-target-missing'}],{stage:'full'}).why,/target is complete/);
+assert.match(c1EntryReviewText([{reason:'purchase-target-missing'}]).why,/No saved purchase target/);
+assert.match(c1EntryReviewText([]).why,/No detailed/,'Missing diagnostics must not be represented as a passed gate');
+console.log('PASS: actual entry rejections distinguish occupied slots, opening gap, qualification and missing target; full holdings and unavailable evidence are not mislabeled.');
