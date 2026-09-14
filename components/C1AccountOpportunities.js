@@ -1,8 +1,9 @@
+import {classifyC1StockScreen} from '../lib/c1StockClassification';
 import {c1WatchPresentation,c1OpportunityPresentation} from '../lib/c1EntryReview';
 import {useEffect,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
-export default function C1AccountOpportunities({decision,openingPlan,openingError,manualRecommendations,view="opportunities"}){
+export default function C1AccountOpportunities({decision,openingPlan,openingError,manualRecommendations,screenRows=[],screenCurrent=false,view="opportunities"}){
  const [,expire]=useState(0);
  useEffect(()=>{
   const remaining=Date.parse(manualRecommendations?.validUntil)-Date.now();
@@ -18,7 +19,9 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const exits=positionOrders;
  if(portfolioOnly&&!buys.length&&!positionOrders.length)return null;
  const waitingReason=decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
- const presentation=c1OpportunityPresentation({decision,buys,plan:openingPlan,ready,waitingReason});
+ const ratedRows=classifyC1StockScreen({snapshot:decision.stockScreen,rows:screenRows,current:screenCurrent&&decision.current&&decision.stockScreen?.sourceSessionDate===decision.sourceSessionDate});
+ const ratedDecision={...decision,opportunities:ratedRows};
+ const presentation=c1OpportunityPresentation({decision:ratedDecision,buys,plan:openingPlan,ready,waitingReason});
  const watch=presentation.watch;
  const watchView=c1WatchPresentation({rows:watch,plan:openingPlan,ready,waitingReason});
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
@@ -30,7 +33,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Model close</small></div>
    <p className="why">Momentum score: {Number.isFinite(tile.entryEvidence?.momentumScore)?tile.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable'}</p>
    <div className="plan"><small>Your next action</small><b>{tile.accountAction}</b><p>{tile.detail}</p>{tile.order&&<p>Estimated price ${tile.order.estimatedPrice.toFixed(2)}. Confirm the current execution price before placing your order.</p>}</div>
-  </article>)}</div>:buys.length?<>
+  </article>)}</div>:portfolioOnly&&buys.length?<>
    <div className="grid buyGrid">{buys.map(o=><article className="idea green" key={o.id}>
     <div className="top"><h3>{o.symbol}</h3><b className="pill green">{decision.positions.some(p=>p.symbol===o.symbol)?'Add':'Buy'}</b></div>
     <div className="price"><b>${o.estimatedPrice.toFixed(2)}</b><small>Opening price</small></div>
