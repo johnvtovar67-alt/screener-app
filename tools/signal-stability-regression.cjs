@@ -21,7 +21,7 @@ assert(decision.includes("m.forwardAsymmetryPass===false")&&decision.includes("m
 assert(decision.includes("if(!t?.available||!t.pass)return false"),'Continuity must not create a Buy without a verified historical-timing pass');
 assert(decision.includes("if(!t?.available||!t.pass||!t.strongPass)return false"),'Strong Buy hysteresis must not override the full-size historical-timing gate');
 assert(!page.includes("Promise.all([fetch(`/api/top5?theme=opportunities`"),'Portfolio refresh still races signal recording against persistence history');
-assert(page.includes('const d=await fetchScreen(t,verificationPass)')&&page.includes("const r=await fetch('/api/performance'"),'Every screen refresh must read history after the screen records current signals');
+assert(page.includes('const d=await fetchScreen(t,verificationPass')&&page.includes("const r=await fetch('/api/performance'"),'Every screen refresh must read history after the screen records current signals');
 assert(/performanceObservationRecorded\s*=\s*await recordPerformance\s*\(/.test(top5)&&!top5.includes('void recordPerformance('),'Broad screen must finish its bounded ledger update before portfolio sizing reads persistence');
 assert(ledger.includes('updatePerformanceLedger')&&ledgerStore.includes('applyPerformanceObservation')&&ledgerEngine.includes("recordType:'state'")&&ledgerEngine.includes('signalState:true')&&ledgerEngine.includes("stateAction=systemPaused?'Paused':action"),'Ledger must record actionable, downgrade, and data-pause transitions distinctly');
 assert(top5.includes('await updatePerformanceLedger(')&&!top5.includes('`${proto}://${host}/api/performance`'),'Broad-screen persistence must call the ledger store directly instead of an authenticated HTTP self-call');
@@ -38,3 +38,6 @@ assert(strongChanged.finalDecision.action==='Avoid','Recent Strong Buy continuit
 assert(strongChanged.signalChange?.from==='Strong Buy'&&strongChanged.signalChange?.to==='Avoid','Recent Strong Buy downgrade must retain an explicit audit trail');
 
 console.log('SIGNAL STABILITY PASS: durable Strong Buy memory, hard invalidations, and refresh ordering verified.');
+
+const screenFetchBody=page.slice(page.indexOf("async function fetchScreen("),page.indexOf("async function load("));
+assert(screenFetchBody.indexOf("d=await r.json()")<screenFetchBody.indexOf("const performance=await performanceHistory()")&&screenFetchBody.includes("const performance=await performanceHistory()"),"Screen response must complete before persistence history is read");
