@@ -2,8 +2,8 @@ const fs=require('fs');
 const s=fs.readFileSync('pages/index.js','utf8');
 const checks=[
   ['Desktop open-date column', '<th>Open Date</th>'],
-  ['Swing non-cash open date', 's.role==="Swing"&&!CASH.includes(sym(s))&&s.openedAt'],
-  ['Human-readable date', 'portfolioDateDisplay(s.openedAt)'],
+  ['Swing non-cash open date', 's.role==="Swing"&&!CASH.includes(sym(s))&&(decision.openedAt||s.openedAt)'],
+  ['Human-readable date', 'portfolioDateDisplay(decision.openedAt||s.openedAt)'],
   ['Desktop date cell', 'className="openDateCell"'],
   ['Mobile open-date field', '<small>Open Date</small>'],
   ['No chip date class', 'positionOpenedDate']
