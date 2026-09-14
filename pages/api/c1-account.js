@@ -10,7 +10,7 @@ import {planC1ContinuedAccountOpening,c1CompletionPolicy} from '../../lib/c1Acco
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
-import {importC1PositionContext,correctC1AccountOpenedAt,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession} from '../../lib/c1AccountService';
+import {carryC1RecordedHoldings,importC1PositionContext,correctC1AccountOpenedAt,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession} from '../../lib/c1AccountService';
 export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
 // Read the uncompressed representation: compressed responses can carry weak
 // ETags, which cannot satisfy the strong comparison required by ifMatch.
@@ -37,7 +37,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    // remain private account inputs and cannot initialize or alter index data.
    if(account){
     const previous=evaluateC1Account({account,book,now});
-    const next=book.model.sessions.find(s=>s.date>previous.sourceSessionDate);
+    for(const next of book.model.sessions.filter(s=>s.date>previous.sourceSessionDate)){
     if(next&&missingC1HoldingPrices(previous.positions.map(p=>({...p,role:'Swing'})),next).length){
      const existing=account.holdingCoverages||[account.holdingCoverage].filter(Boolean);
      if(!existing.some(c=>c.sourceSessionDate===next.date)){
@@ -47,6 +47,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
       c1AccountBook(book,account.holdingCoverages);
      }
     }
+   }
    }
    if(req.method==='POST'){
     if(req.body?.operation==='adopt'){
@@ -66,15 +67,18 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     }else if(req.body?.operation==='correct-opening-date'&&saved){
      account=correctC1AccountOpenedAt({account,symbol:req.body.symbol,openedAt:req.body.openedAt,expectedRevision:req.body.expectedRevision,book,now});
     }else if(req.body?.operation==='record-session'&&saved){
-     account=appendC1AccountSession({account,record:req.body.record,book,expectedRevision:req.body.expectedRevision,now});
+     if(account.revision!==req.body.expectedRevision)throw new Error('Account changed; refresh before recording activity');
+     const prior=carryC1RecordedHoldings({account,book,now,beforeDate:req.body.record?.date});
+     account=appendC1AccountSession({account:prior,record:req.body.record,book,expectedRevision:req.body.expectedRevision,now});
     }else return res.status(400).json({error:'Valid account operation required.'});
    }
    let holdingReviewError=null;
    if(req.method==='POST'&&['refresh-analysis','adopt','record-session'].includes(req.body?.operation)){
-    const through=account.records.at(-1)?.date||account.adoption.sourceSessionDate;
+    const carried=carryC1RecordedHoldings({account,book,now});
+    const through=carried.records.at(-1)?.date||carried.adoption.sourceSessionDate;
     const input=c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),baseline=input.model.sessions.find(s=>s.date===through);
     const reviews=account.holdingRankReviews||[],existing=reviews.find(r=>r.sourceSessionDate===through);
-    const positions=evaluateC1Account({account,book,now}).positions;
+    const positions=evaluateC1Account({account:carried,book,now}).positions;
     const symbols=positions.filter(p=>p.inheritedRiskOnly&&!existing?.rows.some(r=>r.symbol===p.symbol)).map(p=>p.symbol);
     if(symbols.length&&through===book.model.sessions.at(-1).date){
      try{
@@ -95,19 +99,21 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     }
    }
    if(req.method==='POST')account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});
-   let decision=evaluateC1Account({account,book,now});
-   const pendingSession=pendingC1AccountSession({account,book,now});
+   const analysisAccount=carryC1RecordedHoldings({account,book,now});
+   let decision=evaluateC1Account({account:analysisAccount,book,now});
+   const pendingSessions=analysisAccount.records.filter(r=>r.date>(account.records.at(-1)?.date||account.adoption.sourceSessionDate)).map(r=>pendingC1AccountSession({account:carryC1RecordedHoldings({account,book,now,beforeDate:r.date}),book,now}));
+   const pendingSession=pendingSessions.at(-1)||null;
    let openingPlan=null,openingError=null;
-   if(!pendingSession&&decision.current){
+   if(decision.current){
     try{
      const sessions=c1AccountReviewBook(c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)),account.holdingRankReviews).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
      const symbols=decision.requiredOpeningSymbols;
      const opening=await collectOpening({baseline,symbols,now});
-     if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:account.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();decision=applyC1OpeningPlan(decision,openingPlan);}
+     if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();decision=applyC1OpeningPlan(decision,openingPlan);}
     }catch(error){openingError=String(error?.message||'Opening plan unavailable').slice(0,200);}
    }
-   const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession,openingPlan,openingError,now:clock()});
-   return res.status(200).json({decision,pendingSession,openingPlan,openingError,manualRecommendations,holdingReviewError});
+   const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now:clock()});
+   return res.status(200).json({decision,pendingSession,pendingSessions,openingPlan,openingError,manualRecommendations,holdingReviewError});
   }catch(error){const conflict=isC1AccountSaveConflict(error);return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
  };
 }

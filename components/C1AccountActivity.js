@@ -1,5 +1,10 @@
 import {useState} from 'react';
-export default function C1AccountActivity({pending,onSave,busy}){
+export default function C1AccountActivity({pending,pendingSessions=[],onSave,busy}){
+ const [selectedDate,setSelectedDate]=useState(pending.date);
+ const selected=pendingSessions.find(s=>s.date===selectedDate)||pending;
+ return <><label>Trade session <select value={selected.date} onChange={e=>setSelectedDate(e.target.value)}>{(pendingSessions.length?pendingSessions:[pending]).map(s=><option key={s.date} value={s.date}>{s.date}</option>)}</select></label><ActivityForm key={selected.date} pending={selected} onSave={onSave} busy={busy}/></>;
+}
+function ActivityForm({pending,onSave,busy}){
  const [fills,setFills]=useState([]),[orderId,setOrderId]=useState(''),[shares,setShares]=useState(''),[price,setPrice]=useState(''),[fee,setFee]=useState(''),[time,setTime]=useState(''),[complete,setComplete]=useState(false),[error,setError]=useState('');
  function add(){
   const order=pending.plan.orders.find(o=>o.id===orderId),at=new Date(time);
