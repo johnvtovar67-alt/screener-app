@@ -169,6 +169,12 @@ console.log('PASS: Holding explanations use actual dates, stops and closing mark
 assert.equal(matchesPortfolio(initialView,portfolio.map(p=>p.symbol==='T4'?{...p,shares:2}:p)),false);
 assert.equal(positionDecision(initialView,'T4').decisionId,initialView.decisionId);
 const updatedBook={...baselineBook,model:{sessions:[baseline,opening]},captures:[...baselineBook.captures,{sessionDate:opening.date,hash:'opening-fixture',observedAt:opening.date+'T21:00:00Z'}]};
+const staleSource=evaluateService({account:privateAccount,book:baselineBook,now:new Date(opening.date+'T21:00:00Z')});
+assert.match(staleSource.updateReason,/Market-data update pending/);
+assert.ok(staleSource.positions.every(p=>p.reason===staleSource.updateReason));
+const awaitingActivity=evaluateService({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
+assert.match(awaitingActivity.updateReason,/Confirm completed-session activity/);
+assert.equal(awaitingActivity.current,false);
 const pending=pendingService({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
 assert.equal(pending.date,opening.date);
 const updatedAccount=appendService({account:privateAccount,record:records[0],book:updatedBook,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
