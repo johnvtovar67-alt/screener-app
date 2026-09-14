@@ -1049,10 +1049,12 @@ function serializeStockForClient(row = {}) {
   };
 }
 
-function compactRowsForClient(rows = [], limit = 80, includeSymbol = "") {
+function compactRowsForClient(rows = [], limit = 80, includeSymbol = "", screenSymbols = "") {
   const requestedSymbol = normalizeSymbol(includeSymbol);
+  const requiredScreenSymbols=new Set(String(screenSymbols).split(",").slice(0,9).map(normalizeSymbol).filter(Boolean));
   const required = rows.filter((row) =>
     (requestedSymbol && normalizeSymbol(row?.symbol) === requestedSymbol) ||
+    requiredScreenSymbols.has(normalizeSymbol(row?.symbol)) ||
     row?.productionPolicy?.selected === true ||
     row?.productionPolicy?.pilot === true ||
     ["Buy", "Strong Buy"].includes(row?.finalDecision?.action) ||
@@ -1100,7 +1102,7 @@ export default async function handler(req, res) {
         ? broadRows
         : broadRows.filter((r) => selectedSymbols.has(r.symbol)),
       clientRows = isBroad && String(req.query.compact || "") === "1"
-        ? compactRowsForClient(rows, 80, req.query.symbol)
+        ? compactRowsForClient(rows, 80, req.query.symbol, req.query.screenSymbols)
         : rows;
     // Every view is filtered from this same broad snapshot, so record the
     // authoritative broad state even when the user is looking at one theme.

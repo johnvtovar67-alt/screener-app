@@ -38,3 +38,13 @@ const component=fs.readFileSync('components/C1AccountOpportunities.js','utf8');
 assert.ok(component.includes('classifyC1StockScreen({snapshot:decision.stockScreen,rows:screenRows'));
 assert.ok(component.includes(':portfolioOnly&&buys.length?'),'Account orders cannot become extra stock rating tiles');
 console.log('PASS: original-deployment oracle matches 3 Buy/6 Watch, quote/event/liquidity/gap gates, sector/issuer substitutions, expert Strong Buy; holdings affect only account actions, stale checks hide quantities, and account orders cannot promote Watch ratings.');
+
+const top5=fs.readFileSync('pages/api/top5.js','utf8');
+const compactSource=top5.slice(top5.indexOf('function compactRowsForClient('),top5.indexOf('\n}',top5.indexOf('function compactRowsForClient('))+2);
+const compact=new Function('normalizeSymbol',compactSource+';return compactRowsForClient;')(s=>String(s||'').toUpperCase());
+const crowded=Array.from({length:100},(_,i)=>({symbol:'X'+i,finalDecision:{action:'Watch',relativeCapitalScore:100-i}}));
+assert.ok(!compact(crowded).some(x=>x.symbol==='X99'));
+assert.ok(compact(crowded,80,'','X99,X98').some(x=>x.symbol==='X99'),'Every requested screen candidate survives compact row selection');
+assert.ok(compact(crowded,80,'','X99,X98').some(x=>x.symbol==='X98'));
+assert.equal(compact(crowded,80,'','X99,X98').length,80);
+console.log('PASS: compact responses retain required screen candidates without extra provider calls or downloading the full universe.');

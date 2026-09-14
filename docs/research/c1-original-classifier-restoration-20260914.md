@@ -13,3 +13,5 @@ Historical reference is retained as a test-only oracle in tools/fixtures/c1-orig
 Tests compare classification directly with the original implementation across normal 3 Buy/6 Watch, gap, liquidity, quote, event, sector, issuer and Strong Buy cases. Account seed/replay tests verify exact no-account frozen-engine parity, unchanged holdings/cash/stops/dates and actual-fill conservation. The existing full CI suite and build are required before merge. No historical experiment or scheduled task is rerun.
 
 Freeze manifest: update only changed application entries and add the new screen-classifier entry under this owner instruction. Guard and build hooks remain unchanged. Account execution, sizing, frozen options, holding/stop logic, cash ledger and cron files remain unchanged from production 5985138.
+
+Live integration check found the compact broad response omitted five of the nine dated candidates. The client now requests those exact candidate symbols; compactRowsForClient retains them within the existing compact limit. No extra provider request or full-universe payload is introduced. A focused test covers this missing-row failure.
