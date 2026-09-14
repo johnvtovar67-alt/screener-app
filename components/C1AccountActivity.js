@@ -15,6 +15,6 @@ export default function C1AccountActivity({pending,onSave,busy}){
   {fills.map(f=><p key={f.id}>{f.side} {f.shares} {f.symbol} at ${f.price} · fee ${f.fee} <button disabled={busy} onClick={()=>{setFills(rows=>rows.filter(r=>r.id!==f.id));setComplete(false);}}>Remove</button></p>)}
   {error&&<p role="alert">{error}</p>}
   <p><label><input type="checkbox" checked={complete} onChange={e=>setComplete(e.target.checked)}/> All actual activity for this session is included{!fills.length?' — no orders filled':''}.</label></p>
-  <button disabled={busy||!complete} onClick={()=>onSave({date:pending.date,openingObservedAt:pending.openingObservedAt,complete:true,fills:[...fills].sort((a,b)=>a.executedAt.localeCompare(b.executedAt))},pending.revision)}>{busy?'Saving…':'Save activity and update C1'}</button>
+  <button disabled={busy||!complete} onClick={()=>onSave({date:pending.date,openingObservedAt:pending.openingObservedAt,complete:true,...(pending.plan.completionPolicy?{completionPolicy:pending.plan.completionPolicy}:{}),fills:[...fills].sort((a,b)=>a.executedAt.localeCompare(b.executedAt))},pending.revision)}>{busy?'Saving…':'Save activity and update C1'}</button>
  </section>;
 }
