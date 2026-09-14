@@ -1,16 +1,16 @@
 {
   "baselineCommit": "8007dc84820a9f2cb52266fe616df5406768815f",
-  "authorization": "Owner requested meaningful Watch information and accurate Portfolio display on 2026-09-14. Show sourced candidate evidence and one shared blocker; fix date-only timezone display. No strategy/order changes. See docs/research/c1-watch-evidence-20260914.md.",
+  "authorization": "Owner explicitly requested Buy/Strong Buy tiles independent of account capacity on 2026-09-14. Separate stock ratings from checked account actions without changing strategy or quantities. See docs/research/c1-rating-account-action-20260914.md.",
   "files": {
     "components/C1AccountActivity.js": "60b3267974d04634756bc296510c5ac1cd1986b5",
     "components/C1AccountDifferences.js": "7cb9f6cf5abb429907d507863d9b05497e236f10",
-    "components/C1AccountOpportunities.js": "6eb95507bbf2cd4f83b1ee016efc29bc577a3096",
+    "components/C1AccountOpportunities.js": "5c90d8c744145ea8d34cf81d4dad94b097509fd9",
     "components/C1HoldingRisk.js": "c4c81c73e0901bbb90639140201ee312540cd28e",
     "components/C1ModelStatus.js": "a2de5f2d8f63d5c9aa38bd33e9bd450175eda835",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
-    "lib/c1AccountDecision.js": "45a30e107dd699f69b7539de0a512c6a2c31548a",
+    "lib/c1AccountDecision.js": "c37161697ce191b5b7ac5c03b445b9f58928d493",
     "lib/c1AccountDifferences.js": "e52d36812c4eba4a5770d5450f1566e21d327b11",
     "lib/c1AccountExecution.js": "28df09d3e248a92a4cc26c04df599908fed568f5",
     "lib/c1AccountInput.js": "42eaa8f183a637a531e3d75b1f4969eeafd9671f",
@@ -20,7 +20,7 @@
     "lib/c1AccountSave.js": "237ddd0b26977a00c6b157a914eab0afdc16007b",
     "lib/c1AccountSeed.js": "45b327714e4b5b2a0eef85429aee1c8b535a6b43",
     "lib/c1AccountService.js": "984c5660333dea04d4811a9903d38b9414959bec",
-    "lib/c1AccountSimulator.js": "09a72cfd08ed77981a243b312ee41407e5a265eb",
+    "lib/c1AccountSimulator.js": "ca7fc0ad6105ba5ce06d9a24dfe423265a778626",
     "lib/c1ActualFillReplay.js": "04ed0d7a3cbc39c10d4aac0fcf432a486bd5b2cd",
     "lib/c1BaselineReconciliation.js": "b9920408bb698181019fa5bd0eefa00ac458e56f",
     "lib/c1BaselineRevisionReview.js": "df1c7ae8cc6a28a43ad7c80a5f88df0c3c180179",
@@ -166,7 +166,7 @@
     "pages/index.js": "2ae5d3680e3384f64627eb49a9e221ef62bf5751",
     "styles/card-layout.css": "6e8d38ae8506fc7a3e080de6282bddd60662bfac",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
-    "lib/c1EntryReview.js": "f66b41880420c8b1b17cc005d3f2bb13f750e730",
+    "lib/c1EntryReview.js": "115adf8063c9ee4c1eb4c86a160672b91c799430",
     "lib/portfolioDateDisplay.js": "d2709ae4acbcac9cfa74396039848c9e0917c1be"
   }
 }
