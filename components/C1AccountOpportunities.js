@@ -41,7 +41,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
     <div className="decision"><div><small>Timing</small><b>Review now</b></div><div><small>Size</small><b>{o.shares} {o.shares===1?'share':'shares'}</b></div><div><small>Execution</small><b>Manual</b></div></div>
     <div className="plan"><small>Plan</small><b>Confirm the current execution price and available cash before placing your order.</b></div>
    </article>)}</div>
-  </>:!portfolioOnly&&<div className="emptyState"><b>No C1 Buy ratings right now.</b>{!ready&&<span>{waitingReason}</span>}</div>}
+  </>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No C1 Buy ratings right now.':'C1 ratings awaiting update.'}</b>{!ready&&<span>{waitingReason}</span>}</div>}
   {exits.length>0&&<div><h3>Exits to review</h3><ul>{exits.map(o=><li key={o.id}><b>{o.symbol}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; estimated opening price ${o.estimatedPrice.toFixed(2)}. Check the current broker price.</li>)}</ul></div>}
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Checked quantities expire {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}. Refresh to recheck.</p>}
  </section>

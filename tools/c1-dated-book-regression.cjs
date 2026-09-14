@@ -1,3 +1,4 @@
+require('./c1-unexposed-price-regression.cjs');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {createHash}=require('node:crypto');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
