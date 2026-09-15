@@ -1,0 +1,11 @@
+# Opening price revision repair — September 15, 2026
+
+Owner request: fix DELL saved close 534.08 versus provider close 534.28 blocking all checked purchase quantities after an actual STX sale.
+
+The opening collector previously rejected every revised adjusted close immediately. One candidate discrepancy therefore prevented the complete opening plan. The screenshot establishes the differing same-date values; it does not establish why the upstream provider revised its history.
+
+The collector now makes one bounded repeat request on the same adjusted-history endpoint when a revision is detected. Exact repeated OHLC/date evidence is required. A separate review rejects benchmark revisions and any symbol present in adoption holdings or recorded prior-session fills. It independently runs the frozen account opening planner against the original and revised price references, both at the observed open and at current observed quotes. Orders, quantities, stop/target fields, cash books, rejected entries and risk outputs must match exactly. No cents or percentage tolerance is introduced.
+
+The accepted historical sessions and as-observed C1 momentum selections remain immutable. This is price-reference execution parity, not a fresh calculation of momentum rankings from revised historical series. The receipt honestly records that prior prices changed and retains the revision evidence and both parity attestations. The original input hashes remain unchanged. A changed plan or inconsistent provider repeat remains blocked for review. Previously owned symbols remain blocked; this repair does not migrate holding cost bases or reinterpret actual fills.
+
+Tests cover a repeat-confirmed small candidate revision, changed entry-limit decisions, missing repeat evidence, held symbols and benchmarks, default strict validation, unstable provider values, and the actual account API returning checked recommendations after reconciliation without writing account state. Existing intraday sale, replacement buy, duplicate handling, cash conservation, reload and completed-session replay tests remain in place. No strategy parameters, ranking rules, risk limits, holdings or cash are rewritten by this repair.

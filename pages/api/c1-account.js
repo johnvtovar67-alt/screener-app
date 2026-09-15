@@ -1,3 +1,4 @@
+import {reviewC1OpeningPriceRevisions} from '../../lib/c1OpeningPriceReview';
 import {recordC1IntradayActivity,c1IntradayDecision,c1IntradayRemainingPlan,c1RecordedExitPlan,rebaseC1RecordedExitActivity} from '../../lib/c1IntradayActivity';
 import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
 import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
@@ -112,8 +113,9 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     try{
      const sessions=c1AccountReviewBook(c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)),account.holdingRankReviews).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
      const symbols=decision.requiredOpeningSymbols;
-     const opening=await collectOpening({baseline,symbols,now});
+     const opening=await collectOpening({baseline,symbols,now,allowPriceRevisionReview:true});
      if(opening){openingReady=true;openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();
+      openingPlan=reviewC1OpeningPriceRevisions({account:analysisAccount,sessions,opening,plan:openingPlan,now});
       if(analysisAccount.intradayActivity?.plan.recordingOnly)analysisAccount={...analysisAccount,intradayActivity:rebaseC1RecordedExitActivity({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
       if(req.body?.operation==='record-intraday'){
        account=recordC1IntradayActivity({account:analysisAccount,plan:openingPlan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
