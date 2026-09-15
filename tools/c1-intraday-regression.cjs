@@ -53,7 +53,7 @@ vm.createContext(context);vm.runInContext(route,context);
  let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false,openingUnavailable=false;
  const handler=context.factory({environment:'preview',commit:'test',clock:()=>now,readBook:async()=>({record:baselineBook}),collectOpening:async()=>{if(openingUnavailable)throw Error('Fresh opening quote missing for T4');return observed;},store:{read:async()=>stored,write:async(path,record,etag)=>{if(fail)throw Error('Storage unavailable');assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
  async function request(body){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await handler({method:body?'POST':'GET',headers:{authorization:'Bearer '+'fixture'.repeat(6)},body},res);return res;}
- openingUnavailable=true;let unavailable=await request();assert.equal(unavailable.code,200);assert.equal(unavailable.body.intradaySession,null);assert.equal(unavailable.body.openingError,'Fresh opening quote missing for T4');openingUnavailable=false;
+ openingUnavailable=true;let unavailable=await request();assert.equal(unavailable.code,200);assert.equal(unavailable.body.intradaySession.sellOnly,true);assert.equal(unavailable.body.manualRecommendations.status,'waiting');assert.equal(unavailable.body.openingError,'Fresh opening quote missing for T4');openingUnavailable=false;
  let r=await request();assert.equal(r.code,200);assert(r.body.intradaySession,'Entry form is available during the open session');
  fail=true;r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,409);assert.equal(writes,0);fail=false;
  r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.intradaySession.tickets.length,1);assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));assert.equal(r.body.manualRecommendations.status,'ready');
@@ -69,5 +69,17 @@ vm.createContext(context);vm.runInContext(route,context);
  const endView=service.evaluateC1Account({account:replayed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
  assert(Math.abs(endView.actualCash-r.body.decision.actualCash)<1e-7,'Close replay preserves exact intraday sale and replacement economics');
  const reload=await request();assert.equal(reload.code,200);assert.equal(reload.body.intradaySession.tickets.length,2);
+ // An unrelated candidate anchor failure must not block a known completed exit.
+ stored={record:JSON.parse(original),etag:'fallback0'};openingUnavailable=true;
+ r=await request({operation:'record-intraday',ticket:{...ticket,side:'buy'},expectedRevision:0});assert.equal(r.code,409);assert.equal(stored.record.revision,0);
+ r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.manualRecommendations.status,'waiting');assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));assert.equal(r.body.intradaySession.sellOnly,true);
+ const fallbackCash=r.body.decision.actualCash;
+ const closedFallback=service.carryC1RecordedHoldings({account:stored.record,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
+ assert(Math.abs(service.evaluateC1Account({account:closedFallback,book:closeBook,now:new Date(opening.date+'T21:00:00Z')}).actualCash-fallbackCash)<1e-7);
+ assert(closedFallback.records[0].recordingEvidence,'Original accounting-only order evidence retained');
+ openingUnavailable=false;r=await request();assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.manualRecommendations.status,'ready');assert.equal(r.body.intradaySession.plan.recordingOnly,undefined);
+ assert.equal(r.body.decision.actualCash,fallbackCash);assert(r.body.manualRecommendations.orders.some(o=>o.side==='buy'));
+ r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.decision.actualCash,fallbackCash,'Retry after provider recovery must not double-credit sale');
+ console.log('PASS: missing candidate data → recorded exit → preserved cash → verified-plan recovery and closing replay; no buy authorization bypass.');
  console.log('PASS: intraday API sale → actual cash → qualified replacement → recorded purchase → reload → closing replay; partial sales, duplicates, storage failure and Core preservation.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

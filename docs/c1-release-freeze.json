@@ -1,6 +1,6 @@
 {
   "baselineCommit": "8007dc84820a9f2cb52266fe616df5406768815f",
-  "authorization": "Owner explicitly requested intraday completed-sale recording and same-day replacement review on September 15, plus clear Exit wording. Repair preserves frozen selections and engine rules; actual fills reconcile into completed sessions. Strong ETag sync repair preserves conditional writes. See docs/research/c1-intraday-activity-20260915.md. Follow-up owner screenshot shows hidden trade entry. Surface the existing opening error and explicit read-only retry in Account settings; log opening failure for diagnosis. No recommendation gates are changed.",
+  "authorization": "Owner explicitly requested intraday completed-sale recording and same-day replacement review on September 15, plus clear Exit wording. Repair preserves frozen selections and engine rules; actual fills reconcile into completed sessions. Strong ETag sync repair preserves conditional writes. See docs/research/c1-intraday-activity-20260915.md. Follow-up owner screenshot shows hidden trade entry. Surface the existing opening error and explicit read-only retry in Account settings; log opening failure for diagnosis. No recommendation gates are changed. Owner follow-up shows DELL price-basis mismatch blocking an already-completed STX exit. Add accounting-only recording of existing pending exits with canonical replay reconciliation; preserve all buy checks, and expose compared market-data values for diagnosis. See docs/research/c1-recorded-exit-independence-20260915.md.",
   "files": {
     "components/C1AccountActivity.js": "e931a7eb6ed1ad1f5f4f14e3f3e5d9c11abc3ce4",
     "components/C1AccountDifferences.js": "7cb9f6cf5abb429907d507863d9b05497e236f10",
@@ -12,12 +12,12 @@
     "lib/c1AccountDifferences.js": "e52d36812c4eba4a5770d5450f1566e21d327b11",
     "lib/c1AccountExecution.js": "c9d1ffc67bc009e4ffbcbabfd6dd1fcf0e7a70d7",
     "lib/c1AccountInput.js": "7719ac3b745067b2b42434999b7bc06fa510b8b8",
-    "lib/c1AccountOpeningProvider.js": "70915522fef95e79c6cd4a12ed4d68ee4f124a7a",
+    "lib/c1AccountOpeningProvider.js": "8dbe0b9a6b8efdf097b9f5e5bf80e8141774c679",
     "lib/c1AccountPortfolio.js": "411cc6fb888b872c6af1fce4d82c7e94a717a289",
     "lib/c1AccountReconciliation.js": "fc05613dbe81f860396a35672aa92b47d1d46b84",
     "lib/c1AccountSave.js": "237ddd0b26977a00c6b157a914eab0afdc16007b",
     "lib/c1AccountSeed.js": "45b327714e4b5b2a0eef85429aee1c8b535a6b43",
-    "lib/c1AccountService.js": "0de5676c92bfeb3f01db32208bae96f800456760",
+    "lib/c1AccountService.js": "c7a9e771b4e905fd1f05d8d2c02b0785fa6423b4",
     "lib/c1AccountSimulator.js": "09a72cfd08ed77981a243b312ee41407e5a265eb",
     "lib/c1ActualFillReplay.js": "04ed0d7a3cbc39c10d4aac0fcf432a486bd5b2cd",
     "lib/c1BaselineReconciliation.js": "59cb615b6cfff87e3b4ea7b3e9fe1881d4ea2af5",
@@ -94,7 +94,7 @@
     "lib/walkForwardBacktest.js": "9e294411566722e93632d88c9b5a127d29df1535",
     "lib/winnerLifecycle.js": "b588870fec4cd4ef60f4fbab626db3ccace96df2",
     "pages/_app.js": "4260ebaf86e75b7e4f7cb115a17944a7dafe74cd",
-    "pages/api/c1-account.js": "3541782a889fe193978de6e9a9c3300431349852",
+    "pages/api/c1-account.js": "269684c52e02d92fa03b0f5b4c5eba7fa3fbd047",
     "pages/api/catalysts.js": "b570d0f77ccd14505fe840f2d6a4c63968e7e086",
     "pages/api/cron/c1-index.js": "a58798611188ce87a6796fca25a315261f1533e6",
     "pages/api/cron/fmp-research-backtest.js": "4ce2d0302bd451103c86f0412ee197ffb4d50f72",
@@ -161,13 +161,13 @@
     "pages/api/research/v11-stress-test.js": "c6923fcd7d54f9250b498e9273caffe0ca6c2c38",
     "pages/api/top5.js": "468c42d40f544b86da386e92fc4313195f5208d6",
     "pages/api/version.js": "76d9d808fe0153a18b139acb29545b92ea901734",
-    "pages/index.js": "9cce10abb1d68b48d2054c670c5491db7b25b3d7",
+    "pages/index.js": "50301d87836fd4a05b4b0e0280e20c4cab2006a5",
     "styles/card-layout.css": "6e8d38ae8506fc7a3e080de6282bddd60662bfac",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
     "lib/c1EntryReview.js": "96bef8b3e99c301c64b618854d36dbabbd602ea3",
     "lib/portfolioDateDisplay.js": "50382f05065b9263e14e7c112ac1ffc037860ac9",
     "lib/c1StockClassification.js": "bba867e70c587b5e811bbf5172047cb415df8e02",
-    "lib/c1IntradayActivity.js": "6e2c2cdbeb1221bdf33a9afa0fd2e2f8b54fb6de",
-    "components/C1IntradayActivity.js": "87853a3191ec5ed26fff807e25c8118c8a1f445c"
+    "lib/c1IntradayActivity.js": "9a40d596408a1e5c5c65fa529b62e1a946bfa62c",
+    "components/C1IntradayActivity.js": "0ff5331695cb281da1dc911206c36c4201523320"
   }
 }

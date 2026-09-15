@@ -5,6 +5,7 @@ export default function C1IntradayActivity({session,onSave,busy}){
  const choices=useMemo(()=>{
   const groups=new Map(),unconditional=new Set(session.plan.orders.filter(o=>o.side==='sell'&&!o.condition).map(o=>o.symbol+':'+o.sleeve));
   for(const order of session.plan.orders){
+   if(session.sellOnly&&order.side!=='sell')continue;
    if(order.condition&&unconditional.has(order.symbol+':'+order.sleeve))continue;
    let remaining=order.shares-session.fills.filter(f=>f.orderId===order.id).reduce((n,f)=>n+f.shares,0);
    if(order.side==='sell'){
