@@ -1,4 +1,4 @@
-import {recordC1IntradayActivity,c1IntradayDecision,c1IntradayRemainingPlan} from '../../lib/c1IntradayActivity';
+import {recordC1IntradayActivity,c1IntradayDecision,c1IntradayRemainingPlan,c1RecordedExitPlan,rebaseC1RecordedExitActivity} from '../../lib/c1IntradayActivity';
 import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
 import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
 import {c1AccountReviewBook} from '../../lib/c1HeldRankReview';
@@ -7,7 +7,7 @@ import {applyC1OpeningPlan} from '../../lib/c1AccountDecision';
 import {c1AccountBook} from '../../lib/c1AccountInput';
 import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
 import {collectC1AccountOpening} from '../../lib/c1AccountOpeningProvider';
-import {planC1ContinuedAccountOpening,c1CompletionPolicy} from '../../lib/c1AccountExecution';
+import {planC1ContinuedAccountOpening,c1CompletionPolicy,continueC1ActualAccount} from '../../lib/c1AccountExecution';
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
@@ -107,13 +107,14 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    let analysisAccount=carryC1RecordedHoldings({account,book,now,onPending:pending=>pendingSessions.push(pending)});
    let decision=evaluateC1Account({account:analysisAccount,book,now});
    const pendingSession=pendingSessions.at(-1)||null;
-   let openingPlan=null,openingError=null,intradaySession=null;
+   let openingPlan=null,openingError=null,intradaySession=null,openingReady=false;
    if(decision.current){
     try{
      const sessions=c1AccountReviewBook(c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)),account.holdingRankReviews).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
      const symbols=decision.requiredOpeningSymbols;
      const opening=await collectOpening({baseline,symbols,now});
-     if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();
+     if(opening){openingReady=true;openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();
+      if(analysisAccount.intradayActivity?.plan.recordingOnly)analysisAccount={...analysisAccount,intradayActivity:rebaseC1RecordedExitActivity({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
       if(req.body?.operation==='record-intraday'){
        account=recordC1IntradayActivity({account:analysisAccount,plan:openingPlan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
        account=await saveC1AccountUpdate({store,path,saved,account,operation:'record-intraday',book,now});
@@ -127,7 +128,23 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
       }
       decision=applyC1OpeningPlan(decision,openingPlan);
      }
-    }catch(error){if(req.body?.operation==='record-intraday')throw error;openingError=String(error?.message||'Opening plan unavailable').slice(0,200);console.warn('C1_OPENING_UNAVAILABLE',JSON.stringify({reason:openingError}));}
+    }catch(error){if(req.body?.operation==='record-intraday'&&openingReady)throw error;openingError=String(error?.message||'Opening plan unavailable').slice(0,200);console.warn('C1_OPENING_UNAVAILABLE',JSON.stringify({reason:openingError}));}
+   }
+   if(!intradaySession&&decision.current){
+    const sessions=c1AccountReviewBook(c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),account.holdingRankReviews).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate&&s.date<=decision.sourceSessionDate);
+    const continued=continueC1ActualAccount({adoption:account.adoption,sessions,records:analysisAccount.records,observedAt:now});
+    const recordingPlan=analysisAccount.intradayActivity?.plan||c1RecordedExitPlan({continued,now});
+    if(recordingPlan){
+     if(req.body?.operation==='record-intraday'){
+      if(req.body.ticket?.side!=='sell')throw new Error('New purchases require the current opening checks. A completed pending exit can still be recorded.');
+      account=recordC1IntradayActivity({account:analysisAccount,plan:recordingPlan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
+      account=await saveC1AccountUpdate({store,path,saved,account,operation:'record-intraday',book,now});analysisAccount=account;
+     }
+     const activity=analysisAccount.intradayActivity;
+     intradaySession={date:recordingPlan.date,revision:analysisAccount.revision,plan:recordingPlan,sellOnly:true,fills:activity?.fills||[],tickets:activity?.tickets||[]};
+     if(activity)decision=c1IntradayDecision({decision,activity,revision:analysisAccount.revision,now});
+     openingPlan=null;
+    }
    }
    if(req.body?.operation==='record-intraday'&&!intradaySession)throw new Error('Current-session prices are unavailable; the trade has not been saved. Retry during the regular session.');
    if(analysisAccount.intradayActivity&&!intradaySession)decision=c1IntradayDecision({decision,activity:analysisAccount.intradayActivity,revision:analysisAccount.revision,now});
