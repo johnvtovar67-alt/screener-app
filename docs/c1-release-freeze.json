@@ -164,7 +164,7 @@
     "pages/index.js": "50301d87836fd4a05b4b0e0280e20c4cab2006a5",
     "styles/card-layout.css": "6e8d38ae8506fc7a3e080de6282bddd60662bfac",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
-    "lib/c1EntryReview.js": "71fcdef85cdd98f209ecce1feea845618a67375e",
+    "lib/c1EntryReview.js": "5b9ffe3817ecd078aa4d3fb40762aebc4de59594",
     "lib/portfolioDateDisplay.js": "50382f05065b9263e14e7c112ac1ffc037860ac9",
     "lib/c1StockClassification.js": "bba867e70c587b5e811bbf5172047cb415df8e02",
     "lib/c1IntradayActivity.js": "73efcbb071f8428bc1672f12aa0277d7ee0ebbb6",
