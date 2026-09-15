@@ -27,6 +27,8 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
   <p className="sub">Model close: {decision.sourceSessionDate} · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
+  {exits.length>0&&<div><h3>Exits to review</h3><ul>{exits.map(o=><li key={o.id}><b>{o.symbol}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; estimated opening price ${o.estimatedPrice.toFixed(2)}. Check the current broker price.</li>)}</ul></div>}
+  {ready&&buys.length>0&&(exits.length>0||orders.some(order=>order.side==='sell'&&!order.condition))&&<p className="actionHelp">Complete the C1 exits before replacement purchases. Buy quantities assume those sales; check the proceeds and current prices first.</p>}
   {!portfolioOnly&&presentation.tiles.length>0?<div className="grid buyGrid">{presentation.tiles.map(tile=><article className="idea green" key={tile.symbol}>
    <div className="top"><h3>{tile.symbol}</h3><b className="pill green">{tile.rating}</b></div>
    <p className="sub">{tile.entryEvidence?.sector||'Sector unavailable'} · C1 rating as of {decision.sourceSessionDate}</p>
@@ -42,7 +44,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
     <div className="plan"><small>Plan</small><b>Confirm the current execution price and available cash before placing your order.</b></div>
    </article>)}</div>
   </>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No C1 Buy ratings right now.':'C1 ratings awaiting update.'}</b>{!ready&&<span>{waitingReason}</span>}</div>}
-  {exits.length>0&&<div><h3>Exits to review</h3><ul>{exits.map(o=><li key={o.id}><b>{o.symbol}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; estimated opening price ${o.estimatedPrice.toFixed(2)}. Check the current broker price.</li>)}</ul></div>}
+
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Checked quantities expire {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}. Refresh to recheck.</p>}
  </section>
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">

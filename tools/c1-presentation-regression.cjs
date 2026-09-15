@@ -10,9 +10,11 @@ for(const patch of [{clientSnapshotFallback:true},{dataFeedSnapshotStale:true},{
  const r={...ready,...patch};assert.equal(present(r).authorized,false);assert.equal(present(r).targetWeightPct,0);assert.equal(decision(r,buy).size,'None');
 }
 const pilot={productionPolicy:{id:row.productionPolicy.id,status:'limited-pilot',pilot:true,pilotRank:1,targetWeightPct:1},finalDecision:{...buy,source:'independent-limited-pilot'}};
-assert.equal(present(pilot).pilot,true);assert.equal(present(pilot).targetWeightPct,1);
+assert.equal(present(pilot).pilot,false);assert.equal(present(pilot).targetWeightPct,0);
+assert.equal(decision(pilot,pilot.finalDecision).action,'Review');
+assert.doesNotMatch(JSON.stringify(decision(pilot,pilot.finalDecision)),/1%|two.session|Limited Pilot/);
 for(const patch of [{targetWeightPct:33},{pilotRank:4},{pilotRank:null}])assert.equal(present({...pilot,productionPolicy:{...pilot.productionPolicy,...patch}}).authorized,false);
 assert.equal(present({...pilot,finalDecision:buy}).authorized,false);
 assert.equal(decision({},buy),buy,'Non-C1 decisions unchanged');
 assert.equal(decision(row,{action:'Avoid'}).action,'Avoid');
-console.log('PASS: shared C1 presentation — stale selection cannot authorize entry or sizing; bounded pilot preserved');
+console.log('PASS: shared C1 presentation — stale selection cannot authorize entry or sizing; superseded pilot rejected');

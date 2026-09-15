@@ -23,7 +23,7 @@ const save=extract('  async function saveC1Activity(','  const[transactionCheck'
 const disconnect=extract('  function disconnectSync(','  async function copySyncKey(');
 function client(fetcher){
  const state={view:{decision:{id:'previous'}},error:'',key:'test-only-key',writes:0};
- const box={accountRequestId:{current:0},SYNC_KEY:'key',
+ const box={accountRequestId:{current:0},syncPullId:{current:0},syncWriteId:{current:0},syncRevision:{current:{}},syncDirty:{current:false},SYNC_KEY:'key',
   localStorage:{getItem:()=>state.key,removeItem:()=>{state.key='';},setItem:()=>{state.writes++;}},
   fetch:fetcher,setAccountView:v=>{state.view=v;},setAccountError:v=>{state.error=v;},
   setSyncKey(){},setSyncInput(){},setSyncStatus(){}};
