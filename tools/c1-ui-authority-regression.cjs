@@ -47,7 +47,7 @@ try{
  const render=patch=>renderToStaticMarkup(React.createElement(Component,{...props,...patch}));
  const html=render({});
  assert.match(html,/sell 10 shares/);assert.match(html,/5 shares/);
- assert.ok(html.indexOf('Exits to review')<html.indexOf('Review now'),'Funded replacement buys follow exits');
+ assert.ok(html.indexOf('Exits to review')<html.indexOf('C1 recommendation'),'Funded replacement buys follow exits');
  for(const patch of [{manualRecommendations:{...review,status:'waiting'}},{decision:{...current,revision:3}},{decision:{...current,current:false}},{manualRecommendations:{...review,validUntil:'2026-09-14T13:59:59Z'}}])assert.equal(render(patch),'','No orange action box without a current checked action');
  const conditional={...review,orders:[{...openingPlan.orders[0],condition:'stop-triggered'}]};
  assert.equal(render({manualRecommendations:conditional}),'' , 'Standing stops alone are not action instructions');
