@@ -50,3 +50,14 @@ assert.equal(compact(crowded,80,'','X99,X98').length,80);
 console.log('PASS: compact responses retain required screen candidates without extra provider calls or downloading the full universe.');
 
 assert.ok(compact(crowded,80,'X97','X99,X98').some(x=>x.symbol==='X97'),'Single-stock inclusion remains compatible with candidate inclusion');
+
+// Missing source evidence cannot become a real zero-percentile signal.
+const {v11SourceSignalEligible:eligible}=loader.load('lib/c1StockClassification.js');
+for(const value of [null,undefined,'','  ',false,true,NaN,Infinity]){
+ const signal=structuredClone(session.signals[0]);signal.researchFactors.momentumPercentile=value;
+ assert.equal(eligible(signal),false,'Missing/invalid momentum must not enter the C1 queue');
+}
+for(const value of [0,50,100,'92.5']){
+ const signal=structuredClone(session.signals[0]);signal.researchFactors.momentumPercentile=value;
+ assert.equal(eligible(signal),true,'Valid numeric momentum retains original eligibility');
+}

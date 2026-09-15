@@ -29,3 +29,11 @@ assert.ok(component.includes('portfolioOnly?"card rotationBox":"card"'));
 assert.ok(!component.includes('<summary>Recorded stops ('));
 assert.ok(!component.includes('Existing position actions'));
 console.log('PASS: quote-consistent losses, exact stop boundary, stale-model preservation, and lossless allocation display grouping.');
+
+// Opening-plan exits must survive the subsequent current-price rendering.
+const {applyC1OpeningPlan}=loader.load('lib/c1AccountDecision.js');
+const opening={providerVerified:true,sourceSessionDate:decision.sourceSessionDate,observedAt:'2026-09-14T14:00:00Z',orders:[{symbol:'AAA',side:'sell',shares:10,sleeve:'base',reason:'portfolio-drawdown-stop'}]};
+const planned=applyC1OpeningPlan(decision,opening);
+assert.match(display(planned,'AAA',91).reason,/portfolio loss limit has triggered/);
+assert.equal(planned.positions[0].exits[0].shares,10);
+assert.equal(JSON.stringify(decision),before);

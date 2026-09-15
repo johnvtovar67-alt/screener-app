@@ -30,17 +30,20 @@ function cleanPortfolio(rows=[]){
   })).filter(p=>p.symbol&&p.shares>=0);
 }
 async function readPortfolio(key){
-  const path=pathname(key),{blobs}=await list({prefix:path,limit:1}),blob=blobs.find(b=>b.pathname===path)||null;
-  if(!blob)return null;
+  const path=pathname(key);
   const result=await get(path,{access:'private',useCache:false});
-  if(!result||result.statusCode!==200)return null;
+  if(!result)return null;
+  if(result.statusCode!==200||!result.blob?.etag)throw new Error('Portfolio storage identity unavailable');
   const text=await new Response(result.stream).text(),parsed=JSON.parse(text);
-  return parsed&&Array.isArray(parsed.portfolio)?parsed:null;
+  if(!parsed||!Array.isArray(parsed.portfolio))throw new Error('Saved portfolio is invalid');
+  return {...parsed,etag:result.blob.etag};
 }
-async function writePortfolio(key,portfolio,c1ControlState){
+async function writePortfolio(key,portfolio,c1ControlState,expectedEtag){
+  const saved=await readPortfolio(key);
+  if((saved?.etag||null)!==(expectedEtag||null))throw Object.assign(new Error('Portfolio changed on another device. Reload before applying this edit.'),{status:409});
   const payload={version:2,updatedAt:new Date().toISOString(),portfolio:cleanPortfolio(portfolio),c1ControlState:cleanC1ControlState(c1ControlState)};
-  await put(pathname(key),JSON.stringify(payload),{access:'private',allowOverwrite:true,addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:0});
-  return payload;
+  const result=await put(pathname(key),JSON.stringify(payload),{access:'private',allowOverwrite:Boolean(saved),...(saved?{ifMatch:saved.etag}:{}),addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:0});
+  return {...payload,etag:result.etag};
 }
 async function storageHealth(){
   try{
@@ -63,11 +66,12 @@ export default async function handler(req,res){
     }
     if(req.method==='PUT'){
       if(!Array.isArray(req.body?.portfolio))return res.status(400).json({error:'portfolio must be an array.'});
-      const payload=await writePortfolio(key,req.body.portfolio,req.body.c1ControlState);
-      return res.status(200).json({ok:true,updatedAt:payload.updatedAt,count:payload.portfolio.length});
+      const payload=await writePortfolio(key,req.body.portfolio,req.body.c1ControlState,req.body.expectedEtag);
+      return res.status(200).json({ok:true,updatedAt:payload.updatedAt,etag:payload.etag,count:payload.portfolio.length});
     }
     return res.status(405).json({error:'Method not allowed'});
   }catch(e){
+    if(e.status===409||e.status===412||['BlobPreconditionFailedError','BlobAlreadyExistsError'].includes(e.name))return res.status(409).json({error:'Portfolio changed on another device. Your local edit is retained. Reload the saved portfolio before retrying.'});
     console.error('portfolio sync:',e.message);
     return res.status(500).json({error:'Portfolio sync failed.',detail:e.message});
   }

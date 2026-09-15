@@ -99,9 +99,9 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     }
    }
    if(req.method==='POST')account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});
-   const analysisAccount=carryC1RecordedHoldings({account,book,now});
+   const pendingSessions=[];
+   const analysisAccount=carryC1RecordedHoldings({account,book,now,onPending:pending=>pendingSessions.push(pending)});
    let decision=evaluateC1Account({account:analysisAccount,book,now});
-   const pendingSessions=analysisAccount.records.filter(r=>r.date>(account.records.at(-1)?.date||account.adoption.sourceSessionDate)).map(r=>pendingC1AccountSession({account:carryC1RecordedHoldings({account,book,now,beforeDate:r.date}),book,now}));
    const pendingSession=pendingSessions.at(-1)||null;
    let openingPlan=null,openingError=null;
    if(decision.current){

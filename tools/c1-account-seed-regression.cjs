@@ -218,6 +218,17 @@ assert.equal(dated('2026-02-30'),'—');
 const stopExplained=explainHolding({...explanationFixture,exits:[{reason:'initial-stop'}],stopTriggerEvidence:{date:'2026-09-14',low:85,stop:86}},'2026-09-14',95);
 assert.match(stopExplained,/Model-recorded low on 2026-09-14: \$85.00/);
 assert.match(stopExplained,/recovery does not clear the pending exit/);
+// Collect activity choices during the same replay, without replaying every
+// preceding day again for each dropdown option.
+const collected=[];
+const collectedCarry=carry({account:privateAccount,book:stopBook,now:multiNow,onPending:p=>collected.push(p)});
+assert.equal(JSON.stringify(collectedCarry),JSON.stringify(carriedStopped));
+for(const pending of collected){
+ const prior=carry({account:privateAccount,book:stopBook,now:multiNow,beforeDate:pending.date});
+ const expected=loader.load('lib/c1AccountService.js').pendingC1AccountSession({account:prior,book:stopBook,now:multiNow});
+ assert.equal(JSON.stringify(pending),JSON.stringify(expected));
+}
+assert.equal(collected.length,carriedStopped.records.length-privateAccount.records.length);
 console.log('PASS: no-trade continuation is current, repeatable, preserves ownership and storage; multiple sessions and calendar dates verified.');
 const pending=pendingService({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
 assert.equal(pending.date,opening.date);
