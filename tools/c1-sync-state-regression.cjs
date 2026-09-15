@@ -10,8 +10,8 @@ const source=fs.readFileSync('pages/api/portfolio-sync.js','utf8')
  .replace('export default async function handler','async function handler');
 const sandbox={cleanC1ControlState,createHash,console,Response,
  list:async()=>({blobs:stored?[{pathname:stored.path}]:[]}),
- get:async()=>stored?{statusCode:200,blob:{etag:stored.etag},stream:new Response(stored.body).body}:null,
- put:async(path,body,options)=>{if(beforeWrite){const hook=beforeWrite;beforeWrite=null;hook();}if(stored?options.ifMatch!==stored.etag:options.allowOverwrite)throw Object.assign(new Error('Version changed'),{name:'BlobPreconditionFailedError'});stored={path,body,etag:'v'+(++version)};return {etag:stored.etag};}};
+ get:async(path,options)=>{assert.equal(options.headers?.['accept-encoding'],'identity','Conditional writes require the strong uncompressed response ETag');return stored?{statusCode:200,blob:{etag:stored.etag},stream:new Response(stored.body).body}:null;},
+ put:async(path,body,options)=>{if(beforeWrite){const hook=beforeWrite;beforeWrite=null;hook();}if(stored?options.ifMatch!==stored.etag:options.allowOverwrite)throw Object.assign(new Error('Version changed'),{name:'Error',message:'Vercel Blob: Precondition failed: ETag mismatch.'});stored={path,body,etag:'v'+(++version)};return {etag:stored.etag};}};
 vm.createContext(sandbox);vm.runInContext(source+'\nglobalThis.handler=handler;',sandbox);
 async function request(method,state,etag=clientEtag,expectedStatus=200){
  let payload,status;
