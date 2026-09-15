@@ -50,9 +50,10 @@ const context={...service,...execution,...intraday,...loader.load('lib/c1Account
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
- let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false;
- const handler=context.factory({environment:'preview',commit:'test',clock:()=>now,readBook:async()=>({record:baselineBook}),collectOpening:async()=>observed,store:{read:async()=>stored,write:async(path,record,etag)=>{if(fail)throw Error('Storage unavailable');assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
+ let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false,openingUnavailable=false;
+ const handler=context.factory({environment:'preview',commit:'test',clock:()=>now,readBook:async()=>({record:baselineBook}),collectOpening:async()=>{if(openingUnavailable)throw Error('Fresh opening quote missing for T4');return observed;},store:{read:async()=>stored,write:async(path,record,etag)=>{if(fail)throw Error('Storage unavailable');assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
  async function request(body){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await handler({method:body?'POST':'GET',headers:{authorization:'Bearer '+'fixture'.repeat(6)},body},res);return res;}
+ openingUnavailable=true;let unavailable=await request();assert.equal(unavailable.code,200);assert.equal(unavailable.body.intradaySession,null);assert.equal(unavailable.body.openingError,'Fresh opening quote missing for T4');openingUnavailable=false;
  let r=await request();assert.equal(r.code,200);assert(r.body.intradaySession,'Entry form is available during the open session');
  fail=true;r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,409);assert.equal(writes,0);fail=false;
  r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.intradaySession.tickets.length,1);assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));assert.equal(r.body.manualRecommendations.status,'ready');
