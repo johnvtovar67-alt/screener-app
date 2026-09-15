@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 // Reuse the independent account fixture rather than recreate strategy rules.
 const setup=fs.readFileSync('tools/c1-account-seed-regression.cjs','utf8').split('const initialView=')[0];
-const fixture=new Function('require',setup+';return {loader,baseline,baselineBook,privateAccount,opening,plan,portfolio};')(require);
+const fixture=new Function('require',setup+';return {loader,baseline,baselineBook,privateAccount,opening,plan,portfolio,sessions};')(require);
 const {loader,baseline,baselineBook,privateAccount,opening,plan,portfolio}=fixture;
 const intraday=loader.load('lib/c1IntradayActivity.js'),service=loader.load('lib/c1AccountService.js'),execution=loader.load('lib/c1AccountExecution.js');
 const now=new Date(opening.date+'T16:00:00Z'),ticket={id:'broker-sale',symbol:'T4',side:'sell',shares:3,price:plan.orders.find(o=>o.symbol==='T4'&&o.side==='sell').estimatedPrice,fee:.03,executedAt:opening.date+'T15:00:00Z'};
@@ -44,6 +44,29 @@ const after=service.evaluateC1Account({account:closed,book:closeBook,now:new Dat
 assert(Math.abs(after.actualCash-view.actualCash)<1e-7);assert(!after.positions.some(p=>p.symbol==='T4'));
 assert.equal(JSON.stringify(service.carryC1RecordedHoldings({account:closed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')})),JSON.stringify(closed));
 
+// A dropped opening purchase must free its projected slot for the next queued entry.
+const selectedAtOpen=new Set(plan.orders.filter(o=>o.side==='buy').map(o=>o.symbol));
+const movedOpening={...observed,prices:observed.prices.map(p=>({...p,observedPrice:selectedAtOpen.has(p.symbol)?p.open*1.04:p.open}))};
+const recheckedOpening=intraday.c1IntradayEntryRecheck({account:saved,opening:movedOpening,baseline,now});
+const refreshedPlan=execution.planC1ContinuedAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:[],opening:recheckedOpening,observedAt:now.toISOString()});
+const rebased=intraday.rebaseC1UnfilledEntryPlan({activity:saved.intradayActivity,plan:refreshedPlan,now});
+const refreshedRemaining=intraday.c1IntradayRemainingPlan({plan:refreshedPlan,activity:rebased,opening:recheckedOpening,baseline,decision:view,now});
+const alternative=refreshedRemaining.orders.find(o=>o.side==='buy'&&!selectedAtOpen.has(o.symbol));
+assert(alternative,'Next eligible queued stock must receive a quantity after the first choices fail current entry checks');
+assert(!refreshedRemaining.orders.some(o=>o.side==='buy'&&selectedAtOpen.has(o.symbol)));
+assert.equal(JSON.stringify(execution.reconcileC1ActualAccountFills({plan:rebased.plan,fills:rebased.fills,observedAt:now.toISOString()}).books),JSON.stringify(execution.reconcileC1ActualAccountFills({plan:saved.intradayActivity.plan,fills:saved.intradayActivity.fills,observedAt:now.toISOString()}).books));
+const replacement=intraday.recordC1IntradayActivity({account:{...saved,intradayActivity:rebased},plan:refreshedPlan,ticket:{id:'alternate-buy',symbol:alternative.symbol,side:'buy',shares:1,price:alternative.estimatedPrice,fee:0,executedAt:opening.date+'T15:30:00Z'},expectedRevision:1,now});
+const alternateClosed=service.carryC1RecordedHoldings({account:replacement,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
+const alternateView=service.evaluateC1Account({account:alternateClosed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
+assert(alternateView.positions.some(p=>p.symbol===alternative.symbol&&p.shares===1),'Alternative purchase must survive completed-session replay');
+const following={...fixture.sessions.find(s=>s.date>opening.date),corporateActions:[]};
+const followingBook={...closeBook,model:{sessions:[baseline,opening,following]},captures:[...closeBook.captures,{sessionDate:following.date,hash:'following-close',observedAt:following.date+'T21:00:00Z'}]};
+const followingAccount=service.carryC1RecordedHoldings({account:alternateClosed,book:followingBook,now:new Date(following.date+'T21:00:00Z')});
+assert(service.evaluateC1Account({account:followingAccount,book:followingBook,now:new Date(following.date+'T21:00:00Z')}).positions.some(p=>p.symbol===alternative.symbol&&p.shares===1),'Recorded alternative survives the next session without another activity confirmation');
+
+assert.equal(JSON.stringify(intraday.c1IntradayEntryRecheck({account:replacement,opening:observed,baseline,now}).entryRecheck),JSON.stringify(refreshedPlan.entryRecheck),'Recorded purchase retains its checked selection evidence');
+console.log('PASS: recorded sale → rejected opening buys → next queued entry → actual purchase → close replay, with unchanged actual books and original opening quotes.');
+
 // A repeat-confirmed, unowned candidate correction needs identical plans.
 const priceReview=loader.load('lib/c1OpeningPriceReview.js');
 const revisedSymbol=plan.orders.find(o=>o.side==='buy'&&!portfolio.some(p=>p.symbol===o.symbol)).symbol;
@@ -78,8 +101,8 @@ const context={...loader.load('lib/c1OpeningPriceReview.js'),...service,...execu
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
- let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false,openingUnavailable=false,priceRevision=false;
- const handler=context.factory({environment:'preview',commit:'test',clock:()=>now,readBook:async()=>({record:baselineBook}),collectOpening:async()=>{if(openingUnavailable)throw Error('Fresh opening quote missing for T4');return priceRevision?revisionOpening:observed;},store:{read:async()=>stored,write:async(path,record,etag)=>{if(fail)throw Error('Storage unavailable');assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
+ let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false,openingUnavailable=false,priceRevision=false,moved=false;
+ const handler=context.factory({environment:'preview',commit:'test',clock:()=>now,readBook:async()=>({record:baselineBook}),collectOpening:async()=>{if(openingUnavailable)throw Error('Fresh opening quote missing for T4');return moved?movedOpening:priceRevision?revisionOpening:observed;},store:{read:async()=>stored,write:async(path,record,etag)=>{if(fail)throw Error('Storage unavailable');assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
  async function request(body){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await handler({method:body?'POST':'GET',headers:{authorization:'Bearer '+'fixture'.repeat(6)},body},res);return res;}
  openingUnavailable=true;let unavailable=await request();assert.equal(unavailable.code,200);assert.equal(unavailable.body.intradaySession.sellOnly,true);assert.equal(unavailable.body.manualRecommendations.status,'waiting');assert.equal(unavailable.body.openingError,'Fresh opening quote missing for T4');openingUnavailable=false;
  let r=await request();assert.equal(r.code,200);assert(r.body.intradaySession,'Entry form is available during the open session');
@@ -109,6 +132,16 @@ vm.createContext(context);vm.runInContext(route,context);
  openingUnavailable=false;r=await request();assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.manualRecommendations.status,'ready');assert.equal(r.body.intradaySession.plan.recordingOnly,undefined);
  assert.equal(r.body.decision.actualCash,fallbackCash);assert(r.body.manualRecommendations.orders.some(o=>o.side==='buy'));
  r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.decision.actualCash,fallbackCash,'Retry after provider recovery must not double-credit sale');
+ stored={record:JSON.parse(original),etag:'moved0'};moved=false;
+ r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200);
+ moved=true;r=await request();assert.equal(r.code,200,JSON.stringify(r.body));
+ const apiAlternative=r.body.manualRecommendations.orders.find(o=>o.side==='buy'&&!selectedAtOpen.has(o.symbol));assert(apiAlternative,'API must promote the next queued eligible stock after price rejection');
+ assert(r.body.openingPlan.entryRecheck.blocks.length>0);
+ r=await request({operation:'record-intraday',ticket:{...buyTicket,id:'api-alternative',symbol:apiAlternative.symbol,price:apiAlternative.estimatedPrice},expectedRevision:r.body.decision.revision});assert.equal(r.code,200,JSON.stringify(r.body));
+ const apiClosed=service.carryC1RecordedHoldings({account:stored.record,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
+ assert(service.evaluateC1Account({account:apiClosed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')}).positions.some(p=>p.symbol===apiAlternative.symbol&&p.shares===1));
+ r=await request();assert.equal(r.code,200);assert(r.body.decision.positions.some(p=>p.symbol===apiAlternative.symbol));
+ r=await request({operation:'record-session',record:{date:opening.date,entryRecheck:{}},expectedRevision:stored.record.revision});assert.equal(r.code,409);assert.match(r.body.error,/server only/);
  console.log('PASS: missing candidate data → recorded exit → preserved cash → verified-plan recovery and closing replay; no buy authorization bypass.');
  console.log('PASS: intraday API sale → actual cash → qualified replacement → recorded purchase → reload → closing replay; partial sales, duplicates, storage failure and Core preservation.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
