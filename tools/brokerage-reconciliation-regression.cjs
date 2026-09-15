@@ -20,6 +20,10 @@ assert.equal(check.status,'balances-match');assert.equal(check.executable,false)
 assert.equal(check.portfolioSignature,JSON.stringify(holdings));
 assert.ok(page.includes('transactionCheck.portfolioSignature===JSON.stringify(portfolio)'));
 assert.ok(!body.includes('fetch(')&&!body.includes('localStorage.setItem')&&!body.includes('setPortfolio(')&&!body.includes('setC1Control('));
-assert.ok(page.includes('decision.source==="c1-capital-reconciliation"?"Verification needed":decision.action'));
+const display=page.match(/displayAction=(.*?),time=swingTimeReview/)[1];
+const label=new Function('decision','return '+display);
+assert.equal(label({source:'c1-capital-reconciliation',action:'Exit'}),'Verification needed');
+assert.equal(label({source:'c1-actual-account',action:'Exit candidate'}),'Exit');
+assert.equal(label({source:'c1-actual-account',action:'Stop review'}),'Stop review');
 console.log('PASS: transaction reconstruction, duplicates, dates, fees, cash flows, local import, no trading authority');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,3 +1,4 @@
+import {recordC1IntradayActivity,c1IntradayDecision,c1IntradayRemainingPlan} from '../../lib/c1IntradayActivity';
 import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
 import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
 import {c1AccountReviewBook} from '../../lib/c1HeldRankReview';
@@ -66,7 +67,10 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      // Refresh saves only newly verified private holding observations.
     }else if(req.body?.operation==='correct-opening-date'&&saved){
      account=correctC1AccountOpenedAt({account,symbol:req.body.symbol,openedAt:req.body.openedAt,expectedRevision:req.body.expectedRevision,book,now});
+    }else if(req.body?.operation==='record-intraday'&&saved){
+     // Validated against a server-generated plan below; no client orders trusted.
     }else if(req.body?.operation==='record-session'&&saved){
+     if(account.intradayActivity?.date===req.body.record?.date)throw new Error('Trades for this session are already saved intraday. Reload to reconcile them; do not replace them with another session record.');
      if(account.revision!==req.body.expectedRevision)throw new Error('Account changed; refresh before recording activity');
      const prior=carryC1RecordedHoldings({account,book,now,beforeDate:req.body.record?.date});
      account=appendC1AccountSession({account:prior,record:req.body.record,book,expectedRevision:req.body.expectedRevision,now});
@@ -98,22 +102,37 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code:'ACCOUNT_SESSION_BEHIND',stage:'account-review'}));
     }
    }
-   if(req.method==='POST')account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});
+   if(req.method==='POST'&&req.body?.operation!=='record-intraday')account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});
    const pendingSessions=[];
-   const analysisAccount=carryC1RecordedHoldings({account,book,now,onPending:pending=>pendingSessions.push(pending)});
+   let analysisAccount=carryC1RecordedHoldings({account,book,now,onPending:pending=>pendingSessions.push(pending)});
    let decision=evaluateC1Account({account:analysisAccount,book,now});
    const pendingSession=pendingSessions.at(-1)||null;
-   let openingPlan=null,openingError=null;
+   let openingPlan=null,openingError=null,intradaySession=null;
    if(decision.current){
     try{
      const sessions=c1AccountReviewBook(c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)),account.holdingRankReviews).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
      const symbols=decision.requiredOpeningSymbols;
      const opening=await collectOpening({baseline,symbols,now});
-     if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();decision=applyC1OpeningPlan(decision,openingPlan);}
-    }catch(error){openingError=String(error?.message||'Opening plan unavailable').slice(0,200);}
+     if(opening){openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();
+      if(req.body?.operation==='record-intraday'){
+       account=recordC1IntradayActivity({account:analysisAccount,plan:openingPlan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
+       account=await saveC1AccountUpdate({store,path,saved,account,operation:'record-intraday',book,now});
+       analysisAccount=account;
+      }
+      const activity=analysisAccount.intradayActivity;
+      intradaySession={date:openingPlan.date,revision:analysisAccount.revision,plan:activity?.plan||openingPlan,fills:activity?.fills||[],tickets:activity?.tickets||[]};
+      if(activity){
+       decision=c1IntradayDecision({decision,activity,revision:analysisAccount.revision,now});
+       openingPlan=c1IntradayRemainingPlan({plan:openingPlan,activity,opening,baseline,decision,now});
+      }
+      decision=applyC1OpeningPlan(decision,openingPlan);
+     }
+    }catch(error){if(req.body?.operation==='record-intraday')throw error;openingError=String(error?.message||'Opening plan unavailable').slice(0,200);}
    }
+   if(req.body?.operation==='record-intraday'&&!intradaySession)throw new Error('Current-session prices are unavailable; the trade has not been saved. Retry during the regular session.');
+   if(analysisAccount.intradayActivity&&!intradaySession)decision=c1IntradayDecision({decision,activity:analysisAccount.intradayActivity,revision:analysisAccount.revision,now});
    const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now:clock()});
-   return res.status(200).json({decision,pendingSession,pendingSessions,openingPlan,openingError,manualRecommendations,holdingReviewError});
+   return res.status(200).json({decision,pendingSession,pendingSessions,intradaySession,openingPlan,openingError,manualRecommendations,holdingReviewError});
   }catch(error){const conflict=isC1AccountSaveConflict(error);return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
  };
 }

@@ -3,7 +3,7 @@ const assert=(cond,msg)=>{if(!cond)throw new Error(`PORTFOLIO SYNC REGRESSION FA
 const api=fs.readFileSync('pages/api/portfolio-sync.js','utf8');
 const page=fs.readFileSync('pages/index.js','utf8');
 assert(api.includes("access:'private'"),'cloud portfolio must use private blob storage');
-assert(api.includes("get(path,{access:'private',useCache:false})"),'private blob reads must pass required access options');
+assert(api.includes("get(path,{access:'private',useCache:false,headers:{'accept-encoding':'identity'}})"),'private blob reads must pass required access options');
 assert(api.includes("get('portfolio-sync-health/nonexistent.json',{access:'private',useCache:false})"),'health check must exercise private blob read configuration');
 assert(api.includes("createHash('sha256')"),'sync key must be hashed before becoming a blob pathname');
 assert(!api.includes('`${PREFIX}${key}'),'raw sync key must not be used in blob pathname');
