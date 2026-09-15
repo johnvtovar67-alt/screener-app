@@ -127,7 +127,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
       }
       decision=applyC1OpeningPlan(decision,openingPlan);
      }
-    }catch(error){if(req.body?.operation==='record-intraday')throw error;openingError=String(error?.message||'Opening plan unavailable').slice(0,200);}
+    }catch(error){if(req.body?.operation==='record-intraday')throw error;openingError=String(error?.message||'Opening plan unavailable').slice(0,200);console.warn('C1_OPENING_UNAVAILABLE',JSON.stringify({reason:openingError}));}
    }
    if(req.body?.operation==='record-intraday'&&!intradaySession)throw new Error('Current-session prices are unavailable; the trade has not been saved. Retry during the regular session.');
    if(analysisAccount.intradayActivity&&!intradaySession)decision=c1IntradayDecision({decision,activity:analysisAccount.intradayActivity,revision:analysisAccount.revision,now});
