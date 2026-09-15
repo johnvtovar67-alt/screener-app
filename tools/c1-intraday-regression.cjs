@@ -44,17 +44,46 @@ const after=service.evaluateC1Account({account:closed,book:closeBook,now:new Dat
 assert(Math.abs(after.actualCash-view.actualCash)<1e-7);assert(!after.positions.some(p=>p.symbol==='T4'));
 assert.equal(JSON.stringify(service.carryC1RecordedHoldings({account:closed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')})),JSON.stringify(closed));
 
+// A repeat-confirmed, unowned candidate correction needs identical plans.
+const priceReview=loader.load('lib/c1OpeningPriceReview.js');
+const revisedSymbol=plan.orders.find(o=>o.side==='buy'&&!portfolio.some(p=>p.symbol===o.symbol)).symbol;
+const originalBar=baseline.prices.find(p=>p.symbol===revisedSymbol);
+const correctedClose=originalBar.close*1.000374476;
+const observedBar={...originalBar,date:baseline.date,close:correctedClose,high:Math.max(originalBar.high,correctedClose)};
+const revision={symbol:revisedSymbol,savedClose:originalBar.close,observedBar,rechecked:true};
+const revisionOpening={...observed,priceBasisRevisions:[revision],receipt:{...observed.receipt,previousAdjustedClosesUnchanged:false}};
+const comparablePlan=execution.planC1ContinuedAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:privateAccount.records,opening:revisionOpening,observedAt:revisionOpening.receipt.observedAt,completionPolicy:execution.c1CompletionPolicy(privateAccount.positionContext)});
+const reviewed=priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:revisionOpening,plan:{...comparablePlan,sourceReceipt:revisionOpening.receipt},now});
+assert(priceReview.verifiedC1OpeningPriceBasis(reviewed.sourceReceipt));assert.equal(JSON.stringify(reviewed.orders),JSON.stringify(comparablePlan.orders));assert.equal(baseline.prices.find(p=>p.symbol===revisedSymbol).close,originalBar.close);
+assert(!priceReview.verifiedC1OpeningPriceBasis(revisionOpening.receipt),'An unreconciled revision cannot pass');
+assert.throws(()=>priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:{...revisionOpening,priceBasisRevisions:[{...revision,rechecked:false}]},plan,now}),/consistent provider evidence/);
+assert.throws(()=>priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:{...revisionOpening,priceBasisRevisions:[{...revision,symbol:'T4'}]},plan,now}),/account history/);
+assert.throws(()=>priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:{...revisionOpening,priceBasisRevisions:[{...revision,symbol:'SPY'}]},plan,now}),/account history/);
+const boundaryOpening={...revisionOpening,prices:observed.prices.map(p=>p.symbol===revisedSymbol?{...p,open:originalBar.close*1.025}:p)};
+const boundaryPlan=execution.planC1ContinuedAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:[],opening:boundaryOpening,observedAt:boundaryOpening.receipt.observedAt,completionPolicy:execution.c1CompletionPolicy(privateAccount.positionContext)});
+const lowered=originalBar.close*.99;
+assert.throws(()=>priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:{...boundaryOpening,priceBasisRevisions:[{...revision,observedBar:{...observedBar,close:lowered,low:Math.min(observedBar.low,lowered)}}]},plan:boundaryPlan,now}),/changes opening orders/);
+
+const provider={...loader.load('lib/marketSession.js'),Date};vm.createContext(provider);vm.runInContext(fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function '),provider);
+const tinyBaseline={date:baseline.date,universeSymbols:['AAA'],prices:[{symbol:'AAA',close:100}],signals:[{symbol:'AAA',sector:'Technology'}]};
+const anchor={date:baseline.date,open:100,high:101,low:99,close:100.04};
+const tiny={baseline:tinyBaseline,symbols:['AAA'],membersBefore:[{symbol:'AAA',sector:'Technology'}],membersAfter:[{symbol:'AAA',sector:'Technology'}],observations:{AAA:{quote:{symbol:'AAA',timestamp:now.getTime()/1000,open:100,price:100},anchor,anchorRecheck:{...anchor}}},now};
+assert.throws(()=>provider.validateC1OpeningObservations(tiny),/price basis changed/);
+const checked=provider.validateC1OpeningObservations({...tiny,allowPriceRevisionReview:true});assert.equal(checked.receipt.previousAdjustedClosesUnchanged,false);assert.equal(checked.priceBasisRevisions.length,1);
+assert.throws(()=>provider.validateC1OpeningObservations({...tiny,allowPriceRevisionReview:true,observations:{AAA:{...tiny.observations.AAA,anchorRecheck:{...anchor,close:100.05}}}}),/not stable/);
+
 // Exercise the actual API with an injected store and observed-price provider.
-const context={...service,...execution,...intraday,...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountDecision.js'),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1HeldRankReview.js'),
+const context={...loader.load('lib/c1OpeningPriceReview.js'),...service,...execution,...intraday,...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountDecision.js'),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1HeldRankReview.js'),
  collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),missingC1HoldingPrices:()=>[],collectC1HoldingCoverage:async()=>{throw Error('Unexpected holding collection');},collectC1AccountOpening:async()=>null,readStoredC1DatedBook:async()=>null,createHash:require('node:crypto').createHash,process:{env:{}},get(){},put(){},Date,console};
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
- let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false,openingUnavailable=false;
- const handler=context.factory({environment:'preview',commit:'test',clock:()=>now,readBook:async()=>({record:baselineBook}),collectOpening:async()=>{if(openingUnavailable)throw Error('Fresh opening quote missing for T4');return observed;},store:{read:async()=>stored,write:async(path,record,etag)=>{if(fail)throw Error('Storage unavailable');assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
+ let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false,openingUnavailable=false,priceRevision=false;
+ const handler=context.factory({environment:'preview',commit:'test',clock:()=>now,readBook:async()=>({record:baselineBook}),collectOpening:async()=>{if(openingUnavailable)throw Error('Fresh opening quote missing for T4');return priceRevision?revisionOpening:observed;},store:{read:async()=>stored,write:async(path,record,etag)=>{if(fail)throw Error('Storage unavailable');assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
  async function request(body){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await handler({method:body?'POST':'GET',headers:{authorization:'Bearer '+'fixture'.repeat(6)},body},res);return res;}
  openingUnavailable=true;let unavailable=await request();assert.equal(unavailable.code,200);assert.equal(unavailable.body.intradaySession.sellOnly,true);assert.equal(unavailable.body.manualRecommendations.status,'waiting');assert.equal(unavailable.body.openingError,'Fresh opening quote missing for T4');openingUnavailable=false;
  let r=await request();assert.equal(r.code,200);assert(r.body.intradaySession,'Entry form is available during the open session');
+ priceRevision=true;r=await request();assert.equal(r.code,200);assert.equal(r.body.manualRecommendations.status,'ready',JSON.stringify(r.body));assert.equal(r.body.openingPlan.sourceReceipt.priceBasisReview.identicalOpeningPlan,true);assert.equal(writes,0);priceRevision=false;
  fail=true;r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,409);assert.equal(writes,0);fail=false;
  r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.intradaySession.tickets.length,1);assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));assert.equal(r.body.manualRecommendations.status,'ready');
  assert(r.body.manualRecommendations.orders.some(o=>o.side==='buy'&&!o.condition));
