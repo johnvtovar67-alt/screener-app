@@ -9,9 +9,10 @@ const blobs = new Map(), writes = [];
 const box = { ...market, Date, Buffer, Response, createHash, gzipSync, gunzipSync,
   C1_LIVE_INPUT_CONTRACT:'c1-dated-index-input-v1', c1DatedBookPath:()=> 'test/book.json.gz',
   put:async(path,bytes,options)=>{writes.push({path,options});assert.equal(options.access,'private');assert.equal(options.allowOverwrite,false);if(blobs.has(path))throw new Error('exists');blobs.set(path,bytes);},
+  list:async({prefix})=>({hasMore:false,blobs:[...blobs.keys()].filter(p=>p.startsWith(prefix)).map(pathname=>({pathname}))}),
   get:async(path,options)=>{assert.equal(options.access,'private');assert.equal(options.useCache,false);return blobs.has(path)?{statusCode:200,stream:new Response(blobs.get(path)).body}:null;}
 };
-vm.createContext(box);vm.runInContext(source+'\nglobalThis.archive=archiveC1IndexObservation;',box);
+vm.createContext(box);vm.runInContext(source+'\nglobalThis.archive=archiveC1IndexObservation;globalThis.readObservations=readC1IndexObservations;',box);
 (async()=>{
   const now=new Date('2026-09-11T22:00:00Z');
   const input={contract:'c1-dated-index-input-v1',universe:'sp500',sourceSessionDate:'2026-09-11',observedAt:'2026-09-11T21:00:00.000Z',
@@ -26,8 +27,13 @@ vm.createContext(box);vm.runInContext(source+'\nglobalThis.archive=archiveC1Inde
   const changed=JSON.parse(before);changed.priorSessionPrices.closes.ABBV=254.98;
   const b=await box.archive(changed,{now});assert.notEqual(b.observationHash,a.observationHash);assert.equal(blobs.size,2);
   assert.equal(JSON.parse(gunzipSync(blobs.get(path))).payload.priorSessionPrices.closes.ABBV,255,'Later price revision does not overwrite original');
+  const recovered=await box.readObservations('2026-09-11',{now:new Date('2026-09-15T22:00:00Z')});
+  assert.equal(recovered.length,2);assert.equal(recovered[0].observedAt,input.observedAt);
+  assert.equal((await box.readObservations('2026-09-14',{now:new Date('2026-09-15T22:00:00Z')})).length,0);
+  await assert.rejects(()=>box.readObservations('2026-09-16',{now}),/Invalid/);
   const damaged={...saved,acceptedModelInput:true};blobs.set(path,gzipSync(JSON.stringify(damaged)));
   await assert.rejects(()=>box.archive(input,{now}),/archive unavailable/);
+  await assert.rejects(()=>box.readObservations('2026-09-11',{now}),/integrity/);
   await assert.rejects(()=>box.archive(input,{now,store:{write:async()=>{throw new Error('private token');},read:async()=>null}}),/^Error: Index observation archive unavailable$/);
   await assert.rejects(()=>box.archive({...input,observedAt:'2026-09-12T22:00:00Z'},{now}),/Current provider observation/);
   const {c1SourcePriceEvidence}=loader.load('lib/c1LiveInput.js');

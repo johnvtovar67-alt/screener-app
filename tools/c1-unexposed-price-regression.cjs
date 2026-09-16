@@ -41,3 +41,32 @@ const waiting=manual.buildC1ManualRecommendations({decision:{current:false,updat
 assert.match(waiting.reason,/Market-data update pending/);assert.equal(waiting.orders.length,0);assert.doesNotMatch(waiting.reason,/Record outstanding/);
 assert.match(fs.readFileSync('components/C1AccountOpportunities.js','utf8'),/C1 ratings awaiting update/);
 console.log('PASS: Monday rollover with five unexposed revisions; exact economic parity, immutable history, retry, evidence validation, model/account exposure blocks and honest stale status');
+// General correction path: a new held name/date/book, independent of DELL review.
+const heldInput=clone(input);
+heldInput.priorSessionPrices.closes.AAA=99.9;
+heldInput.priceEvidence.rows.find(r=>r.symbol==='AAA'&&r.date==='2026-09-11').adjClose=99.9;
+function observation(payload){return {contract:'c1-index-observation-v1',observationHash:crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex'),observedAt:payload.observedAt,sourceSessionDate:payload.sourceSessionDate,acceptedModelInput:false,executable:false,payload};}
+const earlier=clone(heldInput);earlier.observedAt=earlier.session.decisionAt='2026-09-14T21:00:00.000Z';
+const observations=[observation(earlier),observation(heldInput)];
+const corrected=accept(prior,heldInput,now,{observations});
+assert.equal(corrected.reconciliations.at(-1).reviewedHeldCloses[0].symbol,'AAA');
+assert.equal(JSON.stringify(corrected.model.sessions.slice(0,-1)),JSON.stringify(prior.model.sessions));
+assert.equal(JSON.stringify(prior),before);
+assert.equal(accept(corrected,heldInput,now,{observations}),corrected);
+assert.throws(()=>accept(prior,heldInput,now,{observations:[observations[0]]}),/reconciliation/);
+assert.throws(()=>accept(prior,heldInput,now,{observations:[observations[0],observations[0]]}),/reconciliation/);
+const tampered=clone(observations);tampered[0].payload.priceEvidence.rows[0].adjClose++;
+assert.throws(()=>accept(prior,heldInput,now,{observations:tampered}),/integrity/);
+for(const field of ['adjOpen','adjHigh','adjLow']){
+ const bad=clone(heldInput);bad.priceEvidence.rows.find(r=>r.symbol==='AAA'&&r.date==='2026-09-11')[field]+=.01;
+ const early=clone(bad);early.observedAt=early.session.decisionAt=earlier.observedAt;
+ assert.throws(()=>accept(prior,bad,now,{observations:[observation(early),observation(bad)]}),/reconciliation/);
+}
+const inconsistent=clone(earlier);inconsistent.priceEvidence.rows.find(r=>r.symbol==='AAA'&&r.date==='2026-09-11').adjClose=99.8;
+assert.throws(()=>accept(prior,heldInput,now,{observations:[observation(inconsistent),observations[1]]}),/reconciliation/);
+assert.throws(()=>imports.reconcileC1UnexposedPrices(prior,heldInput,now,digest,(model,...args)=>{
+ const r=imports.advanceC1ForwardModel(model,...args);
+ if(model.sessions.at(-1).prices.find(p=>p.symbol==='AAA').close===99.9)r.ledger.sleeves.base.cash++;
+ return r;
+},observations),/conditions/);
+console.log('PASS: repeat-confirmed held correction, immutable history, missing/duplicate/tampered/conflicting evidence, changed ranges and economic differences');

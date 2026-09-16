@@ -8,7 +8,7 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
 (async () => {
   const now = new Date('2026-09-11T22:00:00Z');
   let collections = 0, connections = 0; const stages = [], archived = [];
-  const dependencies = { now, onStage: stage => stages.push(stage), prepare: async () => ({sourceSessionDate:'2026-09-11'}),
+  const dependencies = { now, readObservations: async()=>[], onStage: stage => stages.push(stage), prepare: async () => ({sourceSessionDate:'2026-09-11'}),
     collect: async () => {collections++;return {sourceSessionDate:'2026-09-11'};},
     archive: async input => {archived.push(input); return {contract:'c1-index-observation-receipt-v1', observationHash:'a'.repeat(64),sourceSessionDate:input.sourceSessionDate,acceptedModelInput:false};},
     connect: async input => {connections++;return input;} };
@@ -30,6 +30,18 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
   assert.equal(archived.length,2,'Rejected transitions retain their actual observed input');
   await assert.rejects(()=>box.run({...dependencies,prepare:async()=>({sourceSessionDate:'2026-09-10'}),archive:async()=>{throw new Error('Index observation archive unavailable');}}),/archive unavailable/);
   assert.equal(connections,1,'An unarchived observation is not connected');
+
+  const replay=[];
+  const recoveryDeps={...dependencies,now:new Date('2026-09-15T22:00:00Z'),prepare:async()=>({sourceSessionDate:'2026-09-10'}),
+    collect:async()=>({sourceSessionDate:'2026-09-15'}),
+    readObservations:async day=>[{sourceSessionDate:day,observationHash:'a'.repeat(64),observedAt:day+'T22:00:00Z',payload:{sourceSessionDate:day}}],
+    connect:async(input,options)=>{replay.push([input.sourceSessionDate,options.now.toISOString()]);return input;}};
+  const caughtUp=await box.run(recoveryDeps);
+  assert.equal(caughtUp.recovered.length,2);
+  assert.equal(replay.map(r=>r[0]).join(','),'2026-09-11,2026-09-14,2026-09-15');
+  assert.equal(replay[0][1],'2026-09-11T22:00:00.000Z','Original observation time, no invented historical input');
+  await assert.rejects(()=>box.run({...recoveryDeps,readObservations:async()=>[]}),/Missing archived index session/);
+  await assert.rejects(()=>box.run({...recoveryDeps,prepare:async()=>({sourceSessionDate:'2026-08-20'})}),/five missing/);
 
   let calls=0; const logs=[];
   const route={Buffer,timingSafeEqual,console:{info:(...args)=>logs.push(args.join(' ')),error:(...args)=>logs.push(args.join(' '))},process:{env:{CRON_SECRET:'test-secret'}},refreshC1Index:async()=>{calls++;return {status:'advanced',decisionSnapshot:{decisionId:'same'}};}};
