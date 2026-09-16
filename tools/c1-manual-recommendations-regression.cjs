@@ -35,3 +35,10 @@ console.log('PASS: Exact account differences distinguish date-only corrections f
 require('./c1-live-display-regression.cjs');
 
 require('./c1-partial-completion-regression.cjs');
+const earlyNow=new Date('2026-11-27T17:59:30Z');
+const earlyPlan={...openingPlan,date:'2026-11-27',observedAt:earlyNow.toISOString(),quoteValidUntil:'2026-11-27T18:01:00Z',sourceReceipt:{...openingPlan.sourceReceipt,observedAt:earlyNow.toISOString()}};
+const earlyReview=build({decision,openingPlan:earlyPlan,now:earlyNow});
+assert.equal(earlyReview.status,'ready');assert.equal(earlyReview.validUntil,'2026-11-27T18:00:00.000Z');
+assert.equal(current(earlyReview,decision,new Date('2026-11-27T18:00:00Z')),false);
+assert.equal(build({decision,openingPlan:earlyPlan,now:new Date('2026-11-27T18:00:00Z')}).status,'waiting');
+console.log('PASS: checked quantities expire at the actual early close');
