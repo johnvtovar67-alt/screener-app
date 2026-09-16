@@ -1,6 +1,6 @@
 {
   "baselineCommit": "8007dc84820a9f2cb52266fe616df5406768815f",
-  "authorization": "Owner explicitly requested intraday completed-sale recording and same-day replacement review on September 15, plus clear Exit wording. Repair preserves frozen selections and engine rules; actual fills reconcile into completed sessions. Strong ETag sync repair preserves conditional writes. See docs/research/c1-intraday-activity-20260915.md. Follow-up owner screenshot shows hidden trade entry. Surface the existing opening error and explicit read-only retry in Account settings; log opening failure for diagnosis. No recommendation gates are changed. Owner follow-up shows DELL price-basis mismatch blocking an already-completed STX exit. Add accounting-only recording of existing pending exits with canonical replay reconciliation; preserve all buy checks, and expose compared market-data values for diagnosis. See docs/research/c1-recorded-exit-independence-20260915.md. Owner requests repair of DELL 534.08/534.28 revision blocking purchases. Require repeat-consistent provider OHLC, no prior account exposure, and identical opening/current-price economic plans under both price bases. Preserve original inputs and all strategy checks; no price tolerance. See docs/research/c1-opening-price-review-20260915.md. Owner explicitly requests repair of occupied-slot recommendations after the recorded STX sale. Recheck failed current entry gates before projection, preserve actual sale economics and saved selection evidence through closing replay. Frozen ranking, opening quotes, sizing and risk parameters are unchanged. See docs/research/c1-intraday-slot-repair-20260915.md. Owner explicitly approved action-card wording changes on September 15: lead with Buy/Add share quantity, remove Manual and Review now, clarify reference prices and refresh time. Presentation only; see docs/research/c1-action-wording-20260915.md.",
+  "authorization": "Owner explicitly requested intraday completed-sale recording and same-day replacement review on September 15, plus clear Exit wording. Repair preserves frozen selections and engine rules; actual fills reconcile into completed sessions. Strong ETag sync repair preserves conditional writes. See docs/research/c1-intraday-activity-20260915.md. Follow-up owner screenshot shows hidden trade entry. Surface the existing opening error and explicit read-only retry in Account settings; log opening failure for diagnosis. No recommendation gates are changed. Owner follow-up shows DELL price-basis mismatch blocking an already-completed STX exit. Add accounting-only recording of existing pending exits with canonical replay reconciliation; preserve all buy checks, and expose compared market-data values for diagnosis. See docs/research/c1-recorded-exit-independence-20260915.md. Owner requests repair of DELL 534.08/534.28 revision blocking purchases. Require repeat-consistent provider OHLC, no prior account exposure, and identical opening/current-price economic plans under both price bases. Preserve original inputs and all strategy checks; no price tolerance. See docs/research/c1-opening-price-review-20260915.md. Owner explicitly requests repair of occupied-slot recommendations after the recorded STX sale. Recheck failed current entry gates before projection, preserve actual sale economics and saved selection evidence through closing replay. Frozen ranking, opening quotes, sizing and risk parameters are unchanged. See docs/research/c1-intraday-slot-repair-20260915.md. Owner explicitly approved action-card wording changes on September 15: lead with Buy/Add share quantity, remove Manual and Review now, clarify reference prices and refresh time. Presentation only; see docs/research/c1-action-wording-20260915.md. Owner explicitly requests repair of the September 15 EOD update. Reconcile only the independently reviewed held DELL close/volume correction with exact economic parity and immutable history; evaluate private exposure at the prior revised date. See docs/research/c1-held-close-review-20260915.md. Only affected application hashes updated; guard and build hooks unchanged.",
   "files": {
     "components/C1AccountActivity.js": "e931a7eb6ed1ad1f5f4f14e3f3e5d9c11abc3ce4",
     "components/C1AccountDifferences.js": "7cb9f6cf5abb429907d507863d9b05497e236f10",
@@ -11,7 +11,7 @@
     "lib/c1AccountDecision.js": "51c43113f2bae78abde83d1cd5ce5c5f65727a1b",
     "lib/c1AccountDifferences.js": "e52d36812c4eba4a5770d5450f1566e21d327b11",
     "lib/c1AccountExecution.js": "65a2a8415e2ab2aa9be749468428341232e0acc4",
-    "lib/c1AccountInput.js": "7719ac3b745067b2b42434999b7bc06fa510b8b8",
+    "lib/c1AccountInput.js": "abb7f375667610eb1a90668cbef2a9ac27b7b933",
     "lib/c1AccountOpeningProvider.js": "16dae4de9b73b5679ef9161c53d1d8a93457b7f1",
     "lib/c1AccountPortfolio.js": "411cc6fb888b872c6af1fce4d82c7e94a717a289",
     "lib/c1AccountReconciliation.js": "fc05613dbe81f860396a35672aa92b47d1d46b84",
@@ -20,7 +20,7 @@
     "lib/c1AccountService.js": "c769c02a7989b462b5523d2e49e64d97d46bec63",
     "lib/c1AccountSimulator.js": "331110e59f3e5b7803811f1f7019dab83525610f",
     "lib/c1ActualFillReplay.js": "04ed0d7a3cbc39c10d4aac0fcf432a486bd5b2cd",
-    "lib/c1BaselineReconciliation.js": "59cb615b6cfff87e3b4ea7b3e9fe1881d4ea2af5",
+    "lib/c1BaselineReconciliation.js": "d44123cfc35b36a3d18807c0e75fc11dcb419816",
     "lib/c1BaselineRevisionReview.js": "df1c7ae8cc6a28a43ad7c80a5f88df0c3c180179",
     "lib/c1CapitalState.js": "cae7bb59a23cb3e998007e8b6a25235f44087a73",
     "lib/c1CombinedPortfolio.js": "62aefc81c2e547261a27f9afe963e1ba3b556708",
@@ -169,6 +169,7 @@
     "lib/c1StockClassification.js": "bba867e70c587b5e811bbf5172047cb415df8e02",
     "lib/c1IntradayActivity.js": "73efcbb071f8428bc1672f12aa0277d7ee0ebbb6",
     "components/C1IntradayActivity.js": "0ff5331695cb281da1dc911206c36c4201523320",
-    "lib/c1OpeningPriceReview.js": "2f6a0e29ac915c8469a7a7bbd49155e8dd684fd9"
+    "lib/c1OpeningPriceReview.js": "2f6a0e29ac915c8469a7a7bbd49155e8dd684fd9",
+    "lib/c1HeldCloseRevisionReview.js": "0baa882f99933328028dc6a32d4175f206970ec5"
   }
 }
