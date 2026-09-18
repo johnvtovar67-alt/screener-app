@@ -3,7 +3,8 @@ const { timingSafeEqual } = require('node:crypto');
 const { createResearchModuleLoader } = require('./research-module-loader.cjs');
 const market = createResearchModuleLoader(process.cwd()).load('lib/marketSession.js');
 const source = file => fs.readFileSync(file, 'utf8').replace(/^import .*;\n/gm, '').replace(/export default /g, '').replace(/export /g, '');
-const box = { ...market, Date }; vm.createContext(box);
+const review = createResearchModuleLoader(process.cwd()).load('lib/c1SessionRevisionReview.js').C1_SESSION_REVISION_REVIEW;
+const box = { ...market, Date, C1_SESSION_REVISION_REVIEW: review }; vm.createContext(box);
 vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1Index;', box);
 (async () => {
   const now = new Date('2026-09-11T22:00:00Z');
@@ -42,6 +43,20 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
   assert.equal(replay[0][1],'2026-09-11T22:00:00.000Z','Original observation time, no invented historical input');
   await assert.rejects(()=>box.run({...recoveryDeps,readObservations:async()=>[]}),/Missing archived index session/);
   await assert.rejects(()=>box.run({...recoveryDeps,prepare:async()=>({sourceSessionDate:'2026-08-20'})}),/five missing/);
+
+  const reviewedCapture={observationHash:review.observations.at(-1),observedAt:'2026-09-17T23:47:40.874Z',payload:{sourceSessionDate:'2026-09-17'}};
+  const newerCapture={observationHash:'later-unreviewed',observedAt:'2026-09-18T01:31:43.577Z',payload:{sourceSessionDate:'2026-09-17'}};
+  let reviewedConnections=0;
+  const reviewedDeps={...dependencies,now:new Date('2026-09-18T01:40:00Z'),
+    prepare:async()=>({sourceSessionDate:'2026-09-16',recordHash:review.priorRecordHash}),
+    readObservations:async()=>[reviewedCapture,newerCapture],
+    collect:async()=>{throw new Error('Must recover reviewed capture before new provider history');},
+    connect:async(input,options)=>{reviewedConnections++;assert.equal(input,reviewedCapture.payload);assert.equal(options.now.toISOString(),reviewedCapture.observedAt);assert.equal(options.observations.length,1);return input;}};
+  assert.equal((await box.run(reviewedDeps)).sourceSessionDate,'2026-09-17');
+  assert.equal(reviewedConnections,1);
+  await assert.rejects(()=>box.run({...reviewedDeps,readObservations:async()=>[newerCapture]}),/Reviewed index observation unavailable/);
+  await assert.rejects(()=>box.run({...reviewedDeps,connect:async()=>{throw new Error('Economic parity rejected');}}),/Economic parity rejected/);
+  await assert.rejects(()=>box.run({...reviewedDeps,prepare:async()=>({sourceSessionDate:'2026-09-16',recordHash:'different'})}),/Must recover/);
 
   let calls=0; const logs=[];
   const route={Buffer,timingSafeEqual,console:{info:(...args)=>logs.push(args.join(' ')),error:(...args)=>logs.push(args.join(' '))},process:{env:{CRON_SECRET:'test-secret'}},refreshC1Index:async()=>{calls++;return {status:'advanced',decisionSnapshot:{decisionId:'same'}};}};
