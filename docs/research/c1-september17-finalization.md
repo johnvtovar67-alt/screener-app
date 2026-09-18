@@ -13,3 +13,8 @@ Validation: local reproduction using actual accepted September 16 model and the 
 Changed application files: c1BaselineReconciliation.js, c1AccountInput.js, new c1ReviewedSessionRevision.js and c1SessionRevisionReview.js. Only these entries in docs/c1-release-freeze.json are updated/added; guard/build hooks are unchanged. CI adds the focused regression. No strategy, sizing, entry/exit, UI, holdings or cash reset.
 
 Limitation: this resolves the reviewed incident. Later provider revisions with changed ranges still need their own evidence review; this is not a claim that all future EOD revisions are automatically safe.
+
+## Production follow-up: preserve the reviewed capture
+The first live retry archived 805958e5c050116d24428f5a9d4146ddf6e480e179c7e02cc20524d40a18e6c6 at 2026-09-18T01:31:43.577Z. Relative to the two reviewed captures, FMP had revised HPE September 16 adjusted OHLC by -0.14 and KHC volume by 3,550. The exact evidence guard correctly rejected this newer, unreviewed history.
+
+For the exact reviewed prior record and September 17 date only, the lifecycle now recovers the last reviewed immutable contemporaneous capture before collecting later-adjusted history. This uses the existing guarded connect path, retains the original observation time, and excludes later observations from that historical validation time. It does not approve the newer HPE revision or overwrite original captures. Regression covers selection despite newer captures, missing reviewed evidence, propagated economic-parity rejection, and no recovery for another prior record. Only the c1IndexLifecycle application hash is updated in the release manifest; the guard is unchanged.
