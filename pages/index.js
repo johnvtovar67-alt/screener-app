@@ -7,7 +7,7 @@ import {mergeC1AccountPortfolio} from "../lib/c1AccountPortfolio";
 import C1AccountOpportunities from "../components/C1AccountOpportunities";
 import C1AccountActivity from "../components/C1AccountActivity";
 import C1ReconciliationDetails from "../components/C1ReconciliationDetails";
-import {c1AccountPositionDecision,c1AccountMatchesPortfolio} from "../lib/c1AccountDecision";
+import {c1AccountPositionDecision} from "../lib/c1AccountDecision";
 import {c1Presentation,c1DisplayDecision} from "../lib/c1Presentation";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {reconcileBrokerageCSV} from "../lib/brokerageReconciliation";
@@ -427,12 +427,16 @@ export default function Home(){
   const td=useMemo(()=>themeStocks.filter(s=>act(s)==="Watch"&&!dataQualityBlocked(s)).sort(deckRank).slice(0,10),[themeStocks]);
   // Swing allocations come exclusively from the C1 account opening plan.
   const buyQueue=[];
+  const accountDifferences=accountView?c1AccountDifferences(accountView.decision,portfolio):[];
+  const accountHoldingMismatch=accountDifferences.some(row=>row.symbol!=="CASH");
+  const accountCashDifference=accountDifferences.find(row=>row.symbol==="CASH")||null;
+  const accountMatches=accountDifferences.length===0;
 
   function rawPd(s){
     if(CASH.includes(sym(s)))return{action:"Cash",reason:"Dry powder."};
     if(s.role==="Swing"){
       if(!accountView)return{action:"Refresh required",reason:"C1 account analysis is unavailable. Reload to retry.",source:"c1-actual-account"};
-      if(!c1AccountMatchesPortfolio(accountView.decision,portfolio))return{action:"Review",reason:"Entered holdings differ from the recorded C1 account. Record the actual activity before using this analysis.",source:"c1-actual-account"};
+      if(accountHoldingMismatch)return{action:"Review",reason:"Entered holdings differ from the recorded C1 account. Record the actual activity before using this analysis.",source:"c1-actual-account"};
       return c1AccountPositionDecision(accountView.decision,sym(s),price(s))||{action:"Review",reason:"This holding is missing from the C1 account analysis. Review Account settings.",source:"c1-actual-account"};
     }
     if(s.error)return{action:"Review",reason:s.error};
@@ -547,8 +551,8 @@ export default function Home(){
     </div>
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
-    {["opportunities","portfolio"].includes(tab)&&accountView&&!c1AccountMatchesPortfolio(accountView.decision,portfolio)&&<p role="status">Account details need attention. <button onClick={()=>setTab("account-tools")}>Open Account settings</button></p>}
-    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} manualRecommendations={accountView.manualRecommendations} openingPlan={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.openingPlan:null} openingError={accountView.openingError} decision={c1AccountMatchesPortfolio(accountView.decision,portfolio)?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the differences in Account settings to restore candidates and checked quantities."}}/>}
+    {["opportunities","portfolio"].includes(tab)&&accountView&&!accountMatches&&<p role="status">{!accountHoldingMismatch&&accountCashDifference?<>Entered cash is {money(Number(accountCashDifference.entered))}; C1 records {money(Number(accountCashDifference.recorded))}. Existing holding guidance remains active; new purchases are paused until the cash history is reconciled. </>:<>Account details need attention. </>}<button onClick={()=>setTab("account-tools")}>Open Account settings</button></p>}
+    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} manualRecommendations={accountView.manualRecommendations} openingPlan={accountMatches?accountView.openingPlan:null} openingError={accountView.openingError} decision={accountMatches?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:accountHoldingMismatch?"Resolve the holding differences in Account settings to restore candidates and checked quantities.":"Existing holding guidance remains active. Reconcile the cash difference in Account settings before deploying new capital."}}/>}
     {tab==="opportunities"&&!accountView&&<section className="card" aria-label="C1 account unavailable">
       <h2>Opportunities</h2>
       <div className="emptyState" role="status"><b>{reloading||accountBusy?'Loading C1 analysis…':syncKey?'C1 analysis is unavailable.':'Connect your recorded portfolio to load C1.'}</b>
