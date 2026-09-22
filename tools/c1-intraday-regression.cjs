@@ -127,7 +127,7 @@ const checked=provider.validateC1OpeningObservations({...tiny,allowPriceRevision
 assert.throws(()=>provider.validateC1OpeningObservations({...tiny,allowPriceRevisionReview:true,observations:{AAA:{...tiny.observations.AAA,anchorRecheck:{...anchor,close:100.05}}}}),/not stable/);
 
 // Exercise the actual API with an injected store and observed-price provider.
-const context={...loader.load('lib/c1OpeningPriceReview.js'),...service,...execution,...intraday,...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountDecision.js'),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1HeldRankReview.js'),
+const context={...loader.load('lib/c1OpeningPriceReview.js'),...service,...execution,...intraday,...loader.load('lib/marketSession.js'),...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountDecision.js'),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1HeldRankReview.js'),
  collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),missingC1HoldingPrices:()=>[],collectC1HoldingCoverage:async()=>{throw Error('Unexpected holding collection');},collectC1AccountOpening:async()=>null,readStoredC1DatedBook:async()=>null,createHash:require('node:crypto').createHash,process:{env:{}},get(){},put(){},Date,console};
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
 vm.createContext(context);vm.runInContext(route,context);
@@ -185,7 +185,16 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.equal(r.code,200,JSON.stringify(r.body));assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));
  assert(r.body.manualRecommendations.orders.some(o=>o.side==='buy'&&o.postExitReplacement===true),'API must return the frozen next queued entry after an owner-recorded exit');
  assert(stored.record.intradayActivity.recordingEvidence.orders.some(o=>o.postExitReplacement===true));
+ const afterCloseNow=new Date(opening.date+'T20:30:00Z');
+ const afterCloseHandler=context.factory({environment:'preview',commit:'test',clock:()=>afterCloseNow,readBook:async()=>({record:baselineBook}),collectOpening:async()=>{throw Error('Opening collection must not be required after close');},store:{read:async()=>stored,write:async(path,record,etag)=>{assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
+ async function afterCloseRequest(body){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await afterCloseHandler({method:body?'POST':'GET',headers:{authorization:'Bearer '+'fixture'.repeat(6)},body},res);return res;}
+ let afterClose=await afterCloseRequest();assert.equal(afterClose.code,200);assert.equal(afterClose.body.intradaySession.afterClose,true,'The saved same-day plan remains available after the closing bell');
+ const afterCloseOrder=stored.record.intradayActivity.plan.orders.find(o=>o.side==='buy'&&o.postExitReplacement===true);
+ const afterCloseBuy={id:'after-close-broker-purchase',symbol:afterCloseOrder.symbol,side:'buy',shares:1,price:afterCloseOrder.estimatedPrice,fee:0,executedAt:opening.date+'T19:30:00Z'};
+ afterClose=await afterCloseRequest({operation:'record-intraday',ticket:afterCloseBuy,expectedRevision:stored.record.revision});
+ assert.equal(afterClose.code,200,JSON.stringify(afterClose.body));assert.equal(afterClose.body.intradaySession.tickets.length,2);assert(stored.record.intradayActivity.tickets.some(t=>t.id===afterCloseBuy.id));
  r=await request({operation:'record-session',record:{date:opening.date,entryRecheck:{}},expectedRevision:stored.record.revision});assert.equal(r.code,409);assert.match(r.body.error,/server only/);
+ console.log('PASS: a regular-session broker fill can be recorded from its saved plan after the closing bell without creating a new recommendation.');
  console.log('PASS: missing candidate data → recorded exit → preserved cash → verified-plan recovery and closing replay; no buy authorization bypass.');
  console.log('PASS: intraday API sale → actual cash → qualified replacement → recorded purchase → reload → closing replay; partial sales, duplicates, storage failure and Core preservation.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

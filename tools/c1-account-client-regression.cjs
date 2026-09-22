@@ -139,4 +139,5 @@ function client(fetcher){
 assert.ok(!page.includes('aria-label="C1 account status"'));
 assert.ok(!page.includes('alpha is not certified.'));
 assert.ok(page.includes('<C1AccountDifferences decision={accountView.decision}'));
+assert.ok(page.includes("type={syncKey?'password':'text'}"),'Connected portfolio sync keys must be masked on screen');
 console.log('PASS: Research disclosures removed; actionable account differences remain visible.');
