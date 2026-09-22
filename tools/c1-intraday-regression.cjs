@@ -14,6 +14,13 @@ assert.equal(intraday.recordC1IntradayActivity({account:saved,plan,ticket,expect
 assert.throws(()=>intraday.recordC1IntradayActivity({account:saved,plan,ticket:{...ticket,price:1},expectedRevision:1,now}),/Conflicting/);
 assert.throws(()=>intraday.recordC1IntradayActivity({account:privateAccount,plan,ticket:{...ticket,shares:4},expectedRevision:0,now}),/exceeds/);
 assert.throws(()=>intraday.recordC1IntradayActivity({account:privateAccount,plan,ticket:{...ticket,executedAt:opening.date+'T17:00:00Z'},expectedRevision:0,now}),/actual regular-session/);
+const correctionNow=new Date(opening.date+'T23:59:00Z'),correctedAt=opening.date+'T15:30:00.000Z';
+const corrected=intraday.correctC1IntradayTradeTime({account:saved,ticketId:ticket.id,executedAt:correctedAt,expectedRevision:1,now:correctionNow});
+assert.equal(corrected.intradayActivity.tickets[0].executedAt,correctedAt);assert(corrected.intradayActivity.fills.every(fill=>fill.executedAt===correctedAt));
+assert.equal(corrected.intradayActivity.tickets[0].shares,ticket.shares);assert.equal(corrected.intradayActivity.tickets[0].price,ticket.price);assert.equal(corrected.intradayActivity.tickets[0].fee,ticket.fee);
+assert.equal(saved.intradayActivity.tickets[0].executedAt,ticket.executedAt,'A correction must not mutate the prior revision');
+assert.throws(()=>intraday.correctC1IntradayTradeTime({account:saved,ticketId:ticket.id,executedAt:opening.date+'T22:15:00.000Z',expectedRevision:1,now:correctionNow}),/regular-session/);
+assert.throws(()=>intraday.correctC1IntradayTradeTime({account:saved,ticketId:ticket.id,executedAt:correctedAt,expectedRevision:0,now:correctionNow}),/Account changed/);
 const prior=service.evaluateC1Account({account:privateAccount,book:baselineBook,now});
 const view=intraday.c1IntradayDecision({decision:prior,activity:saved.intradayActivity,revision:saved.revision,now});
 assert(!view.positions.some(p=>p.symbol==='T4'));
@@ -40,6 +47,8 @@ const html=renderToStaticMarkup(React.createElement(record.exports.default,{sess
 assert.equal((html.match(/C1 planned sale: T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
 assert.match(html,/Other completed sale: T4/);assert.match(html,/up to 3 shares/);assert.match(html,/Save trade and update C1/);assert.match(html,/This trade has filled at Schwab/);
 assert.match(fs.readFileSync(file,'utf8'),/Saved in C1:/,'The form must show an explicit authoritative trade receipt');
+const savedHtml=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:saved.intradayActivity.fills,tickets:saved.intradayActivity.tickets,revision:1},onSave(){},onCorrectTime(){}}));
+assert.match(savedHtml,/Saved completed trades/);assert.match(savedHtml,/Sold 3 T4/);assert.match(savedHtml,/Correct time/);
 
 // A broker-confirmed owner sale is recordable without relabeling it as a C1 stop.
 const discretionaryPlan={...plan,orders:plan.orders.filter(o=>!(o.symbol==='T4'&&o.side==='sell'))};
@@ -141,6 +150,9 @@ vm.createContext(context);vm.runInContext(route,context);
  fail=true;r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,409);assert.equal(writes,0);fail=false;
  r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.intradaySession.tickets.length,1);assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));assert.equal(r.body.manualRecommendations.status,'ready');
  assert(r.body.manualRecommendations.orders.some(o=>o.side==='buy'&&!o.condition));
+ const cashBeforeTimeCorrection=r.body.decision.actualCash,apiCorrectedAt=opening.date+'T15:15:00.000Z';
+ r=await request({operation:'correct-intraday-time',ticketId:ticket.id,executedAt:apiCorrectedAt,expectedRevision:r.body.decision.revision});assert.equal(r.code,200,JSON.stringify(r.body));
+ assert.equal(r.body.intradaySession.tickets.find(row=>row.id===ticket.id).executedAt,apiCorrectedAt);assert.equal(r.body.decision.actualCash,cashBeforeTimeCorrection,'A time correction must not change account economics');
  const {mergeC1AccountPortfolio}=loader.load('lib/c1AccountPortfolio.js');
  const entered=mergeC1AccountPortfolio(portfolio.filter(p=>p.symbol!=='T4'),r.body.decision);
  assert(loader.load('lib/c1AccountDecision.js').c1AccountMatchesPortfolio(r.body.decision,entered));
