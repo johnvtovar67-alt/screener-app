@@ -169,7 +169,7 @@
     "lib/c1StockClassification.js": "bba867e70c587b5e811bbf5172047cb415df8e02",
     "lib/c1IntradayActivity.js": "3bc2bb194ad90a1cf0ec2e54bc76afcbce864ee2",
     "components/C1IntradayActivity.js": "0ff5331695cb281da1dc911206c36c4201523320",
-    "lib/c1OpeningPriceReview.js": "2f6a0e29ac915c8469a7a7bbd49155e8dd684fd9",
+    "lib/c1OpeningPriceReview.js": "afbef6951fd83762ae46f3b54b1c799eeb77a8a7",
     "lib/c1HeldCloseRevisionReview.js": "0baa882f99933328028dc6a32d4175f206970ec5",
     "lib/c1ReviewedSessionRevision.js": "3d241bf8a5eddd592067ac908510eea3f4ea0a87",
     "lib/c1SessionRevisionReview.js": "81b20c650c7daac35ffd2e18850bfd42923d1520"

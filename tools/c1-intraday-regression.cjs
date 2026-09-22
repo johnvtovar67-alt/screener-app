@@ -80,8 +80,16 @@ const reviewed=priceReview.reviewC1OpeningPriceRevisions({account:privateAccount
 assert(priceReview.verifiedC1OpeningPriceBasis(reviewed.sourceReceipt));assert.equal(JSON.stringify(reviewed.orders),JSON.stringify(comparablePlan.orders));assert.equal(baseline.prices.find(p=>p.symbol===revisedSymbol).close,originalBar.close);
 assert(!priceReview.verifiedC1OpeningPriceBasis(revisionOpening.receipt),'An unreconciled revision cannot pass');
 assert.throws(()=>priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:{...revisionOpening,priceBasisRevisions:[{...revision,rechecked:false}]},plan,now}),/consistent provider evidence/);
-assert.throws(()=>priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:{...revisionOpening,priceBasisRevisions:[{...revision,symbol:'T4'}]},plan,now}),/account history/);
-assert.throws(()=>priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:{...revisionOpening,priceBasisRevisions:[{...revision,symbol:'SPY'}]},plan,now}),/account history/);
+const verifiedRevisionFor=symbol=>{const saved=baseline.prices.find(p=>p.symbol===symbol),close=saved.close*1.000001;return {symbol,savedClose:saved.close,
+ observedBar:{...saved,date:baseline.date,close,high:Math.max(saved.high,close)},rechecked:true};};
+const reviewVerifiedRevision=revision=>{const candidateOpening={...revisionOpening,priceBasisRevisions:[revision]},candidatePlan=execution.planC1ContinuedAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:privateAccount.records,opening:candidateOpening,observedAt:candidateOpening.receipt.observedAt,completionPolicy:execution.c1CompletionPolicy(privateAccount.positionContext)});
+ return priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:candidateOpening,plan:{...candidatePlan,providerVerified:true,sourceReceipt:candidateOpening.receipt,quoteValidUntil:new Date(now.getTime()+120000).toISOString()},now});};
+const heldRevision=verifiedRevisionFor('T4'),heldReviewed=reviewVerifiedRevision(heldRevision);
+assert(priceReview.verifiedC1OpeningPriceBasis(heldReviewed.sourceReceipt));
+assert.equal(heldReviewed.sourceReceipt.priceBasisReview.revisions[0].accountTreatment,'preserved-recorded-basis');
+assert.equal(baseline.prices.find(p=>p.symbol==='T4').close,heldRevision.savedClose,'Recorded position basis remains immutable');
+const benchmarkReviewed=reviewVerifiedRevision(verifiedRevisionFor('SPY'));
+assert.equal(benchmarkReviewed.sourceReceipt.priceBasisReview.revisions[0].accountTreatment,'verified-parity-overlay');
 const boundaryOpening={...revisionOpening,prices:observed.prices.map(p=>p.symbol===revisedSymbol?{...p,open:originalBar.close*1.025}:p)};
 const boundaryPlan=execution.planC1ContinuedAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:[],opening:boundaryOpening,observedAt:boundaryOpening.receipt.observedAt,completionPolicy:execution.c1CompletionPolicy(privateAccount.positionContext)});
 const lowered=originalBar.close*.99;
