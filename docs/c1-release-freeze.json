@@ -171,7 +171,7 @@
     "components/C1IntradayActivity.js": "0ff5331695cb281da1dc911206c36c4201523320",
     "lib/c1OpeningPriceReview.js": "2f6a0e29ac915c8469a7a7bbd49155e8dd684fd9",
     "lib/c1HeldCloseRevisionReview.js": "0baa882f99933328028dc6a32d4175f206970ec5",
-    "lib/c1ReviewedSessionRevision.js": "0c6a705328d0c365bd4c806a143fe2fe8f0af0b6",
+    "lib/c1ReviewedSessionRevision.js": "3d241bf8a5eddd592067ac908510eea3f4ea0a87",
     "lib/c1SessionRevisionReview.js": "81b20c650c7daac35ffd2e18850bfd42923d1520"
   }
 }

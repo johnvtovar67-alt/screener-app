@@ -66,6 +66,17 @@ const split=reconcile(priorTwo,inputTwo,new Date(observedAt),digest,advance,spli
 assert.equal(split.audit.confirmationCount,2);assert.equal(split.audit.observations.length,3);
 assert.equal(JSON.stringify(split.audit.mismatches.map(row=>row.symbol)),JSON.stringify(['AAA','BBB']));
 
+// A scheduled membership transition preserves removed constituents' accepted
+// prior bars while reconciling repeat-confirmed symbols common to both sets.
+const transitionInput={...inputTwo,priorSessionPrices:{date:'2026-09-20',closes:{AAA:99.9,CCC:25}},
+ priceEvidence:{...inputTwo.priceEvidence,rows:[inputTwo.priceEvidence.rows[0],
+  {symbol:'CCC',date:'2026-09-20',adjOpen:25,adjHigh:26,adjLow:24,adjClose:25,volume:250}]}};
+const transitionObservation=(at,hash)=>({observedAt:at,observationHash:hash,payload:{...transitionInput,observedAt:at}});
+const transition=reconcile(priorTwo,transitionInput,new Date(observedAt),digest,advance,[
+ transitionObservation('2026-09-21T21:58:00.000Z','f'.repeat(64)),transitionObservation(observedAt,'1'.repeat(64))]);
+assert.equal(transition.audit.confirmationCount,1);assert.equal(transition.audit.correctedPrices.length,2);
+assert.equal(transition.audit.correctedPrices.find(row=>row.symbol==='BBB').close,50);
+
 const automaticAudit=automatic.audit,automaticBook={reconciliations:[automaticAudit],captures:[{sessionDate:'2026-09-21',observedAt}],
  model:{sessions:[previous,{date:'2026-09-21',prices:[{symbol:'AAA',close:102}]}]}};
 const automaticAccount={adoption:{sourceSessionDate:'2026-09-19',seeds:{}},records:[],positionContext:{}};
