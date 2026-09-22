@@ -74,6 +74,16 @@ function anchorDiagnostic(error) {
     })) };
 }
 
+function revisionDiagnostic(error) {
+  const detail = error?.providerRevisionDiagnostic;
+  const stages = ['source','evidence','archive','changes','confirmation','model-parity','execution'];
+  if (!detail || !stages.includes(detail.stage) ||
+      (detail.unconfirmedCount !== undefined && (!Number.isInteger(detail.unconfirmedCount) ||
+       detail.unconfirmedCount < 0 || detail.unconfirmedCount > 600))) return undefined;
+  return { stage: detail.stage, ...(detail.unconfirmedCount === undefined ? {} :
+    { unconfirmedCount: detail.unconfirmedCount }) };
+}
+
 export const config = { maxDuration: 300 };
 
 function observationDiagnostic(receipt) {
@@ -111,7 +121,9 @@ export default async function handler(req, res) {
     console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate, observation: observationDiagnostic(result.observationReceipt) }));
     return res.status(200).json(body);
   } catch (error) {
-    console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error), priceAnchors: anchorDiagnostic(error), observation: observationDiagnostic(error?.indexObservation) }));
+    console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error),
+      priceAnchors: anchorDiagnostic(error), providerRevision: revisionDiagnostic(error),
+      observation: observationDiagnostic(error?.indexObservation) }));
     return res.status(503).json({ status: 'index-unavailable', executable: false,
       error: String(error?.message || 'Index collection failed').slice(0, 220) });
   }
