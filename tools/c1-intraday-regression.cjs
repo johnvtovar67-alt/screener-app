@@ -160,6 +160,17 @@ vm.createContext(context);vm.runInContext(route,context);
  const closedFallback=service.carryC1RecordedHoldings({account:stored.record,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
  assert(Math.abs(service.evaluateC1Account({account:closedFallback,book:closeBook,now:new Date(opening.date+'T21:00:00Z')}).actualCash-fallbackCash)<1e-7);
  assert(closedFallback.records[0].recordingEvidence,'Original accounting-only order evidence retained');
+ const fallbackStored=JSON.parse(JSON.stringify(stored));
+ stored={record:JSON.parse(JSON.stringify(noReplacementSale)),etag:'legacy-owner-exit0'};
+ const legacyAfterCloseNow=new Date(opening.date+'T21:00:00Z');
+ const legacyAfterCloseHandler=context.factory({environment:'preview',commit:'test',clock:()=>legacyAfterCloseNow,readBook:async()=>({record:closeBook}),collectOpening:async()=>{throw Error('Live opening collection must not reconstruct a completed-session replacement');},store:{read:async()=>stored,write:async(path,record,etag)=>{assert.equal(etag,stored.etag);stored={record,etag:'v'+(++writes)};}}});
+ async function legacyAfterCloseRequest(body){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await legacyAfterCloseHandler({method:body?'POST':'GET',headers:{authorization:'Bearer '+'fixture'.repeat(6)},body},res);return res;}
+ let legacyRecovery=await legacyAfterCloseRequest();assert.equal(legacyRecovery.code,200,JSON.stringify(legacyRecovery.body));
+ const recoveredReplacement=legacyRecovery.body.intradaySession.plan.orders.find(o=>o.side==='buy'&&o.postExitReplacement===true);
+ assert(recoveredReplacement,'A completed-session opening must recover the replacement omitted from the older saved owner-exit plan');
+ legacyRecovery=await legacyAfterCloseRequest({operation:'record-intraday',ticket:{...buyTicket,id:'legacy-after-close-buy',symbol:recoveredReplacement.symbol,price:recoveredReplacement.estimatedPrice},expectedRevision:stored.record.revision});
+ assert.equal(legacyRecovery.code,200,JSON.stringify(legacyRecovery.body));assert(stored.record.intradayActivity.fills.some(f=>f.side==='buy'&&f.symbol===recoveredReplacement.symbol));
+ stored=fallbackStored;
  openingUnavailable=false;r=await request();assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.manualRecommendations.status,'ready');assert.equal(r.body.intradaySession.plan.recordingOnly,undefined);
  assert.equal(r.body.decision.actualCash,fallbackCash);assert(r.body.manualRecommendations.orders.some(o=>o.side==='buy'));
  r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.decision.actualCash,fallbackCash,'Retry after provider recovery must not double-credit sale');

@@ -12,7 +12,7 @@ import {planC1ContinuedAccountOpening,c1CompletionPolicy,continueC1ActualAccount
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
-import {carryC1RecordedHoldings,importC1PositionContext,correctC1AccountOpenedAt,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession} from '../../lib/c1AccountService';
+import {carryC1RecordedHoldings,importC1PositionContext,correctC1AccountOpenedAt,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession,recoverC1CompletedOwnerExitActivity} from '../../lib/c1AccountService';
 import {easternMarketClock,marketSessionCloseMinutes} from '../../lib/marketSession';
 export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
 // Read the uncompressed representation: compressed responses can carry weak
@@ -74,8 +74,10 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      // Once the session closes, retain access to the server-generated plan
      // already saved with today's activity. This records a broker fill that
      // occurred during regular hours; it never creates a new recommendation.
-     const activity=account.intradayActivity,marketClock=easternMarketClock(now);
+     let activity=account.intradayActivity;const marketClock=easternMarketClock(now);
      if(activity?.date===marketClock?.key&&marketClock.minutes>=marketSessionCloseMinutes(marketClock.key)){
+      const recovered=recoverC1CompletedOwnerExitActivity({account,book,now});
+      if(recovered){account={...account,intradayActivity:recovered};activity=recovered;}
       account=recordC1IntradayActivity({account,plan:activity.plan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
       account=await saveC1AccountUpdate({store,path,saved,account,operation:'record-intraday',book,now});
       recordedAfterClose=true;
@@ -168,7 +170,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    // opening plan after the closing bell, even while the dated account waits
    // for the completed-session market-data update.
    if(!intradaySession&&account.intradayActivity?.date===easternMarketClock(now)?.key){
-    const activity=account.intradayActivity;
+    const activity=recoverC1CompletedOwnerExitActivity({account,book,now})||account.intradayActivity;
     intradaySession={date:activity.date,revision:account.revision,plan:activity.plan,fills:activity.fills||[],tickets:activity.tickets||[],afterClose:true};
     decision=c1IntradayDecision({decision,activity,revision:account.revision,now});
    }
