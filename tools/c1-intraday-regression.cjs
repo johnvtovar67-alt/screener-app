@@ -39,6 +39,7 @@ new Function('require','module','exports',code)(name=>require(name.startsWith('@
 const html=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:[],tickets:[],revision:0},onSave(){}}));
 assert.equal((html.match(/C1 planned sale: T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
 assert.match(html,/Other completed sale: T4/);assert.match(html,/up to 3 shares/);assert.match(html,/Save trade and update C1/);assert.match(html,/This trade has filled at Schwab/);
+assert.match(fs.readFileSync(file,'utf8'),/Saved in C1:/,'The form must show an explicit authoritative trade receipt');
 
 // A broker-confirmed owner sale is recordable without relabeling it as a C1 stop.
 const discretionaryPlan={...plan,orders:plan.orders.filter(o=>!(o.symbol==='T4'&&o.side==='sell'))};

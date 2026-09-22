@@ -170,10 +170,17 @@ export default function Home(){
     try{
       const d=await refreshC1Account({operation:'record-intraday',ticket,expectedRevision});
       if(!d)throw new Error('Trade save was interrupted. Reload the saved account before retrying.');
+      const savedTicket=d.intradaySession?.tickets?.find(row=>row.id===ticket.id);
+      if(!savedTicket)throw new Error('C1 did not confirm the trade was retained. Reload the saved account before retrying.');
       const updated=mergeC1AccountPortfolio(portfolio,d.decision);
       localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);
-      if(!await pushCloudPortfolio(updated))throw new Error('Trade is saved in C1. Portfolio sync needs a retry; do not enter this trade again.');
-      await analyze(updated);
+      let warning='';
+      try{
+        if(!await pushCloudPortfolio(updated))warning='Portfolio sync needs a retry; do not enter this trade again.';
+        else await analyze(updated);
+      }catch(error){warning='The trade is saved. Account analysis needs a refresh; do not enter this trade again.';}
+      if(warning)setErr(warning);
+      return {view:d,ticket:savedTicket,warning};
     }finally{setAccountBusy(false);}
   }
 
