@@ -8,7 +8,7 @@ import {applyC1OpeningPlan} from '../../lib/c1AccountDecision';
 import {c1AccountBook} from '../../lib/c1AccountInput';
 import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
 import {collectC1AccountOpening} from '../../lib/c1AccountOpeningProvider';
-import {planC1ContinuedAccountOpening,c1CompletionPolicy,continueC1ActualAccount} from '../../lib/c1AccountExecution';
+import {planC1ContinuedAccountOpening,c1CompletionPolicy,continueC1ActualAccount,replanC1IntradayAccountOpening} from '../../lib/c1AccountExecution';
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
@@ -117,11 +117,14 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      const collectedOpening=await collectOpening({baseline,symbols,now,allowPriceRevisionReview:true});
      const opening=collectedOpening?c1IntradayEntryRecheck({account:analysisAccount,opening:collectedOpening,baseline,now}):null;
      if(opening){openingReady=true;openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();
-      openingPlan=reviewC1OpeningPriceRevisions({account:analysisAccount,sessions,opening,plan:openingPlan,now});
+     openingPlan=reviewC1OpeningPriceRevisions({account:analysisAccount,sessions,opening,plan:openingPlan,now});
       if(analysisAccount.intradayActivity?.plan.recordingOnly)analysisAccount={...analysisAccount,intradayActivity:rebaseC1RecordedExitActivity({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
       if(analysisAccount.intradayActivity)analysisAccount={...analysisAccount,intradayActivity:rebaseC1UnfilledEntryPlan({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
+      const replan=activity=>replanC1IntradayAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext),activity,authorityPlan:openingPlan});
+      if(analysisAccount.intradayActivity?.tickets.some(t=>t.recordingReason==='owner-discretionary-exit')){const next=replan(analysisAccount.intradayActivity);analysisAccount={...analysisAccount,intradayActivity:next.activity};openingPlan=next.plan;}
       if(req.body?.operation==='record-intraday'){
        account=recordC1IntradayActivity({account:analysisAccount,plan:openingPlan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
+       if(account.intradayActivity?.tickets.some(t=>t.recordingReason==='owner-discretionary-exit')){const next=replan(account.intradayActivity);account={...account,intradayActivity:next.activity};openingPlan=next.plan;}
        account=await saveC1AccountUpdate({store,path,saved,account,operation:'record-intraday',book,now});
        analysisAccount=account;
       }

@@ -19,6 +19,11 @@ const view=intraday.c1IntradayDecision({decision:prior,activity:saved.intradayAc
 assert(!view.positions.some(p=>p.symbol==='T4'));
 assert(Math.abs(view.actualCash-(prior.actualCash+3*ticket.price-.03))<1e-7);
 const observed={...opening,prices:opening.prices.map(p=>({...p,observedPrice:p.open,observedAt:now.toISOString()})),receipt:{observedAt:now.toISOString(),membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true}};
+const noReplacementPlan={...plan,providerVerified:true,sourceReceipt:observed.receipt,quoteValidUntil:new Date(now.getTime()+120000).toISOString(),orders:plan.orders.filter(o=>o.side!=='buy'&&!(o.symbol==='T4'&&o.side==='sell'))};
+const noReplacementSale=intraday.recordC1IntradayActivity({account:privateAccount,plan:noReplacementPlan,ticket:{...ticket,id:'owner-sale-without-opening-replacement',recordingReason:'owner-discretionary-exit'},expectedRevision:0,now});
+const regenerated=execution.replanC1IntradayAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:[],opening:observed,observedAt:observed.receipt.observedAt,completionPolicy:execution.c1CompletionPolicy(privateAccount.positionContext),activity:noReplacementSale.intradayActivity,authorityPlan:noReplacementPlan});
+assert(regenerated.plan.orders.some(o=>o.side==='buy'&&o.postExitReplacement===true),'An owner sale must regenerate the unchanged queued entries after freeing a slot');
+assert(regenerated.activity.recordingEvidence.orders.some(o=>o.postExitReplacement===true),'The server-generated replacement identity must survive closing replay');
 const remaining=intraday.c1IntradayRemainingPlan({plan,activity:saved.intradayActivity,opening:observed,baseline,decision:view,now});
 assert(!remaining.orders.some(o=>o.symbol==='T4'&&o.side==='sell'));
 assert(remaining.orders.some(o=>o.side==='buy'&&!o.condition),'Qualified replacement remains available after actual sale');
@@ -56,6 +61,10 @@ assert.equal(JSON.stringify(service.carryC1RecordedHoldings({account:closed,book
 const discretionaryClosed=service.carryC1RecordedHoldings({account:discretionary,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
 const discretionaryAfter=service.evaluateC1Account({account:discretionaryClosed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
 assert(!discretionaryAfter.positions.some(p=>p.symbol==='T4'));assert(discretionaryClosed.records[0].recordingEvidence);
+const regeneratedAccount={...noReplacementSale,intradayActivity:regenerated.activity},regeneratedOrder=regenerated.plan.orders.find(o=>o.side==='buy');
+const regeneratedPurchase=intraday.recordC1IntradayActivity({account:regeneratedAccount,plan:regenerated.plan,ticket:{id:'owner-sale-replacement',symbol:regeneratedOrder.symbol,side:'buy',shares:1,price:regeneratedOrder.estimatedPrice,fee:0,executedAt:opening.date+'T15:30:00Z'},expectedRevision:1,now});
+const regeneratedClosed=service.carryC1RecordedHoldings({account:regeneratedPurchase,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
+assert(service.evaluateC1Account({account:regeneratedClosed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')}).positions.some(p=>p.symbol===regeneratedOrder.symbol),'The post-exit replacement purchase must survive completed-session replay');
 
 // A dropped opening purchase must free its projected slot for the next queued entry.
 const selectedAtOpen=new Set(plan.orders.filter(o=>o.side==='buy').map(o=>o.symbol));
@@ -170,6 +179,11 @@ vm.createContext(context);vm.runInContext(route,context);
  assert(apiClosed.records[0].entryPlanEvidence,'Close replay retains original replacement-plan evidence');
  assert(service.evaluateC1Account({account:apiClosed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')}).positions.some(p=>p.symbol===apiAlternative.symbol&&p.shares===1));
  r=await request();assert.equal(r.code,200);assert(r.body.decision.positions.some(p=>p.symbol===apiAlternative.symbol));
+ stored={record:JSON.parse(original),etag:'owner-exit0'};moved=false;priceRevision=false;openingUnavailable=false;
+ r=await request({operation:'record-intraday',ticket:{...ticket,id:'api-owner-exit',recordingReason:'owner-discretionary-exit'},expectedRevision:0});
+ assert.equal(r.code,200,JSON.stringify(r.body));assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));
+ assert(r.body.manualRecommendations.orders.some(o=>o.side==='buy'&&o.postExitReplacement===true),'API must return the frozen next queued entry after an owner-recorded exit');
+ assert(stored.record.intradayActivity.recordingEvidence.orders.some(o=>o.postExitReplacement===true));
  r=await request({operation:'record-session',record:{date:opening.date,entryRecheck:{}},expectedRevision:stored.record.revision});assert.equal(r.code,409);assert.match(r.body.error,/server only/);
  console.log('PASS: missing candidate data → recorded exit → preserved cash → verified-plan recovery and closing replay; no buy authorization bypass.');
  console.log('PASS: intraday API sale → actual cash → qualified replacement → recorded purchase → reload → closing replay; partial sales, duplicates, storage failure and Core preservation.');
