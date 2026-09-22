@@ -1,7 +1,7 @@
 import {useMemo,useState} from 'react';
 
 export default function C1IntradayActivity({session,onSave,busy}){
- const [selection,setSelection]=useState(''),[shares,setShares]=useState(''),[price,setPrice]=useState(''),[fee,setFee]=useState('0'),[time,setTime]=useState(''),[confirmed,setConfirmed]=useState(false),[error,setError]=useState(''),[ticketId,setTicketId]=useState(null);
+ const [selection,setSelection]=useState(''),[shares,setShares]=useState(''),[price,setPrice]=useState(''),[fee,setFee]=useState('0'),[time,setTime]=useState(''),[confirmed,setConfirmed]=useState(false),[error,setError]=useState(''),[ticketId,setTicketId]=useState(null),[receipt,setReceipt]=useState(null);
  const choices=useMemo(()=>{
   const groups=new Map(),unconditional=new Set(session.plan.orders.filter(o=>o.side==='sell'&&!o.condition).map(o=>o.symbol+':'+o.sleeve));
   for(const order of session.plan.orders){
@@ -22,13 +22,18 @@ export default function C1IntradayActivity({session,onSave,busy}){
   return [...groups.values()];
  },[session]);
  const choice=choices.find(c=>c.key===selection);
- function edit(setter,value){setter(value);setTicketId(null);setConfirmed(false);setError('');}
+ function edit(setter,value){setter(value);setTicketId(null);setConfirmed(false);setError('');setReceipt(null);}
  async function submit(event){
   event.preventDefault();setError('');
   const at=new Date(time);
   if(!choice||!confirmed||!Number.isSafeInteger(+shares)||+shares<=0||+shares>choice.shares||!(+price>0)||fee===''||+fee<0||!Number.isFinite(at.getTime())){setError('Select the completed trade and enter its actual quantity, price, fee and execution time.');return;}
   const id=ticketId||globalThis.crypto.randomUUID();setTicketId(id);
-  try{await onSave({id,symbol:choice.symbol,side:choice.side,shares:+shares,price:+price,fee:+fee,executedAt:at.toISOString(),...(choice.recordingReason?{recordingReason:choice.recordingReason}:{})},session.revision);setSelection('');setShares('');setPrice('');setTime('');setConfirmed(false);setTicketId(null);}
+  try{
+   const result=await onSave({id,symbol:choice.symbol,side:choice.side,shares:+shares,price:+price,fee:+fee,executedAt:at.toISOString(),...(choice.recordingReason?{recordingReason:choice.recordingReason}:{})},session.revision);
+   if(result?.ticket?.id!==id)throw new Error('C1 did not return a saved-trade receipt. Nothing was cleared; reload the saved account before retrying.');
+   setReceipt({side:choice.side,symbol:choice.symbol,shares:+shares,price:+price,cash:result.view.decision.actualCash,warning:result.warning||''});
+   setSelection('');setShares('');setPrice('');setTime('');setConfirmed(false);setTicketId(null);
+  }
   catch(e){setError(e.message);}
  }
  return <section className="card" aria-label="Record today's completed trade">
@@ -40,6 +45,7 @@ export default function C1IntradayActivity({session,onSave,busy}){
    <p><label><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/> This trade has filled at Schwab.</label></p>
    <button type="submit" disabled={busy||!confirmed}>{busy?'Saving trade…':'Save trade and update C1'}</button>
    {error&&<p role="alert">{error}</p>}
+   {receipt&&<p role="status"><b>Saved in C1:</b> {receipt.side==='buy'?'Bought':'Sold'} {receipt.shares} {receipt.symbol} at ${receipt.price.toFixed(2)}. Recorded C1 cash: ${receipt.cash.toFixed(2)}.{receipt.warning&&<> {receipt.warning}</>}</p>}
   </form>
   {session.tickets.length>0&&<p role="status">{session.tickets.length} completed {session.tickets.length===1?'trade':'trades'} saved today. Holdings and cash include these fills.</p>}
  </section>;

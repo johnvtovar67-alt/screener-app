@@ -90,11 +90,12 @@ function client(fetcher){
  // No real account, API, storage credential, model replay or provider is used.
  const writes=[],synced=[],analyzed=[];
  const risk={highWater:9000,triggerDay:'2026-09-01'};
+ const clientErrors=[];
  const box={portfolio:plain(portfolio),mergeC1AccountPortfolio,KEY:'portfolio',
-  refreshC1Account:async()=>({decision}),localStorage:{setItem:(k,v)=>writes.push({k,value:JSON.parse(v)}),getItem:()=>JSON.stringify(risk)},
-  setAccountBusy(){},setErr(){},setPortfolio(){},setResults(){},setAnalysisCapitalReady(){},
+  refreshC1Account:async body=>({decision,intradaySession:{tickets:body?.ticket?[body.ticket]:[]}}),localStorage:{setItem:(k,v)=>writes.push({k,value:JSON.parse(v)}),getItem:()=>JSON.stringify(risk)},
+  setAccountBusy(){},setErr:value=>clientErrors.push(value),setPortfolio(){},setResults(){},setAnalysisCapitalReady(){},
   pushCloudPortfolio:async p=>synced.push(plain(p)),analyze:async p=>analyzed.push(plain(p))};
- vm.createContext(box);vm.runInContext(save+'\nthis.save=saveC1Activity;',box);
+ vm.createContext(box);vm.runInContext(save+'\nthis.save=saveC1Activity;this.saveIntraday=saveC1Intraday;',box);
  await box.save({complete:true,fills:[]},0);
  for(const result of [writes[0].value,synced[0],analyzed[0]]){
   assert.deepEqual(result.filter(p=>p.role==='Core'),core,'All save destinations must retain Core balances');
@@ -102,6 +103,12 @@ function client(fetcher){
  }
  assert.equal(writes.length,1);assert.equal(writes[0].k,'portfolio','The save must not reset the capital-risk record');
  assert.equal(JSON.stringify(portfolio),before);
+ const ticket={id:'confirmed-purchase',symbol:'TEST',side:'buy',shares:2,price:101,fee:0,executedAt:'2026-09-22T17:45:00.000Z'};
+ box.pushCloudPortfolio=async()=>false;
+ const confirmed=await box.saveIntraday(ticket,0);
+ assert.equal(confirmed.ticket.id,ticket.id,'A confirmed server ticket must be returned to the form');
+ assert.match(confirmed.warning,/do not enter this trade again/);
+ assert.match(clientErrors.at(-1),/do not enter this trade again/,'A secondary sync failure cannot be presented as a failed C1 trade');
  // A recovered import reads the saved revision and synchronizes dates and
  // context only, including rows already visible on Portfolio.
  const importSource=extract('  async function importPositionContext(','  const[transactionCheck');
