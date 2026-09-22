@@ -68,7 +68,7 @@ function anchorDiagnostic(error) {
     (row.observedPriorClose === null || (Number.isFinite(row.observedPriorClose) && row.observedPriorClose > 0)));
   if (rows.length !== detail.mismatches.length) return undefined;
   return { previousSessionDate: detail.previousSessionDate, currentSessionDate: detail.currentSessionDate,
-    mismatchCount: rows.length, sample: rows.slice(0, 20).map(row => ({
+    mismatchCount: rows.length, sample: rows.slice(0, 5).map(row => ({
       symbol: row.symbol, previousClose: row.previousClose, observedPriorClose: row.observedPriorClose,
       kind: row.observedPriorClose === null ? 'missing-anchor' : 'changed-price'
     })) };
@@ -76,7 +76,8 @@ function anchorDiagnostic(error) {
 
 function revisionDiagnostic(error) {
   const detail = error?.providerRevisionDiagnostic;
-  const stages = ['source','evidence','archive','changes','confirmation','model-parity','execution'];
+  const stages = ['record-integrity','universe','ledger','provider','membership','price-contract','endpoint',
+    'previous-session','evidence','archive','changes','confirmation','model-parity','execution'];
   if (!detail || !stages.includes(detail.stage) ||
       (detail.unconfirmedCount !== undefined && (!Number.isInteger(detail.unconfirmedCount) ||
        detail.unconfirmedCount < 0 || detail.unconfirmedCount > 600))) return undefined;
@@ -122,7 +123,7 @@ export default async function handler(req, res) {
     return res.status(200).json(body);
   } catch (error) {
     console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error),
-      priceAnchors: anchorDiagnostic(error), providerRevision: revisionDiagnostic(error),
+      providerRevision: revisionDiagnostic(error), priceAnchors: anchorDiagnostic(error),
       observation: observationDiagnostic(error?.indexObservation) }));
     return res.status(503).json({ status: 'index-unavailable', executable: false,
       error: String(error?.message || 'Index collection failed').slice(0, 220) });

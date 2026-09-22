@@ -96,7 +96,7 @@
     "pages/_app.js": "4260ebaf86e75b7e4f7cb115a17944a7dafe74cd",
     "pages/api/c1-account.js": "b15c4ea386feabed4abf73af5ae8f33f77be8e32",
     "pages/api/catalysts.js": "b570d0f77ccd14505fe840f2d6a4c63968e7e086",
-    "pages/api/cron/c1-index.js": "ba6321b1fa374a45a7feaf0ea2d3bf9d9813184b",
+    "pages/api/cron/c1-index.js": "85b11a75c58d1ea82f0333e5962413a11caa611d",
     "pages/api/cron/fmp-research-backtest.js": "4ce2d0302bd451103c86f0412ee197ffb4d50f72",
     "pages/api/cron/full-market-discovery.js": "87e0b2db1d23101c62bd843fe34dc628c21817ea",
     "pages/api/entry-timing.js": "f7c33a06f520fe18847648d0ca1ed4a46d381ea2",
@@ -171,7 +171,7 @@
     "components/C1IntradayActivity.js": "0ff5331695cb281da1dc911206c36c4201523320",
     "lib/c1OpeningPriceReview.js": "2f6a0e29ac915c8469a7a7bbd49155e8dd684fd9",
     "lib/c1HeldCloseRevisionReview.js": "0baa882f99933328028dc6a32d4175f206970ec5",
-    "lib/c1ReviewedSessionRevision.js": "2723c4c0389343d22dc9572ac39c8705952e48b8",
+    "lib/c1ReviewedSessionRevision.js": "0c6a705328d0c365bd4c806a143fe2fe8f0af0b6",
     "lib/c1SessionRevisionReview.js": "81b20c650c7daac35ffd2e18850bfd42923d1520"
   }
 }
