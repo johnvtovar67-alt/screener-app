@@ -9,14 +9,15 @@ const cash={symbol:'CASH',role:'Swing',shares:1000,avgCost:1};
 const row={...holding,action:'Hold',stops:[{price:86}],exits:[],reviewRules:[],reason:'C1 hold'};
 const decision={contract:'c1-account-decision-v1',current:true,sourceSessionDate:'2026-09-11',positions:[row],actualCash:1000};
 let legacyCalls=0;
-const box={accountView:null,portfolio:[holding,cash],...actual,CASH:['CASH'],sym:s=>s.symbol,price:s=>s.price,rec:()=>({}),
+const box={accountView:null,accountHoldingMismatch:false,portfolio:[holding,cash],...actual,CASH:['CASH'],sym:s=>s.symbol,price:s=>s.price,rec:()=>({}),
  portfolioDecision:()=>{legacyCalls++;return {action:'Hold',reason:'Core analysis'};}};
 vm.createContext(box);vm.runInContext(source+'\nthis.decide=rawPd;',box);
 assert.equal(box.decide(holding).action,'Refresh required');
 assert.equal(box.decide(cash).action,'Cash');
 box.accountView={decision};assert.equal(box.decide(holding).action,'Hold');
 assert.equal(box.decide({...holding,price:85}).action,'Stop review');
-box.portfolio=[{...holding,shares:11},cash];assert.equal(box.decide(holding).action,'Review');
+box.portfolio=[{...holding,shares:11},cash];box.accountHoldingMismatch=true;assert.equal(box.decide(holding).action,'Review');
+box.portfolio=[holding,{...cash,shares:250}];box.accountHoldingMismatch=false;assert.equal(box.decide(holding).action,'Hold','A cash-only difference must not erase valid holding guidance');
 box.portfolio=[holding,cash];box.accountView={decision:{...decision,current:false,positions:[{...row,action:'Refresh required'}]}};
 assert.equal(box.decide(holding).action,'Refresh required');
 assert.equal(legacyCalls,0,'No unavailable, mismatched, stale or valid Swing account may enter the legacy engine');
@@ -25,6 +26,7 @@ const fallback=page.slice(page.indexOf('{tab==="opportunities"&&!accountView'),p
 assert.ok(fallback.includes('C1 analysis is unavailable'));
 assert.doesNotMatch(fallback,/<Card|<OnDeck|opportunityDecision\(/,'Missing account must not show the superseded screener');
 assert.doesNotMatch(page,/over the 35% concentration review level/);
+assert.ok(page.includes('Existing holding guidance remains active; new purchases are paused until the cash history is reconciled.'),'Cash-only differences must be explained without suppressing holding decisions');
 
 // Render the real component with Next's compiler and React, using only
 // synthetic account data and a fixed regular-session clock.
