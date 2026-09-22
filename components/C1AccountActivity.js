@@ -13,13 +13,14 @@ function ActivityForm({pending,onSave,busy}){
  }
  return <section className="card" aria-label="C1 actual activity">
   <h3>Record activity for {pending.date}</h3>
-  <p>Enter completed fills. Unfilled orders leave your positions and cash unchanged.</p>
-  <label>Order <select value={orderId} onChange={e=>setOrderId(e.target.value)}><option value="">Select an order</option>{pending.plan.orders.map(o=><option key={o.id} value={o.id}>{o.condition?'Stop if triggered: ':''}{o.side} {o.symbol} · {o.shares} shares · {o.sleeve}</option>)}</select></label>
+  <p>This form is only for {pending.date}. Do not enter trades from another day here. Enter completed fills below; if none filled, confirm no activity and save.</p>
+  <label>Order <select value={orderId} onChange={e=>setOrderId(e.target.value)}><option value="">Select an order</option>{pending.plan.orders.map(o=><option key={o.id} value={o.id}>{o.condition?'Stop order filled: ':''}{o.side} {o.symbol} · {o.shares} shares · {o.sleeve}</option>)}</select></label>
   <div className="inputs"><label>Shares<input type="number" min="1" step="1" value={shares} onChange={e=>setShares(e.target.value)}/></label><label>Execution price<input type="number" min="0" step="any" value={price} onChange={e=>setPrice(e.target.value)}/></label><label>Fee ($)<input type="number" min="0" step="any" value={fee} onChange={e=>setFee(e.target.value)}/></label><label>Execution time (your local time)<input type="datetime-local" value={time} onChange={e=>setTime(e.target.value)}/></label></div>
   <button disabled={busy} onClick={add}>Add completed fill</button>
   {fills.map(f=><p key={f.id}>{f.side} {f.shares} {f.symbol} at ${f.price} · fee ${f.fee} <button disabled={busy} onClick={()=>{setFills(rows=>rows.filter(r=>r.id!==f.id));setComplete(false);}}>Remove</button></p>)}
   {error&&<p role="alert">{error}</p>}
   <p><label><input type="checkbox" checked={complete} onChange={e=>setComplete(e.target.checked)}/> All actual activity for this session is included{!fills.length?' — no orders filled':''}.</label></p>
+  {!complete&&<p>Check the confirmation above to enable saving this session.</p>}
   <button disabled={busy||!complete} onClick={()=>onSave({date:pending.date,openingObservedAt:pending.openingObservedAt,complete:true,...(pending.plan.completionPolicy?{completionPolicy:pending.plan.completionPolicy}:{}),fills:[...fills].sort((a,b)=>a.executedAt.localeCompare(b.executedAt))},pending.revision)}>{busy?'Saving…':'Save activity and update C1'}</button>
  </section>;
 }

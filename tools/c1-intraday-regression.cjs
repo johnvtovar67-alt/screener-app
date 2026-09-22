@@ -32,8 +32,18 @@ const file=require('node:path').resolve('components/C1IntradayActivity.js'),reco
 const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
 new Function('require','module','exports',code)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
 const html=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:[],tickets:[],revision:0},onSave(){}}));
-assert.equal((html.match(/Sold T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
-assert.match(html,/up to 3 shares/);assert.match(html,/Save trade and update C1/);assert.match(html,/This trade has filled at Schwab/);
+assert.equal((html.match(/C1 planned sale: T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
+assert.match(html,/Other completed sale: T4/);assert.match(html,/up to 3 shares/);assert.match(html,/Save trade and update C1/);assert.match(html,/This trade has filled at Schwab/);
+
+// A broker-confirmed owner sale is recordable without relabeling it as a C1 stop.
+const discretionaryPlan={...plan,orders:plan.orders.filter(o=>!(o.symbol==='T4'&&o.side==='sell'))};
+const discretionaryTicket={...ticket,id:'owner-sale',recordingReason:'owner-discretionary-exit'};
+const discretionary=intraday.recordC1IntradayActivity({account:privateAccount,plan:discretionaryPlan,ticket:discretionaryTicket,expectedRevision:0,now});
+assert(discretionary.intradayActivity.recordingEvidence);assert(discretionary.intradayActivity.plan.orders.some(o=>o.reason==='owner-discretionary-exit'));
+assert(!intraday.c1IntradayDecision({decision:prior,activity:discretionary.intradayActivity,revision:1,now}).positions.some(p=>p.symbol==='T4'));
+const discretionaryHtml=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan:discretionaryPlan,fills:[],tickets:[],revision:0},onSave(){}}));
+assert.match(discretionaryHtml,/Other completed sale: T4/);assert.doesNotMatch(discretionaryHtml,/Stop order filled: T4/);
+assert.throws(()=>intraday.recordC1IntradayActivity({account:privateAccount,plan:discretionaryPlan,ticket:{...discretionaryTicket,side:'buy'},expectedRevision:0,now}),/Only a completed sale/);
 
 const partial=intraday.recordC1IntradayActivity({account:privateAccount,plan,ticket:{...ticket,shares:1},expectedRevision:0,now});
 assert.equal(intraday.c1IntradayDecision({decision:prior,activity:partial.intradayActivity,revision:1,now}).positions.find(p=>p.symbol==='T4').shares,2);
@@ -43,6 +53,9 @@ assert(!closed.intradayActivity);assert.equal(closed.records.length,1);assert.eq
 const after=service.evaluateC1Account({account:closed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
 assert(Math.abs(after.actualCash-view.actualCash)<1e-7);assert(!after.positions.some(p=>p.symbol==='T4'));
 assert.equal(JSON.stringify(service.carryC1RecordedHoldings({account:closed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')})),JSON.stringify(closed));
+const discretionaryClosed=service.carryC1RecordedHoldings({account:discretionary,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
+const discretionaryAfter=service.evaluateC1Account({account:discretionaryClosed,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
+assert(!discretionaryAfter.positions.some(p=>p.symbol==='T4'));assert(discretionaryClosed.records[0].recordingEvidence);
 
 // A dropped opening purchase must free its projected slot for the next queued entry.
 const selectedAtOpen=new Set(plan.orders.filter(o=>o.side==='buy').map(o=>o.symbol));

@@ -55,6 +55,8 @@ replace('      const todaysOrders = pending.splice(0, pending.length);',`      i
         pending.push({...order,fraction:1});
       }
       const todaysOrders = pending.splice(0, pending.length);`);
+replace('      if (activeSessionNumber === portfolioRiskPausedThrough + 1)',`      if(actualReplay)for(const [symbol,position] of [...positions])if(actualReplay.has(session.date,symbol,'sell','owner-discretionary-exit'))executeSale({date:session.date,symbol,position,reason:'owner-discretionary-exit',shares:position.shares,fill:0});
+      if (activeSessionNumber === portfolioRiskPausedThrough + 1)`);
 replace('    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stringify(pending)),',`    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stringify(actualReplay ? [...pending.filter(o=>o.side!=='sell'||!pendingActualRiskExits.has(o.symbol)),...pendingActualRiskExits.values()] : pending)),`);
 // Supplemental held-stock reviews affect existing-position exits only. Index
 // members, fresh-entry pools and every frozen strategy parameter stay intact.
