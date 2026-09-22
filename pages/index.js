@@ -184,6 +184,16 @@ export default function Home(){
     }finally{setAccountBusy(false);}
   }
 
+  async function correctC1IntradayTime(ticketId,executedAt,expectedRevision){
+    setAccountBusy(true);setErr('');
+    try{
+      const d=await refreshC1Account({operation:'correct-intraday-time',ticketId,executedAt,expectedRevision});
+      const savedTicket=d?.intradaySession?.tickets?.find(row=>row.id===ticketId);
+      if(!savedTicket||savedTicket.executedAt!==executedAt)throw new Error('C1 did not confirm the corrected execution time. Reload before retrying.');
+      return savedTicket;
+    }finally{setAccountBusy(false);}
+  }
+
   async function importPositionContext(context){
     setAccountBusy(true);setErr('');
     try{
@@ -538,7 +548,7 @@ export default function Home(){
       <section className="card"><div className="section"><h2>Account settings</h2><button onClick={()=>setTab("portfolio")}>Back to My Portfolio</button></div></section>
       <div className="syncBox"><div><b>☁ Portfolio Sync</b><small>One portfolio across your Mac and phone.</small></div><div className="syncControls"><input type={syncKey?'password':'text'} value={syncInput} onChange={e=>setSyncInput(e.target.value)} placeholder="Sync key" autoComplete="off" spellCheck="false"/>{syncKey?<><button onClick={copySyncKey}>Copy Key</button><button onClick={disconnectSync}>Disconnect</button></>:<><button onClick={enableSync}>Enable Sync</button><button onClick={connectSync}>Connect</button></>}</div>{syncStatus&&<span className="syncStatus">{syncStatus}</span>}</div>
       <C1PositionContextImport ready={syncStatus==='Synced'&&!reloading&&!loading&&!accountBusy} decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext} onRefresh={recoverC1Account} refreshing={accountBusy}/>
-      {accountView?.intradaySession&&<C1IntradayActivity session={accountView.intradaySession} onSave={saveC1Intraday} busy={accountBusy}/>}
+      {accountView?.intradaySession&&<C1IntradayActivity session={accountView.intradaySession} onSave={saveC1Intraday} onCorrectTime={correctC1IntradayTime} busy={accountBusy}/>}
       {accountView?.intradaySession&&accountView.openingError&&<p role="status">You can record a completed exit above. New recommendations are paused: {accountView.openingError}</p>}
       {accountView&&!accountView.intradaySession&&<section className="card" aria-label="Completed trade entry status"><h3>Record a completed trade</h3><p role="status">{accountView.openingError||(!accountView.decision?.current?'C1 account analysis is not current. Refresh it to load the trade-entry form.':accountView.pendingSession?'Use Record completed trades below for the completed session.':'The current-session trade plan is unavailable. Retry during regular market hours.')}</p><button disabled={accountBusy||loading||reloading} onClick={recoverC1Account}>{accountBusy?'Checking trade entry…':'Retry trade entry'}</button>{accountError&&<p role="alert">{accountError}</p>}</section>}
       {accountView&&<C1AccountDifferences decision={accountView.decision} portfolio={portfolio} onCorrectDate={correctEnteredC1Date} busy={accountBusy}/>}

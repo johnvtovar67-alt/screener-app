@@ -1,7 +1,10 @@
 import {useMemo,useState} from 'react';
 
-export default function C1IntradayActivity({session,onSave,busy}){
+const localInput=value=>{const d=new Date(value),pad=n=>String(n).padStart(2,'0');return Number.isFinite(d.getTime())?`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`:'';};
+
+export default function C1IntradayActivity({session,onSave,onCorrectTime,busy}){
  const [selection,setSelection]=useState(''),[shares,setShares]=useState(''),[price,setPrice]=useState(''),[fee,setFee]=useState('0'),[time,setTime]=useState(''),[confirmed,setConfirmed]=useState(false),[error,setError]=useState(''),[ticketId,setTicketId]=useState(null),[receipt,setReceipt]=useState(null);
+ const [correcting,setCorrecting]=useState(null),[correctedTime,setCorrectedTime]=useState(''),[correctionMessage,setCorrectionMessage]=useState('');
  const choices=useMemo(()=>{
   const groups=new Map(),unconditional=new Set(session.plan.orders.filter(o=>o.side==='sell'&&!o.condition).map(o=>o.symbol+':'+o.sleeve));
   for(const order of session.plan.orders){
@@ -36,6 +39,13 @@ export default function C1IntradayActivity({session,onSave,busy}){
   }
   catch(e){setError(e.message);}
  }
+ async function correctTime(event){
+  event.preventDefault();setError('');setCorrectionMessage('');
+  const at=new Date(correctedTime);
+  if(!correcting||!Number.isFinite(at.getTime())){setError('Enter the actual execution time.');return;}
+  try{await onCorrectTime(correcting,at.toISOString(),session.revision);setCorrecting(null);setCorrectedTime('');setCorrectionMessage('Execution time corrected. Shares, price, fee, cash and cost basis were unchanged.');}
+  catch(e){setError(e.message);}
+ }
  return <section className="card" aria-label="Record today's completed trade">
   <h3>Record a completed trade — {session.date}</h3>
   <p>Enter a trade already filled at Schwab. Saving updates your holdings and cash, then checks C1 for the next action.</p>
@@ -47,6 +57,7 @@ export default function C1IntradayActivity({session,onSave,busy}){
    {error&&<p role="alert">{error}</p>}
    {receipt&&<p role="status"><b>Saved in C1:</b> {receipt.side==='buy'?'Bought':'Sold'} {receipt.shares} {receipt.symbol} at ${receipt.price.toFixed(2)}. Recorded C1 cash: ${receipt.cash.toFixed(2)}.{receipt.warning&&<> {receipt.warning}</>}</p>}
   </form>
-  {session.tickets.length>0&&<p role="status">{session.tickets.length} completed {session.tickets.length===1?'trade':'trades'} saved today. Holdings and cash include these fills.</p>}
+  {session.tickets.length>0&&<div className="savedTrades"><h4>Saved completed trades</h4>{session.tickets.map(ticket=><div key={ticket.id}><p><b>{ticket.side==='buy'?'Bought':'Sold'} {ticket.shares} {ticket.symbol}</b> at ${ticket.price.toFixed(2)} · {new Date(ticket.executedAt).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</p>{correcting===ticket.id?<form onSubmit={correctTime}><label>Correct execution time (your local time)<input aria-label={`Correct ${ticket.symbol} execution time`} type="datetime-local" value={correctedTime} onChange={e=>{setCorrectedTime(e.target.value);setError('');setCorrectionMessage('');}}/></label><button type="submit" disabled={busy}>{busy?'Saving correction…':'Save corrected time'}</button><button type="button" disabled={busy} onClick={()=>{setCorrecting(null);setCorrectedTime('');setError('');}}>Cancel</button></form>:<button type="button" disabled={busy} onClick={()=>{setCorrecting(ticket.id);setCorrectedTime(localInput(ticket.executedAt));setError('');setCorrectionMessage('');}}>Correct time</button>}</div>)}<p role="status">{session.tickets.length} completed {session.tickets.length===1?'trade':'trades'} saved today. Holdings and cash include these fills.</p></div>}
+  {correctionMessage&&<p role="status">{correctionMessage}</p>}
  </section>;
 }
