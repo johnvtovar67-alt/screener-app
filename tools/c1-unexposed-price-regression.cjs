@@ -49,7 +49,9 @@ function observation(payload){return {contract:'c1-index-observation-v1',observa
 const earlier=clone(heldInput);earlier.observedAt=earlier.session.decisionAt='2026-09-14T21:00:00.000Z';
 const observations=[observation(earlier),observation(heldInput)];
 const corrected=accept(prior,heldInput,now,{observations});
-assert.equal(corrected.reconciliations.at(-1).reviewedHeldCloses[0].symbol,'AAA');
+assert.equal(corrected.reconciliations.at(-1).contract,'c1-provider-revision-reconciliation-v1');
+assert.equal(corrected.reconciliations.at(-1).mismatches.find(r=>r.symbol==='AAA').revised.close,99.9);
+assert.equal(corrected.reconciliations.at(-1).observations.length,2);
 assert.equal(JSON.stringify(corrected.model.sessions.slice(0,-1)),JSON.stringify(prior.model.sessions));
 assert.equal(JSON.stringify(prior),before);
 assert.equal(accept(corrected,heldInput,now,{observations}),corrected);
@@ -58,9 +60,10 @@ assert.throws(()=>accept(prior,heldInput,now,{observations:[observations[0],obse
 const tampered=clone(observations);tampered[0].payload.priceEvidence.rows[0].adjClose++;
 assert.throws(()=>accept(prior,heldInput,now,{observations:tampered}),/integrity/);
 for(const field of ['adjOpen','adjHigh','adjLow']){
- const bad=clone(heldInput);bad.priceEvidence.rows.find(r=>r.symbol==='AAA'&&r.date==='2026-09-11')[field]+=.01;
+ const bad=clone(heldInput);bad.priceEvidence.rows.find(r=>r.symbol==='CVX'&&r.date==='2026-09-11')[field]+=.01;
  const early=clone(bad);early.observedAt=early.session.decisionAt=earlier.observedAt;
- assert.throws(()=>accept(prior,bad,now,{observations:[observation(early),observation(bad)]}),/reconciliation/);
+ const rangeCorrected=accept(prior,bad,now,{observations:[observation(early),observation(bad)]});
+ assert.ok(rangeCorrected.reconciliations.at(-1).mismatches.find(r=>r.symbol==='CVX').fields.includes(field.slice(3).toLowerCase()));
 }
 const inconsistent=clone(earlier);inconsistent.priceEvidence.rows.find(r=>r.symbol==='AAA'&&r.date==='2026-09-11').adjClose=99.8;
 assert.throws(()=>accept(prior,heldInput,now,{observations:[observation(inconsistent),observations[1]]}),/reconciliation/);
@@ -69,4 +72,4 @@ assert.throws(()=>imports.reconcileC1UnexposedPrices(prior,heldInput,now,digest,
  if(model.sessions.at(-1).prices.find(p=>p.symbol==='AAA').close===99.9)r.ledger.sleeves.base.cash++;
  return r;
 },observations),/conditions/);
-console.log('PASS: repeat-confirmed held correction, immutable history, missing/duplicate/tampered/conflicting evidence, changed ranges and economic differences');
+console.log('PASS: repeat-confirmed FMP correction, immutable history, missing/duplicate/tampered/conflicting evidence, full-bar revisions and economic differences');
