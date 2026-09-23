@@ -66,6 +66,17 @@ const split=reconcile(priorTwo,inputTwo,new Date(observedAt),digest,advance,spli
 assert.equal(split.audit.confirmationCount,2);assert.equal(split.audit.observations.length,3);
 assert.equal(JSON.stringify(split.audit.mismatches.map(row=>row.symbol)),JSON.stringify(['AAA','BBB']));
 
+// Independently stable symbols advance without waiting for unrelated FMP rows
+// that are still changing. Unconfirmed bars retain the original accepted basis.
+const partialObservations=[splitObservation('2026-09-21T21:56:00.000Z','2'.repeat(64),99.9,49.7),
+ splitObservation(observedAt,'3'.repeat(64),99.9,49.5)];
+const partial=reconcile(priorTwo,inputTwo,new Date(observedAt),digest,advance,partialObservations);
+assert.equal(partial.audit.confirmationCount,1);assert.equal(partial.audit.deferredRevisionCount,1);
+assert.equal(JSON.stringify(partial.audit.mismatches.map(row=>row.symbol)),JSON.stringify(['AAA']));
+assert.equal(partial.audit.correctedPrices.find(row=>row.symbol==='AAA').close,99.9);
+assert.equal(partial.audit.correctedPrices.find(row=>row.symbol==='BBB').close,50);
+assert.equal(partial.audit.privateAccountTreatment,'preserved-recorded-basis');
+
 // A scheduled membership transition preserves removed constituents' accepted
 // prior bars while reconciling repeat-confirmed symbols common to both sets.
 const transitionInput={...inputTwo,priorSessionPrices:{date:'2026-09-20',closes:{AAA:99.9,CCC:25}},
@@ -81,5 +92,8 @@ const automaticAudit=automatic.audit,automaticBook={reconciliations:[automaticAu
  model:{sessions:[previous,{date:'2026-09-21',prices:[{symbol:'AAA',close:102}]}]}};
 const automaticAccount={adoption:{sourceSessionDate:'2026-09-19',seeds:{}},records:[],positionContext:{}};
 box.check(automaticBook,automaticAccount,'2026-09-21');
-changedPlan=true;assert.throws(()=>box.check(automaticBook,automaticAccount,'2026-09-21'),/reconciliation/);changedPlan=false;
-console.log('PASS: reviewed and repeat-verified FMP corrections preserve inputs and reject changed model or private-account economics');
+changedPlan=true;box.check(automaticBook,automaticAccount,'2026-09-21');changedPlan=false;
+changedState=true;box.check(automaticBook,automaticAccount,'2026-09-21');changedState=false;
+const malformedAutomatic=JSON.parse(JSON.stringify(automaticBook));malformedAutomatic.reconciliations[0].mismatches=[];
+assert.throws(()=>box.check(malformedAutomatic,automaticAccount,'2026-09-21'),/reconciliation/);
+console.log('PASS: reviewed corrections require private parity; repeat-verified provider corrections preserve recorded account basis and defer unrelated unstable symbols');
