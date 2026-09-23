@@ -24,6 +24,10 @@ stops had not changed. DELL surfaced that second, incorrect stop.
 - Treat automatic provider correction as append-only evidence. It does not
   rewrite the private account's accepted history and does not rerun actual fills
   against a hypothetical revised past.
+- Apply the same recorded-basis rule to older `c1-unexposed-price` audits that
+  already proved exact model economics and preserved their original inputs.
+  Their former model-only exposure check must not later block a real holding;
+  malformed or economically adjusted audits still fail closed.
 - Preserve recorded positions, shares, cash, cost basis, fills, stops, capital
   peaks and breaker dates without adjustment.
 - Keep legacy, manually reviewed corrections on their existing strict private
