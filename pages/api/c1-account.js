@@ -1,5 +1,5 @@
 import {reviewC1OpeningPriceRevisions} from '../../lib/c1OpeningPriceReview';
-import {c1IntradayEntryRecheck,rebaseC1UnfilledEntryPlan,recordC1IntradayActivity,correctC1IntradayTradeTime,c1IntradayDecision,c1IntradayRemainingPlan,c1RecordedExitPlan,rebaseC1RecordedExitActivity} from '../../lib/c1IntradayActivity';
+import {c1IntradayEntryRecheck,rebaseC1UnfilledEntryPlan,recordC1IntradayActivity,correctC1IntradayTradeTime,correctC1IntradayTradeDetails,c1IntradayDecision,c1IntradayRemainingPlan,c1RecordedExitPlan,rebaseC1RecordedExitActivity} from '../../lib/c1IntradayActivity';
 import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
 import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
 import {c1AccountReviewBook} from '../../lib/c1HeldRankReview';
@@ -70,6 +70,8 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      // Refresh saves only newly verified private holding observations.
     }else if(req.body?.operation==='correct-opening-date'&&saved){
      account=correctC1AccountOpenedAt({account,symbol:req.body.symbol,openedAt:req.body.openedAt,expectedRevision:req.body.expectedRevision,book,now});
+    }else if(req.body?.operation==='correct-intraday-details'&&saved){
+     account=correctC1IntradayTradeDetails({account,ticketId:req.body.ticketId,price:req.body.price,fee:req.body.fee,executedAt:req.body.executedAt,expectedRevision:req.body.expectedRevision,now});
     }else if(req.body?.operation==='correct-intraday-time'&&saved){
      account=correctC1IntradayTradeTime({account,ticketId:req.body.ticketId,executedAt:req.body.executedAt,expectedRevision:req.body.expectedRevision,now});
     }else if(req.body?.operation==='record-intraday'&&saved){
