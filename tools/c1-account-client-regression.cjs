@@ -2,6 +2,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const {mergeC1AccountPortfolio}=createResearchModuleLoader(process.cwd()).load('lib/c1AccountPortfolio.js');
 const page=fs.readFileSync('pages/index.js','utf8');
+const app=fs.readFileSync('pages/_app.js','utf8');
+assert.match(app,/C1_ACCOUNT_TIMEOUT_MS=90000/,'C1 account reads must use the endpoint\'s 90-second execution budget');
+assert.match(app,/url\.pathname==="\/api\/c1-account"\?C1_ACCOUNT_TIMEOUT_MS/,'The longer timeout must be scoped to C1 account reads');
+assert.match(page,/!accountView&&accountAbsent&&<button/,'Account activation must require an authoritative no-account response');
+assert.match(page,/Retry saved account/,'Transient account failures must offer a safe saved-account retry');
 const plain=value=>JSON.parse(JSON.stringify(value));
 const core=[{symbol:'MSTR',shares:10,avgCost:100,role:'Core',openedAt:'2026-01-02',note:'retain'},
  {symbol:'SWVXX',shares:900,avgCost:1,role:'Core'},
@@ -25,20 +30,20 @@ function client(fetcher){
  const state={view:{decision:{id:'previous'}},error:'',key:'test-only-key',writes:0};
  const box={accountRequestId:{current:0},syncPullId:{current:0},syncWriteId:{current:0},syncRevision:{current:{}},syncDirty:{current:false},SYNC_KEY:'key',
   localStorage:{getItem:()=>state.key,removeItem:()=>{state.key='';},setItem:()=>{state.writes++;}},
-  fetch:fetcher,setAccountView:v=>{state.view=v;},setAccountError:v=>{state.error=v;},
+  fetch:fetcher,setAccountView:v=>{state.view=v;},setAccountAbsent:v=>{state.absent=v;},setAccountError:v=>{state.error=v;},
   setSyncKey(){},setSyncInput(){},setSyncStatus(){}};
  vm.createContext(box);vm.runInContext(refresh+disconnect+'\nthis.refresh=refreshC1Account;this.disconnect=disconnectSync;',box);
  return {state,box};
 }
 (async()=>{
- for(const fetcher of [
-  async()=>{throw new Error('Network unavailable');},
-  async()=>({ok:true,json:async()=>{throw new SyntaxError('Invalid JSON');}}),
-  async()=>({ok:false,status:401,json:async()=>({error:'Account rejected'})})
+ for(const [fetcher,retained] of [
+  [async()=>{throw new Error('Network unavailable');},true],
+  [async()=>({ok:true,json:async()=>{throw new SyntaxError('Invalid JSON');}}),true],
+  [async()=>({ok:false,status:401,json:async()=>({error:'Account rejected'})}),false]
  ]){
   const {state,box}=client(fetcher);
   await assert.rejects(box.refresh());
-  assert.equal(state.view,null,'Failed account request must remove the previous decision and opening plan');
+  assert.equal(Boolean(state.view),retained,'Only an authoritative authentication failure may clear the previous account view');
   assert.equal(state.writes,0);
  }
  let calls=0;
@@ -46,7 +51,7 @@ function client(fetcher){
  await missing.box.refresh();assert.equal(missing.state.view,null);assert.equal(calls,0);
  await assert.rejects(missing.box.refresh({operation:'record-session'}));
  const absent=client(async()=>({ok:false,status:404,json:async()=>({})}));
- await absent.box.refresh();assert.equal(absent.state.view,null);
+ await absent.box.refresh();assert.equal(absent.state.view,null);assert.equal(absent.state.absent,true);
  const latest={decision:{id:'latest',executable:false}};
  let rejectOld,resolveOld,count=0;
  const race=client(()=>++count===1?new Promise((_,reject)=>{rejectOld=reject;}):Promise.resolve({ok:true,json:async()=>latest}));
@@ -131,7 +136,7 @@ function client(fetcher){
  assert.equal(updated.find(p=>p.symbol==='VMFXX').shares,1500);
  assert.equal(visibleRows[0].openedAt,'2026-08-31');assert.equal(visibleRows[0].price,108);
  assert.deepEqual(importSync[0],updated);
- console.log('PASS: Core cash/holdings preserved through account save; failed refreshes invalidate stale decisions; superseded errors and disconnected responses cannot replace current account state. Synthetic client checks only.');
+ console.log('PASS: Core cash/holdings preserved through account save; transient refreshes retain the saved-account view without authorizing activation; superseded errors and disconnected responses cannot replace current account state. Synthetic client checks only.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
 
 

@@ -125,30 +125,30 @@ export default function Home(){
   const[tab,setTab]=useState("opportunities"),[stocks,setStocks]=useState([]),[themeStocks,setThemeStocks]=useState([]),[selectedTheme,setSelectedTheme]=useState("ai_compute");
   const[portfolio,setPortfolio]=useState([]),[results,setResults]=useState([]);
   const[holdingsComparison,setHoldingsComparison]=useState(null);
-  const[accountView,setAccountView]=useState(null),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
+  const[accountView,setAccountView]=useState(null),[accountAbsent,setAccountAbsent]=useState(false),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
   const accountRequestId=useRef(0);
   const syncRevision=useRef({key:"",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);
   async function refreshC1Account(body=null,{readOnly=false}={}){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
-    if(!key){setAccountView(null);if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
+    if(!key){setAccountView(null);setAccountAbsent(false);if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
     let recovered=false;
     try{
       const r=await fetch('/api/c1-account',{method:readOnly?'GET':'POST',headers:{authorization:`Bearer ${key}`,...(readOnly?{}:{'content-type':'application/json'})},...(readOnly?{}:{body:JSON.stringify(body||{operation:'refresh-analysis'})}),cache:'no-store'}),d=await r.json();
       if(requestId!==accountRequestId.current)return;
       if(!r.ok){
-        setAccountView(null);
         if(r.status===409&&!readOnly){
           const latest=await fetch('/api/c1-account',{method:'GET',headers:{authorization:`Bearer ${key}`},cache:'no-store'}),view=await latest.json();
           if(requestId!==accountRequestId.current)return;
-          if(latest.ok){setAccountView(view);recovered=true;}
+          if(latest.ok){setAccountView(view);setAccountAbsent(false);recovered=true;}
         }
-        if(r.status!==404||body)throw new Error(recovered?'Your saved account was reloaded. Please retry the change.':d.error||"C1 account refresh failed.");
-        return null;
+        if(r.status===404&&!body){setAccountView(null);setAccountAbsent(true);return null;}
+        if([401,403].includes(r.status)){setAccountView(null);setAccountAbsent(false);}
+        throw new Error(recovered?'Your saved account was reloaded. Please retry the change.':d.error||"C1 account refresh failed.");
       }
-      setAccountView(d);setAccountError("");return d;
+      setAccountView(d);setAccountAbsent(false);setAccountError("");return d;
     }catch(error){
       if(requestId!==accountRequestId.current)return;
-      if(!recovered)setAccountView(null);throw error;
+      setAccountAbsent(false);throw error;
     }
   }
   async function recoverC1Account(){
@@ -293,8 +293,8 @@ export default function Home(){
   }
   function newSyncKey(){const b=new Uint8Array(24);crypto.getRandomValues(b);return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');}
   async function enableSync(){const k=newSyncKey();setSyncKey(k);setSyncInput(k);localStorage.setItem(SYNC_KEY,k);const ok=await pushCloudPortfolio(portfolio,k);if(ok)setSyncStatus('Sync enabled — use this key on your other device.');}
-  async function connectSync(){const k=syncInput.trim();if(k.length<32){setSyncStatus('Enter a valid sync key.');return;}const ok=await pullCloudPortfolio(k,[],false);if(ok){accountRequestId.current++;setAccountView(null);setAccountError('');setSyncKey(k);localStorage.setItem(SYNC_KEY,k);}}
-  function disconnectSync(){syncPullId.current++;syncWriteId.current++;syncRevision.current={key:'',etag:null};syncDirty.current=false;accountRequestId.current++;setAccountView(null);setAccountError('');localStorage.removeItem(SYNC_KEY);setSyncKey('');setSyncInput('');setSyncStatus('Sync disconnected on this device.');}
+  async function connectSync(){const k=syncInput.trim();if(k.length<32){setSyncStatus('Enter a valid sync key.');return;}const ok=await pullCloudPortfolio(k,[],false);if(ok){accountRequestId.current++;setAccountView(null);setAccountAbsent(false);setAccountError('');setSyncKey(k);localStorage.setItem(SYNC_KEY,k);}}
+  function disconnectSync(){syncPullId.current++;syncWriteId.current++;syncRevision.current={key:'',etag:null};syncDirty.current=false;accountRequestId.current++;setAccountView(null);setAccountAbsent(false);setAccountError('');localStorage.removeItem(SYNC_KEY);setSyncKey('');setSyncInput('');setSyncStatus('Sync disconnected on this device.');}
   async function copySyncKey(){if(!syncKey)return;try{await navigator.clipboard.writeText(syncKey);setSyncStatus('Sync key copied.');}catch{setSyncStatus('Copy failed — select the key manually.');}}
   function save(x){syncPullId.current++;setPortfolio(x);localStorage.setItem(KEY,JSON.stringify(x));if(syncKey)void pushCloudPortfolio(x,syncKey);}
   async function add(){
@@ -542,7 +542,7 @@ export default function Home(){
     <header><div><h1>🧠 Investment Operating System</h1><p>Expert analysis underneath. Portfolio-level risk governance on top.</p>{lastUpdated&&<small className="updated">Last refreshed {lastUpdated.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}</small>}</div><button disabled={busy} onClick={handleReload}>{busy?"Reloading...":"Reload"}</button></header>
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
-    {accountError&&<p className="error" role="alert"><b>C1 account activation:</b> {accountError}</p>}
+    {accountError&&<p className="error" role="alert"><b>C1 account:</b> {accountError}</p>}
     {err&&!accountError&&<p className="error">{err}</p>}
     <div hidden={tab!=="account-tools"} aria-label="Account settings">
       <section className="card"><div className="section"><h2>Account settings</h2><button onClick={()=>setTab("portfolio")}>Back to My Portfolio</button></div></section>
@@ -555,7 +555,8 @@ export default function Home(){
       {syncStatus.startsWith('Sync conflict:')&&<section className="card"><h3>Portfolio sync conflict</h3><p>Another device saved changes. Load that saved portfolio before reapplying any local edit. A copy of your current local entries is retained on this device.</p><button onClick={()=>pullCloudPortfolio(syncKey)}>Load saved portfolio</button></section>}
       {accountView?.pendingSession&&<details><summary>Record completed trades</summary><C1AccountActivity key={accountView.pendingSession.date} pending={accountView.pendingSession} pendingSessions={accountView.pendingSessions} onSave={saveC1Activity} busy={accountBusy}/></details>}
       {!accountView&&err&&<C1ReconciliationDetails portfolio={portfolio} capitalStorageKey={C1_DRAWDOWN_KEY}/>}
-      {!accountView&&<button disabled={accountBusy||loading||!portfolio.length} onClick={startC1Account}>{accountBusy?"Starting C1…":"Start C1 with current portfolio"}</button>}
+      {!accountView&&!accountAbsent&&syncKey&&<section className="card" aria-label="Saved C1 account status"><h3>Saved C1 account temporarily unavailable</h3><p>The saved account was not removed. Retry loading it; do not create another account.</p><button disabled={accountBusy||loading||reloading} onClick={recoverC1Account}>{accountBusy?'Loading saved account…':'Retry saved account'}</button></section>}
+      {!accountView&&accountAbsent&&<button disabled={accountBusy||loading||!portfolio.length} onClick={startC1Account}>{accountBusy?"Starting C1…":"Start C1 with current portfolio"}</button>}
       <section className="card"><details><summary>Check transaction balances</summary><p>Compare opening balances and activity with your entered holdings. Files stay on this device. A matching activity ledger can reconcile the saved capital record after you confirm completeness; it never resets the recorded peak or breaker date.</p><p><a href="/reconciliation-template.csv" download>Download example CSV</a> · <a href="/reconciliation-guide.txt" target="_blank" rel="noreferrer">Format instructions</a></p><label>Import formatted activity CSV <input aria-label="Import transaction CSV" type="file" accept=".csv,text/csv" onChange={importTransactions}/></label>{importingTransactions&&<p role="status">Checking transactions…</p>}{transactionCheck&&transactionCheck.portfolioSignature===JSON.stringify(portfolio)&&<div role="status">{transactionCheck.error?<p>Could not reconcile: {transactionCheck.error}</p>:<><p><b>{transactionCheck.status==="balances-match"?"Supplied balances match your entered holdings.":"Balance differences found."}</b></p><p>{transactionCheck.recordCount} records; opening date {transactionCheck.startDate}; last activity {transactionCheck.lastTransactionDate}.</p>{transactionCheck.differences.length>0&&<ul>{transactionCheck.differences.map(d=><li key={d.symbol}>{d.symbol}: reconstructed {d.reconstructed.toLocaleString()} · entered {d.entered.toLocaleString()}</li>)}</ul>}<p>A match verifies supplied transaction arithmetic. It does not validate C1 or establish that a trade was appropriate.</p>{transactionCheck.capitalError&&<p>Capital reconciliation: {transactionCheck.capitalError}</p>}{transactionCheck.capitalReview?.status==="confirmation-required"&&<><p>Retained capital peak: <b>{money(transactionCheck.capitalReview.preservedHighWater)}</b>. Retained breaker date: <b>{transactionCheck.capitalReview.preservedTriggerDay||"None recorded"}</b>.</p><label><input type="checkbox" checked={activityComplete} onChange={event=>setActivityComplete(event.target.checked)}/> These records include all account activity between the saved opening holdings and my current portfolio.</label><button type="button" disabled={!activityComplete||reconcilingAccount||loading} onClick={reconcileImportedHistory}>{reconcilingAccount?"Reconciling…":"Reconcile capital history and analyze"}</button></>}{transactionCheck.capitalReconciled&&<p>Account activity reconciled. The recorded capital peak and breaker date were preserved. Portfolio analysis has been refreshed.</p>}</>}</div>}</details></section>
       {holdingsComparison&&holdingsComparison.portfolioSignature===JSON.stringify(portfolio)&&<details className="holdingsVerification"><summary>Holdings verification — transaction history not verified</summary><p>This comparison does not confirm earlier purchases or recommend buying, holding, or selling. Complete transaction records are needed to verify your account against the model.</p>{holdingsComparison.status==="informational-only"?<><p>Paper-model session: {holdingsComparison.sourceSessionDate}. Share counts below are the holdings you entered.</p><ul>{holdingsComparison.positions.map(p=><li key={p.symbol}>{p.symbol}: {p.shares} shares — {p.modelPresence==="present"?"also present in the paper model":"not present in the paper model; this is not a sell signal"}</li>)}</ul></>:<p>A current, established paper-model comparison is not available yet. No holding classification can be inferred from it.</p>}</details>}
     </div>
