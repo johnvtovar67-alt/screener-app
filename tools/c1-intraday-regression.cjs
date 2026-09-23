@@ -21,6 +21,15 @@ assert.equal(corrected.intradayActivity.tickets[0].shares,ticket.shares);assert.
 assert.equal(saved.intradayActivity.tickets[0].executedAt,ticket.executedAt,'A correction must not mutate the prior revision');
 assert.throws(()=>intraday.correctC1IntradayTradeTime({account:saved,ticketId:ticket.id,executedAt:opening.date+'T22:15:00.000Z',expectedRevision:1,now:correctionNow}),/regular-session/);
 assert.throws(()=>intraday.correctC1IntradayTradeTime({account:saved,ticketId:ticket.id,executedAt:correctedAt,expectedRevision:0,now:correctionNow}),/Account changed/);
+const correctedPrice=ticket.price-10,correctedFee=.09;
+const correctedDetails=intraday.correctC1IntradayTradeDetails({account:saved,ticketId:ticket.id,price:correctedPrice,fee:correctedFee,executedAt:correctedAt,expectedRevision:1,now:correctionNow});
+const correctedTicket=correctedDetails.intradayActivity.tickets[0];
+assert.equal(correctedTicket.price,correctedPrice);assert.equal(correctedTicket.fee,correctedFee);assert.equal(correctedTicket.executedAt,correctedAt);
+assert.equal(correctedTicket.id,ticket.id);assert.equal(correctedTicket.symbol,ticket.symbol);assert.equal(correctedTicket.side,ticket.side);assert.equal(correctedTicket.shares,ticket.shares);
+assert.equal(correctedDetails.intradayActivity.fills.reduce((sum,fill)=>sum+fill.fee,0),correctedFee);
+assert(correctedDetails.intradayActivity.fills.every(fill=>fill.price===correctedPrice&&fill.executedAt===correctedAt));
+assert.throws(()=>intraday.correctC1IntradayTradeDetails({account:saved,ticketId:ticket.id,price:0,fee:0,executedAt:correctedAt,expectedRevision:1,now:correctionNow}),/actual execution price/);
+assert.throws(()=>intraday.correctC1IntradayTradeDetails({account:saved,ticketId:ticket.id,price:correctedPrice,fee:-1,executedAt:correctedAt,expectedRevision:1,now:correctionNow}),/actual execution price/);
 const prior=service.evaluateC1Account({account:privateAccount,book:baselineBook,now});
 const view=intraday.c1IntradayDecision({decision:prior,activity:saved.intradayActivity,revision:saved.revision,now});
 assert(!view.positions.some(p=>p.symbol==='T4'));
@@ -47,8 +56,9 @@ const html=renderToStaticMarkup(React.createElement(record.exports.default,{sess
 assert.equal((html.match(/C1 planned sale: T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
 assert.match(html,/Other completed sale: T4/);assert.match(html,/up to 3 shares/);assert.match(html,/Save trade and update C1/);assert.match(html,/This trade has filled at Schwab/);
 assert.match(fs.readFileSync(file,'utf8'),/Saved in C1:/,'The form must show an explicit authoritative trade receipt');
-const savedHtml=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:saved.intradayActivity.fills,tickets:saved.intradayActivity.tickets,revision:1},onSave(){},onCorrectTime(){}}));
-assert.match(savedHtml,/Saved completed trades/);assert.match(savedHtml,/Sold 3 T4/);assert.match(savedHtml,/Correct time/);
+const savedHtml=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:saved.intradayActivity.fills,tickets:saved.intradayActivity.tickets,revision:1},onSave(){},onCorrectDetails(){}}));
+assert.match(savedHtml,/Saved completed trades/);assert.match(savedHtml,/Sold 3 T4/);assert.match(savedHtml,/Correct details/);
+assert.match(fs.readFileSync(file,'utf8'),/Shares are locked/);assert.match(fs.readFileSync(file,'utf8'),/Save corrected details/);
 
 // A broker-confirmed owner sale is recordable without relabeling it as a C1 stop.
 const discretionaryPlan={...plan,orders:plan.orders.filter(o=>!(o.symbol==='T4'&&o.side==='sell'))};
@@ -153,6 +163,11 @@ vm.createContext(context);vm.runInContext(route,context);
  const cashBeforeTimeCorrection=r.body.decision.actualCash,apiCorrectedAt=opening.date+'T15:15:00.000Z';
  r=await request({operation:'correct-intraday-time',ticketId:ticket.id,executedAt:apiCorrectedAt,expectedRevision:r.body.decision.revision});assert.equal(r.code,200,JSON.stringify(r.body));
  assert.equal(r.body.intradaySession.tickets.find(row=>row.id===ticket.id).executedAt,apiCorrectedAt);assert.equal(r.body.decision.actualCash,cashBeforeTimeCorrection,'A time correction must not change account economics');
+ const apiCorrectedPrice=ticket.price-10,apiCorrectedFee=.13,cashBeforeDetailCorrection=r.body.decision.actualCash;
+ r=await request({operation:'correct-intraday-details',ticketId:ticket.id,price:apiCorrectedPrice,fee:apiCorrectedFee,executedAt:apiCorrectedAt,expectedRevision:r.body.decision.revision});assert.equal(r.code,200,JSON.stringify(r.body));
+ const apiCorrectedTicket=r.body.intradaySession.tickets.find(row=>row.id===ticket.id);
+ assert.equal(apiCorrectedTicket.price,apiCorrectedPrice);assert.equal(apiCorrectedTicket.fee,apiCorrectedFee);assert.equal(apiCorrectedTicket.shares,ticket.shares);assert.equal(apiCorrectedTicket.side,ticket.side);
+ assert(Math.abs(r.body.decision.actualCash-(cashBeforeDetailCorrection+ticket.shares*(apiCorrectedPrice-ticket.price)-(apiCorrectedFee-ticket.fee)))<1e-7,'A sale detail correction must update cash by the exact price and fee difference');
  const {mergeC1AccountPortfolio}=loader.load('lib/c1AccountPortfolio.js');
  const entered=mergeC1AccountPortfolio(portfolio.filter(p=>p.symbol!=='T4'),r.body.decision);
  assert(loader.load('lib/c1AccountDecision.js').c1AccountMatchesPortfolio(r.body.decision,entered));
