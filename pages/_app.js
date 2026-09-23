@@ -14,6 +14,7 @@ const LEGACY_HOSTS=new Set([
   "screener-app-hp1w-git-main-johnvtovar67-7543s-projects.vercel.app"
 ]);
 const API_TIMEOUT_MS=15000;
+const C1_ACCOUNT_TIMEOUT_MS=90000;
 const TOP5_TIMEOUT_MS=90000;
 const TOP5_STALE_MS=30*60*1000;
 const TOP5_CACHE_PREFIX="screener_top5_response_v2:";
@@ -45,7 +46,8 @@ function installResilientApiFetch(){
     const run=async()=>{
       const controller=new AbortController(),parentSignal=init?.signal,onAbort=()=>controller.abort(parentSignal?.reason);
       if(parentSignal){if(parentSignal.aborted)controller.abort(parentSignal.reason);else parentSignal.addEventListener("abort",onAbort,{once:true});}
-      const timer=setTimeout(()=>controller.abort(new DOMException("API request timed out","TimeoutError")),isTop5?TOP5_TIMEOUT_MS:API_TIMEOUT_MS);
+      const timeoutMs=isTop5?TOP5_TIMEOUT_MS:url.pathname==="/api/c1-account"?C1_ACCOUNT_TIMEOUT_MS:API_TIMEOUT_MS;
+      const timer=setTimeout(()=>controller.abort(new DOMException("API request timed out","TimeoutError")),timeoutMs);
       let response=null,error=null;
       try{
         response=await nativeFetch(input,{...init,signal:controller.signal});
