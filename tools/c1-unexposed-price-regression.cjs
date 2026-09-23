@@ -66,10 +66,16 @@ for(const field of ['adjOpen','adjHigh','adjLow']){
  assert.ok(rangeCorrected.reconciliations.at(-1).mismatches.find(r=>r.symbol==='CVX').fields.includes(field.slice(3).toLowerCase()));
 }
 const inconsistent=clone(earlier);inconsistent.priceEvidence.rows.find(r=>r.symbol==='AAA'&&r.date==='2026-09-11').adjClose=99.8;
-assert.throws(()=>accept(prior,heldInput,now,{observations:[observation(inconsistent),observations[1]]}),/reconciliation/);
+const partiallyCorrected=accept(prior,heldInput,now,{observations:[observation(inconsistent),observations[1]]});
+const partialAudit=partiallyCorrected.reconciliations.at(-1);
+assert.ok(partialAudit.mismatches.length>0,'Other independently confirmed revisions still advance');
+assert.ok(!partialAudit.mismatches.some(row=>row.symbol==='AAA'),'Conflicting AAA revision is deferred');
+assert.equal(partialAudit.correctedPrices.find(row=>row.symbol==='AAA').close,
+ prior.model.sessions.at(-1).prices.find(row=>row.symbol==='AAA').close);
+assert.ok(partialAudit.deferredRevisionCount>=1);
 assert.throws(()=>imports.reconcileC1UnexposedPrices(prior,heldInput,now,digest,(model,...args)=>{
  const r=imports.advanceC1ForwardModel(model,...args);
  if(model.sessions.at(-1).prices.find(p=>p.symbol==='AAA').close===99.9)r.ledger.sleeves.base.cash++;
  return r;
 },observations),/conditions/);
-console.log('PASS: repeat-confirmed FMP correction, immutable history, missing/duplicate/tampered/conflicting evidence, full-bar revisions and economic differences');
+console.log('PASS: repeat-confirmed FMP correction, immutable history, missing/duplicate/tampered evidence, conflicting symbols deferred, full-bar revisions and economic differences');
