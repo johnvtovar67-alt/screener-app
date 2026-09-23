@@ -94,7 +94,7 @@
     "lib/walkForwardBacktest.js": "9e294411566722e93632d88c9b5a127d29df1535",
     "lib/winnerLifecycle.js": "b588870fec4cd4ef60f4fbab626db3ccace96df2",
     "pages/_app.js": "9365a01022c92ec9454aa9e40d389b208e3f9443",
-    "pages/api/c1-account.js": "5834fb64a0768ec01cd0bb72ca39436743e7cdb9",
+    "pages/api/c1-account.js": "148baa6bf157f3af06d4dbf6b64c45988cfd4300",
     "pages/api/catalysts.js": "b570d0f77ccd14505fe840f2d6a4c63968e7e086",
     "pages/api/cron/c1-index.js": "85b11a75c58d1ea82f0333e5962413a11caa611d",
     "pages/api/cron/fmp-research-backtest.js": "4ce2d0302bd451103c86f0412ee197ffb4d50f72",
