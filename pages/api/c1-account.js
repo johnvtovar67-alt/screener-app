@@ -75,6 +75,10 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     }else if(req.body?.operation==='correct-intraday-time'&&saved){
      account=correctC1IntradayTradeTime({account,ticketId:req.body.ticketId,executedAt:req.body.executedAt,expectedRevision:req.body.expectedRevision,now});
     }else if(req.body?.operation==='reconcile-cash'&&saved){
+     // Reconcile against the same completed-fill continuation shown by GET.
+     // Otherwise an unsaved derived close can make the write compare the
+     // broker balance with the pre-trade cash snapshot.
+     account=carryC1RecordedHoldings({account,book,now});
      account=reconcileC1BrokerCash({account,brokerCash:req.body.brokerCash,expectedRevision:req.body.expectedRevision,book,now});
     }else if(req.body?.operation==='record-intraday'&&saved){
      // Once the session closes, retain access to the server-generated plan
