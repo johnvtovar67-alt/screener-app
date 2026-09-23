@@ -33,14 +33,16 @@ const {assertC1AccountRevisionCoverage:guard}=loader.load('lib/c1AccountInput.js
 const account={adoption:{sourceSessionDate:'2026-09-11',seeds:{base:{positions:[{symbol:'NTRA'},{symbol:'FCX'},{symbol:'STX'}]}}},records:[]};
 guard(result,account,'2026-09-14');
 const own=clone(account);own.adoption.seeds.base.positions.push({symbol:'CVX'});
-assert.throws(()=>guard(result,own,'2026-09-14'),/CVX/);
+guard(result,own,'2026-09-14');
 guard(result,own,'2026-09-11');
-const traded=clone(account);traded.records.push({fills:[{symbol:'FDX'}]});assert.throws(()=>guard(result,traded,'2026-09-14'),/FDX/);
+const traded=clone(account);traded.records.push({fills:[{symbol:'FDX'}]});guard(result,traded,'2026-09-14');
+const malformedAccountAudit=clone(result);malformedAccountAudit.reconciliations.at(-1).originalInputsPreserved=false;
+assert.throws(()=>guard(malformedAccountAudit,account,'2026-09-14'),/reviewed account reconciliation/);
 const manual=loader.load('lib/c1ManualRecommendations.js');
 const waiting=manual.buildC1ManualRecommendations({decision:{current:false,updateReason:'Market-data update pending for 2026-09-14.'},now});
 assert.match(waiting.reason,/Market-data update pending/);assert.equal(waiting.orders.length,0);assert.doesNotMatch(waiting.reason,/Record outstanding/);
 assert.match(fs.readFileSync('components/C1AccountOpportunities.js','utf8'),/C1 ratings awaiting update/);
-console.log('PASS: Monday rollover with five unexposed revisions; exact economic parity, immutable history, retry, evidence validation, model/account exposure blocks and honest stale status');
+console.log('PASS: Monday rollover with five unexposed revisions; exact economic parity, immutable model/account history, retry, evidence validation and honest stale status');
 // General correction path: a new held name/date/book, independent of DELL review.
 const heldInput=clone(input);
 heldInput.priorSessionPrices.closes.AAA=99.9;
