@@ -64,6 +64,79 @@ sessions is the stable production parameter.
 
 - Retain the 14% catastrophic stop pending stronger evidence.
 - Do not promote the 12% stop.
-- Continue research on early rank deterioration across nearby thresholds and
-  confirmation periods before changing production.
+- Add a production candidate for an early downside momentum override: from
+  session five through session 30, exit at the next session open after three
+  consecutive completed sessions outside the top nine. This remains subject
+  to owner approval and a production implementation review.
+- Add a separate production candidate for protecting a profitable position:
+  after its peak gain reaches 12%, exit at the next session open when its rank
+  finishes outside the top six for two consecutive completed sessions. This
+  overrides the 30-session minimum hold; a one-session wobble does not.
+- Do not use the tested fixed 4% or 6% trailing-price exits. They produced far
+  more turnover and were materially less robust than rank-based deterioration.
 - Production remains unchanged.
+
+## Expanded parameter grid
+
+The follow-up grid retained the 14% catastrophic stop and tested early rank
+deterioration at top-nine, top-12, and top-15 thresholds with two, three, and
+five-session confirmation. It also tested two forms of upside protection:
+
+- rank deterioration after the position first reached an 8% or 12% peak gain;
+- a fixed 4% or 6% trailing-price exit after an 8% or 12% peak gain.
+
+All overrides were limited to sessions five through 30 and executed at the
+next session open. The same 918-session point-in-time evidence and eight
+subperiod windows per universe were used.
+
+### Selected downside comparison
+
+| Universe | Policy | Return | Max drawdown | Sharpe | Turnover | Window wins |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Nasdaq | Current 14% | 92.19% | -38.01% | 0.723 | 1291% | — |
+| Nasdaq | Outside top 9 x3 | 124.79% | -35.55% | 0.859 | 1575% | 5/8 |
+| S&P 500 | Current 14% | 337.46% | -33.18% | 1.288 | 1354% | — |
+| S&P 500 | Outside top 9 x3 | 424.22% | -32.04% | 1.466 | 1751% | 3/8 |
+
+Nearby downside parameters were unstable between universes. Top-15 x3 was
+best in aggregate on Nasdaq but slightly trailed the current policy on S&P 500;
+top-15 x2 was strongest on S&P 500 but less consistent across its subperiods.
+Top-nine x3 is therefore the more conservative continuation candidate, not a
+claim that the grid identified a universally optimal threshold.
+
+### Upside protection comparison
+
+| Universe | Policy | Return | Max drawdown | Sharpe | Turnover | Profit exits | Window wins |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Nasdaq | Current 14% | 92.19% | -38.01% | 0.723 | 1291% | 0 | — |
+| Nasdaq | +12%, outside top 6 x2 | 214.37% | -36.88% | 1.108 | 1319% | 44 | 4/8 |
+| S&P 500 | Current 14% | 337.46% | -33.18% | 1.288 | 1354% | 0 | — |
+| S&P 500 | +12%, outside top 6 x2 | 649.29% | -29.61% | 1.677 | 1507% | 67 | 6/8 |
+
+The +12% / outside-top-six / two-session rule improved aggregate return,
+drawdown, and Sharpe in both universes, won 10 of 16 subperiod return
+comparisons, and added much less turnover than the fixed trailing-price rules.
+It is the strongest tested candidate for the owner's stated goal of protecting
+a winner such as NTRA without selling merely because of one weak day.
+
+The fixed trailing-price rules generated 231–384 exits in the S&P evidence and
+240–351 in the Nasdaq evidence, roughly doubled annualized turnover, and
+materially underperformed the rank-based candidates. They are rejected.
+
+## Proposed operating behavior
+
+For a C1 Swing holding during its first 30 sessions:
+
+1. The existing 14% catastrophic stop remains active.
+2. If the holding has not reached a 12% peak gain, three consecutive completed
+   sessions outside the top nine may trigger an early momentum-loss exit.
+3. Once the holding reaches a 12% peak gain, two consecutive completed sessions
+   outside the top six trigger a profit-protection exit at the next session
+   open.
+4. A single weak session creates a warning, not an exit.
+5. After an exit, re-entry requires a fresh C1 Buy qualification and normal
+   portfolio-risk checks; the prior symbol receives no automatic preference.
+
+This is a policy recommendation from a bounded historical experiment, not a
+live instruction to sell NTRA. NTRA would first need to satisfy the confirmed
+rank-deterioration condition using completed-session data.
