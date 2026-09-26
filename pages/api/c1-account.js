@@ -134,15 +134,15 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    let openingPlan=null,openingError=null,intradaySession=null,openingReady=false;
    if(decision.current){
     try{
-     const sessions=c1AccountReviewBook(c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)),account.holdingRankReviews).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
+     const input=c1AccountReviewBook(c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)),account.holdingRankReviews),historySessions=input.model.sessions,sessions=historySessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
      const symbols=decision.requiredOpeningSymbols;
      const collectedOpening=await collectOpening({baseline,symbols,now,allowPriceRevisionReview:true});
      const opening=collectedOpening?c1IntradayEntryRecheck({account:analysisAccount,opening:collectedOpening,baseline,now}):null;
-     if(opening){openingReady=true;openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();
-     openingPlan=reviewC1OpeningPriceRevisions({account:analysisAccount,sessions,opening,plan:openingPlan,now});
+     if(opening){openingReady=true;openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,historySessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();
+     openingPlan=reviewC1OpeningPriceRevisions({account:analysisAccount,sessions,historySessions,opening,plan:openingPlan,now});
       if(analysisAccount.intradayActivity?.plan.recordingOnly)analysisAccount={...analysisAccount,intradayActivity:rebaseC1RecordedExitActivity({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
       if(analysisAccount.intradayActivity)analysisAccount={...analysisAccount,intradayActivity:rebaseC1UnfilledEntryPlan({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
-      const replan=activity=>replanC1IntradayAccountOpening({adoption:account.adoption,sessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext),activity,authorityPlan:openingPlan});
+      const replan=activity=>replanC1IntradayAccountOpening({adoption:account.adoption,sessions,historySessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext),activity,authorityPlan:openingPlan});
       if(analysisAccount.intradayActivity?.tickets.some(t=>t.recordingReason==='owner-discretionary-exit')){const next=replan(analysisAccount.intradayActivity);analysisAccount={...analysisAccount,intradayActivity:next.activity};openingPlan=next.plan;}
       if(req.body?.operation==='record-intraday'&&!recordedAfterClose){
        account=recordC1IntradayActivity({account:analysisAccount,plan:openingPlan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
@@ -161,8 +161,8 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     }catch(error){if(req.body?.operation==='record-intraday'&&openingReady)throw error;openingError=String(error?.message||'Opening plan unavailable').slice(0,200);console.warn('C1_OPENING_UNAVAILABLE',JSON.stringify({reason:openingError}));}
    }
    if(!intradaySession&&decision.current){
-    const sessions=c1AccountReviewBook(c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),account.holdingRankReviews).model.sessions.filter(s=>s.date>=account.adoption.sourceSessionDate&&s.date<=decision.sourceSessionDate);
-    const continued=continueC1ActualAccount({adoption:account.adoption,sessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,observedAt:now});
+    const input=c1AccountReviewBook(c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),account.holdingRankReviews),historySessions=input.model.sessions,sessions=historySessions.filter(s=>s.date>=account.adoption.sourceSessionDate&&s.date<=decision.sourceSessionDate);
+    const continued=continueC1ActualAccount({adoption:account.adoption,sessions,historySessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,observedAt:now});
     const recordingPlan=analysisAccount.intradayActivity?.plan||c1RecordedExitPlan({continued,now});
     if(recordingPlan){
      if(req.body?.operation==='record-intraday'&&!recordedAfterClose){
