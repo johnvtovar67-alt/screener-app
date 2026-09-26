@@ -186,14 +186,22 @@ export default async function handler(req, res) {
       overrides,
       ...runVariant(dataset, overrides),
     }));
-    return res.status(200).json({
+    const payload = {
       status: "complete",
       productionChanged: false,
       universe,
       evidence,
       primaryCandidate: "proposed-12-top9x3",
       results,
-    });
+    };
+    if (req.query.format === "frame") {
+      const serialized = JSON.stringify(payload).replaceAll("<", "\\u003c");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.status(200).send(
+        `<!doctype html><meta charset="utf-8"><p>Research calculation complete.</p><script>parent.postMessage({type:"c1-momentum-loss-result",payload:${serialized}},location.origin)</script>`,
+      );
+    }
+    return res.status(200).json(payload);
   } catch (error) {
     return res.status(500).json({
       status: "failed",

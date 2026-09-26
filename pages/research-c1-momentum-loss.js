@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const UNIVERSES = ['nasdaq', 'sp500'];
 
@@ -8,14 +8,13 @@ export default function C1MomentumLossResearchRunner() {
   const [results, setResults] = useState({});
   const universe = UNIVERSES[universeIndex];
 
-  function captureResult(event) {
-    try {
-      const text = event.currentTarget.contentDocument?.body?.innerText || '';
-      if (!text.trim()) return;
-      const payload = JSON.parse(text);
-      if (payload.status !== 'complete') {
-        throw new Error(payload.error || `${universe} did not complete`);
-      }
+  useEffect(() => {
+    function captureResult(event) {
+      if (event.origin !== window.location.origin) return;
+      const message = event.data;
+      if (message?.type !== 'c1-momentum-loss-result') return;
+      const payload = message.payload;
+      if (payload?.universe !== universe || payload?.status !== 'complete') return;
       setResults((current) => ({ ...current, [universe]: payload }));
       const nextIndex = universeIndex + 1;
       if (nextIndex < UNIVERSES.length) {
@@ -24,10 +23,10 @@ export default function C1MomentumLossResearchRunner() {
       } else {
         setStatus('Complete');
       }
-    } catch (error) {
-      setStatus(`Failed: ${error.message}`);
     }
-  }
+    window.addEventListener('message', captureResult);
+    return () => window.removeEventListener('message', captureResult);
+  }, [universe, universeIndex]);
 
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', margin: '2rem', maxWidth: 1200 }}>
@@ -37,8 +36,7 @@ export default function C1MomentumLossResearchRunner() {
       {status !== 'Complete' && !status.startsWith('Failed:') && (
         <iframe
           key={universe}
-          src={`/api/research/c1-momentum-loss-experiment?universe=${universe}`}
-          onLoad={captureResult}
+          src={`/api/research/c1-momentum-loss-experiment?universe=${universe}&format=frame`}
           title={`${universe} research calculation`}
           style={{ width: '100%', minHeight: 80, border: '1px solid #cbd5e1' }}
         />
