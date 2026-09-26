@@ -3,6 +3,7 @@ const { createResearchModuleLoader } = require("./research-module-loader.cjs");
 
 const loader = createResearchModuleLoader(process.cwd());
 const { simulatePointInTimePortfolio } = loader.load("lib/c1AccountSimulator.js");
+const { c1ModelEventPhase } = loader.load("lib/c1PaperEvents.js");
 const frozenModule = loader.load("lib/c1FrozenOptions.js");
 const frozen = frozenModule.C1_FROZEN_OPTIONS.base;
 const policy = frozenModule.C1_ACCOUNT_MOMENTUM_EXIT_POLICY;
@@ -125,6 +126,11 @@ assert.equal(
   "2026-09-14",
   "Three completed weak-rank sessions must exit at the following session open.",
 );
+assert.equal(
+  c1ModelEventPhase(downsideExit),
+  1,
+  "An early momentum exit must remain a next-open rank event during account replay.",
+);
 
 const upside = simulatePointInTimePortfolio(
   {
@@ -143,6 +149,11 @@ assert.equal(
   upsideExit?.date,
   "2026-09-14",
   "A winner above 12% must exit at the open after two completed sessions outside the top six.",
+);
+assert.equal(
+  c1ModelEventPhase(upsideExit),
+  1,
+  "An armed-profit momentum exit must remain a next-open rank event during account replay.",
 );
 assert.equal(
   upside.trades.some((trade) => trade.reason === "early-rank-deterioration"),
