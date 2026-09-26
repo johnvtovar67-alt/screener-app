@@ -6,14 +6,14 @@ const { simulatePointInTimePortfolio } = createResearchModuleLoader(
 ).load("lib/walkForwardBacktest.js");
 
 const symbols = ["AAA", "BBB", "CCC", "DDD", "EEE"];
-function session(date, weak = false) {
+function session(date, weak = false, aaaClose = 100) {
   const decisionAt = `${date}T20:00:00.000Z`;
   const prices = symbols.concat("SPY", "QQQ").map((symbol) => ({
     symbol,
     open: 100,
-    high: 101,
+    high: symbol === "AAA" ? aaaClose + 1 : 101,
     low: 99,
-    close: 100,
+    close: symbol === "AAA" ? aaaClose : 100,
     adjusted: true,
   }));
   const signals = symbols.map((symbol, index) => ({
@@ -112,4 +112,45 @@ assert.equal(
   "A one-session rank break must reset after recovery and must not exit.",
 );
 
-console.log("Early rank-exit experiment regression passed.");
+const profitableWeakness = {
+  ...dataset,
+  sessions: dates.map((date, index) => session(date, index >= 4, index >= 2 ? 112 : 100)),
+};
+const profitProtection = simulatePointInTimePortfolio(profitableWeakness, {
+  ...base,
+  profitRankExitStartSessions: 3,
+  profitRankExitEndSessions: 30,
+  profitRankExitActivationPct: 8,
+  profitRankExitThreshold: 3,
+  profitRankExitConsecutiveSessions: 2,
+});
+const profitExit = profitProtection.trades.find(
+  (trade) =>
+    trade.side === "sell" && trade.reason === "profit-rank-deterioration",
+);
+assert.ok(profitExit, "A profitable position with confirmed rank decay must exit.");
+assert.equal(
+  profitExit.date,
+  "2026-08-25",
+  "Profit protection must execute at the next session open without look-ahead.",
+);
+
+const unprofitableWeakness = {
+  ...dataset,
+  sessions: dates.map((date, index) => session(date, index >= 4, index >= 2 ? 96 : 100)),
+};
+const noProfitExit = simulatePointInTimePortfolio(unprofitableWeakness, {
+  ...base,
+  profitRankExitStartSessions: 3,
+  profitRankExitEndSessions: 30,
+  profitRankExitActivationPct: 8,
+  profitRankExitThreshold: 3,
+  profitRankExitConsecutiveSessions: 2,
+});
+assert.equal(
+  noProfitExit.trades.some((trade) => trade.reason === "profit-rank-deterioration"),
+  false,
+  "The upside rule must not masquerade as a loss exit without an established gain.",
+);
+
+console.log("Early rank and upside momentum-exit experiment regression passed.");

@@ -41,6 +41,46 @@ const VARIANTS = [
   }],
   ["early-only-14-top9x3", PRIMARY],
 ];
+const DOWNSIDE_GRID = [
+  ["current-14", {}],
+  ...[9, 12, 15].flatMap((threshold) =>
+    [2, 3, 5].map((confirmations) => [
+      `loss-top${threshold}-x${confirmations}`,
+      {
+        earlyRankExitStartSessions: 5,
+        earlyRankExitEndSessions: 30,
+        earlyRankExitThreshold: threshold,
+        earlyRankExitConsecutiveSessions: confirmations,
+      },
+    ]),
+  ),
+];
+const UPSIDE_GRID = [
+  ["current-14", {}],
+  ...[8, 12].flatMap((activation) =>
+    [6, 9].flatMap((threshold) =>
+      [2, 3].map((confirmations) => [
+        `profit-rank-${activation}-top${threshold}-x${confirmations}`,
+        {
+          profitRankExitStartSessions: 5,
+          profitRankExitEndSessions: 30,
+          profitRankExitActivationPct: activation,
+          profitRankExitThreshold: threshold,
+          profitRankExitConsecutiveSessions: confirmations,
+        },
+      ]),
+    ),
+  ),
+  ...[8, 12].flatMap((activation) =>
+    [4, 6].map((distance) => [
+      `profit-trail-${activation}-by${distance}`,
+      {
+        profitTrailActivationPct: activation,
+        profitTrailDistancePct: distance,
+      },
+    ]),
+  ),
+];
 
 async function exact(pathname) {
   const { blobs } = await list({ prefix: pathname, limit: 10 });
@@ -116,6 +156,12 @@ function summarize(runs) {
   const trades = runs.flatMap((run) => run.trades || []);
   const closed = trades.filter((trade) => trade.side === "sell" && trade.positionClosed === true);
   const early = closed.filter((trade) => trade.reason === "early-rank-deterioration");
+  const profitRank = closed.filter(
+    (trade) => trade.reason === "profit-rank-deterioration",
+  );
+  const profitTrail = closed.filter(
+    (trade) => trade.reason === "profit-trailing-stop",
+  );
   const sessions = new Map(runs[0].curve.map((row, index) => [row.date, index]));
   const buys = trades.filter((trade) => trade.side === "buy");
   const whipsaws = early.filter((exit) => {
@@ -143,6 +189,8 @@ function summarize(runs) {
     earlyExits: early.length,
     earlyExitWhipsaws: whipsaws.length,
     earlyExitWhipsawPct: early.length ? (whipsaws.length / early.length) * 100 : 0,
+    profitRankExits: profitRank.length,
+    profitTrailExits: profitTrail.length,
     exitReasons: reasons,
   };
 }
@@ -180,8 +228,18 @@ export default async function handler(req, res) {
   try {
     const universe = String(req.query.universe || "sp500");
     if (!DATASETS[universe]) return res.status(400).json({ error: "Unknown universe" });
+    const mode = String(req.query.mode || "comparison");
+    const variants =
+      mode === "downside-grid"
+        ? DOWNSIDE_GRID
+        : mode === "upside-grid"
+          ? UPSIDE_GRID
+          : mode === "comparison"
+            ? VARIANTS
+            : null;
+    if (!variants) return res.status(400).json({ error: "Unknown mode" });
     const { dataset, evidence } = await loadDataset(universe);
-    const results = VARIANTS.map(([id, overrides]) => ({
+    const results = variants.map(([id, overrides]) => ({
       id,
       overrides,
       ...runVariant(dataset, overrides),
@@ -190,8 +248,9 @@ export default async function handler(req, res) {
       status: "complete",
       productionChanged: false,
       universe,
+      mode,
       evidence,
-      primaryCandidate: "proposed-12-top9x3",
+      primaryCandidate: mode === "comparison" ? "proposed-12-top9x3" : null,
       results,
     };
     if (req.query.format === "frame") {
