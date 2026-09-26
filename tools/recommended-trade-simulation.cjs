@@ -78,7 +78,7 @@ assert(presentation.c1Presentation(c1Candidates[0]).authorized===false,'selected
 const authorized={...c1Candidates[0],productionPolicy:{...c1Candidates[0].productionPolicy,status:'ready',independentlyValidated:true,activationAuthorized:true}};
 assert(presentation.c1Presentation(authorized).entryLabel==='C1 Entry Cleared','authorized selection retains C1 entry label');
 assert(page.includes('authority.authorized&&["Strong Buy","Buy"].includes(a)'),'rotation must require explicit C1 authority');
-assert(page.includes('14% loss limit • Rank review after 30 sessions'),'authorized C1 cards retain their exit contract');
+assert(page.includes('14% stop • Confirmed momentum exits active from session 5'),'authorized C1 cards show the current exit contract');
 
 const schw=personal.applyPersonalCapitalPolicy({symbol:'SCHW',finalDecision:{action:'Strong Buy',reason:'analytically qualified'}});
 assert(schw.finalDecision.action==='Avoid'&&schw.finalDecision.personalCapitalBlocked,'personal SCHW concentration block must survive a Strong Buy input');

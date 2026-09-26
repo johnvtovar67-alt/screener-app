@@ -71,7 +71,7 @@ function stageTone(stage){return({"Setup":"setup","Proof":"proof","Re-underwrite
 function riskText(s){
   const authority=c1Presentation(s);if(authority&&!authority.authorized)return "No C1 purchase is authorized.";
   const d=fd(s);if(d.planText)return d.planText;
-  if(s?.productionPolicy?.selected)return "14% loss limit • Rank review after 30 sessions";
+  if(s?.productionPolicy?.selected)return "14% stop • Confirmed momentum exits active from session 5";
   const p=plan(s),inv=+p.invalidationPrice,trim=+p.firstTrimPrice,add=+p.addAbovePrice;
   if(["Strong Buy","Buy"].includes(d.action))return `${Number.isFinite(inv)?`Review below ${money(inv)}`:"Manage risk"}${Number.isFinite(trim)?` • Profit review ${money(trim)}`:""}`;
   return Number.isFinite(add)?`Trigger above ${money(add)}`:"Wait for confirmation";

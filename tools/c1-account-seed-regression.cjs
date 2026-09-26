@@ -173,6 +173,11 @@ assert.ok(!missingStop.includes('$0.00'));
 const matureReason=explainHolding({...explanationFixture,reviewRules:[{heldSessions:31,minimumHold:30,exitBuffer:6,close:97}],exits:[{reason:'rank-deterioration'}]},'2026-09-11');
 assert.ok(matureReason.includes('outside the C1 holding range'));
 assert.ok(matureReason.includes('fall outside the top 6'));
+const protectedWinnerReason=explainHolding({...explanationFixture,avgCost:100,reviewRules:[{heldSessions:12,minimumHold:30,exitBuffer:6,close:114,earlyStart:5,earlyEnd:30,earlyThreshold:9,earlyConfirmations:3,earlyStreak:1,profitThreshold:6,profitConfirmations:2,profitStreak:1,profitProtectionArmed:true,peakGainPct:15,rankVerified:true}],exits:[]},'2026-09-11');
+assert.ok(protectedWinnerReason.includes('Profit protection is armed after a peak gain of 15.00%'));
+assert.ok(protectedWinnerReason.includes('current streak: 1 of 2'));
+const protectedWinnerExit=explainHolding({...explanationFixture,reviewRules:[{heldSessions:13,minimumHold:30,exitBuffer:6,close:113}],exits:[{reason:'profit-rank-deterioration'}]},'2026-09-11');
+assert.ok(protectedWinnerExit.includes('outside the top six for two consecutive completed sessions'));
 assert.ok(initialView.positions.every(p=>p.reason.includes('Recorded stop:')||p.reason.includes('Recorded stops:')));
 console.log('PASS: Holding explanations use actual dates, stops and closing marks; ranking coverage never implies purchase provenance.');
 
