@@ -10,7 +10,9 @@ export default function C1MomentumLossResearchRunner() {
 
   function captureResult(event) {
     try {
+      const frameUrl = event.currentTarget.contentWindow?.location?.href || '';
       const text = event.currentTarget.contentDocument?.body?.innerText || '';
+      if (!frameUrl.includes('/api/research/c1-momentum-loss-experiment') || !text.trim()) return;
       const payload = JSON.parse(text);
       if (payload.status !== 'complete') {
         throw new Error(payload.error || `${universe} did not complete`);
