@@ -89,21 +89,18 @@ replace(`      const rankExitSymbols = new Set();
             0,
             sessionIndex - number(position.enteredSessionIndex, sessionIndex),
           );
-          const heldReview = position.inheritedRiskOnly === true
-            ? session.accountHoldingRanks?.[symbol]?.[accountSeed.sleeve]
-            : null;
           const poolIndex = rankedPool.findIndex(
             (signal) => symbolOf(signal) === symbol,
           );
-          const holdingRankVerified = position.inheritedRiskOnly === true
-            ? Number.isFinite(heldReview?.rank)
-            : true;
-          const holdingRank = position.inheritedRiskOnly === true
-            ? heldReview?.eligible === false ? Infinity : number(heldReview?.rank, Infinity)
-            : poolIndex >= 0 ? poolIndex + 1 : Infinity;
+          // Exit ranks must use the same accepted opportunity pool shown to
+          // the owner. A private held-stock comparison may verify price and
+          // momentum evidence, but it cannot manufacture a second top-six.
+          const holdingRankVerified = true;
+          const holdingRank = poolIndex >= 0 ? poolIndex + 1 : Infinity;
           if (accountSeed) {
             position.rankVerified = holdingRankVerified;
             position.lastC1Rank = Number.isFinite(holdingRank) ? holdingRank : null;
+            position.lastC1EligibleCount = rankedPool.length;
             const mark = number(prices.get(symbol)?.close, position.lastPrice);
             const currentGainPct = position.entryPrice > 0
               ? (mark / position.entryPrice - 1) * 100
@@ -136,9 +133,7 @@ replace(`      const rankExitSymbols = new Set();
           }
           if (
             heldSessions >= config.rankedMinimumHoldSessions &&
-            (position.inheritedRiskOnly === true
-              ? holdingRankVerified && (heldReview.eligible === false || holdingRank > rankedExitBuffer)
-              : !retainedRankSymbols.has(symbol))
+            holdingRankVerified && holdingRank > rankedExitBuffer
           )
             rankExitSymbols.add(symbol);
         }`);

@@ -333,21 +333,21 @@ vm.createContext(context);vm.runInContext(route,context);
  const gapNext={...updatedBook,model:{sessions:[gapBook.model.sessions[0],opening]}};
  const gapContinued=appendService({account:gapSaved.record,record:records[0],book:gapNext,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
  assert.equal(evaluateService({account:gapContinued,book:gapNext,now:new Date(opening.date+'T21:00:00Z')}).decisionId,shared.decisionId);
- // Nonmembers use a distinct inherited-risk path, never fabricated ranks.
+ // Nonmembers use the published eligible opportunity list for exit rank.
  const inheritedPortfolio=[{symbol:'OUT',shares:8,avgCost:101,openedAt:sessions[0].date,role:'Swing'},{symbol:'CASH',shares:10000,avgCost:1,role:'Swing'}];
  const inheritedCapital={version:2,portfolioSignature:signature(inheritedPortfolio),highWater:10808,triggerDay:null,reconciliationRequired:false};
  const inherited=adoptService({portfolio:inheritedPortfolio,capitalRecord:inheritedCapital,book:baselineBook,holdingCoverage:covered,now:new Date(baseline.date+'T21:00:00Z')});
  const inheritedView=evaluateService({account:inherited,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')});
  assert.equal(inheritedView.positions[0].shares,8);
- assert.equal(inheritedView.positions[0].action,'Price/stop review');
+ assert.equal(inheritedView.positions[0].action,'Hold');
  assert.equal(inherited.adoption.actualSwingEquity,10808);
  assert.ok(inheritedView.positions[0].exits.length===0,'Being outside rankings cannot cause an inherited rank exit after 30 sessions');
  assert.ok(inheritedView.opportunities.every(p=>p.symbol!=='OUT'));
  const inheritedBook=c1AccountBook(baselineBook,covered);
  assert.equal(inheritedBook.model.sessions[0].universeSymbols.includes('OUT'),false);
  assert.equal(inheritedBook.model.sessions[0].signals.some(s=>s.symbol==='OUT'),false);
- // The held-stock review is account-only, and drives the actual rank exit
- // after the existing minimum hold. It cannot enter the index buy queue.
+ // The held-stock review remains account-only price/momentum evidence. It
+ // cannot manufacture a second eligible rank or enter the index buy queue.
  const {compileC1HeldRankReview,c1AccountReviewBook}=loader.load('lib/c1HeldRankReview.js');
  const rankBaseline=JSON.parse(JSON.stringify(inheritedBook.model.sessions[0]));
  rankBaseline.signals=rankBaseline.signals.map((p,i)=>({...p,researchFactors:{...p.researchFactors,return120Ex20:40-i,return60Ex5:25-i}}));
@@ -410,6 +410,8 @@ vm.createContext(context);vm.runInContext(route,context);
  const reviewed=await rankRequest('POST',{operation:'refresh-analysis'});
  assert.equal(reviewed.code,200,JSON.stringify(reviewed.body));assert.equal(rankCalls,1);assert.equal(rankWrites,1);
  assert.ok(reviewed.body.decision.positions[0].holdingRank);assert.equal(reviewed.body.decision.positions[0].action,'Exit candidate');
+ assert.equal(reviewed.body.decision.positions[0].holdingRank.base.source,'authoritative-opportunities');
+ assert.equal(reviewed.body.decision.positions[0].holdingRank.base.eligible,false);
  assert.equal(JSON.stringify(rankSaved.record.adoption),JSON.stringify(inherited.adoption));
  assert.equal((await rankRequest('GET')).body.decision.decisionId,reviewed.body.decision.decisionId);
  assert.equal((await rankRequest('POST',{operation:'refresh-analysis'})).code,200);assert.equal(rankCalls,1);assert.equal(rankWrites,1);

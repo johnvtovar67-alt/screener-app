@@ -179,4 +179,73 @@ assert.equal(
   "A one-session momentum wobble must not sell the position.",
 );
 
+const inheritedSeed = {
+  ...seed,
+  positions: seed.positions.map((position) => ({
+    ...position,
+    shares: 100_000 / 105,
+    inheritedRiskOnly: true,
+    historicalPriceEvidence: {
+      contract: "c1-historical-price-evidence-v1",
+      from: position.openedAt,
+      through: dates[0],
+      sessionsObserved: 6,
+      expectedSessions: 6,
+      complete: true,
+      high: 115,
+      low: 99,
+      closesAboveEntry: 5,
+      closesBelowEntry: 0,
+      closesAtEntry: 1,
+    },
+  })),
+};
+const inheritedSessions = dates.map((date, index) => {
+  const original = session(date, index, { profitable: true });
+  const heldSignal = {
+    ...original.signals.find((signal) => signal.symbol === "AAA"),
+    price: index < 3 ? 105 : 115,
+  };
+  const publishedSignals = original.signals.filter((signal) => signal.symbol !== "AAA");
+  return {
+    ...original,
+    prices: original.prices.map((row) => row.symbol === "AAA" && index < 3
+      ? { ...row, open: 105, high: 105, low: 104, close: 105 }
+      : row),
+    signals: publishedSignals,
+    positionSignals: publishedSignals,
+    universeSymbols: original.universeSymbols.filter((symbol) => symbol !== "AAA"),
+    legacyHoldingSignals: [{
+      symbol: "AAA",
+      sector: "Sector 0",
+      issuer: "AAA",
+      inheritedRiskOnly: true,
+    }],
+    accountHoldingSignals: [heldSignal],
+    // A private comparison rank must not override the published opportunity
+    // list used by the owner-authorized top-six exit rule.
+    accountHoldingRanks: {
+      AAA: {
+        base: { rank: 1, eligible: true, eligibleCount: 12 },
+      },
+    },
+  };
+});
+const inherited = simulatePointInTimePortfolio(
+  {
+    metadata: { benchmarkSymbol: "SPY", comparisonSymbols: ["SPY", "QQQ"] },
+    sessions: inheritedSessions,
+  },
+  base,
+  inheritedSeed,
+);
+const inheritedExit = inherited.trades.find(
+  (trade) => trade.side === "sell" && trade.reason === "profit-rank-deterioration",
+);
+assert.equal(
+  inheritedExit?.date,
+  dates[2],
+  "An armed inherited holding absent from the published top six must exit after two completed sessions even when a private comparison calls it rank one.",
+);
+
 console.log("C1 production momentum-exit regression passed.");
