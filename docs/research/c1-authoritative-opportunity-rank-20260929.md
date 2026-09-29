@@ -41,3 +41,13 @@ holding omitted from the published opportunity list while a forged private
 review calls it rank 1. Two completed omissions must still produce a
 `profit-rank-deterioration` sale at the following open. The account regression
 also requires the UI decision rank source to be `authoritative-opportunities`.
+
+## Production replay follow-up
+
+The first production refresh exposed an older queue-position order ID collision
+in the recorded FCX-to-MPC replacement session. Correcting historical rank can
+change the reconstructed hypothetical order occupying that numeric ID. Replay
+now gives the immutable broker-filled replacement evidence precedence for that
+completed session. This is an identity migration only: symbol, side, sleeve,
+shares, execution price, fee, time, cash, and ownership continue to come from
+the previously accepted record and cannot be rewritten.

@@ -5,6 +5,10 @@ const fixture=new Function('require',setup+';return {loader,baseline,baselineBoo
 const {loader,baseline,baselineBook,privateAccount,opening,plan,portfolio}=fixture;
 const intraday=loader.load('lib/c1IntradayActivity.js'),service=loader.load('lib/c1AccountService.js'),execution=loader.load('lib/c1AccountExecution.js');
 const now=new Date(opening.date+'T16:00:00Z'),ticket={id:'broker-sale',symbol:'T4',side:'sell',shares:3,price:plan.orders.find(o=>o.symbol==='T4'&&o.side==='sell').estimatedPrice,fee:.03,executedAt:opening.date+'T15:00:00Z'};
+const collisionPlan={...plan,orders:[{id:'base:collision:0',sleeve:'base',date:plan.date,symbol:'NEW',side:'buy',shares:1,estimatedPrice:100,reason:'modeled-new-order'}]};
+const recordedCollision={recordingEvidence:{date:plan.date,sourceSessionDate:plan.sourceSessionDate,openingBooks:plan.openingBooks,orders:[{id:'base:collision:0',sleeve:'base',date:plan.date,symbol:'OLD',side:'buy',shares:1,estimatedPrice:101,reason:'recorded-replacement',postExitReplacement:true}]}};
+const collisionReplay=execution.c1ReplayRecordingEvidence(collisionPlan,recordedCollision);
+assert.equal(collisionReplay.orders.length,1);assert.equal(collisionReplay.orders[0].symbol,'OLD');
 const original=JSON.stringify(privateAccount);
 const saved=intraday.recordC1IntradayActivity({account:privateAccount,plan,ticket,expectedRevision:0,now});
 assert.equal(JSON.stringify(privateAccount),original);
