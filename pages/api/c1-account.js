@@ -35,11 +35,12 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    if((req.method==='GET'||req.body?.operation==='refresh-analysis')&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
    // Read only: this endpoint cannot initialize or refresh the index provider.
    const bookReadStarted=Date.now(),{record:book}=await readBook('sp500',{now}),bookReadMs=Date.now()-bookReadStarted;
-   let account=saved?.record;
+   let account=saved?.record,initialDecision=null;
    // Complete only the next account session's holding observations. These
    // remain private account inputs and cannot initialize or alter index data.
    if(account){
     const previous=evaluateC1Account({account,book,now});
+    initialDecision=previous;
     for(const next of book.model.sessions.filter(s=>s.date>previous.sourceSessionDate)){
     if(next&&missingC1HoldingPrices(previous.positions.map(p=>({...p,role:'Swing'})),next).length){
      const existing=account.holdingCoverages||[account.holdingCoverage].filter(Boolean);
@@ -129,7 +130,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    if(req.method==='POST'&&req.body?.operation!=='record-intraday')account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});
    const pendingSessions=[];
    let analysisAccount=carryC1RecordedHoldings({account,book,now,onPending:pending=>pendingSessions.push(pending)});
-   let decision=evaluateC1Account({account:analysisAccount,book,now});
+   let decision=req.method==='GET'&&analysisAccount===account&&initialDecision?initialDecision:evaluateC1Account({account:analysisAccount,book,now});
    const pendingSession=pendingSessions.at(-1)||null;
    let openingPlan=null,openingError=null,intradaySession=null,openingReady=false;
    if(decision.current){

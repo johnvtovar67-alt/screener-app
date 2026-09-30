@@ -32,6 +32,9 @@ after observation, consuming much of its usable life during the refresh itself.
   return before any model read begins. Emit a privacy-safe end-to-end timing
   marker for the account read, model read and total request, containing only
   milliseconds, so any remaining storage bottleneck can be isolated safely.
+- Reuse the initial authoritative account evaluation when carry-forward leaves
+  the saved account unchanged. The same account, book and timestamp previously
+  triggered an identical full-history replay twice in one request.
 - Keep collected quotes no more than two minutes old when they are verified,
   but keep the resulting manual recommendation available for ten minutes (or
   until the actual market close, whichever comes first). The interface continues
