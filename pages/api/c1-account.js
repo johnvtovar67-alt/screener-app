@@ -35,11 +35,13 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    if((req.method==='GET'||req.body?.operation==='refresh-analysis')&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
    // Read only: this endpoint cannot initialize or refresh the index provider.
    const bookReadStarted=Date.now(),{record:book}=await readBook('sp500',{now}),bookReadMs=Date.now()-bookReadStarted;
-   let account=saved?.record,initialDecision=null;
+   let account=saved?.record,initialDecision=null,initialEvalMs=0,carryMs=0,finalEvalMs=0,saveMs=0;
    // Complete only the next account session's holding observations. These
    // remain private account inputs and cannot initialize or alter index data.
    if(account){
+    const initialEvalStarted=Date.now();
     const previous=evaluateC1Account({account,book,now});
+    initialEvalMs=Date.now()-initialEvalStarted;
     initialDecision=previous;
     for(const next of book.model.sessions.filter(s=>s.date>previous.sourceSessionDate)){
     if(next&&missingC1HoldingPrices(previous.positions.map(p=>({...p,role:'Swing'})),next).length){
@@ -127,10 +129,12 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code:'ACCOUNT_SESSION_BEHIND',stage:'account-review'}));
     }
    }
-   if(req.method==='POST'&&req.body?.operation!=='record-intraday')account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});
+   if(req.method==='POST'&&req.body?.operation!=='record-intraday'){const saveStarted=Date.now();account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});saveMs=Date.now()-saveStarted;}
    const pendingSessions=[];
-   let analysisAccount=carryC1RecordedHoldings({account,book,now,onPending:pending=>pendingSessions.push(pending)});
-   let decision=req.method==='GET'&&analysisAccount===account&&initialDecision?initialDecision:evaluateC1Account({account:analysisAccount,book,now});
+   const carryStarted=Date.now();let analysisAccount=carryC1RecordedHoldings({account,book,now,onPending:pending=>pendingSessions.push(pending)});carryMs=Date.now()-carryStarted;
+   let decision;
+   if(req.method==='GET'&&analysisAccount===account&&initialDecision)decision=initialDecision;
+   else{const finalEvalStarted=Date.now();decision=evaluateC1Account({account:analysisAccount,book,now});finalEvalMs=Date.now()-finalEvalStarted;}
    const pendingSession=pendingSessions.at(-1)||null;
    let openingPlan=null,openingError=null,intradaySession=null,openingReady=false;
    if(decision.current){
@@ -188,7 +192,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    if(req.body?.operation==='record-intraday'&&!intradaySession)throw new Error('Current-session prices are unavailable; the trade has not been saved. Retry during the regular session.');
    if(analysisAccount.intradayActivity&&!intradaySession)decision=c1IntradayDecision({decision,activity:analysisAccount.intradayActivity,revision:analysisAccount.revision,now});
    const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now:clock()});
-   console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,totalMs:Date.now()-requestStarted}));
+   console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,initialEvalMs,saveMs,carryMs,finalEvalMs,totalMs:Date.now()-requestStarted}));
    return res.status(200).json({decision,pendingSession,pendingSessions,intradaySession,openingPlan,openingError,manualRecommendations,holdingReviewError});
   }catch(error){const conflict=isC1AccountSaveConflict(error);return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
  };
