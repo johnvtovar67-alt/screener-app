@@ -3,7 +3,7 @@ import {c1WatchPresentation,c1OpportunityPresentation} from '../lib/c1EntryRevie
 import {useEffect,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
-export default function C1AccountOpportunities({decision,openingPlan,openingError,manualRecommendations,screenRows=[],screenCurrent=false,view="opportunities"}){
+export default function C1AccountOpportunities({decision,openingPlan,openingError,manualRecommendations,screenRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
  const [,expire]=useState(0);
  useEffect(()=>{
   const remaining=Date.parse(manualRecommendations?.validUntil)-Date.now();
@@ -30,14 +30,18 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const priorWatch=watch.filter(row=>!screenSymbols.has(row.symbol));
  const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
  const priorWatchView=c1WatchPresentation({rows:priorWatch,plan:openingPlan,ready,waitingReason});
- const heldSymbols=new Set((decision.positions||[]).map(position=>String(position?.symbol||'').toUpperCase()));
+ const heldSymbols=new Set([
+  ...(decision.positions||[]).map(position=>String(position?.symbol||'').toUpperCase()),
+  ...(portfolio||[]).filter(position=>position?.role==='Swing'&&Number(position?.shares)>0).map(position=>String(position?.symbol||'').toUpperCase())
+ ]);
+ let nextWatchPriority=presentation.tiles.length;
  const watchView={
   shared:null,
   rows:[
    ...currentWatchView.rows.map((row,index)=>{
-    const held=heldSymbols.has(row.symbol);
+    const held=heldSymbols.has(String(row.symbol||'').toUpperCase());
     const momentumRankText=held&&currentWatch[index]?.screenReview?.why?currentWatch[index].screenReview.why.split(';')[0]+'.':'';
-    return {...row,priority:held?'Held':presentation.tiles.length+index+1,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:row.review};
+    return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:row.review};
    }),
    ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'This stock is not in the current verified opportunity screen.'}}))
   ]
@@ -52,7 +56,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
    <p className="sub">{tile.entryEvidence?.sector||'Sector unavailable'} · C1 rating as of {decision.sourceSessionDate}</p>
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Signal closing price</small></div>
    <p className="why">Momentum score: {Number.isFinite(tile.entryEvidence?.momentumScore)?tile.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable'}</p>
-   <div className="plan"><small>Your next action</small><b>{tile.accountAction}</b><p>{tile.detail}</p>{tile.order&&<p>Estimated price ${tile.order.estimatedPrice.toFixed(2)}. Confirm the current execution price before placing your order.</p>}</div>
+   <div className="plan"><small>Your next action</small><b>{tile.accountAction}</b><p>{tile.accountAction==='Hold'&&heldSymbols.has(String(tile.symbol||'').toUpperCase())?'Current C1 holding. The stock remains Buy-rated, but no additional purchase quantity is authorized right now. Any Add must pass the current account and opening checks during regular market hours.':tile.detail}</p>{tile.order&&<p>Estimated price ${tile.order.estimatedPrice.toFixed(2)}. Confirm the current execution price before placing your order.</p>}</div>
   </article>)}</div>:portfolioOnly&&buys.length?<>
    <div className="grid buyGrid">{buys.map(o=><article className="idea green" key={o.id}>
     <div className="top"><h3>{o.symbol}</h3><b className="pill green">{decision.positions.some(p=>p.symbol===o.symbol)?'Add':'Buy'}</b></div>
