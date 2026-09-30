@@ -14,7 +14,7 @@
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
     "lib/c1AccountDecision.js": "ee3a459c2b3b7105115f0a74c27bd464359d33e2",
     "lib/c1AccountDifferences.js": "e52d36812c4eba4a5770d5450f1566e21d327b11",
-    "lib/c1AccountExecution.js": "3b29eeacbf09aee102a5c5280a9091090a34e440",
+    "lib/c1AccountExecution.js": "f0e5ad1bef47d8ce61705fb22d3217202c629c9d",
     "lib/c1AccountInput.js": "b4094fb10b44559517a3b9aabde00f4392ee3a42",
     "lib/c1AccountOpeningProvider.js": "83dbf554a37ed1690c5b2e61e4559bf461e83270",
     "lib/c1AccountPortfolio.js": "411cc6fb888b872c6af1fce4d82c7e94a717a289",
@@ -180,5 +180,6 @@
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
-  "entryRecheckDiagnosticAuthorization": "Owner explicitly requests completion of the September 30 live-capital entry-recheck defect. Add bounded diagnostic logging only on rejected server-generated gap evidence to identify the exact symbol, sleeve, reference delta and computed gap. No strategy or execution behavior changes."
+  "entryRecheckDiagnosticAuthorization": "Owner explicitly requests completion of the September 30 live-capital entry-recheck defect. Add bounded diagnostic logging only on rejected server-generated gap evidence to identify the exact symbol, sleeve, reference delta and computed gap. No strategy or execution behavior changes.",
+  "equivalentGapAuthorization": "September 30 production diagnostics identified the exact opening-review failure: HPE had a server recheck reference of 61.50 while the accepted session signal reference was 61.49; the observed price near 64.66 exceeded the unchanged 3% entry-gap threshold under both references. Preserve a server-generated gap block when both recorded and accepted references independently establish the same failed gate; never convert a pass into a block. No threshold, ranking, sizing, cash, stop, fill, or execution rule changes."
 }
