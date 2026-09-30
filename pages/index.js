@@ -250,9 +250,9 @@ export default function Home(){
 
   async function load(t,verificationPass=0){
     const started=Date.now();setReloading(true);setErr("");
-    let refreshedAccount=null;
-    if(t==="opportunities")try{refreshedAccount=await refreshC1Account();}catch(e){setErr(e.message);}
-    try{const d=await fetchScreen(t,verificationPass,{screenSymbols:refreshedAccount?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[]}),health=screenHealth(d.meta,d.performance);if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth(health);setMarketScope(d.meta||null);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{setThemeStocks(d.stocks||[]);setThemeFeedHealth(health);}const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}
+    const priorScreenSymbols=accountView?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[];
+    const accountRequest=t==="opportunities"?refreshC1Account().then(value=>({value})).catch(error=>({error})):Promise.resolve({value:null});
+    try{const d=await fetchScreen(t,verificationPass,{screenSymbols:priorScreenSymbols}),accountResult=await accountRequest,health=screenHealth(d.meta,d.performance);if(accountResult.error)setErr(accountResult.error.message);if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth(health);setMarketScope(d.meta||null);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{setThemeStocks(d.stocks||[]);setThemeFeedHealth(health);}const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}
     catch(e){setErr(e.message);if(t==="opportunities"){setStocks(pausePriorRows);setFeedHealth(h=>({...h,status:"unavailable"}));}else{setThemeStocks(pausePriorRows);setThemeFeedHealth(h=>({...h,status:"unavailable"}));}}finally{const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));setReloading(false);}
   }
   async function fetchStock(s){const r=await fetch(`/api?symbol=${encodeURIComponent(s)}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);const x=extract(d);if(!x)throw new Error(`No usable data for ${s}`);return x;}
