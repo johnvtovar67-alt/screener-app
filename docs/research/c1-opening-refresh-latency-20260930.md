@@ -25,8 +25,12 @@ after observation, consuming much of its usable life during the refresh itself.
   with bounded eight-way concurrency. Preserve both S&P membership observations,
   exact adjusted-close revision review, the three-percent opening-gap gate, and
   every frozen ranking, sizing, risk, cash, position and execution rule.
-- Run the private-account refresh and broad opportunity refresh concurrently;
-  fetch performance history concurrently with the broad screen.
+- Run the private-account refresh and broad opportunity refresh concurrently.
+  Preserve the required ordering in which performance history is read only
+  after the broad screen records the current signal observation.
+- Start the independent private-account and immutable-model Blob reads
+  together, then validate both before account analysis. Emit an additional
+  privacy-safe end-to-end timing marker containing only milliseconds.
 - Keep collected quotes no more than two minutes old when they are verified,
   but keep the resulting manual recommendation available for ten minutes (or
   until the actual market close, whichever comes first). The interface continues
@@ -43,4 +47,3 @@ anchor per symbol, and proves bounded concurrency above the former three-worker
 bottleneck. Manual-recommendation regression proves the ten-minute window and
 market-close boundary. Existing intraday and UI-authority regressions continue
 to cover exact fills, cash, ownership, sell-before-buy ordering and expiration.
-
