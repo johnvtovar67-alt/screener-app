@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "4fa120447c0da1bbae4597b6e983582c51bc491c",
-    "components/C1AccountOpportunities.js": "d05ee8f605e5ba2f6a86170807884b362a0f157a",
+    "components/C1AccountOpportunities.js": "8db729c55dde5796759f31479773515b70c65bb0",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -177,5 +177,6 @@
     "lib/c1HeldCloseRevisionReview.js": "0baa882f99933328028dc6a32d4175f206970ec5",
     "lib/c1ReviewedSessionRevision.js": "cf30a50763541405f30ecd3ea1a8c367fe94c319",
     "lib/c1SessionRevisionReview.js": "81b20c650c7daac35ffd2e18850bfd42923d1520"
-  }
+  },
+  "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed."
 }
