@@ -42,6 +42,9 @@ after observation, consuming much of its usable life during the refresh itself.
 - Let the Opportunities refresh request a compact account view that skips
   prebuilding historical trade-entry forms. Account settings retains the full
   dated plans and selector when the owner needs to record earlier activity.
+- Run independent held-momentum history reads concurrently within the existing
+  bounded account set, retaining the same verification and time budget without
+  serializing the trading-screen refresh.
 - Keep collected quotes no more than two minutes old when they are verified,
   but keep the resulting manual recommendation available for ten minutes (or
   until the actual market close, whichever comes first). The interface continues

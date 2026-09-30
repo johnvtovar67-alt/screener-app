@@ -103,8 +103,9 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      account=appendC1AccountSession({account:prior,record:req.body.record,book,expectedRevision:req.body.expectedRevision,now});
     }else return res.status(400).json({error:'Valid account operation required.'});
    }
-   let holdingReviewError=null;
+   let holdingReviewError=null,holdingReviewMs=0;
    if(req.method==='POST'&&['refresh-analysis','adopt','record-session'].includes(req.body?.operation)){
+    const holdingReviewStarted=Date.now();
     const carried=carryC1RecordedHoldings({account,book,now});
     const through=carried.records.at(-1)?.date||carried.adoption.sourceSessionDate;
     const input=c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),baseline=input.model.sessions.find(s=>s.date===through);
@@ -128,6 +129,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     }else if(symbols.length){
      console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code:'ACCOUNT_SESSION_BEHIND',stage:'account-review'}));
     }
+    holdingReviewMs=Date.now()-holdingReviewStarted;
    }
    if(req.method==='POST'&&req.body?.operation!=='record-intraday'){const saveStarted=Date.now();account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});saveMs=Date.now()-saveStarted;}
    const pendingSessions=[],compact=req.query?.compact==='1';
@@ -192,7 +194,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    if(req.body?.operation==='record-intraday'&&!intradaySession)throw new Error('Current-session prices are unavailable; the trade has not been saved. Retry during the regular session.');
    if(analysisAccount.intradayActivity&&!intradaySession)decision=c1IntradayDecision({decision,activity:analysisAccount.intradayActivity,revision:analysisAccount.revision,now});
    const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now:clock()});
-   console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,initialEvalMs,saveMs,carryMs,finalEvalMs,totalMs:Date.now()-requestStarted}));
+   console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,initialEvalMs,holdingReviewMs,saveMs,carryMs,finalEvalMs,totalMs:Date.now()-requestStarted}));
    return res.status(200).json({decision,pendingSession,pendingSessions,intradaySession,openingPlan,openingError,manualRecommendations,holdingReviewError});
   }catch(error){const conflict=isC1AccountSaveConflict(error);return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
  };
