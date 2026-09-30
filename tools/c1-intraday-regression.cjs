@@ -98,6 +98,8 @@ const recheckedOpening=intraday.c1IntradayEntryRecheck({account:saved,opening:mo
 // sub-cent floating representation noise. The 3% gate must remain unchanged.
 const noisyRecheck={...recheckedOpening,entryRecheck:{...recheckedOpening.entryRecheck,blocks:recheckedOpening.entryRecheck.blocks.map(block=>({...block,referencePrice:block.referencePrice*(1+5e-10)}))}};
 assert.doesNotThrow(()=>execution.planC1ContinuedAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:[],opening:noisyRecheck,observedAt:now.toISOString()}),'Equivalent accepted reference precision must not invalidate a genuine >3% server entry block');
+const pennyRecheck={...recheckedOpening,entryRecheck:{...recheckedOpening.entryRecheck,blocks:recheckedOpening.entryRecheck.blocks.map((block,index)=>index?block:{...block,referencePrice:block.referencePrice+.01})}};
+assert.doesNotThrow(()=>execution.planC1ContinuedAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:[],opening:pennyRecheck,observedAt:now.toISOString()}),'A one-cent provider reference revision must preserve the block when both references independently exceed the unchanged 3% gap threshold');
 const refreshedPlan=execution.planC1ContinuedAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:[],opening:recheckedOpening,observedAt:now.toISOString()});
 const rebased=intraday.rebaseC1UnfilledEntryPlan({activity:saved.intradayActivity,plan:refreshedPlan,now});
 const refreshedRemaining=intraday.c1IntradayRemainingPlan({plan:refreshedPlan,activity:rebased,opening:recheckedOpening,baseline,decision:view,now});
