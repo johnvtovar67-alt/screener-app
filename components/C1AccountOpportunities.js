@@ -13,13 +13,15 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  },[manualRecommendations?.validUntil]);
  const ready=Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,decision);
  const portfolioOnly=view==='portfolio';
+ const ratedRows=classifyC1StockScreen({snapshot:decision.stockScreen,rows:screenRows,current:screenCurrent&&decision.current&&decision.stockScreen?.sourceSessionDate===decision.sourceSessionDate});
+ const currentBuySymbols=new Set(ratedRows.filter(row=>['Buy','Strong Buy'].includes(row.rating)).map(row=>row.symbol));
  const orders=c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view});
- const buys=c1OrderDisplayGroups(orders.filter(order=>order.side==='buy'&&!order.condition));
+ const rawBuys=orders.filter(order=>order.side==='buy'&&!order.condition);
+ const buys=c1OrderDisplayGroups(portfolioOnly?rawBuys.filter(order=>currentBuySymbols.has(order.symbol)):rawBuys);
  const positionOrders=portfolioOnly?c1OrderDisplayGroups(c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view:'opportunities'}).filter(order=>order.side==='sell'&&!order.condition)):[];
  const exits=positionOrders;
  if(portfolioOnly&&!buys.length&&!positionOrders.length)return null;
  const waitingReason=decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
- const ratedRows=classifyC1StockScreen({snapshot:decision.stockScreen,rows:screenRows,current:screenCurrent&&decision.current&&decision.stockScreen?.sourceSessionDate===decision.sourceSessionDate});
  const ratedDecision={...decision,opportunities:ratedRows};
  const presentation=c1OpportunityPresentation({decision:ratedDecision,buys,plan:openingPlan,ready,waitingReason});
  const watch=presentation.watch;
