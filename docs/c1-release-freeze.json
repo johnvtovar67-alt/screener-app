@@ -21,7 +21,7 @@
     "lib/c1AccountReconciliation.js": "fc05613dbe81f860396a35672aa92b47d1d46b84",
     "lib/c1AccountSave.js": "237ddd0b26977a00c6b157a914eab0afdc16007b",
     "lib/c1AccountSeed.js": "2caa60f6b31df354dbe9fd2ade03645f358ef5d8",
-    "lib/c1AccountService.js": "fdfe161522c292f41d994d20562b707732027d8e",
+    "lib/c1AccountService.js": "04ec89e87c0dba24e9f21b257cdcf8b7d62cfa8a",
     "lib/c1AccountSimulator.js": "9460a5dbb6288c568fc57cf66d19af3d3e4115a6",
     "lib/c1ActualFillReplay.js": "d8e35926644fbe9b3005e2c3e483b4c69fb051ec",
     "lib/c1BaselineReconciliation.js": "a638d81c4eecd081fa9c7da911edd1f4f5340822",
