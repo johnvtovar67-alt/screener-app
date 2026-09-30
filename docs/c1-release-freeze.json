@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "4fa120447c0da1bbae4597b6e983582c51bc491c",
-    "components/C1AccountOpportunities.js": "8db729c55dde5796759f31479773515b70c65bb0",
+    "components/C1AccountOpportunities.js": "b6298ec874c012e944fec4f4e9e3bdb03c7aa252",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -168,7 +168,7 @@
     "pages/index.js": "d187cffa04b003fe1533c0df3a2ebe4aa8384eb3",
     "styles/card-layout.css": "6e8d38ae8506fc7a3e080de6282bddd60662bfac",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
-    "lib/c1EntryReview.js": "44c3ddf4dc3582399e280dc87da2e880998d4b28",
+    "lib/c1EntryReview.js": "6909681253ebf844981a8b9a85e170788e573e50",
     "lib/portfolioDateDisplay.js": "50382f05065b9263e14e7c112ac1ffc037860ac9",
     "lib/c1StockClassification.js": "bba867e70c587b5e811bbf5172047cb415df8e02",
     "lib/c1IntradayActivity.js": "1245082b63a01f9c701f60e49a92a72a71faea32",
@@ -182,5 +182,6 @@
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
   "entryRecheckDiagnosticAuthorization": "Owner explicitly requests completion of the September 30 live-capital entry-recheck defect. Add bounded diagnostic logging only on rejected server-generated gap evidence to identify the exact symbol, sleeve, reference delta and computed gap. No strategy or execution behavior changes.",
   "equivalentGapAuthorization": "September 30 production diagnostics identified the exact opening-review failure: HPE had a server recheck reference of 61.50 while the accepted session signal reference was 61.49; the observed price near 64.66 exceeded the unchanged 3% entry-gap threshold under both references. Preserve a server-generated gap block when both recorded and accepted references independently establish the same failed gate; never convert a pass into a block. No threshold, ranking, sizing, cash, stop, fill, or execution rule changes.",
-  "fullSlotWordingAuthorization": "Owner explicitly requests correction of the September 30 MRNA no-purchase wording after all three C1 Swing slots were filled. Presentation only: when an unowned candidate has no purchase and three active C1 positions are allocated, explain that all three C1 position slots are currently allocated instead of saying no detailed entry-check result is available. No ranking, sizing, cash, entry, exit, stop, fill, or execution behavior changes."
+  "fullSlotWordingAuthorization": "Owner explicitly requests correction of the September 30 MRNA no-purchase wording after all three C1 Swing slots were filled. Presentation only: when an unowned candidate has no purchase and three active C1 positions are allocated, explain that all three C1 position slots are currently allocated instead of saying no detailed entry-check result is available. No ranking, sizing, cash, entry, exit, stop, fill, or execution behavior changes.",
+  "watchPriorityAuthorization": "Owner explicitly requests correction of misleading Watch priority after MRNA ranked #1 on the September 29 completed signal but dropped out of the September 30 current verified opportunity screen. Preserve historical signal rank but do not present it as current Watch priority; derive current membership from the already verified screen and label absent candidates as prior signals/currently ineligible. Presentation only; no ranking engine, sizing, cash, entry, exit, stop, fill, or execution rule changes."
 }
