@@ -28,9 +28,10 @@ after observation, consuming much of its usable life during the refresh itself.
 - Run the private-account refresh and broad opportunity refresh concurrently.
   Preserve the required ordering in which performance history is read only
   after the broad screen records the current signal observation.
-- Start the independent private-account and immutable-model Blob reads
-  together, then validate both before account analysis. Emit an additional
-  privacy-safe end-to-end timing marker containing only milliseconds.
+- Preserve the required unknown-account guard: a missing private account must
+  return before any model read begins. Emit a privacy-safe end-to-end timing
+  marker for the account read, model read and total request, containing only
+  milliseconds, so any remaining storage bottleneck can be isolated safely.
 - Keep collected quotes no more than two minutes old when they are verified,
   but keep the resulting manual recommendation available for ten minutes (or
   until the actual market close, whichever comes first). The interface continues
