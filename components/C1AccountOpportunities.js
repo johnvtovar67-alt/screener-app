@@ -13,7 +13,11 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  },[manualRecommendations?.validUntil]);
  const ready=Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,decision);
  const portfolioOnly=view==='portfolio';
- const ratedRows=classifyC1StockScreen({snapshot:decision.stockScreen,rows:screenRows,current:screenCurrent&&decision.current&&decision.stockScreen?.sourceSessionDate===decision.sourceSessionDate});
+ const screenSymbols=new Set(screenRows.map(row=>String(row?.symbol||row?.ticker||'').toUpperCase()));
+ const ratedRows=classifyC1StockScreen({snapshot:decision.stockScreen,rows:screenRows,current:screenCurrent&&decision.current&&decision.stockScreen?.sourceSessionDate===decision.sourceSessionDate}).map(row=>{
+  const currentScreenMember=screenSymbols.has(row.symbol),priorSignalRank=Number.isFinite(row.priority)?row.priority+1:null;
+  return {...row,currentScreenMember,priorSignalRank,...(screenCurrent&&!currentScreenMember?{screenReview:{why:`Prior signal #${priorSignalRank} — currently ineligible.`,next:'This stock is not in the current verified opportunity screen.'}}:{})};
+ });
  const currentBuySymbols=new Set(ratedRows.filter(row=>['Buy','Strong Buy'].includes(row.rating)).map(row=>row.symbol));
  const orders=c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view});
  const rawBuys=orders.filter(order=>order.side==='buy'&&!order.condition);
