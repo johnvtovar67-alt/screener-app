@@ -33,7 +33,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const watchView={
   shared:null,
   rows:[
-   ...currentWatchView.rows.map((row,index)=>({...row,priority:presentation.tiles.length+index+1})),
+   ...currentWatchView.rows.map((row,index)=>({...row,priority:presentation.tiles.length+index+1,review:row.review?.why?.startsWith('Momentum rank #')?{why:index===0?'Next in the C1 queue; currently below the three selected opportunities.':'Currently below the three selected opportunities.',next:'Move into the selected three on a verified refresh.'}:row.review})),
    ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'This stock is not in the current verified opportunity screen.'}}))
   ]
  };
