@@ -3,7 +3,7 @@ import {c1IntradayEntryRecheck,rebaseC1UnfilledEntryPlan,recordC1IntradayActivit
 import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
 import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
 import {c1AccountReviewBook} from '../../lib/c1HeldRankReview';
-import {buildC1ManualRecommendations} from '../../lib/c1ManualRecommendations';
+import {buildC1ManualRecommendations,C1_MANUAL_RECOMMENDATION_VALIDITY_MS} from '../../lib/c1ManualRecommendations';
 import {applyC1OpeningPlan} from '../../lib/c1AccountDecision';
 import {c1AccountBook} from '../../lib/c1AccountInput';
 import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
@@ -138,7 +138,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
      const symbols=decision.requiredOpeningSymbols;
      const collectedOpening=await collectOpening({baseline,symbols,now,allowPriceRevisionReview:true});
      const opening=collectedOpening?c1IntradayEntryRecheck({account:analysisAccount,opening:collectedOpening,baseline,now}):null;
-     if(opening){openingReady=true;openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,historySessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+120000))).toISOString();
+     if(opening){openingReady=true;openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,historySessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+C1_MANUAL_RECOMMENDATION_VALIDITY_MS))).toISOString();
      openingPlan=reviewC1OpeningPriceRevisions({account:analysisAccount,sessions,historySessions,opening,plan:openingPlan,now});
       if(analysisAccount.intradayActivity?.plan.recordingOnly)analysisAccount={...analysisAccount,intradayActivity:rebaseC1RecordedExitActivity({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
       if(analysisAccount.intradayActivity)analysisAccount={...analysisAccount,intradayActivity:rebaseC1UnfilledEntryPlan({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
