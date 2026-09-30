@@ -25,7 +25,18 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const ratedDecision={...decision,opportunities:ratedRows};
  const presentation=c1OpportunityPresentation({decision:ratedDecision,buys,plan:openingPlan,ready,waitingReason});
  const watch=presentation.watch;
- const watchView=c1WatchPresentation({rows:watch,plan:openingPlan,ready,waitingReason});
+ const screenSymbols=new Set(screenRows.map(row=>String(row?.symbol||row?.ticker||'').toUpperCase()));
+ const currentWatch=watch.filter(row=>screenSymbols.has(row.symbol));
+ const priorWatch=watch.filter(row=>!screenSymbols.has(row.symbol));
+ const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
+ const priorWatchView=c1WatchPresentation({rows:priorWatch,plan:openingPlan,ready,waitingReason});
+ const watchView={
+  shared:null,
+  rows:[
+   ...currentWatchView.rows.map((row,index)=>({...row,priority:presentation.tiles.length+index+1})),
+   ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'This stock is not in the current verified opportunity screen.'}}))
+  ]
+ };
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
   <p className="sub">Signals based on {decision.sourceSessionDate} close · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
@@ -52,8 +63,7 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">
   <h2>🟡 Watch</h2>
   <p className="sub">Candidates awaiting a C1 Buy rating · {decision.sourceSessionDate}</p>
-  {watchView.shared&&<p className="sub"><b>{watchView.shared.why}</b> {watchView.shared.next}</p>}
-  {watch.length?<div className="scroll"><table><thead><tr><th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Signal closing price</th>{!watchView.shared&&<th>Entry check</th>}</tr></thead><tbody>{watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td><td><b>{row.symbol}</b><div>{row.sector}</div></td><td>{row.momentum}</td><td>{row.close}</td>{!watchView.shared&&<td>{row.review.why} {row.review.next}</td>}</tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
+  {watch.length?<div className="scroll"><table><thead><tr><th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Signal closing price</th><th>Entry check</th></tr></thead><tbody>{watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td><td><b>{row.symbol}</b><div>{row.sector}</div></td><td>{row.momentum}</td><td>{row.close}</td><td>{row.review.why} {row.review.next}</td></tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
 
  </section>}
  <style jsx>{`.buyGrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.price small{font-size:12px;color:#64748b}`}</style>
