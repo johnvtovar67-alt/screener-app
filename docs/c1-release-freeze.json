@@ -14,7 +14,7 @@
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
     "lib/c1AccountDecision.js": "ee3a459c2b3b7105115f0a74c27bd464359d33e2",
     "lib/c1AccountDifferences.js": "e52d36812c4eba4a5770d5450f1566e21d327b11",
-    "lib/c1AccountExecution.js": "0592b04efcdbbe13a35b7c2890cf1abcc0f2612a",
+    "lib/c1AccountExecution.js": "ebb8aa1dbdcf85501804067211cb5c143f4c440a",
     "lib/c1AccountInput.js": "b4094fb10b44559517a3b9aabde00f4392ee3a42",
     "lib/c1AccountOpeningProvider.js": "83dbf554a37ed1690c5b2e61e4559bf461e83270",
     "lib/c1AccountPortfolio.js": "411cc6fb888b872c6af1fce4d82c7e94a717a289",
@@ -178,5 +178,6 @@
     "lib/c1ReviewedSessionRevision.js": "cf30a50763541405f30ecd3ea1a8c367fe94c319",
     "lib/c1SessionRevisionReview.js": "81b20c650c7daac35ffd2e18850bfd42923d1520"
   },
-  "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed."
+  "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
+  "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes."
 }
