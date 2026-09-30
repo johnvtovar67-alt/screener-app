@@ -42,6 +42,8 @@ after observation, consuming much of its usable life during the refresh itself.
 - Let the Opportunities refresh request a compact account view that skips
   prebuilding historical trade-entry forms. Account settings retains the full
   dated plans and selector when the owner needs to record earlier activity.
+- Apply that compact carry-forward to held-rank preparation as well as the
+  final response; the rank check must not rebuild the same historical forms.
 - Run independent held-momentum history reads concurrently within the existing
   bounded account set, retaining the same verification and time budget without
   serializing the trading-screen refresh.
