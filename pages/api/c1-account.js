@@ -30,6 +30,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
   if(!/^[A-Za-z0-9_-]{32,128}$/.test(key))return res.status(401).json({error:'Your portfolio sync key is required.'});
  const scope=environment==='production'?'production':`preview-${commit}`;
   const path=`c1-accounts-v1/${scope}/${createHash('sha256').update(key).digest('hex')}.json`;
+  const compact=req.query?.compact==='1';
   try{
    const requestStarted=Date.now(),now=clock(),saved=await store.read(path),accountReadMs=Date.now()-requestStarted;
    if((req.method==='GET'||req.body?.operation==='refresh-analysis')&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
@@ -106,7 +107,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    let holdingReviewError=null,holdingReviewMs=0;
    if(req.method==='POST'&&['refresh-analysis','adopt','record-session'].includes(req.body?.operation)){
     const holdingReviewStarted=Date.now();
-    const carried=carryC1RecordedHoldings({account,book,now});
+    const carried=carryC1RecordedHoldings({account,book,now,skipPendingPlans:compact});
     const through=carried.records.at(-1)?.date||carried.adoption.sourceSessionDate;
     const input=c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),baseline=input.model.sessions.find(s=>s.date===through);
     const reviews=account.holdingRankReviews||[],existing=reviews.find(r=>r.sourceSessionDate===through);
@@ -132,7 +133,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     holdingReviewMs=Date.now()-holdingReviewStarted;
    }
    if(req.method==='POST'&&req.body?.operation!=='record-intraday'){const saveStarted=Date.now();account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});saveMs=Date.now()-saveStarted;}
-   const pendingSessions=[],compact=req.query?.compact==='1';
+   const pendingSessions=[];
    const carryStarted=Date.now();let analysisAccount=carryC1RecordedHoldings({account,book,now,skipPendingPlans:compact,...(compact?{}:{onPending:pending=>pendingSessions.push(pending)})});carryMs=Date.now()-carryStarted;
    let decision;
    if(req.method==='GET'&&analysisAccount===account&&initialDecision)decision=initialDecision;
