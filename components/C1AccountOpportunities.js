@@ -30,10 +30,15 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const priorWatch=watch.filter(row=>!screenSymbols.has(row.symbol));
  const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
  const priorWatchView=c1WatchPresentation({rows:priorWatch,plan:openingPlan,ready,waitingReason});
+ const heldSymbols=new Set((decision.positions||[]).map(position=>String(position?.symbol||'').toUpperCase()));
  const watchView={
   shared:null,
   rows:[
-   ...currentWatchView.rows.map((row,index)=>({...row,priority:presentation.tiles.length+index+1})),
+   ...currentWatchView.rows.map((row,index)=>{
+    const held=heldSymbols.has(row.symbol);
+    const momentumRankText=held&&currentWatch[index]?.screenReview?.why?currentWatch[index].screenReview.why.split(';')[0]+'.':'';
+    return {...row,priority:held?'Held':presentation.tiles.length+index+1,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:row.review};
+   }),
    ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'This stock is not in the current verified opportunity screen.'}}))
   ]
  };
