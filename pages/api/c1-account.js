@@ -28,13 +28,13 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'Method not allowed'});}
   const auth=String(req.headers.authorization||''),key=auth.startsWith('Bearer ')?auth.slice(7):'';
   if(!/^[A-Za-z0-9_-]{32,128}$/.test(key))return res.status(401).json({error:'Your portfolio sync key is required.'});
-  const scope=environment==='production'?'production':`preview-${commit}`;
+ const scope=environment==='production'?'production':`preview-${commit}`;
   const path=`c1-accounts-v1/${scope}/${createHash('sha256').update(key).digest('hex')}.json`;
   try{
-   const now=clock(),saved=await store.read(path);
+   const requestStarted=Date.now(),now=clock(),[saved,storedBook]=await Promise.all([store.read(path),readBook('sp500',{now})]),readMs=Date.now()-requestStarted;
    if((req.method==='GET'||req.body?.operation==='refresh-analysis')&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
    // Read only: this endpoint cannot initialize or refresh the index provider.
-   const {record:book}=await readBook('sp500',{now});
+   const {record:book}=storedBook;
    let account=saved?.record;
    // Complete only the next account session's holding observations. These
    // remain private account inputs and cannot initialize or alter index data.
@@ -187,6 +187,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    if(req.body?.operation==='record-intraday'&&!intradaySession)throw new Error('Current-session prices are unavailable; the trade has not been saved. Retry during the regular session.');
    if(analysisAccount.intradayActivity&&!intradaySession)decision=c1IntradayDecision({decision,activity:analysisAccount.intradayActivity,revision:analysisAccount.revision,now});
    const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now:clock()});
+   console.info('C1_ACCOUNT_TIMING',JSON.stringify({readMs,totalMs:Date.now()-requestStarted}));
    return res.status(200).json({decision,pendingSession,pendingSessions,intradaySession,openingPlan,openingError,manualRecommendations,holdingReviewError});
   }catch(error){const conflict=isC1AccountSaveConflict(error);return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
  };
