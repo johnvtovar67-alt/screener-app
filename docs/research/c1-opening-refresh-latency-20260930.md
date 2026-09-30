@@ -35,6 +35,10 @@ after observation, consuming much of its usable life during the refresh itself.
 - Reuse the initial authoritative account evaluation when carry-forward leaves
   the saved account unchanged. The same account, book and timestamp previously
   triggered an identical full-history replay twice in one request.
+- Build consecutive server-derived no-trade carry-forward records append-only,
+  then validate the completed derived account once. Owner-entered activity and
+  every persisted write retain their existing validation; this removes only the
+  repeated full-account validation after each ephemeral carry-forward row.
 - Keep collected quotes no more than two minutes old when they are verified,
   but keep the resulting manual recommendation available for ten minutes (or
   until the actual market close, whichever comes first). The interface continues
