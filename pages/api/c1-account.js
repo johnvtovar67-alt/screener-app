@@ -130,8 +130,8 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     }
    }
    if(req.method==='POST'&&req.body?.operation!=='record-intraday'){const saveStarted=Date.now();account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});saveMs=Date.now()-saveStarted;}
-   const pendingSessions=[];
-   const carryStarted=Date.now();let analysisAccount=carryC1RecordedHoldings({account,book,now,onPending:pending=>pendingSessions.push(pending)});carryMs=Date.now()-carryStarted;
+   const pendingSessions=[],compact=req.query?.compact==='1';
+   const carryStarted=Date.now();let analysisAccount=carryC1RecordedHoldings({account,book,now,skipPendingPlans:compact,...(compact?{}:{onPending:pending=>pendingSessions.push(pending)})});carryMs=Date.now()-carryStarted;
    let decision;
    if(req.method==='GET'&&analysisAccount===account&&initialDecision)decision=initialDecision;
    else{const finalEvalStarted=Date.now();decision=evaluateC1Account({account:analysisAccount,book,now});finalEvalMs=Date.now()-finalEvalStarted;}

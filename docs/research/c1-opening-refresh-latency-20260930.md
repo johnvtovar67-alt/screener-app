@@ -39,6 +39,9 @@ after observation, consuming much of its usable life during the refresh itself.
   then validate the completed derived account once. Owner-entered activity and
   every persisted write retain their existing validation; this removes only the
   repeated full-account validation after each ephemeral carry-forward row.
+- Let the Opportunities refresh request a compact account view that skips
+  prebuilding historical trade-entry forms. Account settings retains the full
+  dated plans and selector when the owner needs to record earlier activity.
 - Keep collected quotes no more than two minutes old when they are verified,
   but keep the resulting manual recommendation available for ten minutes (or
   until the actual market close, whichever comes first). The interface continues

@@ -128,12 +128,12 @@ export default function Home(){
   const[accountView,setAccountView]=useState(null),[accountAbsent,setAccountAbsent]=useState(false),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
   const accountRequestId=useRef(0);
   const syncRevision=useRef({key:"",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);
-  async function refreshC1Account(body=null,{readOnly=false}={}){
+  async function refreshC1Account(body=null,{readOnly=false,compact=false}={}){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
     if(!key){setAccountView(null);setAccountAbsent(false);if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
     let recovered=false;
     try{
-      const r=await fetch('/api/c1-account',{method:readOnly?'GET':'POST',headers:{authorization:`Bearer ${key}`,...(readOnly?{}:{'content-type':'application/json'})},...(readOnly?{}:{body:JSON.stringify(body||{operation:'refresh-analysis'})}),cache:'no-store'}),d=await r.json();
+      const r=await fetch(`/api/c1-account${compact?'?compact=1':''}`,{method:readOnly?'GET':'POST',headers:{authorization:`Bearer ${key}`,...(readOnly?{}:{'content-type':'application/json'})},...(readOnly?{}:{body:JSON.stringify(body||{operation:'refresh-analysis'})}),cache:'no-store'}),d=await r.json();
       if(requestId!==accountRequestId.current)return;
       if(!r.ok){
         if(r.status===409&&!readOnly){
@@ -251,7 +251,7 @@ export default function Home(){
   async function load(t,verificationPass=0){
     const started=Date.now();setReloading(true);setErr("");
     const priorScreenSymbols=accountView?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[];
-    const accountRequest=t==="opportunities"?refreshC1Account().then(value=>({value})).catch(error=>({error})):Promise.resolve({value:null});
+    const accountRequest=t==="opportunities"?refreshC1Account(null,{compact:true}).then(value=>({value})).catch(error=>({error})):Promise.resolve({value:null});
     try{const d=await fetchScreen(t,verificationPass,{screenSymbols:priorScreenSymbols}),accountResult=await accountRequest,health=screenHealth(d.meta,d.performance);if(accountResult.error)setErr(accountResult.error.message);if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth(health);setMarketScope(d.meta||null);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{setThemeStocks(d.stocks||[]);setThemeFeedHealth(health);}const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}
     catch(e){setErr(e.message);if(t==="opportunities"){setStocks(pausePriorRows);setFeedHealth(h=>({...h,status:"unavailable"}));}else{setThemeStocks(pausePriorRows);setThemeFeedHealth(h=>({...h,status:"unavailable"}));}}finally{const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));setReloading(false);}
   }
