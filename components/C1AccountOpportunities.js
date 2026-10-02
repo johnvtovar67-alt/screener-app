@@ -26,8 +26,11 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
  const presentation=c1OpportunityPresentation({decision:ratedDecision,buys,plan:openingPlan,ready,waitingReason});
  const watch=presentation.watch;
  const screenSymbols=new Set(screenRows.map(row=>String(row?.symbol||row?.ticker||'').toUpperCase()));
+ const verifiedScreen=screenCurrent===true;
  const currentWatch=watch.filter(row=>screenSymbols.has(row.symbol));
- const priorWatch=watch.filter(row=>!screenSymbols.has(row.symbol));
+ const priorWatch=verifiedScreen?watch.filter(row=>!screenSymbols.has(row.symbol)):[];
+ const pendingWatch=verifiedScreen?[]:watch.filter(row=>!screenSymbols.has(row.symbol));
+ const pendingWatchView=c1WatchPresentation({rows:pendingWatch,plan:openingPlan,ready:false,waitingReason:'Current screen verification is pending.'});
  const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
  const priorWatchView=c1WatchPresentation({rows:priorWatch,plan:openingPlan,ready,waitingReason});
  const heldSymbols=new Set([
@@ -43,7 +46,8 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
     const momentumRankText=held&&currentWatch[index]?.screenReview?.why?currentWatch[index].screenReview.why.split(';')[0]+'.':'';
     return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:row.review};
    }),
-   ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'This stock is not in the current verified opportunity screen.'}}))
+   ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'Does not currently qualify for a new C1 entry.'}})),
+   ...pendingWatchView.rows.map(row=>({...row,priority:'—',review:{why:'Last verified C1 signal retained — current verification is pending.',next:'No eligibility change is recorded until a complete verified screen succeeds.'}}))
   ]
  };
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
