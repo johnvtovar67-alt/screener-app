@@ -48,7 +48,10 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
     return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:row.review};
    }),
    ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'Does not currently qualify for a new C1 entry.'}})),
-   ...(!verifiedScreen?watch.filter(row=>!screenSymbols.has(row.symbol)).map(row=>({symbol:row.symbol,priority:'—',sector:row.entryEvidence?.sector||'Sector unavailable',momentum:Number.isFinite(row.entryEvidence?.momentumScore)?row.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable',close:Number.isFinite(row.entryEvidence?.close)?'
+   ...(!verifiedScreen?watch.filter(row=>!screenSymbols.has(row.symbol)).map(row=>{
+    const e=row.entryEvidence||{};
+    return {symbol:row.symbol,priority:'—',sector:e.sector||'Sector unavailable',momentum:Number.isFinite(e.momentumScore)?e.momentumScore.toFixed(1)+'/100':'Unavailable',close:Number.isFinite(e.close)?'$'+e.close.toFixed(2):'Unavailable',review:{why:'Last verified C1 signal retained — current verification is pending.',next:'No eligibility change is recorded until a complete verified screen succeeds.'}};
+   }):[])
   ]
  };
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
