@@ -39,23 +39,17 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
   ...(portfolio||[]).filter(position=>position?.role==='Swing'&&Number(position?.shares)>0).map(position=>String(position?.symbol||'').toUpperCase())
  ]);
  let nextWatchPriority=presentation.tiles.length;
- const watchView={
-  shared:null,
-  rows:[
-   ...currentWatchView.rows.map((row,index)=>{
-    const held=heldSymbols.has(String(row.symbol||'').toUpperCase());
-    const momentumRankText=held&&currentWatch[index]?.screenReview?.why?currentWatch[index].screenReview.why.split(';')[0]+'.':'';
-    return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:row.review};
-   }),
-   ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'Does not currently qualify for a new C1 entry.'}})),
-   ...(!verifiedScreen?watch.filter(row=>!screenSymbols.has(row.symbol)).map(row=>({
-    symbol:row.symbol,
-    priority:'—',
-    sector:row.entryEvidence?.sector||'Sector unavailable',
-    momentum:Number.isFinite(row.entryEvidence?.momentumScore)?row.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable',
-    close:Number.isFinite(row.entryEvidence?.close)?'
-  ]
- };
+ const pendingWatch=!verifiedScreen?watch.filter(row=>!screenSymbols.has(row.symbol)):[];
+ const pendingWatchRows=pendingWatch.map(row=>{
+  const e=row.entryEvidence||{},momentum=Number.isFinite(e.momentumScore)?e.momentumScore.toFixed(1)+'/100':'Unavailable',close=Number.isFinite(e.close)?'$'+e.close.toFixed(2):'Unavailable';
+  return {symbol:row.symbol,priority:'—',sector:e.sector||'Sector unavailable',momentum,close,review:{why:'Last verified C1 signal retained — current verification is pending.',next:'No eligibility change is recorded until a complete verified screen succeeds.'}};
+ });
+ const currentWatchRows=currentWatchView.rows.map((row,index)=>{
+  const held=heldSymbols.has(String(row.symbol||'').toUpperCase()),momentumRankText=held&&currentWatch[index]?.screenReview?.why?currentWatch[index].screenReview.why.split(';')[0]+'.':'';
+  return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:row.review};
+ });
+ const priorWatchRows=priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'Does not currently qualify for a new C1 entry.'}}));
+ const watchView={shared:null,rows:[...currentWatchRows,...priorWatchRows,...pendingWatchRows]};
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
   <p className="sub">Signals based on {decision.sourceSessionDate} close · Available cash: {decision.actualCash.toLocaleString('en-US',{style:'currency',currency:'USD'})}</p>
