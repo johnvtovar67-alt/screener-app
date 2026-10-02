@@ -37,6 +37,16 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    // Read only: this endpoint cannot initialize or refresh the index provider.
    const bookReadStarted=Date.now(),{record:book}=await readBook('sp500',{now}),bookReadMs=Date.now()-bookReadStarted;
    let account=saved?.record,initialDecision=null,initialEvalMs=0,carryMs=0,finalEvalMs=0,saveMs=0;
+   // Compact requests are display reads used by the Opportunities page. They
+   // must not run the expensive private holding-rank refresh/opening-plan path;
+   // a full refresh still performs those checks before any executable action.
+   if(compact&&req.method==='POST'&&req.body?.operation==='refresh-analysis'&&saved){
+    const compactStarted=Date.now(),analysisAccount=carryC1RecordedHoldings({account,book,now,skipPendingPlans:true});
+    const decision=evaluateC1Account({account:analysisAccount,book,now});
+    const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:null,openingPlan:null,openingError:null,now});
+    console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,compact:true,totalMs:Date.now()-requestStarted}));
+    return res.status(200).json({decision,pendingSession:null,pendingSessions:[],intradaySession:null,openingPlan:null,openingError:null,manualRecommendations,holdingReviewError:null});
+   }
    // Complete only the next account session's holding observations. These
    // remain private account inputs and cannot initialize or alter index data.
    if(account){
