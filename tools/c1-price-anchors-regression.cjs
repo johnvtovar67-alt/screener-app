@@ -19,5 +19,5 @@ assert.equal(JSON.stringify(histories),before,'Provider evidence is immutable');
 assert.equal(buildC1PriorSessionPrices({'BRK.B':[{date,close:507}]},['BRK.B'],date).closes['BRK.B'],507);
 assert.throws(()=>buildC1PriorSessionPrices(histories,['BRK-B','BRK.B'],date),/Duplicate canonical/);
 assert.throws(()=>buildC1PriorSessionPrices(histories,['BF-B','BF.B'],date),/Duplicate canonical/);
-assert.ok(fs.readFileSync('lib/c1LiveInputProvider.js','utf8').includes('buildC1PriorSessionPrices(histories, symbols, previousDate)'));
+assert.ok(fs.readFileSync('lib/c1LiveInputProvider.js','utf8').includes('buildC1PriorSessionPrices(histories, activeSymbols, previousDate)'));
 console.log('PASS: FMP share-class anchors match model identities; revisions, missing values and original evidence remain unchanged');
