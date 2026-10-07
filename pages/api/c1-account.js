@@ -42,9 +42,11 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    // a full refresh still performs those checks before any executable action.
    if(compact&&req.method==='POST'&&req.body?.operation==='refresh-analysis'&&saved){
     const compactStarted=Date.now();
-    // Display-only refresh: evaluate the saved account against the verified
-    // completed-session book. Do not replay pending execution/opening state.
-    const decision=evaluateC1Account({account,book,now});
+    // Display-only refresh: carry recorded ownership through completed sessions
+    // without replaying pending opening/execution state, then evaluate the
+    // current verified book. This is derived only and is never saved here.
+    const analysisAccount=carryC1RecordedHoldings({account,book,now,skipPendingPlans:true});
+    const decision=evaluateC1Account({account:analysisAccount,book,now});
     const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:null,openingPlan:null,openingError:null,now});
     console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,compact:true,totalMs:Date.now()-requestStarted}));
     return res.status(200).json({decision,pendingSession:null,pendingSessions:[],intradaySession:null,openingPlan:null,openingError:null,manualRecommendations,holdingReviewError:null});
