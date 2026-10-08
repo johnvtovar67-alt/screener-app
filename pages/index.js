@@ -128,12 +128,12 @@ export default function Home(){
   const[accountView,setAccountView]=useState(null),[accountAbsent,setAccountAbsent]=useState(false),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
   const accountRequestId=useRef(0);
   const syncRevision=useRef({key:"",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);
-  async function refreshC1Account(body=null,{readOnly=false,compact=false}={}){
+  async function refreshC1Account(body=null,{readOnly=!body}={}){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
     if(!key){setAccountView(null);setAccountAbsent(false);if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
     let recovered=false;
     try{
-      const r=await fetch(`/api/c1-account${compact?'?compact=1':''}`,{method:readOnly?'GET':'POST',headers:{authorization:`Bearer ${key}`,...(readOnly?{}:{'content-type':'application/json'})},...(readOnly?{}:{body:JSON.stringify(body||{operation:'refresh-analysis'})}),cache:'no-store'}),d=await r.json();
+      const r=await fetch('/api/c1-account',{method:readOnly?'GET':'POST',headers:{authorization:`Bearer ${key}`,...(readOnly?{}:{'content-type':'application/json'})},...(readOnly?{}:{body:JSON.stringify(body||{operation:'refresh-analysis'})}),cache:'no-store'}),d=await r.json();
       if(requestId!==accountRequestId.current)return;
       if(!r.ok){
         if(r.status===409&&!readOnly){
@@ -151,9 +151,23 @@ export default function Home(){
       setAccountAbsent(false);throw error;
     }
   }
+  async function prepareC1Execution(view){
+    if(!view?.decision?.current)return;
+    const requestId=accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
+    if(!key)return;
+    try{
+      const r=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify({operation:'prepare-execution'}),cache:'no-store'}),execution=await r.json();
+      if(requestId!==accountRequestId.current||localStorage.getItem(SYNC_KEY)!==key)return;
+      if(!r.ok)throw new Error(execution.error||'Opening checks unavailable.');
+      if(execution.decision?.decisionId!==view.decision.decisionId)return;
+      setAccountView({...execution,decision:view.decision});
+    }catch(error){
+      if(requestId===accountRequestId.current&&localStorage.getItem(SYNC_KEY)===key)setAccountView({...view,openingError:error.message});
+    }
+  }
   async function recoverC1Account(){
     setAccountBusy(true);setErr('');setAccountError('');
-    try{await refreshC1Account(null,{readOnly:true});}catch(error){setAccountError(error.message);}finally{setAccountBusy(false);}
+    try{const view=await refreshC1Account({operation:'refresh-account-inputs'});if(view)await prepareC1Execution(view);}catch(error){setAccountError(error.message);}finally{setAccountBusy(false);}
   }
   async function correctEnteredC1Date(symbol,openedAt){
     const issues=c1AccountDifferences(accountView?.decision,portfolio);
@@ -251,7 +265,7 @@ export default function Home(){
   async function load(t,verificationPass=0){
     const started=Date.now();setReloading(true);setErr("");
     const priorScreenSymbols=accountView?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[];
-    const accountRequest=t==="opportunities"?refreshC1Account(null,{compact:true}).then(value=>({value})).catch(error=>({error})):Promise.resolve({value:null});
+    const accountRequest=t==="opportunities"?refreshC1Account().then(value=>{if(value)void prepareC1Execution(value);return {value};}).catch(error=>({error})):Promise.resolve({value:null});
     try{const d=await fetchScreen(t,verificationPass,{screenSymbols:priorScreenSymbols}),accountResult=await accountRequest,health=screenHealth(d.meta,d.performance);if(accountResult.error)setErr(accountResult.error.message);if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth(health);setMarketScope(d.meta||null);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{setThemeStocks(d.stocks||[]);setThemeFeedHealth(health);}const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}
     catch(e){setErr(e.message);if(t==="opportunities"){setStocks(pausePriorRows);setFeedHealth(h=>({...h,status:"unavailable"}));}else{setThemeStocks(pausePriorRows);setThemeFeedHealth(h=>({...h,status:"unavailable"}));}}finally{const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));setReloading(false);}
   }
@@ -355,7 +369,7 @@ export default function Home(){
 
   async function analyze(inputPortfolio){
     const analysisPortfolio=Array.isArray(inputPortfolio)?inputPortfolio:portfolio;
-    setLoading(true);setErr("");let freshAccount=null,accountRefreshFailed=false;try{freshAccount=await refreshC1Account();accountRefreshFailed=freshAccount===undefined;}catch(e){accountRefreshFailed=true;setErr(e.message);}setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
+    setLoading(true);setErr("");let freshAccount=null,accountRefreshFailed=false;try{freshAccount=await refreshC1Account({operation:'refresh-account-inputs'});accountRefreshFailed=freshAccount===undefined;if(freshAccount)void prepareC1Execution(freshAccount);}catch(e){accountRefreshFailed=true;setErr(e.message);}setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
     try{
       try{const sd=await fetchScreen("opportunities",0,{screenSymbols:freshAccount?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[]});snapshot=sd.stocks||[];performance=sd.performance.records;currentProductionPolicy=sd.meta?.productionPolicy||{};screenLive=!sd.meta?.clientSnapshotFallback&&String(sd.meta?.quoteFeedStatus||"live")==="live";setFeedHealth(screenHealth(sd.meta,sd.performance));setMarketScope(sd.meta||null);setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}
       catch(e){setErr(`Portfolio positions were analyzed, but fresh-capital allocation is paused because the broad screen failed: ${e.message}`);setFeedHealth(h=>({...h,status:"unavailable"}));}
@@ -566,7 +580,7 @@ export default function Home(){
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&!accountMatches&&<p role="status">{!accountHoldingMismatch&&accountCashDifference?<>Entered cash is {money(Number(accountCashDifference.entered))}; C1 records {money(Number(accountCashDifference.recorded))}. Existing holding guidance remains active; new purchases are paused until the cash history is reconciled. </>:<>Account details need attention. </>}<button onClick={()=>setTab("account-tools")}>Open Account settings</button></p>}
-    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} manualRecommendations={accountView.manualRecommendations} openingPlan={accountMatches?accountView.openingPlan:null} openingError={accountView.openingError} decision={accountMatches?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:accountHoldingMismatch?"Resolve the holding differences in Account settings to restore candidates and checked quantities.":"Existing holding guidance remains active. Reconcile the cash difference in Account settings before deploying new capital."}}/>}
+    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} executionDecision={accountView.executionDecision} manualRecommendations={accountView.manualRecommendations} openingPlan={accountMatches?accountView.openingPlan:null} openingError={accountView.openingError} decision={accountMatches?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:accountHoldingMismatch?"Resolve the holding differences in Account settings to restore candidates and checked quantities.":"Existing holding guidance remains active. Reconcile the cash difference in Account settings before deploying new capital."}}/>}
     {tab==="opportunities"&&!accountView&&<section className="card" aria-label="C1 account unavailable">
       <h2>Opportunities</h2>
       <div className="emptyState" role="status"><b>{reloading||accountBusy?'Loading C1 analysis…':syncKey?'C1 analysis is unavailable.':'Connect your recorded portfolio to load C1.'}</b>

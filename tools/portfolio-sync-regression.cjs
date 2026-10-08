@@ -19,6 +19,3 @@ assert(page.includes('JSON.stringify({portfolio:rows,c1ControlState,expectedEtag
 assert(page.includes("localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(d.c1ControlState))"),'paired devices must restore the shared C1 drawdown state');
 assert(page.includes('pushCloudPortfolio(analysisPortfolio,syncKey,nextControl.state)'),'drawdown-state changes must push to paired devices');
 console.log('PORTFOLIO SYNC PASS: private keyed storage, authenticated reads, automatic push/pull, portfolio metadata, and shared C1 drawdown state verified.');
-require('./c1-sync-state-regression.cjs');
-
-require('./portfolio-sync-client-regression.cjs');

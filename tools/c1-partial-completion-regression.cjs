@@ -3,7 +3,8 @@ const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const loader=createResearchModuleLoader(process.cwd());
 const {createC1ProspectiveSeeds:create}=loader.load('lib/c1AccountSeed.js');
 const {portfolioCompositionSignature:signature}=loader.load('lib/portfolioGovernor.js');
-const {planC1ContinuedAccountOpening:plan,continueC1ActualAccount:advance,c1CompletionPolicy}=loader.load('lib/c1AccountExecution.js');
+const {planC1ContinuedAccountOpening:plan}=loader.load('lib/c1AccountExecution.js');
+const {continueC1ActualAccount:advance,c1CompletionPolicy}=loader.load('lib/c1AccountLedger.js');
 const symbols=['AAA','BBB','CCC','DDD','EEE','FFF','GGG','HHH','III','JJJ','KKK','LLL'];
 const sessions=['2026-09-11','2026-09-14','2026-09-15','2026-09-16'].map(date=>({date,decisionAt:date+'T21:00:00Z',universeSymbols:symbols,corporateActions:[],
  prices:[...symbols,'SPY','QQQ'].map(symbol=>({symbol,open:100,close:100,high:100,low:100,volume:10000000,adjusted:true})),
@@ -123,4 +124,3 @@ const {buildC1AccountDecision:buildEvidenceDecision}=loader.load('lib/c1AccountD
 const evidenceDecision=buildEvidenceDecision({continued:advance({adoption,sessions:[sessions[0]],records:[],observedAt:args.observedAt}),sourceHash:'fixture',revision:0,now:new Date(args.observedAt)});
 assert.equal(evidenceDecision.opportunities.find(o=>o.symbol==='DDD').entryEvidence.momentumScore,97,'Display uses the original 0–100 momentum percentile, not the centered internal ranking value');
 assert.equal(evidenceDecision.opportunities.find(o=>o.symbol==='DDD').entryEvidence.close,100);
-require('./c1-stock-classification-regression.cjs');

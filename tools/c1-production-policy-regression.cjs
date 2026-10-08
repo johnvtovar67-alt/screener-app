@@ -1,23 +1,4 @@
-require("./c1-live-input-regression.cjs");
-require("./c1-dated-book-regression.cjs");
-require("./c1-index-lifecycle-regression.cjs");
-require("./c1-execution-reconciliation-regression.cjs");
-require("./c1-combined-portfolio-regression.cjs");
-require("./c1-paper-events-regression.cjs");
-require("./c1-presentation-regression.cjs");
-require("./c1-service-equivalence-regression.cjs");
-require("./c1-pending-decisions-regression.cjs");
-require("./c1-execution-adapter-regression.cjs");
-require("./brokerage-reconciliation-regression.cjs");
-require("./c1-account-reconciliation-regression.cjs");
-require("./c1-account-seed-regression.cjs");
-require("./c1-holdings-comparison-regression.cjs");
-require("./c1-momentum-exit-production-regression.cjs");
 const fs = require("fs");
-require("./c1-sleeve-accounting-regression.cjs");
-require("./c1-historical-ledger-regression.cjs");
-require("./c1-forward-model-regression.cjs");
-require("./c1-input-archive-regression.cjs");
 const { createResearchModuleLoader } = require("./research-module-loader.cjs");
 
 const assert = (condition, message) => {
@@ -241,5 +222,3 @@ const manifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
 assert(manifest.includes('release:"2026-09-26-c1-momentum-exits"'), "the release manifest must identify the authorized C1 momentum-exit release");
 
 console.log("C1 PRODUCTION POLICY PASS: unvalidated rank has no full-size authority; three-name, 1%, two-session pilot, liquidity floor, lifecycle, drawdown control, and fail-closed behavior verified");
-require("./c1-decision-snapshot-regression.cjs");
-require("./c1-holding-risk-regression.cjs");

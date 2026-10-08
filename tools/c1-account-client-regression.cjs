@@ -68,8 +68,29 @@ function client(fetcher){
  const recovery=client(async(url,options)=>{methods.push(options.method);return options.method==='GET'?{ok:true,json:async()=>latest}:{ok:false,status:409,json:async()=>({code:'ACCOUNT_SAVE_CONFLICT',error:'Conflict'})};});
  await assert.rejects(recovery.box.refresh({operation:'record-position-context'}),/saved account was reloaded/);
  assert.deepEqual(methods,['POST','GET']);assert.deepEqual(recovery.state.view,latest);assert.equal(recovery.state.writes,0);
- const readOnly=client(async(url,options)=>{assert.equal(options.method,'GET');assert.equal(options.body,undefined);return {ok:true,json:async()=>latest};});
+ const readOnly=client(async(url,options)=>{assert.equal(url,'/api/c1-account');assert.equal(options.method,'GET');assert.equal(options.body,undefined);return {ok:true,json:async()=>latest};});
  await readOnly.box.refresh(null,{readOnly:true});assert.deepEqual(readOnly.state.view,latest);
+ // Completed account display is authoritative before a separate opening request.
+ // Opening failures and delayed replies must not remove or replace that analysis.
+ const analysis={decision:{decisionId:'completed:4',revision:4,current:true,positions:[{symbol:'TEST',action:'Hold'}]}};
+ const execution={...analysis,decision:{...analysis.decision,positions:[{symbol:'TEST',action:'Add candidate'}]},executionDecision:{decisionId:'completed:4:opening',current:true},openingPlan:{id:'verified'}};
+ const prepared=client(async(url,options)=>{assert.equal(JSON.parse(options.body).operation,'prepare-execution');return {ok:true,json:async()=>execution};});
+ await prepared.box.prepareC1Execution(analysis);
+ assert.deepEqual(prepared.state.view.decision,analysis.decision,'Opening overlays cannot rewrite completed holding guidance');
+ assert.deepEqual(prepared.state.view.executionDecision,execution.executionDecision);
+ const unavailable=client(async()=>{throw new Error('The next observed market opening is required');});
+ await unavailable.box.prepareC1Execution(analysis);
+ assert.deepEqual(unavailable.state.view.decision,analysis.decision);
+ assert.match(unavailable.state.view.openingError,/next observed market opening/);
+ let finishOpening;
+ const delayed=client(async()=>new Promise(resolve=>{finishOpening=resolve;}));
+ const pendingOpening=delayed.box.prepareC1Execution(analysis);
+ delayed.box.accountRequestId.current++;
+ delayed.state.view={decision:{decisionId:'newer:5'}};
+ finishOpening({ok:true,json:async()=>execution});await pendingOpening;
+ assert.equal(delayed.state.view.decision.decisionId,'newer:5');
+ const closed=client(async()=>{throw new Error('No opening request for stale analysis');});
+ await closed.box.prepareC1Execution({decision:{current:false}});
  let finishRecovery;
  const recovering=client(async(url,options)=>options.method==='GET'?new Promise(resolve=>{finishRecovery=resolve;}):{ok:false,status:409,json:async()=>({error:'Conflict'})});
  const pendingRecovery=recovering.box.refresh({operation:'record-position-context'});
