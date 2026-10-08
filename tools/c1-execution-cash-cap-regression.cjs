@@ -1,0 +1,64 @@
+const assert=require('node:assert/strict');
+const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const loader=createResearchModuleLoader(process.cwd());
+const {capC1ExecutionCash:cap,c1ExecutionRecordingPlan:recordingPlan}=loader.load('lib/c1ExecutionCashAuthority.js');
+const {recordC1IntradayActivity:record,correctC1IntradayTradeDetails:correct}=loader.load('lib/c1IntradayActivity.js');
+const {reconcileC1ActualAccountFills:reconcile}=loader.load('lib/c1AccountLedger.js');
+const {c1AccountCashAvailability:availability}=loader.load('lib/c1BrokerageCash.js');
+const now=new Date('2026-09-14T16:00:00.000Z');
+const metadata=balance=>({balance,observedAt:'2026-09-14T14:00:00.000Z',source:'manual-broker-balance'});
+const account=balance=>({contract:'c1-private-account-v1',revision:0,records:[],brokerageCash:metadata(balance)});
+const books={base:{cash:1000,positions:{EXIT:{shares:2,avgCost:50,openedAt:'2026-09-01'}}},cooldown15:{cash:1000,positions:{}},sector40:{cash:1037.90,positions:{}}};
+const plan={contract:'c1-actual-account-opening-plan-v1',date:'2026-09-14',sourceSessionDate:'2026-09-11',observedAt:now.toISOString(),openingBooks:books,
+ orders:[{id:'exit',sleeve:'base',symbol:'EXIT',side:'sell',shares:2,estimatedPrice:100,date:'2026-09-14',reason:'momentum'},
+ ...Object.keys(books).map(sleeve=>({id:sleeve+':buy',sleeve,symbol:'BUY',side:'buy',shares:5,estimatedPrice:100,date:'2026-09-14',reason:'ranked-entry'}))]};
+const buyCost=plan=>plan.orders.filter(order=>order.side==='buy').reduce((sum,order)=>sum+order.shares*order.estimatedPrice,0);
+const snapshot=JSON.stringify(plan);
+const restricted=cap({plan,account:account(363.36),strategyCash:3037.90,now});
+assert.equal(restricted.executableCash,363.36);assert.equal(buyCost(restricted),300);
+assert.equal(restricted.orders.find(order=>order.id==='exit').shares,2,'Exits remain available under the cash cap');
+assert.equal(JSON.stringify(plan),snapshot,'The model plan and opening sleeve economics are immutable');
+assert.equal(cap({plan,account:account(1000),strategyCash:250,now}).executableCash,250);
+assert(buyCost(cap({plan,account:account(1000),strategyCash:250,now}))<=250);
+for(const brokerageCash of [undefined,metadata(0),{...metadata(1000),observedAt:'2026-09-13T14:00:00.000Z'}]){
+ const result=cap({plan,account:{...account(0),brokerageCash},strategyCash:3037.90,now});
+ assert.equal(buyCost(result),0);assert.equal(result.orders.find(order=>order.id==='exit').shares,2);
+}
+const buy={id:'buy-ticket',symbol:'BUY',side:'buy',shares:1,price:100,fee:0,executedAt:'2026-09-14T15:00:00.000Z'};
+assert.throws(()=>record({account:{...account(100),brokerageCash:undefined},plan,ticket:buy,expectedRevision:0,now}),/Update Brokerage Cash/);
+assert.throws(()=>record({account:account(100),plan,ticket:{...buy,price:100.01},expectedRevision:0,now}),/exceeds available/);
+assert.throws(()=>record({account:account(100),plan,ticket:{...buy,fee:.01},expectedRevision:0,now}),/exceeds available/);
+assert.throws(()=>record({account:account(100),plan,ticket:{...buy,shares:2},expectedRevision:0,now}),/remaining C1 quantity/);
+const bought=record({account:account(100),plan,ticket:buy,expectedRevision:0,now});
+assert.equal(availability({account:bought,strategyCash:2937.90,now}).executableCash,0);
+assert.equal(record({account:bought,plan,ticket:buy,expectedRevision:0,now}),bought,'Retries cannot double-count a purchase');
+assert.throws(()=>record({account:bought,plan,ticket:{...buy,id:'second'},expectedRevision:1,now}),/remaining C1 quantity/);
+assert.throws(()=>correct({account:bought,ticketId:buy.id,price:100.01,fee:0,executedAt:buy.executedAt,expectedRevision:1,now}),/exceeds available/);
+const corrected=correct({account:bought,ticketId:buy.id,price:99,fee:0,executedAt:buy.executedAt,expectedRevision:1,now});
+assert.equal(corrected.intradayActivity.tickets[0].price,99);
+
+const sale={id:'sale-ticket',symbol:'EXIT',side:'sell',shares:2,price:100,fee:.02,executedAt:'2026-09-14T15:00:00.000Z'};
+const sold=record({account:account(0),plan,ticket:sale,expectedRevision:0,now});
+const actual=reconcile({plan:sold.intradayActivity.plan,fills:sold.intradayActivity.fills,observedAt:now.toISOString()});
+assert.equal(availability({account:sold,strategyCash:actual.actualCash,now}).brokerageCash,199.98);
+const afterSale=cap({plan:{...plan,openingBooks:actual.books,orders:actual.outstanding},account:sold,strategyCash:actual.actualCash,now});
+assert.equal(buyCost(afterSale),100,'Only recorded net proceeds fund the replacement');
+const entryView=recordingPlan({plan:sold.intradayActivity.plan,authorityPlan:afterSale,activity:sold.intradayActivity});
+assert.equal(entryView.orders.find(order=>order.side==='buy').shares,1);
+const resnapshot={...sold,brokerageCash:{...metadata(199.98),observedAt:'2026-09-14T15:30:00.000Z'}};
+assert.equal(availability({account:resnapshot,strategyCash:actual.actualCash,now}).brokerageCash,199.98,'A later manual balance already includes the sale');
+const replacement=record({account:sold,plan,ticket:{...buy,id:'replacement',executedAt:'2026-09-14T15:30:00.000Z'},expectedRevision:1,now});
+assert.equal(availability({account:replacement,strategyCash:actual.actualCash-100,now}).brokerageCash,99.98);
+assert.throws(()=>record({account:sold,plan,ticket:{...buy,id:'backdated',executedAt:'2026-09-14T14:30:00.000Z'},expectedRevision:1,now}),/exceeds available/,'A later recorded sale cannot fund an earlier purchase');
+const withTwoBuys=record({account:account(200),plan,ticket:buy,expectedRevision:0,now});
+const twice=record({account:withTwoBuys,plan,ticket:{...buy,id:'second-funded',executedAt:'2026-09-14T15:30:00.000Z'},expectedRevision:1,now});
+assert.throws(()=>correct({account:twice,ticketId:buy.id,price:150,fee:0,executedAt:buy.executedAt,expectedRevision:2,now}),/exceeds available/,'Correction cannot consume a later recorded buy budget');
+const firstSnapshot=record({account:account(100),plan,ticket:buy,expectedRevision:0,now});
+const externallyFunded={...firstSnapshot,revision:2,brokerageCash:{...metadata(100),observedAt:'2026-09-14T15:05:00.000Z'}};
+const independentlyFunded=record({account:externallyFunded,plan,ticket:{...buy,id:'later-snapshot',executedAt:'2026-09-14T15:10:00.000Z'},expectedRevision:2,now});
+const firstCorrection=correct({account:independentlyFunded,ticketId:buy.id,price:99,fee:0,executedAt:buy.executedAt,expectedRevision:3,now});
+assert.equal(firstCorrection.intradayActivity.tickets[0].price,99,'An earlier correction must preserve a later independently funded purchase');
+assert.equal(firstCorrection.intradayActivity.tickets[1].price,100);
+assert.equal(firstCorrection.brokerageCash.balance,100,'Correction cannot rewrite the later broker observation');
+assert.throws(()=>correct({account:independentlyFunded,ticketId:buy.id,price:101,fee:0,executedAt:buy.executedAt,expectedRevision:3,now}),/exceeds available/,'A later external deposit cannot retroactively fund the earlier purchase');
+console.log('PASS: aggregate strategy/broker cash caps, old/stale accounts, fees and actual price, exit proceeds once, backdated buys, duplicate recording and corrections.');

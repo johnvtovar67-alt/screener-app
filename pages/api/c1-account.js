@@ -9,7 +9,7 @@ import {c1AccountBook} from '../../lib/c1AccountInput';
 import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
 import {collectC1AccountOpening} from '../../lib/c1AccountOpeningProvider';
 import {prepareC1AccountExecution} from '../../lib/c1AccountExecutionView';
-import {deriveC1CompletedAccount,deriveC1AccountAnalysis,importC1PositionContext,correctC1AccountOpenedAt,reconcileC1BrokerCash,adoptC1Account,evaluateC1Account,appendC1AccountSession} from '../../lib/c1AccountService';
+import {deriveC1CompletedAccount,deriveC1AccountAnalysis,importC1PositionContext,correctC1AccountOpenedAt,reconcileC1BrokerCash,updateC1BrokerageCash,adoptC1Account,evaluateC1Account,appendC1AccountSession} from '../../lib/c1AccountService';
 import {correctC1IntradayTradeTime,correctC1IntradayTradeDetails} from '../../lib/c1IntradayActivity';
 import {easternMarketClock,marketSessionCloseMinutes} from '../../lib/marketSession';
 
@@ -117,6 +117,10 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     case 'correct-opening-date':account=correctC1AccountOpenedAt({account,symbol:body.symbol,openedAt:body.openedAt,expectedRevision:body.expectedRevision,book,now});break;
     case 'correct-intraday-details':account=correctC1IntradayTradeDetails({account,ticketId:body.ticketId,price:body.price,fee:body.fee,executedAt:body.executedAt,expectedRevision:body.expectedRevision,now});break;
     case 'correct-intraday-time':account=correctC1IntradayTradeTime({account,ticketId:body.ticketId,executedAt:body.executedAt,expectedRevision:body.expectedRevision,now});break;
+    case 'update-brokerage-cash':
+     // This observation is execution metadata. Do not advance the account,
+     // refresh position context, or reconcile the C1 strategy ledger here.
+     account=updateC1BrokerageCash({account,brokerageCash:body.brokerageCash,expectedRevision:body.expectedRevision,now});break;
     case 'reconcile-cash':
      account=deriveC1CompletedAccount({account,book,now});
      account=reconcileC1BrokerCash({account,brokerCash:body.brokerCash,expectedRevision:body.expectedRevision,book,now});break;

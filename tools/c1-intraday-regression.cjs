@@ -2,7 +2,10 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 // Reuse the independent account fixture rather than recreate strategy rules.
 const setup=fs.readFileSync('tools/c1-account-seed-regression.cjs','utf8').split('const initialView=')[0];
 const fixture=new Function('require',setup+';return {loader,baseline,baselineBook,privateAccount,opening,plan,portfolio,sessions};')(require);
-const {loader,baseline,baselineBook,privateAccount,opening,plan,portfolio}=fixture;
+const {loader,baseline,baselineBook,privateAccount:legacyAccount,opening,plan,portfolio}=fixture;
+// Purchase scenarios explicitly confirm the broker balance before the fills.
+// The unchanged fixture account also exercises migration without that metadata.
+const privateAccount={...legacyAccount,brokerageCash:{balance:legacyAccount.adoption.actualCash,observedAt:opening.date+'T14:00:00.000Z',source:'manual-broker-balance'}};
 const intraday=loader.load('lib/c1IntradayActivity.js'),service=loader.load('lib/c1AccountService.js'),execution={...loader.load('lib/c1AccountLedger.js'),...loader.load('lib/c1AccountExecution.js')};
 const now=new Date(opening.date+'T16:00:00Z'),ticket={id:'broker-sale',symbol:'T4',side:'sell',shares:3,price:plan.orders.find(o=>o.symbol==='T4'&&o.side==='sell').estimatedPrice,fee:.03,executedAt:opening.date+'T15:00:00Z'};
 const collisionPlan={...plan,orders:[{id:'base:collision:0',sleeve:'base',date:plan.date,symbol:'NEW',side:'buy',shares:1,estimatedPrice:100,reason:'modeled-new-order'}]};
