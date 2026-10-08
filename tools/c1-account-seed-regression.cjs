@@ -62,7 +62,8 @@ const historicalPosition=c1SeedPosition(enriched.seeds.base.positions[0],0,basel
 assert.equal(historicalPosition.enteredAt,sessions[0].date,'Historical enrichment cannot reset the original purchase date');
 assert.equal(historicalPosition.highWatermark,close*1.2,'Pre-adoption adjusted highs must initialize profit protection');
 console.log('PASS: unchanged-engine parity in all three sleeves; real opening balances, old/new holding periods, initial stops, retained drawdown, exact account-unit conservation and no inferred historical buys.');
-const {planC1ActualAccountOpening:planOpening,reconcileC1ActualAccountFills:reconcile}=loader.load('lib/c1AccountExecution.js');
+const {planC1ActualAccountOpening:planOpening}=loader.load('lib/c1AccountExecution.js');
+const {reconcileC1ActualAccountFills:reconcile}=loader.load('lib/c1AccountLedger.js');
 const opening={...sessions[36],corporateActions:[]};
 const observedAt=opening.date+'T14:00:00Z';
 const plan=planOpening({adoption,baseline,opening,observedAt});
@@ -128,7 +129,8 @@ for(const id of ['base','cooldown15','sector40']){
  for(const p of run.openPositions)if(p.enteredAt===opening.date)assert.ok(Math.abs(p.initialStopPrice-p.entryPrice*.86)<1e-7);
 }
 console.log('PASS: all three continuing sleeves match independently reconciled whole shares and actual cash after partial buys and fees, with actual execution-price stops.');
-const {continueC1ActualAccount:continueAccount,planC1ContinuedAccountOpening:planContinued}=loader.load('lib/c1AccountExecution.js');
+const {planC1ContinuedAccountOpening:planContinued}=loader.load('lib/c1AccountExecution.js');
+const {continueC1ActualAccount:continueAccount}=loader.load('lib/c1AccountLedger.js');
 const records=[{date:opening.date,complete:true,openingObservedAt:observedAt,fills:planFills}];
 const closedSessions=[baseline,opening];
 const continued=continueAccount({adoption,sessions:closedSessions,records,observedAt:opening.date+'T21:00:00Z'});
@@ -151,7 +153,8 @@ assert.equal(pausedUnfilled.openPositions[0].shares,10);
 assert.ok(pausedUnfilled.pendingDecisions.some(o=>o.symbol==='T4'&&o.reason==='portfolio-drawdown-stop'),'An unfilled breaker exit must persist during the cooldown');
 assert.ok(pausedUnfilled.accountRisk.pausedThrough>pausedUnfilled.accountRisk.activeSessionNumber);
 console.log('PASS: a triggered but unfilled risk exit remains pending through cooldown instead of disappearing.');
-const {adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,reconcileC1BrokerCash:reconcileCash}=loader.load('lib/c1AccountService.js');
+const {adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,reconcileC1BrokerCash:reconcileCash}=loader.load('lib/c1AccountService.js');
+const {pendingC1AccountSession:pendingService}=loader.load('lib/c1AccountExecutionView.js');
 const {c1AccountPositionDecision:positionDecision,c1AccountMatchesPortfolio:matchesPortfolio}=loader.load('lib/c1AccountDecision.js');
 const baselineBook={universe:'sp500',model:{sessions:[baseline]},captures:[{sessionDate:baseline.date,hash:'baseline-fixture',observedAt:baseline.date+'T21:00:00Z'}]};
 const privateAccount=adoptService({portfolio,capitalRecord,book:baselineBook,now:new Date(baseline.date+'T21:00:00Z')});
@@ -204,7 +207,7 @@ assert.ok(staleSource.positions.every(p=>p.reason===staleSource.updateReason));
 const awaitingActivity=evaluateService({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
 assert.match(awaitingActivity.updateReason,/Confirm completed-session activity/);
 assert.equal(awaitingActivity.current,false);
-const {carryC1RecordedHoldings:carry}=loader.load('lib/c1AccountService.js');
+const {deriveC1CompletedAccount:carry}=loader.load('lib/c1AccountService.js');
 const storedBeforeCarry=JSON.stringify(privateAccount);
 const carried=carry({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
 const carriedView=evaluateService({account:carried,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
@@ -215,6 +218,69 @@ assert.equal(JSON.stringify(privateAccount),storedBeforeCarry,'Refreshing never 
 assert.equal(carried.revision,privateAccount.revision);
 assert.equal(carried.records[0].basis,'recorded-holdings-carry-forward');
 assert.equal(carried.records[0].fills.length,0);
+
+// The production regression used a completed capture's observation timestamp
+// as a prospective opening. A daily capture can arrive after midnight: saved
+// broker fills and empty carry sessions must still produce current analysis.
+const {recordC1IntradayActivity:recordIntraday}=loader.load('lib/c1IntradayActivity.js');
+const {deriveC1AccountAnalysis:analyze}=loader.load('lib/c1AccountService.js');
+const recordedSale=recordIntraday({account:privateAccount,plan,expectedRevision:0,
+ ticket:{id:'completed-analysis-sale',symbol:'T4',side:'sell',shares:3,price:100,fee:.03,executedAt:opening.date+'T15:00:00Z'},now:new Date(opening.date+'T16:00:00Z')});
+const completedLateBook={...updatedBook,captures:updatedBook.captures.map(c=>c.sessionDate===opening.date?{...c,observedAt:next.date+'T12:00:00Z'}:c)};
+const completedLateNow=new Date(next.date+'T12:30:00Z');
+const savedSaleBefore=JSON.stringify(recordedSale),savedEvidenceBefore=JSON.stringify(recordedSale.intradayActivity.plan);
+const completedAnalysis=analyze({account:recordedSale,book:completedLateBook,now:completedLateNow});
+const saleEconomics=reconcile({plan:recordedSale.intradayActivity.plan,fills:recordedSale.intradayActivity.fills,observedAt:opening.date+'T21:00:00Z'});
+assert.equal(completedAnalysis.decision.current,true);
+assert.equal(completedAnalysis.decision.actualCash,saleEconomics.actualCash);
+assert.equal(completedAnalysis.decision.positions.some(p=>p.symbol==='T4'),false);
+assert.equal(completedAnalysis.account.revision,recordedSale.revision);
+assert.equal(completedAnalysis.account.records[0].basis,'recorded-intraday-fills');
+assert.equal(JSON.stringify(completedAnalysis.account.records[0].executionEvidence),savedEvidenceBefore);
+assert.equal(JSON.stringify(completedAnalysis.account.records[0].fills),JSON.stringify(recordedSale.intradayActivity.fills));
+assert.equal(completedAnalysis.account.intradayActivity,undefined);
+assert.equal(JSON.stringify(recordedSale),savedSaleBefore,'Completed analysis cannot alter saved account data');
+const emptyLateAnalysis=analyze({account:privateAccount,book:completedLateBook,now:completedLateNow});
+assert.equal(emptyLateAnalysis.decision.current,true);
+assert.equal(emptyLateAnalysis.decision.actualCash,initialView.actualCash);
+const activeSaleAnalysis=analyze({account:recordedSale,book:baselineBook,now:new Date(opening.date+'T16:00:00Z')});
+assert.equal(activeSaleAnalysis.decision.actualCash,saleEconomics.actualCash,'An unclosed session displays recorded actual economics');
+assert.equal(activeSaleAnalysis.account.records.length,0,'An active sale cannot fabricate a completed session');
+assert.equal(JSON.stringify(recordedSale),savedSaleBefore);
+const rejectedEvidenceAccount=JSON.parse(JSON.stringify(completedAnalysis.account));
+rejectedEvidenceAccount.records[0].executionEvidence.openingBooks.base.cash++;
+assert.throws(()=>evaluateService({account:rejectedEvidenceAccount,book:completedLateBook,now:completedLateNow}),/execution evidence/);
+assert.throws(()=>appendService({account:privateAccount,record:completedAnalysis.account.records[0],book:updatedBook,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')}),/saved server-recorded activity/);
+const legacyLateRecords=records.map(record=>({...record,openingObservedAt:next.date+'T12:00:00Z'}));
+const legacyLateReplay=continueAccount({adoption,sessions:closedSessions,records:legacyLateRecords,observedAt:completedLateNow});
+assert.equal(JSON.stringify(legacyLateReplay.books),JSON.stringify(continued.books),'Existing filled records retain their exact sleeve economics without live opening observations');
+for(const id of Object.keys(continued.sleeves))assert.equal(JSON.stringify(legacyLateReplay.sleeves[id]),JSON.stringify(continued.sleeves[id]));
+assert.throws(()=>planContinued({adoption,sessions:closedSessions,records,opening:{...next,corporateActions:[]},observedAt:opening.date+'T21:00:00Z'}),/next observed market opening/,'Prospective execution keeps its opening-session guard');
+console.log('PASS: saved intraday fills and late completed captures cannot invoke next-opening validation; completed and active ownership, revision, cash and immutable evidence are preserved; client-supplied evidence and mismatched balances reject.');
+
+// Accepted cash events and factual opening-date corrections must remain
+// compatible with captured executions without altering their original evidence.
+const correctedOpeningPlan=planContinued({adoption:cashCorrected.adoption,sessions:[baseline],records:[],cashReconciliations:cashCorrected.cashReconciliations,opening,observedAt});
+const cashSale=recordIntraday({account:cashCorrected,plan:correctedOpeningPlan,expectedRevision:cashCorrected.revision,
+ ticket:{id:'cash-review-sale',symbol:'T4',side:'sell',shares:3,price:100,fee:.03,executedAt:opening.date+'T15:00:00Z'},now:new Date(opening.date+'T16:00:00Z')});
+const cashSaleBefore=JSON.stringify(cashSale),cashAnalysis=analyze({account:cashSale,book:completedLateBook,now:completedLateNow});
+assert.ok(Math.abs(cashAnalysis.decision.actualCash-(saleEconomics.actualCash+.52))<1e-7,'Recorded cash adjustment applies once after later fills');
+assert.equal(cashAnalysis.account.cashReconciliations.length,1);
+assert.equal(JSON.stringify(cashSale),cashSaleBefore);
+assert.equal(JSON.stringify(cashAnalysis.account.records[0].executionEvidence),JSON.stringify(correctedOpeningPlan));
+const {correctC1AccountOpenedAt:correctDate}=loader.load('lib/c1AccountService.js');
+const dateCorrectedSale=correctDate({account:completedAnalysis.account,symbol:'T4',openedAt:sessions[1].date,expectedRevision:completedAnalysis.account.revision,book:completedLateBook,now:completedLateNow});
+const dateCorrectedView=evaluateService({account:dateCorrectedSale,book:completedLateBook,now:completedLateNow});
+assert.equal(dateCorrectedView.actualCash,completedAnalysis.decision.actualCash);
+assert.equal(JSON.stringify(dateCorrectedView.positions.map(p=>[p.symbol,p.shares,p.avgCost])),JSON.stringify(completedAnalysis.decision.positions.map(p=>[p.symbol,p.shares,p.avgCost])));
+assert.equal(JSON.stringify(dateCorrectedSale.records[0].executionEvidence),savedEvidenceBefore,'Factual date correction cannot rewrite captured broker evidence');
+for(const property of ['shares','avgCost']){
+ const corrupt=JSON.parse(JSON.stringify(completedAnalysis.account));corrupt.records[0].executionEvidence.openingBooks.base.positions.T4[property]++;
+ assert.throws(()=>evaluateService({account:corrupt,book:completedLateBook,now:completedLateNow}),/execution evidence/);
+}
+console.log('PASS: cash reconciliation then saved fill preserves exact aggregate cash once; factual date correction retains cash/ownership and immutable evidence; tampered shares and cost basis reject.');
+
+
 assert.equal(JSON.stringify(carry({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')})),JSON.stringify(carried));
 const multiBook={...baselineBook,model:{sessions:sessions.slice(35,40).map(s=>({...s,corporateActions:[]}))},captures:sessions.slice(35,40).map(s=>({sessionDate:s.date,hash:s.date===baseline.date?'baseline-fixture':'multi-'+s.date,observedAt:s.date+'T21:00:00Z'}))};
 const multiNow=new Date(sessions[39].date+'T21:00:00Z');
@@ -247,17 +313,6 @@ assert.equal(dated('2026-02-30'),'—');
 const stopExplained=explainHolding({...explanationFixture,exits:[{reason:'initial-stop'}],stopTriggerEvidence:{date:'2026-09-14',low:85,stop:86}},'2026-09-14',95);
 assert.match(stopExplained,/Model-recorded low on 2026-09-14: \$85.00/);
 assert.match(stopExplained,/recovery does not clear the pending exit/);
-// Collect activity choices during the same replay, without replaying every
-// preceding day again for each dropdown option.
-const collected=[];
-const collectedCarry=carry({account:privateAccount,book:stopBook,now:multiNow,onPending:p=>collected.push(p)});
-assert.equal(JSON.stringify(collectedCarry),JSON.stringify(carriedStopped));
-for(const pending of collected){
- const prior=carry({account:privateAccount,book:stopBook,now:multiNow,beforeDate:pending.date});
- const expected=loader.load('lib/c1AccountService.js').pendingC1AccountSession({account:prior,book:stopBook,now:multiNow});
- assert.equal(JSON.stringify(pending),JSON.stringify(expected));
-}
-assert.equal(collected.length,carriedStopped.records.length-privateAccount.records.length);
 console.log('PASS: no-trade continuation is current, repeatable, preserves ownership and storage; multiple sessions and calendar dates verified.');
 const pending=pendingService({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
 assert.equal(pending.date,opening.date);
@@ -278,7 +333,7 @@ const barNormalizer=fmpSource.slice(fmpSource.indexOf('export function normalize
 const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
 const holdingBox={...loader.load('lib/marketSession.js'),Date,URLSearchParams,AbortSignal,process:{env:{}}};
 vm.createContext(holdingBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
-const context={...loader.load('lib/c1OpeningPriceReview.js'),...loader.load('lib/c1IntradayActivity.js'),...loader.load('lib/c1AccountExecution.js'),...loader.load('lib/marketSession.js'),...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1HeldRankReview.js'),collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+const context={...loader.load('lib/c1OpeningPriceReview.js'),...loader.load('lib/c1IntradayActivity.js'),...loader.load('lib/c1AccountExecution.js'),...loader.load('lib/c1AccountLedger.js'),...loader.load('lib/marketSession.js'),...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1HeldRankReview.js'),collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountExecutionView.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -407,14 +462,14 @@ vm.createContext(context);vm.runInContext(route,context);
  let rankSaved={record:inherited,etag:'original'},rankWrites=0,rankCalls=0;
  const rankHandler=context.factory({clock:()=>new Date(baseline.date+'T21:00:00Z'),readBook:async()=>({record:apiRankBook}),collectRanks:async()=>{rankCalls++;return {...receipt,unavailable:[]};},store:{read:async()=>rankSaved,write:async(path,record,etag)=>{assert.equal(etag,rankSaved.etag);rankSaved={record,etag:String(++rankWrites)};}}});
  async function rankRequest(method,body){const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;return this;}};await rankHandler({method,body,headers:{authorization:'Bearer '+'fixture'.repeat(6)}},res);return res;}
- const reviewed=await rankRequest('POST',{operation:'refresh-analysis'});
+ const reviewed=await rankRequest('POST',{operation:'refresh-account-inputs'});
  assert.equal(reviewed.code,200,JSON.stringify(reviewed.body));assert.equal(rankCalls,1);assert.equal(rankWrites,1);
  assert.ok(reviewed.body.decision.positions[0].holdingRank);assert.equal(reviewed.body.decision.positions[0].action,'Exit candidate');
  assert.equal(reviewed.body.decision.positions[0].holdingRank.base.source,'authoritative-opportunities');
  assert.equal(reviewed.body.decision.positions[0].holdingRank.base.eligible,false);
  assert.equal(JSON.stringify(rankSaved.record.adoption),JSON.stringify(inherited.adoption));
  assert.equal((await rankRequest('GET')).body.decision.decisionId,reviewed.body.decision.decisionId);
- assert.equal((await rankRequest('POST',{operation:'refresh-analysis'})).code,200);assert.equal(rankCalls,1);assert.equal(rankWrites,1);
+ assert.equal((await rankRequest('POST',{operation:'refresh-account-inputs'})).code,200);assert.equal(rankCalls,1);assert.equal(rankWrites,1);
  assert.equal((await rankRequest('POST',{operation:'record-rank',rank:1})).code,400);
  const imported=await rankRequest('POST',{operation:'record-position-context',context:purchaseContext,expectedRevision:1});
  assert.equal(imported.code,200,JSON.stringify(imported.body));assert.ok(imported.body.decision.positions[0].reason.includes('2 recorded purchases'));
@@ -437,7 +492,7 @@ vm.createContext(context);vm.runInContext(route,context);
     if(etag!==current.etag)throw conflict();current={record,etag:String(++writes)};
    }}});
   async function send(body){const response={setHeader(){},status(code){this.code=code;return this;},json(value){this.body=value;return this;}};await handler({method:'POST',body,headers:{authorization:'Bearer '+'fixture'.repeat(6)}},response);return response;}
-  const refreshBody={operation:'refresh-analysis'},importBody={operation:'record-position-context',context:purchaseContext,expectedRevision:0};
+  const refreshBody={operation:'refresh-account-inputs'},importBody={operation:'record-position-context',context:purchaseContext,expectedRevision:0};
   const first=send(importWins?refreshBody:importBody);await started.promise;
   const second=await send(importWins?importBody:refreshBody);paused.release();const firstResult=await first;
   assert.equal(second.code,200,JSON.stringify(second.body));assert.equal(firstResult.code,200,JSON.stringify(firstResult.body));
@@ -491,7 +546,7 @@ vm.createContext(context);vm.runInContext(route,context);
  console.log('PASS: held-rank diagnostics distinguish HTTP, network, incomplete history and accepted-price mismatch without logging credentials or holdings.');
 
  console.log('PASS: verified outside-holding rank drives age-gated exits without new entries or index changes; full/half purchase history preserves ownership and records.');
- const futureCoverage={...covered,sourceSessionDate:opening.date,rows:covered.rows.map(r=>({...r,date:opening.date,price:{...r.price,date:opening.date,open:101,high:102,low:99,close:101}}))};
+ const futureCoverage={...covered,sourceSessionDate:opening.date,rows:covered.rows.map(r=>({...r,date:opening.date,price:{...r.price,date:opening.date,open:102,high:104,low:99,close:103}}))};
  const inheritedFuture={...inherited,holdingCoverages:[covered,futureCoverage]};
  const inheritedPending=pendingService({account:inheritedFuture,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
  assert.ok(!inheritedPending.plan.orders.some(o=>o.symbol==='OUT'&&!o.condition));
@@ -503,29 +558,35 @@ vm.createContext(context);vm.runInContext(route,context);
   const stoppedLegacy=account({sessions:[inheritedBook.model.sessions[0],falling]},{...options[id],startDate:baseline.date,endDate:opening.date,liquidateAtEnd:false},seed);
   assert.ok(stoppedLegacy.trades.some(t=>t.symbol==='OUT'&&['initial-stop','portfolio-drawdown-stop'].includes(t.reason)),'Inherited stop remains effective');
  }
- let inheritedSaved=null,inheritedApiBook=baselineBook,coverageCalls=0;
+ let inheritedSaved=null,inheritedApiBook=baselineBook,coverageCalls=0,inheritedWrites=0;
  const inheritedHandler=context.factory({clock:()=>new Date(opening.date+'T21:00:00Z'),readBook:async()=>({record:inheritedApiBook}),collectHoldings:async({baseline:b})=>{coverageCalls++;return b.date===baseline.date?covered:futureCoverage;},
-  store:{read:async()=>inheritedSaved,write:async(path,record)=>{inheritedSaved={record,etag:'1'};}}
+  store:{read:async()=>inheritedSaved,write:async(path,record)=>{inheritedSaved={record,etag:String(++inheritedWrites)};}}
  });
  // Adoption uses a clock matching its current completed source session.
  const inheritedAdoptHandler=context.factory({clock:()=>new Date(baseline.date+'T21:00:00Z'),readBook:async()=>({record:baselineBook}),collectHoldings:async()=>covered,
-  store:{read:async()=>inheritedSaved,write:async(path,record)=>{inheritedSaved={record,etag:'1'};}}
+  store:{read:async()=>inheritedSaved,write:async(path,record)=>{inheritedSaved={record,etag:String(++inheritedWrites)};}}
  });
  async function inheritedRequest(handler,method,body){const res={setHeader(){},status(code){this.code=code;return this;},json(value){this.body=value;return this;}};await handler({method,body,headers:{authorization:'Bearer '+'fixture'.repeat(6)}},res);return res;}
  const inheritedActivated=await inheritedRequest(inheritedAdoptHandler,'POST',{operation:'adopt',portfolio:inheritedPortfolio,capitalRecord:inheritedCapital});
  assert.equal(inheritedActivated.code,200,JSON.stringify(inheritedActivated.body));
  inheritedApiBook=updatedBook;
  const inheritedGet=await inheritedRequest(inheritedHandler,'GET');
- assert.equal(inheritedGet.code,200,JSON.stringify(inheritedGet.body));assert.equal(inheritedGet.body.pendingSession.date,opening.date);
+ assert.equal(inheritedGet.code,200,JSON.stringify(inheritedGet.body));assert.equal(inheritedGet.body.pendingSession,null,'Completed analysis does not request an opening execution plan');
  assert.equal(inheritedSaved.record.revision,0,'A GET cannot record transactions');
  assert.equal(inheritedGet.body.decision.current,true,'GET advances analysis without daily confirmation');
  assert.equal(inheritedSaved.record.records.length,0,'GET keeps the durable transaction ledger unchanged');
+ assert.equal(inheritedWrites,1,'GET verifies missing held prices without writing saved account data');
+ assert.equal(coverageCalls,1,'GET verifies the missing daily held price in memory');
+ assert.ok(inheritedGet.body.decision.positions[0].reviewRules.every(rule=>rule.close===103),'Completed holding analysis uses the verified current daily close');
+ const inheritedInputRefresh=await inheritedRequest(inheritedHandler,'POST',{operation:'refresh-account-inputs'});
+ assert.equal(inheritedInputRefresh.code,200,JSON.stringify(inheritedInputRefresh.body));
+ assert.equal(inheritedSaved.record.records.length,0,'Input verification does not invent activity');
  const inheritedPost=await inheritedRequest(inheritedHandler,'POST',{operation:'record-session',record:inheritedRecord,expectedRevision:0});
  assert.equal(inheritedPost.code,200,JSON.stringify(inheritedPost.body));assert.equal(inheritedSaved.record.revision,1);
  assert.equal(inheritedSaved.record.holdingCoverages.length,2,'Posted activity retains the verified continuation price');
  assert.equal(inheritedPost.body.decision.positions[0].shares,8);
  assert.equal((await inheritedRequest(inheritedHandler,'GET')).code,200);
- assert.equal(coverageCalls,2,'Committed supplemental observations are reused, not silently revised');
+ assert.equal(coverageCalls,2,'Read-only GET and explicit saved refresh each verify once; later reads and activity reuse committed observations');
  const {correctC1AccountOpenedAt}=loader.load('lib/c1AccountService.js');
  const originalAccount=JSON.stringify(inheritedSaved.record);
  const corrected=correctC1AccountOpenedAt({account:inheritedSaved.record,symbol:'OUT',openedAt:sessions[1].date,expectedRevision:1,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});

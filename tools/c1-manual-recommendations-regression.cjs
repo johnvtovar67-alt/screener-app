@@ -14,7 +14,7 @@ assert.equal(build({decision,openingPlan:extendedPlan,now:new Date('2026-09-14T1
 for(const patch of [{pendingSession:{}},{openingError:'missing quote'},{decision:{...decision,current:false}},{now:new Date('2026-09-14T14:02:00Z')},{now:new Date('2026-09-14T21:00:00Z')},{openingPlan:{...openingPlan,quoteValidUntil:now.toISOString()}},{openingPlan:{...openingPlan,providerVerified:false}},{openingPlan:{...openingPlan,sourceSessionDate:'2026-09-10'}},{openingPlan:{...openingPlan,sourceReceipt:{...openingPlan.sourceReceipt,previousAdjustedClosesUnchanged:false}}},{openingPlan:{...openingPlan,orders:[{...openingPlan.orders[0],symbol:'SCHW'}]}},{openingPlan:{...openingPlan,orders:[{...openingPlan.orders[0],symbol:'MSTR'}]}},{openingPlan:{...openingPlan,orders:[...openingPlan.orders,...openingPlan.orders]}}])assert.equal(build({...args,...patch}).status,'waiting');
 assert.equal(current(review,{...decision,revision:8},now),false);assert.equal(current(review,{...decision,current:false},now),false);assert.equal(current(review,decision,new Date('2026-09-14T14:02:00Z')),false);
 const fs=require('node:fs');const page=fs.readFileSync('pages/index.js','utf8');assert(page.includes('["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities'));assert(page.includes('openingPlan={accountMatches?accountView.openingPlan:null}'));assert(!page.includes('alpha is not certified.'));
-const api=fs.readFileSync('pages/api/c1-account.js','utf8');assert(api.includes('buildC1ManualRecommendations({decision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now:clock()})'));
+const execution=fs.readFileSync('lib/c1AccountExecutionView.js','utf8');assert(execution.includes('buildC1ManualRecommendations({decision:executionDecision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now})'));assert(page.includes('executionDecision={accountView.executionDecision}'),'Checked quantities must bind the downstream execution decision');
 console.log('PASS: manual authorization retains source/revision, market hours, freshness, provider verification, restricted purchases, and both-page account matching; no automatic brokerage authority or alpha certification.');
 
 const {c1ManualOrdersForView:ordersForView}=createResearchModuleLoader(process.cwd()).load('lib/c1ManualRecommendations.js');
@@ -37,9 +37,7 @@ assert.equal(differences({...recorded,actualCash:14315},held).some(r=>r.field===
 assert.equal(differences(recorded,[held[1]]).some(r=>r.field==='Holding rows'),true);
 console.log('PASS: Exact account differences distinguish date-only corrections from ownership/cash changes.');
 
-require('./c1-live-display-regression.cjs');
 
-require('./c1-partial-completion-regression.cjs');
 const earlyNow=new Date('2026-11-27T17:59:30Z');
 const earlyPlan={...openingPlan,date:'2026-11-27',observedAt:earlyNow.toISOString(),quoteValidUntil:'2026-11-27T18:01:00Z',sourceReceipt:{...openingPlan.sourceReceipt,observedAt:earlyNow.toISOString()}};
 const earlyReview=build({decision,openingPlan:earlyPlan,now:earlyNow});

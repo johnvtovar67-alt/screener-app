@@ -8,7 +8,10 @@ vm.createContext(sandbox);vm.runInContext(src,sandbox);
 const {reunderwriteExistingPosition}=sandbox.module.exports;
 const risk={swingCapital:18000,positions:{IRDM:{value:3547,pctSwing:.197,factorWeights:{'Space & Satellites':1}}},factorPct:{'Space & Satellites':.197}};
 const irdm={symbol:'IRDM',role:'Swing',price:47.30,shares:75,gainLossPct:-1.38};
-let r=reunderwriteExistingPosition({stock:irdm,decision:{action:'Add',reason:'generic add'},risk,timeReview:{held:33,review:false}});
+// The same spread annualizes differently as the expected close approaches.
+// Keep the long-duration exit fixture dated, rather than inheriting the build clock.
+const review={stock:irdm,decision:{action:'Add',reason:'generic add'},risk,timeReview:{held:33,review:false}};
+let r=reunderwriteExistingPosition({...review,now:new Date('2026-09-01T00:00:00Z')});
 assert(r.override&&r.action==='Exit','IRDM must block ordinary Add and exit when the long-duration merger spread fails the opportunity-cost hurdle');
 assert(r.status==='Merger Opportunity Cost Exit','IRDM must identify a merger opportunity-cost exit');
 assert(r.specialSituation?.blockNewCapital===true,'IRDM acquisition must block ordinary new capital');
@@ -18,6 +21,10 @@ assert(r.specialSituation?.minimumAnnualizedHurdlePct===20,'IRDM merger spread m
 assert(r.specialSituation?.grossUpsideDollars>0,'IRDM review must quantify the current position-level gross spread when shares are available');
 assert(/merger-spread position|merger spread/.test(r.reason),'IRDM review must use merger-arb economics, not generic swing language');
 assert(/Redeploy to cash/.test(r.reason),'IRDM failed merger hurdle must permit redeployment to cash without requiring a replacement');
+r=reunderwriteExistingPosition({...review,now:new Date('2026-10-08T00:00:00Z')});
+assert(r.override&&r.action==='Hold'&&r.status==='Acquisition Pending','IRDM must hold when the unchanged spread clears the annualized hurdle closer to expected close');
+assert(r.specialSituation?.annualizedGrossPct>=20&&r.specialSituation?.opportunityCost===false,'IRDM must evaluate opportunity cost using the supplied review date');
+assert(r.specialSituation?.blockNewCapital===true,'IRDM must still block ordinary Add when the merger spread clears the hurdle');
 const page=fs.readFileSync('pages/index.js','utf8');
 assert(page.includes('function specialSituation(s)'),'portfolio UI must recognize acquisition special situations');
 assert(page.includes('specialSituation(s)?.blockNewCapital?"Watch"'),'IRDM must be excluded from normal actionable Buy ranking');

@@ -1,217 +1,142 @@
-import {reviewC1OpeningPriceRevisions} from '../../lib/c1OpeningPriceReview';
-import {c1IntradayEntryRecheck,rebaseC1UnfilledEntryPlan,recordC1IntradayActivity,correctC1IntradayTradeTime,correctC1IntradayTradeDetails,c1IntradayDecision,c1IntradayRemainingPlan,c1RecordedExitPlan,rebaseC1RecordedExitActivity} from '../../lib/c1IntradayActivity';
-import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
-import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
-import {c1AccountReviewBook} from '../../lib/c1HeldRankReview';
-import {buildC1ManualRecommendations,C1_MANUAL_RECOMMENDATION_VALIDITY_MS} from '../../lib/c1ManualRecommendations';
-import {applyC1OpeningPlan} from '../../lib/c1AccountDecision';
-import {c1AccountBook} from '../../lib/c1AccountInput';
-import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
-import {collectC1AccountOpening} from '../../lib/c1AccountOpeningProvider';
-import {planC1ContinuedAccountOpening,c1CompletionPolicy,continueC1ActualAccount,replanC1IntradayAccountOpening} from '../../lib/c1AccountExecution';
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
-import {carryC1RecordedHoldings,importC1PositionContext,correctC1AccountOpenedAt,reconcileC1BrokerCash,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession,recoverC1CompletedOwnerExitActivity} from '../../lib/c1AccountService';
+import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
+import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
+import {c1AccountReviewBook} from '../../lib/c1HeldRankReview';
+import {buildC1ManualRecommendations} from '../../lib/c1ManualRecommendations';
+import {c1AccountBook} from '../../lib/c1AccountInput';
+import {collectC1HoldingCoverage,missingC1HoldingPrices} from '../../lib/c1HoldingCoverage';
+import {collectC1AccountOpening} from '../../lib/c1AccountOpeningProvider';
+import {prepareC1AccountExecution} from '../../lib/c1AccountExecutionView';
+import {deriveC1CompletedAccount,deriveC1AccountAnalysis,importC1PositionContext,correctC1AccountOpenedAt,reconcileC1BrokerCash,adoptC1Account,evaluateC1Account,appendC1AccountSession} from '../../lib/c1AccountService';
+import {correctC1IntradayTradeTime,correctC1IntradayTradeDetails} from '../../lib/c1IntradayActivity';
 import {easternMarketClock,marketSessionCloseMinutes} from '../../lib/marketSession';
+
 export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
-// Read the uncompressed representation: compressed responses can carry weak
-// ETags, which cannot satisfy the strong comparison required by ifMatch.
-// Never strip W/ or replace the read version with a separately fetched tag.
+// Conditional writes require the strong ETag of the identity representation.
 const storage={
  async read(path){const r=await get(path,{access:'private',useCache:false,headers:{'accept-encoding':'identity'}});if(!r)return null;if(r.statusCode!==200||!r.blob?.etag)throw new Error('Account storage unavailable');return {record:JSON.parse(await new Response(r.stream).text()),etag:r.blob.etag};},
  async write(path,record,etag){return put(path,JSON.stringify(record),{access:'private',addRandomSuffix:false,allowOverwrite:Boolean(etag),...(etag?{ifMatch:etag}:{}),contentType:'application/json',cacheControlMaxAge:0});}
 };
+
+function completedAnalysisView({account,book,now,holdingReviewError=null}){
+ const {decision}=deriveC1AccountAnalysis({account,book,now});
+ const activity=account.intradayActivity,clock=easternMarketClock(now);
+ const intradaySession=activity?.date===clock?.key?{date:activity.date,revision:account.revision,plan:activity.plan,fills:activity.fills||[],tickets:activity.tickets||[],...(activity.plan.recordingOnly?{sellOnly:true}:{}),...(clock.minutes>=marketSessionCloseMinutes(clock.key)?{afterClose:true}:{})}:null;
+ return {decision,pendingSession:null,pendingSessions:[],intradaySession,openingPlan:null,openingError:null,manualRecommendations:buildC1ManualRecommendations({decision,now}),holdingReviewError};
+}
+
+// Missing daily holding prices must be verified before they can be displayed
+// as a completed close. Display reads derive these supplements in memory.
+async function verifyAccountHoldingPrices({account,book,now,collectHoldings}){
+ const previous=evaluateC1Account({account,book,now});
+ for(const next of book.model.sessions.filter(s=>s.date>previous.sourceSessionDate)){
+  if(!missingC1HoldingPrices(previous.positions.map(p=>({...p,role:'Swing'})),next).length)continue;
+  const existing=account.holdingCoverages||[account.holdingCoverage].filter(Boolean);
+  if(existing.some(c=>c.sourceSessionDate===next.date))continue;
+  const supplement=await collectHoldings({portfolio:previous.positions.map(p=>({...p,role:'Swing'})),baseline:next,now});
+  if(supplement.rows.some(r=>r.status!=='verified'))throw new Error('Next-session holding prices or classifications unavailable');
+  account={...account,holdingCoverages:[...existing,supplement]};
+  c1AccountBook(book,account.holdingCoverages);
+ }
+ return account;
+}
+
+// This explicit input refresh persists verified private prices and ranks.
+async function refreshAccountInputs({account,book,now,collectHoldings,collectRanks}){
+ account=await verifyAccountHoldingPrices({account,book,now,collectHoldings});
+ return reviewAccountHoldings({account,book,now,collectRanks});
+}
+
+async function reviewAccountHoldings({account,book,now,collectRanks}){
+ const {decision}=deriveC1AccountAnalysis({account,book,now}),through=decision.sourceSessionDate;
+ const input=c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),baseline=input.model.sessions.find(s=>s.date===through);
+ const reviews=account.holdingRankReviews||[],existing=reviews.find(r=>r.sourceSessionDate===through);
+ const symbols=decision.positions.filter(p=>p.inheritedRiskOnly&&!existing?.rows.some(r=>r.symbol===p.symbol)).map(p=>p.symbol);
+ let holdingReviewError=null;
+ if(symbols.length&&through===book.model.sessions.at(-1).date){
+  try{
+   const review=await collectRanks({baseline,sourceHash:book.captures.find(c=>c.sessionDate===through)?.hash,symbols,now});
+   if(review.rows.length){
+    const combined={...review,rows:[...(existing?.rows||[]),...review.rows]};
+    account={...account,revision:account.revision+1,holdingRankReviews:[...reviews.filter(r=>r.sourceSessionDate!==through),combined]};
+    c1AccountReviewBook(input,account.holdingRankReviews);
+   }
+   if(review.unavailable.length)holdingReviewError=review.unavailable.map(r=>r.symbol+': '+r.reason).join(' ');
+  }catch(error){
+   const code=error?.message==='Holding momentum data provider is not configured'?'PROVIDER_NOT_CONFIGURED':error?.message==='Current bounded holding review required'?'REVIEW_SESSION_MISMATCH':'ACCOUNT_REVIEW_FAILURE';
+   console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code,stage:'account-review'}));
+   holdingReviewError='Holding momentum history is unavailable; recorded prices and stops remain under review.';
+  }
+ }else if(symbols.length)console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code:'ACCOUNT_SESSION_BEHIND',stage:'account-review'}));
+ return {account,holdingReviewError};
+}
+
 export function createC1AccountHandler({store=storage,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,collectHoldings=collectC1HoldingCoverage,collectRanks=collectC1HeldRankReviews,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local'}={}){
  return async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'Method not allowed'});}
   const auth=String(req.headers.authorization||''),key=auth.startsWith('Bearer ')?auth.slice(7):'';
   if(!/^[A-Za-z0-9_-]{32,128}$/.test(key))return res.status(401).json({error:'Your portfolio sync key is required.'});
- const scope=environment==='production'?'production':`preview-${commit}`;
+  const scope=environment==='production'?'production':`preview-${commit}`;
   const path=`c1-accounts-v1/${scope}/${createHash('sha256').update(key).digest('hex')}.json`;
-  const compact=req.query?.compact==='1';
   try{
-   const requestStarted=Date.now(),now=clock(),saved=await store.read(path),accountReadMs=Date.now()-requestStarted;
-   if((req.method==='GET'||req.body?.operation==='refresh-analysis')&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
-   // Read only: this endpoint cannot initialize or refresh the index provider.
-   const bookReadStarted=Date.now(),{record:book}=await readBook('sp500',{now}),bookReadMs=Date.now()-bookReadStarted;
-   let account=saved?.record,initialDecision=null,initialEvalMs=0,carryMs=0,finalEvalMs=0,saveMs=0;
-   // Compact requests are display reads used by the Opportunities page. They
-   // must not run the expensive private holding-rank refresh/opening-plan path;
-   // a full refresh still performs those checks before any executable action.
-   if(compact&&req.method==='POST'&&req.body?.operation==='refresh-analysis'&&saved){
-    const compactStarted=Date.now();
-    // Display-only refresh: carry recorded ownership through completed sessions
-    // without replaying pending opening/execution state, then evaluate the
-    // current verified book. This is derived only and is never saved here.
-    const analysisAccount=carryC1RecordedHoldings({account,book,now,skipPendingPlans:true});
-    const decision=evaluateC1Account({account:analysisAccount,book,now});
-    const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:null,openingPlan:null,openingError:null,now});
-    console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,compact:true,totalMs:Date.now()-requestStarted}));
-    return res.status(200).json({decision,pendingSession:null,pendingSessions:[],intradaySession:null,openingPlan:null,openingError:null,manualRecommendations,holdingReviewError:null});
+   const now=clock(),saved=await store.read(path),body=req.body||{},operation=req.method==='GET'?'refresh-analysis':body.operation;
+   if(operation!=='adopt'&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
+   // The stored daily dataset is authoritative; this cannot initialize it.
+   const {record:book}=await readBook('sp500',{now});
+   let account=saved?.record,holdingReviewError=null;
+   if(operation==='refresh-analysis'){
+    account=await verifyAccountHoldingPrices({account,book,now,collectHoldings});
+    return res.status(200).json(completedAnalysisView({account,book,now}));
    }
-   // Complete only the next account session's holding observations. These
-   // remain private account inputs and cannot initialize or alter index data.
-   if(account){
-    const initialEvalStarted=Date.now();
-    const previous=evaluateC1Account({account,book,now});
-    initialEvalMs=Date.now()-initialEvalStarted;
-    initialDecision=previous;
-    for(const next of book.model.sessions.filter(s=>s.date>previous.sourceSessionDate)){
-    if(next&&missingC1HoldingPrices(previous.positions.map(p=>({...p,role:'Swing'})),next).length){
-     const existing=account.holdingCoverages||[account.holdingCoverage].filter(Boolean);
-     if(!existing.some(c=>c.sourceSessionDate===next.date)){
-      const supplement=await collectHoldings({portfolio:previous.positions.map(p=>({...p,role:'Swing'})),baseline:next,now});
-      if(supplement.rows.some(r=>r.status!=='verified'))throw new Error('Next-session holding prices or classifications unavailable');
-      account={...account,holdingCoverages:[...existing,supplement]};
-      c1AccountBook(book,account.holdingCoverages);
-     }
-    }
+   if(operation==='prepare-execution'||operation==='record-intraday'){
+    account=await verifyAccountHoldingPrices({account,book,now,collectHoldings});
+    const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{})});
+    if(operation==='record-intraday')await saveC1AccountUpdate({store,path,saved,account:prepared.account,operation,book,now});
+    const {account:preparedAccount,...view}=prepared;
+    return res.status(200).json({...view,holdingReviewError});
    }
-   }
-   let recordedAfterClose=false;
-   if(req.method==='POST'){
-    if(req.body?.operation==='adopt'){
+   switch(operation){
+    case 'adopt':{
      if(saved)return res.status(409).json({error:'The existing C1 account cannot be reset.'});
      const baseline=book.model.sessions.at(-1);
      let holdingCoverage;
-     if(missingC1HoldingPrices(req.body.portfolio,baseline).length){
-      holdingCoverage=await collectHoldings({portfolio:req.body.portfolio,baseline,now});
+     if(missingC1HoldingPrices(body.portfolio,baseline).length){
+      holdingCoverage=await collectHoldings({portfolio:body.portfolio,baseline,now});
       const unavailable=holdingCoverage.rows.filter(r=>r.status!=='verified').map(r=>r.symbol);
       if(unavailable.length)return res.status(409).json({holdingCoverage,executable:false,error:'Dated adjusted holding prices or classifications unavailable: '+unavailable.join(', ')});
      }
-     account=adoptC1Account({portfolio:req.body.portfolio,capitalRecord:req.body.capitalRecord,book,holdingCoverage,now,prospectiveLegacyAdoptionConfirmed:req.body.prospectiveLegacyAdoptionConfirmed===true});
-    }else if(req.body?.operation==='record-position-context'&&saved){
-     account=importC1PositionContext({account,context:req.body.context,expectedRevision:req.body.expectedRevision,book,now});
-    }else if(req.body?.operation==='refresh-analysis'&&saved){
-     // Refresh saves only newly verified private holding observations.
-    }else if(req.body?.operation==='correct-opening-date'&&saved){
-     account=correctC1AccountOpenedAt({account,symbol:req.body.symbol,openedAt:req.body.openedAt,expectedRevision:req.body.expectedRevision,book,now});
-    }else if(req.body?.operation==='correct-intraday-details'&&saved){
-     account=correctC1IntradayTradeDetails({account,ticketId:req.body.ticketId,price:req.body.price,fee:req.body.fee,executedAt:req.body.executedAt,expectedRevision:req.body.expectedRevision,now});
-    }else if(req.body?.operation==='correct-intraday-time'&&saved){
-     account=correctC1IntradayTradeTime({account,ticketId:req.body.ticketId,executedAt:req.body.executedAt,expectedRevision:req.body.expectedRevision,now});
-    }else if(req.body?.operation==='reconcile-cash'&&saved){
-     // Reconcile against the same completed-fill continuation shown by GET.
-     // Otherwise an unsaved derived close can make the write compare the
-     // broker balance with the pre-trade cash snapshot.
-     account=carryC1RecordedHoldings({account,book,now});
-     account=reconcileC1BrokerCash({account,brokerCash:req.body.brokerCash,expectedRevision:req.body.expectedRevision,book,now});
-    }else if(req.body?.operation==='record-intraday'&&saved){
-     // Once the session closes, retain access to the server-generated plan
-     // already saved with today's activity. This records a broker fill that
-     // occurred during regular hours; it never creates a new recommendation.
-     let activity=account.intradayActivity;const marketClock=easternMarketClock(now);
-     if(activity?.date===marketClock?.key&&marketClock.minutes>=marketSessionCloseMinutes(marketClock.key)){
-      const recovered=recoverC1CompletedOwnerExitActivity({account,book,now});
-      if(recovered){account={...account,intradayActivity:recovered};activity=recovered;}
-      account=recordC1IntradayActivity({account,plan:activity.plan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
-      account=await saveC1AccountUpdate({store,path,saved,account,operation:'record-intraday',book,now});
-      recordedAfterClose=true;
-     }
-    }else if(req.body?.operation==='record-session'&&saved){
-     if(req.body.record?.entryRecheck)throw new Error('Entry recheck evidence is generated by the server only');
-     if(account.intradayActivity?.date===req.body.record?.date)throw new Error('Trades for this session are already saved intraday. Reload to reconcile them; do not replace them with another session record.');
-     if(account.revision!==req.body.expectedRevision)throw new Error('Account changed; refresh before recording activity');
-     const prior=carryC1RecordedHoldings({account,book,now,beforeDate:req.body.record?.date});
-     account=appendC1AccountSession({account:prior,record:req.body.record,book,expectedRevision:req.body.expectedRevision,now});
-    }else return res.status(400).json({error:'Valid account operation required.'});
-   }
-   let holdingReviewError=null,holdingReviewMs=0;
-   if(req.method==='POST'&&['refresh-analysis','adopt','record-session'].includes(req.body?.operation)){
-    const holdingReviewStarted=Date.now();
-    const carried=carryC1RecordedHoldings({account,book,now,skipPendingPlans:compact});
-    const through=carried.records.at(-1)?.date||carried.adoption.sourceSessionDate;
-    const input=c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),baseline=input.model.sessions.find(s=>s.date===through);
-    const reviews=account.holdingRankReviews||[],existing=reviews.find(r=>r.sourceSessionDate===through);
-    const positions=evaluateC1Account({account:carried,book,now}).positions;
-    const symbols=positions.filter(p=>p.inheritedRiskOnly&&!existing?.rows.some(r=>r.symbol===p.symbol)).map(p=>p.symbol);
-    if(symbols.length&&through===book.model.sessions.at(-1).date){
-     try{
-      const review=await collectRanks({baseline,sourceHash:book.captures.find(c=>c.sessionDate===through)?.hash,symbols,now});
-      if(review.rows.length){
-       const combined={...review,rows:[...(existing?.rows||[]),...review.rows]};
-       account={...account,revision:account.revision+1,holdingRankReviews:[...reviews.filter(r=>r.sourceSessionDate!==through),combined]};
-       c1AccountReviewBook(input,account.holdingRankReviews);
-      }
-      if(review.unavailable.length)holdingReviewError=review.unavailable.map(r=>r.symbol+': '+r.reason).join(' ');
-     }catch(error){
-      const code=error?.message==='Holding momentum data provider is not configured'?'PROVIDER_NOT_CONFIGURED':error?.message==='Current bounded holding review required'?'REVIEW_SESSION_MISMATCH':'ACCOUNT_REVIEW_FAILURE';
-      console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code,stage:'account-review'}));
-      holdingReviewError='Holding momentum history is unavailable; recorded prices and stops remain under review.';
-     }
-    }else if(symbols.length){
-     console.warn('C1_HELD_RANK_VERIFICATION',JSON.stringify({code:'ACCOUNT_SESSION_BEHIND',stage:'account-review'}));
+     account=adoptC1Account({portfolio:body.portfolio,capitalRecord:body.capitalRecord,book,holdingCoverage,now,prospectiveLegacyAdoptionConfirmed:body.prospectiveLegacyAdoptionConfirmed===true});
+     ({account,holdingReviewError}=await reviewAccountHoldings({account,book,now,collectRanks}));
+     break;
     }
-    holdingReviewMs=Date.now()-holdingReviewStarted;
-   }
-   if(req.method==='POST'&&req.body?.operation!=='record-intraday'){const saveStarted=Date.now();account=await saveC1AccountUpdate({store,path,saved,account,operation:req.body?.operation,context:req.body?.context,book,now});saveMs=Date.now()-saveStarted;}
-   const pendingSessions=[];
-   const carryStarted=Date.now();let analysisAccount=carryC1RecordedHoldings({account,book,now,skipPendingPlans:compact,...(compact?{}:{onPending:pending=>pendingSessions.push(pending)})});carryMs=Date.now()-carryStarted;
-   let decision;
-   if(req.method==='GET'&&analysisAccount===account&&initialDecision)decision=initialDecision;
-   else{const finalEvalStarted=Date.now();decision=evaluateC1Account({account:analysisAccount,book,now});finalEvalMs=Date.now()-finalEvalStarted;}
-   const pendingSession=pendingSessions.at(-1)||null;
-   let openingPlan=null,openingError=null,intradaySession=null,openingReady=false;
-   if(decision.current){
-    try{
-     const input=c1AccountReviewBook(c1AccountBook(book,(account.holdingCoverages||account.holdingCoverage)),account.holdingRankReviews),historySessions=input.model.sessions,sessions=historySessions.filter(s=>s.date>=account.adoption.sourceSessionDate),baseline=sessions.at(-1);
-     const symbols=decision.requiredOpeningSymbols;
-     const collectedOpening=await collectOpening({baseline,symbols,now,allowPriceRevisionReview:true});
-     const opening=collectedOpening?c1IntradayEntryRecheck({account:analysisAccount,opening:collectedOpening,baseline,now}):null;
-     if(opening){openingReady=true;openingPlan=planC1ContinuedAccountOpening({adoption:account.adoption,sessions,historySessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext)});openingPlan.providerVerified=true;openingPlan.sourceReceipt=opening.receipt;openingPlan.quoteValidUntil=new Date(Math.min(...opening.prices.map(p=>Date.parse(p.observedAt)+C1_MANUAL_RECOMMENDATION_VALIDITY_MS))).toISOString();
-     openingPlan=reviewC1OpeningPriceRevisions({account:analysisAccount,sessions,historySessions,opening,plan:openingPlan,now});
-      if(analysisAccount.intradayActivity?.plan.recordingOnly)analysisAccount={...analysisAccount,intradayActivity:rebaseC1RecordedExitActivity({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
-      if(analysisAccount.intradayActivity)analysisAccount={...analysisAccount,intradayActivity:rebaseC1UnfilledEntryPlan({activity:analysisAccount.intradayActivity,plan:openingPlan,now})};
-      const replan=activity=>replanC1IntradayAccountOpening({adoption:account.adoption,sessions,historySessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,opening,observedAt:opening.receipt.observedAt,completionPolicy:c1CompletionPolicy(account.positionContext),activity,authorityPlan:openingPlan});
-      if(analysisAccount.intradayActivity?.tickets.some(t=>t.recordingReason==='owner-discretionary-exit')){const next=replan(analysisAccount.intradayActivity);analysisAccount={...analysisAccount,intradayActivity:next.activity};openingPlan=next.plan;}
-      if(req.body?.operation==='record-intraday'&&!recordedAfterClose){
-       account=recordC1IntradayActivity({account:analysisAccount,plan:openingPlan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
-       if(account.intradayActivity?.tickets.some(t=>t.recordingReason==='owner-discretionary-exit')){const next=replan(account.intradayActivity);account={...account,intradayActivity:next.activity};openingPlan=next.plan;}
-       account=await saveC1AccountUpdate({store,path,saved,account,operation:'record-intraday',book,now});
-       analysisAccount=account;
-      }
-      const activity=analysisAccount.intradayActivity;
-      intradaySession={date:openingPlan.date,revision:analysisAccount.revision,plan:activity?.plan||openingPlan,fills:activity?.fills||[],tickets:activity?.tickets||[]};
-      if(activity){
-       decision=c1IntradayDecision({decision,activity,revision:analysisAccount.revision,now});
-       openingPlan=c1IntradayRemainingPlan({plan:openingPlan,activity,opening,baseline,decision,now});
-      }
-      decision=applyC1OpeningPlan(decision,openingPlan);
-     }
-    }catch(error){if(req.body?.operation==='record-intraday'&&openingReady)throw error;openingError=String(error?.message||'Opening plan unavailable').slice(0,200);console.warn('C1_OPENING_UNAVAILABLE',JSON.stringify({reason:openingError}));}
-   }
-   if(!intradaySession&&decision.current){
-    const input=c1AccountReviewBook(c1AccountBook(book,account.holdingCoverages||account.holdingCoverage),account.holdingRankReviews),historySessions=input.model.sessions,sessions=historySessions.filter(s=>s.date>=account.adoption.sourceSessionDate&&s.date<=decision.sourceSessionDate);
-    const continued=continueC1ActualAccount({adoption:account.adoption,sessions,historySessions,records:analysisAccount.records,cashReconciliations:account.cashReconciliations,observedAt:now});
-    const recordingPlan=analysisAccount.intradayActivity?.plan||c1RecordedExitPlan({continued,now});
-    if(recordingPlan){
-     if(req.body?.operation==='record-intraday'&&!recordedAfterClose){
-      if(req.body.ticket?.side!=='sell')throw new Error('New purchases require the current opening checks. A completed pending exit can still be recorded.');
-      account=recordC1IntradayActivity({account:analysisAccount,plan:recordingPlan,ticket:req.body.ticket,expectedRevision:req.body.expectedRevision,now});
-      account=await saveC1AccountUpdate({store,path,saved,account,operation:'record-intraday',book,now});analysisAccount=account;
-     }
-     const activity=analysisAccount.intradayActivity;
-     intradaySession={date:recordingPlan.date,revision:analysisAccount.revision,plan:recordingPlan,sellOnly:true,fills:activity?.fills||[],tickets:activity?.tickets||[]};
-     if(activity)decision=c1IntradayDecision({decision,activity,revision:analysisAccount.revision,now});
-     openingPlan=null;
+    case 'refresh-account-inputs':({account,holdingReviewError}=await refreshAccountInputs({account,book,now,collectHoldings,collectRanks}));break;
+    case 'record-position-context':account=importC1PositionContext({account,context:body.context,expectedRevision:body.expectedRevision,book,now});break;
+    case 'correct-opening-date':account=correctC1AccountOpenedAt({account,symbol:body.symbol,openedAt:body.openedAt,expectedRevision:body.expectedRevision,book,now});break;
+    case 'correct-intraday-details':account=correctC1IntradayTradeDetails({account,ticketId:body.ticketId,price:body.price,fee:body.fee,executedAt:body.executedAt,expectedRevision:body.expectedRevision,now});break;
+    case 'correct-intraday-time':account=correctC1IntradayTradeTime({account,ticketId:body.ticketId,executedAt:body.executedAt,expectedRevision:body.expectedRevision,now});break;
+    case 'reconcile-cash':
+     account=deriveC1CompletedAccount({account,book,now});
+     account=reconcileC1BrokerCash({account,brokerCash:body.brokerCash,expectedRevision:body.expectedRevision,book,now});break;
+    case 'record-session':{
+     if(['entryRecheck','executionEvidence','recordingEvidence','entryPlanEvidence'].some(field=>body.record?.[field]))throw new Error('Execution evidence is generated by the server only');
+     if(account.intradayActivity?.date===body.record?.date)throw new Error('Trades for this session are already saved intraday. Reload to reconcile them; do not replace them with another session record.');
+     if(account.revision!==body.expectedRevision)throw new Error('Account changed; refresh before recording activity');
+     const prior=deriveC1CompletedAccount({account,book,now,beforeDate:body.record?.date});
+     account=appendC1AccountSession({account:prior,record:body.record,book,expectedRevision:body.expectedRevision,now});
+     ({account,holdingReviewError}=await reviewAccountHoldings({account,book,now,collectRanks}));
+     break;
     }
+    default:return res.status(400).json({error:'Valid account operation required.'});
    }
-   // A same-day completed fill remains recordable from its immutable saved
-   // opening plan after the closing bell, even while the dated account waits
-   // for the completed-session market-data update.
-   if(!intradaySession&&account.intradayActivity?.date===easternMarketClock(now)?.key){
-    const activity=recoverC1CompletedOwnerExitActivity({account,book,now})||account.intradayActivity;
-    intradaySession={date:activity.date,revision:account.revision,plan:activity.plan,fills:activity.fills||[],tickets:activity.tickets||[],afterClose:true};
-    decision=c1IntradayDecision({decision,activity,revision:account.revision,now});
-   }
-   if(req.body?.operation==='record-intraday'&&!intradaySession)throw new Error('Current-session prices are unavailable; the trade has not been saved. Retry during the regular session.');
-   if(analysisAccount.intradayActivity&&!intradaySession)decision=c1IntradayDecision({decision,activity:analysisAccount.intradayActivity,revision:analysisAccount.revision,now});
-   const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now:clock()});
-   console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,initialEvalMs,holdingReviewMs,saveMs,carryMs,finalEvalMs,totalMs:Date.now()-requestStarted}));
-   return res.status(200).json({decision,pendingSession,pendingSessions,intradaySession,openingPlan,openingError,manualRecommendations,holdingReviewError});
-  }catch(error){const conflict=isC1AccountSaveConflict(error);return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});}
+   account=await saveC1AccountUpdate({store,path,saved,account,operation,context:body.context,book,now});
+   return res.status(200).json(completedAnalysisView({account,book,now,holdingReviewError}));
+  }catch(error){
+   const conflict=isC1AccountSaveConflict(error);
+   return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});
+  }
  };
 }
 export default createC1AccountHandler();

@@ -3,7 +3,7 @@ import {c1WatchPresentation,c1OpportunityPresentation} from '../lib/c1EntryRevie
 import {useEffect,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
-export default function C1AccountOpportunities({decision,openingPlan,openingError,manualRecommendations,screenRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
+export default function C1AccountOpportunities({decision,executionDecision=decision,openingPlan,openingError,manualRecommendations,screenRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
  const [,expire]=useState(0);
  useEffect(()=>{
   const remaining=Date.parse(manualRecommendations?.validUntil)-Date.now();
@@ -11,14 +11,14 @@ export default function C1AccountOpportunities({decision,openingPlan,openingErro
   const timer=setTimeout(()=>expire(n=>n+1),Math.min(remaining+1,120001));
   return ()=>clearTimeout(timer);
  },[manualRecommendations?.validUntil]);
- const ready=Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,decision);
+ const ready=Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,executionDecision);
  const portfolioOnly=view==='portfolio';
  const ratedRows=classifyC1StockScreen({snapshot:decision.stockScreen,rows:screenRows,current:screenCurrent&&decision.current&&decision.stockScreen?.sourceSessionDate===decision.sourceSessionDate});
  const currentBuySymbols=new Set(ratedRows.filter(row=>['Buy','Strong Buy'].includes(row.rating)).map(row=>row.symbol));
- const orders=c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view});
+ const orders=c1ManualOrdersForView({review:manualRecommendations,decision:executionDecision,openingPlan,view});
  const rawBuys=orders.filter(order=>order.side==='buy'&&!order.condition);
  const buys=c1OrderDisplayGroups(portfolioOnly?rawBuys.filter(order=>currentBuySymbols.has(order.symbol)):rawBuys);
- const positionOrders=portfolioOnly?c1OrderDisplayGroups(c1ManualOrdersForView({review:manualRecommendations,decision,openingPlan,view:'opportunities'}).filter(order=>order.side==='sell'&&!order.condition)):[];
+ const positionOrders=portfolioOnly?c1OrderDisplayGroups(c1ManualOrdersForView({review:manualRecommendations,decision:executionDecision,openingPlan,view:'opportunities'}).filter(order=>order.side==='sell'&&!order.condition)):[];
  const exits=positionOrders;
  if(portfolioOnly&&!buys.length&&!positionOrders.length)return null;
  const waitingReason=decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
