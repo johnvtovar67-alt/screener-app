@@ -12,7 +12,7 @@ import {planC1ContinuedAccountOpening,c1CompletionPolicy,continueC1ActualAccount
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
-import {carryC1RecordedHoldings,importC1PositionContext,correctC1AccountOpenedAt,reconcileC1BrokerCash,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession,recoverC1CompletedOwnerExitActivity} from '../../lib/c1AccountService';
+import {carryC1RecordedHoldings,deriveC1CompletedSessionAccount,importC1PositionContext,correctC1AccountOpenedAt,reconcileC1BrokerCash,adoptC1Account,evaluateC1Account,appendC1AccountSession,pendingC1AccountSession,recoverC1CompletedOwnerExitActivity} from '../../lib/c1AccountService';
 import {easternMarketClock,marketSessionCloseMinutes} from '../../lib/marketSession';
 export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
 // Read the uncompressed representation: compressed responses can carry weak
@@ -42,10 +42,10 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    // a full refresh still performs those checks before any executable action.
    if(compact&&req.method==='POST'&&req.body?.operation==='refresh-analysis'&&saved){
     const compactStarted=Date.now();
-    // Display-only refresh: carry recorded ownership through completed sessions
-    // without replaying pending opening/execution state, then evaluate the
-    // current verified book. This is derived only and is never saved here.
-    const analysisAccount=carryC1RecordedHoldings({account,book,now,skipPendingPlans:true});
+    // Display-only refresh has no dependency on opening/execution planning.
+    // It derives completed-session ownership directly from the verified book
+    // and never saves those display-only records.
+    const analysisAccount=deriveC1CompletedSessionAccount({account,book,now});
     const decision=evaluateC1Account({account:analysisAccount,book,now});
     const manualRecommendations=buildC1ManualRecommendations({decision,pendingSession:null,openingPlan:null,openingError:null,now});
     console.info('C1_ACCOUNT_TIMING',JSON.stringify({accountReadMs,bookReadMs,compact:true,totalMs:Date.now()-requestStarted}));
