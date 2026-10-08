@@ -33,9 +33,9 @@ const recorded={positions:[{symbol:'AAA',shares:34,avgCost:325.6470588,openedAt:
 assert.deepEqual(JSON.parse(JSON.stringify(differences(recorded,held))),[{symbol:'AAA',field:'First purchase date',entered:'2026-09-08',recorded:'2026-09-09',dateOnly:true}]);
 assert.equal(differences({...recorded,positions:[{...recorded.positions[0],openedAt:'2026-09-08'}]},held).length,0);
 assert.equal(differences(recorded,[{...held[0],shares:35},held[1]]).every(r=>r.dateOnly),false);
-assert.equal(differences({...recorded,actualCash:14315},held).some(r=>r.field==='Cash balance'),true);
+assert.equal(differences({...recorded,actualCash:14315,brokerageCash:363.36},held).some(r=>r.field==='Cash balance'),false,'Brokerage cash differences cannot become C1 ownership mismatches');
 assert.equal(differences(recorded,[held[1]]).some(r=>r.field==='Holding rows'),true);
-console.log('PASS: Exact account differences distinguish date-only corrections from ownership/cash changes.');
+console.log('PASS: Exact account differences distinguish date-only corrections from ownership changes and ignore independent brokerage cash.');
 
 
 const earlyNow=new Date('2026-11-27T17:59:30Z');

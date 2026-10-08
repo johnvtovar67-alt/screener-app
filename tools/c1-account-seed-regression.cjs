@@ -316,7 +316,12 @@ assert.match(stopExplained,/recovery does not clear the pending exit/);
 console.log('PASS: no-trade continuation is current, repeatable, preserves ownership and storage; multiple sessions and calendar dates verified.');
 const pending=pendingService({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
 assert.equal(pending.date,opening.date);
-const updatedAccount=appendService({account:privateAccount,record:records[0],book:updatedBook,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
+// New buys require a contemporaneous manual brokerage observation. This
+// fixture adds execution metadata only; its existing strategy inputs/fills,
+// opening balances, and expected continuation economics remain unchanged.
+const withCurrentBrokerCash=account=>({...account,brokerageCash:{balance:account.adoption.actualCash,observedAt:opening.date+'T13:00:00Z',source:'manual-broker-balance'}});
+assert.throws(()=>appendService({account:privateAccount,record:records[0],book:updatedBook,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')}),/Update Brokerage Cash/);
+const updatedAccount=appendService({account:withCurrentBrokerCash(privateAccount),record:records[0],book:updatedBook,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
 const shared=evaluateService({account:updatedAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
 assert.equal(shared.current,true);
 assert.equal(shared.revision,1);
@@ -386,7 +391,7 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.throws(()=>c1AccountBook(gapBook,{...supplement,rows:[supplement.rows[0],supplement.rows[0]]}),/Invalid verified/);
  assert.throws(()=>c1AccountBook({...gapBook,model:{sessions:[{...gapBook.model.sessions[0],universeSymbols:symbols.filter(s=>s!=='T4')}]}},supplement),/classification/);
  const gapNext={...updatedBook,model:{sessions:[gapBook.model.sessions[0],opening]}};
- const gapContinued=appendService({account:gapSaved.record,record:records[0],book:gapNext,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
+ const gapContinued=appendService({account:withCurrentBrokerCash(gapSaved.record),record:records[0],book:gapNext,expectedRevision:0,now:new Date(opening.date+'T21:00:00Z')});
  assert.equal(evaluateService({account:gapContinued,book:gapNext,now:new Date(opening.date+'T21:00:00Z')}).decisionId,shared.decisionId);
  // Nonmembers use the published eligible opportunity list for exit rank.
  const inheritedPortfolio=[{symbol:'OUT',shares:8,avgCost:101,openedAt:sessions[0].date,role:'Swing'},{symbol:'CASH',shares:10000,avgCost:1,role:'Swing'}];

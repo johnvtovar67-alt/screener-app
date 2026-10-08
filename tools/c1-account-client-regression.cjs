@@ -13,14 +13,15 @@ const core=[{symbol:'MSTR',shares:10,avgCost:100,role:'Core',openedAt:'2026-01-0
  {symbol:'CASH',shares:200,avgCost:1,role:'Core'}];
 const portfolio=[...core,{symbol:'VMFXX',shares:1500,avgCost:1,role:'Swing'},
  {symbol:'TEST',shares:5,avgCost:100,openedAt:'2026-09-01',role:'Swing'}];
-const decision={positions:[{symbol:'TEST',shares:3,avgCost:100,openedAt:'2026-09-01'}],actualCash:1698,executable:false};
+const decision={positions:[{symbol:'TEST',shares:3,avgCost:100,openedAt:'2026-09-01'}],actualCash:2698,strategyCash:2698,brokerageCash:1698,executable:false};
 const before=JSON.stringify(portfolio);
 const merged=mergeC1AccountPortfolio(portfolio,decision);
 assert.deepEqual(plain(merged.filter(p=>p.role==='Core')),core);
 assert.equal(merged.find(p=>p.role==='Swing'&&p.symbol==='VMFXX').shares,1698);
 assert.equal(merged.filter(p=>p.symbol==='CASH').length,1);
 assert.equal(JSON.stringify(portfolio),before);
-assert.throws(()=>mergeC1AccountPortfolio(core,decision),/Swing cash/);
+assert.deepEqual(plain(mergeC1AccountPortfolio(core,decision).filter(p=>p.role==='Core')),core);
+assert.equal(mergeC1AccountPortfolio(core,decision).filter(p=>p.role==='Swing'&&['CASH','VMFXX'].includes(p.symbol)).length,0,'Metadata must not invent a Swing cash holding');
 
 function extract(from,to){const a=page.indexOf(from),b=page.indexOf(to,a+from.length);assert.ok(a>=0&&b>a);return page.slice(a,b);}
 const refresh=extract('  async function refreshC1Account(','  async function startC1Account(');
