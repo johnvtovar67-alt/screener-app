@@ -10,3 +10,15 @@
 .marketClosedBanner b{white-space:nowrap;text-transform:capitalize;}
 .marketClosedBanner span{line-height:1.35;}
 @media(max-width:700px){.marketClosedBanner{flex-direction:column;gap:4px;}}
+
+.card.brokerageCash{padding:10px 12px;font-size:14px;}
+.brokerageCashSummary{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;min-width:0;}
+.brokerageCashSummary p{margin:0;min-width:0;overflow-wrap:anywhere;}
+.brokerageCashSummary p span{display:inline-block;max-width:100%;}
+.brokerageCashSummary button{padding:5px 9px;font-size:12px;}
+.brokerageCash>.sub,.brokerageCash>[role]{margin:4px 0 0;font-size:12px;line-height:1.4;overflow-wrap:anywhere;}
+.brokerageCashEditor{margin-top:10px;}
+.brokerageCashEditor .sub{margin:0 0 8px;font-size:12px;line-height:1.4;}
+.brokerageCashEditor .inputs{align-items:flex-end;}
+.brokerageCashEditor label{display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%;}
+.brokerageCashEditor input{width:180px;max-width:100%;}
