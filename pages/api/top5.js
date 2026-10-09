@@ -311,6 +311,7 @@ const quoteInflight = () =>
     : (globalThis[QUOTE_INFLIGHT_KEY] = new Map());
 const quoteCooldownUntil = () => Number(globalThis[QUOTE_COOLDOWN_KEY] || 0);
 const setQuoteCooldown = (ms) => {
+  assertTop5Active();
   globalThis[QUOTE_COOLDOWN_KEY] = Math.max(
     quoteCooldownUntil(),
     Date.now() + ms,
@@ -393,6 +394,7 @@ async function fetchStableSingleQuote(symbol, key) {
     }
     const data = await r.json(),
       row = Array.isArray(data) ? data[0] : data;
+    assertTop5Active();
     return row && (row.symbol || row.price) ? row : null;
   } finally {
     clearTimeout(timer);
@@ -502,9 +504,11 @@ async function fetchFmpQuotes(symbols = []) {
       "FMP batch path returned no quotes; using bounded stable single-quote fallback.",
     );
     const rows = await emergencySingleQuoteFallback(requested, key);
+    assertTop5Active();
     for (const row of rows) {
       const symbol = normalizeSymbol(row?.symbol);
       if (symbol) {
+        assertTop5Active();
         cache.set(symbol, { ts: Date.now(), data: row });
         bySymbol.set(symbol, row);
       }
@@ -653,6 +657,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
   if (
     verificationPass === 0 &&
     cached?.rows &&
+    !cached.promise &&
     cached?.requiredSessionDate === requiredSessionDate &&
     now - cached.ts < CACHE_MS
   )
@@ -922,7 +927,9 @@ async function buildBroadSnapshot(verificationPass = 0) {
     fullMarketCandidateCount: cached?.fullMarketCandidateCount,
     fullMarketDiscoveryConfig: cached?.fullMarketDiscoveryConfig,
     productionPolicySnapshot: cached?.productionPolicySnapshot,
-    requiredSessionDate,
+    // The staged rows retain their actual verification session until the
+    // producer publishes a completed new snapshot.
+    requiredSessionDate: cached?.requiredSessionDate || requiredSessionDate,
     universeSize: cached?.universeSize,
     promise,
   };

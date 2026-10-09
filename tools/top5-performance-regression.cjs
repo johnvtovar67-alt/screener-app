@@ -96,7 +96,7 @@ function createHarness(route = CURRENT, options = {}) {
       price: 100, previousClose: 99, change: 1, changesPercentage: 100 / 99,
       marketCap: 2000000000, volume: 5000000, avgVolume: 5000000,
       priceAvg50: 95, priceAvg200: 90, yearHigh: 102, yearLow: 55,
-      eps: 6, pe: 100 / 6, beta: 1.1, exchange: 'NASDAQ', timestamp: EPOCH / 1000,
+      eps: 6, pe: 100 / 6, beta: 1.1, exchange: 'NASDAQ', timestamp: options.quoteTimestamp ?? EPOCH / 1000,
       sector: 'Sector ' + index % 12, ...(options.quoteOverrides?.[symbol] || {}),
     };
   };
@@ -128,8 +128,11 @@ function createHarness(route = CURRENT, options = {}) {
         row.finished = clock.now() - EPOCH;
         fetchOptions.signal?.removeEventListener('abort', abort);
         const rows = symbols.filter(symbol => !options.missingQuotes?.includes(symbol)).map(quote);
-        resolve({ ok: !options.failQuotes, status: options.failQuotes ? 503 : 200,
-          json: async () => rows, text: async () => options.failQuotes ? 'Fixture quote unavailable' : '' });
+        const batch = url.pathname === '/stable/batch-quote';
+        const status = batch && options.batchStatus ? options.batchStatus : options.failQuotes ? 503 : 200;
+        resolve({ ok: status === 200, status,
+          json: async () => { if (!batch && options.singleJsonLatency) await clock.wait(options.singleJsonLatency); return rows; },
+          text: async () => { if (batch && options.batchTextLatency) await clock.wait(options.batchTextLatency); return status === 200 ? '' : 'Fixture quote unavailable'; } });
       }, latencies.quote);
       if (fetchOptions.signal?.aborted) abort(); else fetchOptions.signal?.addEventListener('abort', abort, { once: true });
     });
@@ -202,6 +205,8 @@ function createHarness(route = CURRENT, options = {}) {
   }
   return { request, clock, calls, logs, snapshot, screenSnapshot, latencies,
     cache: () => context.__screenerBroadOpportunityCacheV9,
+    quoteCache: () => context.__screenerFmpQuoteCacheV4,
+    quoteCooldown: () => Number(context.__screenerFmpQuoteCooldownV4 || 0),
     inflight: () => context.__screenerBroadInflightV1,
     installProducer: (promise, cached) => {
       context.__screenerBroadOpportunityCacheV9 = { ...cached, promise };
@@ -351,6 +356,60 @@ async function main() {
     assertHealthy(survivingWaiter);
     assert.deepEqual(survivingWaiter.body.stocks, verified.body.stocks);
     assert.equal(waiter.calls.filter(row => row.phase === 'fundamentals').length, 1, 'A later waiter shares the intact producer without rebuilding');
+
+    // Prime immediately before the next close: the row session is October 8,
+    // while a rebuild beginning six seconds later requires October 9. The
+    // prior rows are still inside the five-minute cache TTL, so a staging entry
+    // must never make them appear newly verified under the new session key.
+    const beforeClose = Date.parse('2026-10-09T19:59:55Z');
+    const primeRollover = async options => {
+      const harness = createHarness(CURRENT, { ...options, quoteTimestamp: beforeClose / 1000 });
+      harness.clock.advance(beforeClose - EPOCH);
+      const response = await harness.clock.settle(harness.request(compactQuery)); assertHealthy(response);
+      assert.equal(harness.cache().requiredSessionDate, '2026-10-08');
+      harness.clock.advance(6000);
+      Object.assign(harness.snapshot, { sourceSessionDate: '2026-10-09', requiredSessionDate: '2026-10-09', datasetThrough: '2026-10-09' });
+      for (const candidate of harness.snapshot.candidates) candidate.sourceTiming.asOf = '2026-10-09';
+      return { harness, response };
+    };
+    const { harness: rollover, response: beforeRollover } = await primeRollover({});
+    rollover.latencies.discovery = 500; rollover.latencies.fundamentals = 1000;
+    const rolloverResponses = await rollover.clock.settle(Promise.all([rollover.request(compactQuery), rollover.request(compactQuery)]));
+    for (const response of rolloverResponses) {
+      assertHealthy(response);
+      assert.ok(response.elapsedMs >= 1500, 'A concurrent new-session request waits for the actual rebuild');
+      assert.notEqual(response.body.meta.snapshotAsOf, beforeRollover.body.meta.snapshotAsOf);
+      assert.equal(response.body.meta.productionPolicy.sourceSessionDate, '2026-10-09');
+    }
+    assert.deepEqual(rolloverResponses[0].body, rolloverResponses[1].body);
+    assert.equal(rollover.calls.filter(row => row.phase === 'fundamentals').length, 2, 'Only one rebuild follows the prior session snapshot');
+
+    const failedOptions = {};
+    const { harness: failedRollover } = await primeRollover(failedOptions);
+    // primeRollover spreads input options, so use a mutable provider control
+    // through a delayed phase rather than changing unrelated source functions.
+    failedRollover.latencies.fundamentals = 120000;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const response = await failedRollover.clock.settle(failedRollover.request(compactQuery));
+      assert.equal(response.code, 200); assert.equal(response.body.meta.quoteFeedStatus, 'stale-verified');
+      assert.equal(failedRollover.cache().requiredSessionDate, '2026-10-08', 'A failed rebuild cannot restamp prior rows as the newly completed session');
+    }
+    assert.equal(failedRollover.calls.filter(row => row.phase === 'fundamentals').length, 3, 'A failed rollover retries verification rather than hitting a falsely fresh cache');
+
+    const lateSingle = createHarness(CURRENT, { batchStatus: 403, singleJsonLatency: 56000 });
+    const singleFailure = await lateSingle.clock.settle(lateSingle.request(compactQuery));
+    assert.equal(singleFailure.code, 503); assert.equal(singleFailure.body.code, 'TOP5_TIMEOUT');
+    await lateSingle.clock.settle(lateSingle.clock.wait(75000));
+    assert.equal(lateSingle.quoteCache().size, 0, 'Late emergency single-quote JSON cannot populate verified quote cache');
+    assert.equal(lateSingle.calls.filter(row => row.phase === 'quote' && row.symbols.length === 1).length, 2, 'An expired single fallback cannot start the remaining six symbols');
+
+    const lateThrottle = createHarness(CURRENT, { batchStatus: 429, batchTextLatency: 56000 });
+    const throttleFailure = await lateThrottle.clock.settle(lateThrottle.request(compactQuery));
+    assert.equal(throttleFailure.code, 503); assert.equal(throttleFailure.body.code, 'TOP5_TIMEOUT');
+    await lateThrottle.clock.settle(lateThrottle.clock.wait(75000));
+    assert.equal(lateThrottle.quoteCooldown(), 0, 'A late throttling body cannot publish provider cooldown after deadline');
+    assert.equal(lateThrottle.quoteCache().size, 0);
+    assert.equal(lateThrottle.calls.filter(row => row.phase === 'quote').length, 4, 'A late throttling body cannot dispatch retry or single fallback work');
   }
   console.log('PASS: actual top5 route preserves full/compact ranked decisions, screen classifications, manual priority rotation, caching and fail-closed benchmark coverage with mocked I/O.');
 }
