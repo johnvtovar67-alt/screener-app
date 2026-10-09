@@ -20,8 +20,17 @@ const sources = JSON.parse(zlib.gunzipSync(Buffer.from(fixture.sourcesGzipBase64
 for (const [file, expected] of Object.entries(fixture.sourceSha256)) {
   assert.equal(hash(sources[file]), expected, file + ': pinned production source fixture');
 }
+const originalCalendar = fs.readFileSync(path.join(__dirname,
+  'fixtures/top5-market-session-before-reuse.js'));
+assert.equal(hash(originalCalendar), fixture.unchangedRuleSha256['lib/marketSession.js'],
+  'The calendar comparison fixture must preserve the original production rules');
+// The owner authorized reuse of the fixed Eastern formatter and immutable
+// holiday sets to repair /api/top5 timeouts. Pin that exact implementation;
+// market-session-reuse-regression.cjs separately proves exact calendar parity.
+const repairedCalendarSha256 = '2b12b67b5000249f05431908e21c8b8e0979d881f2390d11430287aafe818cc6';
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
-  assert.equal(hash(fs.readFileSync(path.join(root, file))), expected,
+  assert.equal(hash(fs.readFileSync(path.join(root, file))),
+    file === 'lib/marketSession.js' ? repairedCalendarSha256 : expected,
     file + ': the brokerage execution cap must not change the production trading rules');
 }
 
@@ -30,6 +39,10 @@ fs.mkdirSync(scratch, { recursive: true });
 const baselineRoot = fs.mkdtempSync(path.join(scratch, 'c1-brokerage-rule-parity-'));
 fs.cpSync(path.join(root, 'lib'), path.join(baselineRoot, 'lib'), { recursive: true });
 for (const [file, source] of Object.entries(sources)) fs.writeFileSync(path.join(baselineRoot, file), source);
+fs.writeFileSync(path.join(baselineRoot, 'lib/marketSession.js'), originalCalendar);
+assert.equal(hash(fs.readFileSync(path.join(baselineRoot, 'lib/marketSession.js'))),
+  fixture.unchangedRuleSha256['lib/marketSession.js'],
+  'Account/model parity must compare the original calendar with its authorized repair');
 
 // Bind the compact fixture to the actual Git tree whenever that commit is
 // available. Missing Git history in a deployment never requires network I/O.

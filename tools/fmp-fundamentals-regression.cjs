@@ -7,7 +7,7 @@ let src=fs.readFileSync('lib/fmpFundamentals.js','utf8')
   .replace(/export async function /g,'async function ')
   .replace(/export function /g,'function ');
 src+='\nmodule.exports={statementRatioFields,statementGrowthFields,fillMissing};';
-const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,setTimeout,clearTimeout,AbortController,fetch:async()=>({ok:true,json:async()=>[]}),top5Phase:(_name,task)=>task(),top5Network:(_url,task)=>task(),top5Count(){}};
+const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,setTimeout,clearTimeout,AbortController,fetch:async()=>({ok:true,json:async()=>[]}),top5Phase:(_name,task)=>task(),top5Network:(_url,task)=>task(),top5Fetch:(url,options)=>sandbox.fetch(url,options),assertTop5Active(){},isTop5Deadline:()=>false,top5Count(){}};
 vm.createContext(sandbox);vm.runInContext(src,sandbox);
 const {statementRatioFields,statementGrowthFields,fillMissing}=sandbox.module.exports;
 const ratios=statementRatioFields(
