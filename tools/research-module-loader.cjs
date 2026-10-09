@@ -18,6 +18,8 @@ function createResearchModuleLoader(root = process.cwd()) {
   }
 
   function load(request, fromFile = path.join(root, "__research__.js")) {
+    // Request diagnostics import Node's async context and hashing primitives.
+    if (request.startsWith("node:")) return require(request);
     const file = request.startsWith(".")
       ? resolveModule(fromFile, request)
       : path.resolve(root, request);
@@ -77,6 +79,7 @@ function createResearchModuleLoader(root = process.cwd()) {
       exports: record.exports,
       console,
       process,
+      performance,
       Date,
       Intl,
       Math,

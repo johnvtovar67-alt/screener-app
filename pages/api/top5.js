@@ -45,6 +45,8 @@ import { updatePerformanceLedger } from "../../lib/performanceStore";
 import { applyV11ProductionPolicy } from "../../lib/v11ProductionPolicy";
 import { getV11ProductionSnapshot } from "../../lib/v11ProductionSnapshot";
 
+import { profileTop5Request, top5Phase, top5Network, top5Count } from "../../lib/top5Diagnostics";
+
 export const config = { maxDuration: 60 };
 
 const MAX_AUTOMATIC_VERIFICATION_PASS = 20;
@@ -334,7 +336,7 @@ async function fetchStableQuoteBatch(symbols, key) {
     const controller = new AbortController(),
       timer = setTimeout(() => controller.abort(), QUOTE_TIMEOUT_MS);
     try {
-      const r = await fetch(url, { signal: controller.signal });
+      const r = await top5Network(url, () => fetch(url, { signal: controller.signal }));
       if (r.ok) return asQuoteArray(await r.json());
       const text = await r.text().catch(() => "");
       const err = new Error(
@@ -380,7 +382,7 @@ async function fetchStableSingleQuote(symbol, key) {
     timer = setTimeout(() => controller.abort(), QUOTE_TIMEOUT_MS);
   try {
     const url = `https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(toFmpSymbol(symbol))}&apikey=${key}`;
-    const r = await fetch(url, { signal: controller.signal });
+    const r = await top5Network(url, () => fetch(url, { signal: controller.signal }));
     if (!r.ok) {
       const e = new Error(`FMP single quote failed: ${r.status}`);
       e.status = r.status;
@@ -474,6 +476,8 @@ async function fetchFmpQuotes(symbols = []) {
     if (hit && now - hit.ts < QUOTE_TTL_MS) bySymbol.set(symbol, hit.data);
     else missing.push(symbol);
   }
+  top5Count("quoteCacheHits", requested.length - missing.length);
+  top5Count("quoteSymbolsRequested", requested.length);
   for (const batch of chunks(missing)) {
     const rows = await fetchQuoteBatchResilient(batch, key);
     for (const row of rows) {
@@ -626,17 +630,17 @@ async function buildBroadSnapshot(verificationPass = 0) {
     cached?.requiredSessionDate === requiredSessionDate &&
     now - cached.ts < CACHE_MS
   )
-    return cached;
+    { top5Count("broadCacheHits"); return cached; }
   if (
     verificationPass === 0 &&
     cached?.promise &&
     cached?.requiredSessionDate === requiredSessionDate
   )
-    return cached.promise;
+    { top5Count("broadInflightHits"); return cached.promise; }
   const promise = (async () => {
     const [fullMarketDiscovery, productionPolicySnapshot] = await Promise.all([
-        getFullMarketDiscovery({ refreshIfStale: true }),
-        getV11ProductionSnapshot({ refreshIfStale: true }),
+        top5Phase("market-discovery", () => getFullMarketDiscovery({ refreshIfStale: true })),
+        top5Phase("production-snapshot", () => getV11ProductionSnapshot({ refreshIfStale: true })),
       ]),
       fullMarketCandidates = Array.isArray(fullMarketDiscovery?.candidates)
         ? fullMarketDiscovery.candidates
@@ -655,12 +659,12 @@ async function buildBroadSnapshot(verificationPass = 0) {
         (x) => !EXCLUDED.has(x),
       ),
       proxySymbols = marketCycleProxySymbols(),
-      seedQuotes = await fetchFmpQuotes([
+      seedQuotes = await top5Phase("seed-quotes", () => fetchFmpQuotes([
         ...strategicSymbols,
         ...proxySymbols,
         "SPY",
         "QQQ",
-      ]),
+      ])),
       seedNormalized = seedQuotes
         .map(normalizeQuote)
         .filter((q) => q.symbol && q.price);
@@ -668,7 +672,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
       throw new Error(
         "No verified quote data available after batch and bounded single-quote fallback.",
       );
-    const cycle = discoverMarketCycles(seedNormalized),
+    const cycle = top5Phase("market-leadership", () => discoverMarketCycles(seedNormalized)),
       configuredMarketMemberSymbols = marketCycleMemberSymbols().filter(
         (x) => !strategicSymbols.includes(x) && !EXCLUDED.has(x),
       ),
@@ -687,7 +691,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
         ...productionCandidateSymbols,
       ]),
       marketMemberRaw = dynamicSymbols.length
-        ? await fetchFmpQuotes(dynamicSymbols)
+        ? await top5Phase("universe-quotes", () => fetchFmpQuotes(dynamicSymbols), { symbols: dynamicSymbols.length })
         : [],
       marketMemberNormalized = marketMemberRaw
         .map(normalizeQuote)
@@ -752,8 +756,8 @@ async function buildBroadSnapshot(verificationPass = 0) {
         ...fundamentalPriority.slice(fundamentalOffset),
         ...fundamentalPriority.slice(0, fundamentalOffset),
       ],
-      fundamentalMap = await fetchFmpFundamentals(rotatedFundamentalPriority);
-    let rows = broadQuotes.map((q) =>
+      fundamentalMap = await top5Phase("fundamentals", () => fetchFmpFundamentals(rotatedFundamentalPriority), { symbols: rotatedFundamentalPriority.length });
+    let rows = top5Phase("stock-classification", () => broadQuotes.map((q) =>
       scoreQuote(
         mergeFundamentals(
           {
@@ -764,8 +768,8 @@ async function buildBroadSnapshot(verificationPass = 0) {
           fundamentalMap,
         ),
       ),
-    );
-    await seedDurableStrongBuyMemory();
+    ));
+    await top5Phase("screen-continuity", () => seedDurableStrongBuyMemory());
     const recentStrongSymbols = new Set(recentStrongBuySymbols()),
       preTradeCandidates = uniqueSymbols([
         ...productionCandidateSymbols,
@@ -784,7 +788,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
       // Earnings/news/M&A verification is mandatory before deployment, but a
       // multi-thousand-symbol news URL is neither useful nor safe. Only rows that
       // can still become actionable receive the bounded pre-trade check.
-      eventRiskMap = await fetchEventRiskMap(preTradeCandidates);
+      eventRiskMap = await top5Phase("event-verification", () => fetchEventRiskMap(preTradeCandidates), { symbols: preTradeCandidates.length });
     rows = rows.map((r) =>
       eventRiskMap.has(r.symbol)
         ? applyEventRiskGate(r, eventRiskMap.get(r.symbol))
@@ -806,7 +810,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
           )
           .map((r) => r.symbol),
       ]).slice(0, 36),
-      timingMap = await fetchEntryTimingMap(timingCandidates);
+      timingMap = await top5Phase("timing-verification", () => fetchEntryTimingMap(timingCandidates), { symbols: timingCandidates.length });
     rows = rows.map((r) =>
       timingMap.has(r.symbol)
         ? applyEntryTimingGate(r, timingMap.get(r.symbol))
@@ -1081,6 +1085,7 @@ function compactRowsForClient(rows = [], limit = 80, includeSymbol = "", screenS
 }
 
 export default async function handler(req, res) {
+  return profileTop5Request(async () => {
   try {
     res.setHeader("Cache-Control", "no-store, max-age=0");
     const themeKey = String(req.query.theme || "opportunities").toLowerCase(),
@@ -1089,13 +1094,13 @@ export default async function handler(req, res) {
         MAX_AUTOMATIC_VERIFICATION_PASS,
         Math.max(0, Math.floor(Number(req.query.verificationPass) || 0)),
       ),
-      broadSnapshot = await buildBroadSnapshot(verificationPass),
+      broadSnapshot = await top5Phase("broad-snapshot", () => buildBroadSnapshot(verificationPass)),
       snapshotVerificationPaused =
         broadSnapshot.staleFeed || !broadSnapshot.quoteCoverageAdequate,
       broadRows = snapshotVerificationPaused
         ? failClosedRows(broadSnapshot.rows)
         : broadSnapshot.rows,
-      themeLeadership = buildThemeLeadership(broadRows),
+      themeLeadership = top5Phase("theme-leadership", () => buildThemeLeadership(broadRows)),
       isBroad = themeKey === "opportunities" || themeKey === "broad",
       selectedSymbols = new Set(config.symbols.filter((s) => !EXCLUDED.has(s))),
       rows = isBroad
@@ -1107,12 +1112,12 @@ export default async function handler(req, res) {
     // Every view is filtered from this same broad snapshot, so record the
     // authoritative broad state even when the user is looking at one theme.
     // The ledger de-duplicates within a market session.
-    const performanceObservationRecorded = await recordPerformance(
+    const performanceObservationRecorded = await top5Phase("performance-continuity", () => recordPerformance(
       snapshotVerificationPaused
         ? broadRows.map((row) => ({ ...row, dataFeedSnapshotStale: true }))
         : broadRows,
       `${broadSnapshot.snapshotBuiltAt}:${snapshotVerificationPaused ? "paused" : "live"}`,
-    );
+    ));
     const fundamentalsComplete = rows.filter(
         (r) => r.fundamentalDataStatus === "complete",
       ).length,
@@ -1137,7 +1142,7 @@ export default async function handler(req, res) {
       actionableThemes = new Set(
         actionable.map((r) => r.primaryTheme).filter(Boolean),
       ).size;
-    return res
+    return top5Phase("serialize-response", () => res
       .status(200)
       .json({
         stocks: clientRows.map(serializeStockForClient),
@@ -1302,7 +1307,7 @@ export default async function handler(req, res) {
             ),
           ),
         },
-      });
+      }));
   } catch (err) {
     console.error("api/top5 error:", err);
     return res
@@ -1313,4 +1318,5 @@ export default async function handler(req, res) {
         retryable: true,
       });
   }
+  }, { compact: String(req.query.compact || "") === "1", verificationPass: Number(req.query.verificationPass) || 0 });
 }

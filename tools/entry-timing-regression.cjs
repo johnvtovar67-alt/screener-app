@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 let src=fs.readFileSync('lib/entryTiming.js','utf8').replace(/^import .*$/gm,'').replace(/export function /g,'function ').replace(/export async function /g,'async function ');
 src+='\nmodule.exports={analyzeEntryTiming,attachRelativeStrengthContext,applyEntryTimingGate};';
-const box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Date,AbortController,setTimeout,clearTimeout,latestCompletedMarketSessionDay:()=> '2026-08-28'};vm.createContext(box);vm.runInContext(src,box);const{analyzeEntryTiming,attachRelativeStrengthContext,applyEntryTimingGate}=box.module.exports;
+const box={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Date,AbortController,setTimeout,clearTimeout,latestCompletedMarketSessionDay:()=> '2026-08-28',top5Phase:(_name,task)=>task(),top5Network:(_url,task)=>task(),top5Count(){}};vm.createContext(box);vm.runInContext(src,box);const{analyzeEntryTiming,attachRelativeStrengthContext,applyEntryTimingGate}=box.module.exports;
 const bars=closes=>closes.map((close,i)=>({date:`2026-07-${String(i+1).padStart(2,'0')}`,open:close*.997,high:close*1.01,low:close*.99,close,volume:1000000}));
 let slow=[];for(let i=0;i<40;i++)slow.push(100+i*.45+(i%4===0?-.35:.15));let t=analyzeEntryTiming('GOOD',bars(slow));assert(t.available&&t.pass,'gradual trend should pass historical timing');
 const history=(start,growth)=>Array.from({length:221},(_,i)=>({date:`D${i}`,open:start*Math.pow(1+growth,i),high:start*Math.pow(1+growth,i)*1.01,low:start*Math.pow(1+growth,i)*.99,close:start*Math.pow(1+growth,i),volume:1000000}));

@@ -3,10 +3,11 @@ const vm=require('vm');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 let src=fs.readFileSync('lib/fmpFundamentals.js','utf8')
   .replace(/import\s+\{put,list,get\}\s+from\s+'@vercel\/blob';/,'')
+  .replace(/^import .*top5Diagnostics.*$/gm,'')
   .replace(/export async function /g,'async function ')
   .replace(/export function /g,'function ');
 src+='\nmodule.exports={statementRatioFields,statementGrowthFields,fillMissing};';
-const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,setTimeout,clearTimeout,AbortController,fetch:async()=>({ok:true,json:async()=>[]})};
+const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,setTimeout,clearTimeout,AbortController,fetch:async()=>({ok:true,json:async()=>[]}),top5Phase:(_name,task)=>task(),top5Network:(_url,task)=>task(),top5Count(){}};
 vm.createContext(sandbox);vm.runInContext(src,sandbox);
 const {statementRatioFields,statementGrowthFields,fillMissing}=sandbox.module.exports;
 const ratios=statementRatioFields(
