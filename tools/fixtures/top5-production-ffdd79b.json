@@ -1,0 +1,7 @@
+{
+  "commit": "ffdd79b5923a14bd4a9c4e701184b609e4351d21",
+  "sourcePath": "pages/api/top5.js",
+  "fixturePath": "tools/fixtures/top5-production-ffdd79b.js",
+  "gitBlobHash": "468c42d40f544b86da386e92fc4313195f5208d6",
+  "purpose": "Exact production route used as an offline parity oracle; the harness imports the application's real pure scoring and policy modules rather than copying their strategy."
+}

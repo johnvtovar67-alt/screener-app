@@ -1,4 +1,5 @@
 import {useEffect,useState} from "react";
+import {parseTop5Response} from "../lib/top5Response";
 import "../styles/card-layout.css";
 
 const CANONICAL_HOST="screener-app-cq5t.vercel.app";
@@ -20,7 +21,7 @@ const TOP5_STALE_MS=30*60*1000;
 const TOP5_CACHE_PREFIX="screener_top5_response_v2:";
 
 function emitFeedNotice(message=""){try{window.dispatchEvent(new CustomEvent("screener-feed-notice",{detail:message}));}catch{}}
-function readTop5Cache(key){try{const raw=window.localStorage.getItem(TOP5_CACHE_PREFIX+key);const x=raw?JSON.parse(raw):null;return x&&typeof x.body==="string"?x:null;}catch{return null;}}
+function readTop5Cache(key){try{const raw=window.localStorage.getItem(TOP5_CACHE_PREFIX+key);const x=raw?JSON.parse(raw):null;if(!x||typeof x.body!=="string")return null;parseTop5Response(x.body);return x;}catch{return null;}}
 function writeTop5Cache(key,body){try{window.localStorage.setItem(TOP5_CACHE_PREFIX+key,JSON.stringify({ts:Date.now(),body}));}catch{}}
 function cachedResponse(hit){
   let body=hit.body;
@@ -52,7 +53,7 @@ function installResilientApiFetch(){
       try{
         response=await nativeFetch(input,{...init,signal:controller.signal});
         if(response.ok){
-          if(isTop5){const body=await response.text();writeTop5Cache(cacheKey,body);emitFeedNotice("");return new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});}
+          if(isTop5){const body=await response.clone().text();parseTop5Response(body,response);writeTop5Cache(cacheKey,body);emitFeedNotice("");return new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});}
           return response;
         }
       }catch(e){error=e;}finally{clearTimeout(timer);if(parentSignal)parentSignal.removeEventListener("abort",onAbort);}

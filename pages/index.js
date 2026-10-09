@@ -1,5 +1,6 @@
 import C1IntradayActivity from '../components/C1IntradayActivity';
 import {portfolioDateDisplay} from '../lib/portfolioDateDisplay';
+import {readTop5Response} from '../lib/top5Response';
 import C1PositionContextImport from '../components/C1PositionContextImport';
 import C1AccountDifferences from '../components/C1AccountDifferences';
 import {c1AccountDifferences} from '../lib/c1AccountDifferences';
@@ -275,7 +276,7 @@ export default function Home(){
   function pausePriorRows(rows=[]){return rows.map(s=>({...s,clientSnapshotFallback:true,dataFeedSnapshotStale:true}));}
   function decorateSnapshot(rows,performance,meta={}){const clientSnapshotFallback=Boolean(meta?.clientSnapshotFallback),dataFeedSnapshotStale=Boolean(clientSnapshotFallback||meta?.quoteFeedStatus&&meta.quoteFeedStatus!=="live");return(rows||[]).map(s=>({...s,clientSnapshotFallback,dataFeedSnapshotStale:Boolean(s?.dataFeedSnapshotStale||dataFeedSnapshotStale),signalPersistence:{...signalPersistence(performance.records,sym(s)),historyAvailable:performance.available}}));}
   async function fetchScreen(t,verificationPass=0,{full=false,includeSymbol="",screenSymbols=accountView?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[]}={}){
-    const requested=(includeSymbol?`&symbol=${encodeURIComponent(includeSymbol)}`:"")+(screenSymbols.length?`&screenSymbols=${encodeURIComponent(screenSymbols.join(","))}`:""),r=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${verificationPass}${full?"":"&compact=1"}${requested}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);const performance=await performanceHistory();return{...d,stocks:decorateSnapshot(d.stocks||[],performance,d.meta),performance};
+    const requested=(includeSymbol?`&symbol=${encodeURIComponent(includeSymbol)}`:"")+(screenSymbols.length?`&screenSymbols=${encodeURIComponent(screenSymbols.join(","))}`:""),r=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${verificationPass}${full?"":"&compact=1"}${requested}`,{cache:"no-store"}),d=await readTop5Response(r);const performance=await performanceHistory();return{...d,stocks:decorateSnapshot(d.stocks||[],performance,d.meta),performance};
   }
 
   async function load(t,verificationPass=0){

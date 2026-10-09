@@ -2020,6 +2020,12 @@ discoverySource +=
 const box = {
   module: { exports: {} },
   exports: {},
+  top5Phase: (_name, task) => task(),
+  top5Network: (_url, task) => task(),
+  top5Fetch: async () => ({ ok: true, json: async () => [] }),
+  assertTop5Active() {},
+  isTop5Deadline: () => false,
+  top5Count() {},
   process: { env: {} },
   console,
   Date,
