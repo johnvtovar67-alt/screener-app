@@ -1,0 +1,560 @@
+{
+  "contract": "c1-source-pinned-current253-conditional-historical-input-v1",
+  "passedMechanics": true,
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "runClass": "conditional-current-account-policy-counterfactual",
+  "manifestSha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+  "acceptanceReceiptSha256": "ed573201b418f8c11ec747302df318fb37db2c8b9073febfa51bcf8520b4fc74",
+  "acquisitionGuardEvidenceSha256": "ce7bedd122baa6276cf0cd940c46e3891ea70018a629c65bf0b5b18aed9c4d61",
+  "fileBytes": {
+    "manifest": 43583,
+    "fullAcceptanceReceipt": 3360689,
+    "chunks": 291673091
+  },
+  "originalValidationSha256": "06d822332582d364f36b8919dae7bdba614cb5ca36121ebe47d6a3b169fb0a58",
+  "originalManifestSha256": "6dc0ad6cb7ec0edf74f07880c260cb3c5192f86406a299a47dc0589269dd4cf1",
+  "currentFactorSourcePins": {
+    "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+    "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+    "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+    "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+    "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+    "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+    "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+    "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+    "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+    "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+    "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+    "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45"
+  },
+  "adapterSha256": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e",
+  "minimumHistoryRows": 253,
+  "maxCandidates": 500,
+  "sessions": 1170,
+  "priceRows": 659220,
+  "chunks": [
+    {
+      "pathname": "chunks/0000-0050.json.gz",
+      "start": 0,
+      "end": 50,
+      "firstDate": "2022-01-03",
+      "lastDate": "2022-03-15",
+      "compressedBytes": 773425,
+      "compressedSha256": "23cc426cf5c4a2e2e0c1b2a6991f8a064c7983349e4f1ff4789085abcfe0656b",
+      "contentSha256": "80a9c285372afd2d73c16301945d21bbb1eca40141981ec602478389ece04a8d"
+    },
+    {
+      "pathname": "chunks/0050-0100.json.gz",
+      "start": 50,
+      "end": 100,
+      "firstDate": "2022-03-16",
+      "lastDate": "2022-05-25",
+      "compressedBytes": 768915,
+      "compressedSha256": "3acd2bf5f572be5a8a79765f5facfeed8e87f6ffb352f5d257030b0fd54a357a",
+      "contentSha256": "83995091fa2c7f20b49c69812f3f01cdd92c1934e9b8069fdfc89e425bbf4716"
+    },
+    {
+      "pathname": "chunks/0100-0150.json.gz",
+      "start": 100,
+      "end": 150,
+      "firstDate": "2022-05-26",
+      "lastDate": "2022-08-08",
+      "compressedBytes": 764204,
+      "compressedSha256": "a84a03c0b1177e7b01cd7a50308931115b8e6e60a65e877a3cb7701c1770d7fd",
+      "contentSha256": "012a9cd8d374b827e7ed0f457328f35df029d94acdb81df74eb3eef5dad00e8f"
+    },
+    {
+      "pathname": "chunks/0150-0200.json.gz",
+      "start": 150,
+      "end": 200,
+      "firstDate": "2022-08-09",
+      "lastDate": "2022-10-18",
+      "compressedBytes": 762504,
+      "compressedSha256": "8bc787565f739aca61e016b146bd4a84d56e1f73446ab0cb47420caa5af065ae",
+      "contentSha256": "c6605e4662c6de627f0dc577ff46d9b4f2d0565ac73bdec250846d97a011913d"
+    },
+    {
+      "pathname": "chunks/0200-0250.json.gz",
+      "start": 200,
+      "end": 250,
+      "firstDate": "2022-10-19",
+      "lastDate": "2022-12-29",
+      "compressedBytes": 761519,
+      "compressedSha256": "a22dfcf6661e4e9e3aa30c7fdabacaa287c425040d8ae4883d1c13d72ab6ea52",
+      "contentSha256": "927faf738687aaaaab92a9e2c46b77c7409c94283220666cd5b86b1886ec93c6"
+    },
+    {
+      "pathname": "chunks/0250-0300.json.gz",
+      "start": 250,
+      "end": 300,
+      "firstDate": "2022-12-30",
+      "lastDate": "2023-03-14",
+      "compressedBytes": 14975063,
+      "compressedSha256": "975e22971dd6f81f4b0946cee33155ae2d13b386c3b99c69442ad51c3fe26334",
+      "contentSha256": "c014ed5a15accb737067916b27657d6b39290850f83ade68806185d1e02272a8"
+    },
+    {
+      "pathname": "chunks/0300-0350.json.gz",
+      "start": 300,
+      "end": 350,
+      "firstDate": "2023-03-15",
+      "lastDate": "2023-05-24",
+      "compressedBytes": 15496666,
+      "compressedSha256": "a59991d923b535218a412474e097de3d1ac88d3c4817ce6e7a22ed2c6372de79",
+      "contentSha256": "e8b3e36b0dc12d06d0a496f2b34702686cfa3a42c2bbbbe55c583980f071476c"
+    },
+    {
+      "pathname": "chunks/0350-0400.json.gz",
+      "start": 350,
+      "end": 400,
+      "firstDate": "2023-05-25",
+      "lastDate": "2023-08-07",
+      "compressedBytes": 15527608,
+      "compressedSha256": "7f8caa7052775895906c0496cf2a8da27d155ff14543b0dd7a8a9a5d8f6b2859",
+      "contentSha256": "ef9daaccb7e9801cbf5954064ee5f0b30d283a71d57a699b7e069c86e04b2b49"
+    },
+    {
+      "pathname": "chunks/0400-0450.json.gz",
+      "start": 400,
+      "end": 450,
+      "firstDate": "2023-08-08",
+      "lastDate": "2023-10-17",
+      "compressedBytes": 15744435,
+      "compressedSha256": "8bb50466b6f78d500326400bf4c3e6147f2a8367f41c855bbb274259bf381774",
+      "contentSha256": "f1fffad16c74de2dfcabf14eafb7d3460c93c47ee187699732bac0ff02535593"
+    },
+    {
+      "pathname": "chunks/0450-0500.json.gz",
+      "start": 450,
+      "end": 500,
+      "firstDate": "2023-10-18",
+      "lastDate": "2023-12-28",
+      "compressedBytes": 15752829,
+      "compressedSha256": "9d148fbbd42adaf5da37c14c1f53548febc8f4a502d2533228b3fcfe83373abf",
+      "contentSha256": "023dfbefd23a6a1c2b83c9aa2d2dedfe970c50ae3399ca4ca5904f5395a4d756"
+    },
+    {
+      "pathname": "chunks/0500-0550.json.gz",
+      "start": 500,
+      "end": 550,
+      "firstDate": "2023-12-29",
+      "lastDate": "2024-03-12",
+      "compressedBytes": 15448602,
+      "compressedSha256": "e0a53fbf8937f9f9daad51c147a8ffb470c2edd555b4e4a76df89a4c0abd53a4",
+      "contentSha256": "81bd484465abf5cbf67f3623cf76216dc64c3479bf35f08db95eb9d04071cdd4"
+    },
+    {
+      "pathname": "chunks/0550-0600.json.gz",
+      "start": 550,
+      "end": 600,
+      "firstDate": "2024-03-13",
+      "lastDate": "2024-05-22",
+      "compressedBytes": 15522004,
+      "compressedSha256": "2ac1fca891ac14de866924096ca5afa5c0f1b6f36dbf9be04218f16ce68f611e",
+      "contentSha256": "c9fd29234b054fcc76a61f1a32b2d31a1b09d96081b2412a840b2409e2bcc699"
+    },
+    {
+      "pathname": "chunks/0600-0650.json.gz",
+      "start": 600,
+      "end": 650,
+      "firstDate": "2024-05-23",
+      "lastDate": "2024-08-05",
+      "compressedBytes": 15916029,
+      "compressedSha256": "cabab078acdedae193b7acfeeeef3b1190b4c3d5609b1a8d4b2f1c3942164732",
+      "contentSha256": "0e9163fe9e23245c6fa287c20d7902b58579a98803a8fc9541f50ad413a42798"
+    },
+    {
+      "pathname": "chunks/0650-0700.json.gz",
+      "start": 650,
+      "end": 700,
+      "firstDate": "2024-08-06",
+      "lastDate": "2024-10-15",
+      "compressedBytes": 15844044,
+      "compressedSha256": "232ea9b3c5252533e614ff252d5aa81be77b9398d7993ab2b42933081f17e5a8",
+      "contentSha256": "26cae4a59b0032789fad3396d5baedbbe87fbcdfea2317223526b8d149cdce0f"
+    },
+    {
+      "pathname": "chunks/0700-0750.json.gz",
+      "start": 700,
+      "end": 750,
+      "firstDate": "2024-10-16",
+      "lastDate": "2024-12-26",
+      "compressedBytes": 15801127,
+      "compressedSha256": "cd52e5e3812400efd02dfc7cc62bff83ff487a92dda861780820a4d92e3c88ea",
+      "contentSha256": "3b60c5d1d03efd53127cc6afb5a27d25e6bbd5e95282fcaa1c3dfa58f587fbf4"
+    },
+    {
+      "pathname": "chunks/0750-0800.json.gz",
+      "start": 750,
+      "end": 800,
+      "firstDate": "2024-12-27",
+      "lastDate": "2025-03-12",
+      "compressedBytes": 15528603,
+      "compressedSha256": "6587ff6d34647453119fcbb7cfa2919297e74cf7d55cdaea218515994e6af1f9",
+      "contentSha256": "e1048c3ca278de03a4b4d920c5860bd99301ccbcba79dcfeb7f360b26a916a49"
+    },
+    {
+      "pathname": "chunks/0800-0850.json.gz",
+      "start": 800,
+      "end": 850,
+      "firstDate": "2025-03-13",
+      "lastDate": "2025-05-22",
+      "compressedBytes": 15376741,
+      "compressedSha256": "7345119101678ad77dc8b29813562d0606d22b505242f9194469c2338179c635",
+      "contentSha256": "6a0010102d5c160f3196335311cf3a48b66c416c69798f424c5edf661aa0489c"
+    },
+    {
+      "pathname": "chunks/0850-0900.json.gz",
+      "start": 850,
+      "end": 900,
+      "firstDate": "2025-05-23",
+      "lastDate": "2025-08-05",
+      "compressedBytes": 15567007,
+      "compressedSha256": "92accb261d40684a4d13788236455e89ecec6a2183d05c47cbd64f3e6b4264a9",
+      "contentSha256": "2bdf6145641130145b2f41f4e7322d8bab9dcb118725e313de03f6e2c4b3ad36"
+    },
+    {
+      "pathname": "chunks/0900-0950.json.gz",
+      "start": 900,
+      "end": 950,
+      "firstDate": "2025-08-06",
+      "lastDate": "2025-10-15",
+      "compressedBytes": 15461601,
+      "compressedSha256": "3c77da57ba1ffd8a6e297aa0712178633d4e0dd353ad1baa391dd1db3c1d3f8d",
+      "contentSha256": "18a9929d4d7504bb940001816c85a941e5b56d3b0993f17e1e5337793b4001be"
+    },
+    {
+      "pathname": "chunks/0950-1000.json.gz",
+      "start": 950,
+      "end": 1000,
+      "firstDate": "2025-10-16",
+      "lastDate": "2025-12-26",
+      "compressedBytes": 15938386,
+      "compressedSha256": "2e83f5446b9eb90f46b1e3022f32a86cfa1b98c05651c7cfcf2422aec31b9a70",
+      "contentSha256": "52f525b005c83992ed70a26362baf7bbe3a5bfb51094b5f1e2a46da1248461c5"
+    },
+    {
+      "pathname": "chunks/1000-1050.json.gz",
+      "start": 1000,
+      "end": 1050,
+      "firstDate": "2025-12-29",
+      "lastDate": "2026-03-11",
+      "compressedBytes": 16057146,
+      "compressedSha256": "3f5d1042d2f0ac67fda99a50d45059989eb30c6d949608a7bafd423a9ef92e15",
+      "contentSha256": "355be5cd3490263e03112f4b90692b5faa0838a89166aca45af920a6b17c9138"
+    },
+    {
+      "pathname": "chunks/1050-1100.json.gz",
+      "start": 1050,
+      "end": 1100,
+      "firstDate": "2026-03-12",
+      "lastDate": "2026-05-21",
+      "compressedBytes": 15674512,
+      "compressedSha256": "215570222e03645d3c083bf2ea1bed043e32894d18b6206b669ebd38d04b1a3d",
+      "contentSha256": "f3c42c7a85415430e2d91f98aa773f47fccfe8d8e4f15908193fa95c26578dd2"
+    },
+    {
+      "pathname": "chunks/1100-1150.json.gz",
+      "start": 1100,
+      "end": 1150,
+      "firstDate": "2026-05-22",
+      "lastDate": "2026-08-04",
+      "compressedBytes": 15886776,
+      "compressedSha256": "18e6c353aa1454844a98658ead9d68725d1964f90981a742dbf20f3dba41497f",
+      "contentSha256": "e55e7ee978d64250d95e0f8a384820cb3550cbae866d2af8c4447770c705d8fa"
+    },
+    {
+      "pathname": "chunks/1150-1170.json.gz",
+      "start": 1150,
+      "end": 1170,
+      "firstDate": "2026-08-05",
+      "lastDate": "2026-09-01",
+      "compressedBytes": 6323345,
+      "compressedSha256": "569c69133f1550cc06e9b863e849e983d7d74699367101c1a2adf30a23737c73",
+      "contentSha256": "8fb569740be9b14fd6fb0f0548c169064926298c22b1dba83429f98cc7517cdf"
+    }
+  ],
+  "current253Rows": 467109,
+  "original50Rows": 571220,
+  "sourceOriginalCohortsMatched": 1170,
+  "window": {
+    "sessions": 918,
+    "original50Rows": 468767,
+    "current253Rows": 467109,
+    "removedShortHistoryRows": 1658,
+    "changedCohortDates": 863,
+    "maxRemovedSingleDate": 4,
+    "missingCurrentMemberRows": 1865,
+    "first": {
+      "date": "2023-01-04",
+      "originalSourceMembers": 508,
+      "original50": 505,
+      "current253": 504,
+      "current253SymbolsSha256": "59463069940901ab6589a394fd8e299816dff94a30a80870e3fa9e655c33169e",
+      "removedShortHistory": [
+        "CEG"
+      ],
+      "missingCurrentPrice": [
+        "DISCK"
+      ]
+    },
+    "last": {
+      "date": "2026-09-01",
+      "originalSourceMembers": 516,
+      "original50": 512,
+      "current253": 509,
+      "current253SymbolsSha256": "5d0bb3f8be8491e51fbc8c01b4b476b3a8b47fc92a96ca4fecd39df1a03405f3",
+      "removedShortHistory": [
+        "FDXF",
+        "HONA",
+        "Q"
+      ],
+      "missingCurrentPrice": [
+        "CMA",
+        "DISCK",
+        "PXD",
+        "SOLSV"
+      ]
+    }
+  },
+  "missingProfileShortHistory": [
+    "GPS",
+    "SOLS",
+    "SOLSV",
+    "XLNX"
+  ],
+  "clock": {
+    "modeled": true,
+    "originalBeforeCloseCount": 381,
+    "changedTimestamps": 1170,
+    "convention": "Explicit counterfactual completed-day observation at 21:30 UTC, verified by the unchanged source calendar; no claim of historical acquisition timing."
+  },
+  "literalGuardFailureSummary": {
+    "sectorSymbols": [
+      {
+        "symbol": "ANSS",
+        "sector": "Other",
+        "affectedSessionCount": 635,
+        "first": "2023-01-04",
+        "last": "2025-07-17"
+      },
+      {
+        "symbol": "ATVI",
+        "sector": "Other",
+        "affectedSessionCount": 198,
+        "first": "2023-01-04",
+        "last": "2023-10-17"
+      },
+      {
+        "symbol": "AVB",
+        "sector": "Other",
+        "affectedSessionCount": 907,
+        "first": "2023-01-04",
+        "last": "2026-08-17"
+      },
+      {
+        "symbol": "CBOE",
+        "sector": "Other",
+        "affectedSessionCount": 918,
+        "first": "2023-01-04",
+        "last": "2026-09-01"
+      },
+      {
+        "symbol": "CMA",
+        "sector": "Other",
+        "affectedSessionCount": 772,
+        "first": "2023-01-04",
+        "last": "2026-02-02"
+      },
+      {
+        "symbol": "CTLT",
+        "sector": "Other",
+        "affectedSessionCount": 492,
+        "first": "2023-01-04",
+        "last": "2024-12-17"
+      },
+      {
+        "symbol": "CTRA",
+        "sector": "Other",
+        "affectedSessionCount": 838,
+        "first": "2023-01-04",
+        "last": "2026-05-07"
+      },
+      {
+        "symbol": "DAY",
+        "sector": "Other",
+        "affectedSessionCount": 773,
+        "first": "2023-01-04",
+        "last": "2026-02-03"
+      },
+      {
+        "symbol": "DFS",
+        "sector": "Other",
+        "affectedSessionCount": 594,
+        "first": "2023-01-04",
+        "last": "2025-05-16"
+      },
+      {
+        "symbol": "DISH",
+        "sector": "Other",
+        "affectedSessionCount": 115,
+        "first": "2023-01-04",
+        "last": "2023-06-20"
+      },
+      {
+        "symbol": "EA",
+        "sector": "Other",
+        "affectedSessionCount": 899,
+        "first": "2023-01-04",
+        "last": "2026-08-05"
+      },
+      {
+        "symbol": "FRC",
+        "sector": "Other",
+        "affectedSessionCount": 81,
+        "first": "2023-01-04",
+        "last": "2023-05-03"
+      },
+      {
+        "symbol": "HES",
+        "sector": "Other",
+        "affectedSessionCount": 636,
+        "first": "2023-01-04",
+        "last": "2025-07-18"
+      },
+      {
+        "symbol": "HOLX",
+        "sector": "Other",
+        "affectedSessionCount": 816,
+        "first": "2023-01-04",
+        "last": "2026-04-07"
+      },
+      {
+        "symbol": "IPG",
+        "sector": "Other",
+        "affectedSessionCount": 728,
+        "first": "2023-01-04",
+        "last": "2025-11-26"
+      },
+      {
+        "symbol": "JNPR",
+        "sector": "Other",
+        "affectedSessionCount": 625,
+        "first": "2023-01-04",
+        "last": "2025-07-02"
+      },
+      {
+        "symbol": "K",
+        "sector": "Other",
+        "affectedSessionCount": 737,
+        "first": "2023-01-04",
+        "last": "2025-12-10"
+      },
+      {
+        "symbol": "MRO",
+        "sector": "Other",
+        "affectedSessionCount": 475,
+        "first": "2023-01-04",
+        "last": "2024-11-21"
+      },
+      {
+        "symbol": "PXD",
+        "sector": "Other",
+        "affectedSessionCount": 334,
+        "first": "2023-01-04",
+        "last": "2024-05-02"
+      },
+      {
+        "symbol": "SBNY",
+        "sector": "Other",
+        "affectedSessionCount": 46,
+        "first": "2023-01-04",
+        "last": "2023-03-10"
+      },
+      {
+        "symbol": "SEE",
+        "sector": "Other",
+        "affectedSessionCount": 240,
+        "first": "2023-01-04",
+        "last": "2023-12-15"
+      },
+      {
+        "symbol": "SIVB",
+        "sector": "Other",
+        "affectedSessionCount": 45,
+        "first": "2023-01-04",
+        "last": "2023-03-09"
+      },
+      {
+        "symbol": "VMRK",
+        "sector": "Other",
+        "affectedSessionCount": 918,
+        "first": "2023-01-04",
+        "last": "2026-09-01"
+      },
+      {
+        "symbol": "WBA",
+        "sector": "Other",
+        "affectedSessionCount": 664,
+        "first": "2023-01-04",
+        "last": "2025-08-27"
+      },
+      {
+        "symbol": "WRK",
+        "sector": "Other",
+        "affectedSessionCount": 377,
+        "first": "2023-01-04",
+        "last": "2024-07-05"
+      },
+      {
+        "symbol": "INFO",
+        "sector": "Other",
+        "affectedSessionCount": 474,
+        "first": "2024-10-10",
+        "last": "2026-09-01"
+      },
+      {
+        "symbol": "SOLS",
+        "sector": null,
+        "affectedSessionCount": 45,
+        "first": "2025-10-20",
+        "last": "2025-12-22"
+      },
+      {
+        "symbol": "SOLSV",
+        "sector": null,
+        "affectedSessionCount": 16,
+        "first": "2025-11-03",
+        "last": "2025-11-24"
+      }
+    ],
+    "historyGaps": [
+      {
+        "decisionDate": "2023-05-03",
+        "symbol": "FRC",
+        "missingSessionDates": [
+          "2023-05-01",
+          "2023-05-02"
+        ]
+      }
+    ],
+    "metadataGuardFailureDates": 918,
+    "memberCountGuardFailureDates": 0,
+    "benchmark550DayPrefixIncompleteDates": {
+      "count": 124,
+      "first": "2023-01-04",
+      "last": "2023-07-03"
+    }
+  },
+  "limitations": [
+    "Archived provider sector/name classifications lack independent dated provenance.",
+    "Daily adjusted OHLC snapshots do not certify as-known unrevised market data.",
+    "No historical material-event, revision-safe fundamental or operational quote-freshness evidence is fabricated.",
+    "Missing-current-price members are quarantined before derived membership, exactly as current source acquisition; accepted original price bars remain unchanged.",
+    "Archived Other/missing sectors and observed historical price gaps fail actual current live-input guards; conditional mode retains those facts without declaring actual live-input acceptance.",
+    "The full 550-calendar-day benchmark acquisition prefix is unavailable for early historical dates even when 253 rows establish the factor window.",
+    "Conditional completed-session observations are modeled at 21:30 UTC to satisfy the current causal clock; original timestamps are preserved in the receipt and are not evidence of actual historical acquisition.",
+    "Profiles absent from the original archive are allowed only when they never reach the current253 signal cohort."
+  ]
+}

@@ -1,0 +1,288 @@
+{
+  "contract": "c1-conditional-acquisition-guard-provenance-v1",
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "inputManifestSha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+  "originalCompiledAcceptanceReceiptSha256": "ed573201b418f8c11ec747302df318fb37db2c8b9073febfa51bcf8520b4fc74",
+  "originalValidationSha256": "06d822332582d364f36b8919dae7bdba614cb5ca36121ebe47d6a3b169fb0a58",
+  "currentFactorAndCompactionPins": {
+    "lib/c1LiveInput.js": {
+      "sha256": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+      "matchesExecutedFile": true
+    },
+    "lib/historicalSignalEvaluator.js": {
+      "sha256": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+      "matchesExecutedFile": true
+    },
+    "lib/scoring.js": {
+      "sha256": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+      "matchesExecutedFile": true
+    },
+    "lib/expertDecision.js": {
+      "sha256": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+      "matchesExecutedFile": true
+    },
+    "lib/marketSession.js": {
+      "sha256": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+      "matchesExecutedFile": true
+    },
+    "lib/entryTiming.js": {
+      "sha256": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+      "matchesExecutedFile": true
+    },
+    "lib/top5Diagnostics.js": {
+      "sha256": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+      "matchesExecutedFile": true
+    },
+    "lib/eventRisk.js": {
+      "sha256": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+      "matchesExecutedFile": true
+    },
+    "lib/personalCapitalPolicy.js": {
+      "sha256": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+      "matchesExecutedFile": true
+    },
+    "lib/opportunityDecision.js": {
+      "sha256": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+      "matchesExecutedFile": true
+    },
+    "lib/walkForwardBacktest.js": {
+      "sha256": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+      "matchesExecutedFile": true
+    },
+    "lib/replayDatasetCompaction.js": {
+      "sha256": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+      "matchesExecutedFile": true
+    }
+  },
+  "acquisitionGuardSourcePins": {
+    "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+    "lib/c1LiveInputProvider.js": "52396cd4db6f55cf95fe81f9cb42135e09c3f9a1b1d2a29ec94ba3b49ae475bc",
+    "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f"
+  },
+  "separation": "This supporting receipt pins operational acquisition guard provenance separately from the immutable completed compiler/compaction receipt; no compiled frame, accepted manifest or original receipt is rewritten.",
+  "sourceGuards": {
+    "profileValidation": "Current c1LiveMembers in lib/c1LiveInput.js rejects missing/Other/unknown/n/a sectors and membership counts outside current C1_LIVE_UNIVERSES limits.",
+    "lookback": "Current collectC1LiveInput in lib/c1LiveInputProvider.js requests 550 calendar days.",
+    "quarantine": "Current collectC1LiveInput removes missing-completed-price members before compileC1LiveInput and keeps SPY/QQQ mandatory.",
+    "causalClock": "Current latestCompletedMarketSessionDay in lib/marketSession.js; conditional model21:30UTC observation verified independently for every date."
+  },
+  "literalFailures": {
+    "sectorSymbols": [
+      {
+        "symbol": "ANSS",
+        "sector": "Other",
+        "affectedSessionCount": 635,
+        "first": "2023-01-04",
+        "last": "2025-07-17"
+      },
+      {
+        "symbol": "ATVI",
+        "sector": "Other",
+        "affectedSessionCount": 198,
+        "first": "2023-01-04",
+        "last": "2023-10-17"
+      },
+      {
+        "symbol": "AVB",
+        "sector": "Other",
+        "affectedSessionCount": 907,
+        "first": "2023-01-04",
+        "last": "2026-08-17"
+      },
+      {
+        "symbol": "CBOE",
+        "sector": "Other",
+        "affectedSessionCount": 918,
+        "first": "2023-01-04",
+        "last": "2026-09-01"
+      },
+      {
+        "symbol": "CMA",
+        "sector": "Other",
+        "affectedSessionCount": 772,
+        "first": "2023-01-04",
+        "last": "2026-02-02"
+      },
+      {
+        "symbol": "CTLT",
+        "sector": "Other",
+        "affectedSessionCount": 492,
+        "first": "2023-01-04",
+        "last": "2024-12-17"
+      },
+      {
+        "symbol": "CTRA",
+        "sector": "Other",
+        "affectedSessionCount": 838,
+        "first": "2023-01-04",
+        "last": "2026-05-07"
+      },
+      {
+        "symbol": "DAY",
+        "sector": "Other",
+        "affectedSessionCount": 773,
+        "first": "2023-01-04",
+        "last": "2026-02-03"
+      },
+      {
+        "symbol": "DFS",
+        "sector": "Other",
+        "affectedSessionCount": 594,
+        "first": "2023-01-04",
+        "last": "2025-05-16"
+      },
+      {
+        "symbol": "DISH",
+        "sector": "Other",
+        "affectedSessionCount": 115,
+        "first": "2023-01-04",
+        "last": "2023-06-20"
+      },
+      {
+        "symbol": "EA",
+        "sector": "Other",
+        "affectedSessionCount": 899,
+        "first": "2023-01-04",
+        "last": "2026-08-05"
+      },
+      {
+        "symbol": "FRC",
+        "sector": "Other",
+        "affectedSessionCount": 81,
+        "first": "2023-01-04",
+        "last": "2023-05-03"
+      },
+      {
+        "symbol": "HES",
+        "sector": "Other",
+        "affectedSessionCount": 636,
+        "first": "2023-01-04",
+        "last": "2025-07-18"
+      },
+      {
+        "symbol": "HOLX",
+        "sector": "Other",
+        "affectedSessionCount": 816,
+        "first": "2023-01-04",
+        "last": "2026-04-07"
+      },
+      {
+        "symbol": "IPG",
+        "sector": "Other",
+        "affectedSessionCount": 728,
+        "first": "2023-01-04",
+        "last": "2025-11-26"
+      },
+      {
+        "symbol": "JNPR",
+        "sector": "Other",
+        "affectedSessionCount": 625,
+        "first": "2023-01-04",
+        "last": "2025-07-02"
+      },
+      {
+        "symbol": "K",
+        "sector": "Other",
+        "affectedSessionCount": 737,
+        "first": "2023-01-04",
+        "last": "2025-12-10"
+      },
+      {
+        "symbol": "MRO",
+        "sector": "Other",
+        "affectedSessionCount": 475,
+        "first": "2023-01-04",
+        "last": "2024-11-21"
+      },
+      {
+        "symbol": "PXD",
+        "sector": "Other",
+        "affectedSessionCount": 334,
+        "first": "2023-01-04",
+        "last": "2024-05-02"
+      },
+      {
+        "symbol": "SBNY",
+        "sector": "Other",
+        "affectedSessionCount": 46,
+        "first": "2023-01-04",
+        "last": "2023-03-10"
+      },
+      {
+        "symbol": "SEE",
+        "sector": "Other",
+        "affectedSessionCount": 240,
+        "first": "2023-01-04",
+        "last": "2023-12-15"
+      },
+      {
+        "symbol": "SIVB",
+        "sector": "Other",
+        "affectedSessionCount": 45,
+        "first": "2023-01-04",
+        "last": "2023-03-09"
+      },
+      {
+        "symbol": "VMRK",
+        "sector": "Other",
+        "affectedSessionCount": 918,
+        "first": "2023-01-04",
+        "last": "2026-09-01"
+      },
+      {
+        "symbol": "WBA",
+        "sector": "Other",
+        "affectedSessionCount": 664,
+        "first": "2023-01-04",
+        "last": "2025-08-27"
+      },
+      {
+        "symbol": "WRK",
+        "sector": "Other",
+        "affectedSessionCount": 377,
+        "first": "2023-01-04",
+        "last": "2024-07-05"
+      },
+      {
+        "symbol": "INFO",
+        "sector": "Other",
+        "affectedSessionCount": 474,
+        "first": "2024-10-10",
+        "last": "2026-09-01"
+      },
+      {
+        "symbol": "SOLS",
+        "sector": null,
+        "affectedSessionCount": 45,
+        "first": "2025-10-20",
+        "last": "2025-12-22"
+      },
+      {
+        "symbol": "SOLSV",
+        "sector": null,
+        "affectedSessionCount": 16,
+        "first": "2025-11-03",
+        "last": "2025-11-24"
+      }
+    ],
+    "historyGaps": [
+      {
+        "decisionDate": "2023-05-03",
+        "symbol": "FRC",
+        "missingSessionDates": [
+          "2023-05-01",
+          "2023-05-02"
+        ]
+      }
+    ],
+    "metadataGuardFailureDates": 918,
+    "memberCountGuardFailureDates": 0,
+    "benchmark550DayPrefixIncompleteDates": {
+      "count": 124,
+      "first": "2023-01-04",
+      "last": "2023-07-03"
+    }
+  },
+  "wholeSharePriceBasis": "Whole-share arithmetic applies to supplied adjusted-price share units; historical pre-split broker-lot granularity and real corporate-action share changes are not independently reconstructed."
+}

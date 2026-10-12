@@ -1,0 +1,26 @@
+{
+  "contract": "c1-independent-selected64-receipt-review-v1",
+  "passed": true,
+  "scope": "Receipt/current-source/current-selected-byte equality review; no new replay or performance calculation.",
+  "eligibleForAlphaClaim": false,
+  "actualLiveInputAccepted": false,
+  "selectedReceiptSha256": "bc3ec851a4b72a2f971d9774589b2847b288851c7ecf0cec15179b629c15112e",
+  "engineSha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a",
+  "loaderSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+  "builderSha256": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e",
+  "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+  "checkedSourceFiles": 25,
+  "checkedSelectedChunks": 7,
+  "selection": {
+    "rule": "First seven completed derived chunks; first64 sessions from frozen evaluation start, no performance-driven selection",
+    "sourceSessions": 350,
+    "evaluatedSessions": 64,
+    "startDate": "2023-01-04",
+    "endDate": "2023-04-05",
+    "slippageBps": 12
+  },
+  "sourceOutputsAndAllTraceFieldsMatch": true,
+  "pending": [
+    "Match all seven selected derived chunk hashes to the completed full derived manifest before accepting full historical replay input."
+  ]
+}

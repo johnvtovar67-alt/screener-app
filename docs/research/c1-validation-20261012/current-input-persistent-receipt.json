@@ -1,0 +1,35 @@
+{
+  "contract": "c1-current-input-persistent-canonical-receipt-v1",
+  "inputContract": "c1-source-pinned-current253-conditional-historical-input-v1",
+  "passedReconstruction": true,
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "manifest": {
+    "file": "current-input-manifest.json",
+    "sha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+    "bytes": 43583
+  },
+  "canonicalAcceptance": {
+    "file": "current-input-acceptance.json.gz.base64",
+    "encoding": "Base64 text with trailing newline, then gzip with mtime0; gunzip restores exact immutable original acceptance bytes.",
+    "originalSha256": "ed573201b418f8c11ec747302df318fb37db2c8b9073febfa51bcf8520b4fc74",
+    "originalBytes": 3360689,
+    "gzipSha256": "3154a9ef120ed93529f2e322d94bea126f172e03280a94021af1fa9ed47cd903",
+    "gzipBytes": 67192,
+    "base64FileSha256": "3df3d95df4795d806c79e2de6fe0232db08226593eafebacf52702d63ba09852",
+    "base64FileBytes": 89593
+  },
+  "counts": {
+    "sessions": 1170,
+    "priceRows": 659220,
+    "chunks": 24,
+    "current253Rows": 467109,
+    "minimumHistoryRows": 253,
+    "maxCandidates": 500
+  },
+  "acquisitionGuardEvidence": {
+    "file": "current-input-acquisition-guard-evidence.json",
+    "sha256": "ce7bedd122baa6276cf0cd940c46e3891ea70018a629c65bf0b5b18aed9c4d61"
+  },
+  "sourceNote": "Core factor/compiler/compactor pins belong to the canonical acceptance. Operational acquisition sources (including provider550-day/quarantine code) are separately pinned in guard evidence. No original accepted receipt or manifest was rewritten; no raw price/factor frames are published here."
+}

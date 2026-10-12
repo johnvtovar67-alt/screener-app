@@ -2,17 +2,17 @@
   "contract": "c1-preserved-frozen-fixture-arithmetic-v1",
   "scope": "Read-only arithmetic on saved 12 bps accounting fixtures. No engine replay, parameter search, new fills, or fixture modification.",
   "methodology": {
-    "originalBooks": "Three independently simulated 100000-dollar whole-share books. Original trades are retained under originalBooks.",
+    "originalBooks": "Three independently simulated 100000-dollar whole-share books. Original integer-share trades remain in the preserved accounting fixtures; this public receipt contains aggregate metrics only.",
     "combinedCurve": "At each saved date: 0.25*base + 0.50*cooldown15 + 0.25*sector40 for cash/equity. Initial combined capital is 100000. No inter-sleeve rebalancing.",
     "combinedTradeMetrics": "Completed sleeve round trips counted without weighting; PnL and traded notional weighted 25/50/25. Analytical weighted units are not production-mapped or executable share quantities.",
     "currentReplayDifference": "Current replay uses actual 25000/50000/25000-dollar whole-share mappings; its terminal positions are marked, whereas these preserved frozen fixtures artificially liquidate at the final close.",
     "reconstruction": "Each saved sell fully closes one saved buy of the same symbol/sleeve. PnL=shares*(saved sell price-saved buy price); zero commissions; adverse cost already appears in saved fill prices. Holding sessions are differences in the unchanged saved curve index.",
-    "dailyStatistics": "Uses current replay calculateMetrics: 252 annual sessions, zero risk-free rate, sample daily-return deviation for Sharpe. Standard Sortino uses zero-target downside RMS over all daily returns; legacySourceSortino uses sample deviation of negative daily returns. Median holding period selects the upper middle value.",
+    "dailyStatistics": "Uses current replay calculateMetrics: 252 annual sessions, zero risk-free rate, sample daily-return deviation for Sharpe. Standard Sortino uses zero-target downside RMS over all daily returns; legacySourceSortino uses sample deviation of negative daily returns. Median holding period averages the two middle values for even counts. Both frozen universes have middle values 31 and 31, so this equals the former upper-middle value of 31.",
     "savedPrecision": "Equity and cash in original curve checkpoints are rounded to cents. Combined daily statistics use those preserved checkpoints; fill-price PnL reconstructs final equity within the original 0.0051-dollar accounting tolerance per 100000-dollar book.",
     "turnover": "Weighted sum of buy and sell notional divided by mean daily combined equity; annualized by 252/918.",
     "utilization": "Mean daily (1 - weighted cash / weighted equity).",
     "unavailable": "These fixtures do not contain benchmark histories, stop/exit reason metadata, forward holdout evidence, 25/50 bps trade ledgers, or the complete original ensemble profit-concentration receipt. Empty benchmarkComparisons means unavailable, not zero alpha.",
-    "metricFunctionSha256": "a2de4f08bd98abb6ada848f4204925bf1fa4c710f612dc1ec157622b685d556f"
+    "metricFunctionSha256": "0b5d770d7e1122058f30d982bf6e003b6293ff46de43146ad1427d09e5328d21"
   },
   "results": [
     {

@@ -1,0 +1,408 @@
+{
+  "contract": "c1-selected-real-input-cache-source-equivalence-v1",
+  "passed": true,
+  "runClass": "conditional-software-equivalence-check",
+  "modelMode": "Source-exact core account/factor-policy software comparison; not a historical performance report.",
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "fullDerivedInputAcceptancePending": true,
+  "selection": {
+    "rule": "First seven completed derived chunks; first64 sessions from frozen evaluation start, no performance-driven selection",
+    "sourceSessions": 350,
+    "evaluatedSessions": 64,
+    "startDate": "2023-01-04",
+    "endDate": "2023-04-05",
+    "slippageBps": 12
+  },
+  "derivedChunks": [
+    {
+      "pathname": "chunks/0000-0050.json.gz",
+      "start": 0,
+      "end": 50,
+      "firstDate": "2022-01-03",
+      "lastDate": "2022-03-15",
+      "compressedBytes": 773425,
+      "compressedSha256": "23cc426cf5c4a2e2e0c1b2a6991f8a064c7983349e4f1ff4789085abcfe0656b",
+      "contentSha256": "80a9c285372afd2d73c16301945d21bbb1eca40141981ec602478389ece04a8d",
+      "originalCompressedSha256": "876cba8914ec94e655478923f3029ead415d9c8eecd4dfcfc3d8a9cb596f89a5",
+      "originalContentSha256": "eae75d78a1e3ac36b885fed0688ba9375395b3bfd2aec7bd99a14918f7fdf3fe"
+    },
+    {
+      "pathname": "chunks/0050-0100.json.gz",
+      "start": 50,
+      "end": 100,
+      "firstDate": "2022-03-16",
+      "lastDate": "2022-05-25",
+      "compressedBytes": 768915,
+      "compressedSha256": "3acd2bf5f572be5a8a79765f5facfeed8e87f6ffb352f5d257030b0fd54a357a",
+      "contentSha256": "83995091fa2c7f20b49c69812f3f01cdd92c1934e9b8069fdfc89e425bbf4716",
+      "originalCompressedSha256": "5e6c736363ad1e8eb8145a83f629afbaf187c47c95f321bf73cf32790e8d99d4",
+      "originalContentSha256": "6db964bcb2f1b495d429358c33a58547e59e050bc6a2ea0586cd15e7e7e85c74"
+    },
+    {
+      "pathname": "chunks/0100-0150.json.gz",
+      "start": 100,
+      "end": 150,
+      "firstDate": "2022-05-26",
+      "lastDate": "2022-08-08",
+      "compressedBytes": 764204,
+      "compressedSha256": "a84a03c0b1177e7b01cd7a50308931115b8e6e60a65e877a3cb7701c1770d7fd",
+      "contentSha256": "012a9cd8d374b827e7ed0f457328f35df029d94acdb81df74eb3eef5dad00e8f",
+      "originalCompressedSha256": "f8149bc0e35d7f0ae392ed8c48cb9f2ee65dcf974cdea11091bd912c5113b5e0",
+      "originalContentSha256": "629fe5187ab48db58c4e2c82eff13fa2106ceee0c3054fc6b4e178095eea95f9"
+    },
+    {
+      "pathname": "chunks/0150-0200.json.gz",
+      "start": 150,
+      "end": 200,
+      "firstDate": "2022-08-09",
+      "lastDate": "2022-10-18",
+      "compressedBytes": 762504,
+      "compressedSha256": "8bc787565f739aca61e016b146bd4a84d56e1f73446ab0cb47420caa5af065ae",
+      "contentSha256": "c6605e4662c6de627f0dc577ff46d9b4f2d0565ac73bdec250846d97a011913d",
+      "originalCompressedSha256": "99a4143615c49d2ba943d567f4b85d7b4f46f458658f9150d24f90053b09cab5",
+      "originalContentSha256": "a5d380658674f3458205d1399f3712b4b54980ed3154e7514ef192f2ea6f512d"
+    },
+    {
+      "pathname": "chunks/0200-0250.json.gz",
+      "start": 200,
+      "end": 250,
+      "firstDate": "2022-10-19",
+      "lastDate": "2022-12-29",
+      "compressedBytes": 761519,
+      "compressedSha256": "a22dfcf6661e4e9e3aa30c7fdabacaa287c425040d8ae4883d1c13d72ab6ea52",
+      "contentSha256": "927faf738687aaaaab92a9e2c46b77c7409c94283220666cd5b86b1886ec93c6",
+      "originalCompressedSha256": "77300223a77207fc6c7de8000f2641ff9de51043658f08c7bc96699c59b3a447",
+      "originalContentSha256": "fb13eea051fe357851779b44c7b8d436968de468098612ecdc124b0c2f19756d"
+    },
+    {
+      "pathname": "chunks/0250-0300.json.gz",
+      "start": 250,
+      "end": 300,
+      "firstDate": "2022-12-30",
+      "lastDate": "2023-03-14",
+      "compressedBytes": 14975063,
+      "compressedSha256": "975e22971dd6f81f4b0946cee33155ae2d13b386c3b99c69442ad51c3fe26334",
+      "contentSha256": "c014ed5a15accb737067916b27657d6b39290850f83ade68806185d1e02272a8",
+      "originalCompressedSha256": "293d8095bd568444125bf06aee1275950f1138fac26557edcabda50fe692f0e3",
+      "originalContentSha256": "59c27c2812e1bcd96f4753704b66e4141b95975c51ea60341535aa59adbc340c"
+    },
+    {
+      "pathname": "chunks/0300-0350.json.gz",
+      "start": 300,
+      "end": 350,
+      "firstDate": "2023-03-15",
+      "lastDate": "2023-05-24",
+      "compressedBytes": 15496666,
+      "compressedSha256": "a59991d923b535218a412474e097de3d1ac88d3c4817ce6e7a22ed2c6372de79",
+      "contentSha256": "e8b3e36b0dc12d06d0a496f2b34702686cfa3a42c2bbbbe55c583980f071476c",
+      "originalCompressedSha256": "f471f3882865eae6a1d9f2faf63016fa83ac6f282994d5f4690f831f9bba9b57",
+      "originalContentSha256": "260107e0c1407913fa59f380ef926d6cf2433ea5a96dfe44f91a728a70de7f2b"
+    }
+  ],
+  "selectedSourceFramesSha256": "594e4e43423ba121a5ff25e9b87b2c7835a2b8d04b773c3bd8efc045f9110954",
+  "inputContentSha256": "ad045dba3165ccdbcfa656d7bfc32272bc2c1a79c6e2338e4ab8fca0bd7719a9",
+  "selectedEvaluatedSessionsSha256": "b5cbbea8bd4b18979cfe03308727dc26f137692bc7f79a8a2c749b3ac076a383",
+  "originalValidationSha256": "06d822332582d364f36b8919dae7bdba614cb5ca36121ebe47d6a3b169fb0a58",
+  "strictCurrentRejectionSha256": "db1d36c357446d6ec8fbd8986ba17b81ff8e3a463096359b03e4bcbf66f3cb3b",
+  "strictCurrentSourceError": "Current sector is missing for ANSS",
+  "constructionSourceSha256": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e",
+  "engineSha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a",
+  "loaderSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+  "sourcePin": {
+    "contract": "c1-production-policy-source-pin-v1",
+    "sources": {
+      "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+      "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+      "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+      "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+      "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+      "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+      "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+      "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+      "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+      "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+      "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+      "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+      "lib/c1StockClassification.js": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2",
+      "lib/c1ManualRecommendations.js": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+      "lib/c1OpeningPriceReview.js": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+      "lib/c1AccountExecution.js": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4",
+      "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+      "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+      "lib/portfolioGovernor.js": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+      "lib/c1AccountLedger.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+      "lib/c1AccountSimulator.js": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+      "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+      "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+      "lib/c1PaperEvents.js": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c",
+      "lib/c1SleeveAccounting.js": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+    },
+    "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+    "transforms": {
+      "lib/c1AccountSimulator.js": {
+        "originalSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+        "adaptedSha256": "734bb10cf30f7de4dce28e1d05081c0020f55733def3b318477f1bdb7599bd2f"
+      },
+      "lib/c1ActualFillReplay.js": {
+        "originalSha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+        "adaptedSha256": "3693f3def1f7837344cce2eec8e0328a5efc2aef73143dad6420d8c805c65a6f"
+      }
+    },
+    "costOverlay": {
+      "onlyChangedOption": "slippageBps",
+      "value": 12
+    },
+    "adapterSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+    "cached": true
+  },
+  "cachedUncached": {
+    "contract": "c1-production-replay-cache-equivalence-v1",
+    "passed": true,
+    "fields": {
+      "modelMode": {
+        "matched": true,
+        "cachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98",
+        "uncachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98"
+      },
+      "operationalBuyVerificationReproduced": {
+        "matched": true,
+        "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+        "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+      },
+      "historicalEventHistoryAvailable": {
+        "matched": true,
+        "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+        "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+      },
+      "brokerageSnapshotsReproduced": {
+        "matched": true,
+        "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+        "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+      },
+      "runClass": {
+        "matched": true,
+        "cachedSha256": "9c14d5cd33fd2d0af0ce7c5cabc0916b3110c739a92cfaab9a518e1b4f26c2c5",
+        "uncachedSha256": "9c14d5cd33fd2d0af0ce7c5cabc0916b3110c739a92cfaab9a518e1b4f26c2c5"
+      },
+      "eligibleForAlphaClaim": {
+        "matched": true,
+        "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+        "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+      },
+      "actualLiveInputAccepted": {
+        "matched": true,
+        "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+        "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+      },
+      "literalLiveInputGuardFailures": {
+        "matched": true,
+        "cachedSha256": "259f59e1ce3ff7ad11a34bc2e0bae51b312d00dc4f114d3da9f68e5f9531de7f",
+        "uncachedSha256": "259f59e1ce3ff7ad11a34bc2e0bae51b312d00dc4f114d3da9f68e5f9531de7f"
+      },
+      "metrics": {
+        "matched": true,
+        "cachedSha256": "450ef2fbbd5816c1a968732b355ff6a2d811c1b59ba410a9a79c6579aeb022e6",
+        "uncachedSha256": "450ef2fbbd5816c1a968732b355ff6a2d811c1b59ba410a9a79c6579aeb022e6"
+      },
+      "curve": {
+        "matched": true,
+        "cachedSha256": "7b6e87549a6c3cc0a6eca19e3a06de0f0da1cb11dfe753c6a0fc4ea6628c94b6",
+        "uncachedSha256": "7b6e87549a6c3cc0a6eca19e3a06de0f0da1cb11dfe753c6a0fc4ea6628c94b6"
+      },
+      "trades": {
+        "matched": true,
+        "cachedSha256": "03e4ae3f554fb4196cd403e3e73c9b644edec92e6e2b4f95a3bc890d8efc1997",
+        "uncachedSha256": "03e4ae3f554fb4196cd403e3e73c9b644edec92e6e2b4f95a3bc890d8efc1997"
+      },
+      "fills": {
+        "matched": true,
+        "cachedSha256": "6662e25793c9b2a830264482f8e61b917a7686699cc64a51c011a255caf49ac7",
+        "uncachedSha256": "6662e25793c9b2a830264482f8e61b917a7686699cc64a51c011a255caf49ac7"
+      },
+      "plans": {
+        "matched": true,
+        "cachedSha256": "9fd1924092cb5181a665ad32edcb02ef31451b6f617e72426e2d9452e41a9f97",
+        "uncachedSha256": "9fd1924092cb5181a665ad32edcb02ef31451b6f617e72426e2d9452e41a9f97"
+      },
+      "accountTrace": {
+        "matched": true,
+        "cachedSha256": "79d22ffdcb0b5abe448ff76eb0048e1e758446ba7aa7d5a89e48159330994522",
+        "uncachedSha256": "79d22ffdcb0b5abe448ff76eb0048e1e758446ba7aa7d5a89e48159330994522"
+      },
+      "final": {
+        "matched": true,
+        "cachedSha256": "5faba5632468875562d73142640da6a11613195b4f15fb4382ee16cf5974fb6a",
+        "uncachedSha256": "5faba5632468875562d73142640da6a11613195b4f15fb4382ee16cf5974fb6a"
+      },
+      "simulatorTrace": {
+        "matched": true,
+        "cachedSha256": "bf8e1558553c4d1f738198f1bbb5b06d152f4faeb146a99acaccdc31bf1f7157",
+        "uncachedSha256": "bf8e1558553c4d1f738198f1bbb5b06d152f4faeb146a99acaccdc31bf1f7157"
+      }
+    },
+    "cachedStats": {
+      "resumes": 567,
+      "sessionsExecuted": 381,
+      "memoHits": 127730,
+      "memoMisses": 97801
+    },
+    "uncachedStats": {
+      "resumes": 0,
+      "sessionsExecuted": 18525,
+      "memoHits": 0,
+      "memoMisses": 0
+    }
+  },
+  "literalUnmodifiedSource": {
+    "modelMode": {
+      "matched": true,
+      "cachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98",
+      "unmodifiedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98"
+    },
+    "runClass": {
+      "matched": true,
+      "cachedSha256": "9c14d5cd33fd2d0af0ce7c5cabc0916b3110c739a92cfaab9a518e1b4f26c2c5",
+      "unmodifiedSha256": "9c14d5cd33fd2d0af0ce7c5cabc0916b3110c739a92cfaab9a518e1b4f26c2c5"
+    },
+    "eligibleForAlphaClaim": {
+      "matched": true,
+      "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+      "unmodifiedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    "actualLiveInputAccepted": {
+      "matched": true,
+      "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+      "unmodifiedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+    },
+    "literalLiveInputGuardFailures": {
+      "matched": true,
+      "cachedSha256": "259f59e1ce3ff7ad11a34bc2e0bae51b312d00dc4f114d3da9f68e5f9531de7f",
+      "unmodifiedSha256": "259f59e1ce3ff7ad11a34bc2e0bae51b312d00dc4f114d3da9f68e5f9531de7f"
+    },
+    "metrics": {
+      "matched": true,
+      "cachedSha256": "450ef2fbbd5816c1a968732b355ff6a2d811c1b59ba410a9a79c6579aeb022e6",
+      "unmodifiedSha256": "450ef2fbbd5816c1a968732b355ff6a2d811c1b59ba410a9a79c6579aeb022e6"
+    },
+    "curve": {
+      "matched": true,
+      "cachedSha256": "7b6e87549a6c3cc0a6eca19e3a06de0f0da1cb11dfe753c6a0fc4ea6628c94b6",
+      "unmodifiedSha256": "7b6e87549a6c3cc0a6eca19e3a06de0f0da1cb11dfe753c6a0fc4ea6628c94b6"
+    },
+    "trades": {
+      "matched": true,
+      "cachedSha256": "03e4ae3f554fb4196cd403e3e73c9b644edec92e6e2b4f95a3bc890d8efc1997",
+      "unmodifiedSha256": "03e4ae3f554fb4196cd403e3e73c9b644edec92e6e2b4f95a3bc890d8efc1997"
+    },
+    "fills": {
+      "matched": true,
+      "cachedSha256": "6662e25793c9b2a830264482f8e61b917a7686699cc64a51c011a255caf49ac7",
+      "unmodifiedSha256": "6662e25793c9b2a830264482f8e61b917a7686699cc64a51c011a255caf49ac7"
+    },
+    "plans": {
+      "matched": true,
+      "cachedSha256": "9fd1924092cb5181a665ad32edcb02ef31451b6f617e72426e2d9452e41a9f97",
+      "unmodifiedSha256": "9fd1924092cb5181a665ad32edcb02ef31451b6f617e72426e2d9452e41a9f97"
+    },
+    "accountTrace": {
+      "matched": true,
+      "cachedSha256": "79d22ffdcb0b5abe448ff76eb0048e1e758446ba7aa7d5a89e48159330994522",
+      "unmodifiedSha256": "79d22ffdcb0b5abe448ff76eb0048e1e758446ba7aa7d5a89e48159330994522"
+    },
+    "final": {
+      "matched": true,
+      "cachedSha256": "5faba5632468875562d73142640da6a11613195b4f15fb4382ee16cf5974fb6a",
+      "unmodifiedSha256": "5faba5632468875562d73142640da6a11613195b4f15fb4382ee16cf5974fb6a"
+    }
+  },
+  "fullRecordedUncached": {
+    "contract": "c1-full-history-uncached-recorded-replay-verification-v1",
+    "passed": true,
+    "scope": "Independent cache-disabled full chronological production simulator replay of all generated modeled actual executions; complete per-session fills/cash/positions/persistence/counters/stops/risk/pending traces and final outputs. Daily plan generation parity is separately checked against source.",
+    "cost": 12,
+    "observations": 64,
+    "sourceGraphMatches": true,
+    "inputContentMatches": true,
+    "inputManifestMatches": true,
+    "runClass": "conditional-current-account-policy-counterfactual",
+    "eligibleForAlphaClaim": false,
+    "actualLiveInputAccepted": false,
+    "literalLiveInputGuardFailures": {
+      "metadataSourceGateErrors": [
+        "Current sector is missing for ANSS"
+      ],
+      "acquisitionAcceptanceRejected": [
+        true
+      ],
+      "fullArtifactAcceptancePending": [
+        true
+      ]
+    },
+    "results": {
+      "base": {
+        "completeSourceOutputMatches": true,
+        "everySessionTraceMatches": true,
+        "sourceOutputSha256": "cc618849f61808eff0ff74e2d0a2f65cc8a6cccfdb338c83e3834b74aba4f4d1",
+        "cachedSourceOutputSha256": "cc618849f61808eff0ff74e2d0a2f65cc8a6cccfdb338c83e3834b74aba4f4d1",
+        "traceSha256": "71a34a95aeb6ed4a985e609b19c4a6004500533c3a05ed53fd3a2359216f5f16",
+        "cachedTraceSha256": "71a34a95aeb6ed4a985e609b19c4a6004500533c3a05ed53fd3a2359216f5f16"
+      },
+      "cooldown15": {
+        "completeSourceOutputMatches": true,
+        "everySessionTraceMatches": true,
+        "sourceOutputSha256": "838f53df11b6fa1d98387597c103703e1519bf000691a6bef2d6a5eeb616353d",
+        "cachedSourceOutputSha256": "838f53df11b6fa1d98387597c103703e1519bf000691a6bef2d6a5eeb616353d",
+        "traceSha256": "96c56d8cdf37c69c45f1af32da9e3c2e365c97532504539eb2ae445fc9c9e14f",
+        "cachedTraceSha256": "96c56d8cdf37c69c45f1af32da9e3c2e365c97532504539eb2ae445fc9c9e14f"
+      },
+      "sector40": {
+        "completeSourceOutputMatches": true,
+        "everySessionTraceMatches": true,
+        "sourceOutputSha256": "046f74dc14dc30b10f3e007bffe3974d14b0794c68dc3691863bf5d7fc3b2131",
+        "cachedSourceOutputSha256": "046f74dc14dc30b10f3e007bffe3974d14b0794c68dc3691863bf5d7fc3b2131",
+        "traceSha256": "083d70387dea2f83fb4f0e07531ad357de6259c10278b06122b75ad33c00b8c6",
+        "cachedTraceSha256": "083d70387dea2f83fb4f0e07531ad357de6259c10278b06122b75ad33c00b8c6"
+      }
+    },
+    "uncachedStats": {
+      "resumes": 0,
+      "sessionsExecuted": 192,
+      "memoHits": 0,
+      "memoMisses": 0
+    }
+  },
+  "stages": [
+    {
+      "stage": "cached",
+      "durationMs": 12693,
+      "cacheStats": {
+        "resumes": 567,
+        "sessionsExecuted": 381,
+        "memoHits": 127730,
+        "memoMisses": 97801
+      }
+    },
+    {
+      "stage": "uncached",
+      "durationMs": 241548,
+      "cacheStats": {
+        "resumes": 0,
+        "sessionsExecuted": 18525,
+        "memoHits": 0,
+        "memoMisses": 0
+      }
+    },
+    {
+      "stage": "literal-source",
+      "durationMs": 226924,
+      "cacheStats": {}
+    }
+  ],
+  "limitations": [
+    "Partial compile software check only; full manifest acceptance not inferred.",
+    "Root must match selected chunk hashes to the completed accepted conditional manifest before final historical runs.",
+    "No selected-window performance is published; no raw private input, trade or state traces enter this receipt.",
+    "Literal live-input acquisition and operational Buy/event/brokerage verification remain rejected or absent."
+  ]
+}

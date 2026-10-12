@@ -1,0 +1,59 @@
+{
+  "contract": "c1-selected-real64-final-input-match-v1",
+  "passed": true,
+  "runClass": "conditional-software-equivalence-final-input-match",
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "selectedParityReceiptSha256": "bc3ec851a4b72a2f971d9774589b2847b288851c7ecf0cec15179b629c15112e",
+  "finalManifestSha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+  "finalAcceptanceSha256": "ed573201b418f8c11ec747302df318fb37db2c8b9073febfa51bcf8520b4fc74",
+  "finalInputContract": "c1-source-pinned-current253-conditional-historical-input-v1",
+  "completedSourceSessions": 1170,
+  "completeSourceChunks": 24,
+  "selectedSourceChunks": 7,
+  "matches": [
+    {
+      "pathname": "chunks/0000-0050.json.gz",
+      "matched": true,
+      "compressedSha256": "23cc426cf5c4a2e2e0c1b2a6991f8a064c7983349e4f1ff4789085abcfe0656b",
+      "contentSha256": "80a9c285372afd2d73c16301945d21bbb1eca40141981ec602478389ece04a8d"
+    },
+    {
+      "pathname": "chunks/0050-0100.json.gz",
+      "matched": true,
+      "compressedSha256": "3acd2bf5f572be5a8a79765f5facfeed8e87f6ffb352f5d257030b0fd54a357a",
+      "contentSha256": "83995091fa2c7f20b49c69812f3f01cdd92c1934e9b8069fdfc89e425bbf4716"
+    },
+    {
+      "pathname": "chunks/0100-0150.json.gz",
+      "matched": true,
+      "compressedSha256": "a84a03c0b1177e7b01cd7a50308931115b8e6e60a65e877a3cb7701c1770d7fd",
+      "contentSha256": "012a9cd8d374b827e7ed0f457328f35df029d94acdb81df74eb3eef5dad00e8f"
+    },
+    {
+      "pathname": "chunks/0150-0200.json.gz",
+      "matched": true,
+      "compressedSha256": "8bc787565f739aca61e016b146bd4a84d56e1f73446ab0cb47420caa5af065ae",
+      "contentSha256": "c6605e4662c6de627f0dc577ff46d9b4f2d0565ac73bdec250846d97a011913d"
+    },
+    {
+      "pathname": "chunks/0200-0250.json.gz",
+      "matched": true,
+      "compressedSha256": "a22dfcf6661e4e9e3aa30c7fdabacaa287c425040d8ae4883d1c13d72ab6ea52",
+      "contentSha256": "927faf738687aaaaab92a9e2c46b77c7409c94283220666cd5b86b1886ec93c6"
+    },
+    {
+      "pathname": "chunks/0250-0300.json.gz",
+      "matched": true,
+      "compressedSha256": "975e22971dd6f81f4b0946cee33155ae2d13b386c3b99c69442ad51c3fe26334",
+      "contentSha256": "c014ed5a15accb737067916b27657d6b39290850f83ade68806185d1e02272a8"
+    },
+    {
+      "pathname": "chunks/0300-0350.json.gz",
+      "matched": true,
+      "compressedSha256": "a59991d923b535218a412474e097de3d1ac88d3c4817ce6e7a22ed2c6372de79",
+      "contentSha256": "e8b3e36b0dc12d06d0a496f2b34702686cfa3a42c2bbbbe55c583980f071476c"
+    }
+  ],
+  "scope": "Previously completed64-session cached/uncached/unmodified-source software check used exactly the same first seven immutable chunks as the final conditional derived-input manifest; full live-input guard acceptance remains false."
+}

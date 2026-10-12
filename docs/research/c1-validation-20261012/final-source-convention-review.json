@@ -1,0 +1,45 @@
+{
+  "contract": "c1-independent-final-source-convention-review-v1",
+  "passed": true,
+  "scope": "Read-only review of current conditional core-policy source, execution cache, statistic conventions and input-adapter boundaries. No historical replay or parameter experiment.",
+  "eligibleForAlphaClaim": false,
+  "actualLiveInputAccepted": false,
+  "codePins": {
+    "tools/c1-production-policy-replay.cjs": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a",
+    "tools/c1-production-replay-loader.cjs": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+    "tools/c1-build-current-historical-input.cjs": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e",
+    "tools/c1-production-replay-independent-check.cjs": "c471d47e753bff6c118d4b8099e8dab3e492dd4b1baf1d2607faad6fcecd1103",
+    "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+    "lib/c1LiveInputProvider.js": "52396cd4db6f55cf95fe81f9cb42135e09c3f9a1b1d2a29ec94ba3b49ae475bc",
+    "lib/c1AccountSimulator.js": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+    "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+    "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+    "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+    "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+    "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f"
+  },
+  "findings": {
+    "benchmarkCloseToCloseSourceConvention": true,
+    "standardSortinoAndLegacySeparate": true,
+    "evenCountMedianCorrect": true,
+    "portfolioMetricsCombinedFromActualEquityNotWeightedRatios": true,
+    "wholeShareDoubleFloorSourceMapping": true,
+    "sourceCostOverlayOnlySlippageBps": true,
+    "conditionalLabelsEnforced": true,
+    "sourceLiveInputRejectionsPreserved": true,
+    "sourceDecisionExpressionsUnchangedInLoader": true,
+    "losslessPolicyStateCodec": true,
+    "strictOperationalAcceptanceNotClaimed": true
+  },
+  "comparisonLimits": [
+    "Frozen terminal liquidation versus current marked terminal holdings; apply a separately labeled one-side terminal-cost bound before asserting a narrow performance lead.",
+    "Core input cohort, profile/issuer shape, allocation repair, exits and whole-share mapping all differ; no isolated exit attribution.",
+    "Closed-trade statistics exclude current open terminal positions; frozen forced liquidation closes all positions.",
+    "No full operational Buy/event/manual/brokerage workflow result is established."
+  ],
+  "pending": [
+    "Completed derived acceptance receipt must be independently source/chunk-hash checked.",
+    "Selected64 source/cache/uncached receipt must match the completed derived manifest.",
+    "Historical summaries and uncached recorded-verification receipts are not yet available for numerical review."
+  ]
+}
