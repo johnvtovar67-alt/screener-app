@@ -1,0 +1,15 @@
+{
+  "contract": "c1-final-audit-isolation-readonly-check-v1",
+  "observedAtUtc": "2026-10-12 19:17:21 UTC",
+  "gitLsRemote": [
+    "24f08cf370f2de1fe0bf6c17473ec92ead4dcfd4\trefs/heads/audit/c1-current-policy-validation-20261012",
+    "9097e894a487a91eeace7a8f76fb3b42f54a991d\trefs/heads/main"
+  ],
+  "canonicalMainCommit": "9097e894a487a91eeace7a8f76fb3b42f54a991d",
+  "latestReadyProduction": {
+    "id": "dpl_B9MgKxj7t3eAphMq2SBoDtPsrKA3",
+    "commit": "9097e894a487a91eeace7a8f76fb3b42f54a991d"
+  },
+  "auditDeploymentsInLatest20": 0,
+  "scope": "Read-only final isolation check; audit branch Git deployment disabled; no merge/deploy/production records action."
+}

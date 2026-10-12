@@ -1,0 +1,25 @@
+{
+  "contract": "c1-independent-closed-holding-age-review-v1",
+  "passed": true,
+  "scope": "Saved recorded trade-date indices only; holding sessions equal sell-session index minus buy-session index, with zero for same-session stops. No policy or compiler replay.",
+  "checks": [
+    {
+      "cost": 12,
+      "passed": true,
+      "closedHoldingPeriodsChecked": 357,
+      "runArtifactSha256": "2d9beee5cdd45493161dc8fa95835ff98c51dfd8c864f29f0b3d1dcd91a8336d"
+    },
+    {
+      "cost": 25,
+      "passed": true,
+      "closedHoldingPeriodsChecked": 351,
+      "runArtifactSha256": "08e5f7c48d503b59dbd95c07119b9f3a5b25787d5d71bf24cab408464511935d"
+    },
+    {
+      "cost": 50,
+      "passed": true,
+      "closedHoldingPeriodsChecked": 354,
+      "runArtifactSha256": "dc13bdd0dd827b47cd1810f00f93fac012a7276d808656312edb2fe0f0408779"
+    }
+  ]
+}

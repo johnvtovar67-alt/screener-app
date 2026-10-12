@@ -1,0 +1,637 @@
+{
+  "contract": "c1-current-vs-preserved-descriptive-comparison-v1",
+  "complete": true,
+  "universe": "S&P 500",
+  "source": {
+    "frozenAuthoritativeReceipt": {
+      "url": "https://github.com/johnvtovar67-alt/screener-app/blob/research/c1-frozen-cost-audit/docs/research/c1-cost-audit-20260910.json",
+      "gitBranch": "research/c1-frozen-cost-audit",
+      "gitPath": "docs/research/c1-cost-audit-20260910.json",
+      "provenance": "Reads the exact original preserved receipt bytes retrieved with the connected GitHub reader by the parent audit. No cost-audit historical experiment was rerun.",
+      "localOriginalReceiptAvailable": true,
+      "localPath": "/workspace/screener-app/docs/research/c1-validation-20261012/preserved-frozen-cost-audit.json",
+      "bytes": 3586,
+      "sha256": "29db049cf92d52cf70d23aac5e8ef93841712a7101f5c07b6bee12bdfff299be",
+      "gitBlobSHA": "6637ab6a5f4d6cd7c4a8c3dc9861d1fa3c4c70a2",
+      "storedNumbers": {
+        "12": {
+          "totalReturnPct": 380.7204925,
+          "maxDrawdownPct": -20.701051498725377,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 273.13049249999995
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 208.98049249999997
+            }
+          }
+        },
+        "25": {
+          "totalReturnPct": 314.20182000000005,
+          "maxDrawdownPct": -24.174085740821948,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 206.61182000000005
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 142.46182000000005
+            }
+          }
+        },
+        "50": {
+          "totalReturnPct": 260.62695999999994,
+          "maxDrawdownPct": -22.925781010669667,
+          "benchmarks": {
+            "SPY": {
+              "simpleReturnPct": 107.59,
+              "simpleDifferencePct": 153.03695999999994
+            },
+            "QQQ": {
+              "simpleReturnPct": 171.74,
+              "simpleDifferencePct": 88.88695999999993
+            }
+          }
+        }
+      }
+    },
+    "frozenAuthoritativePrecision": "Returns and drawdowns retain all stored receipt precision. The receipt benchmark returns are stored to two decimal places. This original cost receipt contains no Sharpe values.",
+    "frozenSharpeSources": {
+      "12": {
+        "value": 1.5845164616029748,
+        "source": "/workspace/screener-app/docs/research/c1-validation-20261012/preserved-frozen-12bps-metrics.json",
+        "precision": "Full preserved-fixture daily-curve arithmetic precision."
+      },
+      "25": {
+        "value": 1.441,
+        "source": "docs/research/v12-active-swing-ensemble-c1.md",
+        "precision": "Published value to three decimals; additional precision unavailable."
+      },
+      "50": {
+        "value": 1.303,
+        "source": "docs/research/v12-active-swing-ensemble-c1.md",
+        "precision": "Published value to three decimals; additional precision unavailable."
+      }
+    },
+    "frozenPublishedSummary": "docs/research/v12-active-swing-ensemble-c1.md; published rounded summary preserved separately",
+    "frozenPublishedPrecision": "Return/drawdown percentages rounded to 0.01; Sharpe rounded to 0.001. Deltas against those published figures inherit their rounding.",
+    "frozen12FixtureMetrics": "/workspace/screener-app/docs/research/c1-validation-20261012/preserved-frozen-12bps-metrics.json",
+    "frozen12FixtureMetricsSha256": "df3488ce66112a43e2b1a2b44a8255cefff13c9cab4875b725144f88d0ca4540",
+    "arithmetic": "No historical engine rerun. Reads completed current summaries and preserved frozen fixture arithmetic only."
+  },
+  "metricConventions": {
+    "differenceDirection": "Every delta is current minus frozen. Positive drawdown delta means a less negative drawdown. Percentage-valued deltas are percentage points.",
+    "sharpe": "Mean daily return / sample daily-return deviation * sqrt(252); zero risk-free rate.",
+    "sortino": "Standard zero-target downside RMS over all daily returns; legacySourceSortino retains source negative-return sample deviation.",
+    "trades": "Completed sleeve round trips; identical symbols held by different sleeves count separately. Fills are separately reported.",
+    "medianHoldingSessions": "Standard median averages two middle values for even counts. Frozen S&P has middle values 31 and 31, so old upper-middle selection and standard median both equal 31.",
+    "turnover": "Two-way buy+sell notional divided by mean daily combined equity; annualized by 252/observations.",
+    "capitalUtilization": "Mean daily (1 - combined cash / combined equity).",
+    "frozenBenchmarkExcess": "Original excess comes directly from the recovered cost receipt, which uses two-decimal benchmark returns. A separate restatement uses current close-to-close benchmarks; it is not substituted for the original receipt."
+  },
+  "comparisonLimitations": [
+    "Different ranking/eligibility cohorts and compiler conventions can change opportunities even over identical S&P 500 dates. Source compiler receipts must identify the actual current candidate pool.",
+    "Frozen arithmetic weights three independently simulated 100000-dollar whole-share books at 25/50/25. Current production maps source planned integer shares into actual 25000/50000/25000-dollar books with double flooring. Analytical weighted original quantities do not represent current executable shares.",
+    "Frozen fixtures artificially sell remaining positions at final close with modeled cost. Current production has no terminal liquidation and marks remaining positions; closed-trade statistics exclude open terminal holdings.",
+    "Verified descriptive differences include the current 253-observation cohort and profile/issuer representation, SCHW allocation exclusion, production confirmed/profit/30-plus rank exit logic, actual whole-share double-floor mapping and terminal treatment. The performance delta cannot be attributed solely to the momentum-exit overlay. Price-factor formulas matched the archive; this task did not optimize or change factor weights or risk thresholds.",
+    "A conditional account-policy model that skips literal input guards or lacks live Buy/event/brokerage verification cannot validate exact current production alpha. Retain each current summary runClass and eligibility flags in interpretation.",
+    "Saved sector provenance and researcher/model-selection limitations remain. The same inspected time period does not become an untouched holdout."
+  ],
+  "comparisons": [
+    {
+      "slippageBps": 12,
+      "state": "summary-present",
+      "currentSummary": "/workspace/work/c1-validation/results/current-12bps.summary.json",
+      "currentSummarySha256": "47bca6df0468814ef5596adf50ea86442697be01f109ac3a2a429bd43d09d5fa",
+      "currentContract": "c1-conditional-current-account-policy-replay-v1",
+      "currentRunClass": "conditional-current-account-policy-counterfactual",
+      "currentEligibilityForAlphaClaim": false,
+      "currentInputManifestSha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+      "currentSourcePin": {
+        "contract": "c1-production-policy-source-pin-v1",
+        "sources": {
+          "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+          "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+          "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+          "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+          "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+          "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+          "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+          "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+          "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+          "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+          "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+          "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+          "lib/c1StockClassification.js": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2",
+          "lib/c1ManualRecommendations.js": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+          "lib/c1OpeningPriceReview.js": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+          "lib/c1AccountExecution.js": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4",
+          "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+          "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+          "lib/portfolioGovernor.js": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+          "lib/c1AccountLedger.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+          "lib/c1AccountSimulator.js": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+          "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+          "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+          "lib/c1PaperEvents.js": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c",
+          "lib/c1SleeveAccounting.js": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+        },
+        "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+        "transforms": {
+          "lib/c1AccountSimulator.js": {
+            "originalSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+            "adaptedSha256": "734bb10cf30f7de4dce28e1d05081c0020f55733def3b318477f1bdb7599bd2f"
+          },
+          "lib/c1ActualFillReplay.js": {
+            "originalSha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+            "adaptedSha256": "3693f3def1f7837344cce2eec8e0328a5efc2aef73143dad6420d8c805c65a6f"
+          }
+        },
+        "costOverlay": {
+          "onlyChangedOption": "slippageBps",
+          "value": 12
+        },
+        "adapterSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+        "cached": true
+      },
+      "startDate": "2023-01-04",
+      "endDate": "2026-09-01",
+      "frozenObservations": 918,
+      "currentObservations": 918,
+      "sameDateRange": true,
+      "frozenAuthoritative": {
+        "totalReturnPct": 380.7204925,
+        "maxDrawdownPct": -20.701051498725377,
+        "benchmarks": {
+          "SPY": {
+            "simpleReturnPct": 107.59,
+            "simpleDifferencePct": 273.13049249999995
+          },
+          "QQQ": {
+            "simpleReturnPct": 171.74,
+            "simpleDifferencePct": 208.98049249999997
+          }
+        }
+      },
+      "frozenSharpe": {
+        "value": 1.5845164616029748,
+        "source": "/workspace/screener-app/docs/research/c1-validation-20261012/preserved-frozen-12bps-metrics.json",
+        "precision": "Full preserved-fixture daily-curve arithmetic precision."
+      },
+      "frozenPublished": {
+        "totalReturnPct": 380.72,
+        "sharpe": 1.585,
+        "maxDrawdownPct": -20.7,
+        "alphaPositivePeriods": "7/8",
+        "topThreeGrossProfitSharePct": 47.61
+      },
+      "currentMetrics": {
+        "totalReturnPct": 289.0724206987598,
+        "sharpe": 1.4125513073737135,
+        "sortino": 2.228994050030395,
+        "legacySourceSortino": 2.1156637537302085,
+        "maxDrawdownPct": -22.397381685864026,
+        "fillCount": 723,
+        "tradeCount": 357,
+        "closedTrades": 357,
+        "winRatePct": 51.26050420168067,
+        "profitFactor": 2.3200027551954503,
+        "averageHoldingSessions": 19.789915966386555,
+        "medianHoldingSessions": 15,
+        "twoWayTradedNotional": 12978840.01121877,
+        "turnoverPct": 6871.189058550453,
+        "annualizedTurnoverPct": 1886.208761170713,
+        "capitalUtilizationPct": 76.16605577134989,
+        "openTerminalPositions": 9,
+        "endingEquity": 389072.4206987598
+      },
+      "currentBenchmarkComparisons": {
+        "SPY": {
+          "simpleReturnPct": 107.5921081316765,
+          "excessReturnPct": 181.48031256708327,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 107.5921081316765,
+          "simpleOpenToCloseReturnPct": 107.90371441827457
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74071656234395,
+          "excessReturnPct": 117.33170413641582,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 171.74071656234395,
+          "simpleOpenToCloseReturnPct": 170.8255195376784
+        }
+      },
+      "deltaCurrentMinusFrozenAuthoritative": {
+        "totalReturnPct": -91.64807180124018,
+        "maxDrawdownPct": -1.6963301871386491
+      },
+      "deltaCurrentMinusFrozenSharpe": -0.17196515422926129,
+      "deltaCurrentMinusFrozenPublished": {
+        "totalReturnPct": -91.64757930124023,
+        "sharpe": -0.17244869262628648,
+        "maxDrawdownPct": -1.697381685864027
+      },
+      "frozenFixture12Metrics": {
+        "totalReturnPct": 380.7204925,
+        "sharpe": 1.5845164616029748,
+        "sortino": 2.469642848624428,
+        "legacySourceSortino": 2.339962934743203,
+        "maxDrawdownPct": -20.701051498725377,
+        "fillCount": 508,
+        "tradeCount": 254,
+        "closedTrades": 254,
+        "winRatePct": 50,
+        "profitFactor": 2.6134886716473846,
+        "averageHoldingSessions": 28.137795275590552,
+        "medianHoldingSessions": 31,
+        "twoWayTradedNotional": 11127261.812117668,
+        "turnoverPct": 4650.727828061172,
+        "annualizedTurnoverPct": 1276.6703841736553,
+        "capitalUtilizationPct": 76.82553130115673,
+        "openTerminalPositions": 0,
+        "endingEquity": 480720.4925
+      },
+      "deltaCurrentMinusFrozenFixture12": {
+        "totalReturnPct": -91.64807180124018,
+        "sharpe": -0.17196515422926129,
+        "sortino": -0.24064879859403288,
+        "legacySourceSortino": -0.22429918101299462,
+        "maxDrawdownPct": -1.6963301871386491,
+        "fillCount": 215,
+        "tradeCount": 103,
+        "closedTrades": 103,
+        "winRatePct": 1.2605042016806678,
+        "profitFactor": -0.29348591645193434,
+        "averageHoldingSessions": -8.347879309203996,
+        "medianHoldingSessions": -16,
+        "twoWayTradedNotional": 1851578.1991011016,
+        "turnoverPct": 2220.4612304892817,
+        "annualizedTurnoverPct": 609.5383769970576,
+        "capitalUtilizationPct": -0.6594755298068407,
+        "openTerminalPositions": 9,
+        "endingEquity": -91648.0718012402
+      },
+      "originalFrozenBenchmarkExcess": {
+        "SPY": {
+          "simpleReturnPct": 107.59,
+          "simpleDifferencePct": 273.13049249999995
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74,
+          "simpleDifferencePct": 208.98049249999997
+        }
+      },
+      "deltaCurrentMinusOriginalFrozenBenchmarkExcess": {
+        "SPY": -91.65017993291667,
+        "QQQ": -91.64878836358415
+      },
+      "restatedFrozenBenchmarkExcess": {
+        "SPY": {
+          "benchmarkReturnPct": 107.5921081316765,
+          "currentExcessReturnPct": 181.4803125670833,
+          "frozenAuthoritativeExcessOnCurrentBenchmarkPct": 273.1283843683235,
+          "frozenFixture12ExcessOnCurrentBenchmarkPct": 273.1283843683235,
+          "status": "Common-date restatement using the current replay benchmark. The stripped frozen accounting fixture does not retain its original benchmark history."
+        },
+        "QQQ": {
+          "benchmarkReturnPct": 171.74071656234395,
+          "currentExcessReturnPct": 117.33170413641585,
+          "frozenAuthoritativeExcessOnCurrentBenchmarkPct": 208.97977593765603,
+          "frozenFixture12ExcessOnCurrentBenchmarkPct": 208.97977593765603,
+          "status": "Common-date restatement using the current replay benchmark. The stripped frozen accounting fixture does not retain its original benchmark history."
+        }
+      }
+    },
+    {
+      "slippageBps": 25,
+      "state": "summary-present",
+      "currentSummary": "/workspace/work/c1-validation/results/current-25bps.summary.json",
+      "currentSummarySha256": "cde030d283120f9a4af9225dd3acc73ef5c99f4ac97bae609bf10f08994cff7e",
+      "currentContract": "c1-conditional-current-account-policy-replay-v1",
+      "currentRunClass": "conditional-current-account-policy-counterfactual",
+      "currentEligibilityForAlphaClaim": false,
+      "currentInputManifestSha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+      "currentSourcePin": {
+        "contract": "c1-production-policy-source-pin-v1",
+        "sources": {
+          "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+          "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+          "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+          "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+          "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+          "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+          "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+          "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+          "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+          "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+          "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+          "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+          "lib/c1StockClassification.js": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2",
+          "lib/c1ManualRecommendations.js": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+          "lib/c1OpeningPriceReview.js": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+          "lib/c1AccountExecution.js": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4",
+          "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+          "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+          "lib/portfolioGovernor.js": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+          "lib/c1AccountLedger.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+          "lib/c1AccountSimulator.js": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+          "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+          "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+          "lib/c1PaperEvents.js": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c",
+          "lib/c1SleeveAccounting.js": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+        },
+        "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+        "transforms": {
+          "lib/c1AccountSimulator.js": {
+            "originalSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+            "adaptedSha256": "734bb10cf30f7de4dce28e1d05081c0020f55733def3b318477f1bdb7599bd2f"
+          },
+          "lib/c1ActualFillReplay.js": {
+            "originalSha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+            "adaptedSha256": "3693f3def1f7837344cce2eec8e0328a5efc2aef73143dad6420d8c805c65a6f"
+          }
+        },
+        "costOverlay": {
+          "onlyChangedOption": "slippageBps",
+          "value": 25
+        },
+        "adapterSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+        "cached": true
+      },
+      "startDate": "2023-01-04",
+      "endDate": "2026-09-01",
+      "frozenObservations": 918,
+      "currentObservations": 918,
+      "sameDateRange": true,
+      "frozenAuthoritative": {
+        "totalReturnPct": 314.20182000000005,
+        "maxDrawdownPct": -24.174085740821948,
+        "benchmarks": {
+          "SPY": {
+            "simpleReturnPct": 107.59,
+            "simpleDifferencePct": 206.61182000000005
+          },
+          "QQQ": {
+            "simpleReturnPct": 171.74,
+            "simpleDifferencePct": 142.46182000000005
+          }
+        }
+      },
+      "frozenSharpe": {
+        "value": 1.441,
+        "source": "docs/research/v12-active-swing-ensemble-c1.md",
+        "precision": "Published value to three decimals; additional precision unavailable."
+      },
+      "frozenPublished": {
+        "totalReturnPct": 314.2,
+        "sharpe": 1.441,
+        "maxDrawdownPct": -24.17,
+        "alphaPositivePeriods": "6/8",
+        "topThreeGrossProfitSharePct": 49.22
+      },
+      "currentMetrics": {
+        "totalReturnPct": 231.37288401869432,
+        "sharpe": 1.2480529769411108,
+        "sortino": 1.9428148224051232,
+        "legacySourceSortino": 1.8414130441639056,
+        "maxDrawdownPct": -22.920140763005858,
+        "fillCount": 711,
+        "tradeCount": 351,
+        "closedTrades": 351,
+        "winRatePct": 50.427350427350426,
+        "profitFactor": 2.0427660993839103,
+        "averageHoldingSessions": 20.074074074074073,
+        "medianHoldingSessions": 16,
+        "twoWayTradedNotional": 11814163.918418694,
+        "turnoverPct": 6598.113922339523,
+        "annualizedTurnoverPct": 1811.2469590735948,
+        "capitalUtilizationPct": 75.60902969109816,
+        "openTerminalPositions": 9,
+        "endingEquity": 331372.88401869434
+      },
+      "currentBenchmarkComparisons": {
+        "SPY": {
+          "simpleReturnPct": 107.5921081316765,
+          "excessReturnPct": 123.78077588701784,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 107.5921081316765,
+          "simpleOpenToCloseReturnPct": 107.90371441827457
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74071656234395,
+          "excessReturnPct": 59.63216745635038,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 171.74071656234395,
+          "simpleOpenToCloseReturnPct": 170.8255195376784
+        }
+      },
+      "deltaCurrentMinusFrozenAuthoritative": {
+        "totalReturnPct": -82.82893598130573,
+        "maxDrawdownPct": 1.25394497781609
+      },
+      "deltaCurrentMinusFrozenSharpe": -0.19294702305888922,
+      "deltaCurrentMinusFrozenPublished": {
+        "totalReturnPct": -82.82711598130567,
+        "sharpe": -0.19294702305888922,
+        "maxDrawdownPct": 1.2498592369941441
+      },
+      "additionalFrozenTradeMetrics": null,
+      "unavailableReason": "Preserved 25/50 bps receipts provide aggregate return, Sharpe, drawdown and consistency/concentration; no complete trade ledger for supplementary metrics is available.",
+      "originalFrozenBenchmarkExcess": {
+        "SPY": {
+          "simpleReturnPct": 107.59,
+          "simpleDifferencePct": 206.61182000000005
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74,
+          "simpleDifferencePct": 142.46182000000005
+        }
+      },
+      "deltaCurrentMinusOriginalFrozenBenchmarkExcess": {
+        "SPY": -82.83104411298221,
+        "QQQ": -82.82965254364967
+      },
+      "restatedFrozenBenchmarkExcess": {
+        "SPY": {
+          "benchmarkReturnPct": 107.5921081316765,
+          "currentExcessReturnPct": 123.78077588701782,
+          "frozenAuthoritativeExcessOnCurrentBenchmarkPct": 206.60971186832356,
+          "status": "Common-date restatement using the current replay benchmark. The stripped frozen accounting fixture does not retain its original benchmark history."
+        },
+        "QQQ": {
+          "benchmarkReturnPct": 171.74071656234395,
+          "currentExcessReturnPct": 59.63216745635037,
+          "frozenAuthoritativeExcessOnCurrentBenchmarkPct": 142.4611034376561,
+          "status": "Common-date restatement using the current replay benchmark. The stripped frozen accounting fixture does not retain its original benchmark history."
+        }
+      }
+    },
+    {
+      "slippageBps": 50,
+      "state": "summary-present",
+      "currentSummary": "/workspace/work/c1-validation/results/current-50bps.summary.json",
+      "currentSummarySha256": "ff1e478c9513302e9c94956f322fb4714e2f9c88f8cd4b9a6c569223920b8c0d",
+      "currentContract": "c1-conditional-current-account-policy-replay-v1",
+      "currentRunClass": "conditional-current-account-policy-counterfactual",
+      "currentEligibilityForAlphaClaim": false,
+      "currentInputManifestSha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+      "currentSourcePin": {
+        "contract": "c1-production-policy-source-pin-v1",
+        "sources": {
+          "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+          "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+          "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+          "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+          "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+          "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+          "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+          "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+          "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+          "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+          "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+          "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+          "lib/c1StockClassification.js": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2",
+          "lib/c1ManualRecommendations.js": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+          "lib/c1OpeningPriceReview.js": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+          "lib/c1AccountExecution.js": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4",
+          "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+          "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+          "lib/portfolioGovernor.js": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+          "lib/c1AccountLedger.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+          "lib/c1AccountSimulator.js": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+          "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+          "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+          "lib/c1PaperEvents.js": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c",
+          "lib/c1SleeveAccounting.js": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+        },
+        "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+        "transforms": {
+          "lib/c1AccountSimulator.js": {
+            "originalSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+            "adaptedSha256": "734bb10cf30f7de4dce28e1d05081c0020f55733def3b318477f1bdb7599bd2f"
+          },
+          "lib/c1ActualFillReplay.js": {
+            "originalSha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+            "adaptedSha256": "3693f3def1f7837344cce2eec8e0328a5efc2aef73143dad6420d8c805c65a6f"
+          }
+        },
+        "costOverlay": {
+          "onlyChangedOption": "slippageBps",
+          "value": 50
+        },
+        "adapterSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+        "cached": true
+      },
+      "startDate": "2023-01-04",
+      "endDate": "2026-09-01",
+      "frozenObservations": 918,
+      "currentObservations": 918,
+      "sameDateRange": true,
+      "frozenAuthoritative": {
+        "totalReturnPct": 260.62695999999994,
+        "maxDrawdownPct": -22.925781010669667,
+        "benchmarks": {
+          "SPY": {
+            "simpleReturnPct": 107.59,
+            "simpleDifferencePct": 153.03695999999994
+          },
+          "QQQ": {
+            "simpleReturnPct": 171.74,
+            "simpleDifferencePct": 88.88695999999993
+          }
+        }
+      },
+      "frozenSharpe": {
+        "value": 1.303,
+        "source": "docs/research/v12-active-swing-ensemble-c1.md",
+        "precision": "Published value to three decimals; additional precision unavailable."
+      },
+      "frozenPublished": {
+        "totalReturnPct": 260.63,
+        "sharpe": 1.303,
+        "maxDrawdownPct": -22.93,
+        "alphaPositivePeriods": "6/8",
+        "topThreeGrossProfitSharePct": 47.13
+      },
+      "currentMetrics": {
+        "totalReturnPct": 239.50564789768052,
+        "sharpe": 1.2712741115754178,
+        "sortino": 1.9721865307344633,
+        "legacySourceSortino": 1.8536653498415432,
+        "maxDrawdownPct": -32.20839960927795,
+        "fillCount": 717,
+        "tradeCount": 354,
+        "closedTrades": 354,
+        "winRatePct": 48.58757062146893,
+        "profitFactor": 2.0962961419477515,
+        "averageHoldingSessions": 19.6864406779661,
+        "medianHoldingSessions": 15,
+        "twoWayTradedNotional": 11403808.503997676,
+        "turnoverPct": 6459.893097715373,
+        "annualizedTurnoverPct": 1773.3039876081416,
+        "capitalUtilizationPct": 75.71790167438462,
+        "openTerminalPositions": 9,
+        "endingEquity": 339505.6478976805
+      },
+      "currentBenchmarkComparisons": {
+        "SPY": {
+          "simpleReturnPct": 107.5921081316765,
+          "excessReturnPct": 131.91353976600402,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 107.5921081316765,
+          "simpleOpenToCloseReturnPct": 107.90371441827457
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74071656234395,
+          "excessReturnPct": 67.76493133533657,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 171.74071656234395,
+          "simpleOpenToCloseReturnPct": 170.8255195376784
+        }
+      },
+      "deltaCurrentMinusFrozenAuthoritative": {
+        "totalReturnPct": -21.121312102319422,
+        "maxDrawdownPct": -9.28261859860828
+      },
+      "deltaCurrentMinusFrozenSharpe": -0.03172588842458213,
+      "deltaCurrentMinusFrozenPublished": {
+        "totalReturnPct": -21.124352102319477,
+        "sharpe": -0.03172588842458213,
+        "maxDrawdownPct": -9.278399609277947
+      },
+      "additionalFrozenTradeMetrics": null,
+      "unavailableReason": "Preserved 25/50 bps receipts provide aggregate return, Sharpe, drawdown and consistency/concentration; no complete trade ledger for supplementary metrics is available.",
+      "originalFrozenBenchmarkExcess": {
+        "SPY": {
+          "simpleReturnPct": 107.59,
+          "simpleDifferencePct": 153.03695999999994
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74,
+          "simpleDifferencePct": 88.88695999999993
+        }
+      },
+      "deltaCurrentMinusOriginalFrozenBenchmarkExcess": {
+        "SPY": -21.123420233995915,
+        "QQQ": -21.12202866466336
+      },
+      "restatedFrozenBenchmarkExcess": {
+        "SPY": {
+          "benchmarkReturnPct": 107.5921081316765,
+          "currentExcessReturnPct": 131.91353976600402,
+          "frozenAuthoritativeExcessOnCurrentBenchmarkPct": 153.03485186832344,
+          "status": "Common-date restatement using the current replay benchmark. The stripped frozen accounting fixture does not retain its original benchmark history."
+        },
+        "QQQ": {
+          "benchmarkReturnPct": 171.74071656234395,
+          "currentExcessReturnPct": 67.76493133533657,
+          "frozenAuthoritativeExcessOnCurrentBenchmarkPct": 88.88624343765599,
+          "status": "Common-date restatement using the current replay benchmark. The stripped frozen accounting fixture does not retain its original benchmark history."
+        }
+      }
+    }
+  ]
+}

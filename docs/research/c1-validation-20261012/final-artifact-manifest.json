@@ -1,0 +1,388 @@
+{
+  "contract": "c1-final-independent-validation-artifact-manifest-v1",
+  "validationClass": "conditional-current-account-policy-counterfactual-complete",
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "exactEndToEndCurrentProductionResults": null,
+  "universe": "S&P 500",
+  "initialCapital": 100000,
+  "sleeveWeights": {
+    "base": 0.25,
+    "cooldown15": 0.5,
+    "sector40": 0.25
+  },
+  "window": {
+    "start": "2023-01-04",
+    "end": "2026-09-01",
+    "observations": 918
+  },
+  "productionSourceBaseline": "9097e894a487a91eeace7a8f76fb3b42f54a991d",
+  "preReplayPersistence": {
+    "remoteCommit": "c1eb92321cf11b0a0cd9991154f45ca4bdbcef0c",
+    "identicalLocalRemoteTree": "a9dbf8eb4384d0c14e032bad7cf77de039e37303",
+    "gitBundleVerified": true
+  },
+  "originalInputs": {
+    "chunks": 24,
+    "compressedBytes": 409654552,
+    "sessionCohorts": 1170,
+    "priceRows": 659220,
+    "validationSha256": "06d822332582d364f36b8919dae7bdba614cb5ca36121ebe47d6a3b169fb0a58"
+  },
+  "currentInputs": {
+    "manifestSha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+    "canonicalAcceptanceSha256": "ed573201b418f8c11ec747302df318fb37db2c8b9073febfa51bcf8520b4fc74",
+    "literalMetadataGuardRejectedEvaluationDates": 918
+  },
+  "codeSha256": {
+    "tools/c1-production-policy-replay.cjs": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a",
+    "tools/c1-production-replay-loader.cjs": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+    "tools/c1-build-current-historical-input.cjs": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e",
+    "tools/c1-original-input-validation.cjs": "e6189c2a1d65e6d96949574db1ed2116ea10d0a6d7f5a005e2a6e7adb572dae2",
+    "tools/c1-review-current-historical-input.cjs": "30547e4156c4866bbea57ab17b02eaa4eb52a0d23ba1949cfd843ece8ad1d39d",
+    "tools/c1-review-recorded-production-replay.cjs": "748ca61f25716170ab581e240e1ea4d71f812bc50f340af1728f9a9165f2b892",
+    "tools/c1-compare-current-to-preserved.cjs": "96145e1b8faec33a96c31b1c620dbeae99565f01b6916acb7c46836a51cb411d",
+    "lib/c1AccountSimulator.js": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+    "lib/c1ScreenEvidence.js": "071043dcd7d357c5ce1df4c3c2ba3279764db0f4f70580476f49b7581e98eeb4",
+    "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+    "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff"
+  },
+  "verification": {
+    "requiredChecksPassed": 91,
+    "productionBuildPassed": true,
+    "requiredCheckBuildLogSha256": "56c1baf37a43b89f018dece9457a49b6f2aec3ae5342bf27b70bacc304f8b00d",
+    "selectedRealCachedUncachedLiteralSource": {
+      "observations": 64,
+      "costBps": 12,
+      "passed": true
+    },
+    "fullUncachedRecordedSource": {
+      "eachCostObservations": 918,
+      "eachCostSourceSessions": 2754,
+      "allSourceStatesAndOutputsMatch": true
+    },
+    "independentBookArithmeticPassedAllCosts": true,
+    "allClosedHoldingAgesMatch": true
+  },
+  "judgments": {
+    "alpha": "weakened; current production and prospective alpha remain unvalidated",
+    "currentConditionalReturnOutperformsFrozen": false,
+    "currentConditionalSharpeOutperformsFrozen": false,
+    "positiveSimpleExcessOverBothBenchmarksAtAllCosts": true,
+    "thesis": "Retain the core momentum hypothesis with narrower confidence and performance claims; no parameter optimization or trading-policy change."
+  },
+  "results": [
+    {
+      "costBpsPerSide": 12,
+      "result": "current-12bps-results.json",
+      "resultSha256": "fe6289af568c1491227dad08a311ef5da0c726f595a5a8b6ea08a1f20b2ef877",
+      "canonicalSourceVerificationSha256": "0c6a794e8fe8d92b6604fca7b40d8b5ccb66acbb52285814872ae725d79ebe9b",
+      "independentArithmeticSha256": "af8b8948b73bb86181d93229dd044f4542f40bfc3d697ca122bf8763a58493a8",
+      "metrics": {
+        "initialCapital": 100000,
+        "endingEquity": 389072.4206987598,
+        "totalReturnPct": 289.0724206987598,
+        "sharpe": 1.4125513073737135,
+        "sortino": 2.228994050030395,
+        "legacySourceSortino": 2.1156637537302085,
+        "maxDrawdownPct": -22.397381685864026,
+        "fillCount": 723,
+        "tradeCount": 357,
+        "closedTrades": 357,
+        "winRatePct": 51.26050420168067,
+        "profitFactor": 2.3200027551954503,
+        "averageHoldingSessions": 19.789915966386555,
+        "medianHoldingSessions": 15,
+        "twoWayTradedNotional": 12978840.01121877,
+        "turnoverPct": 6871.189058550453,
+        "annualizedTurnoverPct": 1886.208761170713,
+        "capitalUtilizationPct": 76.16605577134989,
+        "openTerminalPositions": 9,
+        "benchmarkComparisons": {
+          "SPY": {
+            "simpleReturnPct": 107.5921081316765,
+            "excessReturnPct": 181.48031256708327,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": 107.5921081316765,
+            "simpleOpenToCloseReturnPct": 107.90371441827457
+          },
+          "QQQ": {
+            "simpleReturnPct": 171.74071656234395,
+            "excessReturnPct": 117.33170413641582,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": 171.74071656234395,
+            "simpleOpenToCloseReturnPct": 170.8255195376784
+          }
+        }
+      },
+      "fullPrivateRunSha256": "2d9beee5cdd45493161dc8fa95835ff98c51dfd8c864f29f0b3d1dcd91a8336d"
+    },
+    {
+      "costBpsPerSide": 25,
+      "result": "current-25bps-results.json",
+      "resultSha256": "b8b2814b089990fd162744a979fe7e89ebf6bee945be910a8e25da86f448fe4d",
+      "canonicalSourceVerificationSha256": "453d9821768e45c632380518c9bd6203bd903edcd358bda3c8a2015179e00220",
+      "independentArithmeticSha256": "a358f597bb455efc7f191bf143810eae72ad4cd88ffee960ca4c8854a7de02ee",
+      "metrics": {
+        "initialCapital": 100000,
+        "endingEquity": 331372.88401869434,
+        "totalReturnPct": 231.37288401869432,
+        "sharpe": 1.2480529769411108,
+        "sortino": 1.9428148224051232,
+        "legacySourceSortino": 1.8414130441639056,
+        "maxDrawdownPct": -22.920140763005858,
+        "fillCount": 711,
+        "tradeCount": 351,
+        "closedTrades": 351,
+        "winRatePct": 50.427350427350426,
+        "profitFactor": 2.0427660993839103,
+        "averageHoldingSessions": 20.074074074074073,
+        "medianHoldingSessions": 16,
+        "twoWayTradedNotional": 11814163.918418694,
+        "turnoverPct": 6598.113922339523,
+        "annualizedTurnoverPct": 1811.2469590735948,
+        "capitalUtilizationPct": 75.60902969109816,
+        "openTerminalPositions": 9,
+        "benchmarkComparisons": {
+          "SPY": {
+            "simpleReturnPct": 107.5921081316765,
+            "excessReturnPct": 123.78077588701784,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": 107.5921081316765,
+            "simpleOpenToCloseReturnPct": 107.90371441827457
+          },
+          "QQQ": {
+            "simpleReturnPct": 171.74071656234395,
+            "excessReturnPct": 59.63216745635038,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": 171.74071656234395,
+            "simpleOpenToCloseReturnPct": 170.8255195376784
+          }
+        }
+      },
+      "fullPrivateRunSha256": "08e5f7c48d503b59dbd95c07119b9f3a5b25787d5d71bf24cab408464511935d"
+    },
+    {
+      "costBpsPerSide": 50,
+      "result": "current-50bps-results.json",
+      "resultSha256": "18844acc1feda28295d77dd14494b6aa292cbc4fd96999ca07c6bd1d373a89ed",
+      "canonicalSourceVerificationSha256": "6560799afff88b3de9608454701d2103cc747b06491760b5580b77cafd1ec68b",
+      "independentArithmeticSha256": "798e62c561a0824726f8819eee5003d981086ff499e813d787483e27ff203a71",
+      "metrics": {
+        "initialCapital": 100000,
+        "endingEquity": 339505.6478976805,
+        "totalReturnPct": 239.50564789768052,
+        "sharpe": 1.2712741115754178,
+        "sortino": 1.9721865307344633,
+        "legacySourceSortino": 1.8536653498415432,
+        "maxDrawdownPct": -32.20839960927795,
+        "fillCount": 717,
+        "tradeCount": 354,
+        "closedTrades": 354,
+        "winRatePct": 48.58757062146893,
+        "profitFactor": 2.0962961419477515,
+        "averageHoldingSessions": 19.6864406779661,
+        "medianHoldingSessions": 15,
+        "twoWayTradedNotional": 11403808.503997676,
+        "turnoverPct": 6459.893097715373,
+        "annualizedTurnoverPct": 1773.3039876081416,
+        "capitalUtilizationPct": 75.71790167438462,
+        "openTerminalPositions": 9,
+        "benchmarkComparisons": {
+          "SPY": {
+            "simpleReturnPct": 107.5921081316765,
+            "excessReturnPct": 131.91353976600402,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": 107.5921081316765,
+            "simpleOpenToCloseReturnPct": 107.90371441827457
+          },
+          "QQQ": {
+            "simpleReturnPct": 171.74071656234395,
+            "excessReturnPct": 67.76493133533657,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": 171.74071656234395,
+            "simpleOpenToCloseReturnPct": 170.8255195376784
+          }
+        }
+      },
+      "fullPrivateRunSha256": "dc13bdd0dd827b47cd1810f00f93fac012a7276d808656312edb2fe0f0408779"
+    }
+  ],
+  "publicArtifacts": [
+    {
+      "file": "acquisition-guard-provenance-review.json",
+      "bytes": 623,
+      "sha256": "bfbb87e5778304e25c1d18e0187c02c8d0034a95df0e5d75ccdd14c0d3aa4400"
+    },
+    {
+      "file": "audit-isolation-check.json",
+      "bytes": 670,
+      "sha256": "558d73ad3322fdb2f7518759dfe76f9376ee3fdb598073fe0d87ef783e0d04ce"
+    },
+    {
+      "file": "closed-holding-age-review.json",
+      "bytes": 851,
+      "sha256": "60eeed0dcc5999aff70fd4e40114b87c7ade721afefb2bd871d275b21067fe5f"
+    },
+    {
+      "file": "current-12bps-independent-arithmetic-review.json",
+      "bytes": 3202,
+      "sha256": "af8b8948b73bb86181d93229dd044f4542f40bfc3d697ca122bf8763a58493a8"
+    },
+    {
+      "file": "current-12bps-results.json",
+      "bytes": 8540,
+      "sha256": "fe6289af568c1491227dad08a311ef5da0c726f595a5a8b6ea08a1f20b2ef877"
+    },
+    {
+      "file": "current-12bps-source-verification.json.gz.base64",
+      "bytes": 19517,
+      "sha256": "eac49420789d6016e9735575e24e43ee32134ad217e90a19a286a31063592df3"
+    },
+    {
+      "file": "current-25bps-independent-arithmetic-review.json",
+      "bytes": 3178,
+      "sha256": "a358f597bb455efc7f191bf143810eae72ad4cd88ffee960ca4c8854a7de02ee"
+    },
+    {
+      "file": "current-25bps-results.json",
+      "bytes": 8545,
+      "sha256": "b8b2814b089990fd162744a979fe7e89ebf6bee945be910a8e25da86f448fe4d"
+    },
+    {
+      "file": "current-25bps-source-verification.json.gz.base64",
+      "bytes": 19505,
+      "sha256": "b046640397f4a51cd79bf281c9db12c0335438d7c770d2742378dce2184d4968"
+    },
+    {
+      "file": "current-50bps-independent-arithmetic-review.json",
+      "bytes": 3213,
+      "sha256": "798e62c561a0824726f8819eee5003d981086ff499e813d787483e27ff203a71"
+    },
+    {
+      "file": "current-50bps-results.json",
+      "bytes": 8540,
+      "sha256": "18844acc1feda28295d77dd14494b6aa292cbc4fd96999ca07c6bd1d373a89ed"
+    },
+    {
+      "file": "current-50bps-source-verification.json.gz.base64",
+      "bytes": 19509,
+      "sha256": "2d9a3f0585f095f7476f041bf03c3fc6358564444a094def38a50ff3d51c7f83"
+    },
+    {
+      "file": "current-input-acceptance.json.gz.base64",
+      "bytes": 89593,
+      "sha256": "3df3d95df4795d806c79e2de6fe0232db08226593eafebacf52702d63ba09852"
+    },
+    {
+      "file": "current-input-acquisition-guard-evidence.json",
+      "bytes": 8875,
+      "sha256": "ce7bedd122baa6276cf0cd940c46e3891ea70018a629c65bf0b5b18aed9c4d61"
+    },
+    {
+      "file": "current-input-manifest.json",
+      "bytes": 43583,
+      "sha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad"
+    },
+    {
+      "file": "current-input-persistent-receipt.json",
+      "bytes": 1652,
+      "sha256": "71a569c3b1c7147255cddf16ba6a5ee580414c0fb10cc165541409bfe11ea61e"
+    },
+    {
+      "file": "current-input-public-summary.json",
+      "bytes": 19135,
+      "sha256": "d5d4b9de6caec09b0545ab39d4ed030eb5c262e1816f367979b3b46c987f00a9"
+    },
+    {
+      "file": "current-replay-provenance-regression.json",
+      "bytes": 663,
+      "sha256": "15ad81240f15cea686873e7a986cf40688ed7432093a8eed7b70fb2f2365f7ac"
+    },
+    {
+      "file": "current-vs-preserved-comparison.json",
+      "bytes": 34051,
+      "sha256": "9d3bbfaf99ffe27bcb4d5687253e4dc2f6eb5e3228a643cba9b6af6ebba2bbd8"
+    },
+    {
+      "file": "failed-cache-rejection.json",
+      "bytes": 437,
+      "sha256": "460a3c4a2b4acfda38b3554c98edceb685cbd0cfd1acd7121a217b672cd312c3"
+    },
+    {
+      "file": "final-source-convention-review.json",
+      "bytes": 3042,
+      "sha256": "434f8fd59f6bdb6c1918fc55e29e57bb309d5fb07a70ef504d63e56d81bf6d97"
+    },
+    {
+      "file": "final-validation-report.md",
+      "bytes": 18601,
+      "sha256": "27b554d428dc0cf9b38a60d4647e796731c182f3e6b5a238e143e0f739a6fb4c"
+    },
+    {
+      "file": "full-recorded-verification-receipt-review.json",
+      "bytes": 1638,
+      "sha256": "3e4ef76a59b111543f9a588fb25d3e5defbdf6bec981c2bfdae7414c922e9368"
+    },
+    {
+      "file": "independent-breaker-parity.json",
+      "bytes": 1328,
+      "sha256": "cda9d3961282ff9c3ab659b6bf2a8ca1035470b53098535b5d6c0e101cfb0470"
+    },
+    {
+      "file": "independent-derived-input-review.json",
+      "bytes": 1657,
+      "sha256": "34d837274a9e931237c30d047a9b3614a3f296b51c6458201772d6f254d10092"
+    },
+    {
+      "file": "independent-stop-parity.json",
+      "bytes": 1663,
+      "sha256": "81d7371cc88552244abe398437a0b7c2634ee39a1992a239e8119f47644b8963"
+    },
+    {
+      "file": "original-export-receipts.json",
+      "bytes": 119556,
+      "sha256": "b10cc2350311aea12a15ecd13402d6ac8faac20863202977ff26cc3fc53c6af8"
+    },
+    {
+      "file": "original-input-validation.json",
+      "bytes": 12774,
+      "sha256": "06d822332582d364f36b8919dae7bdba614cb5ca36121ebe47d6a3b169fb0a58"
+    },
+    {
+      "file": "preserved-frozen-12bps-metrics.json",
+      "bytes": 5597,
+      "sha256": "df3488ce66112a43e2b1a2b44a8255cefff13c9cab4875b725144f88d0ca4540"
+    },
+    {
+      "file": "preserved-frozen-cost-audit.json",
+      "bytes": 3586,
+      "sha256": "29db049cf92d52cf70d23aac5e8ef93841712a7101f5c07b6bee12bdfff299be"
+    },
+    {
+      "file": "replay-regression.json",
+      "bytes": 41262,
+      "sha256": "f0dfb175a3d8ea73f849e2f72f03f137922ebe0e7ad60cb34fd6d462b898dbda"
+    },
+    {
+      "file": "selected-real64-equivalence.json",
+      "bytes": 19802,
+      "sha256": "bc3ec851a4b72a2f971d9774589b2847b288851c7ecf0cec15179b629c15112e"
+    },
+    {
+      "file": "selected-real64-final-input-match.json",
+      "bytes": 2808,
+      "sha256": "af354130c57163bd1ee65ad7f2a82522b94bfb410bb18d38a865fdc339ab4773"
+    },
+    {
+      "file": "selected64-receipt-review.json",
+      "bytes": 1269,
+      "sha256": "e88a5ee7f3b0ff6c83376b2aa127cc93cafc6d2fd003fea5cc5c5eff3f918006"
+    },
+    {
+      "file": "strict-current-input-rejection.json",
+      "bytes": 2589,
+      "sha256": "db1d36c357446d6ec8fbd8986ba17b81ff8e3a463096359b03e4bcbf66f3cb3b"
+    }
+  ]
+}

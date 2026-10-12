@@ -1,0 +1,48 @@
+{
+  "contract": "c1-independent-full-recorded-verification-receipt-review-v1",
+  "passed": true,
+  "scope": "Read-only hash/identity/flags review of completed full uncached source verification receipts against saved run summaries and independent arithmetic reviews; no policy or compiler execution.",
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "results": [
+    {
+      "cost": 12,
+      "passed": true,
+      "verificationReceiptSha256": "0c6a794e8fe8d92b6604fca7b40d8b5ccb66acbb52285814872ae725d79ebe9b",
+      "recordedRunSha256": "2d9beee5cdd45493161dc8fa95835ff98c51dfd8c864f29f0b3d1dcd91a8336d",
+      "observations": 918,
+      "uncachedSourceSessionExecutions": 2754,
+      "matchedSleeves": [
+        "base",
+        "cooldown15",
+        "sector40"
+      ]
+    },
+    {
+      "cost": 25,
+      "passed": true,
+      "verificationReceiptSha256": "453d9821768e45c632380518c9bd6203bd903edcd358bda3c8a2015179e00220",
+      "recordedRunSha256": "08e5f7c48d503b59dbd95c07119b9f3a5b25787d5d71bf24cab408464511935d",
+      "observations": 918,
+      "uncachedSourceSessionExecutions": 2754,
+      "matchedSleeves": [
+        "base",
+        "cooldown15",
+        "sector40"
+      ]
+    },
+    {
+      "cost": 50,
+      "passed": true,
+      "verificationReceiptSha256": "6560799afff88b3de9608454701d2103cc747b06491760b5580b77cafd1ec68b",
+      "recordedRunSha256": "dc13bdd0dd827b47cd1810f00f93fac012a7276d808656312edb2fe0f0408779",
+      "observations": 918,
+      "uncachedSourceSessionExecutions": 2754,
+      "matchedSleeves": [
+        "base",
+        "cooldown15",
+        "sector40"
+      ]
+    }
+  ]
+}
