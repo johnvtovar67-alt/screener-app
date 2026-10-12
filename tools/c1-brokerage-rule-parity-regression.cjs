@@ -26,11 +26,19 @@ assert.equal(hash(originalCalendar), fixture.unchangedRuleSha256['lib/marketSess
   'The calendar comparison fixture must preserve the original production rules');
 // The owner authorized reuse of the fixed Eastern formatter and immutable
 // holiday sets to repair /api/top5 timeouts. Pin that exact implementation;
-// market-session-reuse-regression.cjs separately proves exact calendar parity.
-const repairedCalendarSha256 = '2b12b67b5000249f05431908e21c8b8e0979d881f2390d11430287aafe818cc6';
+// The owner also explicitly authorized the January 9, 2025 exceptional Carter
+// closure repair. market-session-reuse-regression.cjs proves exact parity to
+// the immutable original calendar with only that one-day defect repaired.
+const repairedCalendarSha256 = '611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f';
+// The same recreation instruction explicitly repairs SCHW being removed only
+// after hypothetical account allocation. Pin that current account runtime;
+// c1-validation-repairs-regression.cjs proves the original slot defect and the
+// repaired all-sleeve projection. Other production source pins stay unchanged.
+const repairedAccountSha256 = '2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83';
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   assert.equal(hash(fs.readFileSync(path.join(root, file))),
-    file === 'lib/marketSession.js' ? repairedCalendarSha256 : expected,
+    file === 'lib/marketSession.js' ? repairedCalendarSha256 :
+      file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 : expected,
     file + ': the brokerage execution cap must not change the production trading rules');
 }
 

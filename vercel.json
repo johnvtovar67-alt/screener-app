@@ -9,5 +9,10 @@
       "path": "/api/cron/full-market-discovery",
       "schedule": "15 1 * * 2-6"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "audit/c1-current-policy-validation-20261012": false
+    }
+  }
 }
