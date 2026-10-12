@@ -31,14 +31,25 @@ assert.equal(hash(originalCalendar), fixture.unchangedRuleSha256['lib/marketSess
 // the immutable original calendar with only that one-day defect repaired.
 const repairedCalendarSha256 = '611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f';
 // The owner explicitly authorized SCHW allocation exclusion; the defect removed it only
-// after hypothetical account allocation. Pin that current account runtime;
+// after hypothetical account allocation. Pin that current account runtime plus the private historical-fact replay seam;
 // c1-validation-repairs-regression.cjs proves the original slot defect and the
 // repaired all-sleeve projection and unchanged holding ranks. Other pins stay unchanged.
-const repairedAccountSha256 = 'aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13';
+const repairedAccountSha256 = '02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb';
+// Owner-authorized historical compatibility seams are pinned exactly. The
+// original fixture and all other source pins remain immutable; focused tests
+// verify legacy identities, old-date economics and strict new-activity gates.
+const compatibilitySourceSha256 = {
+  "lib/c1AccountExecution.js": "26cefd2ba3dd020234e7b6d4b2e8621cdd5b1ea2debdba76b277448c374c8983",
+  "lib/c1AccountInput.js": "fa2f6f9691ed06575b7491898ef10b1709bab8d17a427463fb0b21c47f80a432",
+  "lib/c1AccountLedger.js": "575d0173f5513ce7a1e567ed6f8b9ee75c079b6f0e6269ffddb60b0542291455",
+  "lib/c1AccountProjection.js": "8aa8fa0cced356b37126673b1a92d340b58940c9732dd5585d7917bf1152090f",
+  "lib/c1AccountSeed.js": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
+  "lib/c1ActualFillReplay.js": "632b121db966ea313e7ef487e61b429615dfedcd69af9778e62ef8489b4703f5"
+};
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   assert.equal(hash(fs.readFileSync(path.join(root, file))),
     file === 'lib/marketSession.js' ? repairedCalendarSha256 :
-      file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 : expected,
+      file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 : compatibilitySourceSha256[file] || expected,
     file + ': the brokerage execution cap must not change the production trading rules');
 }
 

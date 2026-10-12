@@ -190,9 +190,40 @@ replace("          (Number.isFinite(config.maxSectorPositions) &&\n            [
 replace("            invalidationPrice: number(order.stopPrice),\n          });\n          continue;\n        }\n        if(completion && (pendingActualRiskExits.has(order.symbol) || (existing.stopPrice>0 && number(row.open)<=existing.stopPrice)))continue;\n        const existingValue=completion?existing.shares*number(row.open):0;\n        const currentEquity = equityValue(cash, positions, prices, \"open\");\n        const recordedBuy = actualReplay?.lookup(session.date,order.symbol,\"buy\",order.action);\n        if(recordedBuy && !recordedBuy.shares)continue;\n","            invalidationPrice: number(order.stopPrice),\n          });\n          continue;\n        }\n        if(completion && (pendingActualRiskExits.has(order.symbol) || (existing.stopPrice>0 && number(row.open)<=existing.stopPrice))){noteEntrySkip('existing-stop-or-exit');continue;}\n        const existingValue=completion?existing.shares*number(row.open):0;\n        const currentEquity = equityValue(cash, positions, prices, \"open\");\n        const recordedBuy = actualReplay?.lookup(session.date,order.symbol,\"buy\",order.action);\n        if(recordedBuy && !recordedBuy.shares)continue;\n");
 replace("        const shares = recordedBuy ? recordedBuy.shares : plannedShares;\n        const executionCommission = recordedBuy ? recordedBuy.fee : config.commissionPerOrder;\n        const cost = shares * fill + executionCommission;\n        if(recordedBuy && (shares<=0 || cost>cash+1e-7))throw new Error('Actual purchase exceeds account cash');\n        if (!recordedBuy && (shares < 1 || cost < config.minimumTrade || cost > cash)) continue;\n        cash -= cost;\n        if(recordedBuy)actualReplay.commit(recordedBuy);\n        if(completion){\n          const total=existing.shares+shares;\n","        const shares = recordedBuy ? recordedBuy.shares : plannedShares;\n        const executionCommission = recordedBuy ? recordedBuy.fee : config.commissionPerOrder;\n        const cost = shares * fill + executionCommission;\n        if(recordedBuy && (shares<=0 || cost>cash+1e-7))throw new Error('Actual purchase exceeds account cash');\n        if (!recordedBuy && (shares < 1 || cost < config.minimumTrade || cost > cash)) {noteEntrySkip(cost>cash?'insufficient-cash':'trade-size-limit');continue;}\n        cash -= cost;\n        if(recordedBuy)actualReplay.commit(recordedBuy);\n        if(completion){\n          const total=existing.shares+shares;\n");
 // A current quote can invalidate an unfilled opening entry; it must not reserve a slot.
-replace("        if (portfolioRiskPaused) {noteEntrySkip('portfolio-cooldown');continue;}","        if (portfolioRiskPaused) {noteEntrySkip('portfolio-cooldown');continue;}\n        if (allocationBlocked.has(order.symbol)) {noteEntrySkip('excluded-symbol');continue;}\n        const currentEntryBlock=accountSeed&&session.accountEntryBlocks?.find(b=>b.symbol===order.symbol&&b.sleeve===accountSeed.sleeve);\n        if(currentEntryBlock){noteEntrySkip(currentEntryBlock.reason);continue;}");
+replace("        if (portfolioRiskPaused) {noteEntrySkip('portfolio-cooldown');continue;}","        if (portfolioRiskPaused) {noteEntrySkip('portfolio-cooldown');continue;}\n        const currentEntryBlock=accountSeed&&session.accountEntryBlocks?.find(b=>b.symbol===order.symbol&&b.sleeve===accountSeed.sleeve);\n        if(currentEntryBlock){noteEntrySkip(currentEntryBlock.reason);continue;}");
+// Exact pre-SCHW source reconstructs immutable legacy order identities only.
+// It is never selected by a strategy option or used for a new opening plan.
+const legacyPath='lib/c1LegacyAccountSimulator.js',rawLegacySource=source;
+const legacyPin='15aecf5479fa496bb7fe232f8367aab2c4d37597bba0c347b2064e38e1886e4b';
+assert.equal(createHash('sha256').update(rawLegacySource).digest('hex'),legacyPin,'Legacy account source must remain the exact pre-SCHW runtime at 9097e89');
+assert.equal(fs.readFileSync('tools/fixtures/c1-account-simulator-9097e89.js','utf8'),rawLegacySource,'Original account fixture changed');
+const rawLegacySeed=fs.readFileSync('tools/fixtures/c1-account-seed-9097e89.js','utf8');
+const legacyCalendar=fs.readFileSync('tools/fixtures/c1-market-session-9097e89.js','utf8');
+assert.equal(createHash('sha256').update(rawLegacySeed).digest('hex'),'c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e','Original seed fixture changed');
+assert.equal(createHash('sha256').update(legacyCalendar).digest('hex'),'2b12b67b5000249f05431908e21c8b8e0979d881f2390d11430287aafe818cc6','Original calendar fixture changed');
+// Historical IDs also depended on the old calendar's seeded holding age. Bind
+// only this reconstruction runtime to those original dependencies; corrected
+// live account state and every new opening continue to use the current seed.
+assert.equal(rawLegacySource.split("from './c1AccountSeed'").length,2);
+assert.equal(rawLegacySeed.split("from './marketSession'").length,2);
+const legacySource=rawLegacySource.replace("from './c1AccountSeed'","from './c1LegacyAccountSeed'");
+const legacySeed=rawLegacySeed.replace("from './marketSession'","from './c1LegacyMarketSession'");
+replace("        if (portfolioRiskPaused) {noteEntrySkip('portfolio-cooldown');continue;}","        if (portfolioRiskPaused) {noteEntrySkip('portfolio-cooldown');continue;}\n        if (allocationBlocked.has(order.symbol)) {noteEntrySkip('excluded-symbol');continue;}");
 // Exclude SCHW before allocation, retaining the existing holding-rank pool.
 replace('  const blocked = new Set(config.blockedSymbols.map(symbolOf));', '  const blocked = new Set(config.blockedSymbols.map(symbolOf));\n  const allocationBlocked = new Set([...blocked, "SCHW"]);');
 replace('      const eligibleForRankedEntry = (signal) =>\n        entrySignalQualifies(signal, config) &&\n        !blocked.has(symbolOf(signal)) &&', '      const eligibleForRankedEntry = (signal) =>\n        entrySignalQualifies(signal, config) &&\n        !allocationBlocked.has(symbolOf(signal)) &&');
-if(process.argv.includes('--check'))assert.equal(fs.readFileSync(path,'utf8'),source,'Generated account simulator changed outside declared seams');
-else fs.writeFileSync(path,source);
+// Canonically reconciled completed rank sales are immutable accounting facts.
+// A repaired holding age can change today's recommendation, never a posted
+// historical sale. Only the ledger's transient capability enables this seam.
+replace("      const todaysOrders = pending.splice(0, pending.length);", "      if(actualReplay)for(const recorded of actualReplay.reconciledRankSales(session.date)){\n        const position=positions.get(recorded.symbol);\n        if(!position)throw new Error('Reconciled rank sale has no owned position');\n        executeSale({date:session.date,symbol:recorded.symbol,position,reason:recorded.reason,shares:position.shares,fill:0});\n      }\n      const todaysOrders = pending.splice(0, pending.length);");
+if(process.argv.includes('--check')){
+  assert.equal(fs.readFileSync(path,'utf8'),source,'Generated account simulator changed outside declared seams');
+  assert.equal(fs.readFileSync(legacyPath,'utf8'),legacySource,'Legacy account identity source changed from the immutable pre-SCHW runtime');
+  assert.equal(fs.readFileSync('lib/c1LegacyAccountSeed.js','utf8'),legacySeed,'Legacy account seed changed outside its pinned dependency binding');
+  assert.equal(fs.readFileSync('lib/c1LegacyMarketSession.js','utf8'),legacyCalendar,'Legacy calendar source changed from the immutable original');
+}else{
+  fs.writeFileSync(path,source);
+  fs.writeFileSync(legacyPath,legacySource);
+  fs.writeFileSync('lib/c1LegacyAccountSeed.js',legacySeed);
+  fs.writeFileSync('lib/c1LegacyMarketSession.js',legacyCalendar);
+}
