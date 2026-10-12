@@ -39,6 +39,15 @@ function currentCompiler(root, universe = 'sp500') {
     compact: loader.load('lib/replayDatasetCompaction.js').compactReplaySession,
     pins: sourcePins(root, ['lib/c1LiveInput.js', 'lib/replayDatasetCompaction.js']) };
 }
+function projectConditionalProfiles(rows) {
+  // Only the source's scalar profile projection is modeled here. Applying its
+  // index-count validator to a sector-valid subset invents a smaller index.
+  // The original complete member set and all invalid sector facts are retained;
+  // the unchanged live validator rejects them in strict mode.
+  return rows.map(row => ({ symbol: row.symbol, name: row.name || row.companyName || row.symbol,
+    sector: typeof row.sector === 'string' ? row.sector.trim() : row.sector }))
+    .sort((a, b) => a.symbol.localeCompare(b.symbol));
+}
 function compileCurrentBatch(compiler, raw, start, count) {
   // Production compiles one observed date with fresh decision memory. Every
   // date has no fundamentals/events, so fresh discovery rows are empty and
@@ -126,7 +135,7 @@ function prepareRawInput({ originalSessions, checkpoint, blueprint, signature, p
     // Use the actual live member sanitizer on each dated, evidenced member set.
     // Members with no saved name/sector can only have insufficient history and
     // remain in membership without fabricated security metadata or factors.
-    if (normalizeMembers && expected253.length) for (const profile of normalizeMembers(activeUniverseSymbols.flatMap(symbol => profiles.has(symbol) ? [profiles.get(symbol)] : []))) profiles.set(profile.symbol, profile);
+    if (normalizeMembers && expected253.length) for (const profile of normalizeMembers(activeUniverseSymbols.flatMap(symbol => profiles.has(symbol) ? [profiles.get(symbol)] : []), original.date)) profiles.set(profile.symbol, profile);
     summary.currentMissingPriceMemberRows += missingCurrent.length;
     summary.current253Rows += expected253.length; summary.original50Rows += expected50.length;
     summary.removedShortHistoryRows += expected50.length - expected253.length;
@@ -157,6 +166,7 @@ function buildCurrentInput({ root = process.cwd(), originalRoot, outputRoot, con
   assert.equal(accepted.universeSha256, sha(fs.readFileSync(universeFile)));
   const compiler = currentCompiler(root), profiles = new Map(), originalSessions = [], originalChunks = [];
   const inputContract = conditionalArchivedMetadata ? CONDITIONAL_CONTRACT : CONTRACT;
+  const literalMetadataSourceGateErrors = [];
   for (const chunk of manifest.chunks) {
     const file = path.join(originalRoot, 'chunks', path.basename(chunk.pathname)), compressed = fs.readFileSync(file), raw = zlib.gunzipSync(compressed);
     assert.equal(compressed.length, chunk.compressedBytes);
@@ -181,14 +191,14 @@ function buildCurrentInput({ root = process.cwd(), originalRoot, outputRoot, con
   const checkpoint = JSON.parse(fs.readFileSync(checkpointFile)), blueprint = JSON.parse(fs.readFileSync(universeFile)).privateBlueprint;
   const signature = JSON.parse(manifest.signature);
   const { raw, summary } = prepareRawInput({ originalSessions, checkpoint, blueprint, signature, profiles,
-    normalizeMembers: rows => {
+    normalizeMembers: (rows, date) => {
       if (!conditionalArchivedMetadata) return compiler.live.c1LiveMembers('sp500', rows);
       // Explicit offline counterfactual only: retain the observed invalid
-      // metadata, while the actual source sanitizes every valid profile.
-      // The unchanged source still rejects the complete original member set.
-      const valid = rows.filter(row => typeof row.sector === 'string' && row.sector.trim() && !/^(other|unknown|n\/a)$/i.test(row.sector.trim()));
-      const invalid = rows.filter(row => !valid.includes(row)).map(row => ({ symbol: row.symbol, name: row.name, sector: row.sector }));
-      return [...compiler.live.c1LiveMembers('sp500', valid), ...invalid];
+      // metadata through the same scalar shape. No source input guard is
+      // modified or declared passed; strict mode still calls the real validator.
+      try { compiler.live.c1LiveMembers('sp500', rows); }
+      catch (error) { literalMetadataSourceGateErrors.push({ date, observedNamedMemberCount: rows.length, sourceError: error.message }); }
+      return projectConditionalProfiles(rows);
     },
     isSessionDay: compiler.loader.load('lib/marketSession.js').isUsMarketSessionDay,
     completedSessionDay: compiler.loader.load('lib/marketSession.js').latestCompletedMarketSessionDay,
@@ -221,6 +231,7 @@ function buildCurrentInput({ root = process.cwd(), originalRoot, outputRoot, con
   }
   assert.equal(sha(JSON.stringify(raw.sessions.map(session => session.prices))), rawPriceDigest, 'Original raw prices are immutable');
   const literalLiveInputGuardFailures = {
+    metadataSourceGateErrors: literalMetadataSourceGateErrors,
     sectors: Object.entries(summary.archivedSectorGateExceptions).map(([symbol, row]) => ({ symbol, sector: row.sector,
       affectedSessionDates: row.dates.filter(date => date >= '2023-01-04') })).filter(row => row.affectedSessionDates.length),
     historyGaps: summary.historicalGapGateExceptions,
@@ -276,4 +287,4 @@ if (require.main === module) {
     throw error;
   }
 }
-module.exports = { CONTRACT, CONDITIONAL_CONTRACT, currentCompiler, compileCurrentBatch, prepareRawInput, buildCurrentInput, sourcePins };
+module.exports = { CONTRACT, CONDITIONAL_CONTRACT, currentCompiler, projectConditionalProfiles, compileCurrentBatch, prepareRawInput, buildCurrentInput, sourcePins };

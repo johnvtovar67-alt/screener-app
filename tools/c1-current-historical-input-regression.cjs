@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { currentCompiler, compileCurrentBatch, prepareRawInput } = require('./c1-build-current-historical-input.cjs');
+const { currentCompiler, projectConditionalProfiles, compileCurrentBatch, prepareRawInput } = require('./c1-build-current-historical-input.cjs');
 const compiler = currentCompiler(process.cwd(), 'nasdaq');
 const { isUsMarketSessionDay } = compiler.loader.load('lib/marketSession.js');
 const dates = [];
@@ -10,7 +10,20 @@ for (let time = Date.parse('2025-06-02T12:00:00Z'); dates.length < 260; time += 
 const members = Array.from({ length: 90 }, (_, index) => ({
   symbol: 'T' + index, name: 'Fixture ' + index, sector: 'Sector ' + index % 5, cik: String(index + 1) }));
 const sanitized = compiler.live.c1LiveMembers('nasdaq', members);
+assert.deepEqual(JSON.parse(JSON.stringify(sanitized)), projectConditionalProfiles(members), 'Conditional scalar projection must equal actual source for valid profiles');
 assert.ok(sanitized.every(row => !('cik' in row)), 'Use current live profile sanitation before issuer classification');
+const invalidSectorMembers = structuredClone(members); invalidSectorMembers[0].sector = 'Other';
+assert.throws(() => compiler.live.c1LiveMembers('nasdaq', invalidSectorMembers), /Current sector is missing/);
+assert.equal(projectConditionalProfiles(invalidSectorMembers).find(row => row.symbol === members[0].symbol).sector, 'Other', 'Conditional metadata retains the observed source-invalid sector');
+const fiveHundredMembers = Array.from({ length: 500 }, (_, index) => ({
+  symbol: 'S' + index, name: 'Original issuer ' + index, sector: index < 20 ? 'Other' : 'Technology', cik: String(index + 1) }));
+assert.throws(() => compiler.live.c1LiveMembers('sp500', fiveHundredMembers), /Current sector is missing/);
+assert.throws(() => compiler.live.c1LiveMembers('sp500', fiveHundredMembers.filter(row => row.sector !== 'Other')), /Index membership count is outside/,
+  'Removing invalid sectors before scalar projection reproduces the artificial 480-member adapter bug');
+const projectedFiveHundred = projectConditionalProfiles(fiveHundredMembers);
+assert.equal(projectedFiveHundred.length, 500, 'Conditional metadata preserves the full observed member count');
+assert.equal(projectedFiveHundred.filter(row => row.sector === 'Other').length, 20, 'Every source-invalid label is retained');
+assert.ok(projectedFiveHundred.every(row => !('cik' in row)));
 const symbols = [...sanitized.map(row => row.symbol), 'SPY', 'QQQ'];
 const histories = Object.fromEntries(symbols.map((symbol, index) => [symbol,
   dates.filter((date, day) => symbol !== 'T89' || day >= 8).map((date, day) => {
