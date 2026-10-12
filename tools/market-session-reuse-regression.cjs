@@ -15,6 +15,18 @@ assert.equal(actualFixtureBlob, expectedFixtureBlob,
   'Calendar baseline must remain the exact marketSession.js Git blob from deployed ffdd79b');
 const actualSourceSha256 = crypto.createHash('sha256')
   .update(fs.readFileSync(path.join(repo, actualRelative))).digest('hex');
+// The owner explicitly authorized the exceptional Carter closure on October 12,
+// 2026. Preserve the immutable deployment fixture and compare every export to
+// that exact source with only the identified one-day defect repaired.
+const holidayReturn = '  return out;\n}';
+assert.equal(fixture.toString().split(holidayReturn).length, 2);
+const authorizedBaselineRelative = `work/c1-calendar-authorized-${process.pid}.js`;
+fs.mkdirSync(path.join(repo, 'work'), { recursive: true });
+fs.writeFileSync(path.join(repo, authorizedBaselineRelative),
+  fixture.toString().replace(holidayReturn, "  out.add('2025-01-09');\n" + holidayReturn));
+const original = createResearchModuleLoader(repo).load(baselineRelative);
+assert.equal(original.isUsMarketSessionDay('2025-01-09'), true,
+  'The unchanged original fixture must reproduce the authorized closure defect');
 
 // Freeze only this offline process's default Date construction. Both source
 // modules receive the same clock; explicit values retain native Date parsing.
@@ -28,7 +40,7 @@ let baseline, variant;
 try {
   global.Date = ProofDate;
   const loader = createResearchModuleLoader(repo);
-  baseline = loader.load(baselineRelative);
+  baseline = loader.load(authorizedBaselineRelative);
   variant = loader.load(actualRelative);
 } finally {
   global.Date = NativeDate;
@@ -96,6 +108,7 @@ const expectedDateRules = [
   ['2026-04-03', false, 960], ['2021-07-05', false, 960],
   ['2021-12-24', false, 960], ['2022-12-26', false, 960],
   ['2025-07-03', true, 780], ['2026-07-03', false, 960],
+  ['2025-01-09', false, 960],
   ['2026-11-27', true, 780], ['2026-12-24', true, 780],
 ];
 for (const [key, session, close] of expectedDateRules) {
@@ -105,6 +118,7 @@ for (const [key, session, close] of expectedDateRules) {
 
 const specialDays = [
   '2021-06-18', '2022-06-20', '2023-06-19', '2021-12-31',
+  '2025-01-08', '2025-01-09', '2025-01-10',
   '2026-04-03', '2025-07-03', '2026-07-03', '2026-11-27', '2026-12-24',
   '2024-03-08', '2024-03-10', '2024-03-11', '2024-11-01', '2024-11-03', '2024-11-04',
   '2026-03-06', '2026-03-08', '2026-03-09', '2026-10-30', '2026-11-01', '2026-11-02',
@@ -147,6 +161,7 @@ for (const [index, value] of invalidAndLegacyDates.entries()) {
 }
 
 const distancePairs = [
+  ['2025-01-08', '2025-01-10'], ['2025-01-08', '2025-01-09'],
   ['2026-08-28', '2026-08-31'], ['2026-11-25', '2026-11-27'],
   ['2021-12-30', '2022-01-04'], ['2021-06-17', '2021-06-21'], ['2022-06-17', '2022-06-21'],
   ['2024-02-28', '2024-03-01'], ['2026-02-30', '2026-02-30'], ['2026-02-30', '2026-03-03'],
@@ -212,7 +227,7 @@ function loadWithIntlFault(relative, mode) {
   }
 }
 for (const mode of ['first-construction', 'always-construction', 'first-format']) {
-  baseline = loadWithIntlFault(baselineRelative, mode);
+  baseline = loadWithIntlFault(authorizedBaselineRelative, mode);
   variant = loadWithIntlFault(actualRelative, mode);
   for (const value of ['2026-08-31T13:30:00Z', '2026-08-31T20:00:00Z', new NativeDate(NaN), '2026-11-27T18:00:00Z']) {
     compare('easternMarketClock', [value], `cold formatter ${mode}`);
@@ -227,6 +242,7 @@ const summary = {
   comparison: 'Deep strict exact parity of returned values and exception name/message; NaN, undefined and negative zero retained',
   baselineGitBlob: actualFixtureBlob,
   baselineCommit: 'ffdd79b',
+  authorizedCalendarException: 'January 9, 2025 Carter market closure; immutable baseline plus exactly this one-day repair',
   actualSourceSha256,
   exportsCompared: Object.keys(baseline).length,
   exactComparisons: comparisons,
