@@ -1,0 +1,41 @@
+{
+  "contract": "c1-explicit-research-baseline-registry-v1",
+  "finalComparisonBaselineId": "production-equivalent",
+  "savedHeadlineReproductionBaselineId": "audit-historical",
+  "selectionMustBeExplicit": true,
+  "historicalResultsMustMatchSelectedSourceGraph": true,
+  "ownerResolution": "Reproduce saved 289.07% audit separately; final Challenger comparisons use SCHW allocation excluded with existing holding-rank pool preserved. Engineering and production actions belong to a separate session.",
+  "baselines": [
+    {
+      "id": "audit-historical",
+      "role": "Separate reproduction of preserved conditional audit headline; never relabel as production-equivalent results.",
+      "sourceRoot": "imported/source",
+      "manifestPath": "imported/source-snapshot-manifest.json",
+      "sourcePinPath": "imported/source-pin.json",
+      "sourceCommit": "006e067697385143684c7417b18bc7909c2d217e",
+      "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+      "simulatorSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+      "historicalBaselineAvailable": "Saved aggregate conditional audit results; full matched private inputs are a separate acceptance gate.",
+      "schwPolicy": {
+        "excludedFromEntryAllocation": true,
+        "retainedInHoldingRankPool": false
+      }
+    },
+    {
+      "id": "production-equivalent",
+      "role": "Final Champion and every Challenger comparison baseline after matched inputs and independent path verification.",
+      "sourceRoot": "baselines/production-equivalent/source",
+      "manifestPath": "baselines/production-equivalent/source-snapshot-manifest.json",
+      "sourcePinPath": "baselines/production-equivalent/source-pin.json",
+      "sourceCommit": "e2b98471311fb702113baf0ca64473b92ccfd142",
+      "sourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf",
+      "simulatorSha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+      "historicalBaselineAvailable": false,
+      "schwPolicy": {
+        "excludedFromEntryAllocation": true,
+        "retainedInHoldingRankPool": true
+      },
+      "deployedStatusClaimed": false
+    }
+  ]
+}

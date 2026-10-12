@@ -1,0 +1,502 @@
+{
+  "contract": "c1-complete-frozen-overlay-inventory-v1",
+  "passed": true,
+  "rows": [
+    {
+      "experimentId": "champion",
+      "family": "champion",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "horizon__s100ex15_f50ex5",
+      "family": "horizon",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "horizon__s110ex20_f55ex5",
+      "family": "horizon",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "horizon__s130ex20_f65ex5",
+      "family": "horizon",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "horizon__s140ex25_f70ex10",
+      "family": "horizon",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "global_sector__global80_sector20",
+      "family": "global_sector",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "global_sector__global70_sector30",
+      "family": "global_sector",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "global_sector__global60_sector40",
+      "family": "global_sector",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "global_sector__global50_sector50",
+      "family": "global_sector",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "slow_fast__slow50",
+      "family": "slow_fast",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "slow_fast__slow75",
+      "family": "slow_fast",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "slots__slots2",
+      "family": "slots",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "slots__slots4",
+      "family": "slots",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "slots__slots5",
+      "family": "slots",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "sector_caps__stronger",
+      "family": "sector_caps",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "sector_caps__permissive",
+      "family": "sector_caps",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "sector_position_limit__max1",
+      "family": "sector_position_limit",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "sector_position_limit__max3",
+      "family": "sector_position_limit",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "entry_queue__depth6",
+      "family": "entry_queue",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "entry_queue__depth12",
+      "family": "entry_queue",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "entry_queue__depth15",
+      "family": "entry_queue",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "adv__usdm200",
+      "family": "adv",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "adv__usdm500",
+      "family": "adv",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "adv__usdm750",
+      "family": "adv",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "ordinary_confirmation__sessions2",
+      "family": "ordinary_confirmation",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "ordinary_confirmation__sessions3",
+      "family": "ordinary_confirmation",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "ordinary_hysteresis__top8",
+      "family": "ordinary_hysteresis",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "ordinary_hysteresis__top10",
+      "family": "ordinary_hysteresis",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "early_confirmation__sessions4",
+      "family": "early_confirmation",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "early_confirmation__sessions5",
+      "family": "early_confirmation",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "early_rank__top12",
+      "family": "early_rank",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "early_rank__top15",
+      "family": "early_rank",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "profit_activation__peak15",
+      "family": "profit_activation",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "profit_activation__peak20",
+      "family": "profit_activation",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "profit_confirmation__sessions3",
+      "family": "profit_confirmation",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "profit_confirmation__sessions4",
+      "family": "profit_confirmation",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak20_top9_2",
+      "family": "large_gain_deterioration",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak25_top9_2",
+      "family": "large_gain_deterioration",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "family": "large_gain_deterioration",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "scale_drawdown__trigger8_restore5",
+      "family": "scale_drawdown",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "scale_drawdown__trigger10_restore7",
+      "family": "scale_drawdown",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "scale_drawdown__trigger12_restore9",
+      "family": "scale_drawdown",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "scale_volatility__trigger20_restore15",
+      "family": "scale_volatility",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "scale_volatility__trigger25_restore20",
+      "family": "scale_volatility",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "scale_volatility__trigger30_restore25",
+      "family": "scale_volatility",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "initial_stop__pct12",
+      "family": "initial_stop",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "initial_stop__pct16",
+      "family": "initial_stop",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "sleeve_breaker__pct10",
+      "family": "sleeve_breaker",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    },
+    {
+      "experimentId": "sleeve_breaker__pct14",
+      "family": "sleeve_breaker",
+      "implementation": "source_pinned_research_overlay",
+      "syntheticVerificationRequired": true,
+      "historicalRuns": 0,
+      "performanceVerified": false,
+      "baselineId": "production-equivalent",
+      "overlaySupported": true
+    }
+  ],
+  "challengerCount": 48,
+  "finalComparisonBaseline": "production-equivalent",
+  "historicalAuditBaseline": "audit-historical",
+  "historicalPerformanceRuns": 0,
+  "remainingExternalGate": "Exact licensed private input access and matched full baseline replay",
+  "productionChanged": false
+}

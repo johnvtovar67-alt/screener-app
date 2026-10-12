@@ -4,6 +4,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 PROGRAM = Path(__file__).resolve().parent
@@ -31,7 +32,7 @@ def contained(root, relative):
     return target
 
 
-def inspect(data_root=None, durability_receipt=None):
+def inspect(data_root=None, durability_receipt=None, baseline_id=None):
     errors = []
     manifest_file = EVIDENCE / 'current-input-manifest.json'
     manifest_bytes = manifest_file.read_bytes()
@@ -43,14 +44,20 @@ def inspect(data_root=None, durability_receipt=None):
     if manifest.get('actualLiveInputAccepted') is not False or manifest.get('eligibleForAlphaClaim') is not False:
         errors.append('Conditional evidence limitation is missing')
 
-    source_inventory = PROGRAM / 'imported/source-snapshot-manifest.json'
+    if baseline_id not in ('audit-historical', 'production-equivalent'):
+        raise ValueError('Choose explicit --baseline audit-historical or production-equivalent')
+    baseline = json.loads(subprocess.check_output([
+        'node', '-e', "console.log(JSON.stringify(require(process.argv[1]).verifyBaseline(process.argv[2])))",
+        str(PROGRAM / 'baselines/selection.cjs'), baseline_id,
+    ], text=True))
+    source_inventory = Path(baseline['manifestPath'])
     source_checks = []
     if not source_inventory.exists():
         errors.append('Exact application source snapshot inventory is unavailable')
     else:
         inventory = json.loads(source_inventory.read_text())
         for entry in inventory['files']:
-            source = contained(PROGRAM / 'imported/source', entry['path'])
+            source = contained(Path(baseline['sourceRoot']), entry['path'])
             ok = source.is_file() and file_hash(source) == entry['sha256']
             source_checks.append({'path': entry['path'], 'matched': ok})
             if not ok:
@@ -94,30 +101,31 @@ def inspect(data_root=None, durability_receipt=None):
         durable &= receipt.get('originalArchiveAndRawWarmupPersisted') is True
     if not durable:
         errors.append('All raw inputs and warmup are not verified persisted to GitHub')
-    errors.append('Champion source identity is unresolved: audit snapshot and engineering source have different holding-rank behavior')
 
     return {'contract': 'c1-challenger-readiness-v1', 'readyForLongAnalysis': not errors,
             'championReproducedThisProgram': False, 'challengersRun': 0,
-            'sourceChecksScope': 'Recovered audit Champion snapshot only; not equivalence to engineering commit e2b9847',
+            'baselineId': baseline_id,
+            'sourceChecksScope': 'Explicit chosen immutable baseline; audit and production-equivalent sources remain separate',
             'engineeringSourceHistoricalEquivalenceEstablished': False,
-            'sourceIdentityResolution': 'blocked: audit snapshot and engineering source have materially different holding ranks',
+            'sourceIdentityResolution': 'Resolved by owner: audit-historical reproduces saved headline; production-equivalent is final comparison baseline',
             'comparativePerformanceFindingsVerified': False,
             'actualLiveInputAccepted': False, 'eligibleForAlphaClaim': False,
             'sourceChecks': source_checks, 'inputChecks': input_checks,
             'requiredCurrentChunkCount': len(manifest['chunks']),
             'requiredCurrentCompressedBytes': sum(item['compressedBytes'] for item in manifest['chunks']),
             'githubInputPersistenceVerified': durable, 'errors': errors,
-            'nextGate': 'Restore and persist exact inputs, then reproduce Champion before Challenger execution'}
+            'nextGate': 'Restore licensed private original inputs, reproduce audit headline separately, and establish production-equivalent baseline before comparisons'}
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root')
     parser.add_argument('--durability-receipt')
+    parser.add_argument('--baseline', choices=['audit-historical', 'production-equivalent'], required=True)
     args = parser.parse_args()
     try:
-        report = inspect(args.data_root, args.durability_receipt)
-    except (OSError, ValueError, KeyError, gzip.BadGzipFile) as error:
+        report = inspect(args.data_root, args.durability_receipt, args.baseline)
+    except (OSError, ValueError, KeyError, gzip.BadGzipFile, subprocess.CalledProcessError) as error:
         report = {'contract': 'c1-challenger-readiness-v1', 'readyForLongAnalysis': False,
                   'championReproducedThisProgram': False, 'challengersRun': 0,
                   'errors': [str(error)]}

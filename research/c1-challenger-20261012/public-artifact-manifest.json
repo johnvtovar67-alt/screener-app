@@ -1,7 +1,10 @@
 {
-  "contract": "c1-challenger-public-artifact-manifest-v1",
+  "contract": "c1-challenger-public-artifact-manifest-v2",
   "productionBaseCommit": "9097e894a487a91eeace7a8f76fb3b42f54a991d",
   "existingPublicAuditCommit": "006e067697385143684c7417b18bc7909c2d217e",
+  "productionEquivalentSourceCommit": "e2b98471311fb702113baf0ca64473b92ccfd142",
+  "selfExcluded": true,
+  "researchOpen": true,
   "files": [
     {
       "path": "research/c1-challenger-20261012/.gitignore",
@@ -10,8 +13,43 @@
     },
     {
       "path": "research/c1-challenger-20261012/README.md",
-      "bytes": 1748,
-      "sha256": "3ce61e6750c77c21f1bf0d64133340344aaf8699c7c48f0b00f6805641f8f47c"
+      "bytes": 2717,
+      "sha256": "f9281eb115f7aaf7d2eb1eb69dfa33e553c38a2fe0f8d74b959cb29cc7706e84"
+    },
+    {
+      "path": "research/c1-challenger-20261012/analysis/README.md",
+      "bytes": 15722,
+      "sha256": "6fc78d55bee618f95de1cf8347b2f672296df7daa5973c02cad2707343559b2a"
+    },
+    {
+      "path": "research/c1-challenger-20261012/analysis/analyze.cjs",
+      "bytes": 8500,
+      "sha256": "0c4e52123430c6e183d21e26ff496bbc05f1dc86c26024bb256acfed52087429"
+    },
+    {
+      "path": "research/c1-challenger-20261012/analysis/compare-validation.cjs",
+      "bytes": 16928,
+      "sha256": "4e844fcad859bfb3b242402b96910c8af858ad783c54e13294a044cf5ac500c7"
+    },
+    {
+      "path": "research/c1-challenger-20261012/analysis/diagnostics-regression.cjs",
+      "bytes": 29586,
+      "sha256": "6576034949cda40a2989c33adb703b899f7b0ffbbdee72952ace4da2cdf93fe2"
+    },
+    {
+      "path": "research/c1-challenger-20261012/analysis/finalist-lock.cjs",
+      "bytes": 22911,
+      "sha256": "fb104405f327baa072bf05535b3bb4f5be3845cade42293c5a38e15d7ea3dcdd"
+    },
+    {
+      "path": "research/c1-challenger-20261012/analysis/scorecard.cjs",
+      "bytes": 34999,
+      "sha256": "6a72e45d0db20fd96534ecb7de4bdaba7756de031391a2f34c3e706add5ec91c"
+    },
+    {
+      "path": "research/c1-challenger-20261012/analysis/synthetic-validation.json",
+      "bytes": 3457,
+      "sha256": "cfd9521df52c486bec3e1a15b6006ca7ee38b7a7d7319d76772656b9dc098443"
     },
     {
       "path": "research/c1-challenger-20261012/audit_saved_evidence.py",
@@ -19,9 +57,229 @@
       "sha256": "3f40a65bd8d3de2037d21705a3715818e04c3afe18a3215d819c95c4ea6c697d"
     },
     {
+      "path": "research/c1-challenger-20261012/baselines/README.md",
+      "bytes": 3636,
+      "sha256": "b5b6dc486308fcd3248c85b411a5a7fb99632ebebb727ac27547b01f9f5818b0"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/policy-regression.cjs",
+      "bytes": 5616,
+      "sha256": "9edf10f0e84def6eae4a36bb37a254e4e9e28206597b2513b5a01eba9a7a052d"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/policy-synthetic-results.json",
+      "bytes": 3922,
+      "sha256": "0faa639fc7306b1a3f2ebc6898e2aa2e6c9d1d0a951905918dab822b15f6dcbc"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/application-paths.txt",
+      "bytes": 615,
+      "sha256": "f355d97610ac7c0f3eab8546d043b68a2e7a02874db387916948f7ff0adc615b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/replay-equivalence-synthetic.json",
+      "bytes": 41262,
+      "sha256": "abd4249855e6396a19014f15823e335615084fd1f557001a5eca9ff7aaf19200"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source-pin.json",
+      "bytes": 2731,
+      "sha256": "9692491f282ee09c1c0717ac507bfd663c1e7b80d49088e7636fba0743f0ad1b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source-snapshot-manifest.json",
+      "bytes": 10046,
+      "sha256": "e760a7d56c085df38140bcdc214b21756e7004f7f40e0eda861317d0f6db5212"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1AccountExecution.js",
+      "bytes": 4860,
+      "sha256": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1AccountLedger.js",
+      "bytes": 14688,
+      "sha256": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1AccountProjection.js",
+      "bytes": 8931,
+      "sha256": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1AccountSeed.js",
+      "bytes": 13074,
+      "sha256": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1AccountSimulator.js",
+      "bytes": 142168,
+      "sha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1ActualFillReplay.js",
+      "bytes": 3500,
+      "sha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1FrozenOptions.js",
+      "bytes": 7080,
+      "sha256": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1LiveInput.js",
+      "bytes": 7925,
+      "sha256": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1ManualRecommendations.js",
+      "bytes": 4104,
+      "sha256": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1OpeningPriceReview.js",
+      "bytes": 5017,
+      "sha256": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1PaperEvents.js",
+      "bytes": 6663,
+      "sha256": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1SleeveAccounting.js",
+      "bytes": 6036,
+      "sha256": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/c1StockClassification.js",
+      "bytes": 10497,
+      "sha256": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/entryTiming.js",
+      "bytes": 18111,
+      "sha256": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/eventRisk.js",
+      "bytes": 19243,
+      "sha256": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/expertDecision.js",
+      "bytes": 27119,
+      "sha256": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/historicalSignalEvaluator.js",
+      "bytes": 40008,
+      "sha256": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/marketSession.js",
+      "bytes": 6569,
+      "sha256": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/opportunityDecision.js",
+      "bytes": 25683,
+      "sha256": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/personalCapitalPolicy.js",
+      "bytes": 1229,
+      "sha256": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/portfolioGovernor.js",
+      "bytes": 21651,
+      "sha256": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/replayDatasetCompaction.js",
+      "bytes": 10860,
+      "sha256": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/scoring.js",
+      "bytes": 36340,
+      "sha256": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/top5Diagnostics.js",
+      "bytes": 4279,
+      "sha256": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/lib/walkForwardBacktest.js",
+      "bytes": 129965,
+      "sha256": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/tools/c1-build-current-historical-input.cjs",
+      "bytes": 24158,
+      "sha256": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/tools/c1-original-input-validation.cjs",
+      "bytes": 12897,
+      "sha256": "e6189c2a1d65e6d96949574db1ed2116ea10d0a6d7f5a005e2a6e7adb572dae2"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/tools/c1-production-policy-replay-regression.cjs",
+      "bytes": 7447,
+      "sha256": "5ce179edd60ff1af4e6517a69ff87939919868d06628e9cc58cf982de1e249e4"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/tools/c1-production-policy-replay.cjs",
+      "bytes": 25383,
+      "sha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/tools/c1-production-replay-independent-check.cjs",
+      "bytes": 9327,
+      "sha256": "c471d47e753bff6c118d4b8099e8dab3e492dd4b1baf1d2607faad6fcecd1103"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/tools/c1-production-replay-loader.cjs",
+      "bytes": 8920,
+      "sha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/tools/c1-verify-recorded-production-replay.cjs",
+      "bytes": 805,
+      "sha256": "8ecbc9de526f7b529d4316eb6c57832f2a397e62f2004b82830237b594ed791b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/production-equivalent/source/tools/research-module-loader.cjs",
+      "bytes": 3797,
+      "sha256": "0a8be68533a0d51074644f4dda8dfa311e5269d25751b5dcbfe2c0ce37efd846"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/registry.json",
+      "bytes": 2221,
+      "sha256": "ef2d9ea384746f39b86afc6595949f6eaf660416dc8865d24a453265f8b6bd78"
+    },
+    {
+      "path": "research/c1-challenger-20261012/baselines/selection.cjs",
+      "bytes": 3672,
+      "sha256": "43b409fd34f6363b8ea68a0434a036526865e2ecb1c24e51e1d5ed08fb4df8d2"
+    },
+    {
       "path": "research/c1-challenger-20261012/checkpoint-report.md",
-      "bytes": 10418,
-      "sha256": "4af5348c1e9851f451a3cc96ac728a3ad61158c682716be9f3b1be3ac7679b3d"
+      "bytes": 14466,
+      "sha256": "0c5f78aa982a48c5c2addff4f916dd399fe0f16003b75cb5bfb883c7e35b3662"
+    },
+    {
+      "path": "research/c1-challenger-20261012/continuation.md",
+      "bytes": 8171,
+      "sha256": "460067d397c533395eb4dee0f4efafc16af9f1e18c03269a3af771f1e2955db0"
+    },
+    {
+      "path": "research/c1-challenger-20261012/execution-ledger.json",
+      "bytes": 19604,
+      "sha256": "e37df62af142655779f0f3e53e1f30a977276ee41dc8e3493515276d00678639"
     },
     {
       "path": "research/c1-challenger-20261012/experiments.json",
@@ -32,6 +290,156 @@
       "path": "research/c1-challenger-20261012/fetch_public_references.py",
       "bytes": 1116,
       "sha256": "a705035d89b8da04830d83436e5af09b2030f3890f43aa0bde1922988bf9b9e8"
+    },
+    {
+      "path": "research/c1-challenger-20261012/governance-amendment.json",
+      "bytes": 1583,
+      "sha256": "c2d13392f17afd98e479fa687a8dd99dd6783e9f67b2ae3b88bb846e838124b3"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/README.md",
+      "bytes": 7271,
+      "sha256": "28c5a9564a9caef107804943a1e850112c613d04dd068acf32de865bcd812d2b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/analysis-inputs-regression-results.json",
+      "bytes": 1206,
+      "sha256": "34bd933cbffb6c93d51fa34572fdad2d66cc04899f48a57e803b19fcfeed01ec"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/analysis-inputs-regression.cjs",
+      "bytes": 7543,
+      "sha256": "e0d957cc9ab94d93bb49d2478f0d5789a9293c4cdc4fb388f5323642279114a5"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/analysis-inputs.cjs",
+      "bytes": 8185,
+      "sha256": "cb6334826234e9d95b986c287609ddc0b4e5c4242552e14c636f43bf603de43d"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/exit-README.md",
+      "bytes": 3394,
+      "sha256": "608d0ff11533e634cccc41abb35ef86849428e29eeacc168d970e087b09ba290"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/exit-fixtures.cjs",
+      "bytes": 4801,
+      "sha256": "802fab27a1ad90b660f94f662e663a7832bc718a8e74af5c02508f79cbaac874"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/exit-mechanics-results.json",
+      "bytes": 14823,
+      "sha256": "98eefc868a59d21db653bdbea8084db5cd580abd2e7abc21d5c458179a8cd654"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/exit-overlay.cjs",
+      "bytes": 8902,
+      "sha256": "31d7389b8d78f9c220772067a19549a1fa59dc1e432a675261b5f9da1c802cab"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/exit-regression.cjs",
+      "bytes": 15957,
+      "sha256": "541b567a75e857e1b3ef68873c010aa38f21af695beff058d2f8e6d906ca6ccf"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/exit-unit-results.json",
+      "bytes": 6658,
+      "sha256": "4a85b5311510bbb88b5072664eca7d210740ca68aefed6d52e4956cd866f2314"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/harness-driver-regression.cjs",
+      "bytes": 11306,
+      "sha256": "2d204dbb8bfd38fddbb86f108f218400d53a244059355cf1781d8a25060aef5b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/harness-driver-results.json",
+      "bytes": 2254,
+      "sha256": "4d1db328a1b1a43c88c8d24dea0f870ba1fd9b4fe15ad0f33b0f102e3aa6aa6a"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/implementation-inventory.cjs",
+      "bytes": 1550,
+      "sha256": "b3a0c9f9d7e26f957c8c57045fabbd05a590b86c68daded6dec3795d2866001a"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/implementation-inventory.json",
+      "bytes": 17008,
+      "sha256": "df588325569704d940392a3dcc83f8e0b50de0a862bea4c584be3f38bd3b6b47"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/recorded-verifier-mechanics-results.json",
+      "bytes": 2346,
+      "sha256": "9c75c50cc3f2014d1aa7e1db24f4261252bfcbcbda2c8c98aee014ab8084e6db"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/recorded-verifier-mechanics.cjs",
+      "bytes": 2462,
+      "sha256": "16d8d3964bae8042b6d3f3b0e5b6a3ca0651914af3eda79f734ddab30b355b04"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/recorded-verifier.cjs",
+      "bytes": 3326,
+      "sha256": "71790b64b8afed73f31feb4369c9c2d0376d0962bf0e9f60e758859a463b405c"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/regime-README.md",
+      "bytes": 4076,
+      "sha256": "f91e4b00d517bd1ede97e0770d831c94931ef8d385386ad60ee3e4f6b282c767"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/regime-mechanics-results.json",
+      "bytes": 3686,
+      "sha256": "63b86939ea065280f89bd5dcb01549015b510468cc4d08d6bb1d23f7c22e54c6"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/regime-mechanics.cjs",
+      "bytes": 12956,
+      "sha256": "1f2e1b62d51bdc0f118714168a2ed7245a4bb8dfee71d44ded12cdc10e2d651c"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/regime-overlay.cjs",
+      "bytes": 12194,
+      "sha256": "867cc43d016fd0a9868fa9ae4d06e6281afa8894ae31316d690aad2d3d15223a"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/research-loader.cjs",
+      "bytes": 5904,
+      "sha256": "61bf5bdaa5807bb13e3d4a3a696ed96879897df68ce25279438dd428cf095a02"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/run-historical.cjs",
+      "bytes": 13184,
+      "sha256": "5a5ffbba8c87be5bf2f9bfa5a15597c1195bc00354a52551f6c87c4755bad146"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/signal-README.md",
+      "bytes": 4313,
+      "sha256": "ff4ab7f3b89b036cfaaff1b208e1e937e01d5d557e9490c130faeeedffc7e033"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/signal-input.cjs",
+      "bytes": 11615,
+      "sha256": "3827ff5283c0201b1ef4fbddea817afdf58e449fead9a489ad8f24f2505a14c9"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/signal-mechanics-results.json",
+      "bytes": 4335,
+      "sha256": "3fa8a09f52b987c264bc0bfa0f458c13865cdbae620e407f29182ded41a10c57"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/signal-mechanics.cjs",
+      "bytes": 15349,
+      "sha256": "eb261ae952d43c832c855c7b3d61e46c4afa28228a8aecce8158cb7f6237d9c8"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/signal-overlay.cjs",
+      "bytes": 8056,
+      "sha256": "4f636b3f2443ec85c90061ada15cc7655c22ee0a5b642e90e7ba06f458d35586"
+    },
+    {
+      "path": "research/c1-challenger-20261012/harness/source-transform-loader.cjs",
+      "bytes": 2298,
+      "sha256": "3db9eb63828b8d37ea7928169c8b70ba7a8d5dedd1264be5758929971ce04979"
     },
     {
       "path": "research/c1-challenger-20261012/imported/independent-synthetic-checks/breaker-parity.json",
@@ -310,8 +718,8 @@
     },
     {
       "path": "research/c1-challenger-20261012/preflight.py",
-      "bytes": 6447,
-      "sha256": "18718091d65f8de62a526731f4c00fcd97a59c6181ba7b576735560ef7187aa8"
+      "bytes": 7026,
+      "sha256": "ae18bc0e05a07fa824b99cd8a1efecccbb638ebb2e58ac11d1a81c10085ab831"
     },
     {
       "path": "research/c1-challenger-20261012/provenance/audit-simulator.js",
@@ -345,8 +753,8 @@
     },
     {
       "path": "research/c1-challenger-20261012/public-readiness.json",
-      "bytes": 766,
-      "sha256": "4804a2d68ed23c3f16df793da40f954ed9478c2c51060729586c23a4baf2a864"
+      "bytes": 1330,
+      "sha256": "1196016a5df32d4e182a56aca8cec09b94dfbacbb020be597d5fd2380f2e9190"
     },
     {
       "path": "research/c1-challenger-20261012/public-reference-index.json",
@@ -359,14 +767,14 @@
       "sha256": "f7e646d3a985891c347f28a96443ce230a4d5004c5c80415c51b9e68a8099583"
     },
     {
+      "path": "research/c1-challenger-20261012/public-verification-summary.json",
+      "bytes": 2534,
+      "sha256": "4972f74c065099e5723023377990f474607a6102e1496149db6b0c4dedc172fd"
+    },
+    {
       "path": "research/c1-challenger-20261012/reference-12bps-verifier.json.gz.base64",
       "bytes": 19517,
       "sha256": "eac49420789d6016e9735575e24e43ee32134ad217e90a19a286a31063592df3"
     }
-  ],
-  "rawMarketDataIncluded": false,
-  "privateArchiveLocationsIncluded": false,
-  "productionApplicationChanged": false,
-  "historicalComparisonsVerified": false,
-  "handoff": "https://github.com/johnvtovar67-alt/screener-app/issues/259"
+  ]
 }

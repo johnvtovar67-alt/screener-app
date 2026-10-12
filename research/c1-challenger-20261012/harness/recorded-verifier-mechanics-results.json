@@ -1,0 +1,99 @@
+{
+  "contract": "c1-challenger-recorded-verifier-mechanics-v1",
+  "passed": true,
+  "checks": [
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "champion",
+      "costBps": 12,
+      "passed": true
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "champion",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "champion",
+      "costBps": 50,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "champion",
+      "costBps": 12,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "champion",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "champion",
+      "costBps": 50,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "entry_queue__depth6",
+      "costBps": 12,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "entry_queue__depth6",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "entry_queue__depth6",
+      "costBps": 50,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "ordinary_confirmation__sessions2",
+      "costBps": 12,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "ordinary_confirmation__sessions2",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "ordinary_confirmation__sessions2",
+      "costBps": 50,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "profit_activation__peak20",
+      "costBps": 12,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "profit_activation__peak20",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "profit_activation__peak20",
+      "costBps": 50,
+      "passed": true
+    }
+  ],
+  "historicalComparisonsRun": 0,
+  "syntheticInputsOnly": true,
+  "productionChanged": false
+}

@@ -1,0 +1,102 @@
+{
+  "contract": "c1-regime-synthetic-source-mechanics-v1",
+  "passed": true,
+  "scope": "Artificial software fixtures only; no historical challenger performance, ranking, finalist, alpha or production readiness claims.",
+  "baselineId": "production-equivalent",
+  "baselineCommit": "e2b98471311fb702113baf0ca64473b92ccfd142",
+  "baselineGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf",
+  "experimentsManifestSha256": "6f77af71d22c446a950f83d1f2c61815211c21c36031179c1a3dfac66f611f03",
+  "preregisteredScaleSpecifications": [
+    "scale_drawdown__trigger8_restore5",
+    "scale_drawdown__trigger10_restore7",
+    "scale_drawdown__trigger12_restore9",
+    "scale_volatility__trigger20_restore15",
+    "scale_volatility__trigger25_restore20",
+    "scale_volatility__trigger30_restore25"
+  ],
+  "historicalComparisonsRun": 0,
+  "productionModified": false,
+  "originalInputFilesModified": false,
+  "accounting": "Source model floor followed by source actual sleeve floor; no fractional shares, forced sells or rebalancing.",
+  "loaderUnderTest": "central research-loader.cjs with byte-pinned source adapter",
+  "remainingBlockers": [
+    "Exact licensed matched archived inputs, including benchmark warmup, not yet available.",
+    "Historical causal-regime comparisons require all source/input preservation and baseline verification gates."
+  ],
+  "receipts": [
+    {
+      "test": "normal_state_no_op_all_economics_and_source_traces",
+      "costBps": 12,
+      "passed": true,
+      "originalInputUnchanged": true
+    },
+    {
+      "test": "normal_state_no_op_all_economics_and_source_traces",
+      "costBps": 25,
+      "passed": true,
+      "originalInputUnchanged": true
+    },
+    {
+      "test": "normal_state_no_op_all_economics_and_source_traces",
+      "costBps": 50,
+      "passed": true,
+      "originalInputUnchanged": true
+    },
+    {
+      "test": "active_scale_cached_uncached_double_floor_cash_accounting",
+      "experimentId": "scale_drawdown__trigger8_restore5",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "test": "active_scale_cached_uncached_double_floor_cash_accounting",
+      "experimentId": "scale_drawdown__trigger10_restore7",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "test": "active_scale_cached_uncached_double_floor_cash_accounting",
+      "experimentId": "scale_drawdown__trigger12_restore9",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "test": "active_scale_cached_uncached_double_floor_cash_accounting",
+      "experimentId": "scale_volatility__trigger20_restore15",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "test": "active_scale_cached_uncached_double_floor_cash_accounting",
+      "experimentId": "scale_volatility__trigger25_restore20",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "test": "active_scale_cached_uncached_double_floor_cash_accounting",
+      "experimentId": "scale_volatility__trigger30_restore25",
+      "costBps": 25,
+      "passed": true
+    },
+    {
+      "test": "inclusive_trigger_strict_restore_five_consecutive_completed_sessions_and_reset",
+      "passed": true
+    },
+    {
+      "test": "causal_previous_close_chronology_future_perturbation_original_inputs_unchanged",
+      "passed": true
+    },
+    {
+      "test": "gap_stop_unchanged_existing_holdings_preserved_excess_capacity_pauses_additions",
+      "passed": true
+    },
+    {
+      "test": "source_breaker_exit_cooldown_pending_and_held_state_unchanged_after_regime_activation",
+      "passed": true
+    },
+    {
+      "test": "volatility_reference_missing_warmup_gap_combined_trigger_source_drift_rejected",
+      "passed": true
+    }
+  ]
+}

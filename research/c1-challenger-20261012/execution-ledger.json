@@ -1,0 +1,556 @@
+{
+  "contract": "c1-preregistered-execution-ledger-v1",
+  "matrixSha256": "6f77af71d22c446a950f83d1f2c61815211c21c36031179c1a3dfac66f611f03",
+  "researchStatus": "OPEN",
+  "interimProductionDecision": "A \u2014 KEEP CURRENT C1",
+  "finalResearchConclusion": null,
+  "historicalBaselines": [
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "champion",
+      "costBps": 12,
+      "status": "blocked_awaiting_original_licensed_inputs",
+      "performanceVerified": false
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "champion",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs",
+      "performanceVerified": false
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "champion",
+      "costBps": 50,
+      "status": "blocked_awaiting_original_licensed_inputs",
+      "performanceVerified": false
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "champion",
+      "costBps": 12,
+      "status": "blocked_awaiting_original_licensed_inputs",
+      "performanceVerified": false
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "champion",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs",
+      "performanceVerified": false
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "champion",
+      "costBps": 50,
+      "status": "blocked_awaiting_original_licensed_inputs",
+      "performanceVerified": false
+    }
+  ],
+  "development": [
+    {
+      "experimentId": "champion",
+      "family": "champion",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "horizon__s100ex15_f50ex5",
+      "family": "horizon",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "horizon__s110ex20_f55ex5",
+      "family": "horizon",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "horizon__s130ex20_f65ex5",
+      "family": "horizon",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "horizon__s140ex25_f70ex10",
+      "family": "horizon",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "global_sector__global80_sector20",
+      "family": "global_sector",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "global_sector__global70_sector30",
+      "family": "global_sector",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "global_sector__global60_sector40",
+      "family": "global_sector",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "global_sector__global50_sector50",
+      "family": "global_sector",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "slow_fast__slow50",
+      "family": "slow_fast",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "slow_fast__slow75",
+      "family": "slow_fast",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "slots__slots2",
+      "family": "slots",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "slots__slots4",
+      "family": "slots",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "slots__slots5",
+      "family": "slots",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "sector_caps__stronger",
+      "family": "sector_caps",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "sector_caps__permissive",
+      "family": "sector_caps",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "sector_position_limit__max1",
+      "family": "sector_position_limit",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "sector_position_limit__max3",
+      "family": "sector_position_limit",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "entry_queue__depth6",
+      "family": "entry_queue",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "entry_queue__depth12",
+      "family": "entry_queue",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "entry_queue__depth15",
+      "family": "entry_queue",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "adv__usdm200",
+      "family": "adv",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "adv__usdm500",
+      "family": "adv",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "adv__usdm750",
+      "family": "adv",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "ordinary_confirmation__sessions2",
+      "family": "ordinary_confirmation",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "ordinary_confirmation__sessions3",
+      "family": "ordinary_confirmation",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "ordinary_hysteresis__top8",
+      "family": "ordinary_hysteresis",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "ordinary_hysteresis__top10",
+      "family": "ordinary_hysteresis",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "early_confirmation__sessions4",
+      "family": "early_confirmation",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "early_confirmation__sessions5",
+      "family": "early_confirmation",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "early_rank__top12",
+      "family": "early_rank",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "early_rank__top15",
+      "family": "early_rank",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "profit_activation__peak15",
+      "family": "profit_activation",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "profit_activation__peak20",
+      "family": "profit_activation",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "profit_confirmation__sessions3",
+      "family": "profit_confirmation",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "profit_confirmation__sessions4",
+      "family": "profit_confirmation",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak20_top9_2",
+      "family": "large_gain_deterioration",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak25_top9_2",
+      "family": "large_gain_deterioration",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "family": "large_gain_deterioration",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "scale_drawdown__trigger8_restore5",
+      "family": "scale_drawdown",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "scale_drawdown__trigger10_restore7",
+      "family": "scale_drawdown",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "scale_drawdown__trigger12_restore9",
+      "family": "scale_drawdown",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "scale_volatility__trigger20_restore15",
+      "family": "scale_volatility",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "scale_volatility__trigger25_restore20",
+      "family": "scale_volatility",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "scale_volatility__trigger30_restore25",
+      "family": "scale_volatility",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "initial_stop__pct12",
+      "family": "initial_stop",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "initial_stop__pct16",
+      "family": "initial_stop",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "sleeve_breaker__pct10",
+      "family": "sleeve_breaker",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    },
+    {
+      "experimentId": "sleeve_breaker__pct14",
+      "family": "sleeve_breaker",
+      "baselineId": "production-equivalent",
+      "costBps": 25,
+      "status": "blocked_awaiting_original_licensed_inputs_and_baselines",
+      "implementationSupported": true,
+      "historicalExecutionAttempted": false,
+      "empiricalSuccessOrFailure": null
+    }
+  ],
+  "finalistLock": null,
+  "validation": {
+    "status": "pending_development_and_immutable_finalist_lock",
+    "allowedFinalistsMax": 3,
+    "costBps": [
+      12,
+      25,
+      50
+    ],
+    "retuningAllowed": false
+  },
+  "blockedIsNotPerformanceFailure": true,
+  "productionChanged": false
+}

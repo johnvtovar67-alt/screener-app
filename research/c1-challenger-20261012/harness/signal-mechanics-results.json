@@ -1,0 +1,134 @@
+{
+  "contract": "c1-signal-overlay-synthetic-software-mechanics-v1",
+  "passed": true,
+  "tests": [
+    {
+      "id": "champion",
+      "passed": true,
+      "exactFullCompilerNoOpParity": true
+    },
+    {
+      "id": "horizon__s100ex15_f50ex5",
+      "family": "horizon",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 6
+    },
+    {
+      "id": "horizon__s110ex20_f55ex5",
+      "family": "horizon",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 6
+    },
+    {
+      "id": "horizon__s130ex20_f65ex5",
+      "family": "horizon",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 10
+    },
+    {
+      "id": "horizon__s140ex25_f70ex10",
+      "family": "horizon",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 18
+    },
+    {
+      "id": "global_sector__global80_sector20",
+      "family": "global_sector",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 69
+    },
+    {
+      "id": "global_sector__global70_sector30",
+      "family": "global_sector",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 69
+    },
+    {
+      "id": "global_sector__global60_sector40",
+      "family": "global_sector",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 69
+    },
+    {
+      "id": "global_sector__global50_sector50",
+      "family": "global_sector",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 69
+    },
+    {
+      "id": "slow_fast__slow50",
+      "family": "slow_fast",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 10
+    },
+    {
+      "id": "slow_fast__slow75",
+      "family": "slow_fast",
+      "passed": true,
+      "fullCompilerNonMomentumParity": true,
+      "sourcePoolAndHistoryGatePreserved": true,
+      "fullCompilerSourceHashRecorded": true,
+      "alteredMomentumScoreCount": 10
+    }
+  ],
+  "syntheticCompilerControls": [
+    "horizon",
+    "global_sector",
+    "slow_fast"
+  ],
+  "fixture": {
+    "inventedOnly": true,
+    "sessions": 266,
+    "source253FirstCohortCount": 6,
+    "finalCohortCount": 5,
+    "rawInputHashUnchanged": true,
+    "historicalPerformanceEvidence": false
+  },
+  "independentChecks": [
+    "full compiler no-op output and source identity parity",
+    "all non-momentum fields preserved",
+    "253-row history gate before full-pool percentiles",
+    "tied midpoint ranks",
+    "missing inputs retain source handling",
+    "illiquid reference pool retained",
+    "missing-current-bar and short-history exclusions",
+    "exact horizon endpoints use total minus excluded",
+    "exact source-specific global/sector internal ratios",
+    "equal slow-fraction shift preserves distinct within-component source ratios",
+    "batched recompilation uses actual compiler/compactor and preserves manual full-cohort identities",
+    "modified source, malformed horizon, incorrect ratios and absent licensed storage rejected"
+  ],
+  "rawLicensedDatasetAccessible": false,
+  "historicalReplaysRun": 0,
+  "productionBaselinePerformanceVerified": false,
+  "audit289PerformanceReproduced": false,
+  "historicalPerformanceClaim": false,
+  "productionChanged": false
+}

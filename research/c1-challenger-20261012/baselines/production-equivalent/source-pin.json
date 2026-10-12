@@ -1,0 +1,32 @@
+{
+  "contract": "c1-production-equivalent-25-module-source-pin-v1",
+  "sourceCommit": "e2b98471311fb702113baf0ca64473b92ccfd142",
+  "sourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf",
+  "sources": {
+    "lib/c1AccountExecution.js": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4",
+    "lib/c1AccountLedger.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+    "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+    "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+    "lib/c1AccountSimulator.js": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+    "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+    "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+    "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+    "lib/c1ManualRecommendations.js": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+    "lib/c1OpeningPriceReview.js": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+    "lib/c1PaperEvents.js": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c",
+    "lib/c1SleeveAccounting.js": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03",
+    "lib/c1StockClassification.js": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2",
+    "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+    "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+    "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+    "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+    "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+    "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+    "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+    "lib/portfolioGovernor.js": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+    "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+    "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+    "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+    "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd"
+  }
+}

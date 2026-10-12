@@ -1,0 +1,162 @@
+{
+  "contract": "c1-separated-baseline-policy-synthetic-verification-v1",
+  "passed": true,
+  "scope": "Four invented sessions only. All three real account sleeves and real projection; no historical replay or production action.",
+  "baselines": [
+    {
+      "id": "audit-historical",
+      "sourceCommit": "006e067697385143684c7417b18bc7909c2d217e",
+      "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb"
+    },
+    {
+      "id": "production-equivalent",
+      "sourceCommit": "e2b98471311fb702113baf0ca64473b92ccfd142",
+      "sourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf"
+    }
+  ],
+  "checks": [
+    {
+      "id": "audit-historical",
+      "sleeve": "base",
+      "check": "schw-allocation-excluded-rank-preserved-as-selected",
+      "buys": [
+        "AAA",
+        "BBB",
+        "CCC"
+      ],
+      "schwHoldingRankEligible": false
+    },
+    {
+      "id": "audit-historical",
+      "sleeve": "cooldown15",
+      "check": "schw-allocation-excluded-rank-preserved-as-selected",
+      "buys": [
+        "AAA",
+        "BBB",
+        "CCC"
+      ],
+      "schwHoldingRankEligible": false
+    },
+    {
+      "id": "audit-historical",
+      "sleeve": "sector40",
+      "check": "schw-allocation-excluded-rank-preserved-as-selected",
+      "buys": [
+        "AAA",
+        "BBB",
+        "CCC"
+      ],
+      "schwHoldingRankEligible": false
+    },
+    {
+      "id": "audit-historical",
+      "check": "actual-opening-projection-uses-freed-slot",
+      "sleeves": [
+        "base",
+        "cooldown15",
+        "sector40"
+      ],
+      "blockedOrders": 0
+    },
+    {
+      "id": "audit-historical",
+      "check": "age30-top6",
+      "rankIncludingSCHW": 7,
+      "rankExcludingSCHW": 6,
+      "heldSells": []
+    },
+    {
+      "id": "audit-historical",
+      "check": "profit-top6-two",
+      "rankIncludingSCHW": 7,
+      "rankExcludingSCHW": 6,
+      "heldSells": []
+    },
+    {
+      "id": "audit-historical",
+      "check": "early-top9-three",
+      "rankIncludingSCHW": 10,
+      "rankExcludingSCHW": 9,
+      "heldSells": []
+    },
+    {
+      "id": "production-equivalent",
+      "sleeve": "base",
+      "check": "schw-allocation-excluded-rank-preserved-as-selected",
+      "buys": [
+        "AAA",
+        "BBB",
+        "CCC"
+      ],
+      "schwHoldingRankEligible": true
+    },
+    {
+      "id": "production-equivalent",
+      "sleeve": "cooldown15",
+      "check": "schw-allocation-excluded-rank-preserved-as-selected",
+      "buys": [
+        "AAA",
+        "BBB",
+        "CCC"
+      ],
+      "schwHoldingRankEligible": true
+    },
+    {
+      "id": "production-equivalent",
+      "sleeve": "sector40",
+      "check": "schw-allocation-excluded-rank-preserved-as-selected",
+      "buys": [
+        "AAA",
+        "BBB",
+        "CCC"
+      ],
+      "schwHoldingRankEligible": true
+    },
+    {
+      "id": "production-equivalent",
+      "check": "actual-opening-projection-uses-freed-slot",
+      "sleeves": [
+        "base",
+        "cooldown15",
+        "sector40"
+      ],
+      "blockedOrders": 0
+    },
+    {
+      "id": "production-equivalent",
+      "check": "age30-top6",
+      "rankIncludingSCHW": 7,
+      "rankExcludingSCHW": 6,
+      "heldSells": [
+        {
+          "date": "2026-09-02",
+          "reason": "rank-deterioration"
+        }
+      ]
+    },
+    {
+      "id": "production-equivalent",
+      "check": "profit-top6-two",
+      "rankIncludingSCHW": 7,
+      "rankExcludingSCHW": 6,
+      "heldSells": [
+        {
+          "date": "2026-09-03",
+          "reason": "profit-rank-deterioration"
+        }
+      ]
+    },
+    {
+      "id": "production-equivalent",
+      "check": "early-top9-three",
+      "rankIncludingSCHW": 10,
+      "rankExcludingSCHW": 9,
+      "heldSells": [
+        {
+          "date": "2026-09-04",
+          "reason": "early-rank-deterioration"
+        }
+      ]
+    }
+  ]
+}

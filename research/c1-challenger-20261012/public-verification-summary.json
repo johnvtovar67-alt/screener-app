@@ -1,0 +1,69 @@
+{
+  "contract": "c1-independent-software-verification-summary-v1",
+  "scope": "Invented sessions, source snapshots, orchestration doubles and mocked remote-read receipts only. No licensed historical inputs, real finalists or comparative historical performance.",
+  "passed": true,
+  "implementedChallengers": 48,
+  "historicalComparisonsRun": 0,
+  "analysisSyntheticChecks": 28,
+  "driverSyntheticChecks": 18,
+  "originalProductionFilesByteIdentical": 396,
+  "matrixSha256": "6f77af71d22c446a950f83d1f2c61815211c21c36031179c1a3dfac66f611f03",
+  "receipts": [
+    {
+      "path": "baselines/policy-synthetic-results.json",
+      "passed": true,
+      "sha256": "0faa639fc7306b1a3f2ebc6898e2aa2e6c9d1d0a951905918dab822b15f6dcbc"
+    },
+    {
+      "path": "baselines/production-equivalent/replay-equivalence-synthetic.json",
+      "passed": true,
+      "sha256": "abd4249855e6396a19014f15823e335615084fd1f557001a5eca9ff7aaf19200"
+    },
+    {
+      "path": "harness/implementation-inventory.json",
+      "passed": true,
+      "sha256": "df588325569704d940392a3dcc83f8e0b50de0a862bea4c584be3f38bd3b6b47"
+    },
+    {
+      "path": "harness/signal-mechanics-results.json",
+      "passed": true,
+      "sha256": "3fa8a09f52b987c264bc0bfa0f458c13865cdbae620e407f29182ded41a10c57"
+    },
+    {
+      "path": "harness/exit-unit-results.json",
+      "passed": true,
+      "sha256": "4a85b5311510bbb88b5072664eca7d210740ca68aefed6d52e4956cd866f2314"
+    },
+    {
+      "path": "harness/exit-mechanics-results.json",
+      "passed": true,
+      "sha256": "98eefc868a59d21db653bdbea8084db5cd580abd2e7abc21d5c458179a8cd654"
+    },
+    {
+      "path": "harness/regime-mechanics-results.json",
+      "passed": true,
+      "sha256": "63b86939ea065280f89bd5dcb01549015b510468cc4d08d6bb1d23f7c22e54c6"
+    },
+    {
+      "path": "harness/recorded-verifier-mechanics-results.json",
+      "passed": true,
+      "sha256": "9c75c50cc3f2014d1aa7e1db24f4261252bfcbcbda2c8c98aee014ab8084e6db"
+    },
+    {
+      "path": "harness/harness-driver-results.json",
+      "passed": true,
+      "sha256": "4d1db328a1b1a43c88c8d24dea0f870ba1fd9b4fe15ad0f33b0f102e3aa6aa6a"
+    },
+    {
+      "path": "harness/analysis-inputs-regression-results.json",
+      "passed": true,
+      "sha256": "34bd933cbffb6c93d51fa34572fdad2d66cc04899f48a57e803b19fcfeed01ec"
+    },
+    {
+      "path": "analysis/synthetic-validation.json",
+      "passed": true,
+      "sha256": "cfd9521df52c486bec3e1a15b6006ca7ee38b7a7d7319d76772656b9dc098443"
+    }
+  ],
+  "productionChanged": false
+}

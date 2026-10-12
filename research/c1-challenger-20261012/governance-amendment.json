@@ -1,0 +1,24 @@
+{
+  "contract": "c1-pre-comparison-governance-amendment-v1",
+  "date": "2026-10-12",
+  "id": "champion-neighbor-self-comparison-correction",
+  "originalMatrixSha256": "6f77af71d22c446a950f83d1f2c61815211c21c36031179c1a3dfac66f611f03",
+  "comparativeHistoricalRunsObservedAtAmendment": 0,
+  "selectedHistoricalChallengersAtAmendment": [],
+  "experimentIdsParametersNeighborsAndDatesChanged": false,
+  "rationale": "The original plateau rule includes Champion among immediate parameter neighbors but requires every neighbor to retain at least 75% of a positive candidate Sharpe improvement against Champion. Champion's improvement against itself is identically zero. Applying that requirement to Champion would reject candidates by construction instead of measuring stability. Correct this logical self-comparison before any comparative outcomes are observed.",
+  "plateauPolicyVersion": 2,
+  "legacyPlateauResultMustBeReported": true,
+  "amendedRule": {
+    "bracketingNeighborsRequiredForProductionConsideration": true,
+    "unbracketedEndpointsRemainIneligibleForProductionConsideration": true,
+    "nonChampionNeighborMinimumFractionOfCandidateSharpeImprovement": 0.75,
+    "nonChampionNeighborDrawdownMustBeNoWorseThanChampion": true,
+    "championNeighborExemptOnlyFromImprovementAgainstItself": true,
+    "championNeighborMustRetainVerifiedBaselineSourceAndSameCostPath": true,
+    "costRegimeTurnoverRightTailAndMaterialImprovementGatesUnchanged": true,
+    "noNeighborAddedAfterValidation": true
+  },
+  "productionChangeAuthorized": false,
+  "finalResearchConclusion": null
+}

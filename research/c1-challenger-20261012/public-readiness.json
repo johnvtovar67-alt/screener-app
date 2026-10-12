@@ -1,16 +1,28 @@
 {
-  "contract": "c1-challenger-readiness-v1",
-  "readyForLongAnalysis": false,
-  "championReproducedThisProgram": false,
-  "challengersRun": 0,
-  "sourceChecksScope": "Recovered audit Champion snapshot only; not equivalence to engineering commit e2b9847",
-  "engineeringSourceHistoricalEquivalenceEstablished": false,
-  "sourceIdentityResolution": "blocked: audit snapshot and engineering source have materially different holding ranks",
+  "contract": "c1-challenger-open-research-status-v2",
+  "researchStatus": "OPEN_AWAITING_ORIGINAL_LICENSED_INPUTS",
+  "interimProductionDecision": "A \u2014 KEEP CURRENT C1",
+  "finalResearchConclusion": null,
+  "ownerSourcePolicySelectionResolved": true,
+  "finalComparisonBaseline": "production-equivalent",
+  "historicalAuditBaseline": "audit-historical",
+  "auditHistoricalReproduced": false,
+  "productionEquivalentHistoricalEstablished": false,
+  "historicalChallengersExecuted": 0,
+  "implementedChallengers": 48,
   "comparativePerformanceFindingsVerified": false,
+  "finalistsSelected": [],
   "actualLiveInputAccepted": false,
   "eligibleForAlphaClaim": false,
-  "blockers": [
-    "Exact raw historical inputs unavailable; private licensed preservation not established",
-    "Saved audit Champion and engineering correction have different holding-rank behavior"
-  ]
+  "productionChanged": false,
+  "remainingBlockers": [
+    "Original unmodified licensed historical inputs and warmup are not privately accessible with verified provider permission and matching receipts",
+    "Full audit reproduction and distinct production-equivalent Champion performance require those inputs",
+    "Development screening, immutable finalist lock and unretuned validation require the source-compatible baselines"
+  ],
+  "continuation": "continuation.md",
+  "coordinationIssue": "https://github.com/johnvtovar67-alt/screener-app/issues/259",
+  "readyForLongAnalysis": false,
+  "championReproducedThisProgram": false,
+  "challengersRun": 0
 }

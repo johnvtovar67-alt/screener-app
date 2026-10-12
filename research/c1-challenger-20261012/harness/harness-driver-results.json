@@ -1,0 +1,79 @@
+{
+  "contract": "c1-focused-harness-driver-regression-v1",
+  "passed": true,
+  "scope": "Orchestration guard doubles plus real pinned chronological verifier on two invented sessions. No historical run or source snapshot edits.",
+  "checks": [
+    {
+      "name": "baseline selection requires explicit identity",
+      "passed": true
+    },
+    {
+      "name": "audit cannot host Challenger overlay",
+      "passed": true
+    },
+    {
+      "name": "development rejects audit before input or engine execution",
+      "passed": true
+    },
+    {
+      "name": "missing G2 blocks development before inputs",
+      "passed": true
+    },
+    {
+      "name": "development rejects nonselection cost before replay",
+      "passed": true
+    },
+    {
+      "name": "substitute manifest rejected before replay/output",
+      "passed": true
+    },
+    {
+      "name": "valid development binds manifest before verifier and writes private immutable output",
+      "passed": true
+    },
+    {
+      "name": "validation rejects absent lock before data/replay",
+      "passed": true
+    },
+    {
+      "name": "validation rejects unlocked experiment before replay",
+      "passed": true
+    },
+    {
+      "name": "valid validation uses exact input/source lock and saves GitHub lock hash",
+      "passed": true
+    },
+    {
+      "name": "private output rejects dangling symlink before write",
+      "passed": true
+    },
+    {
+      "name": "late output collision cannot truncate existing immutable file",
+      "passed": true
+    },
+    {
+      "name": "private output rejects public repository directory",
+      "passed": true
+    },
+    {
+      "name": "private output rejects public target even when private root is a repository ancestor",
+      "passed": true
+    },
+    {
+      "name": "private source input rejects public repository directory before data read",
+      "passed": true
+    },
+    {
+      "name": "private source input rejects symlink into public repository before data read",
+      "passed": true
+    },
+    {
+      "name": "source verifier rejects different transformed genotype even when realized path identical",
+      "passed": true
+    },
+    {
+      "name": "recorded verifier rejects modified source trace",
+      "passed": true
+    }
+  ]
+}

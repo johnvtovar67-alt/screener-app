@@ -1,0 +1,543 @@
+{
+  "contract": "c1-source-pinned-exit-synthetic-verification-v1",
+  "passed": true,
+  "scope": "Invented offline sessions and normalized model seed balances only; no historical comparison, alpha evidence or production action.",
+  "historicalComparisonsRun": 0,
+  "productionModified": false,
+  "immutableSnapshotsModified": false,
+  "experimentsManifestSha256": "6f77af71d22c446a950f83d1f2c61815211c21c36031179c1a3dfac66f611f03",
+  "unitChecks": [
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "ordinary_confirmation__sessions2",
+      "passed": true,
+      "sourceExpressionsChanged": true,
+      "counterFields": [
+        "researchOrdinaryRankExitStreak"
+      ]
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "ordinary_confirmation__sessions3",
+      "passed": true,
+      "sourceExpressionsChanged": true,
+      "counterFields": [
+        "researchOrdinaryRankExitStreak"
+      ]
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "ordinary_hysteresis__top8",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "ordinary_hysteresis__top10",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "early_confirmation__sessions4",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "early_confirmation__sessions5",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "early_rank__top12",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "early_rank__top15",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "profit_activation__peak15",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "profit_activation__peak20",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "profit_confirmation__sessions3",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "profit_confirmation__sessions4",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "large_gain_deterioration__peak20_top9_2",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "large_gain_deterioration__peak25_top9_2",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "audit-historical",
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "ordinary_confirmation__sessions2",
+      "passed": true,
+      "sourceExpressionsChanged": true,
+      "counterFields": [
+        "researchOrdinaryRankExitStreak"
+      ]
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "ordinary_confirmation__sessions3",
+      "passed": true,
+      "sourceExpressionsChanged": true,
+      "counterFields": [
+        "researchOrdinaryRankExitStreak"
+      ]
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "ordinary_hysteresis__top8",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "ordinary_hysteresis__top10",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "early_confirmation__sessions4",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "early_confirmation__sessions5",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "early_rank__top12",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "early_rank__top15",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "profit_activation__peak15",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "profit_activation__peak20",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "profit_confirmation__sessions3",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "profit_confirmation__sessions4",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "large_gain_deterioration__peak20_top9_2",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "large_gain_deterioration__peak25_top9_2",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    },
+    {
+      "baselineId": "production-equivalent",
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "passed": true,
+      "sourceExpressionsChanged": false,
+      "counterFields": []
+    }
+  ],
+  "noOp": [
+    {
+      "costBps": 12,
+      "completeEconomicTraceParity": true,
+      "originalSourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf"
+    },
+    {
+      "costBps": 25,
+      "completeEconomicTraceParity": true,
+      "originalSourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf"
+    },
+    {
+      "costBps": 50,
+      "completeEconomicTraceParity": true,
+      "originalSourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf"
+    }
+  ],
+  "boundaries": [
+    {
+      "id": "ordinary_confirmation__sessions2",
+      "saleIndex": 4,
+      "reason": "rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "ordinary_confirmation__sessions3",
+      "saleIndex": 6,
+      "reason": "rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "ordinary_confirmation__sessions2",
+      "saleIndex": 3,
+      "reason": "rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "ordinary_hysteresis__top8",
+      "saleIndex": 2,
+      "reason": "rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "ordinary_hysteresis__top10",
+      "saleIndex": 2,
+      "reason": "rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "early_confirmation__sessions4",
+      "saleIndex": 6,
+      "reason": "early-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "early_confirmation__sessions5",
+      "saleIndex": 7,
+      "reason": "early-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "early_confirmation__sessions4",
+      "saleIndex": 5,
+      "reason": "early-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "early_rank__top12",
+      "saleIndex": 4,
+      "reason": "early-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "early_rank__top15",
+      "saleIndex": 4,
+      "reason": "early-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "profit_activation__peak15",
+      "saleIndex": 2,
+      "reason": "profit-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "profit_activation__peak20",
+      "saleIndex": 2,
+      "reason": "profit-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "profit_activation__peak15",
+      "saleIndex": 3,
+      "reason": "profit-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "profit_confirmation__sessions3",
+      "saleIndex": 6,
+      "reason": "profit-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "profit_confirmation__sessions4",
+      "saleIndex": 7,
+      "reason": "profit-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "large_gain_deterioration__peak20_top9_2",
+      "saleIndex": 4,
+      "reason": "profit-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "large_gain_deterioration__peak25_top9_2",
+      "saleIndex": 4,
+      "reason": "profit-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "large_gain_deterioration__peak30_top9_2",
+      "saleIndex": 4,
+      "reason": "profit-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "large_gain_deterioration__peak25_top9_2",
+      "saleIndex": 3,
+      "reason": "early-rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "profit_confirmation__sessions3",
+      "saleIndex": 2,
+      "reason": "rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "early_confirmation__sessions5",
+      "saleIndex": 2,
+      "reason": "rank-deterioration",
+      "passed": true
+    },
+    {
+      "id": "large_gain_deterioration__peak25_top9_2",
+      "saleIndex": 2,
+      "reason": "rank-deterioration",
+      "passed": true
+    }
+  ],
+  "profitResetWhenNotProfitable": true,
+  "largeGainRankDeteriorationIsRequired": true,
+  "ordinaryCounterResetsOnRetainedRank": true,
+  "hardControls": [
+    {
+      "fixture": "intraday_stop",
+      "experimentId": "ordinary_confirmation__sessions3",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "intraday_stop",
+      "experimentId": "ordinary_hysteresis__top10",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "intraday_stop",
+      "experimentId": "early_confirmation__sessions5",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "intraday_stop",
+      "experimentId": "early_rank__top15",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "intraday_stop",
+      "experimentId": "profit_activation__peak20",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "intraday_stop",
+      "experimentId": "profit_confirmation__sessions4",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "intraday_stop",
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "gap_stop",
+      "experimentId": "ordinary_confirmation__sessions3",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "gap_stop",
+      "experimentId": "ordinary_hysteresis__top10",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "gap_stop",
+      "experimentId": "early_confirmation__sessions5",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "gap_stop",
+      "experimentId": "early_rank__top15",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "gap_stop",
+      "experimentId": "profit_activation__peak20",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "gap_stop",
+      "experimentId": "profit_confirmation__sessions4",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "gap_stop",
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "sleeve_breaker",
+      "experimentId": "ordinary_confirmation__sessions3",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "sleeve_breaker",
+      "experimentId": "ordinary_hysteresis__top10",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "sleeve_breaker",
+      "experimentId": "early_confirmation__sessions5",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "sleeve_breaker",
+      "experimentId": "early_rank__top15",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "sleeve_breaker",
+      "experimentId": "profit_activation__peak20",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "sleeve_breaker",
+      "experimentId": "profit_confirmation__sessions4",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "sleeve_breaker",
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "universe_removal",
+      "experimentId": "ordinary_confirmation__sessions3",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "universe_removal",
+      "experimentId": "ordinary_hysteresis__top10",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "universe_removal",
+      "experimentId": "early_confirmation__sessions5",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "universe_removal",
+      "experimentId": "early_rank__top15",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "universe_removal",
+      "experimentId": "profit_activation__peak20",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "universe_removal",
+      "experimentId": "profit_confirmation__sessions4",
+      "sourceControlUnchanged": true
+    },
+    {
+      "fixture": "universe_removal",
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "sourceControlUnchanged": true
+    }
+  ],
+  "confirmationCacheParity": [
+    {
+      "costBps": 12,
+      "completeEconomicTraceParity": true,
+      "sourcePositionCounterCaptured": true
+    },
+    {
+      "costBps": 25,
+      "completeEconomicTraceParity": true,
+      "sourcePositionCounterCaptured": true
+    },
+    {
+      "costBps": 50,
+      "completeEconomicTraceParity": true,
+      "sourcePositionCounterCaptured": true
+    }
+  ],
+  "integrationCompleted": true
+}

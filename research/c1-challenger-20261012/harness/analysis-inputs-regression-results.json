@@ -1,0 +1,34 @@
+{
+  "contract": "c1-analysis-input-extraction-synthetic-regression-v1",
+  "passed": true,
+  "scope": "Pure extraction of invented marks and private filesystem guard checks. No passing historical acceptance gate, licensing evidence or historical dataset constructed.",
+  "historicalRunsExecuted": 0,
+  "historicalDatasetAccessed": false,
+  "productionChanged": false,
+  "checks": [
+    {
+      "name": "exact sessions, price-row order and unavailable values retained without original mutation",
+      "passed": true
+    },
+    {
+      "name": "ambiguous duplicates, unordered dates and missing original arrays reject without reconstruction",
+      "passed": true
+    },
+    {
+      "name": "three exclusive private files audit-roundtrip exactly and bind output hashes",
+      "passed": true
+    },
+    {
+      "name": "public, traversal, symlink, duplicate and existing output targets reject before any write",
+      "passed": true
+    },
+    {
+      "name": "missing independent acceptance blocks historical extractor without creating artifacts",
+      "passed": true
+    },
+    {
+      "name": "late output collision remains exclusive and produces no completion receipt",
+      "passed": true
+    }
+  ]
+}

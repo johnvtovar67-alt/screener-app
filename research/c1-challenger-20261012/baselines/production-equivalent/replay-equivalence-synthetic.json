@@ -1,0 +1,881 @@
+{
+  "contract": "c1-production-policy-replay-regression-v1",
+  "passed": true,
+  "checks": [
+    {
+      "cost": 12,
+      "passed": true,
+      "fullRecorded": {
+        "contract": "c1-full-history-uncached-recorded-replay-verification-v1",
+        "passed": true,
+        "scope": "Independent cache-disabled full chronological production simulator replay of all generated modeled actual executions; complete per-session fills/cash/positions/persistence/counters/stops/risk/pending traces and final outputs. Daily plan generation parity is separately checked against source.",
+        "cost": 12,
+        "observations": 48,
+        "sourceGraphMatches": true,
+        "inputContentMatches": true,
+        "inputManifestMatches": true,
+        "runClass": "synthetic-source-policy-software-check",
+        "eligibleForAlphaClaim": false,
+        "actualLiveInputAccepted": null,
+        "literalLiveInputGuardFailures": {},
+        "results": {
+          "base": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "65f5acec5a122201a9144bf214e6a0201dbfea242f55f6508f0f9c6d96798323",
+            "cachedSourceOutputSha256": "65f5acec5a122201a9144bf214e6a0201dbfea242f55f6508f0f9c6d96798323",
+            "traceSha256": "1c67a0637dbc3fd468bc1d06516b43edf1f1a260ef18721d7c892bd0990b8b08",
+            "cachedTraceSha256": "1c67a0637dbc3fd468bc1d06516b43edf1f1a260ef18721d7c892bd0990b8b08"
+          },
+          "cooldown15": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "aae2ea15d6ac3a089940d7b47cf182fef2f37c73dbfb58c8bc037f926b3b0b5f",
+            "cachedSourceOutputSha256": "aae2ea15d6ac3a089940d7b47cf182fef2f37c73dbfb58c8bc037f926b3b0b5f",
+            "traceSha256": "397905d983b79b7ad663b1837cac36ddd10bd10d895a0b7c2cfb8e02663c96af",
+            "cachedTraceSha256": "397905d983b79b7ad663b1837cac36ddd10bd10d895a0b7c2cfb8e02663c96af"
+          },
+          "sector40": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "20ba9fe554b3df90a2cb2c5b28bb039edbc5d58038ec821de2f41782da74c437",
+            "cachedSourceOutputSha256": "20ba9fe554b3df90a2cb2c5b28bb039edbc5d58038ec821de2f41782da74c437",
+            "traceSha256": "d6c854f8cdb0d9b704f0fdda39102564482df40ae9206e9143f0e7e6bab9777b",
+            "cachedTraceSha256": "d6c854f8cdb0d9b704f0fdda39102564482df40ae9206e9143f0e7e6bab9777b"
+          }
+        },
+        "uncachedStats": {
+          "resumes": 0,
+          "sessionsExecuted": 144,
+          "memoHits": 0,
+          "memoMisses": 0
+        }
+      },
+      "equivalence": {
+        "contract": "c1-production-replay-cache-equivalence-v1",
+        "passed": true,
+        "fields": {
+          "modelMode": {
+            "matched": true,
+            "cachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98",
+            "uncachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98"
+          },
+          "operationalBuyVerificationReproduced": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "historicalEventHistoryAvailable": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "brokerageSnapshotsReproduced": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "runClass": {
+            "matched": true,
+            "cachedSha256": "7e4927e7523fdf2b565eb447cd920c7d5d2ce0685b109ba69b7d5e4018481534",
+            "uncachedSha256": "7e4927e7523fdf2b565eb447cd920c7d5d2ce0685b109ba69b7d5e4018481534"
+          },
+          "eligibleForAlphaClaim": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "actualLiveInputAccepted": {
+            "matched": true,
+            "cachedSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+            "uncachedSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+          },
+          "literalLiveInputGuardFailures": {
+            "matched": true,
+            "cachedSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "uncachedSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+          },
+          "metrics": {
+            "matched": true,
+            "cachedSha256": "b772aa260175fec649bbbf35f2fd92f8159941f348c4f981341e2a64b623b4e0",
+            "uncachedSha256": "b772aa260175fec649bbbf35f2fd92f8159941f348c4f981341e2a64b623b4e0"
+          },
+          "curve": {
+            "matched": true,
+            "cachedSha256": "c40b3648baa50d5589db2a5160615986cb36fa3139fdd265ea357813d5013428",
+            "uncachedSha256": "c40b3648baa50d5589db2a5160615986cb36fa3139fdd265ea357813d5013428"
+          },
+          "trades": {
+            "matched": true,
+            "cachedSha256": "e1c6a748b90784ffa4590795fb7e84aa867542ceeb22547dae3e31436dc4589c",
+            "uncachedSha256": "e1c6a748b90784ffa4590795fb7e84aa867542ceeb22547dae3e31436dc4589c"
+          },
+          "fills": {
+            "matched": true,
+            "cachedSha256": "ea0bfac5f26f45844963278715916f345cbd8a91db7468c09056eeac945f8f32",
+            "uncachedSha256": "ea0bfac5f26f45844963278715916f345cbd8a91db7468c09056eeac945f8f32"
+          },
+          "plans": {
+            "matched": true,
+            "cachedSha256": "10bcaef2b79a7480af7fca7b13f877500e179dbf1efb03776e90ffb1d480525d",
+            "uncachedSha256": "10bcaef2b79a7480af7fca7b13f877500e179dbf1efb03776e90ffb1d480525d"
+          },
+          "accountTrace": {
+            "matched": true,
+            "cachedSha256": "13be9d1b58928789e328bb94be03cb9cabb3678f327e7204f7fc6b7a66328626",
+            "uncachedSha256": "13be9d1b58928789e328bb94be03cb9cabb3678f327e7204f7fc6b7a66328626"
+          },
+          "final": {
+            "matched": true,
+            "cachedSha256": "b5abde708a61cf368ad70c7a5749855556a2af74e58980dc5943302622eb9ec6",
+            "uncachedSha256": "b5abde708a61cf368ad70c7a5749855556a2af74e58980dc5943302622eb9ec6"
+          },
+          "simulatorTrace": {
+            "matched": true,
+            "cachedSha256": "39300d4b203601e2bb49ac8f5b10280674cbd969103f404868aa8e7f14bdefde",
+            "uncachedSha256": "39300d4b203601e2bb49ac8f5b10280674cbd969103f404868aa8e7f14bdefde"
+          }
+        },
+        "cachedStats": {
+          "resumes": 423,
+          "sessionsExecuted": 285,
+          "memoHits": 4366,
+          "memoMisses": 2825
+        },
+        "uncachedStats": {
+          "resumes": 0,
+          "sessionsExecuted": 10437,
+          "memoHits": 0,
+          "memoMisses": 0
+        }
+      },
+      "metrics": {
+        "initialCapital": 100000,
+        "endingEquity": 79636.491001344,
+        "totalReturnPct": -20.36350899865601,
+        "sharpe": -2.209341303054636,
+        "sortino": -2.272420036759378,
+        "legacySourceSortino": -0.9716547808793906,
+        "maxDrawdownPct": -23.988550600108617,
+        "fillCount": 48,
+        "tradeCount": 21,
+        "closedTrades": 21,
+        "winRatePct": 14.285714285714285,
+        "profitFactor": 0.19050272003453528,
+        "averageHoldingSessions": 14.428571428571429,
+        "medianHoldingSessions": 10,
+        "twoWayTradedNotional": 446910.6625213441,
+        "turnoverPct": 463.19278033855215,
+        "annualizedTurnoverPct": 2431.762096777399,
+        "capitalUtilizationPct": 65.48964684330788,
+        "openTerminalPositions": 6,
+        "benchmarkComparisons": {
+          "SPY": {
+            "simpleReturnPct": -19.999999999999996,
+            "excessReturnPct": -0.3635089986560147,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": -19.999999999999996,
+            "simpleOpenToCloseReturnPct": -19.999999999999996
+          },
+          "QQQ": {
+            "simpleReturnPct": -19.999999999999986,
+            "excessReturnPct": -0.3635089986560258,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": -19.999999999999986,
+            "simpleOpenToCloseReturnPct": -19.999999999999986
+          }
+        },
+        "dailyReturns": [
+          -0.0009578688000001501,
+          0,
+          0,
+          0.04869524365460509,
+          0,
+          0,
+          0,
+          0,
+          -0.0008198174274350878,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0005623826014427014,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.04595148627187107,
+          -0.00039137752383744395,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0007869822399917403,
+          0,
+          0,
+          -0.200760292124481,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0005894683650911059,
+          0
+        ]
+      },
+      "sourcePin": {
+        "contract": "c1-production-policy-source-pin-v1",
+        "sources": {
+          "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+          "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+          "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+          "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+          "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+          "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+          "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+          "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+          "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+          "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+          "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+          "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+          "lib/c1StockClassification.js": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2",
+          "lib/c1ManualRecommendations.js": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+          "lib/c1OpeningPriceReview.js": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+          "lib/c1AccountExecution.js": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4",
+          "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+          "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+          "lib/portfolioGovernor.js": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+          "lib/c1AccountLedger.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+          "lib/c1AccountSimulator.js": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+          "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+          "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+          "lib/c1PaperEvents.js": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c",
+          "lib/c1SleeveAccounting.js": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+        },
+        "sourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf",
+        "transforms": {
+          "lib/c1AccountSimulator.js": {
+            "originalSha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+            "adaptedSha256": "a465f83686ad75da50dbd4869aaa5bb03ecfa82fad4936d6ec3044103c9aa103"
+          },
+          "lib/c1ActualFillReplay.js": {
+            "originalSha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+            "adaptedSha256": "3693f3def1f7837344cce2eec8e0328a5efc2aef73143dad6420d8c805c65a6f"
+          }
+        },
+        "costOverlay": {
+          "onlyChangedOption": "slippageBps",
+          "value": 12
+        },
+        "adapterSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+        "cached": true
+      }
+    },
+    {
+      "cost": 25,
+      "passed": true,
+      "fullRecorded": {
+        "contract": "c1-full-history-uncached-recorded-replay-verification-v1",
+        "passed": true,
+        "scope": "Independent cache-disabled full chronological production simulator replay of all generated modeled actual executions; complete per-session fills/cash/positions/persistence/counters/stops/risk/pending traces and final outputs. Daily plan generation parity is separately checked against source.",
+        "cost": 25,
+        "observations": 48,
+        "sourceGraphMatches": true,
+        "inputContentMatches": true,
+        "inputManifestMatches": true,
+        "runClass": "synthetic-source-policy-software-check",
+        "eligibleForAlphaClaim": false,
+        "actualLiveInputAccepted": null,
+        "literalLiveInputGuardFailures": {},
+        "results": {
+          "base": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "8d8f759ff0e15474fb7dad2b8f17216c9b8c839b6d9e85407b456b4e3d2bd4b4",
+            "cachedSourceOutputSha256": "8d8f759ff0e15474fb7dad2b8f17216c9b8c839b6d9e85407b456b4e3d2bd4b4",
+            "traceSha256": "b7beacc10f612e7aa590c2feee3841052d223bfbeb85b38aadb2b105c3abb804",
+            "cachedTraceSha256": "b7beacc10f612e7aa590c2feee3841052d223bfbeb85b38aadb2b105c3abb804"
+          },
+          "cooldown15": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "d12c71bfc55b0040e043ee170520dc0b015c483ec0706d5b4ce6ba0830eedb09",
+            "cachedSourceOutputSha256": "d12c71bfc55b0040e043ee170520dc0b015c483ec0706d5b4ce6ba0830eedb09",
+            "traceSha256": "f443731caf8bc8760c2f2ded7615e83e08c8d24c4ef57bdee66a8364c44b9d67",
+            "cachedTraceSha256": "f443731caf8bc8760c2f2ded7615e83e08c8d24c4ef57bdee66a8364c44b9d67"
+          },
+          "sector40": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "ce35abe39fdf63fb420d55a7ee1b789a15b0705b039772721352788c50019768",
+            "cachedSourceOutputSha256": "ce35abe39fdf63fb420d55a7ee1b789a15b0705b039772721352788c50019768",
+            "traceSha256": "0708bacc9f8c704e7a053520c5fc9855fdb04d38afd079295fc17c4f224c356c",
+            "cachedTraceSha256": "0708bacc9f8c704e7a053520c5fc9855fdb04d38afd079295fc17c4f224c356c"
+          }
+        },
+        "uncachedStats": {
+          "resumes": 0,
+          "sessionsExecuted": 144,
+          "memoHits": 0,
+          "memoMisses": 0
+        }
+      },
+      "equivalence": {
+        "contract": "c1-production-replay-cache-equivalence-v1",
+        "passed": true,
+        "fields": {
+          "modelMode": {
+            "matched": true,
+            "cachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98",
+            "uncachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98"
+          },
+          "operationalBuyVerificationReproduced": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "historicalEventHistoryAvailable": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "brokerageSnapshotsReproduced": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "runClass": {
+            "matched": true,
+            "cachedSha256": "7e4927e7523fdf2b565eb447cd920c7d5d2ce0685b109ba69b7d5e4018481534",
+            "uncachedSha256": "7e4927e7523fdf2b565eb447cd920c7d5d2ce0685b109ba69b7d5e4018481534"
+          },
+          "eligibleForAlphaClaim": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "actualLiveInputAccepted": {
+            "matched": true,
+            "cachedSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+            "uncachedSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+          },
+          "literalLiveInputGuardFailures": {
+            "matched": true,
+            "cachedSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "uncachedSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+          },
+          "metrics": {
+            "matched": true,
+            "cachedSha256": "5c46704c73f5487939528f92d98ea3ffced3d6772d5edfe3e7cce8f9e1b932ca",
+            "uncachedSha256": "5c46704c73f5487939528f92d98ea3ffced3d6772d5edfe3e7cce8f9e1b932ca"
+          },
+          "curve": {
+            "matched": true,
+            "cachedSha256": "d4275f5622c6c5b3560d00cd0f1c6a1d308b8e8a50cc9804108e8c8cf60e8e60",
+            "uncachedSha256": "d4275f5622c6c5b3560d00cd0f1c6a1d308b8e8a50cc9804108e8c8cf60e8e60"
+          },
+          "trades": {
+            "matched": true,
+            "cachedSha256": "ddda81cc867ac5e014c9ab410dd98940172cbe0bc68deea8cdc1e8a0dedcf0d4",
+            "uncachedSha256": "ddda81cc867ac5e014c9ab410dd98940172cbe0bc68deea8cdc1e8a0dedcf0d4"
+          },
+          "fills": {
+            "matched": true,
+            "cachedSha256": "1759ba3fcc9942733b0d9e1897b2763f2ae9f062ff39f303c49e2afb50eb1b47",
+            "uncachedSha256": "1759ba3fcc9942733b0d9e1897b2763f2ae9f062ff39f303c49e2afb50eb1b47"
+          },
+          "plans": {
+            "matched": true,
+            "cachedSha256": "db4801bed427312fbd207a16896368b4308d8c44a1dc63595e5dc9a57c745e68",
+            "uncachedSha256": "db4801bed427312fbd207a16896368b4308d8c44a1dc63595e5dc9a57c745e68"
+          },
+          "accountTrace": {
+            "matched": true,
+            "cachedSha256": "baaf87e76d3541bd2cecd5599d5b79bf7f8982f3155673947d0984019e5af52d",
+            "uncachedSha256": "baaf87e76d3541bd2cecd5599d5b79bf7f8982f3155673947d0984019e5af52d"
+          },
+          "final": {
+            "matched": true,
+            "cachedSha256": "6f2a9d5c2c4237e69931aa3079eace46d48818817de371c419d2025e2e85546d",
+            "uncachedSha256": "6f2a9d5c2c4237e69931aa3079eace46d48818817de371c419d2025e2e85546d"
+          },
+          "simulatorTrace": {
+            "matched": true,
+            "cachedSha256": "81787c6f7d91bd1a249f6aaa29686f4462f2c1c592990ec977198d84539eb857",
+            "uncachedSha256": "81787c6f7d91bd1a249f6aaa29686f4462f2c1c592990ec977198d84539eb857"
+          }
+        },
+        "cachedStats": {
+          "resumes": 423,
+          "sessionsExecuted": 285,
+          "memoHits": 4366,
+          "memoMisses": 2825
+        },
+        "uncachedStats": {
+          "resumes": 0,
+          "sessionsExecuted": 10437,
+          "memoHits": 0,
+          "memoMisses": 0
+        }
+      },
+      "metrics": {
+        "initialCapital": 100000,
+        "endingEquity": 79182.50977250002,
+        "totalReturnPct": -20.81749022749998,
+        "sharpe": -2.2597880460395294,
+        "sortino": -2.322812317185911,
+        "legacySourceSortino": -0.9971352546001913,
+        "maxDrawdownPct": -24.3470079449557,
+        "fillCount": 48,
+        "tradeCount": 21,
+        "closedTrades": 21,
+        "winRatePct": 14.285714285714285,
+        "profitFactor": 0.18458788656589192,
+        "averageHoldingSessions": 14.428571428571429,
+        "medianHoldingSessions": 10,
+        "twoWayTradedNotional": 445898.9207725002,
+        "turnoverPct": 463.46515713584387,
+        "annualizedTurnoverPct": 2433.1920749631804,
+        "capitalUtilizationPct": 65.58615668262706,
+        "openTerminalPositions": 6,
+        "benchmarkComparisons": {
+          "SPY": {
+            "simpleReturnPct": -19.999999999999996,
+            "excessReturnPct": -0.817490227499984,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": -19.999999999999996,
+            "simpleOpenToCloseReturnPct": -19.999999999999996
+          },
+          "QQQ": {
+            "simpleReturnPct": -19.999999999999986,
+            "excessReturnPct": -0.8174902274999951,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": -19.999999999999986,
+            "simpleOpenToCloseReturnPct": -19.999999999999986
+          }
+        },
+        "dailyReturns": [
+          -0.0019945600000000896,
+          0,
+          0,
+          0.04874582647565551,
+          0,
+          0,
+          0,
+          0,
+          -0.0017096446692166367,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0011728792043568248,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.046067499992802574,
+          -0.0008153691892290871,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0016358891743961657,
+          0,
+          0,
+          -0.20171275235855812,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0012256860500378108,
+          0
+        ]
+      },
+      "sourcePin": {
+        "contract": "c1-production-policy-source-pin-v1",
+        "sources": {
+          "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+          "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+          "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+          "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+          "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+          "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+          "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+          "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+          "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+          "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+          "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+          "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+          "lib/c1StockClassification.js": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2",
+          "lib/c1ManualRecommendations.js": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+          "lib/c1OpeningPriceReview.js": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+          "lib/c1AccountExecution.js": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4",
+          "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+          "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+          "lib/portfolioGovernor.js": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+          "lib/c1AccountLedger.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+          "lib/c1AccountSimulator.js": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+          "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+          "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+          "lib/c1PaperEvents.js": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c",
+          "lib/c1SleeveAccounting.js": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+        },
+        "sourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf",
+        "transforms": {
+          "lib/c1AccountSimulator.js": {
+            "originalSha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+            "adaptedSha256": "a465f83686ad75da50dbd4869aaa5bb03ecfa82fad4936d6ec3044103c9aa103"
+          },
+          "lib/c1ActualFillReplay.js": {
+            "originalSha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+            "adaptedSha256": "3693f3def1f7837344cce2eec8e0328a5efc2aef73143dad6420d8c805c65a6f"
+          }
+        },
+        "costOverlay": {
+          "onlyChangedOption": "slippageBps",
+          "value": 25
+        },
+        "adapterSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+        "cached": true
+      }
+    },
+    {
+      "cost": 50,
+      "passed": true,
+      "fullRecorded": {
+        "contract": "c1-full-history-uncached-recorded-replay-verification-v1",
+        "passed": true,
+        "scope": "Independent cache-disabled full chronological production simulator replay of all generated modeled actual executions; complete per-session fills/cash/positions/persistence/counters/stops/risk/pending traces and final outputs. Daily plan generation parity is separately checked against source.",
+        "cost": 50,
+        "observations": 48,
+        "sourceGraphMatches": true,
+        "inputContentMatches": true,
+        "inputManifestMatches": true,
+        "runClass": "synthetic-source-policy-software-check",
+        "eligibleForAlphaClaim": false,
+        "actualLiveInputAccepted": null,
+        "literalLiveInputGuardFailures": {},
+        "results": {
+          "base": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "5b249ee7a8809efa3e2a45fcd9f181928f50e0b3dd247d5e68983eca5a346a57",
+            "cachedSourceOutputSha256": "5b249ee7a8809efa3e2a45fcd9f181928f50e0b3dd247d5e68983eca5a346a57",
+            "traceSha256": "2ca9ae659304838bc625da6eba7b92da42d9e211e8a1133654ed2dcefe35626d",
+            "cachedTraceSha256": "2ca9ae659304838bc625da6eba7b92da42d9e211e8a1133654ed2dcefe35626d"
+          },
+          "cooldown15": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "f5aaa2713f58f2ec0d145c8777e6539043233aeb127861651e2f4a1babb2dc8c",
+            "cachedSourceOutputSha256": "f5aaa2713f58f2ec0d145c8777e6539043233aeb127861651e2f4a1babb2dc8c",
+            "traceSha256": "f7285dd0714120309f3927f60fa182d4fefe142ea5fc4a20f71fe65d3fc10f74",
+            "cachedTraceSha256": "f7285dd0714120309f3927f60fa182d4fefe142ea5fc4a20f71fe65d3fc10f74"
+          },
+          "sector40": {
+            "completeSourceOutputMatches": true,
+            "everySessionTraceMatches": true,
+            "sourceOutputSha256": "f837c14cd071ec27770dcf47675b5b675adc73f9b3f7f01fd0e8b8834b7edda6",
+            "cachedSourceOutputSha256": "f837c14cd071ec27770dcf47675b5b675adc73f9b3f7f01fd0e8b8834b7edda6",
+            "traceSha256": "612aaa0169309ddbf8ee9ce713747e6f0826c79ee25085a49486a59e4d0e8165",
+            "cachedTraceSha256": "612aaa0169309ddbf8ee9ce713747e6f0826c79ee25085a49486a59e4d0e8165"
+          }
+        },
+        "uncachedStats": {
+          "resumes": 0,
+          "sessionsExecuted": 144,
+          "memoHits": 0,
+          "memoMisses": 0
+        }
+      },
+      "equivalence": {
+        "contract": "c1-production-replay-cache-equivalence-v1",
+        "passed": true,
+        "fields": {
+          "modelMode": {
+            "matched": true,
+            "cachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98",
+            "uncachedSha256": "94fb3ccb0d604b48df76214342827b02da1421ac2e07cbc09835e02dc2f5ac98"
+          },
+          "operationalBuyVerificationReproduced": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "historicalEventHistoryAvailable": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "brokerageSnapshotsReproduced": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "runClass": {
+            "matched": true,
+            "cachedSha256": "7e4927e7523fdf2b565eb447cd920c7d5d2ce0685b109ba69b7d5e4018481534",
+            "uncachedSha256": "7e4927e7523fdf2b565eb447cd920c7d5d2ce0685b109ba69b7d5e4018481534"
+          },
+          "eligibleForAlphaClaim": {
+            "matched": true,
+            "cachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "uncachedSha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+          },
+          "actualLiveInputAccepted": {
+            "matched": true,
+            "cachedSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+            "uncachedSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+          },
+          "literalLiveInputGuardFailures": {
+            "matched": true,
+            "cachedSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "uncachedSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+          },
+          "metrics": {
+            "matched": true,
+            "cachedSha256": "943c76db6eb9b5d5887f705c3ff4fab33dd8a6ab91cabc1d9228813c557d915c",
+            "uncachedSha256": "943c76db6eb9b5d5887f705c3ff4fab33dd8a6ab91cabc1d9228813c557d915c"
+          },
+          "curve": {
+            "matched": true,
+            "cachedSha256": "804289b0e9e916ecd873c5b5e3ccaa7849ef6458af3ef429e86eaeae3369a21d",
+            "uncachedSha256": "804289b0e9e916ecd873c5b5e3ccaa7849ef6458af3ef429e86eaeae3369a21d"
+          },
+          "trades": {
+            "matched": true,
+            "cachedSha256": "5d24b270a6d059a05b3665dd45edf1306084d2c299d6365209edd70e9f430efc",
+            "uncachedSha256": "5d24b270a6d059a05b3665dd45edf1306084d2c299d6365209edd70e9f430efc"
+          },
+          "fills": {
+            "matched": true,
+            "cachedSha256": "b8bd8b1f4f67913f550d650f9e3bc1a35c1a4fa8a5e9081b8eba19ea17e7e61d",
+            "uncachedSha256": "b8bd8b1f4f67913f550d650f9e3bc1a35c1a4fa8a5e9081b8eba19ea17e7e61d"
+          },
+          "plans": {
+            "matched": true,
+            "cachedSha256": "d1ff32e090bbd6652e1eefcc188e2688d811f564910f727a8a888ccac0410412",
+            "uncachedSha256": "d1ff32e090bbd6652e1eefcc188e2688d811f564910f727a8a888ccac0410412"
+          },
+          "accountTrace": {
+            "matched": true,
+            "cachedSha256": "def8dff8aa5517522a6e95459831b8ace7f32fa6bbd8b59ea25da2f426ecec01",
+            "uncachedSha256": "def8dff8aa5517522a6e95459831b8ace7f32fa6bbd8b59ea25da2f426ecec01"
+          },
+          "final": {
+            "matched": true,
+            "cachedSha256": "be2e79acacae0666ea7b1707bcc9588033964ddecc9f1c5709014dc3938750dc",
+            "uncachedSha256": "be2e79acacae0666ea7b1707bcc9588033964ddecc9f1c5709014dc3938750dc"
+          },
+          "simulatorTrace": {
+            "matched": true,
+            "cachedSha256": "afc015cb360de96ca5df10b7b6947ee84c201270bd4191a913bcb5aede9c5367",
+            "uncachedSha256": "afc015cb360de96ca5df10b7b6947ee84c201270bd4191a913bcb5aede9c5367"
+          }
+        },
+        "cachedStats": {
+          "resumes": 423,
+          "sessionsExecuted": 285,
+          "memoHits": 4366,
+          "memoMisses": 2825
+        },
+        "uncachedStats": {
+          "resumes": 0,
+          "sessionsExecuted": 10437,
+          "memoHits": 0,
+          "memoMisses": 0
+        }
+      },
+      "metrics": {
+        "initialCapital": 100000,
+        "endingEquity": 78336.94970000001,
+        "totalReturnPct": -21.663050299999988,
+        "sharpe": -2.3510322793078173,
+        "sortino": -2.4136176962957845,
+        "legacySourceSortino": -1.043738530283394,
+        "maxDrawdownPct": -25.012658363800544,
+        "fillCount": 48,
+        "tradeCount": 21,
+        "closedTrades": 21,
+        "winRatePct": 14.285714285714285,
+        "profitFactor": 0.17378767804609632,
+        "averageHoldingSessions": 14.428571428571429,
+        "medianHoldingSessions": 10,
+        "twoWayTradedNotional": 443471.6076999999,
+        "turnoverPct": 463.3976969587815,
+        "annualizedTurnoverPct": 2432.837909033603,
+        "capitalUtilizationPct": 65.56595036548353,
+        "openTerminalPositions": 6,
+        "benchmarkComparisons": {
+          "SPY": {
+            "simpleReturnPct": -19.999999999999996,
+            "excessReturnPct": -1.6630502999999908,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": -19.999999999999996,
+            "simpleOpenToCloseReturnPct": -19.999999999999996
+          },
+          "QQQ": {
+            "simpleReturnPct": -19.999999999999986,
+            "excessReturnPct": -1.6630503000000019,
+            "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+            "simpleCloseToCloseReturnPct": -19.999999999999986,
+            "simpleOpenToCloseReturnPct": -19.999999999999986
+          }
+        },
+        "dailyReturns": [
+          -0.0039796199999999615,
+          0,
+          0,
+          0.04884297648608338,
+          0,
+          0,
+          0,
+          0,
+          -0.003421814056352779,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0023340824748736555,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.045835126152697026,
+          -0.0016167082102068742,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0032750360509914422,
+          0,
+          0,
+          -0.20373021234877553,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          -0.0024489215336658265,
+          0
+        ]
+      },
+      "sourcePin": {
+        "contract": "c1-production-policy-source-pin-v1",
+        "sources": {
+          "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+          "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+          "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+          "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+          "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+          "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+          "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+          "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+          "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+          "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+          "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+          "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+          "lib/c1StockClassification.js": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2",
+          "lib/c1ManualRecommendations.js": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+          "lib/c1OpeningPriceReview.js": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+          "lib/c1AccountExecution.js": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4",
+          "lib/c1AccountSeed.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+          "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+          "lib/portfolioGovernor.js": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+          "lib/c1AccountLedger.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+          "lib/c1AccountSimulator.js": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+          "lib/c1ActualFillReplay.js": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+          "lib/c1AccountProjection.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+          "lib/c1PaperEvents.js": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c",
+          "lib/c1SleeveAccounting.js": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+        },
+        "sourceGraphSha256": "b1a5d79c017cb96ff55037029dd343d75d4826a8fd7ba341ad2d183dc8d1c5bf",
+        "transforms": {
+          "lib/c1AccountSimulator.js": {
+            "originalSha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+            "adaptedSha256": "a465f83686ad75da50dbd4869aaa5bb03ecfa82fad4936d6ec3044103c9aa103"
+          },
+          "lib/c1ActualFillReplay.js": {
+            "originalSha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630",
+            "adaptedSha256": "3693f3def1f7837344cce2eec8e0328a5efc2aef73143dad6420d8c805c65a6f"
+          }
+        },
+        "costOverlay": {
+          "onlyChangedOption": "slippageBps",
+          "value": 50
+        },
+        "adapterSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+        "cached": true
+      }
+    }
+  ],
+  "boundaryQuantities": {
+    "base:AAA": 27,
+    "base:BBB": 430,
+    "base:CCC": 74,
+    "cooldown15:AAA": 54,
+    "cooldown15:BBB": 861,
+    "cooldown15:CCC": 149,
+    "sector40:AAA": 27,
+    "sector40:BBB": 181,
+    "sector40:CCC": 74
+  },
+  "adapterSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9",
+  "engineSha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a",
+  "coverage": [
+    "literal unmodified production source",
+    "12/25/50 bps",
+    "cached vs uncached all states",
+    "production double-floor sizing",
+    "same-sector sequential projection budget",
+    "issuer constraints",
+    "14% stops",
+    "5–29 early momentum",
+    "5–29 peak-profit armed exit",
+    "30+ rank exit",
+    "cash constraints",
+    "mapped zero",
+    "minimumTrade boundary",
+    "immutable input content",
+    "benchmark close-to-close convention",
+    "lossless saved audit state",
+    "saved-run full uncached source verification"
+  ]
+}
