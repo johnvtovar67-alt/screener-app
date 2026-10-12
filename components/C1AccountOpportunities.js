@@ -1,6 +1,6 @@
-import {classifyC1StockScreen} from '../lib/c1StockClassification';
+import {c1ScreenEvidenceKey,readC1ScreenEvidence,writeC1ScreenEvidence,resolveC1ScreenEvidence} from '../lib/c1ScreenEvidence';
 import {c1WatchPresentation,c1OpportunityPresentation} from '../lib/c1EntryReview';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
 export default function C1AccountOpportunities({decision,executionDecision=decision,openingPlan,openingError,manualRecommendations,screenRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
@@ -11,28 +11,29 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
   const timer=setTimeout(()=>expire(n=>n+1),Math.min(remaining+1,120001));
   return ()=>clearTimeout(timer);
  },[manualRecommendations?.validUntil]);
- const ready=Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,executionDecision);
+ const lastVerified=useRef(null);
+ const sourceKey=c1ScreenEvidenceKey(decision);
+ const [restored,setRestored]=useState({key:null,value:null});
+ const cacheReady=typeof window==='undefined'||restored.key===sourceKey;
+ useEffect(()=>{if(typeof window!=='undefined'){let value=null;try{value=readC1ScreenEvidence(window.localStorage,decision);}catch{}setRestored({key:sourceKey,value});}},[sourceKey]);
+ const evidence=resolveC1ScreenEvidence({decision,rows:screenRows,current:screenCurrent&&cacheReady,previous:lastVerified.current?.key===sourceKey?lastVerified.current:restored.value});
+ useEffect(()=>{if(evidence.verified){lastVerified.current=evidence;if(typeof window!=='undefined')try{writeC1ScreenEvidence(window.localStorage,evidence);}catch{}}},[evidence]);
+ const ready=!evidence.pending&&Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,executionDecision);
  const portfolioOnly=view==='portfolio';
- const ratedRows=classifyC1StockScreen({snapshot:decision.stockScreen,rows:screenRows,current:screenCurrent&&decision.current&&decision.stockScreen?.sourceSessionDate===decision.sourceSessionDate});
- const currentBuySymbols=new Set(ratedRows.filter(row=>['Buy','Strong Buy'].includes(row.rating)).map(row=>row.symbol));
+ const ratedRows=evidence.ratings;
+ const currentBuySymbols=new Set(evidence.buySymbols);
  const orders=c1ManualOrdersForView({review:manualRecommendations,decision:executionDecision,openingPlan,view});
- const rawBuys=orders.filter(order=>order.side==='buy'&&!order.condition);
+ const rawBuys=orders.filter(order=>order.side==='buy'&&!order.condition&&currentBuySymbols.has(order.symbol));
  const buys=c1OrderDisplayGroups(portfolioOnly?rawBuys.filter(order=>currentBuySymbols.has(order.symbol)):rawBuys);
  const positionOrders=portfolioOnly?c1OrderDisplayGroups(c1ManualOrdersForView({review:manualRecommendations,decision:executionDecision,openingPlan,view:'opportunities'}).filter(order=>order.side==='sell'&&!order.condition)):[];
  const exits=positionOrders;
  if(portfolioOnly&&!buys.length&&!positionOrders.length)return null;
- const waitingReason=decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
+ const waitingReason=evidence.pending?evidence.reason:decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
  const ratedDecision={...decision,opportunities:ratedRows};
  const presentation=c1OpportunityPresentation({decision:ratedDecision,buys,plan:openingPlan,ready,waitingReason});
  const watch=presentation.watch;
- const screenSymbols=new Set(screenRows.map(row=>String(row?.symbol||row?.ticker||'').toUpperCase()));
- const verifiedScreen=screenCurrent===true;
- const currentWatch=watch.filter(row=>screenSymbols.has(row.symbol));
- const priorWatch=verifiedScreen?watch.filter(row=>!screenSymbols.has(row.symbol)):[];
- const pendingWatch=verifiedScreen?[]:watch.filter(row=>!screenSymbols.has(row.symbol));
- const pendingWatchView=c1WatchPresentation({rows:pendingWatch,plan:openingPlan,ready:false,waitingReason:'Current screen verification is pending.'});
+ const currentWatch=watch;
  const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
- const priorWatchView=c1WatchPresentation({rows:priorWatch,plan:openingPlan,ready,waitingReason});
  const heldSymbols=new Set([
   ...(decision.positions||[]).map(position=>String(position?.symbol||'').toUpperCase()),
   ...(portfolio||[]).filter(position=>position?.role==='Swing'&&Number(position?.shares)>0).map(position=>String(position?.symbol||'').toUpperCase())
@@ -44,14 +45,13 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
    ...currentWatchView.rows.map((row,index)=>{
     const held=heldSymbols.has(String(row.symbol||'').toUpperCase());
     const momentumRankText=held&&currentWatch[index]?.screenReview?.why?currentWatch[index].screenReview.why.split(';')[0]+'.':'';
-    return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:row.review};
+    return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:evidence.pending?{why:evidence.reason,next:'Fresh capital is paused.'}:row.review};
    }),
-   ...priorWatchView.rows.map((row,index)=>({...row,priority:'—',review:{why:'Prior signal #'+(priorWatch[index]?.priority+1)+' — currently ineligible.',next:'Does not currently qualify for a new C1 entry.'}})),
-   ...pendingWatchView.rows.map(row=>({...row,priority:'—',review:{why:'Last verified C1 signal retained — current verification is pending.',next:'No eligibility change is recorded until a complete verified screen succeeds.'}}))
   ]
  };
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
+  {!portfolioOnly&&evidence.pending&&<p role="status">{evidence.reason}</p>}
   <p className="sub">Signals based on {decision.sourceSessionDate} close · C1 strategy cash: {Number.isFinite(decision.strategyCash)?decision.strategyCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Unavailable'} · Brokerage cash: {Number.isFinite(decision.brokerageCash)?decision.brokerageCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Not entered'} · Available to deploy: {Number.isFinite(decision.executableCash)?decision.executableCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'$0.00'}</p>
   {decision.brokerageCashCurrent===false&&<p role="status">{decision.brokerageCashReason||'Update brokerage cash in My Portfolio before a new C1 purchase.'}</p>}
   {exits.length>0&&<div><h3>Exits to review</h3><ul>{exits.map(o=><li key={o.id}><b>{o.symbol}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; estimated opening price ${o.estimatedPrice.toFixed(2)}. Check the current broker price.</li>)}</ul></div>}

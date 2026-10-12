@@ -22,7 +22,7 @@ function fetchBoundary(responses,initialCache=[]){
 function screenUI(fetch,priorRows=snapshot.stocks){
  const state={stocks:priorRows,feedHealth:{status:'healthy'},error:'',reloading:false,historyReads:0};
  const set=(name,value)=>{state[name]=typeof value==='function'?value(state[name]):value;};
- const box={fetch,readTop5Response,accountView:null,Date,setTimeout:callback=>{callback();return 0;},
+ const box={fetch,readTop5Response,accountView:null,screenRequestId:{current:0},Date,setTimeout:callback=>{callback();return 0;},
   performanceHistory:async()=>{state.historyReads++;return {records:[],available:true};},
   signalPersistence:()=>({}),sym:row=>row.symbol,CASH:['CASH'],specialSituation:()=>null,fd:row=>row.finalDecision,
   refreshC1Account:async()=>null,prepareC1Execution:()=>{throw new Error('No account to prepare');},

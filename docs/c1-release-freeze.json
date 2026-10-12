@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "a868c718d1bae16481e09bcbf4900734feb05f1f",
+    "components/C1AccountOpportunities.js": "0bed093604f2233d349179b267103b5a270b7bf9",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -165,7 +165,7 @@
     "pages/api/research/v11-stress-test.js": "c6923fcd7d54f9250b498e9273caffe0ca6c2c38",
     "pages/api/top5.js": "6c0b454ff6594d6bc5a53c4413a7455b1f422871",
     "pages/api/version.js": "76d9d808fe0153a18b139acb29545b92ea901734",
-    "pages/index.js": "94093692970933f750061814e5f276cb77b394ac",
+    "pages/index.js": "7afefe886a9760800d0e08e7a069a6cda7cb5c93",
     "styles/card-layout.css": "b652f6ff7a40fbe70ebbbd6cd465f68c58563b08",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
     "lib/c1EntryReview.js": "ad8470ab500abfbcbb160a14a38fbe8693248d40",
@@ -184,7 +184,8 @@
     "lib/c1BrokerageCash.js": "2d607dc132f07af5f8c9ba855d3b582e3e9c4493",
     "lib/c1ExecutionCashAuthority.js": "00fe04b5cc8f0681072b450dafc59c5583595b98",
     "lib/top5Diagnostics.js": "8c9aff62a852ac7204ee8538eb2a4f323bdab51d",
-    "lib/top5Response.js": "1be53ba835d5f1ca36f9b3fc569ef536b3cf57b9"
+    "lib/top5Response.js": "1be53ba835d5f1ca36f9b3fc569ef536b3cf57b9",
+    "lib/c1ScreenEvidence.js": "12d43338c0dd045f7fb04f6b7f9c4643bf7e7e2e"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
@@ -202,5 +203,6 @@
   "accountArchitectureCleanupAuthorization": "Owner explicitly requested on October 8, 2026 a wholesale behavior-preserving C1 architecture cleanup: FMP/market data -> Verified Daily Dataset -> C1 Decision -> Account Decision -> UI, with opening verification, execution planning and manual trade authorization only downstream. Replace compact/skipPendingPlans and opening-dependent completed carry/replay with one read-only Account Decision, retaining actual intraday fills, cash, fees, history, factual date corrections and immutable server execution evidence. Simplify the account API and remove superseded source-patching/test-forwarding paths. Preserve frozen thesis, ranking methodology, three sleeves, sizing, entry/exit/stop rules and execution safeguards. Protected-file hash updates cover only the verified refactor and import changes; release-freeze checker and canonical guard are unchanged. Build/verify hooks now run both guards and the complete discovered regression suite; CI uses that full build. IRDM and held-close changes are deterministic test-fixture repairs, with the existing business rules retained. No production account data may be altered during development or testing.",
   "brokerageCashAuthorization": "Owner explicitly requests on October 8, 2026, separation of C1 strategy cash and manual brokerage cash on top of production 5a1a682 / PR #252, metadata-only revision-protected updates, explicit Portfolio cash UI, and final execution cap min(strategyCash, current brokerageCash). Preserve all model, sleeve, ranking, sizing, stop, exit, holding-period and completed-session analysis rules. Only affected application manifest entries updated; checker and build hooks unchanged. See docs/research/c1-brokerage-cash-separation-20261008.md.",
   "brokerageCashUiAuthorization": "Owner explicitly requests a cosmetic-only Brokerage Cash cleanup on October 8, 2026, on PR #253 / production a9b430b: compact three-balance Portfolio summary, an Update disclosure for the existing input/save control, collapse after successful save, secondary freshness status, preserved accessibility/messages and mobile wrapping. No cash accounting, execution, API, persistence, validation, strategy or portfolio calculation changes. Only components/C1BrokerageCash.js and styles/card-layout.css application hashes updated; release checker, guards and build hooks unchanged. See docs/research/c1-brokerage-cash-ui-20261008.md.",
-  "top5TimeoutAuthorization": "Owner explicitly requests targeted performance/robustness repair of production /api/top5 timeout on ffdd79b. Reuse identical calendar calculations, bound independent quote collection, share same-pass work, reuse policy-permitted discovery, enforce operational deadline, and validate top5 response bodies. Preserve all C1 methodology/ranking/verification, cash/account calculations, and PR254 UI. See docs/research/top5-timeout-20261009.md for measured bottleneck/parity evidence. Only affected hashes updated; guards/build hooks unchanged."
+  "top5TimeoutAuthorization": "Owner explicitly requests targeted performance/robustness repair of production /api/top5 timeout on ffdd79b. Reuse identical calendar calculations, bound independent quote collection, share same-pass work, reuse policy-permitted discovery, enforce operational deadline, and validate top5 response bodies. Preserve all C1 methodology/ranking/verification, cash/account calculations, and PR254 UI. See docs/research/top5-timeout-20261009.md for measured bottleneck/parity evidence. Only affected hashes updated; guards/build hooks unchanged.",
+  "sameSessionScreenEvidenceAuthorization": "Owner explicitly authorizes October 12, 2026 repair of first-load/reload compact C1 evidence nondeterminism: obtain fresh account candidates before compact screen request, fence superseded loads, validate complete required evidence, retain verified same-source selection while pending and pause fresh capital. Preserve ranking, source eligibility, sector/issuer logic, account decisions, cash/brokerage cash, entries/exits and execution; preserve PR256 compact response. Only pages/index.js, components/C1AccountOpportunities.js and new lib/c1ScreenEvidence.js hashes updated. Release guard, canonical guard, build hooks and dependencies unchanged. See docs/research/c1-screen-evidence-20261012.md. No merge or deployment authorized by this instruction."
 }

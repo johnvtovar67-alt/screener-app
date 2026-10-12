@@ -129,6 +129,7 @@ export default function Home(){
   const[holdingsComparison,setHoldingsComparison]=useState(null);
   const[accountView,setAccountView]=useState(null),[accountAbsent,setAccountAbsent]=useState(false),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
   const accountRequestId=useRef(0);
+  const screenRequestId=useRef(0);
   const syncRevision=useRef({key:"",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);
   async function refreshC1Account(body=null,{readOnly=!body}={}){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
@@ -280,11 +281,19 @@ export default function Home(){
   }
 
   async function load(t,verificationPass=0){
-    const started=Date.now();setReloading(true);setErr("");
-    const priorScreenSymbols=accountView?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[];
-    const accountRequest=t==="opportunities"?refreshC1Account().then(value=>{if(value)void prepareC1Execution(value);return {value};}).catch(error=>({error})):Promise.resolve({value:null});
-    try{const d=await fetchScreen(t,verificationPass,{screenSymbols:priorScreenSymbols}),accountResult=await accountRequest,health=screenHealth(d.meta,d.performance);if(accountResult.error)setErr(accountResult.error.message);if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth(health);setMarketScope(d.meta||null);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{setThemeStocks(d.stocks||[]);setThemeFeedHealth(health);}const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());}
-    catch(e){setErr(e.message);if(t==="opportunities"){setStocks(pausePriorRows);setFeedHealth(h=>({...h,status:"unavailable"}));}else{setThemeStocks(pausePriorRows);setThemeFeedHealth(h=>({...h,status:"unavailable"}));}}finally{const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));setReloading(false);}
+    const started=Date.now(),requestId=++screenRequestId.current;setReloading(true);setErr("");
+    try{
+      const account=t==="opportunities"?await refreshC1Account():null;
+      if(requestId!==screenRequestId.current)return;
+      if(account)void prepareC1Execution(account);
+      const screenSymbols=(account?.decision?.stockScreen?.candidates||[]).map(c=>c.symbol);
+      const d=await fetchScreen(t,verificationPass,{screenSymbols});
+      if(requestId!==screenRequestId.current)return;
+      const health=screenHealth(d.meta,d.performance);
+      if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth(health);setMarketScope(d.meta||null);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{setThemeStocks(d.stocks||[]);setThemeFeedHealth(health);}
+      const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());
+    }catch(e){if(requestId!==screenRequestId.current)return;setErr(e.message);if(t==="opportunities"){setStocks(pausePriorRows);setFeedHealth(h=>({...h,status:"unavailable"}));}else{setThemeStocks(pausePriorRows);setThemeFeedHealth(h=>({...h,status:"unavailable"}));}}
+    finally{const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));if(requestId===screenRequestId.current)setReloading(false);}
   }
   async function fetchStock(s){const r=await fetch(`/api?symbol=${encodeURIComponent(s)}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);const x=extract(d);if(!x)throw new Error(`No usable data for ${s}`);return x;}
   async function pushCloudPortfolio(rows,key=syncKey,riskState=null){
