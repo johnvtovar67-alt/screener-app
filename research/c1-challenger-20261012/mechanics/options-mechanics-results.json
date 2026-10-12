@@ -1,0 +1,594 @@
+{
+  "contract": "c1-options-only-synthetic-mechanics-verification-v1",
+  "passed": true,
+  "scope": "Synthetic software mechanics only; no historical comparison, challenger ranking, finalist or alpha evidence.",
+  "historicalComparisonsRun": 0,
+  "productionModified": false,
+  "importedSnapshotModified": false,
+  "experimentsManifestSha256": "6f77af71d22c446a950f83d1f2c61815211c21c36031179c1a3dfac66f611f03",
+  "eligibleForAlphaClaim": false,
+  "snapshot": {
+    "auditCommit": "006e067697385143684c7417b18bc7909c2d217e",
+    "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+    "files": 33
+  },
+  "noOp": [
+    {
+      "costBps": 12,
+      "entireOutputMatches": true,
+      "outputSha256": "912a7c29368de3b04df3c53e19bd2b05bbfe5128e4cfbdeac1bf1c808742ebc1"
+    },
+    {
+      "costBps": 25,
+      "entireOutputMatches": true,
+      "outputSha256": "1e71293a5b39f84ecf9f7100b748556d782f9277422ff8084da5d8ef7f4f315f"
+    },
+    {
+      "costBps": 50,
+      "entireOutputMatches": true,
+      "outputSha256": "9966581cc569cff4840455de03ca4bae125a80061810bde9ebb64a403bbebdad"
+    }
+  ],
+  "optionParity": [
+    {
+      "id": "champion",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "slots__slots2",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "slots__slots4",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "slots__slots5",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "sector_caps__stronger",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "sector_caps__permissive",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "sector_position_limit__max1",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "sector_position_limit__max3",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "entry_queue__depth6",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "entry_queue__depth12",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "entry_queue__depth15",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "adv__usdm200",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "adv__usdm500",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "adv__usdm750",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "initial_stop__pct12",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "initial_stop__pct16",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "sleeve_breaker__pct10",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    },
+    {
+      "id": "sleeve_breaker__pct14",
+      "cachedUncachedParity": true,
+      "literalSourceParity": true
+    }
+  ],
+  "queues": [
+    {
+      "experimentId": "entry_queue__depth6",
+      "depth": 6,
+      "firstUnheldCandidate": "T03",
+      "lastUnheldCandidate": "T08",
+      "heldExcludedBeforeQueueTruncation": true
+    },
+    {
+      "experimentId": "champion",
+      "depth": 9,
+      "firstUnheldCandidate": "T03",
+      "lastUnheldCandidate": "T11",
+      "heldExcludedBeforeQueueTruncation": true
+    },
+    {
+      "experimentId": "entry_queue__depth12",
+      "depth": 12,
+      "firstUnheldCandidate": "T03",
+      "lastUnheldCandidate": "T14",
+      "heldExcludedBeforeQueueTruncation": true
+    },
+    {
+      "experimentId": "entry_queue__depth15",
+      "depth": 15,
+      "firstUnheldCandidate": "T03",
+      "lastUnheldCandidate": "T17",
+      "heldExcludedBeforeQueueTruncation": true
+    }
+  ],
+  "advCases": [
+    {
+      "experimentId": "adv__usdm200",
+      "minimumAverageDollarVolume": 200000000,
+      "qualifyingSyntheticSymbols": [
+        "T00",
+        "T01",
+        "T02",
+        "T03"
+      ]
+    },
+    {
+      "experimentId": "champion",
+      "minimumAverageDollarVolume": 300000000,
+      "qualifyingSyntheticSymbols": [
+        "T01",
+        "T02",
+        "T03"
+      ]
+    },
+    {
+      "experimentId": "adv__usdm500",
+      "minimumAverageDollarVolume": 500000000,
+      "qualifyingSyntheticSymbols": [
+        "T02",
+        "T03"
+      ]
+    },
+    {
+      "experimentId": "adv__usdm750",
+      "minimumAverageDollarVolume": 750000000,
+      "qualifyingSyntheticSymbols": [
+        "T03"
+      ]
+    }
+  ],
+  "falseLiquidityFlagRemainsBlocking": true,
+  "slots": [
+    {
+      "experimentId": "slots__slots2",
+      "slotsPerSleeve": 2,
+      "sectors": "all_distinct",
+      "filledPositionsPerSleeve": {
+        "base": 2,
+        "cooldown15": 2,
+        "sector40": 2
+      },
+      "combinedUniqueSymbols": 2,
+      "syntheticUtilizationPct": 93.90570025620839
+    },
+    {
+      "experimentId": "slots__slots2",
+      "slotsPerSleeve": 2,
+      "sectors": "all_shared",
+      "filledPositionsPerSleeve": {
+        "base": 1,
+        "cooldown15": 1,
+        "sector40": 1
+      },
+      "combinedUniqueSymbols": 1,
+      "syntheticUtilizationPct": 46.926410183651356
+    },
+    {
+      "experimentId": "champion",
+      "slotsPerSleeve": 3,
+      "sectors": "all_distinct",
+      "filledPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "combinedUniqueSymbols": 3,
+      "syntheticUtilizationPct": 98.5163280801971
+    },
+    {
+      "experimentId": "champion",
+      "slotsPerSleeve": 3,
+      "sectors": "all_shared",
+      "filledPositionsPerSleeve": {
+        "base": 2,
+        "cooldown15": 2,
+        "sector40": 2
+      },
+      "combinedUniqueSymbols": 2,
+      "syntheticUtilizationPct": 47.2267492307643
+    },
+    {
+      "experimentId": "slots__slots4",
+      "slotsPerSleeve": 4,
+      "sectors": "all_distinct",
+      "filledPositionsPerSleeve": {
+        "base": 4,
+        "cooldown15": 4,
+        "sector40": 4
+      },
+      "combinedUniqueSymbols": 4,
+      "syntheticUtilizationPct": 98.11538369122088
+    },
+    {
+      "experimentId": "slots__slots4",
+      "slotsPerSleeve": 4,
+      "sectors": "all_shared",
+      "filledPositionsPerSleeve": {
+        "base": 2,
+        "cooldown15": 2,
+        "sector40": 2
+      },
+      "combinedUniqueSymbols": 2,
+      "syntheticUtilizationPct": 46.726185354272545
+    },
+    {
+      "experimentId": "slots__slots5",
+      "slotsPerSleeve": 5,
+      "sectors": "all_distinct",
+      "filledPositionsPerSleeve": {
+        "base": 5,
+        "cooldown15": 5,
+        "sector40": 5
+      },
+      "combinedUniqueSymbols": 5,
+      "syntheticUtilizationPct": 98.1153836912209
+    },
+    {
+      "experimentId": "slots__slots5",
+      "slotsPerSleeve": 5,
+      "sectors": "all_shared",
+      "filledPositionsPerSleeve": {
+        "base": 2,
+        "cooldown15": 2,
+        "sector40": 2
+      },
+      "combinedUniqueSymbols": 2,
+      "syntheticUtilizationPct": 39.21844835810766
+    }
+  ],
+  "sectors": [
+    {
+      "experimentId": "sector_caps__stronger",
+      "bySleeve": {
+        "base": {
+          "dollarCap": 0.4,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 39.61882686652697
+        },
+        "cooldown15": {
+          "dollarCap": 0.4,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 39.81901756278799
+        },
+        "sector40": {
+          "dollarCap": 0.35,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 34.81453855129902
+        }
+      }
+    },
+    {
+      "experimentId": "champion",
+      "bySleeve": {
+        "base": {
+          "dollarCap": 0.5,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 49.62953950191154
+        },
+        "cooldown15": {
+          "dollarCap": 0.5,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 49.829778275497446
+        },
+        "sector40": {
+          "dollarCap": 0.4,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 39.61882686652697
+        }
+      }
+    },
+    {
+      "experimentId": "sector_caps__permissive",
+      "bySleeve": {
+        "base": {
+          "dollarCap": 0.6,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 59.64265642787721
+        },
+        "cooldown15": {
+          "dollarCap": 0.6,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 59.8429432961093
+        },
+        "sector40": {
+          "dollarCap": 0.5,
+          "countCap": 2,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 49.62953950191154
+        }
+      }
+    },
+    {
+      "experimentId": "sector_position_limit__max1",
+      "bySleeve": {
+        "base": {
+          "dollarCap": 0.5,
+          "countCap": 1,
+          "filledPositions": 1,
+          "syntheticSectorExposurePct": 32.81291516340832
+        },
+        "cooldown15": {
+          "dollarCap": 0.5,
+          "countCap": 1,
+          "filledPositions": 1,
+          "syntheticSectorExposurePct": 32.81291516340832
+        },
+        "sector40": {
+          "dollarCap": 0.4,
+          "countCap": 1,
+          "filledPositions": 1,
+          "syntheticSectorExposurePct": 32.81291516340832
+        }
+      }
+    },
+    {
+      "experimentId": "sector_position_limit__max3",
+      "bySleeve": {
+        "base": {
+          "dollarCap": 0.5,
+          "countCap": 3,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 49.62953950191154
+        },
+        "cooldown15": {
+          "dollarCap": 0.5,
+          "countCap": 3,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 49.829778275497446
+        },
+        "sector40": {
+          "dollarCap": 0.4,
+          "countCap": 3,
+          "filledPositions": 2,
+          "syntheticSectorExposurePct": 39.61882686652697
+        }
+      }
+    }
+  ],
+  "stops": [
+    {
+      "experimentId": "initial_stop__pct12",
+      "stopSales": 9,
+      "syntheticLow": 87
+    },
+    {
+      "experimentId": "champion",
+      "stopSales": 0,
+      "syntheticLow": 87
+    },
+    {
+      "experimentId": "initial_stop__pct16",
+      "stopSales": 0,
+      "syntheticLow": 87
+    }
+  ],
+  "breakers": [
+    {
+      "experimentId": "sleeve_breaker__pct10",
+      "breakerSales": 9,
+      "cooldowns": {
+        "base": 10,
+        "cooldown15": 15,
+        "sector40": 10
+      }
+    },
+    {
+      "experimentId": "champion",
+      "breakerSales": 0,
+      "cooldowns": {
+        "base": 10,
+        "cooldown15": 15,
+        "sector40": 10
+      }
+    },
+    {
+      "experimentId": "sleeve_breaker__pct14",
+      "breakerSales": 0,
+      "cooldowns": {
+        "base": 10,
+        "cooldown15": 15,
+        "sector40": 10
+      }
+    }
+  ],
+  "affordability": [
+    {
+      "costBps": 12,
+      "openingBuys": [
+        {
+          "sleeve": "base",
+          "symbol": "T00",
+          "shares": 1,
+          "price": 82.39876000000001
+        },
+        {
+          "sleeve": "base",
+          "symbol": "T01",
+          "shares": 1,
+          "price": 82.39876000000001
+        },
+        {
+          "sleeve": "base",
+          "symbol": "T02",
+          "shares": 1,
+          "price": 82.39876000000001
+        },
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T00",
+          "shares": 2,
+          "price": 82.39876000000001
+        },
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T01",
+          "shares": 2,
+          "price": 82.39876000000001
+        },
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T02",
+          "shares": 2,
+          "price": 82.39876000000001
+        },
+        {
+          "sleeve": "sector40",
+          "symbol": "T00",
+          "shares": 1,
+          "price": 82.39876000000001
+        },
+        {
+          "sleeve": "sector40",
+          "symbol": "T01",
+          "shares": 1,
+          "price": 82.39876000000001
+        },
+        {
+          "sleeve": "sector40",
+          "symbol": "T02",
+          "shares": 1,
+          "price": 82.39876000000001
+        }
+      ],
+      "endingCash": 11.21487999999988
+    },
+    {
+      "costBps": 25,
+      "openingBuys": [
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T00",
+          "shares": 1,
+          "price": 82.50574999999999
+        },
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T01",
+          "shares": 1,
+          "price": 82.50574999999999
+        },
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T02",
+          "shares": 1,
+          "price": 82.50574999999999
+        }
+      ],
+      "endingCash": 752.4827500000001
+    },
+    {
+      "costBps": 50,
+      "openingBuys": [
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T00",
+          "shares": 1,
+          "price": 82.71149999999999
+        },
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T01",
+          "shares": 1,
+          "price": 82.71149999999999
+        },
+        {
+          "sleeve": "cooldown15",
+          "symbol": "T02",
+          "shares": 1,
+          "price": 82.71149999999999
+        }
+      ],
+      "endingCash": 751.8655
+    }
+  ],
+  "acceptedFamilies": [
+    "champion",
+    "slots",
+    "sector_caps",
+    "sector_position_limit",
+    "entry_queue",
+    "adv",
+    "initial_stop",
+    "sleeve_breaker"
+  ],
+  "unsupportedFamilies": [
+    "horizon",
+    "global_sector",
+    "slow_fast",
+    "ordinary_confirmation",
+    "ordinary_hysteresis",
+    "early_confirmation",
+    "early_rank",
+    "profit_activation",
+    "profit_confirmation",
+    "large_gain_deterioration",
+    "scale_drawdown",
+    "scale_volatility"
+  ],
+  "knownBoundaries": [
+    "Queue depth applies after already-held names are removed from the source simulator candidate queue; it does not implement operational selected-sector/max-three Buy verification.",
+    "The ADV option retains source liquidityPass; current compiler base flag has a $10m floor, below every planned $200m+ ADV experiment. False or absent evidence is never manufactured into true.",
+    "Slots are per independent sleeve; dollar sector caps, sector-count caps, $750 model minimum trade and production double-floor rounding remain binding.",
+    "All-cash synthetic adoption avoids inherited seed positions whose source initialization stop is fixed at14%; future inherited-position research would need separate explicit treatment.",
+    "No momentum-exit expression or new confirmation/regime state is implemented by this wrapper.",
+    "Historical execution remains blocked pending verified private input restoration and deployed-versus-audit provenance checks."
+  ]
+}

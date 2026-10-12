@@ -1,0 +1,71 @@
+{
+  "contract": "c1-existing-public-reference-index-v1",
+  "repository": "johnvtovar67-alt/screener-app",
+  "immutableCommit": "006e067697385143684c7417b18bc7909c2d217e",
+  "files": [
+    {
+      "path": "docs/research/c1-current-historical-input-20261012.md",
+      "gitBlobSha": "4169aea67c79e619f62f8270f9b8d7b6af5037a1"
+    },
+    {
+      "path": "docs/research/c1-current-production-replay-engine-20261012.md",
+      "gitBlobSha": "b899fca80e588c093bc25a51e5b965deda06bfef"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-12bps-results.json",
+      "gitBlobSha": "902b4fb9e96e337c4c544564ec09d3a56b5808d5"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-25bps-results.json",
+      "gitBlobSha": "41af1c56022a42230919359e67d3fcd8334b4869"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-25bps-source-verification.json.gz.base64",
+      "gitBlobSha": "3fb772d3f42f9ac69e785add67efa62717a84c5c"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-50bps-results.json",
+      "gitBlobSha": "d453bfb191c7302f2d6b0d7d1482820ee6268518"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-50bps-source-verification.json.gz.base64",
+      "gitBlobSha": "b66ada53dcc86d08b5c7cd9c6e962f6980547384"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-input-acceptance.json.gz.base64",
+      "gitBlobSha": "fd666f5389eec560a9c35cfff0bd855917bce0f2"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-input-acquisition-guard-evidence.json",
+      "gitBlobSha": "e116af6596590da794ee4ccea5a20503f27a9487"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-input-manifest.json",
+      "gitBlobSha": "9cece8eb159e0337ce2004e4b3f50b2331055d0d"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-input-persistent-receipt.json",
+      "gitBlobSha": "231cbbeb247995f4398ecf39a015bb9cb497f0de"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/current-input-public-summary.json",
+      "gitBlobSha": "3a4838697600d0b519d15056a6af104b5c5d1ab9"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/final-artifact-manifest.json",
+      "gitBlobSha": "a2ae10345f566e9f1648137ac35aab98189da2de"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/final-validation-report.md",
+      "gitBlobSha": "2837adb120670e5d9677d63cb113124419e0d971"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/original-export-receipts.json",
+      "gitBlobSha": "19dce7c1f455bc941cee4ee45ec18e9bdc3b9417"
+    },
+    {
+      "path": "docs/research/c1-validation-20261012/original-input-validation.json",
+      "gitBlobSha": "1fe81815a783e46250e333daeb82447fa83c8a66"
+    }
+  ]
+}

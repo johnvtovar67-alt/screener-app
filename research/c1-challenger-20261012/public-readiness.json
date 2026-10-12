@@ -1,0 +1,16 @@
+{
+  "contract": "c1-challenger-readiness-v1",
+  "readyForLongAnalysis": false,
+  "championReproducedThisProgram": false,
+  "challengersRun": 0,
+  "sourceChecksScope": "Recovered audit Champion snapshot only; not equivalence to engineering commit e2b9847",
+  "engineeringSourceHistoricalEquivalenceEstablished": false,
+  "sourceIdentityResolution": "blocked: audit snapshot and engineering source have materially different holding ranks",
+  "comparativePerformanceFindingsVerified": false,
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "blockers": [
+    "Exact raw historical inputs unavailable; private licensed preservation not established",
+    "Saved audit Champion and engineering correction have different holding-rank behavior"
+  ]
+}

@@ -1,0 +1,2355 @@
+{
+  "schema": "c1-challenger-preregistered-experiments-v1",
+  "date": "2026-10-12",
+  "status": "design_only_no_challenger_runs",
+  "productionChangesAuthorized": false,
+  "challengerMergeDeployAuthorized": false,
+  "ownerRequest": "Uploaded Pasted text.txt — C1 Challenger Research Program",
+  "source": {
+    "auditBranch": "audit/c1-current-policy-validation-20261012",
+    "auditCommit": "006e067697385143684c7417b18bc7909c2d217e",
+    "replay": "imported/tools/c1-production-policy-replay.cjs",
+    "loader": "imported/tools/c1-production-replay-loader.cjs",
+    "importIdentities": "imported/imported-git-blob-identities.json",
+    "referenceReport": "imported/docs/research/c1-validation-20261012/final-validation-report.md",
+    "inputManifest": "imported/docs/research/c1-validation-20261012/current-input-manifest.json",
+    "sourceGraphSha256": "must_match_recovered_champion_receipt_before_execution",
+    "inputSha256": "must_match_verified_recovered_input_before_execution",
+    "runtimeRepositoryRoot": "must_be_explicit_and_match_source_pin",
+    "identityRole": "saved_audit_reference_not_proven_equal_to_repaired_production",
+    "auditSimulatorSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+    "auditSourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+    "auditReplayEngineSha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a",
+    "intendedRepairedSource": {
+      "engineeringCommit": "e2b98471311fb702113baf0ca64473b92ccfd142",
+      "simulatorSha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+      "deployedCommitVerified": false,
+      "fullSourceGraphSha256": null,
+      "equivalentToSavedAudit": false,
+      "historicalDifferenceQuantified": false
+    },
+    "provenanceGate": {
+      "status": "blocked_unresolved_intended_champion_source",
+      "report": "provenance/provenance-mismatch.md",
+      "syntheticEvidence": "provenance/synthetic-holding-rank-evidence.json",
+      "materialDifference": "SCHW removed from holding-rank pool/helper by audit, retained there by allocation-only engineering repair",
+      "affectedExits": [
+        "earlyTop9/3",
+        "profitTop6/2",
+        "age30+Top6/1"
+      ],
+      "syntheticEvidenceIsHistoricalPerformance": false,
+      "sourceEditsToConcealMismatchAuthorized": false
+    }
+  },
+  "champion": {
+    "runClass": "conditional-current-account-policy-counterfactual",
+    "eligibleForAlphaClaim": false,
+    "actualLiveInputAccepted": false,
+    "startDate": "2023-01-04",
+    "endDate": "2026-09-01",
+    "firstPossibleFillDate": "2023-01-05",
+    "initialCapital": 100000,
+    "initialPortfolio": "all_cash_synthetic_offline",
+    "sleeves": [
+      {
+        "id": "base",
+        "weight": 0.25
+      },
+      {
+        "id": "cooldown15",
+        "weight": 0.5
+      },
+      {
+        "id": "sector40",
+        "weight": 0.25
+      }
+    ],
+    "terminal": "mark_to_final_close_no_artificial_liquidation",
+    "wholeShares": "exact_source_model_floor_then_actual_sleeve_floor",
+    "costBps": [
+      12,
+      25,
+      50
+    ],
+    "commissionPerOrder": 0,
+    "benchmarks": {
+      "symbols": [
+        "SPY",
+        "QQQ"
+      ],
+      "convention": "baseline_close_to_final_close",
+      "savedReferenceReturnPct": {
+        "SPY": 107.5921081316765,
+        "QQQ": 171.74071656234395
+      }
+    },
+    "momentumWeights": {
+      "globalSlow": 0.4,
+      "globalFast": 0.25,
+      "sectorSlow": 0.22,
+      "sectorFast": 0.13
+    },
+    "currentHorizonReturnArguments": {
+      "slow": [
+        100,
+        20
+      ],
+      "fast": [
+        55,
+        5
+      ]
+    },
+    "sourceOptions": "C1_FROZEN_OPTIONS plus C1_ACCOUNT_MOMENTUM_EXIT_POLICY applied through seeded account-policy path",
+    "prohibitions": [
+      "no_live_or_actual_account_reads_or_writes",
+      "no_production_files_changed",
+      "no_surrogate_dataset",
+      "no_incompatible_walker",
+      "no_unchanged_ledger_cost_subtraction"
+    ],
+    "metadataIdentity": "saved_audit_reference; intended_repaired_production_Champion_unresolved",
+    "savedReferenceEqualsRepairedEngineeringResults": false
+  },
+  "periods": {
+    "development": {
+      "from": "2023-01-04",
+      "through": "2024-12-31"
+    },
+    "laterValidation": {
+      "from": "2025-01-01",
+      "through": "2026-09-01"
+    },
+    "boundaryTreatment": "use_existing_market_sessions_and_carry_pre_boundary_equity_positions_cash_counters; include_first_validation_return",
+    "alreadyExtensivelyViewed": true,
+    "pristineHoldout": false,
+    "retuneAfterValidation": false,
+    "rolling": {
+      "lengthCalendarMonths": 12,
+      "stepCalendarMonths": 3,
+      "fixedConfigurations": true
+    }
+  },
+  "execution": {
+    "oneFamilyAtATime": true,
+    "cartesianSearch": false,
+    "combinedCandidates": [],
+    "developmentScreenCostBps": 25,
+    "maxFinalists": 3,
+    "finalistCostsBps": [
+      12,
+      25,
+      50
+    ],
+    "requireIndependentCostReplay": true,
+    "neighborPolicy": {
+      "horizon__s100ex15_f50ex5": {
+        "left": null,
+        "right": "horizon__s110ex20_f55ex5",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "horizon__s110ex20_f55ex5": {
+        "left": "horizon__s100ex15_f50ex5",
+        "right": "champion",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "horizon__s130ex20_f65ex5": {
+        "left": "champion",
+        "right": "horizon__s140ex25_f70ex10",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "horizon__s140ex25_f70ex10": {
+        "left": "horizon__s130ex20_f65ex5",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "global_sector__global80_sector20": {
+        "left": null,
+        "right": "global_sector__global70_sector30",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "global_sector__global70_sector30": {
+        "left": "global_sector__global80_sector20",
+        "right": "champion",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "global_sector__global60_sector40": {
+        "left": "champion",
+        "right": "global_sector__global50_sector50",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "global_sector__global50_sector50": {
+        "left": "global_sector__global60_sector40",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "slow_fast__slow50": {
+        "left": null,
+        "right": "champion",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "slow_fast__slow75": {
+        "left": "champion",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "slots__slots2": {
+        "left": null,
+        "right": "champion",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "slots__slots4": {
+        "left": "champion",
+        "right": "slots__slots5",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "slots__slots5": {
+        "left": "slots__slots4",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "sector_caps__stronger": {
+        "left": null,
+        "right": "champion",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "sector_caps__permissive": {
+        "left": "champion",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "sector_position_limit__max1": {
+        "left": null,
+        "right": "champion",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "sector_position_limit__max3": {
+        "left": "champion",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "entry_queue__depth6": {
+        "left": null,
+        "right": "champion",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "entry_queue__depth12": {
+        "left": "champion",
+        "right": "entry_queue__depth15",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "entry_queue__depth15": {
+        "left": "entry_queue__depth12",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "adv__usdm200": {
+        "left": null,
+        "right": "champion",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "adv__usdm500": {
+        "left": "champion",
+        "right": "adv__usdm750",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "adv__usdm750": {
+        "left": "adv__usdm500",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "ordinary_confirmation__sessions2": {
+        "left": "champion",
+        "right": "ordinary_confirmation__sessions3",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "ordinary_confirmation__sessions3": {
+        "left": "ordinary_confirmation__sessions2",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "ordinary_hysteresis__top8": {
+        "left": "champion",
+        "right": "ordinary_hysteresis__top10",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "ordinary_hysteresis__top10": {
+        "left": "ordinary_hysteresis__top8",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "early_confirmation__sessions4": {
+        "left": "champion",
+        "right": "early_confirmation__sessions5",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "early_confirmation__sessions5": {
+        "left": "early_confirmation__sessions4",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "early_rank__top12": {
+        "left": "champion",
+        "right": "early_rank__top15",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "early_rank__top15": {
+        "left": "early_rank__top12",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "profit_activation__peak15": {
+        "left": "champion",
+        "right": "profit_activation__peak20",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "profit_activation__peak20": {
+        "left": "profit_activation__peak15",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "profit_confirmation__sessions3": {
+        "left": "champion",
+        "right": "profit_confirmation__sessions4",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "profit_confirmation__sessions4": {
+        "left": "profit_confirmation__sessions3",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "large_gain_deterioration__peak20_top9_2": {
+        "left": null,
+        "right": "large_gain_deterioration__peak25_top9_2",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "large_gain_deterioration__peak25_top9_2": {
+        "left": "large_gain_deterioration__peak20_top9_2",
+        "right": "large_gain_deterioration__peak30_top9_2",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "large_gain_deterioration__peak30_top9_2": {
+        "left": "large_gain_deterioration__peak25_top9_2",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "scale_drawdown__trigger8_restore5": {
+        "left": null,
+        "right": "scale_drawdown__trigger10_restore7",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "scale_drawdown__trigger10_restore7": {
+        "left": "scale_drawdown__trigger8_restore5",
+        "right": "scale_drawdown__trigger12_restore9",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "scale_drawdown__trigger12_restore9": {
+        "left": "scale_drawdown__trigger10_restore7",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "scale_volatility__trigger20_restore15": {
+        "left": null,
+        "right": "scale_volatility__trigger25_restore20",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "scale_volatility__trigger25_restore20": {
+        "left": "scale_volatility__trigger20_restore15",
+        "right": "scale_volatility__trigger30_restore25",
+        "bracketed": true,
+        "validationMayAddNewNeighbors": false
+      },
+      "scale_volatility__trigger30_restore25": {
+        "left": "scale_volatility__trigger25_restore20",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "initial_stop__pct12": {
+        "left": null,
+        "right": "champion",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "initial_stop__pct16": {
+        "left": "champion",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "sleeve_breaker__pct10": {
+        "left": null,
+        "right": "champion",
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      },
+      "sleeve_breaker__pct14": {
+        "left": "champion",
+        "right": null,
+        "bracketed": false,
+        "validationMayAddNewNeighbors": false
+      }
+    },
+    "longRunPrerequisites": [
+      "resolved_intended_repaired_or_deployed_source_identity_and_compatible_baseline",
+      "exact_source_and_input_recovery",
+      "durably_persisted_code_and_safe_manifests_on_GitHub_plus_private_licensed_input_preservation",
+      "Champion_equivalence_all_three_costs",
+      "no_op_research_override_equivalence",
+      "focused_chronology_whole_share_cash_cost_and_risk_checks"
+    ],
+    "finalistLockBeforeValidation": true,
+    "plannedExperimentsAreNotImplementedRunnerOptions": true,
+    "overrideRule": "Apply only inside an isolated source-pinned module overlay or compiler seam; unsupported delta remains blocked.",
+    "sourceGraphOverlayConsistency": "Every altered logical parameter must propagate through projection, continuation, seeding, ranking and accounting where used; reject partially overridden graphs.",
+    "readyForLongAnalysis": false
+  },
+  "metricDefinitions": {
+    "twoWayTradedNotional": "sum(source_ledger_buy_and_sell_shares_times_price)",
+    "turnoverPct": "twoWayTradedNotional / mean(combined_daily_equity) * 100",
+    "annualizedTurnoverPct": "twoWayTradedNotional / mean(combined_daily_equity) * 252 / curve.length * 100",
+    "sharpe": "mean(net_daily_returns)/sample_stdev(net_daily_returns)*sqrt(252), risk_free=0",
+    "sortino": "mean(net_daily_returns)/sqrt(mean(min(net_daily_return,0)^2))*sqrt(252)",
+    "legacySourceSortino": "separately_preserved_not_primary",
+    "capitalUtilizationPct": "mean(1-cash/equity)*100",
+    "tradeCount": "source_completed_sleeve_round_trips",
+    "CAGR": "actual_elapsed_calendar_time",
+    "Calmar": "CAGR/abs(maximum_drawdown)",
+    "effectiveIssuerCount": "1/sum(invested_normalized_combined_issuer_weight^2)"
+  },
+  "regimes": {
+    "observationCutoff": "previous_completed_session",
+    "benchmark": "SPY",
+    "correction": {
+      "trailingHighSessions": 252,
+      "drawdownLtePct": -10
+    },
+    "highVolatility": {
+      "priorDailyReturns": 20,
+      "sampleStdevAnnualization": 252,
+      "volatilityGtePct": 25
+    },
+    "lowVolatility": {
+      "priorDailyReturns": 20,
+      "sampleStdevAnnualization": 252,
+      "volatilityLtePct": 15
+    },
+    "strongTrend": {
+      "aboveSMA": 200,
+      "returnSessions": 63,
+      "returnGtePct": 10
+    },
+    "recovery": {
+      "aboveSMA": 50,
+      "returnSessions": 63,
+      "returnGtPct": 0,
+      "drawdownLtePct": -5
+    },
+    "sideways": {
+      "returnSessions": 63,
+      "absoluteReturnLtPct": 5
+    },
+    "overlapAllowed": true,
+    "overlapCountsRequired": true,
+    "minimumInferenceWarning": "sparse_days_and_episodes_limit_evidence"
+  },
+  "rightTail": {
+    "topWinnerCounts": [
+      1,
+      5,
+      10
+    ],
+    "netReturnThresholdsPct": [
+      25,
+      50,
+      100
+    ],
+    "primaryTradeUnit": "source_sleeve_round_trip",
+    "supplementaryTradeUnit": "continuous_combined_issuer_ownership_episode",
+    "contributionDenominators": [
+      "gross_positive_net_PnL",
+      "total_net_PnL"
+    ],
+    "fixedPathRemoval": "neutralize_selected_episode_incremental_net_PnL_on_realized_path_keep_future_fills_quantities_decisions_fixed",
+    "investableCounterfactual": false,
+    "reportTerminalOpenPositionsSeparately": true
+  },
+  "materiality": {
+    "validationCostBps": 25,
+    "minimumSharpeImprovement": 0.1,
+    "minimumRelativeSortinoImprovement": 0.1,
+    "maxDrawdownMustBeEqualOrBetter": true,
+    "minimumCAGRRelativeToPositiveChampion": 0.9,
+    "turnoverMustBeNoHigher": true,
+    "turnoverThesisMinimumRelativeReduction": 0.2,
+    "turnoverThesisProfitPerNotionalMustImprove": true,
+    "fiftyBpsMustRetainPositiveExcessVsBothBenchmarks": true,
+    "topFiveGrossProfitShareMaximumWorseningPercentagePoints": 5,
+    "neighborsMinimumRetainedSharpeImprovementFraction": 0.75,
+    "productionConsiderationRequiresBracketedNeighbors": true,
+    "conditionalHistoricalGatesAloneCertifyAlpha": false,
+    "futureImplementationAuthorized": false
+  },
+  "scorecard": [
+    "cumulative_return",
+    "CAGR",
+    "SPY_QQQ_excess_return_and_CAGR",
+    "Sharpe",
+    "Sortino",
+    "maximum_drawdown",
+    "Calmar",
+    "win_rate",
+    "profit_factor",
+    "expectancy",
+    "average_median_winner",
+    "average_median_loser",
+    "two_way_turnover",
+    "annualized_two_way_turnover",
+    "net_PnL_per_traded_dollar",
+    "trade_count",
+    "fill_count",
+    "mean_median_holding_sessions",
+    "capital_utilization",
+    "issuer_sector_concentration",
+    "cost_sensitivity",
+    "regime_consistency",
+    "outlier_dependence",
+    "parameter_stability",
+    "implementation_complexity"
+  ],
+  "exploratoryUncertainty": {
+    "method": "paired_20_session_moving_block_bootstrap",
+    "draws": 2000,
+    "seed": 20261012,
+    "historicalSelectionBiasRemoved": false
+  },
+  "families": [
+    {
+      "id": "horizon",
+      "hypothesis": "Momentum persists across coarse economically similar intermediate horizons.",
+      "orderedGrid": [
+        "horizon__s100ex15_f50ex5",
+        "horizon__s110ex20_f55ex5",
+        "champion",
+        "horizon__s130ex20_f65ex5",
+        "horizon__s140ex25_f70ex10"
+      ],
+      "deltaClass": "compiler",
+      "scope": "Historical quote construction and momentum-only factor recomputation",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Raw adjusted historical prices with warmup required; precomputed factors alone are insufficient.",
+        "Global/sector and slow/fast weights remain exact Champion values."
+      ]
+    },
+    {
+      "id": "global_sector",
+      "hypothesis": "Sector-relative leadership provides durable value that justifies its complexity.",
+      "orderedGrid": [
+        "global_sector__global80_sector20",
+        "global_sector__global70_sector30",
+        "champion",
+        "global_sector__global60_sector40",
+        "global_sector__global50_sector50"
+      ],
+      "deltaClass": "compiler",
+      "scope": "Four-way momentum-percentile blend",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Preserve separate normalized global and sector slow/fast ratios; do not substitute a common 62/38 internal split."
+      ]
+    },
+    {
+      "id": "slow_fast",
+      "hypothesis": "Persistence versus responsiveness has a broad useful balance.",
+      "orderedGrid": [
+        "slow_fast__slow50",
+        "champion",
+        "slow_fast__slow75"
+      ],
+      "deltaClass": "compiler",
+      "scope": "Four-way momentum-percentile blend",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": []
+    },
+    {
+      "id": "slots",
+      "hypothesis": "Concentration contributes economically rather than through an accidental three-slot choice.",
+      "orderedGrid": [
+        "slots__slots2",
+        "champion",
+        "slots__slots4",
+        "slots__slots5"
+      ],
+      "deltaClass": "existing_options",
+      "scope": "All independent sleeves",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Current target remains exact0.33; alternatives use0.99/N to preserve total99%; max fractions1/N.",
+        "Adaptive equal-weight source branch is false in Champion.",
+        "Slots per sleeve are not combined effective issuer count; preserve caps and disclose utilization interactions."
+      ]
+    },
+    {
+      "id": "sector_caps",
+      "hypothesis": "Existing dollar sector constraints improve robustness without unduly shrinking opportunity.",
+      "orderedGrid": [
+        "sector_caps__stronger",
+        "champion",
+        "sector_caps__permissive"
+      ],
+      "deltaClass": "existing_options",
+      "scope": "Per-sleeve dollar sector limits",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "maxSectorPositions stays2; report sector exposures and binding constraints."
+      ]
+    },
+    {
+      "id": "sector_position_limit",
+      "hypothesis": "Sector issuer-count constraints add durable robustness.",
+      "orderedGrid": [
+        "sector_position_limit__max1",
+        "champion",
+        "sector_position_limit__max3"
+      ],
+      "deltaClass": "existing_options",
+      "scope": "All sleeve position-count sector limits",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Dollar sector caps remain50/50/40%."
+      ]
+    },
+    {
+      "id": "entry_queue",
+      "hypothesis": "Nine source-eligible opportunities represents a plateau rather than a fragile arbitrary depth.",
+      "orderedGrid": [
+        "entry_queue__depth6",
+        "champion",
+        "entry_queue__depth12",
+        "entry_queue__depth15"
+      ],
+      "deltaClass": "existing_options",
+      "scope": "All sleeve candidate queues",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": []
+    },
+    {
+      "id": "adv",
+      "hypothesis": "Opportunity breadth and modeled liquidity remain robust at coarse dollar-volume floors.",
+      "orderedGrid": [
+        "adv__usdm200",
+        "champion",
+        "adv__usdm500",
+        "adv__usdm750"
+      ],
+      "deltaClass": "existing_options",
+      "scope": "All sleeve source entry eligibility",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Do not retain an inherited liquidityPass flag that defeats the intentionally changed ADV floor; a source-equivalent seam must document the eligibility predicate."
+      ]
+    },
+    {
+      "id": "ordinary_confirmation",
+      "hypothesis": "A modest confirmation filter improves net alpha per dollar traded.",
+      "orderedGrid": [
+        "champion",
+        "ordinary_confirmation__sessions2",
+        "ordinary_confirmation__sessions3"
+      ],
+      "deltaClass": "new_state",
+      "scope": "Ordinary momentum exits only",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "No alteration of hard stops, universe-removal exits, early/profit exits or sleeve breakers."
+      ]
+    },
+    {
+      "id": "ordinary_hysteresis",
+      "hypothesis": "A wider ordinary retention buffer removes insignificant rank oscillations.",
+      "orderedGrid": [
+        "champion",
+        "ordinary_hysteresis__top8",
+        "ordinary_hysteresis__top10"
+      ],
+      "deltaClass": "existing_options",
+      "scope": "Ordinary momentum exits at age30+",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Early/profit thresholds stay9/6; no challenger-rank rotation if source architecture lacks such rotations."
+      ]
+    },
+    {
+      "id": "early_confirmation",
+      "hypothesis": "One or two extra completed-session confirmations reduce early turnover without losing protection.",
+      "orderedGrid": [
+        "champion",
+        "early_confirmation__sessions4",
+        "early_confirmation__sessions5"
+      ],
+      "deltaClass": "policy_overlay",
+      "scope": "Early rank exits only",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": []
+    },
+    {
+      "id": "early_rank",
+      "hypothesis": "A modestly more permissive early rank threshold preserves durable momentum.",
+      "orderedGrid": [
+        "champion",
+        "early_rank__top12",
+        "early_rank__top15"
+      ],
+      "deltaClass": "policy_overlay",
+      "scope": "Early rank exits only",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": []
+    },
+    {
+      "id": "profit_activation",
+      "hypothesis": "The existing profit activation threshold is a plateau rather than a source of unnecessary truncation.",
+      "orderedGrid": [
+        "champion",
+        "profit_activation__peak15",
+        "profit_activation__peak20"
+      ],
+      "deltaClass": "policy_overlay",
+      "scope": "Early profit protection only",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Retain ages5–29, current-profit condition, Top6/2 and ordinary age30+Top6/1."
+      ]
+    },
+    {
+      "id": "profit_confirmation",
+      "hypothesis": "An extra momentum confirmation preserves right-tail winners efficiently.",
+      "orderedGrid": [
+        "champion",
+        "profit_confirmation__sessions3",
+        "profit_confirmation__sessions4"
+      ],
+      "deltaClass": "policy_overlay",
+      "scope": "Early profit protection only",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": []
+    },
+    {
+      "id": "large_gain_deterioration",
+      "hypothesis": "Protecting only large profitable winners after meaningful momentum deterioration can be simpler and less truncating.",
+      "orderedGrid": [
+        "large_gain_deterioration__peak20_top9_2",
+        "large_gain_deterioration__peak25_top9_2",
+        "large_gain_deterioration__peak30_top9_2"
+      ],
+      "deltaClass": "policy_overlay",
+      "scope": "Replace early profit-protection specification only",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Compare against Champion separately; peak20/25/30 are one predeclared architectural family.",
+        "Retain earlyTop9/3 and ordinary age30+Top6/1. Overlap limits incremental scope and must be reported."
+      ]
+    },
+    {
+      "id": "scale_drawdown",
+      "hypothesis": "Simple observable new-exposure scaling addresses corrections/high volatility without changing ranking.",
+      "orderedGrid": [
+        "scale_drawdown__trigger8_restore5",
+        "scale_drawdown__trigger10_restore7",
+        "scale_drawdown__trigger12_restore9"
+      ],
+      "deltaClass": "new_state",
+      "scope": "New allocation capacity only",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Full exposure control is Champion; trigger/restore pair is one coarse specification, not an optimized Cartesian grid.",
+        "No forced liquidation; retain all hard controls; no SPY data after prior completed session."
+      ]
+    },
+    {
+      "id": "scale_volatility",
+      "hypothesis": "Simple observable new-exposure scaling addresses corrections/high volatility without changing ranking.",
+      "orderedGrid": [
+        "scale_volatility__trigger20_restore15",
+        "scale_volatility__trigger25_restore20",
+        "scale_volatility__trigger30_restore25"
+      ],
+      "deltaClass": "new_state",
+      "scope": "New allocation capacity only",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Full exposure control is Champion; trigger/restore pair is one coarse specification, not an optimized Cartesian grid.",
+        "No forced liquidation; retain all hard controls; no SPY data after prior completed session."
+      ]
+    },
+    {
+      "id": "initial_stop",
+      "hypothesis": "The current catastrophic stop protects downside without excessive recovery truncation.",
+      "orderedGrid": [
+        "initial_stop__pct12",
+        "champion",
+        "initial_stop__pct16"
+      ],
+      "deltaClass": "existing_options",
+      "scope": "Initial catastrophic stop across all sleeves",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Intentional risk-threshold experiment; all remaining risk mechanisms unchanged."
+      ]
+    },
+    {
+      "id": "sleeve_breaker",
+      "hypothesis": "The current breaker balances catastrophic protection with durable participation.",
+      "orderedGrid": [
+        "sleeve_breaker__pct10",
+        "champion",
+        "sleeve_breaker__pct14"
+      ],
+      "deltaClass": "existing_options",
+      "scope": "All sleeve drawdown breakers",
+      "neighborRule": "Immediate ordered neighbors, including Champion where adjacent; endpoint is unbracketed.",
+      "notes": [
+        "Retain cooldown10/15/10 and source reset mechanics; no waived wait reinstatement."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "id": "champion",
+      "role": "champion",
+      "status": "reference_not_reproduced_by_program",
+      "family": "champion",
+      "hypothesis": "Current repaired conditional account-policy formulation needs no change.",
+      "sourceOverrides": {},
+      "researchOverrides": {},
+      "requiresResearchSeam": false
+    },
+    {
+      "id": "horizon__s100ex15_f50ex5",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "horizon",
+      "hypothesis": "Momentum persists across coarse economically similar intermediate horizons.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumHorizons": {
+          "slow": {
+            "totalLookbackSessions": 100,
+            "excludeRecentSessions": 15,
+            "includedReturnSessions": 85
+          },
+          "fast": {
+            "totalLookbackSessions": 50,
+            "excludeRecentSessions": 5,
+            "includedReturnSessions": 45
+          }
+        }
+      },
+      "overrideScope": "Historical quote construction and momentum-only factor recomputation",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Raw adjusted historical prices with warmup required; precomputed factors alone are insufficient.",
+        "Global/sector and slow/fast weights remain exact Champion values."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "horizon__s110ex20_f55ex5",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "horizon",
+      "hypothesis": "Momentum persists across coarse economically similar intermediate horizons.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumHorizons": {
+          "slow": {
+            "totalLookbackSessions": 110,
+            "excludeRecentSessions": 20,
+            "includedReturnSessions": 90
+          },
+          "fast": {
+            "totalLookbackSessions": 55,
+            "excludeRecentSessions": 5,
+            "includedReturnSessions": 50
+          }
+        }
+      },
+      "overrideScope": "Historical quote construction and momentum-only factor recomputation",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Raw adjusted historical prices with warmup required; precomputed factors alone are insufficient.",
+        "Global/sector and slow/fast weights remain exact Champion values."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "horizon__s130ex20_f65ex5",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "horizon",
+      "hypothesis": "Momentum persists across coarse economically similar intermediate horizons.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumHorizons": {
+          "slow": {
+            "totalLookbackSessions": 130,
+            "excludeRecentSessions": 20,
+            "includedReturnSessions": 110
+          },
+          "fast": {
+            "totalLookbackSessions": 65,
+            "excludeRecentSessions": 5,
+            "includedReturnSessions": 60
+          }
+        }
+      },
+      "overrideScope": "Historical quote construction and momentum-only factor recomputation",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Raw adjusted historical prices with warmup required; precomputed factors alone are insufficient.",
+        "Global/sector and slow/fast weights remain exact Champion values."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "horizon__s140ex25_f70ex10",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "horizon",
+      "hypothesis": "Momentum persists across coarse economically similar intermediate horizons.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumHorizons": {
+          "slow": {
+            "totalLookbackSessions": 140,
+            "excludeRecentSessions": 25,
+            "includedReturnSessions": 115
+          },
+          "fast": {
+            "totalLookbackSessions": 70,
+            "excludeRecentSessions": 10,
+            "includedReturnSessions": 60
+          }
+        }
+      },
+      "overrideScope": "Historical quote construction and momentum-only factor recomputation",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Raw adjusted historical prices with warmup required; precomputed factors alone are insufficient.",
+        "Global/sector and slow/fast weights remain exact Champion values."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "global_sector__global80_sector20",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "global_sector",
+      "hypothesis": "Sector-relative leadership provides durable value that justifies its complexity.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumWeights": {
+          "globalSlow": 0.49230769230769234,
+          "globalFast": 0.3076923076923077,
+          "sectorSlow": 0.1257142857142857,
+          "sectorFast": 0.07428571428571427
+        }
+      },
+      "overrideScope": "Four-way momentum-percentile blend",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Preserve separate normalized global and sector slow/fast ratios; do not substitute a common 62/38 internal split."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "global_sector__global70_sector30",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "global_sector",
+      "hypothesis": "Sector-relative leadership provides durable value that justifies its complexity.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumWeights": {
+          "globalSlow": 0.4307692307692308,
+          "globalFast": 0.26923076923076916,
+          "sectorSlow": 0.18857142857142864,
+          "sectorFast": 0.11142857142857145
+        }
+      },
+      "overrideScope": "Four-way momentum-percentile blend",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Preserve separate normalized global and sector slow/fast ratios; do not substitute a common 62/38 internal split."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "global_sector__global60_sector40",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "global_sector",
+      "hypothesis": "Sector-relative leadership provides durable value that justifies its complexity.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumWeights": {
+          "globalSlow": 0.36923076923076925,
+          "globalFast": 0.23076923076923073,
+          "sectorSlow": 0.2514285714285715,
+          "sectorFast": 0.14857142857142858
+        }
+      },
+      "overrideScope": "Four-way momentum-percentile blend",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Preserve separate normalized global and sector slow/fast ratios; do not substitute a common 62/38 internal split."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "global_sector__global50_sector50",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "global_sector",
+      "hypothesis": "Sector-relative leadership provides durable value that justifies its complexity.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumWeights": {
+          "globalSlow": 0.3076923076923077,
+          "globalFast": 0.1923076923076923,
+          "sectorSlow": 0.31428571428571433,
+          "sectorFast": 0.18571428571428572
+        }
+      },
+      "overrideScope": "Four-way momentum-percentile blend",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Preserve separate normalized global and sector slow/fast ratios; do not substitute a common 62/38 internal split."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "slow_fast__slow50",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "slow_fast",
+      "hypothesis": "Persistence versus responsiveness has a broad useful balance.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumWeights": {
+          "globalSlow": 0.322,
+          "globalFast": 0.328,
+          "sectorSlow": 0.17800000000000002,
+          "sectorFast": 0.172
+        },
+        "aggregateSlowFraction": 0.5,
+        "method": "equal shift of within-component slow fractions from exact source values"
+      },
+      "overrideScope": "Four-way momentum-percentile blend",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "slow_fast__slow75",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "slow_fast",
+      "hypothesis": "Persistence versus responsiveness has a broad useful balance.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "momentumWeights": {
+          "globalSlow": 0.48450000000000004,
+          "globalFast": 0.16549999999999998,
+          "sectorSlow": 0.2655,
+          "sectorFast": 0.08449999999999999
+        },
+        "aggregateSlowFraction": 0.75,
+        "method": "equal shift of within-component slow fractions from exact source values"
+      },
+      "overrideScope": "Four-way momentum-percentile blend",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "slots__slots2",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "slots",
+      "hypothesis": "Concentration contributes economically rather than through an accidental three-slot choice.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "rankedTargetCount": 2,
+          "maxPositions": 2,
+          "buyTargetPct": 0.495,
+          "strongBuyTargetPct": 0.495,
+          "buyMaxPositionPct": 0.5,
+          "strongBuyMaxPositionPct": 0.5
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All independent sleeves",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Targets0.99/N intentionally preserve Champion0.33×3=99% total target; max fractions1/N. Optional adaptive equal-weight mode remains disabled.",
+        "Slots per sleeve are not combined effective issuer count; preserve sector caps and disclose utilization interactions."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "slots__slots4",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "slots",
+      "hypothesis": "Concentration contributes economically rather than through an accidental three-slot choice.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "rankedTargetCount": 4,
+          "maxPositions": 4,
+          "buyTargetPct": 0.2475,
+          "strongBuyTargetPct": 0.2475,
+          "buyMaxPositionPct": 0.25,
+          "strongBuyMaxPositionPct": 0.25
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All independent sleeves",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Targets0.99/N intentionally preserve Champion0.33×3=99% total target; max fractions1/N. Optional adaptive equal-weight mode remains disabled.",
+        "Slots per sleeve are not combined effective issuer count; preserve sector caps and disclose utilization interactions."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "slots__slots5",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "slots",
+      "hypothesis": "Concentration contributes economically rather than through an accidental three-slot choice.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "rankedTargetCount": 5,
+          "maxPositions": 5,
+          "buyTargetPct": 0.198,
+          "strongBuyTargetPct": 0.198,
+          "buyMaxPositionPct": 0.2,
+          "strongBuyMaxPositionPct": 0.2
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All independent sleeves",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Targets0.99/N intentionally preserve Champion0.33×3=99% total target; max fractions1/N. Optional adaptive equal-weight mode remains disabled.",
+        "Slots per sleeve are not combined effective issuer count; preserve sector caps and disclose utilization interactions."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "sector_caps__stronger",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "sector_caps",
+      "hypothesis": "Existing dollar sector constraints improve robustness without unduly shrinking opportunity.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_by_sleeve": {
+          "base": {
+            "maxSectorPct": 0.4
+          },
+          "cooldown15": {
+            "maxSectorPct": 0.4
+          },
+          "sector40": {
+            "maxSectorPct": 0.35
+          }
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Per-sleeve dollar sector limits",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "maxSectorPositions stays2; report sector exposures and binding constraints."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "sector_caps__permissive",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "sector_caps",
+      "hypothesis": "Existing dollar sector constraints improve robustness without unduly shrinking opportunity.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_by_sleeve": {
+          "base": {
+            "maxSectorPct": 0.6
+          },
+          "cooldown15": {
+            "maxSectorPct": 0.6
+          },
+          "sector40": {
+            "maxSectorPct": 0.5
+          }
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Per-sleeve dollar sector limits",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "maxSectorPositions stays2; report sector exposures and binding constraints."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "sector_position_limit__max1",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "sector_position_limit",
+      "hypothesis": "Sector issuer-count constraints add durable robustness.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "maxSectorPositions": 1
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve position-count sector limits",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Dollar sector caps remain50/50/40%."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "sector_position_limit__max3",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "sector_position_limit",
+      "hypothesis": "Sector issuer-count constraints add durable robustness.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "maxSectorPositions": 3
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve position-count sector limits",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Dollar sector caps remain50/50/40%."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "entry_queue__depth6",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "entry_queue",
+      "hypothesis": "Nine source-eligible opportunities represents a plateau rather than a fragile arbitrary depth.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "rankedEntryQueueCount": 6
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve candidate queues",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "entry_queue__depth12",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "entry_queue",
+      "hypothesis": "Nine source-eligible opportunities represents a plateau rather than a fragile arbitrary depth.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "rankedEntryQueueCount": 12
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve candidate queues",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "entry_queue__depth15",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "entry_queue",
+      "hypothesis": "Nine source-eligible opportunities represents a plateau rather than a fragile arbitrary depth.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "rankedEntryQueueCount": 15
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve candidate queues",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "adv__usdm200",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "adv",
+      "hypothesis": "Opportunity breadth and modeled liquidity remain robust at coarse dollar-volume floors.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "minimumAverageDollarVolume": 200000000
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve source entry eligibility",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Do not retain an inherited liquidityPass flag that defeats the intentionally changed ADV floor; a source-equivalent seam must document the eligibility predicate."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "adv__usdm500",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "adv",
+      "hypothesis": "Opportunity breadth and modeled liquidity remain robust at coarse dollar-volume floors.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "minimumAverageDollarVolume": 500000000
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve source entry eligibility",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Do not retain an inherited liquidityPass flag that defeats the intentionally changed ADV floor; a source-equivalent seam must document the eligibility predicate."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "adv__usdm750",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "adv",
+      "hypothesis": "Opportunity breadth and modeled liquidity remain robust at coarse dollar-volume floors.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "minimumAverageDollarVolume": 750000000
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve source entry eligibility",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Do not retain an inherited liquidityPass flag that defeats the intentionally changed ADV floor; a source-equivalent seam must document the eligibility predicate."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "ordinary_confirmation__sessions2",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "ordinary_confirmation",
+      "hypothesis": "A modest confirmation filter improves net alpha per dollar traded.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "ordinaryRankExit": {
+          "minimumAgeSessions": 30,
+          "rankThreshold": 6,
+          "consecutiveCompletedSessions": 2
+        }
+      },
+      "overrideScope": "Ordinary momentum exits only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "No alteration of hard stops, universe-removal exits, early/profit exits or sleeve breakers."
+      ],
+      "requiresNewPolicyState": true,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "ordinary_confirmation__sessions3",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "ordinary_confirmation",
+      "hypothesis": "A modest confirmation filter improves net alpha per dollar traded.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "ordinaryRankExit": {
+          "minimumAgeSessions": 30,
+          "rankThreshold": 6,
+          "consecutiveCompletedSessions": 3
+        }
+      },
+      "overrideScope": "Ordinary momentum exits only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "No alteration of hard stops, universe-removal exits, early/profit exits or sleeve breakers."
+      ],
+      "requiresNewPolicyState": true,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "ordinary_hysteresis__top8",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "ordinary_hysteresis",
+      "hypothesis": "A wider ordinary retention buffer removes insignificant rank oscillations.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "rankedExitBuffer": 8
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Ordinary momentum exits at age30+",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Early/profit thresholds stay9/6; no challenger-rank rotation if source architecture lacks such rotations."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "ordinary_hysteresis__top10",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "ordinary_hysteresis",
+      "hypothesis": "A wider ordinary retention buffer removes insignificant rank oscillations.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "rankedExitBuffer": 10
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Ordinary momentum exits at age30+",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Early/profit thresholds stay9/6; no challenger-rank rotation if source architecture lacks such rotations."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "early_confirmation__sessions4",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "early_confirmation",
+      "hypothesis": "One or two extra completed-session confirmations reduce early turnover without losing protection.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "earlyRankExitConsecutiveSessions": 4
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Early rank exits only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "early_confirmation__sessions5",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "early_confirmation",
+      "hypothesis": "One or two extra completed-session confirmations reduce early turnover without losing protection.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "earlyRankExitConsecutiveSessions": 5
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Early rank exits only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "early_rank__top12",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "early_rank",
+      "hypothesis": "A modestly more permissive early rank threshold preserves durable momentum.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "earlyRankExitThreshold": 12
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Early rank exits only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "early_rank__top15",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "early_rank",
+      "hypothesis": "A modestly more permissive early rank threshold preserves durable momentum.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "earlyRankExitThreshold": 15
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Early rank exits only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "profit_activation__peak15",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "profit_activation",
+      "hypothesis": "The existing profit activation threshold is a plateau rather than a source of unnecessary truncation.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "profitRankExitActivationPct": 15
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Early profit protection only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Retain ages5–29, current-profit condition, Top6/2 and ordinary age30+Top6/1."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "profit_activation__peak20",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "profit_activation",
+      "hypothesis": "The existing profit activation threshold is a plateau rather than a source of unnecessary truncation.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "profitRankExitActivationPct": 20
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Early profit protection only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Retain ages5–29, current-profit condition, Top6/2 and ordinary age30+Top6/1."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "profit_confirmation__sessions3",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "profit_confirmation",
+      "hypothesis": "An extra momentum confirmation preserves right-tail winners efficiently.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "profitRankExitConsecutiveSessions": 3
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Early profit protection only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "profit_confirmation__sessions4",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "profit_confirmation",
+      "hypothesis": "An extra momentum confirmation preserves right-tail winners efficiently.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "profitRankExitConsecutiveSessions": 4
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Early profit protection only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "large_gain_deterioration__peak20_top9_2",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "large_gain_deterioration",
+      "hypothesis": "Protecting only large profitable winners after meaningful momentum deterioration can be simpler and less truncating.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "profitRankExitActivationPct": 20,
+          "profitRankExitThreshold": 9,
+          "profitRankExitConsecutiveSessions": 2
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Replace early profit-protection specification only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Compare against Champion separately; peak20/25/30 are one predeclared architectural family.",
+        "Retain earlyTop9/3 and ordinary age30+Top6/1. Overlap limits incremental scope and must be reported."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "analyticClassification": "weaker_subset_of_existing_early_profit_protection; not_new_lifetime_tail_protection",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "large_gain_deterioration__peak25_top9_2",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "large_gain_deterioration",
+      "hypothesis": "Protecting only large profitable winners after meaningful momentum deterioration can be simpler and less truncating.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "profitRankExitActivationPct": 25,
+          "profitRankExitThreshold": 9,
+          "profitRankExitConsecutiveSessions": 2
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Replace early profit-protection specification only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Compare against Champion separately; peak20/25/30 are one predeclared architectural family.",
+        "Retain earlyTop9/3 and ordinary age30+Top6/1. Overlap limits incremental scope and must be reported."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "analyticClassification": "weaker_subset_of_existing_early_profit_protection; not_new_lifetime_tail_protection",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "large_gain_deterioration__peak30_top9_2",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "large_gain_deterioration",
+      "hypothesis": "Protecting only large profitable winners after meaningful momentum deterioration can be simpler and less truncating.",
+      "sourceOverrides": {
+        "C1_ACCOUNT_MOMENTUM_EXIT_POLICY": {
+          "profitRankExitActivationPct": 30,
+          "profitRankExitThreshold": 9,
+          "profitRankExitConsecutiveSessions": 2
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Replace early profit-protection specification only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Compare against Champion separately; peak20/25/30 are one predeclared architectural family.",
+        "Retain earlyTop9/3 and ordinary age30+Top6/1. Overlap limits incremental scope and must be reported."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "analyticClassification": "weaker_subset_of_existing_early_profit_protection; not_new_lifetime_tail_protection",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "scale_drawdown__trigger8_restore5",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "scale_drawdown",
+      "hypothesis": "Simple observable new-exposure scaling addresses corrections/high volatility without changing ranking.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "newExposureScaling": {
+          "observable": "prior_close_SPY_trailing252_high_drawdown_abs_pct",
+          "triggerAtOrAbovePct": 8,
+          "restoreBelowPct": 5,
+          "restoreConsecutiveCompletedSessions": 5,
+          "activeNewCapitalMultiplier": 0.5,
+          "normalNewCapitalMultiplier": 1.0,
+          "heldPositionAction": "none",
+          "excessHeldExposureAction": "pause_additions",
+          "combinedTrigger": false
+        }
+      },
+      "overrideScope": "New allocation capacity only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Full exposure control is Champion; trigger/restore pair is one coarse specification, not an optimized Cartesian grid.",
+        "No forced liquidation; retain all hard controls; no SPY data after prior completed session."
+      ],
+      "requiresNewPolicyState": true,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "scale_drawdown__trigger10_restore7",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "scale_drawdown",
+      "hypothesis": "Simple observable new-exposure scaling addresses corrections/high volatility without changing ranking.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "newExposureScaling": {
+          "observable": "prior_close_SPY_trailing252_high_drawdown_abs_pct",
+          "triggerAtOrAbovePct": 10,
+          "restoreBelowPct": 7,
+          "restoreConsecutiveCompletedSessions": 5,
+          "activeNewCapitalMultiplier": 0.5,
+          "normalNewCapitalMultiplier": 1.0,
+          "heldPositionAction": "none",
+          "excessHeldExposureAction": "pause_additions",
+          "combinedTrigger": false
+        }
+      },
+      "overrideScope": "New allocation capacity only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Full exposure control is Champion; trigger/restore pair is one coarse specification, not an optimized Cartesian grid.",
+        "No forced liquidation; retain all hard controls; no SPY data after prior completed session."
+      ],
+      "requiresNewPolicyState": true,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "scale_drawdown__trigger12_restore9",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "scale_drawdown",
+      "hypothesis": "Simple observable new-exposure scaling addresses corrections/high volatility without changing ranking.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "newExposureScaling": {
+          "observable": "prior_close_SPY_trailing252_high_drawdown_abs_pct",
+          "triggerAtOrAbovePct": 12,
+          "restoreBelowPct": 9,
+          "restoreConsecutiveCompletedSessions": 5,
+          "activeNewCapitalMultiplier": 0.5,
+          "normalNewCapitalMultiplier": 1.0,
+          "heldPositionAction": "none",
+          "excessHeldExposureAction": "pause_additions",
+          "combinedTrigger": false
+        }
+      },
+      "overrideScope": "New allocation capacity only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Full exposure control is Champion; trigger/restore pair is one coarse specification, not an optimized Cartesian grid.",
+        "No forced liquidation; retain all hard controls; no SPY data after prior completed session."
+      ],
+      "requiresNewPolicyState": true,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "scale_volatility__trigger20_restore15",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "scale_volatility",
+      "hypothesis": "Simple observable new-exposure scaling addresses corrections/high volatility without changing ranking.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "newExposureScaling": {
+          "observable": "prior_close_SPY_20_return_sample_vol_annualized_pct",
+          "triggerAtOrAbovePct": 20,
+          "restoreBelowPct": 15,
+          "restoreConsecutiveCompletedSessions": 5,
+          "activeNewCapitalMultiplier": 0.5,
+          "normalNewCapitalMultiplier": 1.0,
+          "heldPositionAction": "none",
+          "excessHeldExposureAction": "pause_additions",
+          "combinedTrigger": false
+        }
+      },
+      "overrideScope": "New allocation capacity only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Full exposure control is Champion; trigger/restore pair is one coarse specification, not an optimized Cartesian grid.",
+        "No forced liquidation; retain all hard controls; no SPY data after prior completed session."
+      ],
+      "requiresNewPolicyState": true,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "scale_volatility__trigger25_restore20",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "scale_volatility",
+      "hypothesis": "Simple observable new-exposure scaling addresses corrections/high volatility without changing ranking.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "newExposureScaling": {
+          "observable": "prior_close_SPY_20_return_sample_vol_annualized_pct",
+          "triggerAtOrAbovePct": 25,
+          "restoreBelowPct": 20,
+          "restoreConsecutiveCompletedSessions": 5,
+          "activeNewCapitalMultiplier": 0.5,
+          "normalNewCapitalMultiplier": 1.0,
+          "heldPositionAction": "none",
+          "excessHeldExposureAction": "pause_additions",
+          "combinedTrigger": false
+        }
+      },
+      "overrideScope": "New allocation capacity only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Full exposure control is Champion; trigger/restore pair is one coarse specification, not an optimized Cartesian grid.",
+        "No forced liquidation; retain all hard controls; no SPY data after prior completed session."
+      ],
+      "requiresNewPolicyState": true,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "scale_volatility__trigger30_restore25",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "scale_volatility",
+      "hypothesis": "Simple observable new-exposure scaling addresses corrections/high volatility without changing ranking.",
+      "sourceOverrides": {},
+      "researchOverrides": {
+        "newExposureScaling": {
+          "observable": "prior_close_SPY_20_return_sample_vol_annualized_pct",
+          "triggerAtOrAbovePct": 30,
+          "restoreBelowPct": 25,
+          "restoreConsecutiveCompletedSessions": 5,
+          "activeNewCapitalMultiplier": 0.5,
+          "normalNewCapitalMultiplier": 1.0,
+          "heldPositionAction": "none",
+          "excessHeldExposureAction": "pause_additions",
+          "combinedTrigger": false
+        }
+      },
+      "overrideScope": "New allocation capacity only",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Full exposure control is Champion; trigger/restore pair is one coarse specification, not an optimized Cartesian grid.",
+        "No forced liquidation; retain all hard controls; no SPY data after prior completed session."
+      ],
+      "requiresNewPolicyState": true,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "initial_stop__pct12",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "initial_stop",
+      "hypothesis": "The current catastrophic stop protects downside without excessive recovery truncation.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "minimumInitialStopPct": 12,
+          "maximumInitialStopPct": 12
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Initial catastrophic stop across all sleeves",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Intentional risk-threshold experiment; all remaining risk mechanisms unchanged."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "initial_stop__pct16",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "initial_stop",
+      "hypothesis": "The current catastrophic stop protects downside without excessive recovery truncation.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "minimumInitialStopPct": 16,
+          "maximumInitialStopPct": 16
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "Initial catastrophic stop across all sleeves",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Intentional risk-threshold experiment; all remaining risk mechanisms unchanged."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "sleeve_breaker__pct10",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "sleeve_breaker",
+      "hypothesis": "The current breaker balances catastrophic protection with durable participation.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "portfolioDrawdownStopPct": 10
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve drawdown breakers",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Retain cooldown10/15/10 and source reset mechanics; no waived wait reinstatement."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    },
+    {
+      "id": "sleeve_breaker__pct14",
+      "role": "challenger",
+      "status": "planned_not_run",
+      "family": "sleeve_breaker",
+      "hypothesis": "The current breaker balances catastrophic protection with durable participation.",
+      "sourceOverrides": {
+        "C1_FROZEN_OPTIONS_all_sleeves": {
+          "portfolioDrawdownStopPct": 14
+        }
+      },
+      "researchOverrides": {},
+      "overrideScope": "All sleeve drawdown breakers",
+      "requiresResearchSeam": true,
+      "stage": "development_screen_25bps",
+      "eligibleForProductionConsideration": false,
+      "notes": [
+        "Retain cooldown10/15/10 and source reset mechanics; no waived wait reinstatement."
+      ],
+      "requiresNewPolicyState": false,
+      "implementationStatus": "not_implemented; isolated_overlay_or_seam_required",
+      "blockedBy": [
+        "intended_champion_source_provenance",
+        "exact_private_licensed_input_recovery_and_preservation",
+        "isolated_overlay_or_seam_implementation"
+      ]
+    }
+  ],
+  "counts": {
+    "champions": 1,
+    "challengers": 48,
+    "families": 19
+  },
+  "finalDecisionLabels": [
+    "A — KEEP CURRENT C1",
+    "B — CHALLENGER WARRANTS FURTHER FORWARD TESTING",
+    "C — CHALLENGER IS STRONG ENOUGH TO CONSIDER PRODUCTION REPLACEMENT"
+  ],
+  "defaultUntilCompletedEvidence": "A — KEEP CURRENT C1",
+  "dataGovernance": {
+    "ownerClarification": "Proprietary raw data must not be public.",
+    "publicRawDataAuthorized": false,
+    "publicReconstructableRowLevelDataAuthorized": false,
+    "privateGitHubInputStorageRequiredBeforeLongRun": true,
+    "privateGitHubStorageOnlyWhenProviderLicensePermits": true,
+    "missingChunkManifestCountsAsDatasetPreservation": false,
+    "publicEvidenceAllowed": [
+      "source_code",
+      "source_hashes",
+      "safe_manifests",
+      "licensed_non_sensitive_aggregate_results",
+      "synthetic_software_fixtures"
+    ],
+    "sourceSessionHandoffRequired": true,
+    "blockedEndpointAlternateRouteRetryAuthorized": false,
+    "providerReacquisitionCountsAsExactArchivedRecovery": false
+  },
+  "analyticChecks": {
+    "largeGainAlternatives": {
+      "subsetOfCurrentProfitExitPredicate": true,
+      "preservesEarlyTop9_3": true,
+      "preservesAge30PlusTop6_1": true,
+      "maximumIncrementalProtectionVersusEarlyRule": "may accelerate earlyTop9/3 by one completed session once large-gain and profit conditions hold",
+      "lifetimeExitArchitectureChange": false
+    },
+    "sectorPositionThree": "may_be_inactive_under_dollar_caps; verify_before_claiming_diversification",
+    "deepQueue": "may_be_no_effect_when_capacity_or_other_gates_bind",
+    "ADV200": "inherited_liquidityPass_can_make_threshold_change_inactive",
+    "duplicatePathHashes": "report_no_effect; do_not_count_as_independent_plateau_evidence",
+    "scaling": "cash_and_affordability_path_change_must_be_reported"
+  }
+}

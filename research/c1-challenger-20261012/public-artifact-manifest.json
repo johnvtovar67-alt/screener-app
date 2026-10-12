@@ -1,0 +1,372 @@
+{
+  "contract": "c1-challenger-public-artifact-manifest-v1",
+  "productionBaseCommit": "9097e894a487a91eeace7a8f76fb3b42f54a991d",
+  "existingPublicAuditCommit": "006e067697385143684c7417b18bc7909c2d217e",
+  "files": [
+    {
+      "path": "research/c1-challenger-20261012/.gitignore",
+      "bytes": 593,
+      "sha256": "21212ed481ab847ba2606ebc6db49f5b1b0542879769ab25d51fd41c72c6eb33"
+    },
+    {
+      "path": "research/c1-challenger-20261012/README.md",
+      "bytes": 1748,
+      "sha256": "3ce61e6750c77c21f1bf0d64133340344aaf8699c7c48f0b00f6805641f8f47c"
+    },
+    {
+      "path": "research/c1-challenger-20261012/audit_saved_evidence.py",
+      "bytes": 5079,
+      "sha256": "3f40a65bd8d3de2037d21705a3715818e04c3afe18a3215d819c95c4ea6c697d"
+    },
+    {
+      "path": "research/c1-challenger-20261012/checkpoint-report.md",
+      "bytes": 10418,
+      "sha256": "4af5348c1e9851f451a3cc96ac728a3ad61158c682716be9f3b1be3ac7679b3d"
+    },
+    {
+      "path": "research/c1-challenger-20261012/experiments.json",
+      "bytes": 90577,
+      "sha256": "6f77af71d22c446a950f83d1f2c61815211c21c36031179c1a3dfac66f611f03"
+    },
+    {
+      "path": "research/c1-challenger-20261012/fetch_public_references.py",
+      "bytes": 1116,
+      "sha256": "a705035d89b8da04830d83436e5af09b2030f3890f43aa0bde1922988bf9b9e8"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/independent-synthetic-checks/breaker-parity.json",
+      "bytes": 1328,
+      "sha256": "d3ec65ccc25e6ebc277b39232fa52ac79dbfc2d073c9afc3476c5d7b9377e3bb"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/independent-synthetic-checks/failed-cache-rejection.json",
+      "bytes": 437,
+      "sha256": "cf09d3a22a7ea07e1f1f287e4ae797810c077a4c030b614113d49e9c5af640aa"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/independent-synthetic-checks/stop-parity.json",
+      "bytes": 1663,
+      "sha256": "61d302bcc1dfb99e2a6616dcfa9df37e0c08317ab9ef1bcb86197c3b270065e0"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/recovered-source-synthetic-regression.json",
+      "bytes": 41262,
+      "sha256": "f0dfb175a3d8ea73f849e2f72f03f137922ebe0e7ad60cb34fd6d462b898dbda"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source-pin.json",
+      "bytes": 2664,
+      "sha256": "09c4680128514bbf641f5bf8fc23a29664a70a77b8c3d8c453388f283894952f"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source-recovered-git-blob-identities.json",
+      "bytes": 230,
+      "sha256": "2ead0958d41701fdc541c7ccbd0e2b940084478e36886478fc53600eff1999ef"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source-recovery-verification.json",
+      "bytes": 194,
+      "sha256": "3cf67372dfe8a59722d685f117e868ca1f01a426347489e90680db62471bf9c9"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source-snapshot-manifest.json",
+      "bytes": 5761,
+      "sha256": "f72e00a582a739b2c1a7c2c4912deb01f4a11f6958b88b5083e6bac49624e203"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1AccountExecution.js",
+      "bytes": 4860,
+      "sha256": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1AccountLedger.js",
+      "bytes": 14688,
+      "sha256": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1AccountProjection.js",
+      "bytes": 8931,
+      "sha256": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1AccountSeed.js",
+      "bytes": 13074,
+      "sha256": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1AccountSimulator.js",
+      "bytes": 142309,
+      "sha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1ActualFillReplay.js",
+      "bytes": 3500,
+      "sha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1FrozenOptions.js",
+      "bytes": 7080,
+      "sha256": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1LiveInput.js",
+      "bytes": 7925,
+      "sha256": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1ManualRecommendations.js",
+      "bytes": 4104,
+      "sha256": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1OpeningPriceReview.js",
+      "bytes": 5017,
+      "sha256": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1PaperEvents.js",
+      "bytes": 6663,
+      "sha256": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1SleeveAccounting.js",
+      "bytes": 6036,
+      "sha256": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/c1StockClassification.js",
+      "bytes": 10497,
+      "sha256": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/entryTiming.js",
+      "bytes": 18111,
+      "sha256": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/eventRisk.js",
+      "bytes": 19243,
+      "sha256": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/expertDecision.js",
+      "bytes": 27119,
+      "sha256": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/historicalSignalEvaluator.js",
+      "bytes": 40008,
+      "sha256": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/marketSession.js",
+      "bytes": 6569,
+      "sha256": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/opportunityDecision.js",
+      "bytes": 25683,
+      "sha256": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/personalCapitalPolicy.js",
+      "bytes": 1229,
+      "sha256": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/portfolioGovernor.js",
+      "bytes": 21651,
+      "sha256": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/replayDatasetCompaction.js",
+      "bytes": 10860,
+      "sha256": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/scoring.js",
+      "bytes": 36340,
+      "sha256": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/top5Diagnostics.js",
+      "bytes": 4279,
+      "sha256": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/lib/walkForwardBacktest.js",
+      "bytes": 129965,
+      "sha256": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/tools/c1-build-current-historical-input.cjs",
+      "bytes": 24158,
+      "sha256": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/tools/c1-original-input-validation.cjs",
+      "bytes": 12897,
+      "sha256": "e6189c2a1d65e6d96949574db1ed2116ea10d0a6d7f5a005e2a6e7adb572dae2"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/tools/c1-production-policy-replay-regression.cjs",
+      "bytes": 7447,
+      "sha256": "5ce179edd60ff1af4e6517a69ff87939919868d06628e9cc58cf982de1e249e4"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/tools/c1-production-policy-replay.cjs",
+      "bytes": 25383,
+      "sha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/tools/c1-production-replay-independent-check.cjs",
+      "bytes": 9327,
+      "sha256": "c471d47e753bff6c118d4b8099e8dab3e492dd4b1baf1d2607faad6fcecd1103"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/tools/c1-production-replay-loader.cjs",
+      "bytes": 8920,
+      "sha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/tools/c1-verify-recorded-production-replay.cjs",
+      "bytes": 805,
+      "sha256": "8ecbc9de526f7b529d4316eb6c57832f2a397e62f2004b82830237b594ed791b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/source/tools/research-module-loader.cjs",
+      "bytes": 3797,
+      "sha256": "0a8be68533a0d51074644f4dda8dfa311e5269d25751b5dcbfe2c0ce37efd846"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/tools/c1-build-current-historical-input.cjs",
+      "bytes": 24158,
+      "sha256": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/tools/c1-original-input-validation.cjs",
+      "bytes": 12897,
+      "sha256": "e6189c2a1d65e6d96949574db1ed2116ea10d0a6d7f5a005e2a6e7adb572dae2"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/tools/c1-production-policy-replay-regression.cjs",
+      "bytes": 7447,
+      "sha256": "5ce179edd60ff1af4e6517a69ff87939919868d06628e9cc58cf982de1e249e4"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/tools/c1-production-policy-replay.cjs",
+      "bytes": 25383,
+      "sha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/tools/c1-production-replay-independent-check.cjs",
+      "bytes": 9327,
+      "sha256": "c471d47e753bff6c118d4b8099e8dab3e492dd4b1baf1d2607faad6fcecd1103"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/tools/c1-production-replay-loader.cjs",
+      "bytes": 8920,
+      "sha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9"
+    },
+    {
+      "path": "research/c1-challenger-20261012/imported/tools/c1-verify-recorded-production-replay.cjs",
+      "bytes": 805,
+      "sha256": "8ecbc9de526f7b529d4316eb6c57832f2a397e62f2004b82830237b594ed791b"
+    },
+    {
+      "path": "research/c1-challenger-20261012/mechanics/README.md",
+      "bytes": 3954,
+      "sha256": "0466c479f2070661ce475e66fb09e2f5092009fe1fa452586fc1596273be12e7"
+    },
+    {
+      "path": "research/c1-challenger-20261012/mechanics/implementation-inventory.json",
+      "bytes": 13994,
+      "sha256": "8778d260db3122826f7c7be1e8a2ed281110d51edcd6443fba25342d4a7c0f81"
+    },
+    {
+      "path": "research/c1-challenger-20261012/mechanics/options-loader.cjs",
+      "bytes": 5330,
+      "sha256": "ac268bb32e77cbbe78801d8653ea186a630f8d8c53143090fa525a65b4d474a7"
+    },
+    {
+      "path": "research/c1-challenger-20261012/mechanics/options-mechanics-regression.cjs",
+      "bytes": 11706,
+      "sha256": "300ed6f8c2736bfafc9b71c5491a3dca56174bc7c8509c84372dff8953ba9d90"
+    },
+    {
+      "path": "research/c1-challenger-20261012/mechanics/options-mechanics-results.json",
+      "bytes": 15177,
+      "sha256": "5346a027b18cc07d818e3edda5a343f5e870144e7b5a2e3c23504405d0cd940f"
+    },
+    {
+      "path": "research/c1-challenger-20261012/mechanics/synthetic-fixtures.cjs",
+      "bytes": 3610,
+      "sha256": "cfdec4414f2672af39feb619f4f4047ae08352b904307c51248526249a00abd6"
+    },
+    {
+      "path": "research/c1-challenger-20261012/plan.md",
+      "bytes": 30814,
+      "sha256": "833fa755497c71b6dd683b0c29cf725e2ae9b963bd7e8b2642de4db78bb54e2e"
+    },
+    {
+      "path": "research/c1-challenger-20261012/preflight.py",
+      "bytes": 6447,
+      "sha256": "18718091d65f8de62a526731f4c00fcd97a59c6181ba7b576735560ef7187aa8"
+    },
+    {
+      "path": "research/c1-challenger-20261012/provenance/audit-simulator.js",
+      "bytes": 142309,
+      "sha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83"
+    },
+    {
+      "path": "research/c1-challenger-20261012/provenance/e2-simulator.js",
+      "bytes": 142168,
+      "sha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13"
+    },
+    {
+      "path": "research/c1-challenger-20261012/provenance/provenance-mismatch.md",
+      "bytes": 3460,
+      "sha256": "57bef0f26b95369488d1658f96efa392dcc1488fb8ac64888166efea6606ed32"
+    },
+    {
+      "path": "research/c1-challenger-20261012/provenance/reproduce.cjs",
+      "bytes": 4742,
+      "sha256": "a98361b85c6e121acad877eac61affe6196fd9ad06ef81370242e20fb456d595"
+    },
+    {
+      "path": "research/c1-challenger-20261012/provenance/shared-market-session.js",
+      "bytes": 6569,
+      "sha256": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f"
+    },
+    {
+      "path": "research/c1-challenger-20261012/provenance/synthetic-holding-rank-evidence.json",
+      "bytes": 3138,
+      "sha256": "3ac226ca96aa3c7ad8d7cced75f412bb3dd280d10d7205e56677275138cfa6c1"
+    },
+    {
+      "path": "research/c1-challenger-20261012/public-readiness.json",
+      "bytes": 766,
+      "sha256": "4804a2d68ed23c3f16df793da40f954ed9478c2c51060729586c23a4baf2a864"
+    },
+    {
+      "path": "research/c1-challenger-20261012/public-reference-index.json",
+      "bytes": 2793,
+      "sha256": "1faa5d52ff5b60ba3405d8298ff5b669ed06ba07e5189e82d6b7ed546efaea0a"
+    },
+    {
+      "path": "research/c1-challenger-20261012/public-saved-evidence-audit.json",
+      "bytes": 7580,
+      "sha256": "f7e646d3a985891c347f28a96443ce230a4d5004c5c80415c51b9e68a8099583"
+    },
+    {
+      "path": "research/c1-challenger-20261012/reference-12bps-verifier.json.gz.base64",
+      "bytes": 19517,
+      "sha256": "eac49420789d6016e9735575e24e43ee32134ad217e90a19a286a31063592df3"
+    }
+  ],
+  "rawMarketDataIncluded": false,
+  "privateArchiveLocationsIncluded": false,
+  "productionApplicationChanged": false,
+  "historicalComparisonsVerified": false,
+  "handoff": "https://github.com/johnvtovar67-alt/screener-app/issues/259"
+}

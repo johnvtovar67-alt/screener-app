@@ -1,0 +1,176 @@
+{
+  "contract": "c1-challenger-recovered-source-snapshot-v1",
+  "auditCommit": "006e067697385143684c7417b18bc7909c2d217e",
+  "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+  "sourceRoot": "imported/source",
+  "applicationModuleCount": 25,
+  "files": [
+    {
+      "path": "lib/c1AccountExecution.js",
+      "bytes": 4860,
+      "sha256": "7899ed82bf383f05aacc02c327af3ed38f186a2291132c810796b7049ffbddb4"
+    },
+    {
+      "path": "lib/c1AccountLedger.js",
+      "bytes": 14688,
+      "sha256": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77"
+    },
+    {
+      "path": "lib/c1AccountProjection.js",
+      "bytes": 8931,
+      "sha256": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b"
+    },
+    {
+      "path": "lib/c1AccountSeed.js",
+      "bytes": 13074,
+      "sha256": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e"
+    },
+    {
+      "path": "lib/c1AccountSimulator.js",
+      "bytes": 142309,
+      "sha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83"
+    },
+    {
+      "path": "lib/c1ActualFillReplay.js",
+      "bytes": 3500,
+      "sha256": "e971fbabeff74ecac30a5e7da13b1cd355c6b616d3366bdc399bcd275b196630"
+    },
+    {
+      "path": "lib/c1FrozenOptions.js",
+      "bytes": 7080,
+      "sha256": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff"
+    },
+    {
+      "path": "lib/c1LiveInput.js",
+      "bytes": 7925,
+      "sha256": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b"
+    },
+    {
+      "path": "lib/c1ManualRecommendations.js",
+      "bytes": 4104,
+      "sha256": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095"
+    },
+    {
+      "path": "lib/c1OpeningPriceReview.js",
+      "bytes": 5017,
+      "sha256": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884"
+    },
+    {
+      "path": "lib/c1PaperEvents.js",
+      "bytes": 6663,
+      "sha256": "933310f1c65a04506cb142fbee0f5aed6f7973328d1707e76cc1b1852b02cc5c"
+    },
+    {
+      "path": "lib/c1SleeveAccounting.js",
+      "bytes": 6036,
+      "sha256": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03"
+    },
+    {
+      "path": "lib/c1StockClassification.js",
+      "bytes": 10497,
+      "sha256": "e89c102b22c0dd4496214aeb177a8813dd5f75c828473c0f8775677fb02de2b2"
+    },
+    {
+      "path": "lib/entryTiming.js",
+      "bytes": 18111,
+      "sha256": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5"
+    },
+    {
+      "path": "lib/eventRisk.js",
+      "bytes": 19243,
+      "sha256": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd"
+    },
+    {
+      "path": "lib/expertDecision.js",
+      "bytes": 27119,
+      "sha256": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853"
+    },
+    {
+      "path": "lib/historicalSignalEvaluator.js",
+      "bytes": 40008,
+      "sha256": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5"
+    },
+    {
+      "path": "lib/marketSession.js",
+      "bytes": 6569,
+      "sha256": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f"
+    },
+    {
+      "path": "lib/opportunityDecision.js",
+      "bytes": 25683,
+      "sha256": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128"
+    },
+    {
+      "path": "lib/personalCapitalPolicy.js",
+      "bytes": 1229,
+      "sha256": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1"
+    },
+    {
+      "path": "lib/portfolioGovernor.js",
+      "bytes": 21651,
+      "sha256": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720"
+    },
+    {
+      "path": "lib/replayDatasetCompaction.js",
+      "bytes": 10860,
+      "sha256": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45"
+    },
+    {
+      "path": "lib/scoring.js",
+      "bytes": 36340,
+      "sha256": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6"
+    },
+    {
+      "path": "lib/top5Diagnostics.js",
+      "bytes": 4279,
+      "sha256": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324"
+    },
+    {
+      "path": "lib/walkForwardBacktest.js",
+      "bytes": 129965,
+      "sha256": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd"
+    },
+    {
+      "path": "tools/c1-build-current-historical-input.cjs",
+      "bytes": 24158,
+      "sha256": "9786d5d1f5bee1c86f000111b597c0e25b36c0be0a257f4a3cc9606d4896236e"
+    },
+    {
+      "path": "tools/c1-original-input-validation.cjs",
+      "bytes": 12897,
+      "sha256": "e6189c2a1d65e6d96949574db1ed2116ea10d0a6d7f5a005e2a6e7adb572dae2"
+    },
+    {
+      "path": "tools/c1-production-policy-replay-regression.cjs",
+      "bytes": 7447,
+      "sha256": "5ce179edd60ff1af4e6517a69ff87939919868d06628e9cc58cf982de1e249e4"
+    },
+    {
+      "path": "tools/c1-production-policy-replay.cjs",
+      "bytes": 25383,
+      "sha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a"
+    },
+    {
+      "path": "tools/c1-production-replay-independent-check.cjs",
+      "bytes": 9327,
+      "sha256": "c471d47e753bff6c118d4b8099e8dab3e492dd4b1baf1d2607faad6fcecd1103"
+    },
+    {
+      "path": "tools/c1-production-replay-loader.cjs",
+      "bytes": 8920,
+      "sha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9"
+    },
+    {
+      "path": "tools/c1-verify-recorded-production-replay.cjs",
+      "bytes": 805,
+      "sha256": "8ecbc9de526f7b529d4316eb6c57832f2a397e62f2004b82830237b594ed791b"
+    },
+    {
+      "path": "tools/research-module-loader.cjs",
+      "bytes": 3797,
+      "sha256": "0a8be68533a0d51074644f4dda8dfa311e5269d25751b5dcbfe2c0ce37efd846"
+    }
+  ],
+  "rawHistoricalInputsIncluded": false,
+  "productionModified": false
+}

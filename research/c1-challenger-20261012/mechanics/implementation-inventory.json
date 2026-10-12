@@ -1,0 +1,418 @@
+{
+  "contract": "c1-challenger-options-implementation-inventory-v1",
+  "sourceAuditCommit": "006e067697385143684c7417b18bc7909c2d217e",
+  "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+  "verificationPassed": true,
+  "noOpAllOutputsVerifiedCostBps": [
+    12,
+    25,
+    50
+  ],
+  "syntheticConfigurationsVerified": 18,
+  "preregisteredManifestSha256": "6f77af71d22c446a950f83d1f2c61815211c21c36031179c1a3dfac66f611f03",
+  "productionChanges": false,
+  "importedSourceChanges": false,
+  "historicalComparisonsRun": 0,
+  "challengerFinalists": [],
+  "historicalExecutionBlockedBy": [
+    "verified_private_input_restore",
+    "deployed_vs_audit_source_provenance"
+  ],
+  "acceptedFamilies": [
+    "champion",
+    "slots",
+    "sector_caps",
+    "sector_position_limit",
+    "entry_queue",
+    "adv",
+    "initial_stop",
+    "sleeve_breaker"
+  ],
+  "unsupportedFamilies": [
+    "horizon",
+    "global_sector",
+    "slow_fast",
+    "ordinary_confirmation",
+    "ordinary_hysteresis",
+    "early_confirmation",
+    "early_rank",
+    "profit_activation",
+    "profit_confirmation",
+    "large_gain_deterioration",
+    "scale_drawdown",
+    "scale_volatility"
+  ],
+  "experiments": [
+    {
+      "experimentId": "champion",
+      "family": "champion",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "horizon__s100ex15_f50ex5",
+      "family": "horizon",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "horizon__s110ex20_f55ex5",
+      "family": "horizon",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "horizon__s130ex20_f65ex5",
+      "family": "horizon",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "horizon__s140ex25_f70ex10",
+      "family": "horizon",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "global_sector__global80_sector20",
+      "family": "global_sector",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "global_sector__global70_sector30",
+      "family": "global_sector",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "global_sector__global60_sector40",
+      "family": "global_sector",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "global_sector__global50_sector50",
+      "family": "global_sector",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "slow_fast__slow50",
+      "family": "slow_fast",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "slow_fast__slow75",
+      "family": "slow_fast",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "slots__slots2",
+      "family": "slots",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "slots__slots4",
+      "family": "slots",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "slots__slots5",
+      "family": "slots",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "sector_caps__stronger",
+      "family": "sector_caps",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "sector_caps__permissive",
+      "family": "sector_caps",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "sector_position_limit__max1",
+      "family": "sector_position_limit",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "sector_position_limit__max3",
+      "family": "sector_position_limit",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "entry_queue__depth6",
+      "family": "entry_queue",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "entry_queue__depth12",
+      "family": "entry_queue",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "entry_queue__depth15",
+      "family": "entry_queue",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "adv__usdm200",
+      "family": "adv",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "adv__usdm500",
+      "family": "adv",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "adv__usdm750",
+      "family": "adv",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "ordinary_confirmation__sessions2",
+      "family": "ordinary_confirmation",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "ordinary_confirmation__sessions3",
+      "family": "ordinary_confirmation",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "ordinary_hysteresis__top8",
+      "family": "ordinary_hysteresis",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "ordinary_hysteresis__top10",
+      "family": "ordinary_hysteresis",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "early_confirmation__sessions4",
+      "family": "early_confirmation",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "early_confirmation__sessions5",
+      "family": "early_confirmation",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "early_rank__top12",
+      "family": "early_rank",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "early_rank__top15",
+      "family": "early_rank",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "profit_activation__peak15",
+      "family": "profit_activation",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "profit_activation__peak20",
+      "family": "profit_activation",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "profit_confirmation__sessions3",
+      "family": "profit_confirmation",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "profit_confirmation__sessions4",
+      "family": "profit_confirmation",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak20_top9_2",
+      "family": "large_gain_deterioration",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak25_top9_2",
+      "family": "large_gain_deterioration",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "large_gain_deterioration__peak30_top9_2",
+      "family": "large_gain_deterioration",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "scale_drawdown__trigger8_restore5",
+      "family": "scale_drawdown",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "scale_drawdown__trigger10_restore7",
+      "family": "scale_drawdown",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "scale_drawdown__trigger12_restore9",
+      "family": "scale_drawdown",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "scale_volatility__trigger20_restore15",
+      "family": "scale_volatility",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "scale_volatility__trigger25_restore20",
+      "family": "scale_volatility",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "scale_volatility__trigger30_restore25",
+      "family": "scale_volatility",
+      "implementation": "not_implemented_by_options_loader",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "initial_stop__pct12",
+      "family": "initial_stop",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "initial_stop__pct16",
+      "family": "initial_stop",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "sleeve_breaker__pct10",
+      "family": "sleeve_breaker",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    },
+    {
+      "experimentId": "sleeve_breaker__pct14",
+      "family": "sleeve_breaker",
+      "implementation": "options_export_overlay_verified_on_synthetic_inputs",
+      "historicalComparisonsRun": 0,
+      "historicalExecutionReady": false
+    }
+  ],
+  "files": [
+    {
+      "path": "mechanics/README.md",
+      "bytes": 3954,
+      "sha256": "0466c479f2070661ce475e66fb09e2f5092009fe1fa452586fc1596273be12e7"
+    },
+    {
+      "path": "mechanics/options-loader.cjs",
+      "bytes": 5330,
+      "sha256": "ac268bb32e77cbbe78801d8653ea186a630f8d8c53143090fa525a65b4d474a7"
+    },
+    {
+      "path": "mechanics/options-mechanics-regression.cjs",
+      "bytes": 11706,
+      "sha256": "300ed6f8c2736bfafc9b71c5491a3dca56174bc7c8509c84372dff8953ba9d90"
+    },
+    {
+      "path": "mechanics/options-mechanics-results.json",
+      "bytes": 15177,
+      "sha256": "5346a027b18cc07d818e3edda5a343f5e870144e7b5a2e3c23504405d0cd940f"
+    },
+    {
+      "path": "mechanics/synthetic-fixtures.cjs",
+      "bytes": 3610,
+      "sha256": "cfdec4414f2672af39feb619f4f4047ae08352b904307c51248526249a00abd6"
+    }
+  ],
+  "repro": "node mechanics/options-mechanics-regression.cjs"
+}

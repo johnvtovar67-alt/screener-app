@@ -1,0 +1,178 @@
+{
+  "contract": "c1-challenger-independent-saved-evidence-review-v1",
+  "passed": true,
+  "auditCommit": "006e067697385143684c7417b18bc7909c2d217e",
+  "engineeringCommit": "e2b98471311fb702113baf0ca64473b92ccfd142",
+  "championSourceIsExactAuditSnapshot": true,
+  "championFullHistoryReproducedThisProgram": false,
+  "challengersTested": 0,
+  "checks": [
+    {
+      "costBps": 12,
+      "resultHashMatches": true,
+      "engineSourceMatches": true,
+      "all25ApplicationSourceHashesMatch": true,
+      "recordedReceiptHashesMatch": true,
+      "independentSummaryArithmeticMatches": true,
+      "newFullHistoricalReplayCompleted": false
+    },
+    {
+      "costBps": 25,
+      "resultHashMatches": true,
+      "engineSourceMatches": true,
+      "all25ApplicationSourceHashesMatch": true,
+      "recordedReceiptHashesMatch": true,
+      "independentSummaryArithmeticMatches": true,
+      "newFullHistoricalReplayCompleted": false
+    },
+    {
+      "costBps": 50,
+      "resultHashMatches": true,
+      "engineSourceMatches": true,
+      "all25ApplicationSourceHashesMatch": true,
+      "recordedReceiptHashesMatch": true,
+      "independentSummaryArithmeticMatches": true,
+      "newFullHistoricalReplayCompleted": false
+    }
+  ],
+  "savedChampionScorecard": [
+    {
+      "costBps": 12,
+      "status": "saved_reference_integrity_verified_not_replayed",
+      "initialCapital": 100000,
+      "endingEquity": 389072.4206987598,
+      "totalReturnPct": 289.0724206987598,
+      "sharpe": 1.4125513073737135,
+      "sortino": 2.228994050030395,
+      "legacySourceSortino": 2.1156637537302085,
+      "maxDrawdownPct": -22.397381685864026,
+      "fillCount": 723,
+      "tradeCount": 357,
+      "closedTrades": 357,
+      "winRatePct": 51.26050420168067,
+      "profitFactor": 2.3200027551954503,
+      "averageHoldingSessions": 19.789915966386555,
+      "medianHoldingSessions": 15,
+      "twoWayTradedNotional": 12978840.01121877,
+      "turnoverPct": 6871.189058550453,
+      "annualizedTurnoverPct": 1886.208761170713,
+      "capitalUtilizationPct": 76.16605577134989,
+      "openTerminalPositions": 9,
+      "benchmarkComparisons": {
+        "SPY": {
+          "simpleReturnPct": 107.5921081316765,
+          "excessReturnPct": 181.48031256708327,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 107.5921081316765,
+          "simpleOpenToCloseReturnPct": 107.90371441827457
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74071656234395,
+          "excessReturnPct": 117.33170413641582,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 171.74071656234395,
+          "simpleOpenToCloseReturnPct": 170.8255195376784
+        }
+      },
+      "derivedCalendarCagrPct": 44.980251197620326,
+      "derivedCalmar": 2.0082816745499024,
+      "fullRunAvailableHere": false,
+      "resultSha256": "fe6289af568c1491227dad08a311ef5da0c726f595a5a8b6ea08a1f20b2ef877",
+      "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+      "verifierCanonicalSha256": "0c6a794e8fe8d92b6604fca7b40d8b5ccb66acbb52285814872ae725d79ebe9b"
+    },
+    {
+      "costBps": 25,
+      "status": "saved_reference_integrity_verified_not_replayed",
+      "initialCapital": 100000,
+      "endingEquity": 331372.88401869434,
+      "totalReturnPct": 231.37288401869432,
+      "sharpe": 1.2480529769411108,
+      "sortino": 1.9428148224051232,
+      "legacySourceSortino": 1.8414130441639056,
+      "maxDrawdownPct": -22.920140763005858,
+      "fillCount": 711,
+      "tradeCount": 351,
+      "closedTrades": 351,
+      "winRatePct": 50.427350427350426,
+      "profitFactor": 2.0427660993839103,
+      "averageHoldingSessions": 20.074074074074073,
+      "medianHoldingSessions": 16,
+      "twoWayTradedNotional": 11814163.918418694,
+      "turnoverPct": 6598.113922339523,
+      "annualizedTurnoverPct": 1811.2469590735948,
+      "capitalUtilizationPct": 75.60902969109816,
+      "openTerminalPositions": 9,
+      "benchmarkComparisons": {
+        "SPY": {
+          "simpleReturnPct": 107.5921081316765,
+          "excessReturnPct": 123.78077588701784,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 107.5921081316765,
+          "simpleOpenToCloseReturnPct": 107.90371441827457
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74071656234395,
+          "excessReturnPct": 59.63216745635038,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 171.74071656234395,
+          "simpleOpenToCloseReturnPct": 170.8255195376784
+        }
+      },
+      "derivedCalendarCagrPct": 38.75537952187835,
+      "derivedCalmar": 1.6908875003259705,
+      "fullRunAvailableHere": false,
+      "resultSha256": "b8b2814b089990fd162744a979fe7e89ebf6bee945be910a8e25da86f448fe4d",
+      "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+      "verifierCanonicalSha256": "453d9821768e45c632380518c9bd6203bd903edcd358bda3c8a2015179e00220"
+    },
+    {
+      "costBps": 50,
+      "status": "saved_reference_integrity_verified_not_replayed",
+      "initialCapital": 100000,
+      "endingEquity": 339505.6478976805,
+      "totalReturnPct": 239.50564789768052,
+      "sharpe": 1.2712741115754178,
+      "sortino": 1.9721865307344633,
+      "legacySourceSortino": 1.8536653498415432,
+      "maxDrawdownPct": -32.20839960927795,
+      "fillCount": 717,
+      "tradeCount": 354,
+      "closedTrades": 354,
+      "winRatePct": 48.58757062146893,
+      "profitFactor": 2.0962961419477515,
+      "averageHoldingSessions": 19.6864406779661,
+      "medianHoldingSessions": 15,
+      "twoWayTradedNotional": 11403808.503997676,
+      "turnoverPct": 6459.893097715373,
+      "annualizedTurnoverPct": 1773.3039876081416,
+      "capitalUtilizationPct": 75.71790167438462,
+      "openTerminalPositions": 9,
+      "benchmarkComparisons": {
+        "SPY": {
+          "simpleReturnPct": 107.5921081316765,
+          "excessReturnPct": 131.91353976600402,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 107.5921081316765,
+          "simpleOpenToCloseReturnPct": 107.90371441827457
+        },
+        "QQQ": {
+          "simpleReturnPct": 171.74071656234395,
+          "excessReturnPct": 67.76493133533657,
+          "convention": "Source baseline-session close to final close; benchmark entry-share scale cancels.",
+          "simpleCloseToCloseReturnPct": 171.74071656234395,
+          "simpleOpenToCloseReturnPct": 170.8255195376784
+        }
+      },
+      "derivedCalendarCagrPct": 39.678204493888835,
+      "derivedCalmar": 1.2319210198341906,
+      "fullRunAvailableHere": false,
+      "resultSha256": "18844acc1feda28295d77dd14494b6aa292cbc4fd96999ca07c6bd1d373a89ed",
+      "sourceGraphSha256": "ac7355c070966f6ce34fcbd5d930f93280c8d271dedb469146a5c27afa262fdb",
+      "verifierCanonicalSha256": "6560799afff88b3de9608454701d2103cc747b06491760b5580b77cafd1ec68b"
+    }
+  ],
+  "scope": "Independent byte/source/receipt and available summary arithmetic review. Full raw replay, trade-ledger arithmetic, regimes and right tails remain unverified in this program.",
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false
+}

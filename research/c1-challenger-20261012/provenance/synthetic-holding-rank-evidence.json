@@ -1,0 +1,102 @@
+{
+  "contract": "c1-two-source-holding-rank-provenance-synthetic-v1",
+  "scope": "Four invented offline sessions only; no historical replay, account write, strategy modification or production action.",
+  "sharedCalendarSha256": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+  "fixtures": [
+    {
+      "rule": "age-30-top6",
+      "rankWithSCHW": 7,
+      "openedAt": "2026-07-01",
+      "price": 100,
+      "expectedReason": "rank-deterioration",
+      "expectedDate": "2026-09-02"
+    },
+    {
+      "rule": "profit-top6-two-session",
+      "rankWithSCHW": 7,
+      "openedAt": "2026-08-24",
+      "price": 120,
+      "expectedReason": "profit-rank-deterioration",
+      "expectedDate": "2026-09-03"
+    },
+    {
+      "rule": "early-top9-three-session",
+      "rankWithSCHW": 10,
+      "openedAt": "2026-08-24",
+      "price": 100,
+      "expectedReason": "early-rank-deterioration",
+      "expectedDate": "2026-09-04"
+    }
+  ],
+  "evidence": [
+    {
+      "ref": "e2b98471311fb702113baf0ca64473b92ccfd142",
+      "simulatorSha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+      "rule": "age-30-top6",
+      "rankWithSCHW": 7,
+      "rankWithoutSCHW": 6,
+      "schwRankEligible": true,
+      "heldSells": [
+        {
+          "date": "2026-09-02",
+          "reason": "rank-deterioration"
+        }
+      ]
+    },
+    {
+      "ref": "e2b98471311fb702113baf0ca64473b92ccfd142",
+      "simulatorSha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+      "rule": "profit-top6-two-session",
+      "rankWithSCHW": 7,
+      "rankWithoutSCHW": 6,
+      "schwRankEligible": true,
+      "heldSells": [
+        {
+          "date": "2026-09-03",
+          "reason": "profit-rank-deterioration"
+        }
+      ]
+    },
+    {
+      "ref": "e2b98471311fb702113baf0ca64473b92ccfd142",
+      "simulatorSha256": "aa9171972572607cbe63fbe68911c0825f4d67113e5ebf2649704d04f4cf6e13",
+      "rule": "early-top9-three-session",
+      "rankWithSCHW": 10,
+      "rankWithoutSCHW": 9,
+      "schwRankEligible": true,
+      "heldSells": [
+        {
+          "date": "2026-09-04",
+          "reason": "early-rank-deterioration"
+        }
+      ]
+    },
+    {
+      "ref": "006e067697385143684c7417b18bc7909c2d217e",
+      "simulatorSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+      "rule": "age-30-top6",
+      "rankWithSCHW": 7,
+      "rankWithoutSCHW": 6,
+      "schwRankEligible": false,
+      "heldSells": []
+    },
+    {
+      "ref": "006e067697385143684c7417b18bc7909c2d217e",
+      "simulatorSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+      "rule": "profit-top6-two-session",
+      "rankWithSCHW": 7,
+      "rankWithoutSCHW": 6,
+      "schwRankEligible": false,
+      "heldSells": []
+    },
+    {
+      "ref": "006e067697385143684c7417b18bc7909c2d217e",
+      "simulatorSha256": "2c5e4036d4fac8992c8bedbeb0899c627a82e3b54b4f1cf59e924409dc95ac83",
+      "rule": "early-top9-three-session",
+      "rankWithSCHW": 10,
+      "rankWithoutSCHW": 9,
+      "schwRankEligible": false,
+      "heldSells": []
+    }
+  ]
+}

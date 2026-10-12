@@ -1,0 +1,14 @@
+# Local expansion of an already public receipt; keep the original encoded form.
+imported/docs/research/c1-validation-20261012/current-input-acceptance.decoded.json
+__pycache__/
+# Licensed raw data and complete private runs must remain in approved private storage.
+private-inputs/
+private-runs/
+# Public receipts remain at their original immutable public commit. Fetch locally.
+imported/docs/
+imported/input-access-inventory.json
+imported/imported-git-blob-identities.json
+imported/imported-additional-git-blob-identities.json
+readiness.json
+saved-evidence-audit.json
+source-session-handoff.md
