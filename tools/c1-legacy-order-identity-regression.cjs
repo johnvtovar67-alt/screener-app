@@ -232,9 +232,19 @@ const emptyBoundary=boundaryRun({contract:'c1-actual-fill-replay-v1',sessions:[{
 assert.equal(emptyBoundary.actualCash,0);
 assert.equal(emptyBoundary.openPositions[0].shares,1000,'No actual sale means current ownership remains held under the repaired calendar');
 const replayModule=loader.load('lib/c1ActualFillReplay.js');
+const relocatedSeed={...boundaryAdoption.seeds.base,asOfSession:'2025-02-24',positions:boundaryAdoption.seeds.base.positions.map(p=>({...p,openedAt:'2025-01-10'}))};
+const relocated={...boundary.replay.base,sessions:[{date:'2025-02-25',fills:boundary.replay.base.sessions[0].fills}]};
+const relocatedReplay=replayModule.createC1ActualFillReplay(relocated,relocatedSeed,boundarySessions.slice(1));
+assert.deepEqual(plain(relocatedReplay.reconciledRankSales('2025-02-25')),[],
+  'A legitimate private capability is bound to its canonical Feb24 record and cannot force a Feb25 sale');
+assert.throws(()=>relocatedReplay.finish(),/Actual fill could not be applied/,
+  'Relocating the same trusted in-memory fill references leaves the altered date unapplied');
+assert.throws(()=>currentSimulator({sessions:boundarySessions.slice(1)},
+  {...configurations.base,startDate:'2025-02-24',endDate:'2025-02-25',liquidateAtEnd:false},relocatedSeed,relocated),/Actual fill could not be applied/,
+  'A relocated legitimate fill cannot force an absent current rank exit in another dated replay');
 const rawStop={...plain(boundary.replay.base),sessions:[{date:'2025-02-24',fills:[{symbol:'AAA',side:'sell',reason:'initial-stop',
   shares:1000,price:86,fee:0,id:'not-a-rank-sale',orderId:'base:2025-02-24:stop:AAA',executedAt:'2025-02-24T15:00:00Z'}]}]};
-replayModule.markC1ReconciledRankSale(rawStop.sessions[0].fills[0]);
+replayModule.markC1ReconciledRankSale(rawStop.sessions[0].fills[0],'2025-02-24');
 assert.throws(()=>boundaryRun(rawStop),/Actual fill could not be applied/,'The capability cannot force an untriggered standing stop');
 const boundaryBook={universe:'sp500',model:{sessions:boundarySessions.slice(0,2)},captures:boundarySessions.slice(0,2).map(s=>({
   sessionDate:s.date,hash:'boundary:'+s.date,observedAt:s.decisionAt}))};

@@ -41,10 +41,10 @@ const repairedAccountSha256 = '02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43
 const compatibilitySourceSha256 = {
   "lib/c1AccountExecution.js": "26cefd2ba3dd020234e7b6d4b2e8621cdd5b1ea2debdba76b277448c374c8983",
   "lib/c1AccountInput.js": "fa2f6f9691ed06575b7491898ef10b1709bab8d17a427463fb0b21c47f80a432",
-  "lib/c1AccountLedger.js": "575d0173f5513ce7a1e567ed6f8b9ee75c079b6f0e6269ffddb60b0542291455",
+  "lib/c1AccountLedger.js": "1760ace3914bd8524313283b2dd04ae8e1c73a583bdab3a3adf62a3e1711a287",
   "lib/c1AccountProjection.js": "8aa8fa0cced356b37126673b1a92d340b58940c9732dd5585d7917bf1152090f",
   "lib/c1AccountSeed.js": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
-  "lib/c1ActualFillReplay.js": "632b121db966ea313e7ef487e61b429615dfedcd69af9778e62ef8489b4703f5"
+  "lib/c1ActualFillReplay.js": "024e43c190a875c153337087046bfe3dfd216080c905ffaf8b4e26fbcb975a5c"
 };
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   assert.equal(hash(fs.readFileSync(path.join(root, file))),
