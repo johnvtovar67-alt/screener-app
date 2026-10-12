@@ -1,0 +1,18 @@
+{
+  "contract": "c1-current-replay-provenance-regression-v1",
+  "passed": true,
+  "engineSha256": "36a8e41afdd825de46d0302b0fc3008354b30ff0ba2bd5483920ad12721d532a",
+  "coverage": [
+    "explicit conditional flag required",
+    "conditional rejected acquisition preserved",
+    "false alpha eligibility mandatory",
+    "guard failure evidence retained",
+    "conditional source-state parity",
+    "input metadata identity verified",
+    "receipt hash checked",
+    "strict contract requires actual acquisition acceptance",
+    "original archive rejected by conditional flag",
+    "operational Buy/event/brokerage omissions explicit",
+    "even-count median"
+  ]
+}

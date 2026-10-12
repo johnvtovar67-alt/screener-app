@@ -1,0 +1,50 @@
+{
+  "contract": "c1-independent-current253-history-gate-assessment-v1",
+  "window": [
+    "2023-01-04",
+    "2026-09-01"
+  ],
+  "sessions": 918,
+  "affectedSessions": 863,
+  "excludedSymbolSessionCount": 1658,
+  "affectedSymbols": {
+    "MBC": 203,
+    "GEHC": 203,
+    "VLTO": 203,
+    "SOLV": 203,
+    "GEV": 203,
+    "INFO": 203,
+    "KVUE": 174,
+    "Q": 164,
+    "SNDK": 52,
+    "FDXF": 19,
+    "AMTM": 14,
+    "CEG": 11,
+    "HONA": 6
+  },
+  "firstAffected": {
+    "date": "2023-01-04",
+    "originalCohortCount": 505,
+    "current253CohortCount": 504,
+    "excludedHistory50To252": [
+      "CEG"
+    ]
+  },
+  "lastAffected": {
+    "date": "2026-09-01",
+    "originalCohortCount": 512,
+    "current253CohortCount": 509,
+    "excludedHistory50To252": [
+      "FDXF",
+      "HONA",
+      "Q"
+    ]
+  },
+  "maximumCohortReduction": 4,
+  "sourceSha256": {
+    "manifest.original.json": "6dc0ad6cb7ec0edf74f07880c260cb3c5192f86406a299a47dc0589269dd4cf1",
+    "pit-sp500-price-checkpoint-v1.json": "9e239617df3c4824fb5b68b1590bc058a511550fbaa9e8d1eb8b5f13ec9161c0",
+    "pit-sp500-universe-v1.json": "4b8b77ce6abc493a4090feaa98b49adc7fd7303f2c55b0ed0e55ee46df7b14af"
+  },
+  "conclusion": "Archive identity does not prove exact current inputs. The current253 gate changes the factor cohort; current-source factors and ranks must be rebuilt before replay acceptance."
+}

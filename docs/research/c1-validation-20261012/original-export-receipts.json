@@ -1,0 +1,2900 @@
+{
+  "contract": "c1-read-only-original-export-recovery-v1",
+  "endpoint": "Existing private research Vercel preview archive-export GET endpoint; no new deployment or remote writes",
+  "originalManifestSha256": "6dc0ad6cb7ec0edf74f07880c260cb3c5192f86406a299a47dc0589269dd4cf1",
+  "acceptedManifestSha256": "e41a6a9dae0b9c0981d2147cbe518f3f912ea62da3417a6015e86be1174aad61",
+  "originalCompressedBytes": 409654552,
+  "chunkCount": 24,
+  "chunkOriginalAndContentHashCoverage": "24/24",
+  "chunks": [
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0000-0050.json.gz",
+        "bytes": 1009377,
+        "sha256": "876cba8914ec94e655478923f3029ead415d9c8eecd4dfcfc3d8a9cb596f89a5",
+        "contentSha256": "eae75d78a1e3ac36b885fed0688ba9375395b3bfd2aec7bd99a14918f7fdf3fe",
+        "uncompressedBytes": 4885342,
+        "etag": "\"edd8c9841575cbff2d3078fe9b746a81\"",
+        "uploadedAt": "2026-09-03T01:01:57.000Z",
+        "readAt": "2026-10-12T17:36:54.766Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 1,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0000-0050.json.gz",
+          "offset": 0,
+          "length": 1009377,
+          "totalBytes": 1009377,
+          "etag": "\"edd8c9841575cbff2d3078fe9b746a81\"",
+          "sha256": "876cba8914ec94e655478923f3029ead415d9c8eecd4dfcfc3d8a9cb596f89a5",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "originalBytesVerified": 1009377,
+        "originalSha256Verified": "876cba8914ec94e655478923f3029ead415d9c8eecd4dfcfc3d8a9cb596f89a5",
+        "contentSha256Verified": "eae75d78a1e3ac36b885fed0688ba9375395b3bfd2aec7bd99a14918f7fdf3fe",
+        "uncompressedBytesVerified": 4885342
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+        "bytes": 14137983,
+        "sha256": "5e6c736363ad1e8eb8145a83f629afbaf187c47c95f321bf73cf32790e8d99d4",
+        "contentSha256": "6db964bcb2f1b495d429358c33a58547e59e050bc6a2ea0586cd15e7e7e85c74",
+        "uncompressedBytes": 74479234,
+        "etag": "\"e162fabb56e75775d4ffbadbfafbdd8f\"",
+        "uploadedAt": "2026-09-03T01:03:13.000Z",
+        "readAt": "2026-10-12T17:39:39.648Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 7,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 14137983,
+          "etag": "\"e162fabb56e75775d4ffbadbfafbdd8f\"",
+          "sha256": "815a9121b1721e4620a1875f1db405d0a5635571f681e6a1c39df3cd9e7dbc04",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 14137983,
+          "etag": "\"e162fabb56e75775d4ffbadbfafbdd8f\"",
+          "sha256": "3e3cc56aa45c3d0fddda3062efcba8928fb94f9fd9ff78c2a786ec4094ec282c",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 14137983,
+          "etag": "\"e162fabb56e75775d4ffbadbfafbdd8f\"",
+          "sha256": "fc394c50e871d44e93c740ea417bf59d764faa8390d4e559810fdf8798e00077",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 14137983,
+          "etag": "\"e162fabb56e75775d4ffbadbfafbdd8f\"",
+          "sha256": "83ca5c8e08ffb834a90ae46bb0703f391c76288c6529d0e8329db0c5d96cf22b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 14137983,
+          "etag": "\"e162fabb56e75775d4ffbadbfafbdd8f\"",
+          "sha256": "00c6b42fe0b9215feefe21dd3224d8570174d251fe05eb60e1de07ee920358d9",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 14137983,
+          "etag": "\"e162fabb56e75775d4ffbadbfafbdd8f\"",
+          "sha256": "9b2035a83514e27b34fc8e7e1b3a3fd524367ebdb38a47556248afaca9879290",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+          "offset": 12582912,
+          "length": 1555071,
+          "totalBytes": 14137983,
+          "etag": "\"e162fabb56e75775d4ffbadbfafbdd8f\"",
+          "sha256": "87adba80f65acb0764270d8845e8f189236668920426fcd1144f63a0085c3dba",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 14137983,
+        "compressedSha256": "5e6c736363ad1e8eb8145a83f629afbaf187c47c95f321bf73cf32790e8d99d4",
+        "decompressedBytes": 74479234,
+        "decompressedSha256": "6db964bcb2f1b495d429358c33a58547e59e050bc6a2ea0586cd15e7e7e85c74",
+        "manifestCompressedBytesMatches": true,
+        "rangeCount": 7,
+        "jsonType": "dict",
+        "jsonTopLevelKeys": [
+          "metadata",
+          "sessions"
+        ]
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+        "bytes": 16225508,
+        "sha256": "f8149bc0e35d7f0ae392ed8c48cb9f2ee65dcf974cdea11091bd912c5113b5e0",
+        "contentSha256": "629fe5187ab48db58c4e2c82eff13fa2106ceee0c3054fc6b4e178095eea95f9",
+        "uncompressedBytes": 81991213,
+        "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+        "uploadedAt": "2026-09-03T01:04:42.000Z",
+        "readAt": "2026-10-12T17:39:45.485Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 8,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 16225508,
+          "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+          "sha256": "be6ac51ce39181914b457ec07d86508a2561c02a48c50fd55c96bd14a81e113f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 16225508,
+          "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+          "sha256": "cae5d151645952feb2f1c17417954e31791808a5399baaf285275499d4da0b58",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 16225508,
+          "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+          "sha256": "f523850424bd95cce0004855c20f586bf90077a3c82778d0f3061350136a8541",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 16225508,
+          "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+          "sha256": "3b63cb7fa3ca48fd16cce211e58ccf1c4962cd9eaba586adfe8ad3e73e26e208",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 16225508,
+          "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+          "sha256": "1f7fa2ec0f383723e929375639976d908b4f44869a07c67c64905d6f3365668a",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 16225508,
+          "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+          "sha256": "0a8ac599c75802c05377a73ab6f74a2e80ff56498ea7806a8088c87d84ad3ef2",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 16225508,
+          "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+          "sha256": "f44b5c6dc7eeaafc0395a9365488a759b76c4e41f1f3253a6424a19912b09233",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+          "offset": 14680064,
+          "length": 1545444,
+          "totalBytes": 16225508,
+          "etag": "\"bf213904c93aa7d26cb9e1562ae36255\"",
+          "sha256": "3a62764c9c3100c4cfd0dbe0b389a619705df83863b5ce1d99b5d6440c5f8bd0",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 16225508,
+        "compressedSha256": "f8149bc0e35d7f0ae392ed8c48cb9f2ee65dcf974cdea11091bd912c5113b5e0",
+        "decompressedBytes": 81991213,
+        "decompressedSha256": "629fe5187ab48db58c4e2c82eff13fa2106ceee0c3054fc6b4e178095eea95f9",
+        "manifestCompressedBytesMatches": true,
+        "rangeCount": 8,
+        "jsonType": "dict",
+        "jsonTopLevelKeys": [
+          "metadata",
+          "sessions"
+        ]
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+        "bytes": 17341826,
+        "sha256": "99a4143615c49d2ba943d567f4b85d7b4f46f458658f9150d24f90053b09cab5",
+        "contentSha256": "a5d380658674f3458205d1399f3712b4b54980ed3154e7514ef192f2ea6f512d",
+        "uncompressedBytes": 86450715,
+        "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+        "uploadedAt": "2026-09-03T01:05:40.000Z",
+        "readAt": "2026-10-12T17:39:51.025Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "1f06e0e01f32a4a0deb96d1975203c5945e1a9a8a8859b195b0e772402239cab",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "81f2e71b4e03d2129da907117debe2dd78fd58c12613c7dfb97e221037b59481",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "28afeae71a81ad2a5e3182bc9bd6d72e16093a241246d3ed41144ec78c8433d7",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "6445993aad0522435e799de8637a3f7607f25de027a5334c3ef723373fb19b53",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "a41db486e284a00f8e5b053a23ffabca0f8db797af92d07bdf1f90e726c41adf",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "a1529af4fc605c6652a403fd3cb319af2d36a8da8b085619e12529757c543b85",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "00425cb91056c5f1ddc7c094ef432f6597129f8929adbc5b95b8659fb9703c85",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "18905058d5a6978817d14d1cf63da365b5be6f8a1144af1a185e600601644a26",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+          "offset": 16777216,
+          "length": 564610,
+          "totalBytes": 17341826,
+          "etag": "\"39cc0415288a15ab8a2d5dea58d1b9b9\"",
+          "sha256": "0ea3463871618403d12602e3fd94e03776fb2b1c137c1db331650199642a5e1d",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 17341826,
+        "compressedSha256": "99a4143615c49d2ba943d567f4b85d7b4f46f458658f9150d24f90053b09cab5",
+        "decompressedBytes": 86450715,
+        "decompressedSha256": "a5d380658674f3458205d1399f3712b4b54980ed3154e7514ef192f2ea6f512d",
+        "manifestCompressedBytesMatches": true,
+        "rangeCount": 9,
+        "jsonType": "dict",
+        "jsonTopLevelKeys": [
+          "metadata",
+          "sessions"
+        ]
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+        "bytes": 18129684,
+        "sha256": "77300223a77207fc6c7de8000f2641ff9de51043658f08c7bc96699c59b3a447",
+        "contentSha256": "fb13eea051fe357851779b44c7b8d436968de468098612ecdc124b0c2f19756d",
+        "uncompressedBytes": 88022880,
+        "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+        "uploadedAt": "2026-09-03T01:06:43.000Z",
+        "readAt": "2026-10-12T17:39:55.948Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "b6916a98327e0497d71ad4784b432594d9094bb094ca835427012a6c9e51cb45",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "461403d478f887e5ce8459c277eb34e0a5aa1e62cc670407ba94aef6981653b7",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "cccb7e91e89323347f6a241e3cc56fbb41aa776c8cff11e556ffc16f637f55d7",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "f73e725f1691049f6fc2b33b156ea7420b78345d9fff156ec1083d07153ba523",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "de6482724e35084c6ad92c3788d39e3901c253d8756828a6adcca8c585c1d5cc",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "934a83b6bd54980bf9e5a3957f1fffc6511191259864ba45973186aef07967ce",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "0fa218c7ffc5f0546644caa158b18e3fe1c3d189cc5d59bebea89f97ccc5cbf6",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "2f8c0e26ca69e024c865a598ea300be1e23164535d8f006c5426a2a3a3167e85",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+          "offset": 16777216,
+          "length": 1352468,
+          "totalBytes": 18129684,
+          "etag": "\"3b892c070bfd52ec2667b6dff0ac923a\"",
+          "sha256": "5df174a002cfcb6736e889801e15776330a6707da06a6d355924993d7ac12e4f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18129684,
+        "compressedSha256": "77300223a77207fc6c7de8000f2641ff9de51043658f08c7bc96699c59b3a447",
+        "decompressedBytes": 88022880,
+        "decompressedSha256": "fb13eea051fe357851779b44c7b8d436968de468098612ecdc124b0c2f19756d",
+        "manifestCompressedBytesMatches": true,
+        "rangeCount": 9,
+        "jsonType": "dict",
+        "jsonTopLevelKeys": [
+          "metadata",
+          "sessions"
+        ]
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+        "bytes": 18304044,
+        "sha256": "293d8095bd568444125bf06aee1275950f1138fac26557edcabda50fe692f0e3",
+        "contentSha256": "59c27c2812e1bcd96f4753704b66e4141b95975c51ea60341535aa59adbc340c",
+        "uncompressedBytes": 88107195,
+        "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+        "uploadedAt": "2026-09-03T01:07:42.000Z",
+        "readAt": "2026-10-12T17:40:31.186Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "61642d50e650c1d1a7eacd6c293a3fdef228b16ee6acb07e10e0f6d68be43292",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "fcbc0bc8a8ff5838cc5748af844fb11d96952b27ce8f6f583c48d97787c5d760",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "2ee2bfe2a7d48226e105a473227554f098df7206db297498f66b640c8ad052bd",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "64df30103025c5d5057d1515507eb72b235e0ceb5d1148932319f7c8f5933f02",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "e61d4e58e3a66cda360c9410305e2401956091b7fedf6b73f091c9c41f9317ad",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "c84fdcaf14bb687e163b612b459e6e7835230faaec607a1868ca68cd825b1307",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "bd10b81a1533d31f181fe0489e9b67610e095f3ede52b73f39cf177d2a545aba",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "4757068d9392d3dfa51a9b6257f87435917d4e630225c1802566620f1b468f6c",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+          "offset": 16777216,
+          "length": 1526828,
+          "totalBytes": 18304044,
+          "etag": "\"049873915f5c2786e7195cffb76609ac\"",
+          "sha256": "daac6b3bd55c41ef3213d1d0eb074646f2bdedb337f15c02b978ce0f54df5124",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18304044,
+        "compressedSha256": "293d8095bd568444125bf06aee1275950f1138fac26557edcabda50fe692f0e3",
+        "decompressedBytes": 88107195,
+        "decompressedSha256": "59c27c2812e1bcd96f4753704b66e4141b95975c51ea60341535aa59adbc340c",
+        "manifestCompressedBytesMatches": true,
+        "rangeCount": 9,
+        "jsonType": "dict",
+        "jsonTopLevelKeys": [
+          "metadata",
+          "sessions"
+        ]
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+        "bytes": 18448254,
+        "sha256": "f471f3882865eae6a1d9f2faf63016fa83ac6f282994d5f4690f831f9bba9b57",
+        "contentSha256": "260107e0c1407913fa59f380ef926d6cf2433ea5a96dfe44f91a728a70de7f2b",
+        "uncompressedBytes": 88379171,
+        "etag": "\"811794b8ff405abc36732671704884b7\"",
+        "uploadedAt": "2026-09-03T01:14:52.000Z",
+        "readAt": "2026-10-12T17:40:25.605Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "60c516ef09cfe84afff9b80ac490dde06e260fabb031ef0deada91f282e45a35",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "28a648d375cc0149618300b353787c46129872c687fa34290d588bd69996cf3f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "8d966b8393c5421989d2968de8f936140fee7d8a3a203a4ec5b4c3ef0280dd20",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "b87d725b4ad786f6655c590aaa6c01c1e6bde7dd6e9fc737528527051b5917dd",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "84612ceb2196974ddc3ba0bb27cd3d0e12f3de347524fae1b54080cd746ff3db",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "2de36dddd9348ca94d8b480b27989d4e71b7e5cf4507ff3a4ce7e425300794f2",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "d6f3b545d1f94153d85f8b289a709eff0a61438ac9c37b268d8c3eacd2a311bb",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "4d2d863d7f072eae35e1fd9b3631b6f8d29c3eb341c2740b6fa4c1aa642ef41f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+          "offset": 16777216,
+          "length": 1671038,
+          "totalBytes": 18448254,
+          "etag": "\"811794b8ff405abc36732671704884b7\"",
+          "sha256": "35b4dbd6b09cff1e25dbc6e9b493122cc8a9b881d5517e4e2bc74f72282f1abf",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18448254,
+        "compressedSha256": "f471f3882865eae6a1d9f2faf63016fa83ac6f282994d5f4690f831f9bba9b57",
+        "decompressedBytes": 88379171,
+        "decompressedSha256": "260107e0c1407913fa59f380ef926d6cf2433ea5a96dfe44f91a728a70de7f2b",
+        "manifestCompressedBytesMatches": true,
+        "rangeCount": 9,
+        "jsonType": "dict",
+        "jsonTopLevelKeys": [
+          "metadata",
+          "sessions"
+        ]
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+        "bytes": 18557315,
+        "sha256": "ce3a7d3de7898614fd81e21c34922ecf668be43c0d167ecf1443068825cc2377",
+        "contentSha256": "750be3bf717cecfbd6275fea4d94aeea28ed52b742c94b6e768791e1b1201ab6",
+        "uncompressedBytes": 88465329,
+        "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+        "uploadedAt": "2026-09-03T01:16:56.000Z",
+        "readAt": "2026-10-12T17:40:35.804Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "28ef3941ea965e1915dc189f39eb88f1b66d29545efb178fb996ced5201eab08",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "815b3890c96ce4e919035baf41a07bbaa873c7468e46665c90891fd2996616b6",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "4eecb12b55ab811dc7ed226a1ee6108913490b75560f69eca8fad77516bb20ee",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "0737be0171a6093602d8ee0a176f805022fffb381179f5c6207d439cf27baf91",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "cebaadc9b251ee5e303cd665bb61c345a3d3f7f578b4213c8c6437570a4ff56e",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "13d17cefba59a3d7c35980393944089aded9f2a85f2d4797c9487fd599b55e83",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "3bbd8b2b63fe80241ae90fa6fdb510a225af46b3e8a370ef4feda95e7f84049a",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "1fc381d6a2b020b0f5bdc7e5b688ea9704fa982829977fc15375ad7e48570865",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+          "offset": 16777216,
+          "length": 1780099,
+          "totalBytes": 18557315,
+          "etag": "\"e7a355544986836190d54a7e6e11dbee\"",
+          "sha256": "8eb3fff93130dc37d506df7aa4c42265fc7cc00fa482110a3e9b39154cecc1e1",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18557315,
+        "compressedSha256": "ce3a7d3de7898614fd81e21c34922ecf668be43c0d167ecf1443068825cc2377",
+        "decompressedBytes": 88465329,
+        "decompressedSha256": "750be3bf717cecfbd6275fea4d94aeea28ed52b742c94b6e768791e1b1201ab6",
+        "manifestCompressedBytesMatches": true,
+        "rangeCount": 9,
+        "jsonType": "dict",
+        "jsonTopLevelKeys": [
+          "metadata",
+          "sessions"
+        ]
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+        "bytes": 18501354,
+        "sha256": "09ca05122c577f02a54c038e98ab1e41014ed61c7cdf43c25264a0c324614a86",
+        "contentSha256": "60615aaf604b9686565412b1209876b603f7100a3e9c431c8815b15c44ac53ab",
+        "uncompressedBytes": 88404158,
+        "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+        "uploadedAt": "2026-09-03T01:18:56.000Z",
+        "readAt": "2026-10-12T17:40:40.773Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "fae686e5f23b519205df370a2d9a372f24f8e0b0013f95e351f4b4ae559930dc",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "d55d20824c75c8ccd17f0ad99bf13565c7e9f335996bcabfa16d5f18200aac77",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "cafad686ba55292763230b9c85b9d8594eb7715009e73f77c29016e243bcee43",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "70d82e6a77f124dc7b39ca80354e326592cea9652feb67f8a7b56571900ca55b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "3f634fb386a5c09038eb90a2ca08383ae74c8af1ebcdc5a0cf9a3408de29b823",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "978c6bfaa4f532d8f414ac29cda19b9dc922557a8ccb37ab02c5187eb7b3f38c",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "fb3aa8b71da9a11d4a8eb1b7c14c20ffabb5a5c4c83758ef24ef276183a4b7be",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "a999e7977d670695b2486cc3f4443844aeb5ef742244c135d71dc89ecc28a9cc",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+          "offset": 16777216,
+          "length": 1724138,
+          "totalBytes": 18501354,
+          "etag": "\"1e2dec37268b5e969d849bd52c795d8e\"",
+          "sha256": "fde0e229ccb0f1f428551d29aec4e0b9e4c7cd797745e4a9d441f64cf975a3c4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18501354,
+        "compressedSha256": "09ca05122c577f02a54c038e98ab1e41014ed61c7cdf43c25264a0c324614a86",
+        "decompressedBytes": 88404158,
+        "decompressedSha256": "60615aaf604b9686565412b1209876b603f7100a3e9c431c8815b15c44ac53ab",
+        "manifestCompressedBytesMatches": true,
+        "rangeCount": 9,
+        "jsonType": "dict",
+        "jsonTopLevelKeys": [
+          "metadata",
+          "sessions"
+        ]
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+        "bytes": 18662704,
+        "sha256": "e0e3c6b9aafd800fef081c002b72ff835e51441fcbdd8eedf3534f5102352282",
+        "contentSha256": "36dc3e0d8b2bf03c2ee273cf5f466d8bb11200d392d21204ba42df41334c7816",
+        "uncompressedBytes": 88491546,
+        "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+        "uploadedAt": "2026-09-03T01:20:55.000Z",
+        "readAt": "2026-10-12T17:39:53.589Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "88516310dfee972434d9f071276dbdc15cdd661f76c1b62137135ede456956df",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "8641a6eddf058f1b7eda6e3f0a75c85ea7da6dfe6bde05b87f9b508e1fe22611",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "40c39a59c786644a61fedee5becf6052433a9312c439be1ceac8170d4a558b69",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "cdd856c4e0303d7c13d6ba569114f18b5a5b39f6718037ad081427817a652fc4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "6c846f7343d798b423935a3b413ef84e9f253e169fef94bc5961995a35e0c19a",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "e9c1e0db572ec91fbd7cf540694db269efabaa6b465242ea9d72c0327a852d7b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "c5a337f187e7a83f0154aa73693471968b8e5b5bc859d9894b6c069956d136ff",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "9c4ec3f7479faa75ab3a41c120d3a9326cc892f51e4dcd7af67ee655604b68df",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+          "offset": 16777216,
+          "length": 1885488,
+          "totalBytes": 18662704,
+          "etag": "\"30ca222363a6412f69c76638c588ee3d\"",
+          "sha256": "2bb9b46fd6a2c304d948ccd579cfc406dd715ff02bf906c5882c903483aea7c9",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18662704,
+        "compressedSha256": "e0e3c6b9aafd800fef081c002b72ff835e51441fcbdd8eedf3534f5102352282",
+        "uncompressedBytes": 88491546,
+        "contentSha256": "36dc3e0d8b2bf03c2ee273cf5f466d8bb11200d392d21204ba42df41334c7816",
+        "manifestCompressedBytesMatch": true,
+        "originalCompressedHashMatch": true,
+        "decompressedHashMatch": true,
+        "rangeCount": 9
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+        "bytes": 18746945,
+        "sha256": "dd741630574c97225dd9191d28637cf02c69f5d41aa4b55a8095ccba7e2e317e",
+        "contentSha256": "97a03d7719c448171c54b21471f00f8c31c1893afcd88ec04cba8f3f82431dae",
+        "uncompressedBytes": 88642197,
+        "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+        "uploadedAt": "2026-09-03T01:22:52.000Z",
+        "readAt": "2026-10-12T17:39:59.703Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "8ef0e8be6bdee570b01e9f8e692ad79453389cffd0e7141b7ac559dc6c367019",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "20614beb996ec4e3535946eff6789ce34d136b01a872ee30803f545cb5b087c8",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "48883897714b75cb6c58be8d8ec134689fd5ff93ffff46d6ae84dcdf02a16694",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "8ba16e5faa431df8ba3e4318d4c6e96e78169a5287a0246f2ad8aec23f08a5ab",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "ad222696d894676106087b4acc32467ea470a4d48c094e42fd183907964f134a",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "dbff0a04a1f5e58cbccfd9135139576ef2de251e7657bdf4500bbe2c011d26ff",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "43c872c31df5ca70f2b74e35061f2dd01db24912291ba6d4da230ca0de428b94",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "5c87f8e34261e3b9dec7818cfe548ccb35bcd0a08fa6d2a4eefaf745173044a0",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+          "offset": 16777216,
+          "length": 1969729,
+          "totalBytes": 18746945,
+          "etag": "\"c28be3b69863b5532f99c02cb05358f8\"",
+          "sha256": "dd534064ac0f71b7dee6539ac3e756b2a50cfb27d5528daf8ae6d92c22dd2ff2",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18746945,
+        "compressedSha256": "dd741630574c97225dd9191d28637cf02c69f5d41aa4b55a8095ccba7e2e317e",
+        "uncompressedBytes": 88642197,
+        "contentSha256": "97a03d7719c448171c54b21471f00f8c31c1893afcd88ec04cba8f3f82431dae",
+        "manifestCompressedBytesMatch": true,
+        "originalCompressedHashMatch": true,
+        "decompressedHashMatch": true,
+        "rangeCount": 9
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+        "bytes": 18717424,
+        "sha256": "398aec4a9384cd59b33942d57e1998a57db18240ba12c7c88042cae09c98763b",
+        "contentSha256": "d3139a56bc51b858f75a63e507ca7ccf1b1a898d22f631291c4e484ae2ef7f76",
+        "uncompressedBytes": 88708638,
+        "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+        "uploadedAt": "2026-09-03T01:24:50.000Z",
+        "readAt": "2026-10-12T17:40:31.469Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "5f5e33af37cc32c2590fdccf51f54577508d3a39a1ce7390f531270b5d2d2c4f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "fa5e1e4515eca4d5e22a4e34428f3612af366054a26572f673297a0929dd3645",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "ab4d4a94cefff046f5a40fc63e6f160c1e0bfb2f3f965c333a442bca2aa8281a",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "96e5c201e87c008815d56a9545c49d6f1586587b4e10167df52c3144a6fbaa58",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "78d3d814806f6dd73595d79a8a34ac4b720919b52be5038a8248a54eed4e78cd",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "027615414bcafc4be8547ad378fc518aa780d585d80296e6c64a1478e538654b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "8a0656e3d79fa67572b5457cb5cd0ec7612090190a2bc0d534b74391a0faf6e7",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "2e50bbebce63ea4d388c6ebf4cdb1f1113176927779b3a7ad80ba58283ec8f62",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+          "offset": 16777216,
+          "length": 1940208,
+          "totalBytes": 18717424,
+          "etag": "\"0b7e16d0ce190c473271c8a369d1f305\"",
+          "sha256": "3a64349c5817fd7a0fabe44a182020a57d692d9524e445f028353b159be8c1e8",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18717424,
+        "compressedSha256": "398aec4a9384cd59b33942d57e1998a57db18240ba12c7c88042cae09c98763b",
+        "uncompressedBytes": 88708638,
+        "contentSha256": "d3139a56bc51b858f75a63e507ca7ccf1b1a898d22f631291c4e484ae2ef7f76",
+        "manifestCompressedBytesMatch": true,
+        "originalCompressedHashMatch": true,
+        "decompressedHashMatch": true,
+        "rangeCount": 9
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+        "bytes": 18580642,
+        "sha256": "a71d7e839a86e742f84338994fe0455231ebedc41ab4d15c95ddcfaad85e0111",
+        "contentSha256": "83ed4110178a2c71ca4385d4d25d1185cd8828ede7ee69c573060ad2e3406a06",
+        "uncompressedBytes": 88723322,
+        "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+        "uploadedAt": "2026-09-03T01:26:49.000Z",
+        "readAt": "2026-10-12T17:40:05.205Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "df3bcd7d192eb752a3ba8b297168623004cd6d87e9bf7704293522f275533ce4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "068be00b4bdf2cc2388cc11629d936636b5852d03b401eb96caba4f9c331a4b2",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "a15c5ef3a58a131704040ff1b47a370b5b9519f5ddf5377c5595afd7660edc1f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "4102e136463f12f9517bc725152597f604d82c8ef62f09bd296e34e8b9642407",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "2fec85c42a951689293c2df4ff5903b95bcd6affdc057ff8a94b90ec2bd98344",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "195cd428a857eb5e4b4f7f8d098c75c536ae9d25c9a5e8dfeddc0565314ded65",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "2e0985be3cb6b1443c8a79c5d074c49b7d7835ebcbb45b5d941ab4c67a9b14df",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "4e2b1a17a7bb9d29df4da0f3b21a6f19152d7231dada3fcd31dbfd6027e25d3c",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+          "offset": 16777216,
+          "length": 1803426,
+          "totalBytes": 18580642,
+          "etag": "\"03078939a842d617a9f5e2c4a31998e1\"",
+          "sha256": "b9305136e2c1d493f717264763257c8de8919a2d60435bb99da5f907b92dfda4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18580642,
+        "compressedSha256": "a71d7e839a86e742f84338994fe0455231ebedc41ab4d15c95ddcfaad85e0111",
+        "uncompressedBytes": 88723322,
+        "contentSha256": "83ed4110178a2c71ca4385d4d25d1185cd8828ede7ee69c573060ad2e3406a06",
+        "manifestCompressedBytesMatch": true,
+        "originalCompressedHashMatch": true,
+        "decompressedHashMatch": true,
+        "rangeCount": 9
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+        "bytes": 18272155,
+        "sha256": "940aff2b23117d3a6d947a6c180473d2c2793a47eb392aa2f3eee9ee57cfba50",
+        "contentSha256": "47e24c67a1a302ba8b284cc0567c6292ef8662d33015a68c9ad5a0eef1d61cc4",
+        "uncompressedBytes": 88477514,
+        "etag": "\"282b1517244ad8475799c87ca702491b\"",
+        "uploadedAt": "2026-09-03T01:28:49.000Z",
+        "readAt": "2026-10-12T17:40:17.543Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "90579de94b4a05a6cbb1fb4e0418470264ea2ea93683d150e1a31fd9dcbe7137",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "12cc1798e1476819422a76f6882679e58dea0e9b1f684d3b94cb71311ce021ce",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "300a2813d94908926cc26436de443c03d80b489dd8f072efb6b7592e59674c73",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "cb6683b0358446f8e34bc0ab5e7de91065552088a8dfe5a4ba682ddec3d3f511",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "4f4a087e723ec76d28e363df23ab7099b147c6cb1894c678fc99c5e1a719ce61",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "28458b953c90c888213cc315d41d2e6129e42994b12bc6b5c5a352f7d0e218b9",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "35e09ee543dd1e7ce13e33695db4622648ec79f4ddb39ea327858ed1263a3dbe",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "2aef8a3d4e9e15a58ce40e09a4dcf6a35a6b8e508f6641742a2523d70d8b6c5e",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+          "offset": 16777216,
+          "length": 1494939,
+          "totalBytes": 18272155,
+          "etag": "\"282b1517244ad8475799c87ca702491b\"",
+          "sha256": "ec3bf71b0902136d20bbc7585b91a1cb379101849ba37a0d82cca262e3173a22",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18272155,
+        "compressedSha256": "940aff2b23117d3a6d947a6c180473d2c2793a47eb392aa2f3eee9ee57cfba50",
+        "uncompressedBytes": 88477514,
+        "contentSha256": "47e24c67a1a302ba8b284cc0567c6292ef8662d33015a68c9ad5a0eef1d61cc4",
+        "manifestCompressedBytesMatch": true,
+        "originalCompressedHashMatch": true,
+        "decompressedHashMatch": true,
+        "rangeCount": 9
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+        "bytes": 18585853,
+        "sha256": "de2d203d46ead4a93e9ca94ab5b16fc5c89edd24ce79adebdb0d8b5146da6c16",
+        "contentSha256": "0ea4fd299ba6aa56072e27016697a8647bc834050198b71e63fbf6bee4525555",
+        "uncompressedBytes": 88981254,
+        "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+        "uploadedAt": "2026-09-03T01:30:49.000Z",
+        "readAt": "2026-10-12T17:40:24.808Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "20a4f3e6b67ba4873eb28885052626163c17ef45d2fcc622fe8cf542e2345b21",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "a8f01043cc93f2502314656595a5958890d917d14e2ca2f2b7501a582bc10085",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "04c4f6745d940c79ad8c3e132e4277f21e2d9133ffba840eee20eb08c656d92e",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "4a501d0fa2459d1b6e29a4a4d88e9ac8faca718818c58d9885bb5f7b95ffedcd",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "c4dd6c4ac567f51e738221749835f2739b0dcb4f312455fc0b8383a6e950ebbb",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "75b9ae86d006cabbc7e2e293b5800d39ce69cb8233c4bab1fd8da3b3a3b73a56",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "66a15c88e7eeb487eabd234ed7c337f9728bf05a58c0ddb589da008103e8dd27",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "b39e0ebda1497d25a8ddcfea9ea6c8ec83fd5e5ede0bcd75b91d31d562eb3ec4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+          "offset": 16777216,
+          "length": 1808637,
+          "totalBytes": 18585853,
+          "etag": "\"5a819d90c10092d25e3c0606848478e1\"",
+          "sha256": "b292fa3edd3c9bcc317fa725e4158ee4090ca7be0d8632cd01c2ef7f7b171fec",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18585853,
+        "compressedSha256": "de2d203d46ead4a93e9ca94ab5b16fc5c89edd24ce79adebdb0d8b5146da6c16",
+        "uncompressedBytes": 88981254,
+        "contentSha256": "0ea4fd299ba6aa56072e27016697a8647bc834050198b71e63fbf6bee4525555",
+        "manifestCompressedBytesMatch": true,
+        "originalCompressedHashMatch": true,
+        "decompressedHashMatch": true,
+        "rangeCount": 9
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+        "bytes": 18663150,
+        "sha256": "193b55fca817f9f934579f188c0a5528fc9ff75c2caec816ad155edca65431f5",
+        "contentSha256": "3e8fc17fea98a0e263681c4114dd109e53f288e255120c2b0e202671b8c35bf8",
+        "uncompressedBytes": 89146968,
+        "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+        "uploadedAt": "2026-09-03T01:32:50.000Z",
+        "readAt": "2026-10-12T17:40:37.149Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "01076bb68aed9ef2f176f102327a64461159984a98516c3d3ac5c1f15015b259",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "808cdf0580c02c3cd2795fd36b0c3b4fddc2da265b46469eeb86d2469f60d18d",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "11a2f653fd6a01afb977ef98557faf1971c2b5755fa4a3cfb14e43983762cf14",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "950f48233ccee331fb8f427d60efd874a3e100fca9aa0beda55a997bfc26832f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "076e5642b3c4403b9d90993d93b5a665cf730d4ff6012dd58a5ef9f782286de9",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "f5a829f9027f674a641f2e6f41712cddfe062f4abecbf68ac852e37cce3ee499",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "69272fa9eeaed3177054c20b6e89c20dbca090bb15b9df6db0c0a2689162c32d",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "49962b6582cdf4c2e0f3bf758690e940f9cef02836e005620743cefc89ef3cef",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+          "offset": 16777216,
+          "length": 1885934,
+          "totalBytes": 18663150,
+          "etag": "\"3c788d972f135cd09cfa080a1b0fe80d\"",
+          "sha256": "02281b65fd5dae86fddcd4fbe87d36bf43e7f074b3304ad59ab7ca0ecb88d02a",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18663150,
+        "compressedSha256": "193b55fca817f9f934579f188c0a5528fc9ff75c2caec816ad155edca65431f5",
+        "uncompressedBytes": 89146968,
+        "contentSha256": "3e8fc17fea98a0e263681c4114dd109e53f288e255120c2b0e202671b8c35bf8",
+        "manifestCompressedBytesMatch": true,
+        "originalCompressedHashMatch": true,
+        "decompressedHashMatch": true,
+        "rangeCount": 9
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+        "bytes": 18688965,
+        "sha256": "b690f85c6252806a9f49ab108bf4d2f7ccc9e4377d93bf2cd9257e404e9315c4",
+        "contentSha256": "74f21aaf9628dd516ed6ea665e658982d470e2105dc12867fe12d5e4a495ddf8",
+        "uncompressedBytes": 89381039,
+        "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+        "uploadedAt": "2026-09-03T01:34:49.000Z",
+        "readAt": "2026-10-12T17:40:10.724Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "47b5ad34048323a0ec5f896923d438ae85aa36a17f4fd1a88367ab6c013c20b4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "d9e0b6ebc7cc6f9be2c029d995adfc2c9c8787673c8980a41977d153624e6f68",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "250f56e279dee19a4207bca8c869d6404228506af99132dc00a589ab7c160fa3",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "abc0f5a1fa644977c7a1aed6065df86c6bc94a05d0a37b72bac9e17cdfee9691",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "87bb06f4d4d4d0b6aaedcae094aeb8eeed8154c972908dae289142a18fed9f80",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "fb5f3ce89ded03ec1ec6f46293a8cd8aae4ae7eea77e667ed98f76ef2593b623",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "87d821873fa4ad7aac84f3fb87c142fbca4d58636bc42534dbce2b2bf783ef83",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "76f45c6c1ade17685afbe929079259b0b642aafa14d27d7e936e823ee5dbbce7",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+          "offset": 16777216,
+          "length": 1911749,
+          "totalBytes": 18688965,
+          "etag": "\"42abd8756540a722fa90132e67abdb46\"",
+          "sha256": "65a81e39c1945384ae1501fd14e22fc2437778e131ac42c841dcbfed94b246ed",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "compressedBytes": 18688965,
+        "compressedSha256": "b690f85c6252806a9f49ab108bf4d2f7ccc9e4377d93bf2cd9257e404e9315c4",
+        "uncompressedBytes": 89381039,
+        "contentSha256": "74f21aaf9628dd516ed6ea665e658982d470e2105dc12867fe12d5e4a495ddf8",
+        "manifestCompressedBytesMatch": true,
+        "originalCompressedHashMatch": true,
+        "decompressedHashMatch": true,
+        "rangeCount": 9
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+        "bytes": 18891409,
+        "sha256": "7daa6cdba68400576fd4708aabbe668c6dd2909064801ccd9fac0a8fa687c211",
+        "contentSha256": "406ff02bc1884e503e27209a10026667dc793f488c32f2e4737a0d7960e84375",
+        "uncompressedBytes": 89533297,
+        "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+        "uploadedAt": "2026-09-03T01:36:50.000Z",
+        "readAt": "2026-10-12T17:40:57.444Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 10,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "3d133c6f11fcbef059a3ca25497dad194091581544d5d8a69e1732962a02b30e",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "dcfa395c80b0c3556c9d11541f63a6cac3905380ee0e542256f4aa69467c1633",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "f598488c79c6108ed74d058200642cac8260a10fb773c2bb334e9c45dba37944",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "8adc07980603a520e6ae8fdc53da69fdb27d958c1cad3db1745fc8565fc16b23",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "ddd7c784960877f05097314263e5833f0b844b78ece65fecaae0b0e59eda1925",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "e645ba8786a5e67643d4e80243f078b63e29a2df1f090be5c3b57ba6ebe0cb0b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "bc472e3fdbd26fc21fe2ed7eb82c32b2262ce8e2ff6ed4bfef735554409a3398",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "2f611d92f75964d9c26efc8b8c7ff99cacbce2703a23e6f9ef03601e3882972a",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 16777216,
+          "length": 2097152,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "a9afd7dee9943fe6e5f0ff3888fc540c1fcf0fb35b318cedac7011658da6d296",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+          "offset": 18874368,
+          "length": 17041,
+          "totalBytes": 18891409,
+          "etag": "\"d431229eaccbab9116da0cc95b20a9b4\"",
+          "sha256": "bb4a807cd31557877b18f754a98e5477e1a24a9dbb5acb0540d19b5a37a8a446",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "originalBytesVerified": 18891409,
+        "originalSha256Verified": "7daa6cdba68400576fd4708aabbe668c6dd2909064801ccd9fac0a8fa687c211",
+        "contentSha256Verified": "406ff02bc1884e503e27209a10026667dc793f488c32f2e4737a0d7960e84375",
+        "uncompressedBytesVerified": 89533297
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+        "bytes": 18809545,
+        "sha256": "5359ff76eb5cd19727fa3fca8bbea8c86b7634c18fd80dec43b238dffece72de",
+        "contentSha256": "288ac5f17269b8a145f532c57b2825887d483e781fdc13338fb68b9aed012c41",
+        "uncompressedBytes": 89679468,
+        "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+        "uploadedAt": "2026-09-03T01:38:49.000Z",
+        "readAt": "2026-10-12T17:41:08.142Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "d3d2f42bda072c97f3152d7b177cacbdd1ec11ac1a03e5df339762c6ad3842b2",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "acca56a1a1bca5e3537638dd0e3cc4440e08578c0f1d0c7a7ca4e5d1080d7b16",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "af094dd00998abb76c05716cdd42de57bb622398c1bd29916c98da39b0e2b88f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "8c84064bf288eb4a5d50cf5c30ebdeb1220a7194b83ca65ea03b983e2f05b61a",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "800590c477c1ad4ab432b2911edefa003a3bc291eb90337ef68e74cd35b47ad1",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "12686a864175695e139ffae692994e05641fa3635eee7e9685c6cf64add64e16",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "2b314c36b17df7554c6e6256c2833a844ba624f66a04befd5d05673331a1cfba",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "a7c4b82328d6ee332cf4af15cbff4f25aab8728bdd5539e990ed02c89001388e",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+          "offset": 16777216,
+          "length": 2032329,
+          "totalBytes": 18809545,
+          "etag": "\"0149d13d4d199f5324fd681e872d2f7d\"",
+          "sha256": "d226cbf523a27a5d22606fff7d02d962bc14d95bd43457dfdc04b25763694c56",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "originalBytesVerified": 18809545,
+        "originalSha256Verified": "5359ff76eb5cd19727fa3fca8bbea8c86b7634c18fd80dec43b238dffece72de",
+        "contentSha256Verified": "288ac5f17269b8a145f532c57b2825887d483e781fdc13338fb68b9aed012c41",
+        "uncompressedBytesVerified": 89679468
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+        "bytes": 18745975,
+        "sha256": "ae7e41c08f7810a6acdb0fd0c22f977c950fbd3e8c2e9f9bc8fa189054300889",
+        "contentSha256": "8f1ab2b68c70b61b80b29ac7b64eca562ed79156db1d3b4158e3e050abc9b62d",
+        "uncompressedBytes": 89321557,
+        "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+        "uploadedAt": "2026-09-03T01:40:49.000Z",
+        "readAt": "2026-10-12T17:41:19.482Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "6b6bed590c573014c91e1f918b30aeeab222c383f1cdecd3766be8684df6e02e",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "8f7d430440d53c20a6a10a8ddfecfdda670452679ed25827bac8a230c021f701",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "0dd9b8998625b4aeb315e677bc0318502f15a8c86a9f097ecd9cb11c75cbb6d6",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "0ef992a45940300546acd83beca3021c0fcb8a42fd14457d594723cbe325c332",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "7121ea76a9d221f2e361c5841e50cf8b2e6483d9b26e0b44c9bfcda0879fc63b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "e6c3d167e878e6f6fdb8c58f1f00d6b968d549e9d252c67ebccf39fb77c45390",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "78f8979f800927f14b49c0758e62a3a59d08f249ee2fd6e926ff09d481ff7bf4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "992d470527d68c9cd33251c6d9243f2df88a147ff93f4a81c8c34bd443dc37cf",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+          "offset": 16777216,
+          "length": 1968759,
+          "totalBytes": 18745975,
+          "etag": "\"afc0101765a74ed90dedff8883e8b6c1\"",
+          "sha256": "bf612646fafba456a4b7a779997f793e9059b8a4c424b5bb7309b78254fe43d2",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "originalBytesVerified": 18745975,
+        "originalSha256Verified": "ae7e41c08f7810a6acdb0fd0c22f977c950fbd3e8c2e9f9bc8fa189054300889",
+        "contentSha256Verified": "8f1ab2b68c70b61b80b29ac7b64eca562ed79156db1d3b4158e3e050abc9b62d",
+        "uncompressedBytesVerified": 89321557
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+        "bytes": 18556672,
+        "sha256": "32945129e87994d6193656bc30abde9e6d458fd80a71a240ed650203573314a7",
+        "contentSha256": "6cfad7870e469da34b1c0cd22b39fb94f1cb315f9247ffdbe03ae466bd08060d",
+        "uncompressedBytes": 88808634,
+        "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+        "uploadedAt": "2026-09-03T01:42:51.000Z",
+        "readAt": "2026-10-12T17:41:03.049Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "655cd59770cd252749926bb499d44a0bbdacf84e0aecfdc99c69283778f6db8c",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "f067e39de2c396ea34694c34e7ca9d6c8d8b917728b51dbfd5c34262190af0c3",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "a3dbc7986adc29c00418707e7e734d7ceb83cef885b4ab0df90c22c67ca9d727",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "1020079490ef699fcad1f84c8de7978e236352102f74e4472400acc75c412081",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "8e9cfe1ddadc2940b253f8ce8147e33733ee541cc40ce3ba3cf787e3a65eb0c3",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "ef09d8fd4b8b5ecfee3297da0b06bfc42e60ecc2ca99c392097e1f719ea175e3",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "68807e834383e6f00623386f7940e4a50dfdcdf9203b84b50e9eeccf62dc22df",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "521c289c6160856aad34a5f57ba483ece8df13f4070d3646387fd08087f54ff8",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+          "offset": 16777216,
+          "length": 1779456,
+          "totalBytes": 18556672,
+          "etag": "\"6d0c89171f4ed7212ee61a39980998d6\"",
+          "sha256": "a8d1b3a87f62e9a54fd24691ba1cb0d31e7601c5a05bf4bd71e6bb5a723e98e4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "originalBytesVerified": 18556672,
+        "originalSha256Verified": "32945129e87994d6193656bc30abde9e6d458fd80a71a240ed650203573314a7",
+        "contentSha256Verified": "6cfad7870e469da34b1c0cd22b39fb94f1cb315f9247ffdbe03ae466bd08060d",
+        "uncompressedBytesVerified": 88808634
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+        "bytes": 18757377,
+        "sha256": "306c8404f77711cf03fdd381eed3efe599b303b51afe84a91190700126b11c05",
+        "contentSha256": "cd4f7732d55d0a79ec806222f8eea4240b1374aeaa9c8c226f7eac0119d9715c",
+        "uncompressedBytes": 89192482,
+        "etag": "\"354f46be1049ca68322dc09745190e61\"",
+        "uploadedAt": "2026-09-03T01:44:49.000Z",
+        "readAt": "2026-10-12T17:41:13.672Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "e83a332eb2e55b021c6eb5ed06324531479f3fb37cdad33e6639779817b87c3b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "61681cdc5b6c60b06bd4ec2442da0470760ebb3d038e2b574280a6f9627d5691",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "a4f677ee3cf7c2c1af06afc1c14d647bc92c911fab2c627e6776dc8e45b42a7b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "6766f01738a1a89d52a1376279cee6b9a2bc7530d5ae667d2049f0ac11881909",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "bba3dc259ec88e9a37e08c998e43233ed3bf065cdd018def53d2a4542a8aed07",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "f0d106871b167cb8f966e808f5a1ea31a05d5e0eb1fefaef4a551d91d1f5eae8",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "8cd686551274e0c5c6a3aef3f455865affd3283680bd41515f7b231914619e12",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "fbbb521154a91b1b0f1037be5d3ff30a403f89cacc3477087a4b945cea72f603",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+          "offset": 16777216,
+          "length": 1980161,
+          "totalBytes": 18757377,
+          "etag": "\"354f46be1049ca68322dc09745190e61\"",
+          "sha256": "93d3d3b0c40909debeee99b5e4699a784e879bddcd80c54a9bdda84564ffc1f3",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "originalBytesVerified": 18757377,
+        "originalSha256Verified": "306c8404f77711cf03fdd381eed3efe599b303b51afe84a91190700126b11c05",
+        "contentSha256Verified": "cd4f7732d55d0a79ec806222f8eea4240b1374aeaa9c8c226f7eac0119d9715c",
+        "uncompressedBytesVerified": 89192482
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+        "bytes": 18745393,
+        "sha256": "944a506bdaba2c0acd5197b63c40a3b08b6872771ad20a5080bfdb6f57c3ffde",
+        "contentSha256": "f494ea97723aa655292df87ed637dce14ea039ff3ce8d4b5f673135c946d360f",
+        "uncompressedBytes": 89079505,
+        "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+        "uploadedAt": "2026-09-03T01:46:50.000Z",
+        "readAt": "2026-10-12T17:41:25.665Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 9,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "f65651d6e75b78d1d2a153b8bace29992a5f4ba00bbcbd0eab088ac014c3337d",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "cee5c0c6997b13d9dab05e36aa6b8e74a723e5b0286d159b80fed908fda7a565",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "4c500c93c9fcb82467dbc9a75286517776e40e88efe54ba2355d3d3dd74a1842",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 6291456,
+          "length": 2097152,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "2a4a8bb703e4a77ae9cd7ea23db41b4a90d30088b4af647843b6219fb4467af4",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 8388608,
+          "length": 2097152,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "2a8c218e853bfb1b97a700b319c5b16fedc65baaed8ddc94a85aae46589e7b2b",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 10485760,
+          "length": 2097152,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "24ac8dfbc2c73d705c8201cacada5c026873d6d72f0f5d714304a4b8a13e73aa",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 12582912,
+          "length": 2097152,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "6eaa07152f2e49cb76fcc925875003bc62b678e3f0371df66ea007ad5b1a04eb",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 14680064,
+          "length": 2097152,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "cef234bd350db0a21626ba53fc172ba90be86e582999ccb2310bbfaf429a9b78",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+          "offset": 16777216,
+          "length": 1968177,
+          "totalBytes": 18745393,
+          "etag": "\"5cde8dd6ab3ff547187058f24c021dcf\"",
+          "sha256": "03f7989ed20481d53e79578f40d3966248b677f9551f91f7a17d288d6c38a57d",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "originalBytesVerified": 18745393,
+        "originalSha256Verified": "944a506bdaba2c0acd5197b63c40a3b08b6872771ad20a5080bfdb6f57c3ffde",
+        "contentSha256Verified": "f494ea97723aa655292df87ed637dce14ea039ff3ce8d4b5f673135c946d360f",
+        "uncompressedBytesVerified": 89079505
+      }
+    },
+    {
+      "source": {
+        "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1150-1170.json.gz",
+        "bytes": 7574998,
+        "sha256": "e49d421b49bf1c933da04bd02301e28ba14e29d786c970d505fbde9cf0f5f140",
+        "contentSha256": "5580a7a1d393ae83207413482200dc6112fb62b22d2151fe6bd2daca24181b22",
+        "uncompressedBytes": 35671004,
+        "etag": "\"0a4eb180f0010f36e4e71cfe16c4330c\"",
+        "uploadedAt": "2026-09-03T01:48:21.000Z",
+        "readAt": "2026-10-12T17:41:30.851Z",
+        "byteBasis": "original-stored-object",
+        "gzipRecompressed": false
+      },
+      "rangeReceiptCount": 4,
+      "ranges": [
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1150-1170.json.gz",
+          "offset": 0,
+          "length": 2097152,
+          "totalBytes": 7574998,
+          "etag": "\"0a4eb180f0010f36e4e71cfe16c4330c\"",
+          "sha256": "5783dfde9f3e5329180108c49f4b9a8ad2ca4928f5fa9b3e078d2c3f73d68ffc",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1150-1170.json.gz",
+          "offset": 2097152,
+          "length": 2097152,
+          "totalBytes": 7574998,
+          "etag": "\"0a4eb180f0010f36e4e71cfe16c4330c\"",
+          "sha256": "f6049f9eb99053a4d96c481da582f096f40ba28039c9b1cc20d44efc9737f015",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1150-1170.json.gz",
+          "offset": 4194304,
+          "length": 2097152,
+          "totalBytes": 7574998,
+          "etag": "\"0a4eb180f0010f36e4e71cfe16c4330c\"",
+          "sha256": "3a0602cbc3ee1a2b088b622a277bf3b08bc8417ad7815841077de27c62b4f95f",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        },
+        {
+          "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1150-1170.json.gz",
+          "offset": 6291456,
+          "length": 1283542,
+          "totalBytes": 7574998,
+          "etag": "\"0a4eb180f0010f36e4e71cfe16c4330c\"",
+          "sha256": "dbc4a5a899fdefe8080b8495c44d71bcbe3d86fdba2c2c50e8f69a937597260c",
+          "encoding": "base64",
+          "rangeServed": true,
+          "gzipRecompressed": false
+        }
+      ],
+      "localVerification": {
+        "originalBytesVerified": 7574998,
+        "originalSha256Verified": "e49d421b49bf1c933da04bd02301e28ba14e29d786c970d505fbde9cf0f5f140",
+        "contentSha256Verified": "5580a7a1d393ae83207413482200dc6112fb62b22d2151fe6bd2daca24181b22",
+        "uncompressedBytesVerified": 35671004
+      }
+    }
+  ],
+  "supplementalOriginalReceipts": [
+    {
+      "pathname": "research/pit-sp500-price-checkpoint-v1.json",
+      "bytes": 71563911,
+      "sha256": "9e239617df3c4824fb5b68b1590bc058a511550fbaa9e8d1eb8b5f13ec9161c0",
+      "contentSha256": "9e239617df3c4824fb5b68b1590bc058a511550fbaa9e8d1eb8b5f13ec9161c0",
+      "uncompressedBytes": 71563911,
+      "etag": "\"64d9e4392f514a8d3d68c4ccbb6348f4\"",
+      "uploadedAt": "2026-09-03T22:18:52.000Z",
+      "readAt": "2026-10-12T17:40:29.627Z",
+      "byteBasis": "original-stored-object",
+      "gzipRecompressed": false
+    },
+    {
+      "pathname": "research/pit-sp500-universe-v1.json",
+      "bytes": 18938,
+      "sha256": "4b8b77ce6abc493a4090feaa98b49adc7fd7303f2c55b0ed0e55ee46df7b14af",
+      "contentSha256": "4b8b77ce6abc493a4090feaa98b49adc7fd7303f2c55b0ed0e55ee46df7b14af",
+      "uncompressedBytes": 18938,
+      "etag": "\"dc0f5788c63056ef251c0db2bc65f7b5\"",
+      "uploadedAt": "2026-09-02T16:39:27.000Z",
+      "readAt": "2026-10-12T17:40:23.687Z",
+      "byteBasis": "original-stored-object",
+      "gzipRecompressed": false
+    },
+    {
+      "pathname": "research/pit-sp500-dataset-status-v1.json",
+      "bytes": 1778,
+      "sha256": "a71fb2c4bbefd96909cb59f2bfb46a78af7deb37c10c3d1522419d9ea8428d71",
+      "contentSha256": "a71fb2c4bbefd96909cb59f2bfb46a78af7deb37c10c3d1522419d9ea8428d71",
+      "uncompressedBytes": 1778,
+      "etag": "\"e0c68954a782b9ca5793877468f7e601\"",
+      "uploadedAt": "2026-09-03T22:19:01.000Z",
+      "readAt": "2026-10-12T17:40:33.987Z",
+      "byteBasis": "original-stored-object",
+      "gzipRecompressed": false
+    }
+  ]
+}

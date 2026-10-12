@@ -1,0 +1,52 @@
+{
+  "contract": "c1-independent-breaker-parity-v1",
+  "passed": true,
+  "coverage": [
+    "12% open-equity sleeve breaker",
+    "risk exits before buys",
+    "all nine sleeve holds liquidated",
+    "10/15/10 cash cooldown",
+    "high-water reset on resumption",
+    "12/25/50 source/cache/uncached parity"
+  ],
+  "receipts": [
+    {
+      "cost": 12,
+      "breakerDate": "2026-03-12",
+      "breakerExits": 9,
+      "resumption": {
+        "base": "2026-03-27",
+        "cooldown15": "2026-04-06",
+        "sector40": "2026-03-27"
+      },
+      "sourceParity": true,
+      "cacheParity": true
+    },
+    {
+      "cost": 25,
+      "breakerDate": "2026-03-12",
+      "breakerExits": 9,
+      "resumption": {
+        "base": "2026-03-27",
+        "cooldown15": "2026-04-06",
+        "sector40": "2026-03-27"
+      },
+      "sourceParity": true,
+      "cacheParity": true
+    },
+    {
+      "cost": 50,
+      "breakerDate": "2026-03-12",
+      "breakerExits": 9,
+      "resumption": {
+        "base": "2026-03-27",
+        "cooldown15": "2026-04-06",
+        "sector40": "2026-03-27"
+      },
+      "sourceParity": true,
+      "cacheParity": true
+    }
+  ],
+  "engineSha256": "176e42e2cdef45f101ab183ada71f508eebe9e680e9fe5ade04b351935cdb341",
+  "loaderSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9"
+}

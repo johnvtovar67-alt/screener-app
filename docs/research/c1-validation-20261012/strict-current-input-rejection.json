@@ -1,0 +1,27 @@
+{
+  "contract": "c1-strict-historical-live-input-rejection-v1",
+  "passed": false,
+  "currentLiveInputAccepted": false,
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "sourceError": "Current sector is missing for ANSS",
+  "sourceStack": "Error: Current sector is missing for ANSS\n    at /workspace/screener-app/lib/c1LiveInput.js:24:13\n    at Array.map (<anonymous>)\n    at Object.c1LiveMembers (/workspace/screener-app/lib/c1LiveInput.js:18:15)\n    at normalizeMembers (/workspace/screener-app/tools/c1-build-current-historical-input.cjs:177:62)\n    at /workspace/screener-app/tools/c1-build-current-historical-input.cjs:121:71\n    at Array.map (<anonymous>)\n    at prepareRawInput (/workspace/screener-app/tools/c1-build-current-historical-input.cjs:76:37)\n    at buildCurrentInput (/workspace/screener-app/tools/c1-build-current-historical-input.cjs:175:28)\n    at Object.<anonymous> (/workspace/screener-app/tools/c1-build-current-historical-input.cjs:251:20)\n    at Module._compile (node:internal/modules/cjs/loader:1872:14)",
+  "sourcePins": {
+    "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+    "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+    "lib/scoring.js": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+    "lib/expertDecision.js": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+    "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+    "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+    "lib/top5Diagnostics.js": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+    "lib/eventRisk.js": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+    "lib/personalCapitalPolicy.js": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+    "lib/opportunityDecision.js": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+    "lib/walkForwardBacktest.js": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+    "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45"
+  },
+  "adapterSha256": "9dd93a7501eef4e7fbbb6757e95bac28a9be4e3efc631856be940b2e27ece48b",
+  "originalValidationSha256": "06d822332582d364f36b8919dae7bdba614cb5ca36121ebe47d6a3b169fb0a58",
+  "originalManifestSha256": "6dc0ad6cb7ec0edf74f07880c260cb3c5192f86406a299a47dc0589269dd4cf1",
+  "derivedManifestWritten": false
+}

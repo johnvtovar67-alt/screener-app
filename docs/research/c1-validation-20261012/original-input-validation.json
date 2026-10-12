@@ -1,0 +1,279 @@
+{
+  "contract": "c1-original-historical-input-validation-v1",
+  "sourcePins": {
+    "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+    "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+    "lib/entryTiming.js": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+    "lib/replayDatasetCompaction.js": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+    "lib/marketSession.js": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f"
+  },
+  "originalManifestSha256": "6dc0ad6cb7ec0edf74f07880c260cb3c5192f86406a299a47dc0589269dd4cf1",
+  "priceCheckpointSha256": "9e239617df3c4824fb5b68b1590bc058a511550fbaa9e8d1eb8b5f13ec9161c0",
+  "universeSha256": "4b8b77ce6abc493a4090feaa98b49adc7fd7303f2c55b0ed0e55ee46df7b14af",
+  "sessions": 1170,
+  "priceRows": 659220,
+  "cohortsMatched": 1170,
+  "sourceUniverseCountsMatched": 1170,
+  "chunkCompressedBytes": 409654552,
+  "factorContainingChunks": 24,
+  "factorRows": 571220,
+  "comparedFactorValues": 11610128,
+  "comparedTimingValues": 3343230,
+  "missingSavedFactorValues": 3241592,
+  "missingSavedTimingValues": 84090,
+  "priceGeometryViolations": 0,
+  "zeroVolumeRows": 49,
+  "maxNumericalDifference": 0,
+  "cohortMismatches": [],
+  "priceMismatches": [],
+  "factorMismatches": [],
+  "sourceCountMismatches": [],
+  "sectorObservations": {
+    "Healthcare": 69013,
+    "Consumer Cyclical": 62580,
+    "Technology": 85713,
+    "Communication Services": 23582,
+    "Utilities": 34060,
+    "Basic Materials": 27943,
+    "Financial Services": 74304,
+    "Industrials": 76578,
+    "Consumer Defensive": 39846,
+    "Energy": 24070,
+    "Real Estate": 33299,
+    "Other": 20232
+  },
+  "chunks": [
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0000-0050.json.gz",
+      "compressedBytes": 1009377,
+      "compressedSha256": "876cba8914ec94e655478923f3029ead415d9c8eecd4dfcfc3d8a9cb596f89a5",
+      "contentSha256": "eae75d78a1e3ac36b885fed0688ba9375395b3bfd2aec7bd99a14918f7fdf3fe",
+      "uncompressedBytes": 4885342,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0050-0100.json.gz",
+      "compressedBytes": 14137983,
+      "compressedSha256": "5e6c736363ad1e8eb8145a83f629afbaf187c47c95f321bf73cf32790e8d99d4",
+      "contentSha256": "6db964bcb2f1b495d429358c33a58547e59e050bc6a2ea0586cd15e7e7e85c74",
+      "uncompressedBytes": 74479234,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0100-0150.json.gz",
+      "compressedBytes": 16225508,
+      "compressedSha256": "f8149bc0e35d7f0ae392ed8c48cb9f2ee65dcf974cdea11091bd912c5113b5e0",
+      "contentSha256": "629fe5187ab48db58c4e2c82eff13fa2106ceee0c3054fc6b4e178095eea95f9",
+      "uncompressedBytes": 81991213,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0150-0200.json.gz",
+      "compressedBytes": 17341826,
+      "compressedSha256": "99a4143615c49d2ba943d567f4b85d7b4f46f458658f9150d24f90053b09cab5",
+      "contentSha256": "a5d380658674f3458205d1399f3712b4b54980ed3154e7514ef192f2ea6f512d",
+      "uncompressedBytes": 86450715,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0200-0250.json.gz",
+      "compressedBytes": 18129684,
+      "compressedSha256": "77300223a77207fc6c7de8000f2641ff9de51043658f08c7bc96699c59b3a447",
+      "contentSha256": "fb13eea051fe357851779b44c7b8d436968de468098612ecdc124b0c2f19756d",
+      "uncompressedBytes": 88022880,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0250-0300.json.gz",
+      "compressedBytes": 18304044,
+      "compressedSha256": "293d8095bd568444125bf06aee1275950f1138fac26557edcabda50fe692f0e3",
+      "contentSha256": "59c27c2812e1bcd96f4753704b66e4141b95975c51ea60341535aa59adbc340c",
+      "uncompressedBytes": 88107195,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0300-0350.json.gz",
+      "compressedBytes": 18448254,
+      "compressedSha256": "f471f3882865eae6a1d9f2faf63016fa83ac6f282994d5f4690f831f9bba9b57",
+      "contentSha256": "260107e0c1407913fa59f380ef926d6cf2433ea5a96dfe44f91a728a70de7f2b",
+      "uncompressedBytes": 88379171,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0350-0400.json.gz",
+      "compressedBytes": 18557315,
+      "compressedSha256": "ce3a7d3de7898614fd81e21c34922ecf668be43c0d167ecf1443068825cc2377",
+      "contentSha256": "750be3bf717cecfbd6275fea4d94aeea28ed52b742c94b6e768791e1b1201ab6",
+      "uncompressedBytes": 88465329,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0400-0450.json.gz",
+      "compressedBytes": 18501354,
+      "compressedSha256": "09ca05122c577f02a54c038e98ab1e41014ed61c7cdf43c25264a0c324614a86",
+      "contentSha256": "60615aaf604b9686565412b1209876b603f7100a3e9c431c8815b15c44ac53ab",
+      "uncompressedBytes": 88404158,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0450-0500.json.gz",
+      "compressedBytes": 18662704,
+      "compressedSha256": "e0e3c6b9aafd800fef081c002b72ff835e51441fcbdd8eedf3534f5102352282",
+      "contentSha256": "36dc3e0d8b2bf03c2ee273cf5f466d8bb11200d392d21204ba42df41334c7816",
+      "uncompressedBytes": 88491546,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0500-0550.json.gz",
+      "compressedBytes": 18746945,
+      "compressedSha256": "dd741630574c97225dd9191d28637cf02c69f5d41aa4b55a8095ccba7e2e317e",
+      "contentSha256": "97a03d7719c448171c54b21471f00f8c31c1893afcd88ec04cba8f3f82431dae",
+      "uncompressedBytes": 88642197,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0550-0600.json.gz",
+      "compressedBytes": 18717424,
+      "compressedSha256": "398aec4a9384cd59b33942d57e1998a57db18240ba12c7c88042cae09c98763b",
+      "contentSha256": "d3139a56bc51b858f75a63e507ca7ccf1b1a898d22f631291c4e484ae2ef7f76",
+      "uncompressedBytes": 88708638,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0600-0650.json.gz",
+      "compressedBytes": 18580642,
+      "compressedSha256": "a71d7e839a86e742f84338994fe0455231ebedc41ab4d15c95ddcfaad85e0111",
+      "contentSha256": "83ed4110178a2c71ca4385d4d25d1185cd8828ede7ee69c573060ad2e3406a06",
+      "uncompressedBytes": 88723322,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0650-0700.json.gz",
+      "compressedBytes": 18272155,
+      "compressedSha256": "940aff2b23117d3a6d947a6c180473d2c2793a47eb392aa2f3eee9ee57cfba50",
+      "contentSha256": "47e24c67a1a302ba8b284cc0567c6292ef8662d33015a68c9ad5a0eef1d61cc4",
+      "uncompressedBytes": 88477514,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0700-0750.json.gz",
+      "compressedBytes": 18585853,
+      "compressedSha256": "de2d203d46ead4a93e9ca94ab5b16fc5c89edd24ce79adebdb0d8b5146da6c16",
+      "contentSha256": "0ea4fd299ba6aa56072e27016697a8647bc834050198b71e63fbf6bee4525555",
+      "uncompressedBytes": 88981254,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0750-0800.json.gz",
+      "compressedBytes": 18663150,
+      "compressedSha256": "193b55fca817f9f934579f188c0a5528fc9ff75c2caec816ad155edca65431f5",
+      "contentSha256": "3e8fc17fea98a0e263681c4114dd109e53f288e255120c2b0e202671b8c35bf8",
+      "uncompressedBytes": 89146968,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0800-0850.json.gz",
+      "compressedBytes": 18688965,
+      "compressedSha256": "b690f85c6252806a9f49ab108bf4d2f7ccc9e4377d93bf2cd9257e404e9315c4",
+      "contentSha256": "74f21aaf9628dd516ed6ea665e658982d470e2105dc12867fe12d5e4a495ddf8",
+      "uncompressedBytes": 89381039,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0850-0900.json.gz",
+      "compressedBytes": 18891409,
+      "compressedSha256": "7daa6cdba68400576fd4708aabbe668c6dd2909064801ccd9fac0a8fa687c211",
+      "contentSha256": "406ff02bc1884e503e27209a10026667dc793f488c32f2e4737a0d7960e84375",
+      "uncompressedBytes": 89533297,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0900-0950.json.gz",
+      "compressedBytes": 18809545,
+      "compressedSha256": "5359ff76eb5cd19727fa3fca8bbea8c86b7634c18fd80dec43b238dffece72de",
+      "contentSha256": "288ac5f17269b8a145f532c57b2825887d483e781fdc13338fb68b9aed012c41",
+      "uncompressedBytes": 89679468,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/0950-1000.json.gz",
+      "compressedBytes": 18745975,
+      "compressedSha256": "ae7e41c08f7810a6acdb0fd0c22f977c950fbd3e8c2e9f9bc8fa189054300889",
+      "contentSha256": "8f1ab2b68c70b61b80b29ac7b64eca562ed79156db1d3b4158e3e050abc9b62d",
+      "uncompressedBytes": 89321557,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1000-1050.json.gz",
+      "compressedBytes": 18556672,
+      "compressedSha256": "32945129e87994d6193656bc30abde9e6d458fd80a71a240ed650203573314a7",
+      "contentSha256": "6cfad7870e469da34b1c0cd22b39fb94f1cb315f9247ffdbe03ae466bd08060d",
+      "uncompressedBytes": 88808634,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1050-1100.json.gz",
+      "compressedBytes": 18757377,
+      "compressedSha256": "306c8404f77711cf03fdd381eed3efe599b303b51afe84a91190700126b11c05",
+      "contentSha256": "cd4f7732d55d0a79ec806222f8eea4240b1374aeaa9c8c226f7eac0119d9715c",
+      "uncompressedBytes": 89192482,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1100-1150.json.gz",
+      "compressedBytes": 18745393,
+      "compressedSha256": "944a506bdaba2c0acd5197b63c40a3b08b6872771ad20a5080bfdb6f57c3ffde",
+      "contentSha256": "f494ea97723aa655292df87ed637dce14ea039ff3ce8d4b5f673135c946d360f",
+      "uncompressedBytes": 89079505,
+      "cohorts": 50,
+      "containsFactors": true
+    },
+    {
+      "pathname": "research/pit-sp500-compiled-v1/2022-01-01-2026-09-01/1150-1170.json.gz",
+      "compressedBytes": 7574998,
+      "compressedSha256": "e49d421b49bf1c933da04bd02301e28ba14e29d786c970d505fbde9cf0f5f140",
+      "contentSha256": "5580a7a1d393ae83207413482200dc6112fb62b22d2151fe6bd2daca24181b22",
+      "uncompressedBytes": 35671004,
+      "cohorts": 20,
+      "containsFactors": true
+    }
+  ],
+  "limitations": [
+    "This validates original compiler cohorts (default minimumHistoryRows20, historicalMarketDataVerified50), not the current live253-row input cohort.",
+    "Price-derived factor functions are recomputed with current source on the original accepted cohort; quality/fundamental factors are pinned by complete original decompressed chunk hashes, not recomputed without the missing fundamental checkpoint.",
+    "Sector labels are those saved by original compiler and lack independent dated sector provenance.",
+    "Daily adjusted OHLC snapshots do not certify as-known unrevised market data."
+  ],
+  "complete": true,
+  "passed": true,
+  "completeSourceMarketCalendarMatched": true,
+  "january9_2025ExceptionalClosure": true,
+  "originalByteRangeReceiptCount": 201,
+  "supplementalOriginalSourcesVerified": true,
+  "validatorSourceSha256": "e6189c2a1d65e6d96949574db1ed2116ea10d0a6d7f5a005e2a6e7adb572dae2",
+  "generatedAt": "2026-10-12T17:57:19.376174+00:00",
+  "originalByteRangesReverifiedFromCompressedFiles": 201,
+  "originalByteRangeCoverage": 409654552
+}

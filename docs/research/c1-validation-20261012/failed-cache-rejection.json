@@ -1,0 +1,9 @@
+{
+  "contract": "c1-independent-failed-cache-rejection-v1",
+  "passed": true,
+  "originalError": "Actual fill could not be applied to its C1 decision (UNKNOWN buy Buy); original account must be retained",
+  "repeatedRejections": 2,
+  "cacheResumesAfterFailure": 0,
+  "engineSha256": "176e42e2cdef45f101ab183ada71f508eebe9e680e9fe5ade04b351935cdb341",
+  "loaderSha256": "75590e07a8280a91b8310936a625269932dbfdc66cf186955bb3a8c6889c5ab9"
+}
