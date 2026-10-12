@@ -1,0 +1,13 @@
+{
+  "contract": "c1-independent-acquisition-guard-provenance-review-v1",
+  "passed": true,
+  "scope": "Hash/current-source/identity review only; no acquisition or policy rerun.",
+  "actualLiveInputAccepted": false,
+  "eligibleForAlphaClaim": false,
+  "evidenceSha256": "ce7bedd122baa6276cf0cd940c46e3891ea70018a629c65bf0b5b18aed9c4d61",
+  "checkedSourcePins": 15,
+  "inputManifestSha256": "b6d83ac68fce80937de36d78d3735bcf87f114442cb56db0f280d8c6249c44ad",
+  "acceptanceSha256": "ed573201b418f8c11ec747302df318fb37db2c8b9073febfa51bcf8520b4fc74",
+  "checkedUniqueSourceFiles": 13,
+  "checkedAcquisitionGuardSourcePins": 3
+}
