@@ -3,8 +3,9 @@ const s=fs.readFileSync('pages/index.js','utf8');
 const checks=[
   ['capital score helper','function capitalScoreVisual('],
   ['replacement edge helper','function replacementEdgeVisual('],
-  ['capital score visual','scoreVisual ${v.tone}'],
-  ['replacement edge visual','edgeVisual ${v.tone}'],
+  ['momentum evidence badge','momentumBadge ${evidence.tone}'],
+  ['evidence explanation','<p>{evidence.explanation}</p>'],
+  ['accepted evidence date','<small>As of {evidence.sourceSessionDate}</small>'],
   ['none-qualified label','None qualified'],
   ['score excellent threshold','v>=80'],
   ['score strong threshold','v>=70'],
@@ -14,4 +15,4 @@ const checks=[
 ];
 const failed=checks.filter(([,needle])=>!s.includes(needle)).map(([name])=>name);
 if(failed.length){console.error('TIME REVIEW SCORE VISUALS FAIL:',failed.join(', '));process.exit(1);}
-console.log('TIME REVIEW SCORE VISUALS PASS: Capital Score quality and qualified replacement edge are visually explicit.');
+console.log('TIME REVIEW SCORE VISUALS PASS: legacy capital-score and replacement-edge thresholds preserved; momentum badges, explanations and accepted dates replace duration-panel visuals.');

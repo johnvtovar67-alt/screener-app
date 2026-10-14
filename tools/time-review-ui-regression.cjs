@@ -13,8 +13,9 @@ assert(r.stage==='Long Swing Review'&&r.review,'60+ day mediocre swing must trig
 r=swingTimeReview({openedAt:iso(61),gainLossPct:20,tradeSetupScore:75,technicalScore:70,momentumScore:68,relativeStrengthScore:70});
 assert(r.stage==='Long Swing Review'&&!r.review,'60+ day strong winner should not be forced into a sale review');
 const page=fs.readFileSync('pages/index.js','utf8');
-assert(page.includes('timeReviewRows'),'time-review rows not computed');
-assert(page.includes('⏱ Time Review')||page.includes('Swing Time Reviews'),'time-review visibility missing');
+assert(page.includes('momentumEvidenceRows=portfolioHoldings(results).map'),'momentum evidence must include every non-cash holding without a duration threshold');
+assert(page.includes('Momentum Evidence'),'momentum evidence overview visibility missing');
+assert(!page.includes('stageTone(time.stage)')&&!page.includes('${time.stage} stage'),'duration stages must not be displayed as position evidence');
 assert(page.includes('type="date" value={openedDate}'),'opened-date editor missing');
 assert(page.includes('openedAt:openedAtInput||prior?.openedAt||now'),'manual opened date must be able to correct legacy positions');
 assert(page.includes('if(nextTab==="portfolio")return portfolio.length>0?analyze():undefined'),'opening Portfolio must run exactly one fresh analysis');
@@ -25,4 +26,4 @@ assert(app.includes('data-version-stamp')&&!app.includes('position:"fixed",right
 assert(page.includes('/api/entry-timing?symbols=')&&page.includes('timingBySymbol'),'Portfolio analysis must attach historical timing to every held non-cash symbol');
 const timingApi=fs.readFileSync('pages/api/entry-timing.js','utf8');
 assert(timingApi.includes('.slice(0,25)')&&timingApi.includes('fetchEntryTimingMap(symbols)'),'Portfolio timing requests must remain bounded and use the stable shared timing engine');
-console.log('TIME REVIEW UI PASS: aging swing review, winner protection, opened-date correction, and compact portfolio visibility verified.');
+console.log('TIME REVIEW UI PASS: existing aging/risk rules and winner protection preserved; momentum evidence replaces duration presentation.');

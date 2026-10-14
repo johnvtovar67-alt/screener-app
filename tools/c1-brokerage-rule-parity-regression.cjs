@@ -145,8 +145,15 @@ const cashFields = new Set(['strategyCash', 'brokerageCash', 'executableCash',
   'brokerageCashCurrent', 'brokerageCashObservedAt', 'brokerageCashStatus',
   'brokerageCashReason', 'cashAuthority', 'cashBlockedOrders']);
 function withoutCashOverlay(value, rawPlan = false) {
-  return Object.fromEntries(Object.entries(value).filter(([key]) =>
+  const original = Object.fromEntries(Object.entries(value).filter(([key]) =>
     !cashFields.has(key) && !(rawPlan && key === 'actualCash')));
+  // The owner authorized this new read-only portfolio annotation. Keep every
+  // pre-existing action, economic and risk field in the pinned comparison.
+  if (!rawPlan && Array.isArray(original.positions)) original.positions = original.positions.map(position => {
+    const { momentumEvidence, ...unchanged } = position;
+    return unchanged;
+  });
+  return original;
 }
 const currentService = current.load('lib/c1AccountService.js');
 const baselineService = baseline.load('lib/c1AccountService.js');
@@ -175,12 +182,15 @@ for (const [active, original] of [[currentAccount, baselineAccount], [currentHel
   else assert.ok(rawPlan.orders.some(o => o.side === 'sell' && !o.condition),
     'Inherited-position fixture must exercise existing exit recommendations');
   const oldDecision = baselineService.deriveC1AccountAnalysis({ account: original, book, now }).decision;
+  const currentEvidence = currentService.deriveC1AccountAnalysis({ account: active, book, now }).decision.positions.map(p => p.momentumEvidence);
   for (const balance of [10000, 363.36, 0]) {
     const withBroker = { ...active, brokerageCash: { balance,
       observedAt: nextSession.date + 'T13:29:00Z', source: 'manual-broker-balance' } };
     const decision = currentService.deriveC1AccountAnalysis({ account: withBroker, book, now }).decision;
     same(withoutCashOverlay(decision), oldDecision,
       'Broker cash changes cannot alter completed ranks, opportunities, holdings or decisions');
+    same(decision.positions.map(p => p.momentumEvidence), currentEvidence,
+      'Broker cash changes cannot alter the independent informational momentum evidence');
     assert.equal(decision.actualCash, decision.strategyCash, 'actualCash remains only a strategy cash alias');
     assert.ok(Math.abs(decision.strategyCash - 3037.90) < 1e-7);
     assert.equal(decision.executableCash, Math.min(decision.strategyCash, balance));
