@@ -9,14 +9,14 @@ for(const [tone,color] of [['accelerating','#dbeafe'],['intact','#dcfce7'],['wea
  assert.ok(page.includes(`momentumBadge.${tone}{background:${color}`),`${tone} evidence needs a distinct visual tone`);
 }
 assert.ok(page.includes('<th>Evidence</th>'),'Desktop evidence must have its own column');
-assert.ok(page.includes('Momentum Evidence'),'The compact overview must describe momentum evidence');
+assert.doesNotMatch(page,/momentumEvidenceRows|momentumEvidenceBox|momentumEvidenceCompact|momentumEvidenceItem|Momentum Evidence/,'The redundant momentum summary strip must be absent');
 assert.ok(page.includes('specialSituationBadge'),'Special-situation presentation must remain available');
 assert.doesNotMatch(page,/stageTone\(|stageBadge|time\.stage|timeReviewRows/,'Duration stages must not appear as portfolio evidence');
 
 // Render the production desktop and mobile row with controlled account evidence.
 // Classification logic is tested independently; this boundary fixture verifies
 // that evidence never changes the existing position decision or Why text.
-const start=page.indexOf('  function momentumEvidenceFor(s){'),end=page.indexOf('  const momentumEvidenceRows=',start);
+const start=page.indexOf('  function momentumEvidenceFor(s){'),end=page.indexOf('  const missingOpenDateSymbols=',start);
 assert.ok(start>=0&&end>start,'Portfolio evidence helper and row must be present');
 const code=babel.transformSync('import React from "react";\n'+page.slice(start,end)+'\nmodule.exports={PortfolioRow};',{
  filename:'portfolio-evidence-row.jsx',babelrc:false,configFile:false,
@@ -54,10 +54,10 @@ for(const [classification,tone] of classifications){
 }
 for(const mobile of [false,true]){
  const evidence={classification:'Momentum Intact',status:'available',label:'Momentum Intact',tone:'intact',explanation:'Current rank remains within the holding range.',sourceSessionDate:'2026-09-11',limitations:[]};
- for(const patch of [{accountMatches:false},{accountHoldingMismatch:true},{row:{...holding,role:'Core'}}]){
+ for(const patch of [{accountMatches:false},{accountHoldingMismatch:true}]){
   const {html,calls}=render({...patch,evidence,mobile});
   assert.match(html,/Evidence unavailable/);
-  assert.equal(calls[0].position,undefined,'Unmatched or Core rows cannot inherit C1 evidence');
+  assert.equal(calls[0].position,undefined,'Unmatched Swing rows cannot inherit C1 evidence');
   assert.equal(calls[0].decision,null);
   assert.ok(html.includes(why),'Unavailable evidence cannot replace the action reason');
  }
@@ -68,6 +68,21 @@ for(const mobile of [false,true]){
  assert.match(render({evidence,mobile,row:{...holding,openedAt:'2025-01-09'}}).html,/Momentum Intact/,'Holding age cannot change the evidence badge');
  assert.match(render({evidence,mobile,row:{...holding,symbol:'IRDM'}}).html,/Acquisition Pending/);
  assert.doesNotMatch(render({evidence,mobile,row:{...holding,symbol:'CASH'}}).html,/momentumBadge|momentumEvidenceText|Rank improved/,'Cash has no momentum evidence classification');
+}
+for(const symbol of ['MRNA','MSTR'])for(const mobile of [false,true])for(const action of ['Hold','Buy','Sell']){
+ for(const evidence of [unavailable,{classification:'Momentum Accelerating',status:'available',label:'Momentum Accelerating',tone:'accelerating',explanation:'Injected C1 rank improved from 5 to 2.',sourceSessionDate:'2026-09-11',limitations:[]}]){
+  const {html,calls}=render({evidence,action,source:'legacy-core',mobile,row:{...holding,symbol,role:'Core'}});
+  assert.equal(calls.length,0,`${symbol} Core must not request Swing momentum evidence`);
+  assert.doesNotMatch(html,/momentumBadge|momentumEvidenceText|Evidence unavailable|Evidence stale|Momentum Accelerating|Momentum Intact|Momentum Weakening|Exit Risk|Injected C1 rank|As of \d{4}-\d{2}-\d{2}|<small>Evidence<\/small>/,'Core rows must have no momentum evidence presentation');
+  assert.ok(html.includes(`>${action}</b>`),`Core ${symbol} must retain its ${action} action`);
+  assert.ok(html.includes(why),'Core Why must remain unchanged');
+  assert.match(html,/\$105\.00/,'Core price must remain unchanged');
+  assert.match(html,/\$50\.00 \/ 5\.00%/,'Core gain/loss must remain unchanged');
+  if(!mobile){
+   const cells=[...html.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)];
+   assert.equal(cells[3][1],'','Core desktop Evidence cell must stay blank');
+  }
+ }
 }
 const {c1PortfolioMomentumEvidence:resolver,c1MomentumRiskBasis}=modules.load('lib/c1MomentumEvidence.js');
 const date=modules.load('lib/marketSession.js').latestCompletedMarketSessionDay(new Date());
@@ -87,4 +102,4 @@ for(const mobile of [false,true]){
  assert.ok(changed.includes('>Hold</b>')&&changed.includes(why),'Invalid evidence signature cannot change the position action or Why');
  assert.match(render({evidence:{},mobile,resolver,date}).html,/Evidence unavailable/,'An older server without serialized evidence cannot manufacture a label');
 }
-console.log('MOMENTUM EVIDENCE UI PASS: desktop/mobile classifications, unavailable/stale states, independent actions, holding restrictions and special situations verified.');
+console.log('MOMENTUM EVIDENCE UI PASS: Swing classifications and unavailable/stale states retained; Core evidence is absent while desktop/mobile actions, Why, price and gain/loss remain unchanged.');
