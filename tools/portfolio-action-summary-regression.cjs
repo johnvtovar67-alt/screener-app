@@ -9,8 +9,8 @@ assert(page.includes('Sell or reduce')&&page.includes('Buy in this order'),'trad
 assert(page.includes('Sell {x.shares}')&&page.includes('Buy {x.shares}'),'trade rows do not label sold and purchased shares unambiguously');
 assert(page.includes('estimatedCashAfterActions')&&page.includes('Cash remaining'),'trade ticket does not reconcile estimated remaining cash');
 assert(!page.includes('→ NTRA')&&!page.includes('g.items.map(x=>tradeLabel'),'legacy source-to-target arrow presentation still exists');
-assert(page.includes('className="momentumEvidenceCompact"'),'momentum evidence panel is not compact');
-assert(page.includes('className="momentumEvidenceItem"')&&page.includes('momentumBadge ${evidence.tone}'),'compact momentum evidence lost holding classifications');
+assert(!page.includes('momentumEvidenceRows')&&!page.includes('momentumEvidenceCompact')&&!page.includes('momentumEvidenceItem'),'redundant momentum evidence summary strip is still present');
+assert(page.includes('momentumBadge ${evidence.tone}')&&page.includes('<p>{evidence.explanation}</p>'),'Swing rows must retain their momentum evidence');
 assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');
 assert(page.includes('timing:"Await Confirmation"')&&page.includes('size:"Qualified — Not Funded"'),'Buy cards can still imply executable deployment when the portfolio capital signal is not fundable');
 assert(page.includes('timing:"Await Capital"')&&page.includes('bp.blockReason||funded<minFundingAction'),'Buy cards are not reconciled against the final portfolio allocator');
@@ -19,4 +19,4 @@ assert(!page.includes('Current selection')&&!page.includes('Current #{rankNo}'),
 assert(page.includes('const held=resultForCards.get(sym(s));if(held){const final=pd(held),time=swingTimeReview(held);return marketPlan({...final,reason:holdingReason(held,final,time)});'),
   'Owned Opportunities cards must reuse the exact finalized Portfolio decision');
 assert(page.includes('% of Swing capital')&&page.includes('No add, trim, or exit trigger is active today.'),'Portfolio holdings are missing plain-language sizing and trigger context');
-console.log('PORTFOLIO ACTION SUMMARY PASS: lifecycle exits, ordered sell/buy ticket, cash reconciliation, and compact momentum evidence verified.');
+console.log('PORTFOLIO ACTION SUMMARY PASS: lifecycle exits, ordered sell/buy ticket, cash reconciliation and row evidence preserved without the redundant summary strip.');
