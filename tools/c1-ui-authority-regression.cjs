@@ -37,10 +37,13 @@ try{
  const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
  const babel=require('next/dist/compiled/babel/core');
  const file=path.resolve('components/C1AccountOpportunities.js');
- const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
- const modules=createResearchModuleLoader(process.cwd()),record={exports:{}};
- new Function('require','module','exports',code)(name=>name.startsWith('../lib/')?modules.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
- const Component=record.exports.default;
+ const modules=createResearchModuleLoader(process.cwd());
+ function component(file){
+  const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code,record={exports:{}};
+  new Function('require','module','exports',code)(name=>name.startsWith('../lib/')?modules.load(name,file):name.startsWith('.')?component(path.resolve(path.dirname(file),name.endsWith('.js')?name:name+'.js')):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
+  return record.exports;
+ }
+ const Component=component(file).default;
  const current={...decision,decisionId:'synthetic',revision:2,stockScreen:{contract:'c1-stock-screen-v1',sourceSessionDate:decision.sourceSessionDate,candidates:[{symbol:'BBB',sector:'Technology',issuer:'name:BBB',sourcePrice:100,researchRank:1,momentumPercentile:99,sourceTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000}}]}};
  const openingPlan={contract:'c1-actual-account-opening-plan-v1',providerVerified:true,quoteValidUntil:'2026-09-14T14:02:00Z',sourceSessionDate:current.sourceSessionDate,date:'2026-09-14',observedAt:new Date().toISOString(),sourceReceipt:{observedAt:new Date().toISOString(),membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true},orders:[{id:'exit',symbol:'AAA',side:'sell',shares:10,estimatedPrice:99,phase:1},{id:'buy',symbol:'BBB',side:'buy',shares:5,estimatedPrice:100,phase:3}]};
  const {buildC1ManualRecommendations}=modules.load('lib/c1ManualRecommendations.js');

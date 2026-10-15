@@ -21,7 +21,18 @@ const source='2026-10-14';
 const technical='Technical detail sentinel: 1/3/5-session returns, MACD histogram, top-six rank and confirmation streaks.';
 async function main(){try{
  const modules=createResearchModuleLoader(process.cwd());
+ const components=new Map();
+ function loadComponent(relativeFile){
+  const file=path.resolve(relativeFile);if(components.has(file))return components.get(file);
+  const record={exports:{}},code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,
+   presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
+  new Function('require','module','exports',code)(name=>name.startsWith('../lib/')?modules.load(name,file):name.startsWith('.')?loadComponent(path.resolve(path.dirname(file),name.endsWith('.js')?name:name+'.js')):
+   require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
+  components.set(file,record.exports);return record.exports;
+ }
  const helpers=modules.load('lib/c1PositionPresentation.js');
+ const displayFormat=modules.load('lib/c1DisplayFormat.js');
+ const PositionDetails=loadComponent('components/C1PositionDetails.js').default;
  const {c1PositionPresentation:present}=helpers;
  const {verifyC1Quote}=modules.load('lib/c1QuoteVerification.js');
  const {buildC1ManualRecommendations}=modules.load('lib/c1ManualRecommendations.js');
@@ -79,7 +90,8 @@ async function main(){try{
   eq(verification.newDataAccepted,false,'A provider response with no new price/timestamp remains explicitly unchanged');
   eq(verification.refreshStatus,'provider-unchanged','A manually refreshed unchanged provider result is distinguishable from newly accepted data');
   eq(result.label,'SELL — STOP TRIGGERED','Real DELL $460 is below the recorded $468.85 stop despite high historical rank');
-  match(result.reason,/460\.00[\s\S]*468\.85/,'The immediate action explains the real displayed and recorded stop prices');
+  eq(result.reason,'Verified price reached the recorded stop; sale remains pending.','The immediate action uses the approved concise stop explanation');
+  eq(result.quotePrice,460,'The authoritative verified stop price remains available to structured Details');
   absent(result.reason,/already sold|sale executed|order submitted|broker confirmed/i,'The real DELL case does not imply broker execution');
   const unverified={...normalized,_fmpQuoteObservation:undefined},urgent=present(args(row,unverified));
   eq(urgent.label,'VERIFY STOP URGENTLY','An unverified apparent DELL $468.85 breach never becomes normal Hold');
@@ -110,6 +122,8 @@ async function main(){try{
   const input={...args(position,quote('DELL',85,{timestamp:undefined})),decision,executionDecision};
   eq(unchanged(input,'Verified execution observations remain immutable').label,'SELL — STOP TRIGGERED','Execution-only verified current evidence can display an existing stop breach');
   eq(present(input).quoteValidUntil,'2026-10-15T15:01:00.000Z','An execution advisory has an exact two-minute presentation deadline');
+  eq(present(input).quotePrice,85,'The supplied verified execution price is retained for display without reading an unsupported stock value');
+  eq(present({...input,now:new Date('2026-10-15T15:01:00.001Z')}).quotePrice,null,'Expired evidence cannot retain a current verified display price');
   eq(present({...input,now:new Date('2026-10-15T15:01:00.001Z')}).label,'VERIFY STOP URGENTLY','The expired execution advisory leaves an urgent unresolved apparent breach');
   for(const [name,patch] of Object.entries({expired:{observedAt:'2026-10-15T14:57:59Z'},future:{observedAt:'2026-10-15T15:00:01Z'},wrongSource:{sourceSessionDate:'2026-10-13'},unverified:{completedConfirmationsUnchanged:false}})){
    const candidate={...input,executionDecision:{...executionDecision,positions:[{...position,intradayMomentumAdvisory:{...advisory,...patch}}]}};
@@ -151,7 +165,7 @@ async function main(){try{
   for(const reason of ['recent-momentum-deterioration','recent-momentum-profit-protection','rank-deterioration','early-rank-deterioration','profit-rank-deterioration']){
    const position=holding('MPC',{action:'Exit candidate',exits:[{sleeve:'base',shares:10,reason}]});
    const result=present(args(position,quote('MPC',115)));
-   eq(result.label,/profit/.test(reason)?'SELL — PROFIT PROTECTION':'SELL — MOMENTUM',`${reason}: confirmed account exit has the requested specific Sell presentation`);
+   eq(result.label,/profit/.test(reason)?'SELL — PROFIT PROTECTION':'SELL — MOMENTUM EXIT',`${reason}: confirmed account exit has the requested specific Sell presentation`);
    eq(result.stopTriggered,false,`${reason}: a momentum or rank exit is not relabeled as a stop`);
    absent(result.reason,/already sold|sale executed|order submitted|broker confirmed/i,`${reason}: recommendation cannot invent execution`);
   }
@@ -331,7 +345,7 @@ async function main(){try{
   const decision=decisionFor(position,{current}),record={exports:{}};
   const before=copy({position,stock,decision});
   const evidence={classification:'Momentum Intact',status:'available',label:'Momentum Intact',tone:'intact',explanation:'Technical evidence sentinel: source rank and MACD.',sourceSessionDate:source,limitations:[]};
-  const bindings={...helpers,accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
+  const bindings={...helpers,...displayFormat,C1PositionDetails:PositionDetails,stocks:[stock],portfolio:[stock],shortReason:new Function(page.match(/^function shortReason\(value\)\{[^\n]+/m)?.[0]+';return shortReason;')(),accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
    c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
    swingTimeReview:()=>({}),holdingReason:(s,decision)=>decision.reason,sym:s=>s.symbol,price:s=>s.price,cls:action=>/sell|exit|stop/i.test(action)?'red':'yellow',factorFor:()=> 'Sector',
    portfolioDateDisplay:()=> 'Oct 1, 2026',specialSituation:()=>null,money:n=>'$'+Number(n).toFixed(2),pct:n=>Number(n).toFixed(2)+'%'};
@@ -343,45 +357,93 @@ async function main(){try{
    const headers=[...heading.matchAll(/<th(?:\s[^>]*)?>([\s\S]*?)<\/th>/g)].map(match=>match[1]);
    const cells=[...html.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)].map(match=>match[1]);
    eq(cells.length,headers.length,'Actual desktop position cells align with the visible table headings');
-   same(headers,['Position','Open Date','Decision','Evidence','Why','Price','Gain/Loss'],'The original compact seven-column Portfolio layout is restored');
+   same(headers,['Position','Open Date','Decision','Reason','Price','Gain/Loss'],'The compact six-column Portfolio layout keeps action and one concise explanation');
    eq(headers.at(-2),'Price','The displayed price remains in the Price column');
    eq(headers.at(-1),'Gain/Loss','The gain/loss amount remains in the Gain/Loss column');
   }
   return html;
  }
  const visible=html=>html.replace(/<details\b[^>]*>[\s\S]*?<\/details>/g,'');
+ const detailHeadings=['Recent momentum','Rank / protection state','Stop information','Data freshness'];
+ function structuredDetails(html,message){
+  const details=html.match(/<details\b[^>]*>[\s\S]*?<\/details>/)?.[0]||'';
+  match(details,/<summary[^>]*>Details<\/summary>/,`${message}: technical details remain available`);
+  same([...details.matchAll(/<h4(?:\s[^>]*)?>([^<]+)<\/h4>/g)].map(row=>row[1]),detailHeadings,`${message}: the four concise technical groups appear exactly once`);
+  absent(details,/<details\b[^>]*\sopen(?:[=\s>])/,`${message}: technical groups are collapsed by default`);
+  return details;
+ }
+ {
+  const position=holding('MPC',{holdingRank:{base:{verified:true,eligible:true,rank:2,eligibleCount:500}},recentMomentumReviews:[{sleeve:'base',available:true,entryAllowed:true,sourceSessionDate:source,
+   metrics:{ret1:.5,ret3:1.2,ret5:2.3,macdImproving:true,verifiedPeak:true,peakGainPct:20,gainGivebackFraction:.25,confirmations:2},state:{streak:0,profitProtectionArmed:true,profitGivebackStreak:0}}]}),stock=quote('MPC',115),decision=decisionFor(position);
+  const input={position,stock,decision,presentation:present(args(position,stock))},before=copy(input),html=renderToStaticMarkup(React.createElement(PositionDetails,input));
+  const details=structuredDetails(html,'The actual shared Details component');
+  match(details,/\+0\.50%[\s\S]*\+1\.20%[\s\S]*\+2\.30%/,'Recent performance uses supplied 1-, 3-, and 5-session metrics');
+  match(details,/#2 \/ 500/,'The verified historical rank remains available');
+  match(details,/Armed[\s\S]*\+20\.00%[\s\S]*25\.0%/,'Existing profit activation and verified gain giveback remain available');
+  match(details,/\$86\.00/,'The original recorded stop is preserved in technical details');
+  match(details,/<dt>Verified current price<\/dt><dd>\$115\.00<\/dd>/,'Stop information uses the authoritative verified price from the shared presenter');
+  absent(details,/Technical detail sentinel/,'The full narrative is replaced by concise supplied values');
+  same(input,before,'Displaying structured technical values cannot recalculate or mutate the decision, profits or stops');
+  eq(displayFormat.c1DisplaySector({sector:'Technology'}),'Technology','A verified human-readable sector remains available');
+  eq(displayFormat.c1DisplaySector({sector:'Other'},{profile:{sector:'Health Care'}}),'Healthcare','Known sector evidence supplies a human-readable fallback');
+  eq(displayFormat.c1DisplaySector({sector:null},{sectorName:'Sector9'}),'Sector unavailable','Unknown sector codes have a plain fallback');
+  const oldSource=renderToStaticMarkup(React.createElement(PositionDetails,{...input,decision:{...decision,current:true,sourceSessionDate:'2026-10-13'}}));
+  match(oldSource,/<dt>Account review<\/dt><dd>Stale<\/dd>/,'A cached current boolean cannot make an old completed-session source appear current');
+  const generic={available:true,ret1:99,ret3:98,ret5:97,macdImproving:true};
+  for(const [name,patch] of Object.entries({
+   heldWithoutAcceptedReview:{position:holding('MPC'),stock:{...stock,entryTiming:generic}},
+   heldWrongSource:{position:{...position,recentMomentumReviews:position.recentMomentumReviews.map(review=>({...review,sourceSessionDate:'2026-10-13'}))},stock:{...stock,entryTiming:generic}},
+   unheldWithoutAcceptedGate:{position:undefined,stock:{...stock,entryTiming:generic}},
+   unheldWrongSource:{position:undefined,stock:{...stock,entryTiming:generic},evidence:{recentMomentumGate:{available:true,sourceSessionDate:'2026-10-13',metrics:generic}}},
+  })){
+   const candidate={...input,...patch},before=copy(candidate),html=renderToStaticMarkup(React.createElement(PositionDetails,candidate));
+   match(html,/<h4[^>]*>Recent momentum<\/h4>[\s\S]*?<dt>Evidence<\/dt><dd>Unavailable<\/dd>/,`${name}: only the matching accepted account evidence can populate recent metrics`);
+   absent(html,/\+99\.00%|\+98\.00%|\+97\.00%/,`${name}: generic or wrong-date timing cannot masquerade as accepted decision evidence`);
+   same(candidate,before,`${name}: rejecting unsupported display provenance cannot mutate source inputs`);
+  }
+  const acceptedEntry=renderToStaticMarkup(React.createElement(PositionDetails,{...input,position:undefined,evidence:{recentMomentumGate:{available:true,sourceSessionDate:source,metrics:{ret1:.5,ret3:1.2,ret5:2.3,macdImproving:true}}}}));
+  match(acceptedEntry,/\+0\.50%[\s\S]*\+1\.20%[\s\S]*\+2\.30%/,'A matching accepted entry gate supplies its real recent performance');
+  const repeatedPosition={...position,recentMomentumReviews:['base','reserve','tactical'].map(sleeve=>({...position.recentMomentumReviews[0],sleeve})),stops:['base','reserve','tactical'].map(sleeve=>({sleeve,price:86}))};
+  const repeated=renderToStaticMarkup(React.createElement(PositionDetails,{...input,position:repeatedPosition}));
+  eq((repeated.match(/<dt>Deterioration confirmations<\/dt>/g)||[]).length,1,'Identical sleeve confirmations are represented once');
+  eq((repeated.match(/<dd>\$86\.00<\/dd>/g)||[]).length,1,'Identical sleeve stop values are represented once');
+ }
  for(const mobile of [false,true]){
   const stop=portfolioHtml(holding(),quote(),{mobile});
   match(stop,/SELL — STOP TRIGGERED/,'The real Portfolio row renders the exact stop action');
-  match(visible(stop),/Last verified quote:/,'The verified quote timestamp is shown independently of signal-session and refresh clocks');
-  match(stop,/<details\b/,'The real Portfolio row retains expandable technical detail');
-  absent(stop,/<details\b[^>]*\sopen(?:[=\s>])/,'Technical detail is collapsed by default');
-  match(stop,/Technical detail sentinel/,'The full existing explanation remains available on expansion');
+  match(stop,/Last verified quote/,'The verified quote timestamp remains available in the distinct freshness details');
+  structuredDetails(stop,'The real Portfolio row');
+  match(stop,/class="[^"]*pill red[^\"]*"[^>]*>SELL — STOP TRIGGERED</,'Confirmed Sell uses a red action badge');
   absent(visible(stop),/Technical detail sentinel|Technical evidence sentinel|Momentum Intact|MACD histogram|top-six rank/,'Primary Portfolio content hides technical explanation and evidence labels');
   const hold=portfolioHtml(holding('MPC'),quote('MPC',115),{mobile});
   match(visible(hold),/>HOLD</,'The real profitable Portfolio row presents Hold');
+  match(hold,/class="[^"]*pill yellow[^\"]*"[^>]*>HOLD</,'A no-exit holding uses the compact yellow Hold badge');
+  eq((visible(hold).match(/No sell rule is confirmed\./g)||[]).length,1,'The held position has one concise explanation without duplicated prose');
   match(visible(hold),/\$115\.00/,'The current displayed price is preserved');
   match(visible(hold),/\$150\.00/,'The existing gain/loss amount is preserved');
   absent(visible(hold),/Technical detail sentinel|MACD|confirmation streak/,'Profitable holdings have no expanded technical paragraph by default');
   const stale=portfolioHtml(holding('DELL',{action:'Stop review'}),quote('DELL',85,{timestamp:undefined}),{mobile});
   absent(visible(stale),/SELL/,'A stale or unverified displayed price does not render a new Sell');
   match(visible(stale),/VERIFY STOP URGENTLY/,'A potentially breached stop is not displayed as a normal Hold');
-  match(visible(stale),/URGENT VERIFICATION REQUIRED/,'Urgent unresolved stop risk is unmistakable on desktop and mobile');
+  match(stale,/class="[^"]*pill orange[^\"]*"[^>]*>VERIFY STOP URGENTLY</,'Unresolved verification uses an orange badge on desktop and mobile');
   const realDell=holding('DELL',{stops:[{sleeve:'base',shares:10,price:468.85}]}),realStock=quote('DELL',460);
   const realVerified=portfolioHtml(realDell,realStock,{mobile});
   match(visible(realVerified),/SELL — STOP TRIGGERED/,'The reported DELL breach has the same verified action on desktop and mobile');
-  match(visible(realVerified),/460\.00[\s\S]*468\.85/,'The reported DELL price and existing stop are both visible in the concise action explanation');
+  match(realVerified,/\$460\.00/,'The verified DELL current price remains available');
+  match(realVerified,/\$468\.85/,'The recorded DELL stop remains available in structured Details');
+  absent(visible(realVerified),/468\.85/,'The primary stop explanation remains concise while the recorded value is available in Details');
   const realUnverified=portfolioHtml(realDell,{...realStock,_fmpQuoteObservation:undefined},{mobile});
   match(visible(realUnverified),/VERIFY STOP URGENTLY/,'The reported DELL breach is urgent when its exact API quote provenance is missing');
-  match(visible(realUnverified),/URGENT VERIFICATION REQUIRED/,'The reported unverified DELL breach carries the explicit urgent notice in each layout');
+  match(realUnverified,/class="[^"]*pill orange[^\"]*"[^>]*>VERIFY STOP URGENTLY</,'The reported unverified DELL breach preserves urgent color without duplicating its label');
+  const veev=portfolioHtml(holding('VEEV',{recentMomentumReviews:[{available:false}]}),quote('VEEV',100),{mobile});
+  match(visible(veev),/>HOLD</,'VEEV incomplete momentum evidence retains its underlying no-exit Hold action');
+  match(visible(veev),/Recent momentum unavailable; no additions\./,'The VEEV missing-data limitation is concise and preserves the new-capital restriction');
+  const protectedWinner=portfolioHtml(holding('MPC',{exits:[{reason:'recent-momentum-profit-protection'}]}),quote('MPC',115),{mobile});
+  match(protectedWinner,/class="[^"]*pill red[^\"]*"[^>]*>SELL — PROFIT PROTECTION</,'MPC confirmed profit protection retains its independent red Sell action');
  }
 
  // Compile the real Opportunities component with the same shared helper.
- const file=path.resolve('components/C1AccountOpportunities.js'),record={exports:{}};
- const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,
-  presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
- new Function('require','module','exports',code)(name=>name.startsWith('../lib/')?modules.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
- const Component=record.exports.default;
+ const Component=loadComponent('components/C1AccountOpportunities.js').default;
  const dell=holding('DELL',{action:'Exit candidate',exits:[{sleeve:'base',shares:10,reason:'initial-stop'}]}),mpc=holding('MPC');
  const stocks=[quote('DELL',85),quote('MPC',115)].map(stock=>({...stock,eventRisk:{status:'Clear'},entryTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000},recommendation:{expertDecision:{metrics:{quoteFreshnessPass:true}}}}));
  const decision=decisionFor(dell,{positions:[dell,mpc],stockScreen:{contract:'c1-stock-screen-v1',sourceSessionDate:source,candidates:[dell,mpc].map((position,index)=>({symbol:position.symbol,sector:'Sector '+index,issuer:'issuer:'+position.symbol,sourcePrice:position.symbol==='MPC'?115:90,researchRank:index+1,momentumPercentile:99-index,
