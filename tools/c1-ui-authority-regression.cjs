@@ -53,12 +53,11 @@ try{
  const props={decision:current,openingPlan,manualRecommendations:review,view:'portfolio',screenRows,screenCurrent:true};
  const render=patch=>renderToStaticMarkup(React.createElement(Component,{...props,...patch}));
  const html=render({});
- assert.match(html,/Sell 10 shares/);assert.match(html,/BUY 5 shares/);
- assert.ok(html.indexOf('Sell decisions')<html.indexOf('BUY 5 shares'),'Funded replacement buys follow exits');
- assert.match(html,/<details[^>]*><summary[^>]*>Details<\/summary>/,'Full execution context remains in collapsed details');
- assert.doesNotMatch(html,/<details[^>]*\bopen(?:\s|=|>)/,'Execution details are collapsed by default');
+ assert.match(html,/sell 10 shares/);assert.match(html,/Buy 5 shares/);
+ assert.ok(html.indexOf('Exits to review')<html.indexOf('C1 recommendation'),'Funded replacement buys follow exits');
+ assert.match(html,/Opening reference price/,'The original reference-price and quantity layout is retained');
  const inconsistent=render({screenRows:[{...screenRows[0],recommendation:{expertDecision:{strongBuyPass:false,metrics:{quoteFreshnessPass:false}}}}]});
- assert.match(inconsistent,/Sell 10 shares/);assert.doesNotMatch(inconsistent,/BUY 5 shares/,'Portfolio must fail closed when the current opportunity screen does not authorize the replacement buy');
+ assert.match(inconsistent,/sell 10 shares/);assert.doesNotMatch(inconsistent,/Buy 5 shares/,'Portfolio must fail closed when the current opportunity screen does not authorize the replacement buy');
  const fullSlots={...current,positions:[row,{...row,symbol:'CCC'},{...row,symbol:'DDD'}],stockScreen:{...current.stockScreen,candidates:[{...current.stockScreen.candidates[0],symbol:'BBB'}]}};
  const fullSlotsHtml=render({decision:fullSlots,view:'opportunities',openingPlan:{...openingPlan,orders:[]},manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:{...openingPlan,orders:[]}})});
  assert.match(fullSlotsHtml,/All three C1 position slots are currently allocated/,'Full account must explain why an unowned Buy-rated candidate has no purchase');

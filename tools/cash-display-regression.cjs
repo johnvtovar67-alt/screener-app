@@ -2,7 +2,7 @@ const fs=require('fs');
 const s=fs.readFileSync('pages/index.js','utf8');
 const checks=[
   ['cash identity retained','cashDryPowder=CASH.includes(sym(s))'],
-  ['cash date suppressed','!cashDryPowder&&(decision.openedAt||s.openedAt)'],
+  ['cash date suppressed','!CASH.includes(sym(s))&&(decision.openedAt||s.openedAt)'],
   ['cash dry powder label','cashDryPowder?"Dry Powder":"Price"'],
   ['cash total value','cashDryPowder?money(s.value):money(price(s))'],
   ['cash unit price','$1.00/share'],
