@@ -7,6 +7,7 @@ import {c1AccountDifferences} from '../lib/c1AccountDifferences';
 import {mergeC1AccountPortfolio,portfolioHoldings,initialC1StrategyCash,seedInitialC1StrategyCash} from "../lib/c1AccountPortfolio";
 import C1BrokerageCash from '../components/C1BrokerageCash';
 import C1AccountOpportunities from "../components/C1AccountOpportunities";
+import C1IntradayAdvisory from "../components/C1IntradayAdvisory";
 import C1AccountActivity from "../components/C1AccountActivity";
 import C1ReconciliationDetails from "../components/C1ReconciliationDetails";
 import {c1AccountPositionDecision} from "../lib/c1AccountDecision";
@@ -619,6 +620,7 @@ export default function Home(){
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&!accountMatches&&<p role="status">Account details need attention. <button onClick={()=>setTab("account-tools")}>Open Account settings</button></p>}
+    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1IntradayAdvisory decision={accountView.decision} screenRows={stocks} portfolio={portfolio} accountMatches={accountMatches} disabled={busy}/>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} executionDecision={accountView.executionDecision} manualRecommendations={accountView.manualRecommendations} openingPlan={accountMatches?accountView.openingPlan:null} openingError={accountView.openingError} decision={accountMatches?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the holding differences in Account settings to restore candidates and checked quantities."}}/>}
     {tab==="opportunities"&&!accountView&&<section className="card" aria-label="C1 account unavailable">
       <h2>Opportunities</h2>
