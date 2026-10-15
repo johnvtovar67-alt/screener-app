@@ -39,12 +39,18 @@ const repairedAccountSha256 = '02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43
 // original fixture and all other source pins remain immutable; focused tests
 // verify legacy identities, old-date economics and strict new-activity gates.
 const compatibilitySourceSha256 = {
-  "lib/c1AccountExecution.js": "26cefd2ba3dd020234e7b6d4b2e8621cdd5b1ea2debdba76b277448c374c8983",
+  // October 15 owner-authorized recent-momentum release: these reviewed
+  // adapters change current/future recommendations only. The comparisons below
+  // still require exact pre-cutover account, cash, fill and raw-plan parity.
+  // Canonical simulator/options and the original production fixture stay pinned.
+  "lib/c1AccountExecution.js": "341ec04046a57d809cd5f8414b0bb64e719813c747db1c2f5615611c603828b9",
   "lib/c1AccountInput.js": "fa2f6f9691ed06575b7491898ef10b1709bab8d17a427463fb0b21c47f80a432",
-  "lib/c1AccountLedger.js": "1760ace3914bd8524313283b2dd04ae8e1c73a583bdab3a3adf62a3e1711a287",
-  "lib/c1AccountProjection.js": "8aa8fa0cced356b37126673b1a92d340b58940c9732dd5585d7917bf1152090f",
+  "lib/c1AccountLedger.js": "ebe1ca8a9cfd48c187a21ef003f70e4c6c8dc9a32ed3be996425d6725bf5ecc8",
+  "lib/c1AccountProjection.js": "4f934797bec64b579873f1db2fdb2b380f6fe756c9e23d18ab86375d3103c987",
+  "lib/c1PaperEvents.js": "1f0db7fb8fcf4d95dc69169cb2b8a10261e259504166cdd01b254eae8a2f6a80",
+  "lib/c1StockClassification.js": "611632b4b266cc365211af28bf637c9111c1ddb18e3ee7b74f778ca3d29ccebe",
   "lib/c1AccountSeed.js": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
-  "lib/c1ActualFillReplay.js": "024e43c190a875c153337087046bfe3dfd216080c905ffaf8b4e26fbcb975a5c"
+  "lib/c1ActualFillReplay.js": "656156dcfcddab8897748e708551617b4d7ebf70c3410c1b0b4041cf9ac1ab97"
 };
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   assert.equal(hash(fs.readFileSync(path.join(root, file))),
