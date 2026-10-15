@@ -98,6 +98,8 @@
  .accountTools .inputs,.portfolioEditor .inputs{gap:8px;}
  .accountTools .inputs label,.portfolioEditor .inputs label{flex:1 1 140px;}
  .accountTools .inputs input,.portfolioEditor .inputs input,.accountTools .inputs input[type=datetime-local],.portfolioEditor input[type=date]{width:100%;}
+ .accountTools .inputs label:has(input[type=datetime-local]){flex:1 1 220px;}
+ .accountTools .inputs label:has(input[aria-label="Fee"]){flex:0 0 72px;}
  .accountTools select{width:100%;}
  .accountTools .syncControls input{width:100%;}
  .card .portfolioItem{padding:10px 0;}
