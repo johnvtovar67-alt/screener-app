@@ -1,5 +1,7 @@
 # C1 Priority 3 — change-control and verification report
 
+This records the initial local implementation at `0e11650`. The subsequent owner-authorized PR publication review is documented in `c1-priority3-pr-readiness-20261014.md`; its only configuration addition blocks automatic deployment of the feature branch.
+
 ## Status
 
 Local review candidate only, on `feat/c1-intraday-advisory`, based on main/production `f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde`. Production deployment was rechecked after verification and remains `dpl_DDBfxBKupMFdHaH5sATk2VCMcPvC` at that exact commit. No branch push, preview/production deployment, promotion, cron change or account operation was performed.

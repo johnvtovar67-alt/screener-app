@@ -1,5 +1,7 @@
 # C1 Priority 3: intraday advisory — local review package
 
+This is the implementation record for `0e11650`. The later authorized GitHub PR review is documented in `c1-priority3-pr-readiness-20261014.md`. No merge or deployment is authorized.
+
 ## Authorization and reference
 
 The owner's October 14 pasted instruction explicitly authorizes implementing and testing a read-only intraday advisory interface locally, with manual on-demand refresh. It prohibits changing authoritative scoring, Buy/Sell/Hold decisions, sizing, stops, exits, the three-sleeve/30-session framework, accounts, production data, infrastructure or credentials, and prohibits deployment without approval. Momentum responsiveness is research design and initial evidence only; no alternative trading rules or 48-Challenger study are authorized.
