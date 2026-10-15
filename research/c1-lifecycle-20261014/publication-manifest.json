@@ -24,9 +24,14 @@
       "bytes": 3807
     },
     "data-readiness.md": {
-      "sha256": "3c1628b5f2e362c4729d5b60e9b09116b8873dec05d2a787e6b0d0ba048456ed",
-      "git_blob_sha1": "4abc3ee0a7c5278759d83a0067f9c6ad59d117c0",
-      "bytes": 3971
+      "sha256": "bf32887b2115c360c0444734008d6ccb58828193b07fe9d0669143b8c0df42eb",
+      "git_blob_sha1": "b8804b759a862cae9b5955627ae4dd444825c4dc",
+      "bytes": 4514
+    },
+    "existing-corpus-access.json": {
+      "sha256": "4adf5751a83c63cb7f34aab595e1447c2442146f49e9dce41ecf16741acad426",
+      "git_blob_sha1": "3eeffc0ebcfa23524f4dd263a8598f85c1bb259c",
+      "bytes": 864
     },
     "fresh-retrieval-verification.json": {
       "sha256": "e0b509f45d6e97317a1053456eb84207656bb8230ae642f66c6e6bf20eb66ee3",

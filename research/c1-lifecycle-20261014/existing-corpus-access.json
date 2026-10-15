@@ -1,0 +1,27 @@
+{
+  "configured_hostname_used": true,
+  "sensitive_locations_omitted": true,
+  "sp500_compiled_manifest": {
+    "method": "GET",
+    "status": 404
+  },
+  "other_existing_corpora": [
+    {
+      "corpus": "nasdaq_compiled_manifest",
+      "status": 404
+    },
+    {
+      "corpus": "sp500_price_checkpoint",
+      "status": 404
+    },
+    {
+      "corpus": "observed_sp500_book",
+      "status": 404
+    }
+  ],
+  "new_credentials_or_storage": false,
+  "contract": "c1-existing-corpus-bounded-access-evidence-v1",
+  "scope": "Existing configured connection only, no provider acquisition; hostname/resource-ID construction corrected before these observations.",
+  "raw_data_retrieved": false,
+  "interpretation": "HTTP404 does not establish deletion or conclusively verified store/account mapping; required corpus bytes remain unavailable through this connection."
+}
