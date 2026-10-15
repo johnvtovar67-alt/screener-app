@@ -1,0 +1,53 @@
+{
+  "acquisition_driver_executed": false,
+  "branch": "research/c1-eight-comparison-20261014",
+  "completed_utc": "2026-10-15T02:22:50.417549+00:00",
+  "contract": "c1-volnorm-independent-remote-verification-v1",
+  "documentation_review": {
+    "candidate_and_controls_understandable": true,
+    "entry_and_holding_separation_clear": true,
+    "period_provenance_and_limitations_clear": true,
+    "private_output_and_no_rerun_instructions_clear": true,
+    "protocol_read": true,
+    "readme_read": true,
+    "synthetic_reproduction_instructions_work": true
+  },
+  "documentation_sha256": {
+    "research/c1-volnorm-20261015/PROTOCOL.md": "7f8b909e21637f8a09cb4fa16d5711176ab28b0f33f94ca950f9cb09ec19a2a0",
+    "research/c1-volnorm-20261015/README.md": "34cc004348907c1f5aad08041c24fb0737d1591f6fbae2aba5cf47f1167e763a"
+  },
+  "empirical_outcome_values_in_receipt": false,
+  "full_commit": "ebbc8658318b3472b6b69dabf9ccef6677d0ec69",
+  "market_data_requests": 0,
+  "private_artifact_locations_in_receipt": false,
+  "release_freeze_check": {
+    "approved_reference": "8007dc8",
+    "passed": true
+  },
+  "remote": "https://github.com/johnvtovar67-alt/screener-app.git",
+  "retrieval": {
+    "checkout_clean_after_checks": true,
+    "local_git_objects_used": false,
+    "method": "fresh HTTPS single-branch depth-one clone from GitHub origin through inherited proxy"
+  },
+  "source_market_data_retrieved": false,
+  "tests": {
+    "c1_eight_preserved": {
+      "duration_seconds": 1.132,
+      "failed": 0,
+      "passed": 23
+    },
+    "c1_fresh_preserved": {
+      "duration_seconds": 0.812,
+      "failed": 0,
+      "passed": 16
+    },
+    "c1_volnorm": {
+      "duration_seconds": 0.207,
+      "failed": 0,
+      "passed": 48
+    },
+    "total_failed": 0,
+    "total_passed": 87
+  }
+}
