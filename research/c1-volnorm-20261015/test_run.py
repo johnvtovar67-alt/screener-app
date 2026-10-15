@@ -12,6 +12,12 @@ class Response:
     def read(self,n):return self.body[:n]
 
 class AcquisitionTests(unittest.TestCase):
+    def test_provenance_never_retains_identity_source_rows(self):
+        with patch.dict('os.environ',{'FMP_API_KEY':'synthetic-key'}):client=run.Client()
+        result=run.private_provenance(client,{}, {'ATVI':{'companyName':'synthetic-licensed-row','other':'private-source-marker'}},'synthetic')
+        self.assertEqual(result['optional_identity_verified'],{'ATVI':True})
+        self.assertNotIn('private-source-marker',json.dumps(result))
+        self.assertNotIn('synthetic-licensed-row',json.dumps(result))
     def test_independent_special_closures(self):
         dates=run.sessions()
         for d in ('2012-10-29','2012-10-30','2018-12-05','2025-01-09'):self.assertNotIn(d,dates)

@@ -73,6 +73,11 @@ def normalize(payload,symbol,calendar):
         out.append(bar)
     return sorted(out,key=lambda b:b['date'])
 
+def private_provenance(client,hashes,identities,run_id):
+    """Keep source fingerprints private; never persist delisting source rows."""
+    return {'run_id':run_id,'requests':client.calls,'provider_fingerprints':client.fingerprints,
+      'source_code_sha256':hashes,'optional_identity_verified':{s:True for s in identities},'source_rows_retained':False}
+
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--run-id',required=True);p.add_argument('--private-root',default='/workspace/work/c1-private-volnorm');args=p.parse_args()
     if not args.run_id or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_' for c in args.run_id):raise Failure('Unsafe run id')
@@ -130,7 +135,7 @@ def main():
         audit.update(status='stopped_at_prerequisite',failure=str(e) if isinstance(e,Failure) else type(e).__name__)
         raise
     finally:
-        old.save_private(private/'provenance.json',{'run_id':args.run_id,'requests':c.calls,'provider_fingerprints':c.fingerprints,'source_code_sha256':hashes,'optional_identity_metadata':optional_meta,'source_rows_retained':False})
+        old.save_private(private/'provenance.json',private_provenance(c,hashes,optional_meta,args.run_id))
         audit.update(requests=c.calls,calls=len(c.calls),response_bytes=c.bytes,completed_utc=dt.datetime.now(dt.timezone.utc).isoformat())
         (public/'operational-audit.json').write_text(json.dumps(audit,indent=2,allow_nan=False)+'\n')
         print(json.dumps({'status':audit['status'],'calls':len(c.calls),'bytes':c.bytes,'aggregate_saved':audit.get('aggregate_saved',False),'private_directory':str(private),'failure':audit.get('failure')}))

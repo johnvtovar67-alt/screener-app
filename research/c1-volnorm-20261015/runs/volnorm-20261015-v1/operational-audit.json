@@ -1,0 +1,1046 @@
+{
+  "contract": "c1-volnorm-acquisition-v1",
+  "run_id": "volnorm-20261015-v1",
+  "started_utc": "2026-10-15T02:15:45.761889+00:00",
+  "freeze_commit": "2e80d7f4fd1c3e735bc27174e3a54717e3a74f72",
+  "source_code_sha256": {
+    "research/c1-volnorm-20261015/report.py": "02eedec98df98ae893f2789420d2dfb01ccfdc50b28096b3c99f0c5e07bb5ee4",
+    "research/c1-volnorm-20261015/entries.py": "7ab7589e5fe298a0088a6356ec04bc060d368ca622470a6b58d78d99977654d4",
+    "research/c1-volnorm-20261015/test_common.py": "a0f8bd2ec0928750528a2904d7c9669b9649122530065005b99d9971001ad6c8",
+    "research/c1-volnorm-20261015/stats.py": "52a22dbec13283d9e22ee1210fd39e638c74346036f19f8c5456c5050039af5a",
+    "research/c1-volnorm-20261015/run.py": "b46889731db1b1da075278a9c880bbd1442e7aef9392690228559f45d7129d39",
+    "research/c1-volnorm-20261015/test_stats.py": "eb67dac68dc34529f6a9ebd53d171224c176482e4ca7b72e80320e3eb3a850fe",
+    "research/c1-volnorm-20261015/common.py": "7d1b31fcbbfeea53e3d2137b80c31b2341e15b84a88eab0b2ded9be67ba74231",
+    "research/c1-volnorm-20261015/test_entries.py": "5bdaff0dffb2a16c8b25a454f257e60b81d0bd335abda8a42b081e052910d0d7",
+    "research/c1-volnorm-20261015/analysis.py": "e9345413cab1e62e783704f011670351b9818b545c6e39a6532b0f0948c38b16",
+    "research/c1-volnorm-20261015/test_run.py": "b631dc15efc6a6dd85bcfeb3bbb5546fb1ac0004236438a3efe17167baefb7ed",
+    "research/c1-volnorm-20261015/holding.py": "58f23db51d6e024b2405b63a7a78b96ff3a9b7ba663204cc483447612f1f7bc8",
+    "research/c1-volnorm-20261015/test_holding.py": "7fb6a13d014abcb214024c432417afe9b76d0ad61c8991d7620d1a940451fe28",
+    "research/c1-volnorm-20261015/PROTOCOL.md": "7f8b909e21637f8a09cb4fa16d5711176ab28b0f33f94ca950f9cb09ec19a2a0",
+    "research/c1-fresh-20261014/analyze.py": "b1b4c733ef82f55627395764fdaca322f52b5545ad448c8436ead313ab5ad174",
+    "research/c1-eight-20261014/run_eight.py": "8710fa05e70c9cc21ef2440737be131e9f78d820387dddf1d35b26c0bb64069b"
+  },
+  "call_cap": 40,
+  "byte_cap": 33554432,
+  "status": "complete_partial_research",
+  "source_rows_persisted": false,
+  "numerical_outputs": "private only",
+  "provider_remaining_quota": "not exposed; no measured remainder claimed",
+  "private_output_preflight": true,
+  "production_modified": false,
+  "pr262_modified": false,
+  "frozen48_modified": false,
+  "optional_delisted": {
+    "BBBY": {
+      "identity_metadata_verified": false,
+      "price_history_attempted": false
+    },
+    "SIVB": {
+      "identity_metadata_verified": false,
+      "price_history_attempted": false
+    },
+    "ATVI": {
+      "identity_metadata_verified": false,
+      "price_history_attempted": false
+    }
+  },
+  "coverage": [
+    {
+      "symbol": "SPY",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "AAPL",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "MSFT",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "NVDA",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "TSLA",
+      "rows": 3902,
+      "first_session": "2010-06-29",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "JPM",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "XOM",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "PG",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "JNJ",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "AMZN",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "META",
+      "rows": 3425,
+      "first_session": "2012-05-18",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "UNH",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "PFE",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "BA",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "CAT",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "WMT",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "HD",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "NKE",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "NEE",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "DUK",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "AMT",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "SPG",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "T",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "NEM",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    },
+    {
+      "symbol": "CVX",
+      "rows": 4529,
+      "first_session": "2008-01-02",
+      "last_session": "2025-12-31",
+      "internal_missing": 0,
+      "duplicates": 0,
+      "adjusted_geometry": "pass"
+    }
+  ],
+  "independent_calendar_match": true,
+  "repeats": [
+    {
+      "symbol": "NVDA",
+      "same_new_cohort": true,
+      "prior_overlap_fingerprint_available": true,
+      "same_payload_as_prior_overlap": true
+    },
+    {
+      "symbol": "PG",
+      "same_new_cohort": true,
+      "prior_overlap_fingerprint_available": true,
+      "same_payload_as_prior_overlap": true
+    }
+  ],
+  "adjustment_checks": [
+    {
+      "symbol": "NVDA",
+      "dates_and_fields_match": true,
+      "common_adjustment_factor": true,
+      "action_present": true,
+      "split_continuity": true,
+      "dividend_factor_changes_match_exdates": null
+    },
+    {
+      "symbol": "PG",
+      "dates_and_fields_match": true,
+      "common_adjustment_factor": true,
+      "action_present": true,
+      "split_continuity": null,
+      "dividend_factor_changes_match_exdates": true
+    }
+  ],
+  "aggregate_saved": true,
+  "source_vintage": "New cohort only; no old rows spliced; adjusted current-vintage history, not original-as-known snapshot",
+  "requests": [
+    {
+      "endpoint": "delisted-companies",
+      "params": {
+        "page": 0,
+        "limit": 1000
+      },
+      "utc": "2026-10-15T02:15:45.768337+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 16603,
+      "rows": 100,
+      "fields": [
+        "companyName",
+        "delistedDate",
+        "exchange",
+        "ipoDate",
+        "symbol"
+      ]
+    },
+    {
+      "endpoint": "delisted-companies",
+      "params": {
+        "page": 1,
+        "limit": 1000
+      },
+      "utc": "2026-10-15T02:15:46.118441+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 16792,
+      "rows": 100,
+      "fields": [
+        "companyName",
+        "delistedDate",
+        "exchange",
+        "ipoDate",
+        "symbol"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "SPY",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:46.468548+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 770826,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "AAPL",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:46.818659+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 764278,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "MSFT",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:47.168774+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 766039,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "NVDA",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:47.518879+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 777850,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "TSLA",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:47.869011+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 655972,
+      "rows": 3902,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "JPM",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:48.219111+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 758675,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "XOM",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:48.569258+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 755593,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "PG",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:48.919383+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 752682,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "JNJ",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:49.269502+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 759263,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "AMZN",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:49.619622+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 760730,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "META",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:49.969747+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 583811,
+      "rows": 3425,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "UNH",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:50.319869+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 760383,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "PFE",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:50.669965+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 750468,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "BA",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:51.020087+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 757165,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "CAT",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:51.370216+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 758325,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "WMT",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:51.720372+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 754542,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "HD",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:52.070478+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 756000,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "NKE",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:52.420583+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 753482,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "NEE",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:52.770680+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 746827,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "DUK",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:53.120814+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 751043,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "AMT",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:53.470928+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 758366,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "SPG",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:53.821039+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 756964,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "T",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:54.171194+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 740310,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "NEM",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:54.521310+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 750616,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "CVX",
+        "from": "2008-01-01",
+        "to": "2025-12-31"
+      },
+      "utc": "2026-10-15T02:15:54.871410+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 754971,
+      "rows": 4529,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "NVDA",
+        "from": "2024-05-20",
+        "to": "2024-06-21"
+      },
+      "utc": "2026-10-15T02:15:55.221518+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 3961,
+      "rows": 23,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "PG",
+        "from": "2020-02-18",
+        "to": "2020-03-06"
+      },
+      "utc": "2026-10-15T02:15:55.571636+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 2358,
+      "rows": 14,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "splits",
+      "params": {
+        "symbol": "NVDA",
+        "limit": "100"
+      },
+      "utc": "2026-10-15T02:15:55.921756+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 783,
+      "rows": 6,
+      "fields": [
+        "date",
+        "denominator",
+        "numerator",
+        "splitType",
+        "symbol"
+      ]
+    },
+    {
+      "endpoint": "dividends",
+      "params": {
+        "symbol": "PG",
+        "limit": "100"
+      },
+      "utc": "2026-10-15T02:15:56.271864+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 26794,
+      "rows": 100,
+      "fields": [
+        "adjDividend",
+        "date",
+        "declarationDate",
+        "dividend",
+        "frequency",
+        "paymentDate",
+        "recordDate",
+        "symbol",
+        "yield"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/full",
+      "params": {
+        "symbol": "NVDA",
+        "from": "2024-05-20",
+        "to": "2024-06-21"
+      },
+      "utc": "2026-10-15T02:15:56.621981+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 5265,
+      "rows": 23,
+      "fields": [
+        "change",
+        "changePercent",
+        "close",
+        "date",
+        "high",
+        "low",
+        "open",
+        "symbol",
+        "volume",
+        "vwap"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/full",
+      "params": {
+        "symbol": "PG",
+        "from": "2024-06-01",
+        "to": "2024-08-31"
+      },
+      "utc": "2026-10-15T02:15:56.972082+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 14352,
+      "rows": 63,
+      "fields": [
+        "change",
+        "changePercent",
+        "close",
+        "date",
+        "high",
+        "low",
+        "open",
+        "symbol",
+        "volume",
+        "vwap"
+      ]
+    }
+  ],
+  "calls": 33,
+  "response_bytes": 18742089,
+  "completed_utc": "2026-10-15T02:17:16.801735+00:00",
+  "driver_publication_note": "Exact executed driver preserved privately. Published driver only redacts optional identity metadata from provenance; the executed identity map was empty, no such source rows were saved. Numerical engine files match execution hashes unchanged.",
+  "frozen_numerical_engine_hashes_verified": {
+    "analysis.py": true,
+    "common.py": true,
+    "entries.py": true,
+    "holding.py": true,
+    "stats.py": true
+  }
+}
