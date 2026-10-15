@@ -138,7 +138,7 @@ async function main(){
   assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<b[^>]*>CCC<\/b>/,'Existing Watch analysis remains visible');
   assert.doesNotMatch(opportunities,/currently ineligible|(?:buy|add) \d+ shares?/i);
   const exits=renderToStaticMarkup(React.createElement(Opportunities,{...props,view:'portfolio'}));
-  assert.match(exits,/AAA: SELL · 10 shares/,'Zero brokerage cash must preserve checked exits');
+  assert.match(exits,/sell 10 shares/,'Zero brokerage cash must preserve checked exits');
   assert.doesNotMatch(exits,/(?:buy|add) \d+ shares?/i);
  }
  const oldAccount={...decision,brokerageCash:null,executableCash:0,brokerageCashCurrent:false,brokerageCashReason:'Enter current brokerage cash.'};

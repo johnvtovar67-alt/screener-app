@@ -1,0 +1,2938 @@
+{
+  "sourceCSS": {
+    "reference": "f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde",
+    "pageCSS": {
+      "bytes": 9578,
+      "sha256": "fe3b39074dfa1061bda6ba18e80d207df25249d38440635c0114c4fd875dddd2",
+      "exact": true
+    },
+    "cardCSS": {
+      "bytes": 1562,
+      "sha256": "7deed53e823d07eee10cb4dd5cdfa7929e6576b1b0311d05f0faf93c48be4477",
+      "exact": true
+    },
+    "opportunitiesCSS": {
+      "bytes": 118,
+      "sha256": "1040a44e51ecf2f74a26094a5a4f398cd6940b04cd562a15f161e61e8357ba46",
+      "exact": true
+    }
+  },
+  "fixtureBoundary": "Same offline deterministic fixture; no owner/provider/account access or holding changes.",
+  "geometryNote": "Original slots, styles and fonts are compared. Current decisions, stock selection and concise copy change natural text wrapping/height/column widths; no claim of whole-page pixel identity.",
+  "cases": 18,
+  "browserErrors": [],
+  "slotComparisons": [
+    {
+      "view": "opportunities",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 413.34375,
+        "restored": 413.328125
+      },
+      "height": {
+        "historical": 31,
+        "restored": 31
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": "Signal closing price",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 413.34375,
+        "restored": 413.328125
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 413.34375,
+        "restored": 413.328125
+      },
+      "height": {
+        "historical": 40,
+        "restored": 40
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "Your next action",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 413.34375,
+        "restored": 413.328125
+      },
+      "height": {
+        "historical": 145,
+        "restored": 163
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "",
+      "label": "Your next action",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 391.34375,
+        "restored": 391.328125
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 1344,
+        "restored": 1344
+      },
+      "height": {
+        "historical": 31,
+        "restored": 31
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": "Opening reference price",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 1344,
+        "restored": 1344
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 1344,
+        "restored": 1344
+      },
+      "height": {
+        "historical": 40,
+        "restored": 40
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "C1 recommendation",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 1344,
+        "restored": 1344
+      },
+      "height": {
+        "historical": 59,
+        "restored": 59
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "",
+      "label": "C1 recommendation",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 1322,
+        "restored": 1322
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298.5,
+        "restored": 298.5
+      },
+      "height": {
+        "historical": 65,
+        "restored": 65
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "badges",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298.5,
+        "restored": 298.5
+      },
+      "height": {
+        "historical": 79,
+        "restored": 79
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298.5,
+        "restored": 298.5
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298.5,
+        "restored": 298.5
+      },
+      "height": {
+        "historical": 76,
+        "restored": 58
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "decision",
+      "label": "Timing",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298.5,
+        "restored": 298.5
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Timing",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 94.15625,
+        "restored": 94.15625
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Size",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 94.171875,
+        "restored": 94.171875
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Priority",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 94.15625,
+        "restored": 94.15625
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "Plan",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298.5,
+        "restored": 298.5
+      },
+      "height": {
+        "historical": 59,
+        "restored": 77
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "symbol": "VEEV",
+      "slot": "SMALL",
+      "label": "Plan",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 276.5,
+        "restored": 276.5
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 31,
+        "restored": 31
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": "Signal closing price",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 40,
+        "restored": 40
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "Your next action",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 163,
+        "restored": 163
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "",
+      "label": "Your next action",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 276,
+        "restored": 276
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 310,
+        "restored": 310
+      },
+      "height": {
+        "historical": 31,
+        "restored": 31
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": "Opening reference price",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 310,
+        "restored": 310
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 310,
+        "restored": 310
+      },
+      "height": {
+        "historical": 58,
+        "restored": 58
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "C1 recommendation",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 310,
+        "restored": 310
+      },
+      "height": {
+        "historical": 59,
+        "restored": 59
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "",
+      "label": "C1 recommendation",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 288,
+        "restored": 288
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 65,
+        "restored": 65
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "badges",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 79,
+        "restored": 79
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 76,
+        "restored": 58
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "decision",
+      "label": "Timing",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Timing",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 94,
+        "restored": 94
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Size",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 94,
+        "restored": 94
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Priority",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 94,
+        "restored": 94
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "Plan",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 298,
+        "restored": 298
+      },
+      "height": {
+        "historical": 59,
+        "restored": 77
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "symbol": "VEEV",
+      "slot": "SMALL",
+      "label": "Plan",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 276,
+        "restored": 276
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 31,
+        "restored": 31
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": "Signal closing price",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 40,
+        "restored": 40
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "Your next action",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 163,
+        "restored": 163
+      }
+    },
+    {
+      "view": "opportunities",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "",
+      "label": "Your next action",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 246,
+        "restored": 246
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 280,
+        "restored": 280
+      },
+      "height": {
+        "historical": 31,
+        "restored": 31
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": "Opening reference price",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 280,
+        "restored": 280
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 280,
+        "restored": 280
+      },
+      "height": {
+        "historical": 58,
+        "restored": 58
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "C1 recommendation",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 280,
+        "restored": 280
+      },
+      "height": {
+        "historical": 59,
+        "restored": 59
+      }
+    },
+    {
+      "view": "portfolio",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "",
+      "label": "C1 recommendation",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 258,
+        "restored": 258
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "top",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 65,
+        "restored": 65
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "badges",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 79,
+        "restored": 79
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "price",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 22,
+        "restored": 22
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "why",
+      "label": null,
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 76,
+        "restored": 58
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "decision",
+      "label": "Timing",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Timing",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 84,
+        "restored": 84
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Size",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 84,
+        "restored": 84
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "DIV",
+      "label": "Priority",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 84,
+        "restored": 84
+      },
+      "height": {
+        "historical": 95,
+        "restored": 95
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "plan",
+      "label": "Plan",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 268,
+        "restored": 268
+      },
+      "height": {
+        "historical": 59,
+        "restored": 77
+      }
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "symbol": "VEEV",
+      "slot": "SMALL",
+      "label": "Plan",
+      "originalSlotPresent": true,
+      "styleDifferences": {},
+      "width": {
+        "historical": 246,
+        "restored": 246
+      },
+      "height": {
+        "historical": 15,
+        "restored": 15
+      }
+    }
+  ],
+  "renderedCases": [
+    {
+      "view": "opportunities",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "pageHeight": 1283,
+      "tableHeaders": [],
+      "slotGeometry": [
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 413.328125,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 413.328125,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 413.328125,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 413.328125,
+          "height": 93,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 391.328125,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 413.328125,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 413.328125,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 413.328125,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 413.328125,
+          "height": 163,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 391.328125,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 413.34375,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 413.34375,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 413.34375,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 413.34375,
+          "height": 111,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 391.34375,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "MPC",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 447.328125,
+          "height": 352,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 363.9375,
+              "y": 477.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 447.328125,
+          "height": 352,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 823.265625,
+              "y": 477.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "HPE",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 447.34375,
+          "height": 352,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 1282.609375,
+              "y": 477.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "clipped": false
+        }
+      ],
+      "actions": [
+        "HOLD",
+        "Strong Buy",
+        "NO PURCHASE",
+        "SELL — STOP TRIGGERED",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "portfolio",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "pageHeight": 1568,
+      "tableHeaders": [
+        "Position",
+        "Open Date",
+        "Decision",
+        "Evidence",
+        "Why",
+        "Price",
+        "Gain/Loss"
+      ],
+      "slotGeometry": [
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 1344,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Opening reference price",
+          "width": 1344,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 1344,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "C1 recommendation",
+          "width": 1344,
+          "height": 59,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "C1 recommendation",
+          "width": 1322,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 1378,
+          "height": 260,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Opening reference price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 1263.25,
+              "y": 449.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "clipped": false
+        }
+      ],
+      "actions": [
+        "Buy",
+        "SELL — STOP TRIGGERED",
+        "HOLD"
+      ],
+      "errors": []
+    },
+    {
+      "view": "themes",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "pageHeight": 1000,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "pageHeight": 1016,
+      "tableHeaders": [],
+      "slotGeometry": [
+        {
+          "symbol": "VEEV",
+          "selector": "top",
+          "slotLabel": null,
+          "width": 298.5,
+          "height": 65,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "badges",
+          "slotLabel": null,
+          "width": 298.5,
+          "height": 79,
+          "padding": "12px 0px 0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "price",
+          "slotLabel": null,
+          "width": 298.5,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "why",
+          "slotLabel": null,
+          "width": 298.5,
+          "height": 58,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "decision",
+          "slotLabel": "Timing",
+          "width": 298.5,
+          "height": 95,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "94.1562px 94.1719px 94.1562px"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Timing",
+          "width": 94.15625,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Size",
+          "width": 94.171875,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Priority",
+          "width": 94.15625,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "plan",
+          "slotLabel": "Plan",
+          "width": 298.5,
+          "height": 77,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "SMALL",
+          "slotLabel": "Plan",
+          "width": 276.5,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "idea yellow",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderColor": "rgb(203, 213, 225)",
+          "width": 332.5,
+          "height": 478,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": []
+        }
+      ],
+      "sellBadges": [],
+      "actions": [
+        "Watch"
+      ],
+      "errors": []
+    },
+    {
+      "view": "account-settings",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "pageHeight": 1000,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "activity-form",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "pageHeight": 1000,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "opportunities",
+      "viewport": 390,
+      "pageWidth": 390,
+      "pageHeight": 2249,
+      "tableHeaders": [],
+      "slotGeometry": [
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 298,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 298,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 298,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 298,
+          "height": 111,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 276,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 298,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 298,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 298,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 298,
+          "height": 163,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 276,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 298,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 298,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 298,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 298,
+          "height": 111,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 276,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "MPC",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 332,
+          "height": 300,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 240.609375,
+              "y": 636.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 332,
+          "height": 370,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 240.609375,
+              "y": 966.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "HPE",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 332,
+          "height": 300,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 240.609375,
+              "y": 1330.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "clipped": false
+        }
+      ],
+      "actions": [
+        "HOLD",
+        "Strong Buy",
+        "NO PURCHASE",
+        "SELL — STOP TRIGGERED",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "portfolio",
+      "viewport": 390,
+      "pageWidth": 390,
+      "pageHeight": 2670,
+      "tableHeaders": [
+        "Position",
+        "Open Date",
+        "Decision",
+        "Evidence",
+        "Why",
+        "Price",
+        "Gain/Loss"
+      ],
+      "slotGeometry": [
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 310,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Opening reference price",
+          "width": 310,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 310,
+          "height": 58,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "C1 recommendation",
+          "width": 310,
+          "height": 59,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "C1 recommendation",
+          "width": 288,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 344,
+          "height": 296,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Opening reference price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 221.25,
+              "y": 608.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "clipped": false
+        }
+      ],
+      "actions": [
+        "Buy",
+        "SELL — STOP TRIGGERED",
+        "HOLD"
+      ],
+      "errors": []
+    },
+    {
+      "view": "themes",
+      "viewport": 390,
+      "pageWidth": 390,
+      "pageHeight": 1653,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "pageWidth": 390,
+      "pageHeight": 1114,
+      "tableHeaders": [],
+      "slotGeometry": [
+        {
+          "symbol": "VEEV",
+          "selector": "top",
+          "slotLabel": null,
+          "width": 298,
+          "height": 65,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "badges",
+          "slotLabel": null,
+          "width": 298,
+          "height": 79,
+          "padding": "12px 0px 0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "price",
+          "slotLabel": null,
+          "width": 298,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "why",
+          "slotLabel": null,
+          "width": 298,
+          "height": 58,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "decision",
+          "slotLabel": "Timing",
+          "width": 298,
+          "height": 95,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "94px 94px 94px"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Timing",
+          "width": 94,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Size",
+          "width": 94,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Priority",
+          "width": 94,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "plan",
+          "slotLabel": "Plan",
+          "width": 298,
+          "height": 77,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "SMALL",
+          "slotLabel": "Plan",
+          "width": 276,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "idea yellow",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderColor": "rgb(203, 213, 225)",
+          "width": 332,
+          "height": 478,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": []
+        }
+      ],
+      "sellBadges": [],
+      "actions": [
+        "Watch"
+      ],
+      "errors": []
+    },
+    {
+      "view": "account-settings",
+      "viewport": 390,
+      "pageWidth": 401,
+      "pageHeight": 1342,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "activity-form",
+      "viewport": 390,
+      "pageWidth": 401,
+      "pageHeight": 1342,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "opportunities",
+      "viewport": 360,
+      "pageWidth": 360,
+      "pageHeight": 2369,
+      "tableHeaders": [],
+      "slotGeometry": [
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 268,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 268,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 268,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 268,
+          "height": 111,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "MPC",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 246,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 268,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 268,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 268,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 268,
+          "height": 163,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 246,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 268,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Signal closing price",
+          "width": 268,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 268,
+          "height": 40,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "Your next action",
+          "width": 268,
+          "height": 129,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "HPE",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "Your next action",
+          "width": 246,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "MPC",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 302,
+          "height": 300,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 210.609375,
+              "y": 709.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 302,
+          "height": 370,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 210.609375,
+              "y": 1039.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "HPE",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 302,
+          "height": 336,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 210.609375,
+              "y": 1421.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "clipped": false
+        }
+      ],
+      "actions": [
+        "HOLD",
+        "Strong Buy",
+        "NO PURCHASE",
+        "SELL — STOP TRIGGERED",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "portfolio",
+      "viewport": 360,
+      "pageWidth": 360,
+      "pageHeight": 2832,
+      "tableHeaders": [
+        "Position",
+        "Open Date",
+        "Decision",
+        "Evidence",
+        "Why",
+        "Price",
+        "Gain/Loss"
+      ],
+      "slotGeometry": [
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 top",
+          "slotLabel": null,
+          "width": 280,
+          "height": 31,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 price",
+          "slotLabel": "Opening reference price",
+          "width": 280,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 why",
+          "slotLabel": null,
+          "width": 280,
+          "height": 58,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5 plan",
+          "slotLabel": "C1 recommendation",
+          "width": 280,
+          "height": 59,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "jsx-c55e4043d87284a5",
+          "slotLabel": "C1 recommendation",
+          "width": 258,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 314,
+          "height": 296,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Opening reference price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 191.25,
+              "y": 663.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "clipped": false
+        }
+      ],
+      "actions": [
+        "Buy",
+        "SELL — STOP TRIGGERED",
+        "HOLD"
+      ],
+      "errors": []
+    },
+    {
+      "view": "themes",
+      "viewport": 360,
+      "pageWidth": 371,
+      "pageHeight": 1737,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "pageWidth": 360,
+      "pageHeight": 1228,
+      "tableHeaders": [],
+      "slotGeometry": [
+        {
+          "symbol": "VEEV",
+          "selector": "top",
+          "slotLabel": null,
+          "width": 268,
+          "height": 65,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "badges",
+          "slotLabel": null,
+          "width": 268,
+          "height": 79,
+          "padding": "12px 0px 0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "price",
+          "slotLabel": null,
+          "width": 268,
+          "height": 22,
+          "padding": "0px",
+          "fontSize": "19px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "why",
+          "slotLabel": null,
+          "width": 268,
+          "height": 58,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "decision",
+          "slotLabel": "Timing",
+          "width": 268,
+          "height": 95,
+          "padding": "0px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "84px 84px 84px"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Timing",
+          "width": 84,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Size",
+          "width": 84,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "DIV",
+          "slotLabel": "Priority",
+          "width": 84,
+          "height": 95,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "plan",
+          "slotLabel": "Plan",
+          "width": 268,
+          "height": 77,
+          "padding": "10px",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "color": "rgb(17, 24, 39)",
+          "background": "rgb(248, 250, 252)",
+          "borderRadius": "10px",
+          "columns": "none"
+        },
+        {
+          "symbol": "VEEV",
+          "selector": "SMALL",
+          "slotLabel": "Plan",
+          "width": 246,
+          "height": 15,
+          "padding": "0px",
+          "fontSize": "13.3333px",
+          "fontWeight": "800",
+          "color": "rgb(100, 116, 139)",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderRadius": "0px",
+          "columns": "none"
+        }
+      ],
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "idea yellow",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderColor": "rgb(203, 213, 225)",
+          "width": 302,
+          "height": 478,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": []
+        }
+      ],
+      "sellBadges": [],
+      "actions": [
+        "Watch"
+      ],
+      "errors": []
+    },
+    {
+      "view": "account-settings",
+      "viewport": 360,
+      "pageWidth": 401,
+      "pageHeight": 1408,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "activity-form",
+      "viewport": 360,
+      "pageWidth": 401,
+      "pageHeight": 1408,
+      "tableHeaders": [],
+      "slotGeometry": [],
+      "cards": [],
+      "sellBadges": [],
+      "actions": [],
+      "errors": []
+    }
+  ]
+}

@@ -7,11 +7,11 @@ const checks=[
   ['theme leadership fallback',s.includes('themeLeadership')],
   ['date label removed',!s.includes('<small>Opened</small>')],
   ['date accessibility retained',s.includes('aria-label="Position opened date"')],
-  ['standalone universe disclosure',s.includes('outsideBroadUniverse')&&s.includes('Outside today’s C1 opportunities.')],
-  ['empty On Deck confirmation',s.includes('No Watch candidates are available.')&&s.includes('Current information is insufficient for new purchases.')],
+  ['standalone universe disclosure',s.includes('outsideBroadUniverse')&&s.includes('outside today’s Opportunities universe')],
+  ['empty On Deck confirmation',s.includes('No stocks currently qualify for On Deck.')&&s.includes('Reload completed.')],
   ['visible reload engagement',s.includes('650-(Date.now()-started)')],
   ['theme feed health isolated',s.includes('themeFeedHealth')&&s.includes('feedHealth={themeFeedHealth}')],
-  ['data pauses separated from watch list',s.includes('Data verification pending')&&s.includes('<b className="pill gray">NO PURCHASE</b>')&&s.includes('Current information is insufficient for a purchase.')&&s.includes('!dataQualityBlocked(s)')]
+  ['data pauses separated from watch list',s.includes('Data Verification Paused')&&s.includes('Current data are incomplete; new purchases are paused.')&&s.includes('Current verified prices are required before buying.')&&s.includes('!dataQualityBlocked(s)')]
   ,['portfolio action details wrap',s.includes('.tradeRow{display:grid;grid-template-columns:minmax(90px,.7fr) minmax(0,1.3fr)')&&s.includes('@media(max-width:700px)')&&s.includes('.tradeRow{grid-template-columns:minmax(72px,.6fr) minmax(0,1.4fr);padding-left:0}')]
   ,['portfolio actions distinguished from candidates',s.includes('Complete the sells first, then place the buys in priority order.')]
   ,['entry badges follow authoritative policy',s.includes('const authority=c1Presentation(s);if(authority)return authority.entryLabel')&&s.includes('label==="Chase Risk"')&&s.includes('currentGate?.shortHorizonChaseClear===true')&&s.includes('Current Entry Cleared')]
