@@ -45,8 +45,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
    ...currentWatchView.rows.map((row,index)=>{
     const held=heldSymbols.has(String(row.symbol||'').toUpperCase());
     const momentumRankText=held&&currentWatch[index]?.screenReview?.why?currentWatch[index].screenReview.why.split(';')[0]+'.':'';
-    const holding=decision.positions?.find(position=>position.symbol===row.symbol);
-    return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:holding&&['Review','Exit candidate'].includes(holding.action)?holding.reason:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:holding?.action==='Exit candidate'?'The same pending exit is shown in Portfolio. No addition is authorized.':'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:evidence.pending?{why:evidence.reason,next:'Fresh capital is paused.'}:row.review};
+    return {...row,priority:held?'Held':++nextWatchPriority,review:held?{why:['Current C1 holding.',momentumRankText].filter(Boolean).join(' '),next:'Portfolio rules govern Hold/Add/Exit; this is not a new-entry queue position.'}:evidence.pending?{why:evidence.reason,next:'Fresh capital is paused.'}:row.review};
    }),
   ]
  };
