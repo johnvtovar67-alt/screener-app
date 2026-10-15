@@ -5,6 +5,10 @@ const checks=[
   ['replacement edge helper','function replacementEdgeVisual('],
   ['shared plain reason','c1PlainDecisionReason({action:displayAction'],
   ['internal evidence retained','evidence=showMomentumEvidence?momentumEvidenceFor(s):null'],
+  ['original evidence badge','momentumBadge ${evidence.tone}'],
+  ['concise evidence explanation','c1CompactMomentumEvidence(evidence)'],
+  ['accepted evidence date','<small>As of {evidence.sourceSessionDate}</small>'],
+  ['original plan trigger','c1DecisionTrigger({action:a'],
   ['none-qualified label','None qualified'],
   ['score excellent threshold','v>=80'],
   ['score strong threshold','v>=70'],
@@ -14,5 +18,6 @@ const checks=[
 ];
 const failed=checks.filter(([,needle])=>!s.includes(needle)).map(([name])=>name);
 if(failed.length){console.error('TIME REVIEW SCORE VISUALS FAIL:',failed.join(', '));process.exit(1);}
-if(s.includes('<p>{evidence.explanation}</p>')||s.includes('momentumBadge ${evidence.tone}')||s.includes('<th>Evidence</th>'))throw new Error('Technical narratives must not render in the one-reason interface');
-console.log('TIME REVIEW SCORE VISUALS PASS: capital-score thresholds and internal momentum evidence are preserved; the UI displays one plain reason.');
+if(s.includes('<p>{evidence.explanation}</p>'))throw new Error('The full technical narrative must not replace concise evidence');
+if(!s.includes('<th>Evidence</th>'))throw new Error('The original Evidence column must remain present');
+console.log('TIME REVIEW SCORE VISUALS PASS: capital-score thresholds and internal momentum evidence are preserved with original evidence and plan-trigger slots.');

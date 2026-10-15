@@ -15,29 +15,24 @@ const between=(text,start,end)=>{
 // Original Git blobs: pages/index.js b2a7d3638c2344ad262e095ed7825194239ab36d;
 // C1AccountOpportunities.js 0bed093604f2233d349179b267103b5a270b7bf9;
 // styles/card-layout.css b652f6ff7a40fbe70ebbbd6cd465f68c58563b08.
-// Only these owner-requested content omissions differ from the historical Card.
+// The literal historical Card differs only at the read-only copy bindings
+// and the event-label guard that prevents an empty badge.
 let card=between(page,'function Card(','function RecentSignalChanges(');
-card=card.replace('Outside today’s C1 opportunities.','Standalone result — outside today’s Opportunities universe and relative capital ranking.');
 assert.equal(card.split('{e?.label&&<span className="eventTag">').length-1,1,'Only a labeled event renders the original event badge');
 card=card.replace('{e?.label&&<span className="eventTag">','{e&&<span className="eventTag">');
-card=card.replace('<span className="themeTag">{theme(s)}</span>{e&&','<span className="themeTag">{theme(s)}</span><span className="entryTag">Entry: {entry(s)}</span>{e&&');
-card=card.replace('{c1PlainDecisionReason({action:a,reason:d.reason})}','{d.reason}');
-card=card.replace('    <p className="why">{d.reason}</p>\n','    <p className="why">{d.reason}</p>\n    <div className="decision"><div><small>Timing</small><b>{d.timing}</b></div><div><small>Size</small><b>{d.size}</b></div><div><small>Priority</small><b>{d.priority}</b></div></div>\n    <div className="plan"><small>Plan</small><b>{riskText(s)}</b></div>\n');
-exact('Historical Card with enumerated content omissions',card,'afdbde4a0867f65976f204fd963efedde18bd4fc102aa817f32cf42cb28185ea');
-exact('Authorized plain-language function RecentSignalChanges',between(page,"function RecentSignalChanges(","function VerificationPaused("),'ff73b4400651882f67f7dc4bd967dde3991964bff5227e8fb381d5047ff7f982');
-exact('Authorized plain-language function VerificationPaused',between(page,"function VerificationPaused(","function OnDeck("),'86d88ef81a89a4c92d0c00405d23620edac0a51bdddb449ce7afab31e803b0a0');
-exact('Authorized plain-language function OnDeck',between(page,"function OnDeck(","function fullMarketCoverageFallback("),'cca1cbf365bf3e980a201991021e16f8a8aac1ca536bbb5c3ef542353c80a860');
+card=card.replace('{c1PlainDecisionReason({action:a,reason:d.reason,stock:s,decision:d})}','{d.reason}');
+card=card.replace('{c1DecisionTrigger({action:a,reason:d.reason,stock:s,decision:d})}','{riskText(s)}');
+exact('Literal historical Card with read-only copy bindings',card,'afdbde4a0867f65976f204fd963efedde18bd4fc102aa817f32cf42cb28185ea');
+exact('Authorized plain-language function RecentSignalChanges',between(page,"function RecentSignalChanges(","function VerificationPaused("),'4b4fedcc65587b7e6cb9c9d38c3824752c16922bb49d5cdafd2dc5e7988eda26');
+exact('Authorized plain-language function VerificationPaused',between(page,"function VerificationPaused(","function OnDeck("),'bd3267c55f6219325aa0b2c8594903d7af85d963677d80ad2610fcbcf1802810');
+exact('Authorized plain-language function OnDeck',between(page,"function OnDeck(","function fullMarketCoverageFallback("),'7d94f8ee3508adf96c51741fe8828642c50d4a77c7cec50ba10b5ddcd3e716e8');
 const portfolio=between(page,'    if(mobile)return <article className="portfolioItem">','\n  }\n\n  const missingOpenDateSymbols=');
 const currentColor='className={`pill ${actionClass}`}';
 assert.equal(portfolio.split(currentColor).length-1,2,'Only the two original action pills use the current decision color adapter');
-let historicalPortfolio=portfolio.replaceAll(currentColor,'className={`pill ${cls(d.action)}`}');
-historicalPortfolio=historicalPortfolio.replaceAll('<div className="positionBadges">{specialSituation(s)','<div className="positionBadges">{badge}{specialSituation(s)');
-historicalPortfolio=historicalPortfolio.replace('<div className="mobileField"><small>Why</small>','{showMomentumEvidence&&<div className="mobileField momentumEvidenceText"><small>Evidence</small>{evidenceText}</div>}<div className="mobileField"><small>Why</small>');
-historicalPortfolio=historicalPortfolio.replace('</b></td><td>{d.reason}</td>','</b></td><td className={showMomentumEvidence?"momentumEvidenceText":undefined}>{evidenceText}</td><td>{d.reason}</td>');
-exact('Desktop/mobile Portfolio with only technical-content omissions',historicalPortfolio,'ad611a6d2deeb4758fcc6eaab43e6c243d95283f1d06f019795358135a07fa66');
+exact('Literal desktop/mobile Portfolio JSX',portfolio.replaceAll(currentColor,'className={`pill ${cls(d.action)}`}'),'ad611a6d2deeb4758fcc6eaab43e6c243d95283f1d06f019795358135a07fa66');
 const headers=page.match(/<thead><tr><th>Position<\/th>[\s\S]*?<\/thead>/)?.[0];
 assert.ok(headers,'The historical holdings table must exist');
-exact('Historical Portfolio headers with only Evidence omitted',headers.replace('<th>Why</th>','<th>Evidence</th><th>Why</th>'),'4b145a6924d8258079e036c5b4755351436dcf2adb87f8f0fac0d0c196ea48cf');
+exact('Literal seven historical Portfolio headers',headers,'4b145a6924d8258079e036c5b4755351436dcf2adb87f8f0fac0d0c196ea48cf');
 const globalCss=page.match(/<style jsx global>\{`([\s\S]*?)`}\s*<\/style>/)?.[1];
 assert.ok(globalCss,'The historical application stylesheet must exist');
 exact('Historical application CSS',globalCss,'fe3b39074dfa1061bda6ba18e80d207df25249d38440635c0114c4fd875dddd2');
@@ -63,7 +58,6 @@ main=main.replace('analyze(await refreshEnteredPortfolio()||portfolio,{forceQuot
 // Restore only the explicitly approved short-copy substitutions for comparison.
 const copyExceptions=[
  ['Your holdings and current trading actions.','Core and Swing holdings are tracked separately. C1 determines Swing entries, position sizes and exits.'],
- ['<th>Decision</th><th>Why</th>','<th>Decision</th><th>Evidence</th><th>Why</th>'],
  ['Add the opening date for {missingOpenDateSymbols.join(", ")} to complete its position review.','Add the opening date for {missingOpenDateSymbols.join(", ")} so its holding-period review can run. Its price, fundamentals, momentum, sizing, and portfolio-risk analysis are still active.'],
  ['Use Opportunities for C1 trading actions.','Additional stock analysis by theme. C1 ratings and account actions appear in Opportunities and My Portfolio.'],
  ['Use Opportunities for C1 trading actions.','Additional analysis for a stock. Use Opportunities and My Portfolio for C1 ratings and account actions.']
@@ -73,4 +67,4 @@ const operationalStyle='    <style jsx global>{`.refreshEvidence{font-size:12px;
 assert.equal(main.split(operationalStyle).length-1,1,'The single enumerated current-data/mobile-action compatibility stylesheet must remain exact');
 main=main.replace(operationalStyle,'');
 exact('Historical Home return with enumerated current-data compatibility',main,'69cbd4677de138d58d8ed224547f1791043bde02d435a1ee22955b4066902220');
-console.log('PASS: pinned historical layout/styles/fonts and unchanged data/account handlers; only enumerated short-copy omissions and current-decision/data compatibility are allowed.');
+console.log('PASS: pinned historical layout/styles/fonts and unchanged data/account handlers; literal original display slots with read-only copy bindings and current-decision/data compatibility.');

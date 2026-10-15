@@ -53,11 +53,11 @@ try{
  const props={decision:current,openingPlan,manualRecommendations:review,view:'portfolio',screenRows,screenCurrent:true};
  const render=patch=>renderToStaticMarkup(React.createElement(Component,{...props,...patch}));
  const html=render({});
- assert.match(html,/AAA: SELL · 10 shares/);assert.match(html,/Buy 5 shares/);
+ assert.match(html,/sell 10 shares/);assert.match(html,/Buy 5 shares/);
  assert.ok(html.indexOf('Sell decisions')<html.indexOf('C1 recommendation'),'Funded replacement buys follow exits');
  assert.match(html,/Opening reference price/,'The original reference-price and quantity layout is retained');
  const inconsistent=render({screenRows:[{...screenRows[0],recommendation:{expertDecision:{strongBuyPass:false,metrics:{quoteFreshnessPass:false}}}}]});
- assert.match(inconsistent,/AAA: SELL · 10 shares/);assert.doesNotMatch(inconsistent,/Buy 5 shares/,'Portfolio must fail closed when the current opportunity screen does not authorize the replacement buy');
+ assert.match(inconsistent,/sell 10 shares/);assert.doesNotMatch(inconsistent,/Buy 5 shares/,'Portfolio must fail closed when the current opportunity screen does not authorize the replacement buy');
  const fullSlots={...current,positions:[row,{...row,symbol:'CCC'},{...row,symbol:'DDD'}],stockScreen:{...current.stockScreen,candidates:[{...current.stockScreen.candidates[0],symbol:'BBB'}]}};
  const fullSlotsHtml=render({decision:fullSlots,view:'opportunities',openingPlan:{...openingPlan,orders:[]},manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:{...openingPlan,orders:[]}})});
  assert.match(fullSlotsHtml,/All C1 position slots are occupied\./,'Full account must explain why an unowned Buy-rated candidate has no purchase');

@@ -32,7 +32,7 @@ async function main(){try{
  }
  const helpers=modules.load('lib/c1PositionPresentation.js');
  const {c1PositionPresentation:present}=helpers;
- const {c1PlainDecisionReason}=modules.load('lib/c1DecisionCopy.js');
+ const {c1PlainDecisionReason,c1DecisionTrigger,c1CompactMomentumEvidence}=modules.load('lib/c1DecisionCopy.js');
  const {verifyC1Quote}=modules.load('lib/c1QuoteVerification.js');
  const {buildC1ManualRecommendations}=modules.load('lib/c1ManualRecommendations.js');
  function holding(symbol='DELL',patch={}){
@@ -344,7 +344,7 @@ async function main(){try{
   const decision=decisionFor(position,{current}),record={exports:{}};
   const before=copy({position,stock,decision});
   const evidence={classification:'Momentum Intact',status:'available',label:'Momentum Intact',tone:'intact',explanation:'Technical evidence sentinel: source rank and MACD.',sourceSessionDate:source,limitations:[]};
-  const bindings={...helpers,c1PlainDecisionReason,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
+  const bindings={...helpers,c1PlainDecisionReason,c1CompactMomentumEvidence,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
    c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
    swingTimeReview:()=>({}),holdingReason:(s,decision)=>decision.reason,sym:s=>s.symbol,price:s=>s.price,cls:action=>/sell|exit|stop/i.test(action)?'red':'yellow',factorFor:()=> 'Sector',
    portfolioDateDisplay:()=> 'Oct 1, 2026',specialSituation:()=>null,money:n=>'$'+Number(n).toFixed(2),pct:n=>Number(n).toFixed(2)+'%'};
@@ -356,7 +356,7 @@ async function main(){try{
    const headers=[...heading.matchAll(/<th(?:\s[^>]*)?>([\s\S]*?)<\/th>/g)].map(match=>match[1]);
    const cells=[...html.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)].map(match=>match[1]);
    eq(cells.length,headers.length,'Actual desktop position cells align with the visible table headings');
-   same(headers,['Position','Open Date','Decision','Why','Price','Gain/Loss'],'Only the technical Evidence column is omitted from the original styled Portfolio table');
+   same(headers,['Position','Open Date','Decision','Evidence','Why','Price','Gain/Loss'],'The original seven styled Portfolio columns are preserved');
    eq(headers.at(-2),'Price','The displayed price remains in the Price column');
    eq(headers.at(-1),'Gain/Loss','The gain/loss amount remains in the Gain/Loss column');
   }
@@ -369,10 +369,13 @@ async function main(){try{
   const stop=portfolioHtml(holding(),quote(),{mobile});
   match(stop,/SELL — STOP TRIGGERED/,'The historical Portfolio renders the current verified stop action');
   match(stop,/class="[^"]*pill red[^\"]*"[^>]*>SELL — STOP TRIGGERED</,'The current confirmed stop retains its red action');
-  absent(stop,/Momentum Intact|Technical evidence sentinel|MACD|histogram|confirmation streak|1\/3\/5|momentumBadge|momentumEvidenceText/,'Technical evidence remains internal while the current verified exit is displayed');
+  match(stop,/Momentum Intact/,'The original momentum badge remains visible without overriding the independent stop');
+  match(stop,/Recent price momentum remains supported/,'The original Evidence slot has concise accepted momentum evidence');
+  match(stop,/As of 2026-10-14/,'The accepted source date remains visible in the original Evidence slot');
+  absent(stop,/Technical evidence sentinel|MACD|histogram|confirmation streak|1\/3\/5/,'The original evidence slots do not expose raw technical calculations');
   match(stop,/Stop triggered at \$86\.00; sale pending\./,'The verified stop has one plain reason using the existing recorded stop');
   absent(stop,/<details\b/,'Technical rules are not reintroduced in a disclosure');
-  const reason=mobile?stop.match(/<small>Why<\/small><p>([\s\S]*?)<\/p>/)?.[1]:[...stop.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)][3]?.[1];
+  const reason=mobile?stop.match(/<small>Why<\/small><p>([\s\S]*?)<\/p>/)?.[1]:[...stop.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)][4]?.[1];
   eq((reason?.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each Portfolio row has exactly one plain-English reason sentence');
   const hold=portfolioHtml(holding('MPC'),quote('MPC',115),{mobile});
   match(hold,/>HOLD</,'MPC without an exit retains the current Hold action in the historical layout');
@@ -402,16 +405,18 @@ async function main(){try{
  const ancillaryCode=babel.transformSync('import React from "react";\n'+page.slice(page.indexOf('function Card('),page.indexOf('function fullMarketCoverageFallback('))+'\nmodule.exports={Card,RecentSignalChanges,VerificationPaused,OnDeck};',{
   filename:'plain-decision-views-regression.jsx',babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]
  }).code;
- const sample={symbol:'TEST',price:105,reason:technical,action:'Watch'},ancillary={exports:{}},ancillaryBindings={c1PlainDecisionReason,fd:s=>({action:s.action,reason:s.reason,nextTrigger:technical}),act:s=>s.action,event:s=>s.eventRisk||{status:'Clear'},
-  sym:s=>s.symbol,price:s=>s.price,name:()=> 'Test issuer',theme:()=> 'Technology',cls:()=> 'gray',money:n=>'$'+Number(n).toFixed(2),chg:()=>0,pct:n=>Number(n).toFixed(2)+'%',onDeckReason:()=>technical};
+ const sample={symbol:'TEST',price:105,reason:technical,action:'Watch',riskPlan:{invalidationPrice:85}},ancillary={exports:{}},ancillaryBindings={c1PlainDecisionReason,c1DecisionTrigger,fd:s=>({action:s.action,reason:s.reason,nextTrigger:technical,timing:'Wait',size:'No checked quantity',priority:'Watch'}),act:s=>s.action,event:s=>s.eventRisk||{status:'Clear'},
+  sym:s=>s.symbol,price:s=>s.price,name:()=> 'Test issuer',theme:()=> 'Technology',cls:()=> 'gray',money:n=>'$'+Number(n).toFixed(2),chg:()=>0,pct:n=>Number(n).toFixed(2)+'%',onDeckReason:()=>technical,entry:()=> 'Entry check',priorActionableSignal:()=>false,dataQualityBlocked:()=>false};
  new Function('require','module','exports',...Object.keys(ancillaryBindings),ancillaryCode)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),ancillary,ancillary.exports,...Object.values(ancillaryBindings));
  for(const [name,props] of [['Card',{s:sample}],['RecentSignalChanges',{rows:[sample]}],['VerificationPaused',{rows:[sample]}],['OnDeck',{rows:[sample]}]]){
   const before=copy(props),html=renderToStaticMarkup(React.createElement(ancillary.exports[name],props));
   same(props,before,`${name}: rendering cannot mutate the underlying decision or evidence`);
-  absent(html,/Technical detail sentinel|MACD|histogram|confirmation|top-six|1\/3\/5|Next Trigger|Timing<|Size<|Priority<|<details/ ,`${name}: technical rules and duplicated supporting prose stay internal`);
+  absent(html,/Technical detail sentinel|MACD|histogram|confirmation|top-six|1\/3\/5|<details/ ,`${name}: technical rules and duplicated supporting prose stay internal`);
   match(html,/\$105\.00/,`${name}: the original displayed price remains available`);
   const text=html.replace(/<style[\s\S]*?<\/style>/g,'').replace(/<[^>]*>/g,' ');
-  eq((text.match(/[.!?](?=\s+[A-Z]|\s*$)/g)||[]).length,1,`${name}: the decision has exactly one plain-English explanation sentence`);
+  if(name!=='VerificationPaused')match(html,/Setup invalidation: \$85\.00\./,`${name}: the original trigger slot uses the supplied setup invalidation`);
+  else match(html,/Current verified prices are required before buying\./,'The original paused-data Next Step remains a verification requirement');
+  if(name==='Card')for(const slot of ['Entry:','Timing','Size','Priority','Plan'])ok(html.includes(slot),`Card: original ${slot} display slot is retained`);
  }
 
  const clearCard=renderToStaticMarkup(React.createElement(ancillary.exports.Card,{s:sample}));
@@ -423,6 +428,26 @@ async function main(){try{
  match(redirectCard,/See Opportunities for the current C1 purchase decision\./,'Single-symbol analysis directs to the authoritative C1 purchase view');
  absent(redirectCard,/does not currently qualify|insufficient for a purchase/,'An analysis-only redirect cannot falsely downgrade an Opportunities Buy');
  same(redirected,redirectBefore,'Redirect copy preserves the original Single Symbol action and reason');
+
+ const missingStop=holding('DELL',{stops:[]}),missingPresentation=present(args(missingStop,quote('DELL',1))),missingInput={action:missingPresentation.label,presentation:missingPresentation,position:missingStop};
+ eq(missingPresentation.label,'HOLD','A low quote without a recorded stop cannot invent a stop exit');
+ eq(c1DecisionTrigger(missingInput),'No recorded stop is available.','Missing stop data never invents a fixed percentage or stop level');
+ absent(c1PlainDecisionReason(missingInput),/\$|14%|stop triggered/i,'Missing stops cannot create a fictitious level or breach');
+ const multiStop={...missingStop,stops:[{price:86},{price:90}]};
+ eq(c1DecisionTrigger({action:'HOLD',position:multiStop}),'Multiple recorded stops; review the account plan.','Different recorded stops are never collapsed into an invented single threshold');
+ eq(c1DecisionTrigger({action:'Watch',stock:{riskPlan:{}}}),'No verified entry trigger is available.','Missing setup invalidation never creates a fabricated entry trigger');
+ eq(c1DecisionTrigger({action:'Watch',stock:{riskPlan:{invalidationPrice:0}}}),'No verified entry trigger is available.','Nonpositive invalidation is not a displayed setup level');
+ eq(c1DecisionTrigger({action:'Watch',stock:{riskPlan:{invalidationPrice:88.5}}}),'Setup invalidation: $88.50.','A setup trigger preserves the exact existing positive level');
+ for(const [exit,pattern] of [['recent-momentum-deterioration',/Recent price momentum deteriorated/],['rank-deterioration',/Holding rank no longer qualifies/],['profit-rank-deterioration',/Holding rank deteriorated while profit protection was active/],['recent-momentum-profit-protection',/profit protection/]]){
+  const position=holding('MPC',{exits:[{reason:exit}]}),presentation=present(args(position,quote('MPC',115))),input={action:presentation.label,presentation,position},before=copy(input);
+  match(c1PlainDecisionReason(input),pattern,`${exit}: the concise reason describes the supplied decision mechanism`);
+  eq(c1DecisionTrigger(input),'Sale pending; verify the execution price.',`${exit}: a confirmed exit does not wait for another signal`);
+  same(input,before,`${exit}: reason and trigger cannot mutate the position or exit authority`);
+ }
+ const weakEvidence={status:'available',classification:'Momentum Weakening',sourceSessionDate:source};
+ match(c1PlainDecisionReason({action:'HOLD',evidence:weakEvidence}),/Momentum weakening; no sell signal confirmed/,'A weakening Hold retains meaningful deterioration context');
+ match(c1CompactMomentumEvidence({status:'stale',classification:'Momentum Intact'}),/stale/,'Stale evidence cannot be described as supported momentum');
+ match(c1CompactMomentumEvidence({status:'unavailable',classification:null}),/unavailable/,'Missing evidence cannot invent a supported classification');
 
  // Compile the real Opportunities component with the same shared helper.
  const Component=loadComponent('components/C1AccountOpportunities.js').default;

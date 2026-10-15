@@ -45,7 +45,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
   stock:positionRows.find(row=>(row.symbol||row.ticker)===symbol)||screenRows.find(row=>(row.symbol||row.ticker)===symbol),
   executionDecision,openingPlan,manualRecommendations,checkedAddOrders:rawBuys,now:new Date()}):null;
  const actionTone=(held,canPurchase)=>held?.action==='Sell'?'red':held?.urgent?'orange':held?'yellow':canPurchase?'green':'gray';
- const plainReason=(symbol,action,reason,presentation)=>c1PlainDecisionReason({action,reason,presentation,position:decision.positions?.find(position=>position.symbol===symbol)});
+ const plainReason=(symbol,action,reason,presentation)=>c1PlainDecisionReason({action,reason,presentation,position:decision.positions?.find(position=>position.symbol===symbol),opportunity:ratedRows.find(row=>row.symbol===symbol),sourceCandidate:decision.stockScreen?.candidates?.find(row=>row.symbol===symbol)});
  let nextWatchPriority=presentation.tiles.length;
  const watchView={
   shared:null,
@@ -62,20 +62,21 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
   {!portfolioOnly&&evidence.pending&&<p role="status">{c1PlainDecisionReason({action:'NO PURCHASE',reason:evidence.reason})}</p>}
   <p className="sub">Signals based on {decision.sourceSessionDate} close · C1 strategy cash: {Number.isFinite(decision.strategyCash)?decision.strategyCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Unavailable'} · Brokerage cash: {Number.isFinite(decision.brokerageCash)?decision.brokerageCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Not entered'} · Available to deploy: {Number.isFinite(decision.executableCash)?decision.executableCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'$0.00'}</p>
   {decision.brokerageCashCurrent===false&&<p role="status">{c1PlainDecisionReason({action:'NO PURCHASE',reason:decision.brokerageCashReason||'Update brokerage cash before buying.'})}</p>}
-  {exits.length>0&&<div><h3>Sell decisions</h3><ul>{exits.map(o=>{const held=holdingPresentation(o.symbol),sell=held?.action==='Sell'?held:null;return <li key={o.id}><b>{o.symbol}: {sell?.label||'SELL'} · {o.shares} {o.shares===1?'share':'shares'}</b><p>{plainReason(o.symbol,sell?.label||'SELL',sell?.reason||o.reason,sell)}</p></li>;})}</ul></div>}
+  {exits.length>0&&<div><h3>Sell decisions</h3><ul>{exits.map(o=>{const held=holdingPresentation(o.symbol),sell=held?.action==='Sell'?held:null;return <li key={o.id}><b>{o.symbol}: {sell?.label||'SELL'}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; opening reference ${o.estimatedPrice.toFixed(2)}. {plainReason(o.symbol,sell?.label||'SELL',sell?.reason||o.reason,sell)}</li>;})}</ul></div>}
   {ready&&buys.length>0&&(exits.length>0||orders.some(order=>order.side==='sell'&&!order.condition))&&<p className="actionHelp">Complete the listed sales before buying replacements.</p>}
   {!portfolioOnly&&presentation.tiles.length>0?<div className="grid buyGrid">{presentation.tiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className="idea green" key={tile.symbol}>
    <div className="top"><h3>{tile.symbol}</h3><b className={`pill ${actionTone(held,canPurchase)}`}>{held?.label||(canPurchase?tile.rating:'NO PURCHASE')}</b></div>
    <p className="sub">{tile.entryEvidence?.sector||'Sector unavailable'} · {tile.rating} rating as of {decision.sourceSessionDate}</p>
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Signal closing price</small></div>
    <p className="why">Momentum score: {Number.isFinite(tile.entryEvidence?.momentumScore)?tile.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable'}</p>
-   <div className="plan">{canPurchase&&<b>{held?'Add':'Buy'} {tile.order.shares} {tile.order.shares===1?'share':'shares'}</b>}<p>{plainReason(tile.symbol,held?.label||(canPurchase?tile.accountAction:'NO PURCHASE'),held?.reason||tile.detail,held)}</p></div>
+   <div className="plan"><small>Your next action</small><b>{canPurchase?`${held?'Add':'Buy'} ${tile.order.shares} ${tile.order.shares===1?'share':'shares'}`:held?.label||'NO PURCHASE'}</b><p>{plainReason(tile.symbol,held?.label||(canPurchase?tile.accountAction:'NO PURCHASE'),held?.reason||tile.detail,held)}</p>{canPurchase&&<p>Opening reference ${tile.order.estimatedPrice.toFixed(2)}; confirm the current broker price.</p>}</div>
   </article>;})}</div>:portfolioOnly&&buys.length?<>
    <div className="grid buyGrid">{buys.map(o=>{const held=holdingPresentation(o.symbol);if(held&&!held.canAdd)return null;return <article className={held?'idea':'idea green'} key={o.id}>
     <div className="top"><h3>{o.symbol}</h3><b className={`pill ${actionTone(held,true)}`}>{held?.label||'Buy'}</b></div>
     <div className="price"><b>${o.estimatedPrice.toFixed(2)}</b><small>Opening reference price</small></div>
     <p className="why">{plainReason(o.symbol,held?.label||'Buy',held?.reason||'Account, cash and opening checks passed for this quantity.',held)}</p>
     <div className="plan"><small>C1 recommendation</small><b>{decision.positions.some(p=>p.symbol===o.symbol)?'Add':'Buy'} {o.shares} {o.shares===1?'share':'shares'} of {o.symbol}</b></div>
+    <p>Confirm price and cash at your broker, then record only the actual fill.</p>
    </article>;})}</div>
   </>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No C1 Buy ratings right now.':'C1 ratings awaiting update.'}</b>{!ready&&<span>{c1PlainDecisionReason({action:'NO PURCHASE',reason:waitingReason})}</span>}</div>}
 

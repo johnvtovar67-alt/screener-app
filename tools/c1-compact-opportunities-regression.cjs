@@ -49,7 +49,7 @@ try{
  const article=(markup,symbol)=>[...markup.matchAll(/<article\b[^>]*>[\s\S]*?<\/article>/g)].map(match=>match[0]).find(card=>new RegExp('<h3[^>]*>'+symbol+'<\\/h3>').test(card))||'';
  assert.match(main,/<h3>BBB<\/h3><b>Strong Buy<\/b>/,'A genuinely checked purchase retains the historical Strong Buy tile');
  assert.match(main,/Buy 2 shares/,'Only the original checked Buy quantity is displayed');
- assert.match(article(main,'BBB'),/Current checks support this purchase\./,'A checked purchase has a consistent positive plain-English reason');
+ assert.match(article(main,'BBB'),/Historical strength and recent momentum qualify this purchase\./,'A checked purchase has a consistent positive plain-English reason');
  assert.doesNotMatch(article(main,'BBB'),/does not currently qualify|insufficient for a purchase/,'A current checked Buy cannot be described as ineligible');
  assert.match(main,/<h3>MPC<\/h3><b>HOLD<\/b>/,'The current held-share Hold action replaces the historical generic Add headline');
  assert.match(main,/Add 1 share/,'The original checked partial-position completion is retained separately');
@@ -67,7 +67,9 @@ try{
  assert.match(article(rawMain,'MPC'),/class="[^"]*pill yellow[^"]*"[^>]*>HOLD</,'The current Hold status remains distinct from its checked Add proposal');
  for(const symbol of ['BBB','MPC','CCC']){
   const rawCard=article(rawMain,symbol),plan=rawCard.match(/class="[^"]*\bplan\b[^"]*">([\s\S]*?)<\/div>/)?.[1]||'';
-  assert.equal([...plan.matchAll(/<p(?:\s[^>]*)?>/g)].length,1,'Each ranked card contains exactly one plain-language decision sentence');
+  assert.equal([...plan.matchAll(/<p(?:\s[^>]*)?>/g)].length,symbol==='CCC'?1:2,'The original plan contains one concise reason and an opening reference only for checked quantities');
+  assert.match(plan,/<small[^>]*>Your next action<\/small>/,'The original next-action label remains in its original slot');
+  if(symbol!=='CCC')assert.match(plan,/Opening reference \$100\.00; confirm the current broker price\./,'Checked orders retain the original execution-reference slot');
   const sentence=plan.match(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/)?.[1]||'';
   assert.equal((sentence.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each decision reason is one sentence');
   assert.doesNotMatch(sentence,/MACD|histogram|confirmation|top[- ](?:six|nine)|rank #|1\/3\/5|bps|cooldown|\d+[- ]session/i,'Technical calculations and rules remain internal');
