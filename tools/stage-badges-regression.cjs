@@ -9,8 +9,8 @@ const {c1PositionPresentation}=modules.load('lib/c1PositionPresentation.js');
 for(const [tone,color] of [['accelerating','#dbeafe'],['intact','#dcfce7'],['weakening','#fef9c3'],['exit-risk','#fee2e2'],['unknown','#e5e7eb']]){
  assert.ok(page.includes(`momentumBadge.${tone}{background:${color}`),`${tone} evidence needs a distinct visual tone`);
 }
-assert.ok(page.includes('<th>Details</th>'),'Desktop technical evidence belongs in the Details column');
-assert.ok(!page.includes('<th>Why</th>'),'The full technical reason must not occupy a separate primary column');
+assert.ok(page.includes('<th>Evidence</th>'),'The original compact Evidence column is restored');
+assert.ok(page.includes('<th>Why</th>'),'The compact Portfolio keeps one concise Why column');
 assert.doesNotMatch(page,/momentumEvidenceRows|momentumEvidenceBox|momentumEvidenceCompact|momentumEvidenceItem|Momentum Evidence/,'The redundant momentum summary strip must be absent');
 assert.ok(page.includes('specialSituationBadge'),'Special-situation presentation must remain available');
 assert.doesNotMatch(page,/stageTone\(|stageBadge|time\.stage|timeReviewRows/,'Duration stages must not appear as portfolio evidence');
@@ -43,7 +43,7 @@ function render({evidence=unavailable,action='Hold',source='c1-actual-account',m
 }
 for(const [classification,tone] of classifications){
  const evidence={classification,status:'available',label:classification,tone,explanation:'Rank improved from 5 to 2; completed closes gained 3.1%.',sourceSessionDate:'2026-09-11',limitations:[]};
- for(const mobile of [false,true])for(const [action,displayAction] of [['Hold','HOLD'],['Add candidate','HOLD'],['Exit candidate','SELL'],['Buy','HOLD'],['Sell','SELL']]){
+ for(const mobile of [false,true])for(const [action,displayAction] of [['Hold','HOLD'],['Add candidate','HOLD'],['Exit candidate','SELL — MOMENTUM'],['Buy','HOLD'],['Sell','SELL — MOMENTUM']]){
   const {html,calls,accountView}=render({evidence,action,mobile});
   assert.match(html,new RegExp(`class="momentumBadge ${tone}"[^>]*>${classification}<`));
   assert.match(html,/Rank improved from 5 to 2; completed closes gained 3\.1%\./);

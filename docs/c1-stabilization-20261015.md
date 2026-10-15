@@ -1,0 +1,30 @@
+# C1 current-price stabilization and compact UI restoration
+
+Owner authorization: the October 15 “FINAL STABILIZATION, MARKET DATA REPAIR & PRODUCTION RELEASE” instruction explicitly requests fresh provider verification, preservation of the released momentum rules and factual executions, restoration of the pre-PR #266 compact interface, regression/visual tests, and release through the existing pipeline after passing checks.
+
+Rollback point: main/production `0af8b7d01f2c6d1136c147b9f84a38795c6526fd`, Vercel production deployment `dpl_BqayRioFZ3qmRghBXTAjT55fm1fw`. Its version and READY state were checked before repair. `0672788` supplies the approved compact layout reference and recorded-fill compatibility baseline.
+
+## Reproduced causes
+
+- FMP supplied fresh regular-session DELL prices below $468.85, but `/api` normalized away the provider/cache provenance required by the holding presenter. Production `/api?symbol=DELL` returned $458.32 with timestamp 1792090347 and no verification proof. The provider was available; these prices were excluded inside the application.
+- Portfolio reused held stocks from the broad screen instead of fetching independent current held quotes; browser no-store did not bypass the quote helper’s 60-second process cache.
+- Account intraday quote evidence unnecessarily required completed MACD warm-up, rejected safely reviewed price-basis receipts, and compared post-fetch quotes against request-start time, treating valid observations as future timestamps.
+- PR #266 put technical narrative ahead of scanability and retained green rating tiles with no authorized purchase. Its mobile Watch action column could be outside the initial viewport.
+
+## Repair boundaries
+
+The existing quote fetcher now issues a bounded fresh provider request when requested, preserves a symbol/price/timestamp-bound observation through normalization, and reports provider-updated, provider-unchanged, rate-limited, cached or failed outcomes. Forced requests share in-flight work and the existing 20-second failure cooldown; successful forced requests are limited to one per symbol per 20 seconds per server process. Serverless instances can differ, so the client also compares the received timestamp/price with its previous observation and discloses unchanged data. No new storage or service is introduced.
+
+Current stop evidence requires a regular-session, same-symbol, same-session quote no more than 120 seconds old, matching the existing account-opening verification window. Fallback, stale, missing, future, regressed or inconsistent observations cannot create a new stop instruction. Premarket, after-hours and previous-close quotes are identified separately. A displayed apparent breach without sufficient current proof says `VERIFY STOP URGENTLY` and `URGENT VERIFICATION REQUIRED`; it never becomes ordinary HOLD. Exact expiry triggers a local display refresh without a provider request or account write.
+
+Held-price requests start independently of account and broad-screen requests, publish verified evidence even when either analysis request fails, and fence superseded Opportunities responses. A provider response older than the client’s latest accepted quote cannot replace it. Last verified quote, completed signal session and application refresh are separately identified. Server-verified intraday price/stop evidence no longer depends on momentum warm-up. Reviewed price-basis receipts retain original account basis; bounded same-session server completion time resolves request-start clock skew. Current verified stop breaches suppress only proposed future capital in that security. Standing stop order identities and recording conditions remain intact; unsold shares do not create cash or slots. Already recorded fills and duplicate saved-ticket retries remain historical facts.
+
+Historical scores, ranking, 1/3/5-session momentum/MACD thresholds, three completed deterioration confirmations, two profit-protection confirmations, latched 12% activation, verified peak-gain giveback, cooldown/reentry rules, 14% stops, sleeve controls and Core classifications are unchanged. Intraday observations do not invent a completed close, confirmation streak, historical high or new automatic momentum exit. Existing confirmed independent exits display `SELL — MOMENTUM` or `SELL — PROFIT PROTECTION`; stops retain precedence. Brokerage execution remains manual and no Schwab connection is added.
+
+Compact tiles and the original seven-column Portfolio layout are restored with concise reasons and secondary evidence. Green tiles require an existing current authorized quantity; ranked but unfunded or blocked candidates remain neutral Watch with the investment rating and the actual capital/eligibility reason. Both views use one holding presenter and the same quote row. Mobile urgency must remain visible without horizontal scrolling.
+
+## Verification
+
+The real repaired FMP fetch → normalization → verification path accepted DELL $461.245 at 18:56:02 UTC (retrieved 18:56:05 UTC), below $468.85; MPC and SPY also returned fresh observations. Evidence summaries containing only prices, timestamps and nonsecret response metadata are in the ignored work directory. No account records were accessed or written by these probes.
+
+Permanent regressions cover actual API normalization and refresh transport, DELL $460/$468.85, MPC confirmed profit protection and healthy holding, recovery/reentry, stale/future/extended-hours/conflicting quotes, no-new-data disclosure, server-completion clocks, reviewed basis, current-capital vetoes, exact fill/cash/fee replay, same-day discretionary sale, partial/replacement purchases, Core exclusion and real desktop/mobile/Opportunities rendering. Browser fixtures compare real JSX and CSS with `0672788`; they use controlled data and do not certify investment performance. Full regression/build, CI, preview and canonical production verification are required before release. No guard or build hook is changed; the freeze manifest updates only owner-authorized affected application entries.
