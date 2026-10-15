@@ -193,6 +193,20 @@ class AnalyzerTests(unittest.TestCase):
             self.assertEqual(result["leave_one_security_out"][s]["deterioration"]["onsets"], overall - result["by_security"][s]["deterioration"]["onsets"])
             self.assertEqual(result["by_security"][s]["lots_entry_classification"]["H"]["scheduled_lots"], 19)
 
+    def test_excluding_nvda_tsla_uses_original_groups_and_common_bootstrap(self):
+        result = self.result
+        excluded = result["excluding_nvda_tsla"]
+        removed_events = sum(result["by_security"][symbol]["deterioration"]["onsets"] for symbol in ("NVDA", "TSLA"))
+        self.assertEqual(excluded["deterioration"]["onsets"], result["overall"]["deterioration"]["onsets"] - removed_events)
+        for method in ("H", "P"):
+            self.assertEqual(excluded["lots_entry_classification"][method]["scheduled_lots"], 19 * 6)
+        for name, metric in excluded["uncertainty"].items():
+            self.assertEqual(metric["requested_replicates"], result["bootstrap"]["replicates"])
+            self.assertLessEqual(metric["valid_replicates"], result["bootstrap"]["replicates"])
+        # The extra sensitivity group is sliced from full-panel records; the
+        # single frozen-formation object is preserved rather than recomputed.
+        self.assertEqual(result["volatility_strata"], self.preserved["volatility_strata"])
+
     def test_equal_security_macro_average_and_horizon_uncertainty(self):
         result = self.result
         for name in ("onset_forward5_pct", "champion_fast_response_forward21_pct", "F_slow_response_forward63_risk_normalized", "H_trigger_forward63_pct", "P_all_lot_difference_pp"):

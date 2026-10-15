@@ -1,0 +1,13 @@
+# Authorized execution addendum
+
+The owner's latest instruction expressly authorizes proceeding with the bounded eight-security study using the existing connection and private-data safeguards. It supersedes the earlier operational pause in this folder's planning documents. The separate technical-location administrative question remains in the private research record and must not be presented as a lack of permission for research.
+
+No statistical definition changes. Full-eight formation groups, factor windows, deterioration onsets, H/P quarterly entries and next-open timing remain as frozen. The predeclared sensitivity excluding both NVDA and TSLA slices the original full-eight records, retaining original formation groups and common bootstrap draws. It is an influence check, not a changed investable strategy.
+
+New study budget:20requests maximum,12MiB cumulative response bytes,16planned requests, sequential starts at least0.35seconds apart and20second timeouts. Earlier study consumption is separate and remains recorded. Subscription ceilings are not treated as measured remaining account quota; provider-side remaining usage is not exposed by the existing connection. Stop on any authentication, entitlement, quota, timeout or structural validation error, without retries or alternate routes. No plan change, purchase, credential or infrastructure operation is authorized.
+
+Use a new non-overwriting run directory and preflight private storage before requests. Source rows exist only in process memory. Provider-response fingerprints and private provenance remain subscriber-private; public audit contains code hashes and non-price operational checks only. All per-security, regime, small-cell and pooled numerical results remain private. No support correspondence or its summaries are published by this execution checkpoint.
+
+Each response is freshly retrieved and timestamped. Compare fingerprints with the prior study privately, disclose match/difference status, and never splice old source rows into the new cohort. Save full-eight base aggregates before extended analysis so a later reporting problem cannot erase the basic result. Aggregate files are written atomically with mode0600 under a directory with mode0700.
+
+`run_eight.py` acquires and validates once, saves private base and extended aggregates, and exposes only an operational audit. An existing run directory or audit prevents rerunning that run identifier. A later authorized study requires its own recorded budget and unique identifier. Production C1, account records, PR#262 and the frozen48-Challenger protocol remain outside this execution.

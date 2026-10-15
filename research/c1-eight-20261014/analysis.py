@@ -389,6 +389,7 @@ def analyze(data, securities=SECURITIES, bootstrap_replicates=BOOTSTRAP_REPLICAT
         "by_causal_spy_regime": {g: aggregate_selected(lambda r, g=g: r["regime"] == g) for g in regimes},
         "by_frozen2019_volatility": {g: aggregate_selected(lambda r, g=g: r["volatility_group"] == g) for g in sorted(set(groups.values()))},
         "leave_one_security_out": {s: aggregate_selected(lambda r, s=s: r["symbol"] != s) for s in securities},
+        "excluding_nvda_tsla": aggregate_selected(lambda r: r["symbol"] not in ("NVDA", "TSLA")),
         "trigger_outcomes_by_signal_calendar_year": {}, "trigger_outcomes_by_signal_spy_regime": {},
         "equal_security_and_influence": {},
         "limitations": [
