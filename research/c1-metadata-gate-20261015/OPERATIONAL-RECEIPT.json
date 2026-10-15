@@ -1,0 +1,33 @@
+{
+  "task": "owner-authorized historical metadata qualification",
+  "date_utc": "2026-10-15",
+  "window": ["2024-12-31", "2025-04-03"],
+  "verdict": "NO_GO_FOR_FULL_HISTORICAL_ACQUISITION",
+  "fmp_request_cap": 25,
+  "fmp_requests_used": 9,
+  "fmp_unused_task_allowance": 16,
+  "account_wide_remaining_quota_verified": false,
+  "fmp_all_requests_http_200": true,
+  "fmp_response_bytes": 873541,
+  "price_history_requests": 0,
+  "profile_retention": "Identity/classification projection; incidental quote values discarded",
+  "acquisition_sealed": true,
+  "raw_provider_data_and_hashes_published": false,
+  "support_correspondence_published": false,
+  "public_primary_anchor_reconciliation": {
+    "spy_equity_name_class_lines": 503,
+    "sector_fund_union_equity_name_class_lines": 503,
+    "spy_and_sector_funds_name_class_sets_equal": true,
+    "pinned_public_snapshot_rows": 503,
+    "normalized_name_matches": 456,
+    "explicit_reviewed_alias_matches": 47,
+    "unresolved": 0,
+    "sector_disagreements": 0,
+    "complete_effective_interval_coverage_certified": false,
+    "historical_c1_fmp_sector_partition_certified": false
+  },
+  "original_frozen_archive_accessed": false,
+  "infrastructure_or_credentials_changed": false,
+  "production_account_pr262_or_frozen48_changed": false,
+  "scope": "Operational receipt and public-source corroboration; no portfolio or signal performance findings"
+}
