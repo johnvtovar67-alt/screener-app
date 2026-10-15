@@ -51,6 +51,27 @@ try{
  for(const column of [1,3,4])assert.ok(mobileRules.includes('.watchTable th:nth-child('+column+'),.watchTable td:nth-child('+column+')'),'Only nonaction Watch columns are hidden on narrow screens');
  assert.match(mobileRules,/\.watchTable\{table-layout:fixed;width:100%;min-width:0\}/,'The stock and action columns fit the viewport rather than forcing horizontal scrolling');
  assert.match(mobileRules,/\.watchTable th:nth-child\(5\),\.watchTable td:nth-child\(5\)\{width:70%\}/,'The immediately visible action keeps most of the narrow-screen width');
+ // Reproduce the actual four-button navigation on every tab. Its former
+ // nowrap flex row overflowed a 390px page to 417px, outside any scroller.
+ const page=fs.readFileSync('pages/index.js','utf8'),navSource=page.match(/<nav>[\s\S]*?<\/nav>/)?.[0];
+ assert.ok(navSource,'The production navigation is exercised rather than a substitute layout');
+ const navRecord={exports:{}};
+ const navCode=babel.transformSync('import React from "react";function Navigation({tab}){const openTab=()=>{};return ('+navSource+');}module.exports=Navigation;',{filename:'c1-compact-navigation-regression.jsx',babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
+ new Function('require','module','exports',navCode)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),navRecord,navRecord.exports);
+ const tabs=['opportunities','portfolio','themes','single'],labels=['Opportunities','My Portfolio','Themes','Single'];
+ for(const [index,tab] of tabs.entries()){
+  const navigation=renderToStaticMarkup(React.createElement(navRecord.exports,{tab}));
+  assert.deepEqual([...navigation.matchAll(/<button[^>]*>([^<]+)<\/button>/g)].map(match=>match[1]),labels,'Mobile wrapping preserves every original navigation action and its order');
+  assert.match(navigation,new RegExp('<button class="active">'+labels[index]+'<\/button>'),'The selected tab keeps the existing active state');
+ }
+ const globalCss=page.match(/<style jsx global>\{`([\s\S]*?)`}<\/style>/)?.[1];
+ assert.ok(globalCss,'The actual application stylesheet supplies the navigation layout');
+ const navWrap=[];
+ require('postcss').parse(globalCss).walkRules('nav',rule=>rule.walkDecls('flex-wrap',decl=>{
+  const media=[];for(let parent=rule.parent;parent;parent=parent.parent)if(parent.type==='atrule')media.push([parent.name,parent.params]);
+  navWrap.push({value:decl.value,media});
+ }));
+ assert.deepEqual(navWrap,[{value:'wrap',media:[['media','(max-width:700px)']]}],'Only mobile navigation wraps; desktop layout and all trading views retain their existing behavior');
  assert.equal(JSON.stringify(props),baseline,'Rendering cannot mutate checked orders, shares, fees, cash or evidence');
  const noOrders={...plan,orders:[]},noReview=buildC1ManualRecommendations({decision,openingPlan:noOrders});
  const paused=render({openingPlan:noOrders,manualRecommendations:noReview});
