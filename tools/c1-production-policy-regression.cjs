@@ -219,6 +219,6 @@ assert(drawdown.activeCapitalPct === 0 && !drawdown.cooldown && drawdown.reconci
 const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
 assert(top5.includes("independent_limited_pilot") && top5.includes("pilotRequiresTwoSessionPersistence") && top5.includes("$300 million"), "the live route must identify the bounded pilot and its liquidity contract");
 const manifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
-assert(manifest.includes('release:"2026-09-26-c1-momentum-exits"'), "the release manifest must identify the authorized C1 momentum-exit release");
+assert(manifest.includes('release:"2026-10-15-c1-recent-momentum-recorded-fills"'), "the release manifest must identify the authorized C1 recent-momentum release");
 
 console.log("C1 PRODUCTION POLICY PASS: unvalidated rank has no full-size authority; three-name, 1%, two-session pilot, liquidity floor, lifecycle, drawdown control, and fail-closed behavior verified");

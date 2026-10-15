@@ -2,6 +2,10 @@ import {list} from '@vercel/blob';
 import {RELEASE_MANIFEST} from "../../lib/releaseManifest";
 
 const requiredFeatures=[
+  "recent-session-momentum-decisions",
+  "verified-peak-gain-giveback",
+  "recovered-momentum-reentry",
+  "immutable-recent-exit-replay",
   "market-cycle-overhaul",
   "portfolio-sync",
   "proof-followthrough",
