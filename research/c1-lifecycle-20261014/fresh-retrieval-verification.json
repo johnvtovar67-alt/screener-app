@@ -1,0 +1,276 @@
+{
+  "contract": "c1-lifecycle-fresh-public-retrieval-verification-v1",
+  "repository": "johnvtovar67-alt/screener-app",
+  "immutable_commit": "66ba815ab3878ef7efc1ab6f19b89a6188da2706",
+  "research_directory": "research/c1-lifecycle-20261014",
+  "fresh_context": "Separate Codex agent initialized only with pinned repository, commit, retrieval scope and constraints; no sibling research directories or existing main fixtures inspected.",
+  "retrieval_method": "Existing GitHub connector, base64 exact file bytes with explicit immutable commit ref; Git commit and tree traversal for all blob identities.",
+  "scope": "Public retrieval, SHA-256, Git blob SHA-1, byte sizes, seven Python AST syntax checks and public assertion consistency only.",
+  "result": "PASS",
+  "manifest_listed_file_count": 15,
+  "public_file_count_including_manifest": 16,
+  "public_files_read": 16,
+  "sha256_computed_count": 16,
+  "manifest_sha256_comparisons_passed": 15,
+  "git_blob_sha1_comparisons_passed": 16,
+  "remote_tree_byte_size_comparisons_passed": 16,
+  "python_ast_syntax_checks_passed": 7,
+  "python_files": [
+    "scripts/analyze_partial.py",
+    "scripts/measure_giveback.py",
+    "scripts/prepare_fixture_inputs.py",
+    "scripts/research_paths.py",
+    "scripts/validate_partial.py",
+    "scripts/verify_inputs.py",
+    "verify_public.py"
+  ],
+  "manifest_self_hash_note": "The manifest cannot list its own hash. Its SHA-256 was independently computed here and its Git blob SHA-1 and size matched the immutable commit tree.",
+  "immutable_tree_chain": {
+    "root": "58a6a99592db9e8bb4a38c6bded1c1094df33543",
+    "research": "e7bf68f084a518f134a7676d375c22c99ba414fc",
+    "checkpoint": "ec21c56305e066ade7877c29b7ba0fd47df0401b",
+    "scripts": "34f55d9fba695580933638faaf143984ecf209c9"
+  },
+  "verified_hashes": {
+    ".gitignore": {
+      "bytes": 194,
+      "sha256": "01baa86d5dddcb777dafca2c7dc9a3e3fa331fa23127d3029faa0bb6a0cdd4c7",
+      "git_blob_sha1": "555b6c74a25edbd91562fd6a5018a40e8d390e92",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": null
+    },
+    "README.md": {
+      "bytes": 5025,
+      "sha256": "81be90a36ed1c75c7c8d549d624a5d43e15ceb155b624ef0dadac63986b0ec5c",
+      "git_blob_sha1": "f3e21c7c7b52d2026e21ce3d1cbb642458ba7f37",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": null
+    },
+    "aggregate-evidence.json": {
+      "bytes": 49572,
+      "sha256": "148eb348ef331cb83ffdf91e6aba8d546190d8611ffe23d9f47da4ca90c9a741",
+      "git_blob_sha1": "4f97035459170c4f72ab700917212ef6ec37eff2",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": null
+    },
+    "assessment.md": {
+      "bytes": 3807,
+      "sha256": "6bf09ed308bfb066e4c8f3dd1a49d99cbf49e69b4a9276ed60c0334a1b64c673",
+      "git_blob_sha1": "af6c84f779fc5aad79228462da9e67101f6708a8",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": null
+    },
+    "data-readiness.md": {
+      "bytes": 3971,
+      "sha256": "3c1628b5f2e362c4729d5b60e9b09116b8873dec05d2a787e6b0d0ba048456ed",
+      "git_blob_sha1": "4abc3ee0a7c5278759d83a0067f9c6ad59d117c0",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": null
+    },
+    "partial-study-plan.md": {
+      "bytes": 4609,
+      "sha256": "124e84d1ef7821812d1fd710ecb10ccf5e76ccc05837078d1c0d51c0b5ddb470",
+      "git_blob_sha1": "0b42c59350faf8a00033d5801c5b96bf4d8b4cdc",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": null
+    },
+    "provenance.json": {
+      "bytes": 5854,
+      "sha256": "b2c717bbc972d47deeb118a0294c7fe60bfb3573a110a62a37f7316e909c3db7",
+      "git_blob_sha1": "7e88b2acac02b640b790cae9fe700cc67839978b",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": null
+    },
+    "scripts/analyze_partial.py": {
+      "bytes": 24506,
+      "sha256": "069a993e3d7e17ec3ccb69caff39bfd7c9197d33cdbaddfcc8b028f3b0faf187",
+      "git_blob_sha1": "53186837f8bb0acb2aac96d80f9bbe99c049e169",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": "PASS"
+    },
+    "scripts/measure_giveback.py": {
+      "bytes": 3184,
+      "sha256": "e433c52ff6f8050efb8ba13189dbaf78ac38305c5c632d979b252fdad5e88620",
+      "git_blob_sha1": "a2247d84ee24fd4c53eb75af4c2f4cc4bf897b21",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": "PASS"
+    },
+    "scripts/prepare_fixture_inputs.py": {
+      "bytes": 1509,
+      "sha256": "48fde31e35257f5c9aa9d1ae65f8cc7b205e192dd2241c1b0bdb5584040782ba",
+      "git_blob_sha1": "d72b80df80cc643fb72b38517544dcff12db4237",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": "PASS"
+    },
+    "scripts/research_paths.py": {
+      "bytes": 1319,
+      "sha256": "939f8a7f5d948967bceb6b86f0128ea972cd4c21a7cb9ce3fca74b6fc90118a1",
+      "git_blob_sha1": "efe62ffef4b8b5842fc1056284fa6235633fe5cb",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": "PASS"
+    },
+    "scripts/validate_partial.py": {
+      "bytes": 6218,
+      "sha256": "3aebc53f06f9f19817f83010608db04992d39dc3dc5f9bc619b1981580aa852d",
+      "git_blob_sha1": "64de091cd47e9d690fe773a2181d3bad531d7754",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": "PASS"
+    },
+    "scripts/verify_inputs.py": {
+      "bytes": 2494,
+      "sha256": "5f4397c39e39a4712faed5c5f7fd929162f867e30dc057ac1e8aa97f3d31910a",
+      "git_blob_sha1": "f8c199ebbe6595c998fc32e6e836826d6e3de451",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": "PASS"
+    },
+    "six-challengers.json": {
+      "bytes": 4315,
+      "sha256": "362bbb3d29ecc0d99dc55786f1041d746fa7ade519e8fbfd2eff8e6518d902dc",
+      "git_blob_sha1": "0870138f43fca0db7c95a5f4f87742153869b297",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": null
+    },
+    "verify_public.py": {
+      "bytes": 1439,
+      "sha256": "8650b3c608124199ea88d3bb1461695a99c8f80237c983d8d64d2061b4c22c29",
+      "git_blob_sha1": "cb67845db23317cdcf6c70319cc631f394cb780f",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": true,
+      "manifest_sha256_match": true,
+      "manifest_git_blob_sha1_match": true,
+      "python_ast_syntax": "PASS"
+    },
+    "publication-manifest.json": {
+      "bytes": 3454,
+      "sha256": "d5f22081203ce43f61b4c3ad8b253cefc19a2cbb04d0b45b374fc2f151ef2e51",
+      "git_blob_sha1": "14daa7c6744d02bb81c46f63804115d71881192a",
+      "remote_commit_tree_blob_match": true,
+      "connector_blob_identity_match": true,
+      "manifest_entry_present": false,
+      "manifest_sha256_match": null,
+      "manifest_git_blob_sha1_match": null,
+      "python_ast_syntax": null
+    }
+  },
+  "retrievable_content": {
+    "instructions": {
+      "public_verification": "README.md directs same-commit retrieval and running verify_public.py with Python 3 standard library; no private inputs are needed.",
+      "conditional_empirical_reproduction": "README.md names C1_LIFECYCLE_WORKDIR and C1_RESEARCH_SOURCE_ROOT and prepare_fixture_inputs.py \u2192 verify_inputs.py \u2192 analyze_partial.py \u2192 validate_partial.py \u2192 measure_giveback.py. Exact authorized input bytes are required; none were inspected or used in this verification."
+    },
+    "six_arms": [
+      {
+        "id": "F",
+        "name": "Ranking freshness",
+        "sole_change": "Set both skips to zero; preserve included lengths, percentile reference universe, transforms and weights."
+      },
+      {
+        "id": "L",
+        "name": "Formation length",
+        "sole_change": "Change included lengths only, retaining Champion skips."
+      },
+      {
+        "id": "E",
+        "name": "New entry deterioration veto",
+        "sole_change": "Reject new sleeve-position initiation when R(5,0)<=-7.00%; existing positions, topups, leadership pool and held ranks unchanged."
+      },
+      {
+        "id": "H",
+        "name": "Independent holding deterioration",
+        "sole_change": "At holding age >=5, first close with R(5,0)<=-7.00% queues sale at next executable price. No rank condition."
+      },
+      {
+        "id": "X",
+        "name": "Early rank confirmation",
+        "sole_change": "Change early outside-top-nine confirmation from three to one completed close."
+      },
+      {
+        "id": "P",
+        "name": "Independent peak-gain retention",
+        "sole_change": "From age >=5, latch activation once observed completed-close peak gain>=12%; queue sale when current gain<=50% of peak gain, independent of rank, including at/below basis."
+      }
+    ],
+    "priority": [
+      "F",
+      "H",
+      "P"
+    ],
+    "aggregate_result_assertions": {
+      "included_episodes": 470,
+      "independently_recomputed_episode_rule_pairs": 1410,
+      "is_portfolio_backtest": false,
+      "reference_is_current_champion": false
+    },
+    "limitations": [
+      "Completed historical fixed-episode exit diagnostic; current-policy Champion portfolio performance and market-source authenticity were not established.",
+      "No CAGR, Sharpe, portfolio drawdown, stop-frequency or strategy-cost improvement follows from fixed-episode proceeds.",
+      "The two original fixtures and row-level empirical outputs are excluded; recorded digests preserve identities rather than missing bytes.",
+      "No six-arm comparative portfolio run or selected winner exists; full-session evidence remains the documented NO-GO blocker.",
+      "F/H/P are execution priorities, not selected winners."
+    ]
+  },
+  "public_retrieval_verified": true,
+  "empirical_replay_performed": false,
+  "private_inputs_accessed": false,
+  "private_market_or_account_data_accessed": false,
+  "credential_values_accessed": false,
+  "market_provider_calls_made": false,
+  "repository_mutations_or_publication_performed": false,
+  "discrepancies": []
+}

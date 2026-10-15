@@ -18,7 +18,7 @@ Use the immutable commit SHA reported with this checkpoint, rather than assuming
 python3 research/c1-lifecycle-20261014/verify_public.py
 ```
 
-This verifies public artifacts and syntax without data, credentials, provider calls, package installation or account access. It does not reproduce empirical results. The manifest cannot include its own hash; its Git blob identity is verified through the immutable remote tree. A separate fresh-context Codex agent will perform the retrieval verification, with its receipt reported separately.
+This verifies public artifacts and syntax without data, credentials, provider calls, package installation or account access. It does not reproduce empirical results. The manifest cannot include its own hash; its Git blob identity is verified through the immutable remote tree. A separate fresh-context Codex agent retrieved and verified all 16 initial public artifacts. Its [verification receipt](fresh-retrieval-verification.json) is preserved here, bound to immutable initial checkpoint commit `66ba815ab3878ef7efc1ab6f19b89a6188da2706`. This receipt addition changes documentation and manifest only; published research computations and aggregate evidence are unchanged.
 
 ## Empirical reproduction when exact authorized inputs already exist
 
