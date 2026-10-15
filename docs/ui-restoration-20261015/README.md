@@ -4,20 +4,20 @@ These are actual complete application pages rendered in Chromium with the **same
 
 **Before:** production source/assets `e046666`. **After:** restored UI from source branch `fix/c1-compact-sitewide-ui`, rendered through the existing local Next app. Click any screenshot for its full resolution. Screenshots are review evidence, not investment-performance results or a private-account acceptance claim.
 
-The reference image compares full Portfolio pages from approved `8007dc`, immediate pre-redesign `0672788`, before `e046666`, and the restored UI. Historical source was rendered with installed Next15/React18; `8007dc` originally declared Next14.
+The reference image compares full Portfolio pages from approved `8007dc`, immediate pre-redesign `0672788`, before `e046666`, and the restored UI. Historical source was rendered with installed Next 15 / React 18; `8007dc` originally declared Next 14.
 
 [![Full-page Portfolio source references](baseline-portfolio-contact.png)](baseline-portfolio-contact.png)
 
 <details>
 <summary>Opportunities</summary>
 
-Desktop1440px
+Desktop 1440 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
 | [![Before Opportunities desktop](before-opportunities-1440.png)](before-opportunities-1440.png) | [![After Opportunities desktop](after-opportunities-1440.png)](after-opportunities-1440.png) |
 
-Mobile390px
+Mobile 390 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
@@ -28,13 +28,13 @@ Mobile390px
 <details>
 <summary>Portfolio</summary>
 
-Desktop1440px
+Desktop 1440 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
 | [![Before Portfolio desktop](before-portfolio-1440.png)](before-portfolio-1440.png) | [![After Portfolio desktop](after-portfolio-1440.png)](after-portfolio-1440.png) |
 
-Mobile390px
+Mobile 390 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
@@ -45,13 +45,13 @@ Mobile390px
 <details>
 <summary>Themes</summary>
 
-Desktop1440px
+Desktop 1440 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
 | [![Before Themes desktop](before-themes-1440.png)](before-themes-1440.png) | [![After Themes desktop](after-themes-1440.png)](after-themes-1440.png) |
 
-Mobile390px
+Mobile 390 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
@@ -62,13 +62,13 @@ Mobile390px
 <details>
 <summary>Single Symbol</summary>
 
-Desktop1440px
+Desktop 1440 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
 | [![Before Single Symbol desktop](before-single-1440.png)](before-single-1440.png) | [![After Single Symbol desktop](after-single-1440.png)](after-single-1440.png) |
 
-Mobile390px
+Mobile 390 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
@@ -79,13 +79,13 @@ Mobile390px
 <details>
 <summary>Account settings</summary>
 
-Desktop1440px
+Desktop 1440 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
 | [![Before Account settings desktop](before-account-settings-1440.png)](before-account-settings-1440.png) | [![After Account settings desktop](after-account-settings-1440.png)](after-account-settings-1440.png) |
 
-Mobile390px
+Mobile 390 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
@@ -96,13 +96,13 @@ Mobile390px
 <details>
 <summary>Completed-trade form</summary>
 
-Desktop1440px
+Desktop 1440 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
 | [![Before Completed-trade form desktop](before-activity-form-1440.png)](before-activity-form-1440.png) | [![After Completed-trade form desktop](after-activity-form-1440.png)](after-activity-form-1440.png) |
 
-Mobile390px
+Mobile 390 px
 
 | Before e046666 | Restored UI |
 | --- | --- |
@@ -110,6 +110,6 @@ Mobile390px
 
 </details>
 
-Mobile Watch tradeoff: consistent stock cards make the controlled390px Opportunities page1946px tall versus1746px before; the Portfolio page falls from2586px to1722px. This is a readability/consistency choice, not a claim that every page is shorter.
+Mobile Watch tradeoff: consistent stock cards make the controlled 390 px Opportunities page 1946 px tall versus 1746 px before; the Portfolio page falls from 2586 px to 1722 px. This is a readability/consistency choice, not a claim that every page is shorter.
 
-Verification: full desktop/mobile pages, narrow360px checks, expanded four-group holding Details, Single details, cash editor, holdings editor, and unsubmitted activity form. The market-leadership strip may scroll inside its own container; restored pages do not require horizontal page scrolling. All fixture holdings remained unchanged.
+Verification: full desktop/mobile pages, narrow 360 px checks, expanded four-group holding Details, Single details, cash editor, holdings editor, and unsubmitted activity form. The market-leadership strip may scroll inside its own container; restored pages do not require horizontal page scrolling. All fixture holdings remained unchanged.
