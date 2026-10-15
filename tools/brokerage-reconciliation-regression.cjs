@@ -20,7 +20,7 @@ assert.equal(check.status,'balances-match');assert.equal(check.executable,false)
 assert.equal(check.portfolioSignature,JSON.stringify(holdings));
 assert.ok(page.includes('transactionCheck.portfolioSignature===JSON.stringify(portfolio)'));
 assert.ok(!body.includes('fetch(')&&!body.includes('localStorage.setItem')&&!body.includes('setPortfolio(')&&!body.includes('setC1Control('));
-const displayMatch=page.match(/const displayAction=([^;\n]+);/);
+const displayMatch=page.match(/const displayAction=(.*?),time=swingTimeReview\(s\)/);
 assert.ok(displayMatch,'The real holding-action fallback expression remains available');
 const display=displayMatch[1];
 const fallbackLabel=new Function('decision','presentation','return '+display);

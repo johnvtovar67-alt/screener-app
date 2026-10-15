@@ -130,19 +130,19 @@ async function main(){
   const opportunities=renderToStaticMarkup(React.createElement(Opportunities,props));
   assert.match(opportunities,/C1 strategy cash: \$3,037\.90/);
   assert.match(opportunities,new RegExp('Brokerage cash: \\$'+balance.toFixed(2).replace('.','\\.')));
-  assert.doesNotMatch(opportunities.slice(0,opportunities.indexOf('aria-label="Watch opportunities"')),/<h3[^>]*>BBB<\/h3>/,'A cash cap cannot create an actionable opportunity tile');
-  assert.match(opportunities,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>[\s\S]*?<details[^>]*>[\s\S]*?Investment rating: Buy/,'The unchanged investment rating remains available in neutral Watch Details without purchase authorization');
+  assert.match(opportunities,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>/,'A cash cap retains the original ranked tile without purchase authority');
+  assert.match(opportunities,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>[\s\S]*?Buy rating as of/,'The unchanged investment rating remains available in the original neutral ranked tile without purchase authorization');
   assert.doesNotMatch(opportunities,/<article[^>]*class="[^"]*green/,'Cash-blocked candidates do not receive a green opportunity impression');
   assert.match(opportunities,/C1 qualifies this stock, but available brokerage cash is insufficient for a new purchase/);
-  assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<h3[^>]*>CCC<\/h3>/,'Existing Watch analysis remains visible');
-  assert.doesNotMatch(opportunities,/currently ineligible|BUY \d+ shares/);
+  assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<b[^>]*>CCC<\/b>/,'Existing Watch analysis remains visible');
+  assert.doesNotMatch(opportunities,/currently ineligible|(?:buy|add) \d+ shares?/i);
   const exits=renderToStaticMarkup(React.createElement(Opportunities,{...props,view:'portfolio'}));
-  assert.match(exits,/Sell 10 shares/,'Zero brokerage cash must preserve checked exits');
-  assert.doesNotMatch(exits,/BUY \d+ shares/);
+  assert.match(exits,/sell 10 shares/,'Zero brokerage cash must preserve checked exits');
+  assert.doesNotMatch(exits,/(?:buy|add) \d+ shares?/i);
  }
  const oldAccount={...decision,brokerageCash:null,executableCash:0,brokerageCashCurrent:false,brokerageCashReason:'Enter current brokerage cash.'};
  const oldHtml=renderToStaticMarkup(React.createElement(Opportunities,{decision:oldAccount,screenRows,screenCurrent:true}));
- assert.match(oldHtml,/Brokerage cash: Not entered/);assert.doesNotMatch(oldHtml.slice(0,oldHtml.indexOf('aria-label="Watch opportunities"')),/<h3[^>]*>BBB<\/h3>/);assert.match(oldHtml,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>[\s\S]*?<details[^>]*>[\s\S]*?Investment rating: Buy/);assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Enter current brokerage cash/);
+ assert.match(oldHtml,/Brokerage cash: Not entered/);assert.match(oldHtml,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>/);assert.match(oldHtml,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>[\s\S]*?Buy rating as of/);assert.doesNotMatch(oldHtml,/(?:buy|add) \d+ shares?/i,'Missing brokerage cash cannot authorize a checked purchase quantity');assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Enter current brokerage cash/);
  await exerciseCashEditor(decision);
  console.log('PASS: compact cash summary reveals the unchanged editor, collapses only after successful save, preserves disabled/error/freshness status, and retains Buy/Watch analysis and checked exits without authorizing purchases.');
 }
