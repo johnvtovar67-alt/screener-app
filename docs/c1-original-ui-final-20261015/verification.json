@@ -1,0 +1,1274 @@
+{
+  "before": "483aaf7",
+  "reference": "f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde",
+  "after": "Optimized local production build",
+  "fixtureBoundary": "Same deterministic offline market/account values; no real owner access, provider requests, trades or holding changes.",
+  "originalCSS": {
+    "pageBytes": 9578,
+    "pageSha256": "fe3b39074dfa1061bda6ba18e80d207df25249d38440635c0114c4fd875dddd2",
+    "cardLayoutSha256": "7deed53e823d07eee10cb4dd5cdfa7929e6576b1b0311d05f0faf93c48be4477",
+    "accountOpportunitiesCSS": ".buyGrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.price small{font-size:12px;color:#64748b}"
+  },
+  "sellLabelFit": [
+    {
+      "width": 1440,
+      "surface": "card",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 239.28125,
+          "y": 408.84375,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 467.328125
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 1440,
+      "surface": "card",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 213.828125,
+          "y": 408.84375,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 467.328125
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 1440,
+      "surface": "card",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 245.84375,
+          "y": 408.84375,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 467.328125
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 1440,
+      "surface": "watch",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 732.703125,
+          "y": 881.25,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 1403
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 1440,
+      "surface": "watch",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 717.03125,
+          "y": 881.25,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 1403
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 1440,
+      "surface": "watch",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 736.875,
+          "y": 881.25,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 1403
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 1440,
+      "surface": "portfolio",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 573.15625,
+          "y": 1207.15625,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 825.5
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 1440,
+      "surface": "portfolio",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 563.125,
+          "y": 1207.15625,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 836.578125
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 1440,
+      "surface": "portfolio",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 1440,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 575.8125,
+          "y": 1207.15625,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 822.5625
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "card",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 115.953125,
+          "y": 567.84375,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 344
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "card",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 46,
+          "y": 598.34375,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 344
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "card",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 122.515625,
+          "y": 567.84375,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 344
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "watch",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 417.140625,
+          "y": 1662.25,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 657.1875
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "watch",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 417.140625,
+          "y": 1662.25,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 682.640625
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "watch",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 417.140625,
+          "y": 1662.25,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 650.625
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "portfolio",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 29,
+          "y": 1902.15625,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 361
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "portfolio",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 29,
+          "y": 1902.15625,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 361
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 390,
+      "surface": "portfolio",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 390,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 29,
+          "y": 1902.15625,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 361
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "card",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 46,
+          "y": 671.34375,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 314
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "card",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 46,
+          "y": 671.34375,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 314
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "card",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 46,
+          "y": 671.34375,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 314
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "watch",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 417.140625,
+          "y": 1801.25,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 657.1875
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "watch",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 91.140625,
+          "y": 609.25,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 356.640625
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "watch",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 97.140625,
+          "y": 609.25,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 330.625
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "portfolio",
+      "label": "SELL — STOP TRIGGERED",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — STOP TRIGGERED",
+          "x": 29,
+          "y": 1975.15625,
+          "width": 228.046875,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 331
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "portfolio",
+      "label": "SELL — PROFIT PROTECTION",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — PROFIT PROTECTION",
+          "x": 29,
+          "y": 485.15625,
+          "width": 253.5,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 331
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    },
+    {
+      "width": 360,
+      "surface": "portfolio",
+      "label": "SELL — MOMENTUM EXIT",
+      "pageWidth": 360,
+      "items": [
+        {
+          "text": "SELL — MOMENTUM EXIT",
+          "x": 29,
+          "y": 485.15625,
+          "width": 221.484375,
+          "height": 30,
+          "fontSize": "16px",
+          "lineCount": 1,
+          "clipped": false,
+          "parentRight": 331
+        }
+      ],
+      "fixtureNote": "Mechanical text-fit variant on actual rendered markup; not a trading-decision assertion"
+    }
+  ],
+  "cases": [
+    {
+      "view": "opportunities",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "cards": [
+        {
+          "symbol": "MPC",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 447.328125,
+          "height": 267,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 363.9375,
+              "y": 477.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 447.328125,
+          "height": 267,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 823.265625,
+              "y": 477.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "HPE",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 447.34375,
+          "height": 267,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 1282.609375,
+              "y": 477.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "x": 732.703125,
+          "y": 881.25,
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "clipped": false
+        }
+      ],
+      "decisionCopy": [
+        "Momentum score: 98.0/100",
+        "No sell signal is confirmed.",
+        "Momentum score: 97.0/100",
+        "Current checks support this purchase.",
+        "Momentum score: 95.0/100",
+        "The stock does not currently qualify for a purchase."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "HOLD",
+        "Strong Buy",
+        "NO PURCHASE",
+        "SELL — STOP TRIGGERED",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "portfolio",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 1378,
+          "height": 226,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Opening reference price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 1263.25,
+              "y": 449.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "x": 573.15625,
+          "y": 1207.15625,
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "clipped": false
+        }
+      ],
+      "decisionCopy": [
+        "Current checks support this purchase.",
+        "Stop triggered at $468.85; sale pending.",
+        "No sell signal is confirmed."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [
+        "Position",
+        "Open Date",
+        "Decision",
+        "Why",
+        "Price",
+        "Gain/Loss"
+      ],
+      "actions": [
+        "Buy",
+        "SELL — STOP TRIGGERED",
+        "HOLD"
+      ],
+      "errors": []
+    },
+    {
+      "view": "themes",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "single",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "idea yellow",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderColor": "rgb(203, 213, 225)",
+          "width": 332.5,
+          "height": 262,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": []
+        }
+      ],
+      "sellBadges": [],
+      "decisionCopy": [
+        "See Opportunities for the current C1 purchase decision."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "Watch"
+      ],
+      "errors": []
+    },
+    {
+      "view": "account-settings",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "activity-form",
+      "viewport": 1440,
+      "pageWidth": 1440,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "opportunities",
+      "viewport": 390,
+      "pageWidth": 390,
+      "cards": [
+        {
+          "symbol": "MPC",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 332,
+          "height": 245,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 240.609375,
+              "y": 636.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 332,
+          "height": 285,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 240.609375,
+              "y": 911.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "HPE",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 332,
+          "height": 263,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 240.609375,
+              "y": 1190.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "x": 417.140625,
+          "y": 1662.25,
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "clipped": false
+        }
+      ],
+      "decisionCopy": [
+        "Momentum score: 98.0/100",
+        "No sell signal is confirmed.",
+        "Momentum score: 97.0/100",
+        "Current checks support this purchase.",
+        "Momentum score: 95.0/100",
+        "The stock does not currently qualify for a purchase."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "HOLD",
+        "Strong Buy",
+        "NO PURCHASE",
+        "SELL — STOP TRIGGERED",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "portfolio",
+      "viewport": 390,
+      "pageWidth": 390,
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 344,
+          "height": 226,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Opening reference price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 221.25,
+              "y": 608.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "x": 29,
+          "y": 1902.15625,
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "clipped": false
+        }
+      ],
+      "decisionCopy": [
+        "Current checks support this purchase.",
+        "Oct 1, 2026",
+        "Stop triggered at $468.85; sale pending.",
+        "Oct 1, 2026",
+        "No sell signal is confirmed."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [
+        "Position",
+        "Open Date",
+        "Decision",
+        "Why",
+        "Price",
+        "Gain/Loss"
+      ],
+      "actions": [
+        "Buy",
+        "SELL — STOP TRIGGERED",
+        "HOLD"
+      ],
+      "errors": []
+    },
+    {
+      "view": "themes",
+      "viewport": 390,
+      "pageWidth": 390,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "single",
+      "viewport": 390,
+      "pageWidth": 390,
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "idea yellow",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderColor": "rgb(203, 213, 225)",
+          "width": 332,
+          "height": 262,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": []
+        }
+      ],
+      "sellBadges": [],
+      "decisionCopy": [
+        "See Opportunities for the current C1 purchase decision."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "Watch"
+      ],
+      "errors": []
+    },
+    {
+      "view": "account-settings",
+      "viewport": 390,
+      "pageWidth": 401,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "activity-form",
+      "viewport": 390,
+      "pageWidth": 401,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "opportunities",
+      "viewport": 360,
+      "pageWidth": 360,
+      "cards": [
+        {
+          "symbol": "MPC",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 302,
+          "height": 245,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 210.609375,
+              "y": 709.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 302,
+          "height": 303,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 210.609375,
+              "y": 984.34375,
+              "height": 14
+            }
+          ]
+        },
+        {
+          "symbol": "HPE",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 302,
+          "height": 281,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Signal closing price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 210.609375,
+              "y": 1299.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "x": 417.140625,
+          "y": 1771.25,
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "clipped": false
+        }
+      ],
+      "decisionCopy": [
+        "Momentum score: 98.0/100",
+        "No sell signal is confirmed.",
+        "Momentum score: 97.0/100",
+        "Current checks support this purchase.",
+        "Momentum score: 95.0/100",
+        "The stock does not currently qualify for a purchase."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "HOLD",
+        "Strong Buy",
+        "NO PURCHASE",
+        "SELL — STOP TRIGGERED",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "portfolio",
+      "viewport": 360,
+      "pageWidth": 360,
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "jsx-c55e4043d87284a5 idea green",
+          "background": "rgb(246, 255, 248)",
+          "borderColor": "rgb(74, 222, 128)",
+          "width": 314,
+          "height": 244,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": [
+            {
+              "text": "Opening reference price",
+              "display": "block",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "x": 191.25,
+              "y": 663.34375,
+              "height": 14
+            }
+          ]
+        }
+      ],
+      "sellBadges": [
+        {
+          "label": "SELL — STOP TRIGGERED",
+          "x": 29,
+          "y": 1975.15625,
+          "width": 228.046875,
+          "height": 30,
+          "lines": 1,
+          "whiteSpace": "nowrap",
+          "clipped": false
+        }
+      ],
+      "decisionCopy": [
+        "Current checks support this purchase.",
+        "Oct 1, 2026",
+        "Stop triggered at $468.85; sale pending.",
+        "Oct 1, 2026",
+        "No sell signal is confirmed."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [
+        "Position",
+        "Open Date",
+        "Decision",
+        "Why",
+        "Price",
+        "Gain/Loss"
+      ],
+      "actions": [
+        "Buy",
+        "SELL — STOP TRIGGERED",
+        "HOLD"
+      ],
+      "errors": []
+    },
+    {
+      "view": "themes",
+      "viewport": 360,
+      "pageWidth": 371,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH",
+        "WATCH"
+      ],
+      "errors": []
+    },
+    {
+      "view": "single",
+      "viewport": 360,
+      "pageWidth": 360,
+      "cards": [
+        {
+          "symbol": "VEEV",
+          "className": "idea yellow",
+          "background": "rgba(0, 0, 0, 0)",
+          "borderColor": "rgb(203, 213, 225)",
+          "width": 302,
+          "height": 262,
+          "padding": "16px",
+          "priceFont": "19px",
+          "labels": []
+        }
+      ],
+      "sellBadges": [],
+      "decisionCopy": [
+        "See Opportunities for the current C1 purchase decision."
+      ],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [
+        "Watch"
+      ],
+      "errors": []
+    },
+    {
+      "view": "account-settings",
+      "viewport": 360,
+      "pageWidth": 401,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [],
+      "errors": []
+    },
+    {
+      "view": "activity-form",
+      "viewport": 360,
+      "pageWidth": 401,
+      "cards": [],
+      "sellBadges": [],
+      "decisionCopy": [],
+      "emptyEventBadgesCount": 0,
+      "visibleTechnicalEvidenceCount": 0,
+      "tableHeaders": [],
+      "actions": [],
+      "errors": []
+    }
+  ]
+}

@@ -86,7 +86,7 @@ async function main(){
   assert.doesNotMatch(markup,/(?:buy|add) \d+ shares?/i,'Pending evidence cannot authorize any purchase or completion quantity');
   equal(watchSymbols(markup),['DELL','VLO','ILMN','AAA','BBB','CCC'],'Pending evidence retains the independent Watch members and order');
  };
- const pendingHtml=render(partial);assert.match(pendingHtml,/verification is pending/);assert.doesNotMatch(pendingHtml,/currently ineligible/);assertPaused(pendingHtml);
+ const pendingHtml=render(partial);assert.match(pendingHtml,/Current information is insufficient for a purchase/);assert.doesNotMatch(pendingHtml,/currently ineligible/);assertPaused(pendingHtml);
  // Browser omission can suppress a server-checked Buy/Add recommendation,
  // but cannot generate or mutate the independent server recommendation.
  const RealDate=Date;
@@ -97,17 +97,17 @@ async function main(){
   const manual=fixed.load('lib/c1ManualRecommendations.js'),review=manual.buildC1ManualRecommendations({decision:entryDecision,openingPlan:plan});assert.equal(review.status,'ready');
   const serverEvidence=JSON.stringify({plan,review}),Entry=component(file,fixed).default;
   function actions(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Entry({decision:entryDecision,executionDecision:entryDecision,manualRecommendations:review,openingPlan:plan,screenRows,screenCurrent:true,view:'portfolio'});const html=renderToStaticMarkup(node);effects.at(-1)();return html;}
-  const checked=actions(rows);assert.match(checked,/Buy 2 shares/);assert.match(checked,/Add 3 shares/);assert.match(checked,/sell 4 shares/);
-  const omitted=actions(partial);assert.doesNotMatch(omitted,/(?:buy 2|add 3) shares/i);assert.match(omitted,/sell 4 shares/,'Missing entry evidence does not suppress checked exits');
+  const checked=actions(rows);assert.match(checked,/Buy 2 shares/);assert.match(checked,/Add 3 shares/);assert.match(checked,/DELL: SELL · 4 shares/);
+  const omitted=actions(partial);assert.doesNotMatch(omitted,/(?:buy 2|add 3) shares/i);assert.match(omitted,/DELL: SELL · 4 shares/,'Missing entry evidence does not suppress checked exits');
   assert.equal(JSON.stringify({plan,review}),serverEvidence,'Compact evidence cannot change server orders or quantities');
  }finally{global.Date=RealDate;}
  const previousWindow=global.window;
  try{
   global.window={localStorage:storage};refs.length=0;states.length=0;
-  assert.match(render(partial),/verification is pending/,'A new mount must restore before trusting browser cache');
+  assert.match(render(partial),/Current information is insufficient for a purchase/,'A new mount must restore before trusting browser cache');
   const restoredMarkup=render(partial);
   assertPaused(restoredMarkup);
-  assert.doesNotMatch(restoredMarkup,/currently ineligible/);assert.match(restoredMarkup,/verification is pending/);
+  assert.doesNotMatch(restoredMarkup,/currently ineligible/);assert.match(restoredMarkup,/Current information is insufficient for a purchase/);
   equal(readC1ScreenEvidence(storage,decision).ratings,first.ratings);
  }finally{if(previousWindow===undefined)delete global.window;else global.window=previousWindow;}
  // An earlier screen response cannot publish after the newer refresh.

@@ -53,14 +53,14 @@ try{
  const props={decision:current,openingPlan,manualRecommendations:review,view:'portfolio',screenRows,screenCurrent:true};
  const render=patch=>renderToStaticMarkup(React.createElement(Component,{...props,...patch}));
  const html=render({});
- assert.match(html,/sell 10 shares/);assert.match(html,/Buy 5 shares/);
- assert.ok(html.indexOf('Exits to review')<html.indexOf('C1 recommendation'),'Funded replacement buys follow exits');
+ assert.match(html,/AAA: SELL · 10 shares/);assert.match(html,/Buy 5 shares/);
+ assert.ok(html.indexOf('Sell decisions')<html.indexOf('C1 recommendation'),'Funded replacement buys follow exits');
  assert.match(html,/Opening reference price/,'The original reference-price and quantity layout is retained');
  const inconsistent=render({screenRows:[{...screenRows[0],recommendation:{expertDecision:{strongBuyPass:false,metrics:{quoteFreshnessPass:false}}}}]});
- assert.match(inconsistent,/sell 10 shares/);assert.doesNotMatch(inconsistent,/Buy 5 shares/,'Portfolio must fail closed when the current opportunity screen does not authorize the replacement buy');
+ assert.match(inconsistent,/AAA: SELL · 10 shares/);assert.doesNotMatch(inconsistent,/Buy 5 shares/,'Portfolio must fail closed when the current opportunity screen does not authorize the replacement buy');
  const fullSlots={...current,positions:[row,{...row,symbol:'CCC'},{...row,symbol:'DDD'}],stockScreen:{...current.stockScreen,candidates:[{...current.stockScreen.candidates[0],symbol:'BBB'}]}};
  const fullSlotsHtml=render({decision:fullSlots,view:'opportunities',openingPlan:{...openingPlan,orders:[]},manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:{...openingPlan,orders:[]}})});
- assert.match(fullSlotsHtml,/All three C1 position slots are currently allocated/,'Full account must explain why an unowned Buy-rated candidate has no purchase');
+ assert.match(fullSlotsHtml,/All C1 position slots are occupied\./,'Full account must explain why an unowned Buy-rated candidate has no purchase');
  assert.doesNotMatch(fullSlotsHtml,/No detailed entry-check result is available/);
  for(const patch of [{manualRecommendations:{...review,status:'waiting'}},{decision:{...current,revision:3}},{decision:{...current,current:false}},{manualRecommendations:{...review,validUntil:'2026-09-14T13:59:59Z'}}])assert.equal(render(patch),'','No orange action box without a current checked action');
  const conditional={...review,orders:[{...openingPlan.orders[0],condition:'stop-triggered'}]};
