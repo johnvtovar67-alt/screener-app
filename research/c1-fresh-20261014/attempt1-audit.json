@@ -1,0 +1,491 @@
+{
+  "contract": "c1-fresh-ephemeral-v1",
+  "status": "failed_prerequisite",
+  "source_ref": "f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde",
+  "spec_ref": "3bcfca60c8ec5d2f2bf3d1b1b6724bd1e34b9f08",
+  "frozen48_modified": false,
+  "production_modified": false,
+  "licensed_inputs_saved": false,
+  "initial_schema_probe": {
+    "symbol": "PG",
+    "from": "2020-02-18",
+    "to": "2020-03-06",
+    "status": 200,
+    "rows": 14,
+    "bytes": 2358
+  },
+  "symbols": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "TSLA",
+    "JPM",
+    "XOM",
+    "PG",
+    "JNJ"
+  ],
+  "from": "2019-01-01",
+  "to": "2024-12-31",
+  "provider_vintage": "fresh_retrieval_not_as_known_history",
+  "adjustment": "provider adjOpen/adjHigh/adjLow/adjClose; adjusted-open execution proxy only",
+  "calendar": {
+    "independent_nyse_calendar_match": true,
+    "spy_calendar_match": true,
+    "sessions_per_symbol": 1510,
+    "first_session": "2019-01-02",
+    "last_session": "2024-12-31",
+    "warmup_sessions": 252,
+    "missing_observations": 0,
+    "duplicate_observations": 0,
+    "adjusted_ohlcv_geometry_pass": true
+  },
+  "membership": {
+    "endpoint_available": true,
+    "rows": 1531,
+    "fields": [
+      "addedSecurity",
+      "addedTicker",
+      "changeType",
+      "date",
+      "dateAdded",
+      "reason",
+      "removedSecurity",
+      "removedTicker",
+      "symbol"
+    ],
+    "dated_change_fields_present": true,
+    "full_dated_eligible_universe_verified": false,
+    "historical_sector_assignments_verified": false,
+    "limitation": "Change feed availability only; fixed purposive sample, no backdated membership or ranks."
+  },
+  "repeat_consistency": [
+    {
+      "symbol": "NVDA",
+      "from": "2024-05-20",
+      "to": "2024-06-21",
+      "rows": 23,
+      "identical_normalized_overlap": true
+    },
+    {
+      "symbol": "PG",
+      "from": "2020-02-18",
+      "to": "2020-03-06",
+      "rows": 14,
+      "identical_normalized_overlap": true
+    }
+  ],
+  "adjustment_checks": [
+    {
+      "symbol": "NVDA",
+      "dates_match": true,
+      "ohlc_common_adjustment_factor_within_0_3pct": true,
+      "action_records_in_window": 1,
+      "action_field_names": [
+        "date",
+        "denominator",
+        "numerator",
+        "splitType",
+        "symbol"
+      ],
+      "split_adjusted_full_continuity": true,
+      "dividend_factor_changes_coincide_with_action_dates": null,
+      "interpretation": "Internal split/dividend consistency only; no independent vendor or as-known vintage certification."
+    },
+    {
+      "symbol": "PG",
+      "dates_match": true,
+      "ohlc_common_adjustment_factor_within_0_3pct": true,
+      "action_records_in_window": 1,
+      "action_field_names": [
+        "adjDividend",
+        "date",
+        "declarationDate",
+        "dividend",
+        "frequency",
+        "paymentDate",
+        "recordDate",
+        "symbol",
+        "yield"
+      ],
+      "split_adjusted_full_continuity": null,
+      "dividend_factor_changes_coincide_with_action_dates": true,
+      "interpretation": "Internal split/dividend consistency only; no independent vendor or as-known vintage certification."
+    }
+  ],
+  "failure": "OSError",
+  "requests": [
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "AAPL",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:39.767850+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 257906,
+      "sha256": "3f25bd472e5cb806adadd6a82381236db57af2313e404f5df12d39079fe8ce68",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "MSFT",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:40.130016+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 258929,
+      "sha256": "40b335b0d9e4b7270d1719d128eec58d41b3d2e4874f5ad82bbe444ad9200a3b",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "NVDA",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:40.480285+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 253612,
+      "sha256": "f7e4a11ecd9cf24a142625d8829bfb5cbaefdf3f153811155247255bbc7a9b09",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "TSLA",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:40.830266+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 257576,
+      "sha256": "c7854f3036a01b2d7add3020df0da74a55428e5564ef413396b8ce6784a9093f",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "JPM",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:41.180423+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 255262,
+      "sha256": "0c967bae521c96d71c32b25bf3272167818f2d92faa32bfb7546cb1c7b2d1762",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "XOM",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:41.530534+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 252500,
+      "sha256": "95dfc7ab4dcfdff4cbcdca13e5acd3eea5640bc48e26f64ad6f8cd483f8b3877",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "PG",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:41.880635+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 253789,
+      "sha256": "3619b2b45139b7e7f8140d93ea0dac1ae5745db733e59c03b8dde953df2aa7dd",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "JNJ",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:42.230739+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 256121,
+      "sha256": "0a4a322a51dd5cdfd9b552b1fa84702809343c253bd9e968e03e693ab0776f44",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "SPY",
+        "from": "2019-01-01",
+        "to": "2024-12-31"
+      },
+      "utc": "2026-10-15T01:11:42.580849+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 257786,
+      "sha256": "e679c11b84a0c62823e8686a09f851ab61b72828e0ea86990033fc8fa3c678d3",
+      "rows": 1510,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-sp500-constituent",
+      "params": {},
+      "utc": "2026-10-15T01:11:42.930952+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 456098,
+      "sha256": "cb9b5a15ecdf98e155e67284827c6b767b4f91ec0cc81e8ef52a3871d63309ee",
+      "rows": 1531,
+      "fields": [
+        "addedSecurity",
+        "addedTicker",
+        "changeType",
+        "date",
+        "dateAdded",
+        "reason",
+        "removedSecurity",
+        "removedTicker",
+        "symbol"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "NVDA",
+        "from": "2024-05-20",
+        "to": "2024-06-21"
+      },
+      "utc": "2026-10-15T01:11:43.281100+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 3961,
+      "sha256": "7cce1b540aa5279acb629bcca570a4f183f33e1a5b113583a6bb0c4c1ce6f676",
+      "rows": 23,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "params": {
+        "symbol": "PG",
+        "from": "2020-02-18",
+        "to": "2020-03-06"
+      },
+      "utc": "2026-10-15T01:11:43.631237+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 2358,
+      "sha256": "72feeb1e13f58fa3f080ec338fe627833f7fb8b450672ba2410691457a459da7",
+      "rows": 14,
+      "fields": [
+        "adjClose",
+        "adjHigh",
+        "adjLow",
+        "adjOpen",
+        "date",
+        "symbol",
+        "volume"
+      ]
+    },
+    {
+      "endpoint": "splits",
+      "params": {
+        "symbol": "NVDA",
+        "limit": "100"
+      },
+      "utc": "2026-10-15T01:11:43.981370+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 783,
+      "sha256": "3df5c4f5595ce43ba7a3630cebdbce150963e41869034843d029a6a1aa63aad4",
+      "rows": 6,
+      "fields": [
+        "date",
+        "denominator",
+        "numerator",
+        "splitType",
+        "symbol"
+      ]
+    },
+    {
+      "endpoint": "dividends",
+      "params": {
+        "symbol": "PG",
+        "limit": "100"
+      },
+      "utc": "2026-10-15T01:11:44.331478+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 26795,
+      "sha256": "38df48c26906890afe5cc9005180a78c73ac6bf0ebe1b533f854aba423af7ace",
+      "rows": 100,
+      "fields": [
+        "adjDividend",
+        "date",
+        "declarationDate",
+        "dividend",
+        "frequency",
+        "paymentDate",
+        "recordDate",
+        "symbol",
+        "yield"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/full",
+      "params": {
+        "symbol": "NVDA",
+        "from": "2024-05-20",
+        "to": "2024-06-21"
+      },
+      "utc": "2026-10-15T01:11:44.681656+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 5265,
+      "sha256": "21939564dc1286beb2c819b0c733e34c356e3eef2ff3071215c1a77f17ef79ac",
+      "rows": 23,
+      "fields": [
+        "change",
+        "changePercent",
+        "close",
+        "date",
+        "high",
+        "low",
+        "open",
+        "symbol",
+        "volume",
+        "vwap"
+      ]
+    },
+    {
+      "endpoint": "historical-price-eod/full",
+      "params": {
+        "symbol": "PG",
+        "from": "2024-06-01",
+        "to": "2024-08-31"
+      },
+      "utc": "2026-10-15T01:11:45.031780+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "bytes": 14352,
+      "sha256": "c1e8977c8a5c8274caff7b1dc91ec86af598206d978161e508e2d23e056c4c44",
+      "rows": 63,
+      "fields": [
+        "change",
+        "changePercent",
+        "close",
+        "date",
+        "high",
+        "low",
+        "open",
+        "symbol",
+        "volume",
+        "vwap"
+      ]
+    }
+  ],
+  "provider_calls_including_initial_probe": 17,
+  "bytes_including_initial_probe": 2815451,
+  "input_preservation": "None: raw and normalized licensed inputs existed only in process memory"
+}
