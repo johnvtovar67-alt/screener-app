@@ -32,6 +32,7 @@ async function main(){try{
  }
  const helpers=modules.load('lib/c1PositionPresentation.js');
  const {c1PositionPresentation:present}=helpers;
+ const {c1PlainDecisionReason}=modules.load('lib/c1DecisionCopy.js');
  const {verifyC1Quote}=modules.load('lib/c1QuoteVerification.js');
  const {buildC1ManualRecommendations}=modules.load('lib/c1ManualRecommendations.js');
  function holding(symbol='DELL',patch={}){
@@ -343,7 +344,7 @@ async function main(){try{
   const decision=decisionFor(position,{current}),record={exports:{}};
   const before=copy({position,stock,decision});
   const evidence={classification:'Momentum Intact',status:'available',label:'Momentum Intact',tone:'intact',explanation:'Technical evidence sentinel: source rank and MACD.',sourceSessionDate:source,limitations:[]};
-  const bindings={...helpers,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
+  const bindings={...helpers,c1PlainDecisionReason,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
    c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
    swingTimeReview:()=>({}),holdingReason:(s,decision)=>decision.reason,sym:s=>s.symbol,price:s=>s.price,cls:action=>/sell|exit|stop/i.test(action)?'red':'yellow',factorFor:()=> 'Sector',
    portfolioDateDisplay:()=> 'Oct 1, 2026',specialSituation:()=>null,money:n=>'$'+Number(n).toFixed(2),pct:n=>Number(n).toFixed(2)+'%'};
@@ -355,22 +356,24 @@ async function main(){try{
    const headers=[...heading.matchAll(/<th(?:\s[^>]*)?>([\s\S]*?)<\/th>/g)].map(match=>match[1]);
    const cells=[...html.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)].map(match=>match[1]);
    eq(cells.length,headers.length,'Actual desktop position cells align with the visible table headings');
-   same(headers,['Position','Open Date','Decision','Evidence','Why','Price','Gain/Loss'],'The literal historical seven-column Portfolio layout is restored');
+   same(headers,['Position','Open Date','Decision','Why','Price','Gain/Loss'],'Only the technical Evidence column is omitted from the original styled Portfolio table');
    eq(headers.at(-2),'Price','The displayed price remains in the Price column');
    eq(headers.at(-1),'Gain/Loss','The gain/loss amount remains in the Gain/Loss column');
   }
   return html;
  }
  const visible=html=>html.replace(/<details\b[^>]*>[\s\S]*?<\/details>/g,'');
- // The original evidence/Why table and mobile fields must consume current
+ // The original table and mobile fields must consume current
  // decisions without changing the verified price, account or trade facts.
  for(const mobile of [false,true]){
   const stop=portfolioHtml(holding(),quote(),{mobile});
   match(stop,/SELL — STOP TRIGGERED/,'The historical Portfolio renders the current verified stop action');
   match(stop,/class="[^"]*pill red[^\"]*"[^>]*>SELL — STOP TRIGGERED</,'The current confirmed stop retains its red action');
-  match(stop,/Momentum Intact/,'The original historical momentum evidence remains available alongside the independent exit');
-  match(stop,/As of 2026-10-14/,'The original evidence field retains its accepted source session');
-  absent(stop,/<details\b/,'The original Portfolio evidence and Why layout has no rebuilt Details wrapper');
+  absent(stop,/Momentum Intact|Technical evidence sentinel|MACD|histogram|confirmation streak|1\/3\/5|momentumBadge|momentumEvidenceText/,'Technical evidence remains internal while the current verified exit is displayed');
+  match(stop,/Stop triggered at \$86\.00; sale pending\./,'The verified stop has one plain reason using the existing recorded stop');
+  absent(stop,/<details\b/,'Technical rules are not reintroduced in a disclosure');
+  const reason=mobile?stop.match(/<small>Why<\/small><p>([\s\S]*?)<\/p>/)?.[1]:[...stop.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)][3]?.[1];
+  eq((reason?.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each Portfolio row has exactly one plain-English reason sentence');
   const hold=portfolioHtml(holding('MPC'),quote('MPC',115),{mobile});
   match(hold,/>HOLD</,'MPC without an exit retains the current Hold action in the historical layout');
   match(hold,/class="[^"]*pill yellow[^\"]*"[^>]*>HOLD</,'The historical action pill retains the current Hold color');
@@ -388,6 +391,38 @@ async function main(){try{
   const protectedWinner=portfolioHtml(holding('MPC',{exits:[{reason:'recent-momentum-profit-protection'}]}),quote('MPC',115),{mobile});
   match(protectedWinner,/class="[^"]*pill red[^\"]*"[^>]*>SELL — PROFIT PROTECTION</,'MPC retains its independent profit-protection exit');
  }
+
+ // The copy layer is read-only: raw technical evidence and action authority
+ // remain unchanged while all four ancillary views render a single short reason.
+ const copyInput={action:'HOLD',reason:technical,presentation:present(args(holding('MPC'),quote('MPC',115))),position:holding('MPC')},copyBefore=copy(copyInput);
+ const copyOutput=c1PlainDecisionReason(copyInput);
+ eq(typeof copyOutput,'string','The display helper returns only text');
+ same(copyInput,copyBefore,'Short copy cannot mutate source actions, stops, accepted prices, cash or orders');
+ absent(copyOutput,/MACD|histogram|confirmation|top-six|1\/3\/5/,'Raw technical explanations cannot leak through the display helper');
+ const ancillaryCode=babel.transformSync('import React from "react";\n'+page.slice(page.indexOf('function Card('),page.indexOf('function fullMarketCoverageFallback('))+'\nmodule.exports={Card,RecentSignalChanges,VerificationPaused,OnDeck};',{
+  filename:'plain-decision-views-regression.jsx',babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]
+ }).code;
+ const sample={symbol:'TEST',price:105,reason:technical,action:'Watch'},ancillary={exports:{}},ancillaryBindings={c1PlainDecisionReason,fd:s=>({action:s.action,reason:s.reason,nextTrigger:technical}),act:s=>s.action,event:s=>s.eventRisk||{status:'Clear'},
+  sym:s=>s.symbol,price:s=>s.price,name:()=> 'Test issuer',theme:()=> 'Technology',cls:()=> 'gray',money:n=>'$'+Number(n).toFixed(2),chg:()=>0,pct:n=>Number(n).toFixed(2)+'%',onDeckReason:()=>technical};
+ new Function('require','module','exports',...Object.keys(ancillaryBindings),ancillaryCode)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),ancillary,ancillary.exports,...Object.values(ancillaryBindings));
+ for(const [name,props] of [['Card',{s:sample}],['RecentSignalChanges',{rows:[sample]}],['VerificationPaused',{rows:[sample]}],['OnDeck',{rows:[sample]}]]){
+  const before=copy(props),html=renderToStaticMarkup(React.createElement(ancillary.exports[name],props));
+  same(props,before,`${name}: rendering cannot mutate the underlying decision or evidence`);
+  absent(html,/Technical detail sentinel|MACD|histogram|confirmation|top-six|1\/3\/5|Next Trigger|Timing<|Size<|Priority<|<details/ ,`${name}: technical rules and duplicated supporting prose stay internal`);
+  match(html,/\$105\.00/,`${name}: the original displayed price remains available`);
+  const text=html.replace(/<style[\s\S]*?<\/style>/g,'').replace(/<[^>]*>/g,' ');
+  eq((text.match(/[.!?](?=\s+[A-Z]|\s*$)/g)||[]).length,1,`${name}: the decision has exactly one plain-English explanation sentence`);
+ }
+
+ const clearCard=renderToStaticMarkup(React.createElement(ancillary.exports.Card,{s:sample}));
+ absent(clearCard,/class="[^"]*eventTag/,'A Clear event object without a label cannot create an empty badge');
+ const eventCard=renderToStaticMarkup(React.createElement(ancillary.exports.Card,{s:{...sample,eventRisk:{label:'Acquisition Pending'}}}));
+ match(eventCard,/Acquisition Pending/,'A real labeled event retains its original badge');
+ const redirected={...sample,symbol:'VEEV',reason:'Use Opportunities for current account actions.'},redirectBefore=copy(redirected);
+ const redirectCard=renderToStaticMarkup(React.createElement(ancillary.exports.Card,{s:redirected}));
+ match(redirectCard,/See Opportunities for the current C1 purchase decision\./,'Single-symbol analysis directs to the authoritative C1 purchase view');
+ absent(redirectCard,/does not currently qualify|insufficient for a purchase/,'An analysis-only redirect cannot falsely downgrade an Opportunities Buy');
+ same(redirected,redirectBefore,'Redirect copy preserves the original Single Symbol action and reason');
 
  // Compile the real Opportunities component with the same shared helper.
  const Component=loadComponent('components/C1AccountOpportunities.js').default;
