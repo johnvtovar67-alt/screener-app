@@ -1,0 +1,51 @@
+{
+  "contract": "c1-eight-remote-retrieval-verification-v1",
+  "verification_utc": "2026-10-15T01:59:18.529595+00:00",
+  "remote": "https://github.com/johnvtovar67-alt/screener-app.git",
+  "branch": "research/c1-eight-comparison-20261014",
+  "retrieved_commit": "313e6ac33e45812157e5701abe7e4e854f6bcf09",
+  "expected_commit_match": true,
+  "retrieval_method": "New depth-one single-branch Git clone from origin HTTPS using inherited network proxy; no local source repository, reference clone or object alternates",
+  "local_object_alternates_present": false,
+  "documents_read": [
+    "AGENTS.md",
+    "research/c1-eight-20261014/README.md",
+    "research/c1-eight-20261014/PROTOCOL.md",
+    "research/c1-eight-20261014/EXECUTION-ADDENDUM.md"
+  ],
+  "checks": [
+    {
+      "command": "python -m unittest discover -s research/c1-eight-20261014 -p 'test_*.py' -v",
+      "tests_run": 23,
+      "exit_code": 0,
+      "status": "passed"
+    },
+    {
+      "command": "python -m unittest discover -s research/c1-fresh-20261014 -p 'test_*.py' -v",
+      "tests_run": 16,
+      "exit_code": 0,
+      "status": "passed"
+    },
+    {
+      "command": "node tools/c1-release-freeze-check.cjs",
+      "exit_code": 0,
+      "status": "passed",
+      "approved_application_release": "8007dc8"
+    }
+  ],
+  "total_synthetic_tests_passed": 39,
+  "experiment_comprehension": [
+    "Separate developmental raw-factor and independent hypothetical-exit research; no official full-universe C1 ranking, portfolio alpha, rule promotion or production change.",
+    "Frozen original factor windows, fixed deterioration and H/P thresholds, completed-close decisions and following-open adjusted-price proxies are preserved.",
+    "Full-eight 2019 formation groups, causal prior-close regimes, matched and unmatched responses, horizon censoring, common-quarter bootstrap and influential-name exclusions remain distinct.",
+    "Execution addendum supersedes earlier administrative pause without changing statistical definitions.",
+    "Do not repeat completed acquisition for checkpoint verification; numerical outputs and provider fingerprints remain private and are absent from this retrieval.",
+    "Any larger volatility-adjusted test requires a separately frozen rule and additional coverage; existing normalization is measurement only."
+  ],
+  "fmp_or_other_market_data_requests_during_verification": 0,
+  "licensed_source_data_accessed_during_verification": false,
+  "private_numerical_outputs_retrieved": false,
+  "production_or_account_changes": false,
+  "external_messages_sent": false,
+  "publication_performed_by_verifier": false
+}
