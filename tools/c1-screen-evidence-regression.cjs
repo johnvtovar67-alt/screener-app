@@ -8,7 +8,7 @@ const {readTop5Response}=loader.load('lib/top5Response.js');
 const specs=[['MRNA','Health Care'],['HPE','Technology'],['MPC','Energy'],['DELL','Technology'],['VLO','Energy'],['ILMN','Health Care'],['AAA','Other'],['BBB','Other'],['CCC','Other']];
 const session={date:'2026-10-09',signals:specs.map(([symbol,sector],i)=>({symbol,sector,companyName:symbol,cik:String(100+i),price:100,researchFactors:{momentumPercentile:99-i},entryTiming:{available:true,asOf:'2026-10-09',liquidityPass:true,averageDollarVolume20:500000000}}))};
 const snapshot=buildC1StockScreenSnapshot(session);
-const decision={current:true,decisionId:'accepted-hash:1',sourceSessionDate:session.date,stockScreen:snapshot,positions:[{symbol:'DELL',entryContext:{stage:'full'}}]};
+const decision={contract:'c1-account-decision-v1',current:true,decisionId:'accepted-hash:1',sourceSessionDate:session.date,stockScreen:snapshot,positions:[{symbol:'DELL',exits:[],reason:'Momentum rank #4; original account holding explanation.',entryContext:{stage:'full'}}]};
 const rows=specs.map(([symbol,sector])=>({symbol,sector,price:100,entryTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000},expertDecision:{metrics:{quoteFreshnessPass:true}},eventRisk:{status:'Clear'},finalDecision:{action:'Watch',relativeCapitalScore:['DELL','ILMN'].includes(symbol)?200:0}}));
 const crowded=[...rows,...Array.from({length:110},(_,i)=>({symbol:'X'+i,finalDecision:{action:'Watch',relativeCapitalScore:100-i}}))];
 const api=fs.readFileSync('pages/api/top5.js','utf8'),start=api.indexOf('function compactRowsForClient('),end=api.indexOf('\n}',start)+2;
@@ -17,11 +17,11 @@ const page=fs.readFileSync('pages/index.js','utf8');
 const boundary=page.slice(page.indexOf('  function screenHealth('),page.indexOf('  async function fetchStock('));
 function client(){
  const state={stocks:[],health:null,requests:[]};let resolveAccount;
- const box={accountView:null,screenRequestId:{current:0},Date,setTimeout:fn=>{fn();},readTop5Response,
+ const box={accountView:null,portfolio:[],screenRequestId:{current:0},Date,setTimeout:fn=>{fn();},readTop5Response,
   refreshC1Account:()=>new Promise(resolve=>{resolveAccount=resolve;}),prepareC1Execution:()=>{},
   performanceHistory:async()=>({records:[],available:true}),signalPersistence:()=>({}),sym:r=>r.symbol,
   fetch:async url=>{state.requests.push(url);const u=new URL(url,'https://offline.invalid');return new Response(JSON.stringify({stocks:compact(crowded,80,'',u.searchParams.get('screenSymbols')||''),meta:{quoteFeedStatus:'live',fundamentalFeedStatus:'healthy'}}));},
-  setReloading:()=>{},setErr:()=>{},setStocks:value=>{state.stocks=typeof value==='function'?value(state.stocks):value;},setFeedHealth:value=>{state.health=typeof value==='function'?value(state.health):value;},setMarketScope:()=>{},setMarketRadar:()=>{},setLastUpdated:()=>{},setThemeStocks:()=>{},setThemeFeedHealth:()=>{}};
+  setReloading:()=>{},setErr:()=>{},setStocks:value=>{state.stocks=typeof value==='function'?value(state.stocks):value;},setFeedHealth:value=>{state.health=typeof value==='function'?value(state.health):value;},setMarketScope:()=>{},setMarketRadar:()=>{},setLastUpdated:()=>{},setApplicationRefreshAt:()=>{},setThemeStocks:()=>{},setThemeFeedHealth:()=>{}};
  vm.createContext(box);vm.runInContext(boundary+';this.loadScreen=load;',box);
  return {state,box,load:box.loadScreen,get account(){return resolveAccount;}};
 }
@@ -71,11 +71,13 @@ async function main(){
  assert.ok(heldRow,'The existing holding retains the Held priority');
  assert.match(heldRow,/<b>HOLD<\/b>/,'A held stock without a confirmed exit has an action-first Hold status');
  assert.match(heldRow,/<details><summary>Details<\/summary>[\s\S]*?Momentum rank #4/,'The original holding rank remains available in Details');
- assert.doesNotMatch(heldRow.replace(/<details>[\s\S]*?<\/details>/g,''),/Momentum rank|Momentum score/,'Technical holding evidence is outside the primary action');
+ assert.doesNotMatch(heldRow.replace(/<details>[\s\S]*?<\/details>/g,''),/Momentum rank/,'The full holding explanation remains secondary to the primary action');
+ assert.match(heldRow,/<td>96\.0\/100<\/td><td>\$100\.00<\/td>/,'The original compact score and signal-price columns remain readable');
  assert.doesNotMatch(heldRow,/<details[^>]*\bopen(?:\s|=|>)/,'Holding details start collapsed');
  assert.match(html,/<td>4<\/td><td><b>VLO/);assert.match(html,/<td>5<\/td><td><b>ILMN/);
  const pendingHtml=render(partial);assert.match(pendingHtml,/verification is pending/);assert.doesNotMatch(pendingHtml,/currently ineligible/);
- for(const symbol of first.buySymbols)assert.ok(pendingHtml.includes('<h3>'+symbol+'</h3>'),'Retain verified opportunity tiles');
+ for(const symbol of first.buySymbols)assert.ok(pendingHtml.includes('<b>'+symbol+'</b>'),'Retain verified ranked candidates in neutral Watch while new capital is paused');
+ assert.doesNotMatch(pendingHtml,/<h3>/,'Unverified purchase quantities cannot appear as actionable opportunity tiles');
  for(const symbol of ['DELL','VLO','ILMN'])assert.ok(pendingHtml.includes('<b>'+symbol+'</b>'),'Retain Watch members');
  assert.match(pendingHtml,/<td>4<\/td><td><b>VLO/);assert.match(pendingHtml,/<td>5<\/td><td><b>ILMN/);
  // Browser omission can suppress a server-checked Buy/Add recommendation,
@@ -98,7 +100,8 @@ async function main(){
   global.window={localStorage:storage};refs.length=0;states.length=0;
   assert.match(render(partial),/verification is pending/,'A new mount must restore before trusting browser cache');
   const restoredMarkup=render(partial);
-  for(const symbol of first.buySymbols)assert.ok(restoredMarkup.includes('<h3>'+symbol+'</h3>'),'Page remount retains verified composition when new response is partial');
+  for(const symbol of first.buySymbols)assert.ok(restoredMarkup.includes('<b>'+symbol+'</b>'),'Page remount retains verified composition in neutral Watch when new response is partial');
+  assert.doesNotMatch(restoredMarkup,/<h3>/,'Restoring cached ranks alone cannot authorize a fresh opportunity tile');
   assert.doesNotMatch(restoredMarkup,/currently ineligible/);assert.match(restoredMarkup,/verification is pending/);
   equal(readC1ScreenEvidence(storage,decision).ratings,first.ratings);
  }finally{if(previousWindow===undefined)delete global.window;else global.window=previousWindow;}

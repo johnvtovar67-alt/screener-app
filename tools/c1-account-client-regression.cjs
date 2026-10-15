@@ -106,7 +106,8 @@ function client(fetcher){
   const noop=()=>{},analysisBox={portfolio:[],accountView:null,KEY:'portfolio',C1_DRAWDOWN_KEY:'risk',
    refreshC1Account:async()=>{if(result==='failure')throw new Error('Account unavailable');return result==='fresh'?latest:undefined;},
    fetchScreen:async()=>({stocks:[],performance:{records:[]},meta:{}}),screenHealth:()=>({}),
-   setLoading:noop,setErr:noop,setAnalysisCapitalReady:noop,setHoldingsComparison:noop,setFeedHealth:noop,setMarketScope:noop,setMarketRadar:noop,setStocks:noop,setResults:noop,setPortfolioAnalyzedAt:noop,setLastUpdated:noop,
+   setLoading:noop,setErr:noop,setAnalysisCapitalReady:noop,setHoldingsComparison:noop,setFeedHealth:noop,setMarketScope:noop,setMarketRadar:noop,setStocks:noop,setResults:noop,setPortfolioAnalyzedAt:noop,setLastUpdated:noop,setApplicationRefreshAt:noop,
+   fetchHoldingQuotes:async()=>new Map(),results:[],
    CASH:[],compareC1Holdings:()=>({}),rank:()=>0,localStorage:{getItem:()=>'{"highWater":12345}',setItem:()=>{capitalWrites++;}},Date};
   vm.createContext(analysisBox);vm.runInContext(analyzeSource+'\nthis.analyze=analyze;',analysisBox);
   await analysisBox.analyze([]);assert.equal(capitalWrites,0,'Fresh, failed or superseded account analysis cannot rewrite legacy capital');

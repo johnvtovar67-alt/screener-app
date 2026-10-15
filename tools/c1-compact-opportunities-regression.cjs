@@ -1,0 +1,88 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
+const babel=require('next/dist/compiled/babel/core');
+const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const RealDate=Date,now='2026-10-15T17:00:00Z';
+global.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[now]));}static now(){return RealDate.parse(now);}};
+try{
+ const loader=createResearchModuleLoader(process.cwd());
+ const file=path.resolve('components/C1AccountOpportunities.js'),record={exports:{}};
+ const compiled=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
+ new Function('require','module','exports',compiled)(name=>name.startsWith('../lib/')?loader.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
+ const Component=record.exports.default,{buildC1ManualRecommendations}=loader.load('lib/c1ManualRecommendations.js');
+ const {c1PositionPresentation}=loader.load('lib/c1PositionPresentation.js');
+ const {verifyC1Quote}=loader.load('lib/c1QuoteVerification.js');
+ // Reuse the actual API normalization boundary so a fabricated freshness
+ // boolean cannot stand in for the provider observation used by stop checks.
+ const api=fs.readFileSync('pages/api/index.js','utf8'),normalizerStart=api.indexOf('const normalizeSymbol='),normalizerEnd=api.indexOf('async function fetchQuote(',normalizerStart);
+ assert.ok(normalizerStart>=0&&normalizerEnd>normalizerStart);
+ const normalize=new Function(api.slice(normalizerStart,normalizerEnd)+';return normalizeQuote;')();
+ const position={symbol:'MPC',role:'Swing',shares:10,avgCost:80,price:100,action:'Hold',stops:[{price:86}],exits:[],entryContext:{stage:'half'},reviewRules:[],reason:'Momentum rank #2; technical supporting evidence.'};
+ const candidate=(symbol,index)=>({symbol,sector:'Sector'+index,issuer:'issuer:'+symbol,sourcePrice:100,researchRank:index+1,momentumPercentile:99-index,sourceTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000},recentMomentumGate:{sourceSessionDate:'2026-10-14',available:true,entryAllowed:true}});
+ const decision={contract:'c1-account-decision-v1',decisionId:'compact:1',revision:1,current:true,sourceSessionDate:'2026-10-14',positions:[position],strategyCash:1000,brokerageCash:500,brokerageCashCurrent:true,executableCash:500,stockScreen:{contract:'c1-stock-screen-v1',sourceSessionDate:'2026-10-14',candidates:['BBB','MPC','CCC','DDD'].map(candidate)}};
+ const screenRows=['BBB','MPC','CCC','DDD'].map((symbol,index)=>{
+  const provider={symbol,price:100,timestamp:Date.now()/1000,_fmpQuoteCache:'live',_fmpQuoteProvider:'FMP',_fmpQuoteEndpoint:'quote',_fmpQuoteFetchedAt:now,
+   _fmpQuoteObservation:{provider:'FMP',endpoint:'stable/quote',symbol,price:100,timestamp:Date.now()/1000,fetchedAt:now}};
+  const normalized=normalize(provider,symbol);
+  assert.deepEqual(normalized._fmpQuoteObservation,provider._fmpQuoteObservation,'The real account quote normalizer retains bound price and timestamp evidence');
+  assert.equal(verifyC1Quote(normalized,new Date()).verifiedRegularSession,true);
+  return {...normalized,eventRisk:{status:'Clear'},entryTiming:{available:true,liquidityPass:index<3,averageDollarVolume20:index<3?500000000:1000000},recommendation:{expertDecision:{strongBuyPass:symbol==='BBB',metrics:{quoteFreshnessPass:true}}}};
+ });
+ const plan={contract:'c1-actual-account-opening-plan-v1',providerVerified:true,sourceSessionDate:decision.sourceSessionDate,date:'2026-10-15',observedAt:now,quoteValidUntil:'2026-10-15T17:02:00Z',sourceReceipt:{observedAt:now,membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true},entryReviews:[{symbol:'CCC',reason:'brokerage-cash-insufficient'}],orders:[{id:'new',symbol:'BBB',side:'buy',shares:2,estimatedPrice:100,phase:3},{id:'add',symbol:'MPC',side:'buy',shares:1,estimatedPrice:100,phase:3}]};
+ const review=buildC1ManualRecommendations({decision,openingPlan:plan});assert.equal(review.status,'ready');
+ const props={decision,executionDecision:decision,openingPlan:plan,manualRecommendations:review,screenRows,positionRows:screenRows,screenCurrent:true};
+ const strip=html=>html.replace(/\sclass="[^"]*"/g,'');
+ const renderRaw=patch=>renderToStaticMarkup(React.createElement(Component,{...props,...patch}));
+ const render=patch=>strip(renderRaw(patch));
+ const section=(html,label)=>html.match(new RegExp('<section[^>]*aria-label="'+label+'"[\\s\\S]*?<\\/section>'))?.[0]||'';
+ const baseline=JSON.stringify(props),html=render({}),main=section(html,'C1 account opportunities'),watch=section(html,'Watch opportunities');
+ assert.match(main,/<h3>BBB<\/h3><b>STRONG BUY<\/b>/,'Only actual authorized capital uses a green actionable tile');
+ assert.match(main,/BUY 2 shares of BBB/);assert.match(main,/<h3>MPC<\/h3><b>ADD<\/b>/);assert.match(main,/ADD 1 share of MPC/,'Checked partial-position completion is retained');
+ assert.match(main,/Verified opening reference/,'The original compact reference-price tile is restored');
+ assert.doesNotMatch(main,/<h3>CCC<\/h3>|<h3>DDD<\/h3>|NO PURCHASE/,'Unfunded and nonqualifying candidates do not occupy opportunities');
+ assert.match(watch,/<b>CCC<\/b>[\s\S]*?Ranked Buy/,'A capital cap does not change the underlying investment rating');
+ assert.match(watch,/WATCH \/ NO PURCHASE/);assert.match(watch,/available brokerage cash is insufficient/);assert.match(watch,/<b>DDD<\/b>/);
+ assert.doesNotMatch(section(renderRaw({}),'Watch opportunities'),/class="[^"]*\bgreen\b|BUY \d+ shares/,'Watch stays neutral without implying permission');
+ assert.match(main,/<b>HOLD<\/b>/,'The held-share action remains separate from a checked Add proposal');
+ const componentSource=fs.readFileSync(file,'utf8'),watchHtml=section(renderRaw({}),'Watch opportunities');
+ assert.match(watchHtml,/<table[^>]*class="[^"]*watchTable/,'The Watch table has an isolated responsive scope');
+ assert.match(watchHtml,/watchMobileEvidence[^>]*>Score /,'Hidden mobile columns retain their compact supporting evidence near the stock');
+ const mobileRules=componentSource.slice(componentSource.indexOf('@media(max-width:700px)'));
+ for(const column of [1,3,4])assert.ok(mobileRules.includes('.watchTable th:nth-child('+column+'),.watchTable td:nth-child('+column+')'),'Only nonaction Watch columns are hidden on narrow screens');
+ assert.match(mobileRules,/\.watchTable\{table-layout:fixed;width:100%;min-width:0\}/,'The stock and action columns fit the viewport rather than forcing horizontal scrolling');
+ assert.match(mobileRules,/\.watchTable th:nth-child\(5\),\.watchTable td:nth-child\(5\)\{width:70%\}/,'The immediately visible action keeps most of the narrow-screen width');
+ assert.equal(JSON.stringify(props),baseline,'Rendering cannot mutate checked orders, shares, fees, cash or evidence');
+ const noOrders={...plan,orders:[]},noReview=buildC1ManualRecommendations({decision,openingPlan:noOrders});
+ const paused=render({openingPlan:noOrders,manualRecommendations:noReview});
+ assert.doesNotMatch(section(paused,'C1 account opportunities'),/<article/,'A ranking alone cannot authorize a tile');
+ assert.match(section(paused,'Watch opportunities'),/Ranked Strong Buy/,'Strong Buy ranking survives without permission to buy');
+ const expired=render({manualRecommendations:{...review,validUntil:'2026-10-15T16:59:59Z'}});
+ assert.doesNotMatch(section(expired,'C1 account opportunities'),/BUY 2 shares|ADD 1 share/,'Expired review cannot create green purchase intent');
+ const fullSlots={...decision,positions:[position,{...position,symbol:'XXX'},{...position,symbol:'YYY'}]},fullPlan={...plan,orders:[]};
+ const full=render({decision:fullSlots,executionDecision:fullSlots,openingPlan:fullPlan,manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:fullPlan})});
+ assert.match(full,/All three C1 position slots are currently allocated/);assert.doesNotMatch(section(full,'C1 account opportunities'),/<article/);
+ const poor={...decision,stockScreen:{...decision.stockScreen,candidates:decision.stockScreen.candidates.map(c=>c.symbol==='BBB'?{...c,recentMomentumGate:{...c.recentMomentumGate,entryAllowed:false}}:c)}};
+ assert.doesNotMatch(section(render({decision:poor,executionDecision:poor}),'C1 account opportunities'),/BUY 2 shares/,'A checked order cannot override a failed current momentum screen');
+ // Same quote evidence reaches the shared holding presenter from both pages;
+ // a stopped holding never remains a green Add tile.
+ const stoppedPosition={...position,stops:[{price:468.85}]},stoppedDecision={...decision,positions:[stoppedPosition]};
+ const stoppedProps={decision:stoppedDecision,executionDecision:stoppedDecision,manualRecommendations:buildC1ManualRecommendations({decision:stoppedDecision,openingPlan:plan})};
+ const stopped=render(stoppedProps),expected=c1PositionPresentation({decision:stoppedDecision,position:stoppedPosition,stock:screenRows.find(r=>r.symbol==='MPC')});
+ assert.equal(expected.label,'SELL — STOP TRIGGERED');assert.match(stopped,/SELL — STOP TRIGGERED/);assert.doesNotMatch(section(stopped,'C1 account opportunities'),/ADD 1 share of MPC/);
+ assert.match(section(stopped,'Watch opportunities'),/<small>Last verified quote: (?!unavailable)[^<]+ · regular session<\/small>/,'Held opportunities separately disclose the verified current quote timestamp');
+ assert.match(stopped,/Signals based on 2026-10-14 close/,'The completed signal session is not replaced by the intraday timestamp');
+ const staleRows=screenRows.map(r=>({...r,quoteVerification:verifyC1Quote(r,new Date()),stale:true,clientSnapshotFallback:true}));
+ const stale=render({...stoppedProps,positionRows:staleRows,screenRows:staleRows});
+ assert.doesNotMatch(section(stale,'C1 account opportunities'),/BUY 2 shares|ADD 1 share/,'Stale price/screen evidence fails closed for all new capital');
+ assert.match(stale,/VERIFY STOP URGENTLY/,'A stale apparent stop breach is urgent rather than an ordinary Hold');
+ assert.match(stale,/URGENT VERIFICATION REQUIRED/,'The unresolved stop is prominent in the actual Watch rendering');
+ assert.doesNotMatch(stale,/SELL — STOP TRIGGERED/,'A stale quote cannot fabricate a stop confirmation');
+ assert.match(section(stale,'Watch opportunities'),/<small>Last verified quote: (?!unavailable)[^<]+ · current verification unavailable<\/small>/,'A retained last verified timestamp is not presented as current verification');
+ const missingProofRows=screenRows.map(row=>({...row,_fmpQuoteObservation:undefined}));
+ const missingProof=render({...stoppedProps,positionRows:missingProofRows,screenRows:missingProofRows});
+ assert.match(missingProof,/VERIFY STOP URGENTLY/,'A bare cached quote without bound provenance stays an urgent verification condition');
+ assert.match(section(missingProof,'Watch opportunities'),/Last verified quote: unavailable · current verification unavailable/,'Missing verification history does not invent a verified timestamp');
+ assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|ADD 1 share of MPC/,'Missing proof cannot confirm an exit or authorize adding through the apparent stop');
+ assert.equal(JSON.stringify(props),baseline,'Stop, stale, momentum and expiry projections preserve all original inputs');
+ console.log('PASS: compact actual-render opportunities require checked capital; rated but unfunded/blocked candidates remain neutral Watch; partial completions, shared stop decisions, expiry, stale checks and accounting immutability are preserved.');
+}finally{global.Date=RealDate;}
