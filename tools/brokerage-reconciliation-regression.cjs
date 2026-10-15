@@ -20,8 +20,9 @@ assert.equal(check.status,'balances-match');assert.equal(check.executable,false)
 assert.equal(check.portfolioSignature,JSON.stringify(holdings));
 assert.ok(page.includes('transactionCheck.portfolioSignature===JSON.stringify(portfolio)'));
 assert.ok(!body.includes('fetch(')&&!body.includes('localStorage.setItem')&&!body.includes('setPortfolio(')&&!body.includes('setC1Control('));
-const display=page.match(/displayAction=(.*?),time=swingTimeReview/)[1];
-const label=new Function('decision','return '+display);
+const display=page.match(/const displayAction=(.*?),brief=/)[1];
+const fallbackLabel=new Function('decision','presentation','return '+display);
+const label=decision=>fallbackLabel(decision,null);
 assert.equal(label({source:'c1-capital-reconciliation',action:'Exit'}),'Verification needed');
 assert.equal(label({source:'c1-actual-account',action:'Exit candidate'}),'Exit');
 assert.equal(label({source:'c1-actual-account',action:'Stop review'}),'Stop review');

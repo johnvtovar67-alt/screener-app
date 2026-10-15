@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "063ce75e9ea90d7e20e79865714cbb1aefcf554e",
+    "components/C1AccountOpportunities.js": "8cbae2dfa70de09bbc2d5ac5f34ef48b965c6a30",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -81,7 +81,7 @@
     "lib/personalCapitalPolicy.js": "bf15d389a4924f59a76e51c5eaa3ad68449f0494",
     "lib/portfolioGovernor.js": "37251522a7a3561d9787c203345fd1924201f6e8",
     "lib/positionReunderwrite.js": "ce5b433ed8d802bdf0b82f4f64c497c049fec345",
-    "lib/releaseManifest.js": "597090e2a0b397efee6c3371d2458c5b05713e3a",
+    "lib/releaseManifest.js": "d4d3559037d23ef99ab9b3c195b07f388290f82e",
     "lib/replayDatasetCompaction.js": "4c0fb6f017276c3563e69fb83658a8f6f3820df1",
     "lib/researchMutationAuth.js": "a45540c4282821f26f41944458f873470b51da2e",
     "lib/scoring.js": "bd142893da504c3d186d0e9b906316cb053ab0e4",
@@ -165,7 +165,7 @@
     "pages/api/research/v11-stress-test.js": "c6923fcd7d54f9250b498e9273caffe0ca6c2c38",
     "pages/api/top5.js": "6c0b454ff6594d6bc5a53c4413a7455b1f422871",
     "pages/api/version.js": "76d9d808fe0153a18b139acb29545b92ea901734",
-    "pages/index.js": "b2a7d3638c2344ad262e095ed7825194239ab36d",
+    "pages/index.js": "61ba9f576d19db5bf23c07e1daff0323523473f4",
     "styles/card-layout.css": "b652f6ff7a40fbe70ebbbd6cd465f68c58563b08",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
     "lib/c1EntryReview.js": "0f6e4ce9855c1350da4cf373d29c57994e8e4794",
@@ -196,7 +196,8 @@
     "lib/c1RecentMomentumChallengerSimulator.js": "818b67b4d0565bdf797874d5cb0c51d427ac5369",
     "lib/c1RecentMomentumChallenger.js": "fbf8554d1c4c3bc3aac854eee8c838fd7b45fd38",
     "lib/c1RecentMomentumAccountSimulator.js": "b9409585d35f0ebc97e24f601b391d526604366b",
-    "lib/c1RecentMomentumLivePolicy.js": "809dbcf7e5d14ef8c4cf329dc1fdfa478dfc1604"
+    "lib/c1RecentMomentumLivePolicy.js": "809dbcf7e5d14ef8c4cf329dc1fdfa478dfc1604",
+    "lib/c1PositionPresentation.js": "c2469a3127e0b21fa380db4575088d49a53e1468"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
@@ -223,5 +224,6 @@
   "portfolioUiCleanupAuthorization": "Owner explicitly requests the final Portfolio Intelligence UI cleanup and authorizes deployment after checks on October 14, 2026: remove the duplicate Momentum Evidence summary strip; render momentum evidence only for noncash C1 Swing positions; preserve Core action, thesis, price and gain/loss and all Swing classifications, explanations, disclosures and actions. Only pages/index.js application hash changes. All evidence methodology, trading, account, risk, guard/build/CI and infrastructure source remains unchanged. Rollback: commit 31c4c2112205ed2df86d012cab29fd5cba59b21d, deployment dpl_B2gXwsCC6jVGHacNLJKHEomSpz9N. See docs/c1-portfolio-ui-cleanup-20261014.md.",
   "isolatedChallengerAuthorization": "Owner instruction October 15, 2026: implement one focused recent-momentum C1 Challenger on an isolated branch, preserving Champion and all established safeguards; no merge, deployment, accounts, acquisition, infrastructure, or frozen 48-Challenger changes. Only three new, non-live library hashes are added. Existing application hashes, guards, build hooks, and live imports remain unchanged. See docs/research/c1-recent-momentum-challenger-20261015.md.",
   "recentMomentumProductionAuthorization": "Owner explicitly authorizes the October 15 Complete and Release Recent-Momentum Decision Engine request: reuse be24d87, integrate actual Swing decisions and verified half-earned-gain giveback, preserve historical fills/Core/ranks/stops/cash/limits, pass review/CI/build, then merge and deploy. Includes saved-plan recent-exit replay, history propagation, prior-triggered stop phase safety repair and sold-sleeve review filtering. Only affected application hashes updated; guard/build hooks unchanged. See docs/research/c1-recent-momentum-production-20261015.md.",
-  "recordedFillCompatibilityAuthorization": "Owner explicitly authorized fixing PR #263 recorded-fill compatibility and completing the reviewed release workflow on October 15. Preserve verified posted executions independently from new Buy/Add eligibility; add the exact same-day Add plus discretionary-sale regression. Scoring, momentum thresholds, profit-protection, canonical/frozen engines and unrelated features remain unchanged from 5f17a60. Update only reviewed affected application hashes and exact compatibility source pins; guard and build hooks remain unchanged."
+  "recordedFillCompatibilityAuthorization": "Owner explicitly authorized fixing PR #263 recorded-fill compatibility and completing the reviewed release workflow on October 15. Preserve verified posted executions independently from new Buy/Add eligibility; add the exact same-day Add plus discretionary-sale regression. Scoring, momentum thresholds, profit-protection, canonical/frozen engines and unrelated features remain unchanged from 5f17a60. Update only reviewed affected application hashes and exact compatibility source pins; guard and build hooks remain unchanged.",
+  "actionPresentationAuthorization": "Owner explicitly requests on October 15, 2026 an action-first Portfolio correction: SELL — STOP TRIGGERED only for verified existing-stop breaches, HOLD without an exit, one short explanation and collapsed technical Details, consistent held-stock decisions on Opportunities. Shared read-only presenter and existing evidence expiry only; no momentum, threshold, accounting, execution, historical data or record changes. See docs/c1-action-first-portfolio-20261015.md. Only affected application hashes updated; release guard and build hooks unchanged."
 }

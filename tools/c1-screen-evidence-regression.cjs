@@ -67,7 +67,13 @@ async function main(){
  new Function('require','module','exports',compiled)(name=>name==='react'?mockReact:name.startsWith('../lib/')?loader.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
  const Component=record.exports.default;
  function render(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Component({decision,screenRows,screenCurrent:true});const html=renderToStaticMarkup(node);effects.slice(1).forEach(effect=>effect());return html.replace(/\sclass="[^"]*"/g,'');}
- const html=render(rows);assert.match(html,/Current C1 holding\. Momentum rank #4/);assert.match(html,/<td>4<\/td><td><b>VLO/);assert.match(html,/<td>5<\/td><td><b>ILMN/);
+ const html=render(rows),heldRow=html.match(/<tr><td>Held<\/td><td><b>DELL<\/b>[\s\S]*?<\/tr>/)?.[0];
+ assert.ok(heldRow,'The existing holding retains the Held priority');
+ assert.match(heldRow,/<b>HOLD<\/b>/,'A held stock without a confirmed exit has an action-first Hold status');
+ assert.match(heldRow,/<details><summary>Details<\/summary>[\s\S]*?Momentum rank #4/,'The original holding rank remains available in Details');
+ assert.doesNotMatch(heldRow.replace(/<details>[\s\S]*?<\/details>/g,''),/Momentum rank|Momentum score/,'Technical holding evidence is outside the primary action');
+ assert.doesNotMatch(heldRow,/<details[^>]*\bopen(?:\s|=|>)/,'Holding details start collapsed');
+ assert.match(html,/<td>4<\/td><td><b>VLO/);assert.match(html,/<td>5<\/td><td><b>ILMN/);
  const pendingHtml=render(partial);assert.match(pendingHtml,/verification is pending/);assert.doesNotMatch(pendingHtml,/currently ineligible/);
  for(const symbol of first.buySymbols)assert.ok(pendingHtml.includes('<h3>'+symbol+'</h3>'),'Retain verified opportunity tiles');
  for(const symbol of ['DELL','VLO','ILMN'])assert.ok(pendingHtml.includes('<b>'+symbol+'</b>'),'Retain Watch members');
@@ -77,14 +83,14 @@ async function main(){
  const RealDate=Date;
  global.Date=class extends RealDate{constructor(...args){super(...(args.length?args:['2026-10-12T14:00:00Z']));}static now(){return RealDate.parse('2026-10-12T14:00:00Z');}};
  try{
-  const fixed=createResearchModuleLoader(process.cwd()),entryDecision={...decision,revision:1,decisionId:'quantity-source:1',positions:[{symbol:'DELL',exits:[],entryContext:{stage:'full'}},{symbol:'HPE',exits:[],entryContext:{stage:'half'}}]};
+  const fixed=createResearchModuleLoader(process.cwd()),entryDecision={...decision,contract:'c1-account-decision-v1',revision:1,decisionId:'quantity-source:1',positions:[{symbol:'DELL',exits:[],entryContext:{stage:'full'}},{symbol:'HPE',exits:[],entryContext:{stage:'half'}}]};
   const plan={contract:'c1-actual-account-opening-plan-v1',providerVerified:true,sourceSessionDate:session.date,date:'2026-10-12',observedAt:'2026-10-12T14:00:00Z',quoteValidUntil:'2026-10-12T14:02:00Z',sourceReceipt:{observedAt:'2026-10-12T14:00:00Z',membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true},orders:[{id:'new',symbol:'MRNA',side:'buy',shares:2,estimatedPrice:100,phase:3},{id:'add',symbol:'HPE',side:'buy',shares:3,estimatedPrice:100,phase:3},{id:'exit',symbol:'DELL',side:'sell',shares:4,estimatedPrice:100,phase:1}]};
   const manual=fixed.load('lib/c1ManualRecommendations.js'),review=manual.buildC1ManualRecommendations({decision:entryDecision,openingPlan:plan});assert.equal(review.status,'ready');
   const serverEvidence=JSON.stringify({plan,review}),entryRecord={exports:{}};
   new Function('require','module','exports',compiled)(name=>name==='react'?mockReact:name.startsWith('../lib/')?fixed.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),entryRecord,entryRecord.exports);
   function actions(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=entryRecord.exports.default({decision:entryDecision,executionDecision:entryDecision,manualRecommendations:review,openingPlan:plan,screenRows,screenCurrent:true,view:'portfolio'});const html=renderToStaticMarkup(node);effects.at(-1)();return html;}
-  const checked=actions(rows);assert.match(checked,/Buy 2 shares/);assert.match(checked,/Add 3 shares/);assert.match(checked,/sell 4 shares/);
-  const omitted=actions(partial);assert.doesNotMatch(omitted,/Buy 2 shares|Add 3 shares/);assert.match(omitted,/sell 4 shares/,'Missing entry evidence does not suppress checked exits');
+  const checked=actions(rows);assert.match(checked,/BUY 2 shares/);assert.match(checked,/ADD 3 shares/);assert.match(checked,/Sell 4 shares/);
+  const omitted=actions(partial);assert.doesNotMatch(omitted,/BUY 2 shares|ADD 3 shares/);assert.match(omitted,/Sell 4 shares/,'Missing entry evidence does not suppress checked exits');
   assert.equal(JSON.stringify({plan,review}),serverEvidence,'Compact evidence cannot change server orders or quantities');
  }finally{global.Date=RealDate;}
  const previousWindow=global.window;
