@@ -1,5 +1,7 @@
 # One C1 recent-momentum Challenger
 
+This records the original isolated implementation at `be24d87`. The later owner-authorized live integration and giveback extension are documented in [the production release](c1-recent-momentum-production-20261015.md); research-only statements below describe the original checkpoint.
+
 Owner authorization: October 15, 2026 request to implement the reviewed 1/3/5-session decision gate in an isolated branch, with a 60-minute effort limit and no merge, deployment, account changes, new acquisition, platform evaluation, infrastructure, or broad research. This is one Challenger, separate from the frozen 48-Challenger program. No application route, cron, account service, or live recommendation imports it.
 
 Champion reference: `f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde`. The canonical account simulator, its generator, frozen historical simulator/options, current live rank-exit overlay, historical captures and account records remain unchanged. A new generator pins the complete canonical account simulator SHA-256 and applies explicit, unique seams to produce the separate Challenger engine. `--check` verifies its generated source.
