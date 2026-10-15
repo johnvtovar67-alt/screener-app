@@ -1,0 +1,81 @@
+{
+  "contract": "c1-capital-rotation-plan-audit-v1",
+  "utc": "2026-10-15T02:40:05.538130+00:00",
+  "inspected_checkpoint": "50ea6482067a74c4ffb77ce3d419ae80b867351b",
+  "scope": "Read-only source and existing evidence inspection plus pure calendar arithmetic; no replay or new empirical result",
+  "fmp_market_or_metadata_requests": 0,
+  "archive_or_blob_access": false,
+  "credential_or_infrastructure_change": false,
+  "production_or_account_change": false,
+  "pr262_or_frozen48_change": false,
+  "prior_volnorm_disposition": "Owner-closed, no optimization, threshold change, variant or rerun",
+  "private_negative_evidence_verified_unchanged": true,
+  "source_evidence": {
+    "lib/c1IndexLifecycle.js": {
+      "sha256": "2f68eb63796b5a0a74423f197cf2ca503989f67ce501744918b10b1a6d1dd060",
+      "finding": "Production collection selects full S&P500"
+    },
+    "lib/c1LiveInput.js": {
+      "sha256": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+      "finding": "253-row compiler contract; current membership/sectors never backdated"
+    },
+    "lib/historicalSignalEvaluator.js": {
+      "sha256": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+      "finding": "Source-compatible full cross-sectional factors and percentile construction"
+    },
+    "lib/c1AccountSimulator.js": {
+      "sha256": "02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb",
+      "finding": "Current seeded account overlay and queue/execution state"
+    },
+    "lib/c1FrozenOptions.js": {
+      "sha256": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+      "finding": "Frozen sleeve options and current account momentum policy"
+    },
+    "lib/c1AccountSeed.js": {
+      "sha256": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
+      "finding": "Normalized origin validation and seeding limitations"
+    },
+    "lib/c1ExecutionCashAuthority.js": {
+      "sha256": "c9db74739a96494a25cecc2abca8e9926f0760aea14a2a2256a850781b6ceb75",
+      "finding": "Unrecorded sale proceeds cannot fund execution"
+    },
+    "docs/research/c1-source-dependency-audit-20260911.json": {
+      "sha256": "d8f83553c90fd1a34e7efadeddc72ee2a3db074820e11c079660278c311e289e",
+      "finding": "Sector labels affect source fills; historical provenance unresolved"
+    }
+  },
+  "conditional_target": {
+    "universe": "full S&P500",
+    "baseline": "2024-12-31",
+    "run_start": "2025-01-02",
+    "run_end": "2025-04-03",
+    "warmup_start": "2023-12-29",
+    "warmup_rows": 253,
+    "run_sessions": 63,
+    "total_benchmark_rows": 316,
+    "metadata_qualified": false,
+    "executability_claim": false
+  },
+  "failed_acquisition_prerequisite": "No inspected record verifies complete dated full-S&P ranking membership plus sectors for this historical window",
+  "additional_execution_requirements": [
+    "Validated price/share/volume and corporate-action cash units",
+    "Causal explicit common-origin research seed or verified actual-account origin",
+    "Separately frozen one-time intervention manifest",
+    "Unchanged-engine no-op parity and paired state/cash conservation"
+  ],
+  "prospective_budget_only": {
+    "max_union_securities": 540,
+    "max_outside_holdings": 10,
+    "max_action_bearing_names": 30,
+    "max_requests": 1750,
+    "max_response_bytes": 201326592,
+    "maximum_planned_requests_formula": "3*(540+10+2)+2*30+10=1726",
+    "not_started": true,
+    "account_remaining_quota_not_measured": true
+  },
+  "verification": {
+    "release_freeze": "passed",
+    "documentation_diff_check": "passed",
+    "new_empirical_claim": false
+  }
+}

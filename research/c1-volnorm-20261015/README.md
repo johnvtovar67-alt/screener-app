@@ -1,5 +1,7 @@
 # Volatility-normalized deterioration research
 
+Current owner disposition: **closed; no threshold changes, optimization or variants**. Read [DISPOSITION.md](DISPOSITION.md). Original code and private negative findings remain preserved; no rerun is authorized.
+
 This is the separately authorized next phase, following checkpoint e352154e8e47c4dd29601f630bb198f6187a56d6. Read PROTOCOL.md first. The candidate, cohort, date splits, timing, costs, outcome labels, uncertainty and decision gates are frozen before the new acquisition. No threshold optimization is allowed.
 
 Execution completed as `volnorm-20261015-v1`:33requests and18,742,089response bytes within the40request/32MiB hard cap. All24active securities andSPY were retrieved; dates, adjusted geometry, independent calendar, repeats and targeted corporate actions passed. There were no internal price-calendar gaps. TSLA/META leading IPO gaps remain absent and unsupported opportunities/lots are censored. None of the three optional delisted identities was verified within the prespecified two-page metadata bound; no optional history was requested. This does not establish that the provider lacks those histories. No additional endpoint or alias was attempted.
