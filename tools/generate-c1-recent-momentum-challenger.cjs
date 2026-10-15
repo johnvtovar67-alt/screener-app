@@ -89,6 +89,18 @@ replace('positions.set(p.symbol,{...c1SeedPosition(p,sessionIndex,session.date,p
 replace('      for (const order of sellOrders) {\n        const position = positions.get(order.symbol);',
 `      for (const order of sellOrders) {
         if (recentOpenEnabled(session) && (order.reason === 'recent-momentum-deterioration' || order.reason === 'recent-momentum-profit-protection')) {
+          const held = positions.get(order.symbol), openingRow = prices.get(order.symbol);
+          // A pending momentum recommendation cannot consume a gap-through
+          // standing stop under its softer reason. Use the established sale
+          // path so the stop identity, fill and any stop cooldown are retained.
+          if (held && Number.isFinite(held.stopPrice) && held.stopPrice > 0 &&
+              recentOpeningAvailable(session, openingRow) && openingRow.open <= held.stopPrice) {
+            const stopped = executeSale({date:session.date,symbol:order.symbol,position:held,shares:held.shares,
+              reason:config.classifyStopExits ? held.stopKind || 'initial-stop' : 'invalidation-stop',
+              fill:tradePrice(openingRow.open,'sell',config.slippageBps)});
+            if (stopped) stopped.openingStopPriority = true;
+            continue;
+          }
           const origin = recentOrigin(order, session);
           if (!origin?.available || !recentOpeningAvailable(session, prices.get(order.symbol))) {
             skippedOrders.push({date:session.date,symbol:order.symbol,side:'sell',reason:'recent-momentum-exit-evidence-unavailable'});

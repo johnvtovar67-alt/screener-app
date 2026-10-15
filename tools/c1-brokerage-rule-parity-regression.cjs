@@ -46,7 +46,7 @@ const compatibilitySourceSha256 = {
   "lib/c1AccountExecution.js": "341ec04046a57d809cd5f8414b0bb64e719813c747db1c2f5615611c603828b9",
   "lib/c1AccountInput.js": "fa2f6f9691ed06575b7491898ef10b1709bab8d17a427463fb0b21c47f80a432",
   "lib/c1AccountLedger.js": "ebe1ca8a9cfd48c187a21ef003f70e4c6c8dc9a32ed3be996425d6725bf5ecc8",
-  "lib/c1AccountProjection.js": "e117c6e693cf98050877d91aff696a8a9d6d5608019602dbbf75f5b49e5269a7",
+  "lib/c1AccountProjection.js": "4f934797bec64b579873f1db2fdb2b380f6fe756c9e23d18ab86375d3103c987",
   "lib/c1PaperEvents.js": "1f0db7fb8fcf4d95dc69169cb2b8a10261e259504166cdd01b254eae8a2f6a80",
   "lib/c1StockClassification.js": "611632b4b266cc365211af28bf637c9111c1ddb18e3ee7b74f778ca3d29ccebe",
   "lib/c1AccountSeed.js": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",

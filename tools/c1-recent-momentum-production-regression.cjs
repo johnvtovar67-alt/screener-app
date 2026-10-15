@@ -183,6 +183,44 @@ for(const [name,patch] of Object.entries({missing:{available:false},stale:{stale
   same(unfilled.books,originalPlan.openingBooks,'Zero actual fills cannot create modeled ownership or cash changes');
 }
 
+// A new opening gap can supersede yesterday's confirmed momentum exit. It
+// must retain the existing stop classification, priority and cash ordering.
+{
+  const c=testCase([100,99,98,97,96,97,98]);
+  const gap=c.book.model.sessions[224].prices.find(row=>row.symbol===c.symbol);
+  gap.open=85;gap.low=84.9;
+  ok(c.book.model.sessions.slice(220,224).every(session=>session.prices.find(row=>row.symbol===c.symbol).low>86),'No prior session in the scenario has already triggered the fixed stop');
+  ok(position(c,3).exits.every(exit=>exit.reason==='recent-momentum-deterioration'),'The prior completed close has a confirmed momentum exit');
+  const projected=opening(c,3),sell=sales(projected,c.symbol);
+  eq(sell.length,3,'A gap through the stop produces exactly one sale per owned sleeve');
+  ok(sell.every(order=>order.reason==='initial-stop'),'The opening stop breach takes priority over the pending recent-momentum reason');
+  ok(sell.every(order=>order.phase===1),'A verified gap stop executes in the opening sale phase');
+  ok(sell.every(order=>Math.abs(order.estimatedPrice-85*.9988)<.000001),'The stop uses the actual gap opening with the existing 12 bps sell adjustment');
+  near(sell.reduce((sum,order)=>sum+order.shares,0),300,'A gap stop never duplicates the queued momentum-sale quantity');
+  for(const sleeve of ['base','cooldown15','sector40']){
+    const sequence=projected.orders.filter(order=>order.sleeve===sleeve&&!order.condition);
+    eq(sequence[0]?.reason,'initial-stop',`${sleeve}: the gap sale precedes funded replacement purchases`);
+    ok(projected.projectedBooks[sleeve].cash>=0,`${sleeve}: replacement purchases remain within post-sale sleeve funds`);
+  }
+  const account={...c.account,brokerageCash:{balance:0,observedAt:c.dates[4]+'T14:45:00Z',source:'manual-broker-balance'}};
+  const capped=capC1ExecutionCash({plan:projected,account,strategyCash:70000,now:new Date(c.dates[4]+'T15:00:00Z')});
+  eq(capped.orders.some(order=>order.side==='buy'),false,'An unrecorded gap-stop sale cannot fund executable purchases when broker cash is zero');
+  eq(sales(capped,c.symbol).length,3,'Cash restrictions keep every gap-stop exit available');
+  ok(projected.orders.filter(order=>order.condition==='stop-triggered').every(order=>order.phase===4),'Untriggered standing stops retain their intraday phase');
+  // The frozen sleeve has no per-name stop cooldown. Exercise its existing
+  // optional mechanism separately so gap reclassification cannot bypass it.
+  const {simulatePointInTimePortfolio:live}=loader.load('lib/c1RecentMomentumAccountSimulator.js');
+  const {C1_FROZEN_OPTIONS}=loader.load('lib/c1FrozenOptions.js');
+  const sessions=c.book.model.sessions.slice(220,226),history=c.book.model.sessions.slice(0,226);
+  const recorded={contract:'c1-actual-fill-replay-v1',sessions:c.dates.slice(1,6).map((date,index)=>({date,
+    fills:index===3?[{symbol:c.symbol,side:'sell',reason:'initial-stop',shares:300,price:85*.9988,fee:0}]:[]}))};
+  const config={...C1_FROZEN_OPTIONS.base,startDate:c.start,endDate:c.dates[5],liquidateAtEnd:false};
+  const normal=live({sessions,recentMomentumHistorySessions:history},config,c.account.adoption.seeds.base,recorded);
+  const cooling=live({sessions,recentMomentumHistorySessions:history},{...config,stopCooldownSessions:2},c.account.adoption.seeds.base,recorded);
+  ok(normal.pendingDecisions.some(order=>order.side==='buy'&&order.symbol===c.symbol),'Without an optional stop cooldown, a later confirmed recovery remains eligible');
+  eq(cooling.pendingDecisions.some(order=>order.side==='buy'&&order.symbol===c.symbol),false,'The existing optional stop-cooldown mechanism still blocks a premature recovery purchase');
+}
+
 // New-reason posted sales replay as facts; a later recovery can establish a
 // genuinely new purchase lifecycle without inheriting the old exit streak.
 {

@@ -178,7 +178,7 @@
     "lib/c1ReviewedSessionRevision.js": "cf30a50763541405f30ecd3ea1a8c367fe94c319",
     "lib/c1SessionRevisionReview.js": "81b20c650c7daac35ffd2e18850bfd42923d1520",
     "lib/c1AccountLedger.js": "99ea0df628224489a46ab7c7d67785421c074b4b",
-    "lib/c1AccountProjection.js": "bb77ba6317a572210629585f46460482e9ff74e3",
+    "lib/c1AccountProjection.js": "bf6da41dcd51c00a7993b2c010924828483797d0",
     "lib/c1AccountExecutionView.js": "60897e483a2a1b640613f5c95ebbbeae768bb81a",
     "components/C1BrokerageCash.js": "120f2cbdfcf6c2f3cff70e2ea66bd261f9064d0a",
     "lib/c1BrokerageCash.js": "2d607dc132f07af5f8c9ba855d3b582e3e9c4493",
@@ -193,7 +193,7 @@
     "lib/c1MomentumEvidence.js": "269d105c17188b0b50251ce33b334a38a9150265",
     "lib/c1MomentumEvidenceInput.js": "c6995109819ce8802b59b7b0260b7f65d2438c02",
     "lib/c1RecentMomentumGate.js": "317c5576ecadcd1b0ec8d33f4abc959b2efe0e0a",
-    "lib/c1RecentMomentumChallengerSimulator.js": "97a30065e4bb575bec90dc9ad237b6e40891aa0f",
+    "lib/c1RecentMomentumChallengerSimulator.js": "a7b683c9be1bd78394ce0afb274a1ae64b05efdb",
     "lib/c1RecentMomentumChallenger.js": "fbf8554d1c4c3bc3aac854eee8c838fd7b45fd38",
     "lib/c1RecentMomentumAccountSimulator.js": "b9409585d35f0ebc97e24f601b391d526604366b",
     "lib/c1RecentMomentumLivePolicy.js": "809dbcf7e5d14ef8c4cf329dc1fdfa478dfc1604"
