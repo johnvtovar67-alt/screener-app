@@ -1,0 +1,23 @@
+{
+  "verification": "independent_remote_checkout_smoke_pass",
+  "retrieved_repository": "johnvtovar67-alt/screener-app",
+  "retrieved_branch": "research/c1-fresh-comparison-20261014",
+  "retrieved_commit": "9b91b206b186b0a548c7c8d6ae25c541f9ff7293",
+  "method": "Separate agent independently fetched GitHub through the configured proxy and explicit per-command network permission; sparse checkout of fresh research and preserved lifecycle specifications only.",
+  "synthetic_tests_passed": 16,
+  "licensed_provider_requests_during_verification": 0,
+  "exhausted_continuation_refused_before_client_construction": true,
+  "documentation_understood": [
+    "Eight securities acquisition-validated; quantitative comparison covers NVDA and PG only",
+    "Adjusted-price marginal signal diagnostics, not portfolio returns",
+    "No licensed inputs retained; exact numerical replay unavailable without retention rights",
+    "Further bounded private research permitted; full replay and public numeric display remain gated"
+  ],
+  "sha256": {
+    "analyze.py": "b1b4c733ef82f55627395764fdaca322f52b5545ad448c8436ead313ab5ad174",
+    "acquire.py": "3e1e436d646cfb3fb211633aa11755786797004f31f484386249db766c9b8046",
+    "../c1-lifecycle-20261014/six-challengers.json": "362bbb3d29ecc0d99dc55786f1041d746fa7ade519e8fbfd2eff8e6518d902dc"
+  },
+  "public_folder_review": "No licensed prices, reconstructable price paths or numerical comparison findings",
+  "scope": "Code and protocol recovery demonstrated; no claim of exact historical-input replay"
+}
