@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
-const RealDate=Date,realFetch=global.fetch;
+const RealDate=Date,realFetch=global.fetch,previousTestKey=process.env.FMP_API_KEY;
 let milliseconds=RealDate.parse('2026-10-15T15:00:00.000Z'),calls=0,failing=false;
 let response={symbol:'DELL',price:460,timestamp:milliseconds/1000,exchange:'NYSE'};
 class ClockDate extends RealDate{constructor(...args){super(...(args.length?args:[milliseconds]));}static now(){return milliseconds;}}
@@ -15,7 +15,8 @@ const quote=(price=460,time=milliseconds)=>({symbol:'DELL',price,timestamp:time/
 
 async function main(){
  global.Date=ClockDate;
- global.fetch=async()=>{calls++;if(failing)throw new Error('Synthetic provider unavailable');return{ok:true,json:async()=>[{...response}]};};
+ process.env.FMP_API_KEY='offline-fixture-key';
+ global.fetch=async url=>{assert.ok(new URL(url).searchParams.get('apikey')==='offline-fixture-key','Offline checks must use only the fixture credential');calls++;if(failing)throw new Error('Synthetic provider unavailable');return{ok:true,json:async()=>[{...response}]};};
  const loader=createResearchModuleLoader(process.cwd());
  const {fetchFmpQuote}=loader.load('lib/fmpQuotes.js');
  const {verifyC1Quote:verify}=loader.load('lib/c1QuoteVerification.js');
@@ -92,4 +93,4 @@ async function main(){
  ok(source.includes('quoteVerification:verifyC1Quote(analyzed)'),'The public endpoint returns recomputed provider verification');
  console.log(`PASS: ${assertions} FMP provider/cache/normalization/current-quote verification assertions; no network or account changes.`);
 }
-main().finally(()=>{global.Date=RealDate;global.fetch=realFetch;}).catch(error=>{console.error(error);process.exitCode=1;});
+main().finally(()=>{global.Date=RealDate;global.fetch=realFetch;if(previousTestKey===undefined)delete process.env.FMP_API_KEY;else process.env.FMP_API_KEY=previousTestKey;}).catch(error=>{console.error(error);process.exitCode=1;});
