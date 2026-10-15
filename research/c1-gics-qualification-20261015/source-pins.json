@@ -1,0 +1,16 @@
+{
+  "research_specification": "C1-GICS-ROTATION-2025Q1-v1",
+  "source_commit": "9416059bdf1b5e5053d0d8d31a83c8ce21519fe0",
+  "specification_sha256": "5e2a5f02b026749c781fefa00096a5d6bfee16b6ce3c117cc159936bd1eaa4bd",
+  "source_sha256": {
+    "lib/c1IndexLifecycle.js": "2f68eb63796b5a0a74423f197cf2ca503989f67ce501744918b10b1a6d1dd060",
+    "lib/c1LiveInput.js": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+    "lib/historicalSignalEvaluator.js": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+    "lib/c1AccountSimulator.js": "02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb",
+    "lib/c1FrozenOptions.js": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+    "lib/c1AccountSeed.js": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
+    "lib/c1ExecutionCashAuthority.js": "c9db74739a96494a25cecc2abca8e9926f0760aea14a2a2256a850781b6ceb75",
+    "docs/c1-release-freeze.json": "27b943e71bfc42c8264d529df0d51aed97d6d311985bfe78df003c780889e2d9"
+  },
+  "production_files_modified": false
+}
