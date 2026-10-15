@@ -1,0 +1,17 @@
+{
+  "status": "location_notice_completeness_undetermined",
+  "established_rights": "Written FMP Support clarifications confirmed by owner; personal Codex and private research storage rights settled",
+  "scope": "Only prior Section2.8 notice completeness",
+  "substantive_support_exchanges_retrieved": false,
+  "connected_mail_evidence": "FMP rating survey and separate historical-taxonomy exchange; substantive permission/location correspondence not exposed",
+  "inference_from_search_absence": "No inference that permission or notice is absent",
+  "separate_email_required_by_clause": false,
+  "express_notice_content": "Location IP and domain aliases where data is stored or processed",
+  "remaining_input": "Actual prior location-related correspondence and any acceptance of provided identifiers",
+  "broad_licensing_email_draft": "superseded_do_not_send",
+  "new_market_data_calls": 0,
+  "messages_created_or_sent": 0,
+  "infrastructure_changes": false,
+  "credentials_changed": false,
+  "production_pr262_frozen48_changes": false
+}
