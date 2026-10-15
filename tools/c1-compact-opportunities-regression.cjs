@@ -6,10 +6,14 @@ const RealDate=Date,now='2026-10-15T17:00:00Z';
 global.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[now]));}static now(){return RealDate.parse(now);}};
 try{
  const loader=createResearchModuleLoader(process.cwd());
- const file=path.resolve('components/C1AccountOpportunities.js'),record={exports:{}};
- const compiled=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
- new Function('require','module','exports',compiled)(name=>name.startsWith('../lib/')?loader.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
- const Component=record.exports.default,{buildC1ManualRecommendations}=loader.load('lib/c1ManualRecommendations.js');
+ const components=new Map();
+ function loadComponent(relativeFile){
+  const file=path.resolve(relativeFile);if(components.has(file))return components.get(file);
+  const record={exports:{}},compiled=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
+  new Function('require','module','exports',compiled)(name=>name.startsWith('../lib/')?loader.load(name,file):name.startsWith('.')?loadComponent(path.resolve(path.dirname(file),name.endsWith('.js')?name:name+'.js')):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
+  components.set(file,record.exports);return record.exports;
+ }
+ const file=path.resolve('components/C1AccountOpportunities.js'),Component=loadComponent(file).default,{buildC1ManualRecommendations}=loader.load('lib/c1ManualRecommendations.js');
  const {c1PositionPresentation}=loader.load('lib/c1PositionPresentation.js');
  const {verifyC1Quote}=loader.load('lib/c1QuoteVerification.js');
  // Reuse the actual API normalization boundary so a fabricated freshness
@@ -26,7 +30,7 @@ try{
   const normalized=normalize(provider,symbol);
   assert.deepEqual(normalized._fmpQuoteObservation,provider._fmpQuoteObservation,'The real account quote normalizer retains bound price and timestamp evidence');
   assert.equal(verifyC1Quote(normalized,new Date()).verifiedRegularSession,true);
-  return {...normalized,eventRisk:{status:'Clear'},entryTiming:{available:true,liquidityPass:index<3,averageDollarVolume20:index<3?500000000:1000000},recommendation:{expertDecision:{strongBuyPass:symbol==='BBB',metrics:{quoteFreshnessPass:true}}}};
+  return {...normalized,sector:symbol==='MPC'?'Energy':symbol==='BBB'?'Technology':undefined,eventRisk:{status:'Clear'},entryTiming:{available:true,liquidityPass:index<3,averageDollarVolume20:index<3?500000000:1000000},recommendation:{expertDecision:{strongBuyPass:symbol==='BBB',metrics:{quoteFreshnessPass:true}}}};
  });
  const plan={contract:'c1-actual-account-opening-plan-v1',providerVerified:true,sourceSessionDate:decision.sourceSessionDate,date:'2026-10-15',observedAt:now,quoteValidUntil:'2026-10-15T17:02:00Z',sourceReceipt:{observedAt:now,membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true},entryReviews:[{symbol:'CCC',reason:'brokerage-cash-insufficient'}],orders:[{id:'new',symbol:'BBB',side:'buy',shares:2,estimatedPrice:100,phase:3},{id:'add',symbol:'MPC',side:'buy',shares:1,estimatedPrice:100,phase:3}]};
  const review=buildC1ManualRecommendations({decision,openingPlan:plan});assert.equal(review.status,'ready');
@@ -34,23 +38,43 @@ try{
  const strip=html=>html.replace(/\sclass="[^"]*"/g,'');
  const renderRaw=patch=>renderToStaticMarkup(React.createElement(Component,{...props,...patch}));
  const render=patch=>strip(renderRaw(patch));
- const section=(html,label)=>html.match(new RegExp('<section[^>]*aria-label="'+label+'"[\\s\\S]*?<\\/section>'))?.[0]||'';
+ const section=(html,label)=>{
+  const start=html.search(new RegExp('<section[^>]*aria-label="'+label+'"'));if(start<0)return '';
+  const tags=/<\/?section\b[^>]*>/g;tags.lastIndex=start;let depth=0,match;
+  while((match=tags.exec(html))){depth+=match[0].startsWith('</')?-1:1;if(!depth)return html.slice(start,tags.lastIndex);}
+  throw new Error('Unclosed actual section '+label);
+ };
+ const visible=html=>html.replace(/<details\b[^>]*>[\s\S]*?<\/details>/g,'');
  const baseline=JSON.stringify(props),html=render({}),main=section(html,'C1 account opportunities'),watch=section(html,'Watch opportunities');
  assert.match(main,/<h3>BBB<\/h3><b>STRONG BUY<\/b>/,'Only actual authorized capital uses a green actionable tile');
- assert.match(main,/BUY 2 shares of BBB/);assert.match(main,/<h3>MPC<\/h3><b>ADD<\/b>/);assert.match(main,/ADD 1 share of MPC/,'Checked partial-position completion is retained');
- assert.match(main,/Verified opening reference/,'The original compact reference-price tile is restored');
+ assert.match(main,/BUY 2 shares; opening checks passed\./);assert.match(main,/<h3>MPC<\/h3><b>HOLD<\/b>/);assert.match(main,/ADD 1 share; opening checks passed\./,'Checked partial-position completion is retained separately from the held-share action');
+ assert.match(main,/Opening reference: \$100\.00/,'The unchanged checked opening reference remains available in Details');
  assert.doesNotMatch(main,/<h3>CCC<\/h3>|<h3>DDD<\/h3>|NO PURCHASE/,'Unfunded and nonqualifying candidates do not occupy opportunities');
- assert.match(watch,/<b>CCC<\/b>[\s\S]*?Ranked Buy/,'A capital cap does not change the underlying investment rating');
- assert.match(watch,/WATCH \/ NO PURCHASE/);assert.match(watch,/available brokerage cash is insufficient/);assert.match(watch,/<b>DDD<\/b>/);
+ assert.match(watch,/<h3>CCC<\/h3>[\s\S]*?<details[^>]*>[\s\S]*?Investment rating: Buy/,'A capital cap does not change the underlying investment rating retained in collapsed Details');
+ assert.match(watch,/NO PURCHASE/);assert.match(visible(watch),/Insufficient cash for a purchase\./);assert.match(watch,/<h3>DDD<\/h3>/);
  assert.doesNotMatch(section(renderRaw({}),'Watch opportunities'),/class="[^"]*\bgreen\b|BUY \d+ shares/,'Watch stays neutral without implying permission');
  assert.match(main,/<b>HOLD<\/b>/,'The held-share action remains separate from a checked Add proposal');
  const componentSource=fs.readFileSync(file,'utf8'),watchHtml=section(renderRaw({}),'Watch opportunities');
- assert.match(watchHtml,/<table[^>]*class="[^"]*watchTable/,'The Watch table has an isolated responsive scope');
- assert.match(watchHtml,/watchMobileEvidence[^>]*>Score /,'Hidden mobile columns retain their compact supporting evidence near the stock');
- const mobileRules=componentSource.slice(componentSource.indexOf('@media(max-width:700px)'));
- for(const column of [1,3,4])assert.ok(mobileRules.includes('.watchTable th:nth-child('+column+'),.watchTable td:nth-child('+column+')'),'Only nonaction Watch columns are hidden on narrow screens');
- assert.match(mobileRules,/\.watchTable\{table-layout:fixed;width:100%;min-width:0\}/,'The stock and action columns fit the viewport rather than forcing horizontal scrolling');
- assert.match(mobileRules,/\.watchTable th:nth-child\(5\),\.watchTable td:nth-child\(5\)\{width:70%\}/,'The immediately visible action keeps most of the narrow-screen width');
+ assert.doesNotMatch(watchHtml,/<table/,'Watch uses the same compact card language as Opportunities');
+ assert.equal([...watchHtml.matchAll(/<article\b/g)].length,2,'Every original Watch candidate retains one compact card');
+ assert.match(watchHtml,/class="[^"]*pill gray[^\"]*"[^>]*>NO PURCHASE</,'No-purchase cards have a neutral badge');
+ assert.match(renderRaw({}),/class="[^"]*pill yellow[^\"]*"[^>]*>HOLD</,'A checked Add does not replace a yellow Hold status');
+ assert.match(componentSource,/<style jsx global>/,'Helper-rendered cards use the global stylesheet contract required for actual scoped classes');
+ assert.match(componentSource,/\.opportunityCard \.price small\{display:block/,'Card price labels remain stacked in the actual namespaced stylesheet');
+ assert.doesNotMatch(componentSource,/\.buyGrid\{grid-template-columns:repeat\(auto-fit/,'One opportunity cannot stretch across the entire viewport');
+ for(const card of [...renderRaw({}).matchAll(/<article\b[^>]*>[\s\S]*?<\/article>/g)].map(match=>match[0])){
+  assert.deepEqual([...card.matchAll(/<h4[^>]*>([^<]+)<\/h4>/g)].map(match=>match[1]),['Recent momentum','Rank / protection state','Stop information','Data freshness'],'Each card has exactly four structured technical groups');
+  assert.doesNotMatch(card,/<details[^>]*\bopen(?:\s|=|>)/,'Technical groups remain collapsed');
+  assert.equal([...visible(card).matchAll(/class="[^"]*compactReason[^\"]*"/g)].length,1,'Each card has one visible concise explanation');
+  const faceReason=card.match(/<p[^>]*class="[^"]*compactReason[^\"]*"[^>]*>([^<]*)<\/p>/)?.[1];
+  const entryReasons=[...card.matchAll(/<small[^>]*>Entry check: ([^<]*)<\/small>/g)].map(match=>match[1]);
+  assert.ok(!entryReasons.includes(faceReason),'Collapsed entry checks cannot repeat an identical primary explanation');
+ }
+ assert.match(visible(main),/Technology · 2026-10-14/);assert.match(visible(main),/Energy · 2026-10-14/);
+ assert.match(main,/<details[^>]*>[\s\S]*?Investment rating: Strong Buy/,'The underlying Strong Buy rating remains available in collapsed Details');
+ assert.doesNotMatch(visible(main+watch),/Rated |Investment rating:/,'Card faces retain only sector and source date rather than duplicate rating metadata');
+ assert.match(watch,/Sector unavailable/,'Unknown sector identifiers use the human-readable fallback');
+ assert.doesNotMatch(visible(main+watch),/Sector0|Sector1|Sector2|Sector3|Momentum rank #2; technical supporting evidence/,'Internal sector codes and narrative paragraphs are absent from the primary cards');
  // Reproduce the actual four-button navigation on every tab. Its former
  // nowrap flex row overflowed a 390px page to 417px, outside any scroller.
  const page=fs.readFileSync('pages/index.js','utf8'),navSource=page.match(/<nav>[\s\S]*?<\/nav>/)?.[0];
@@ -76,7 +100,7 @@ try{
  const noOrders={...plan,orders:[]},noReview=buildC1ManualRecommendations({decision,openingPlan:noOrders});
  const paused=render({openingPlan:noOrders,manualRecommendations:noReview});
  assert.doesNotMatch(section(paused,'C1 account opportunities'),/<article/,'A ranking alone cannot authorize a tile');
- assert.match(section(paused,'Watch opportunities'),/Ranked Strong Buy/,'Strong Buy ranking survives without permission to buy');
+ assert.match(section(paused,'Watch opportunities'),/<details[^>]*>[\s\S]*?Investment rating: Strong Buy/,'Strong Buy ranking survives in Details without permission to buy');
  const expired=render({manualRecommendations:{...review,validUntil:'2026-10-15T16:59:59Z'}});
  assert.doesNotMatch(section(expired,'C1 account opportunities'),/BUY 2 shares|ADD 1 share/,'Expired review cannot create green purchase intent');
  const fullSlots={...decision,positions:[position,{...position,symbol:'XXX'},{...position,symbol:'YYY'}]},fullPlan={...plan,orders:[]};
@@ -89,21 +113,22 @@ try{
  const stoppedPosition={...position,stops:[{price:468.85}]},stoppedDecision={...decision,positions:[stoppedPosition]};
  const stoppedProps={decision:stoppedDecision,executionDecision:stoppedDecision,manualRecommendations:buildC1ManualRecommendations({decision:stoppedDecision,openingPlan:plan})};
  const stopped=render(stoppedProps),expected=c1PositionPresentation({decision:stoppedDecision,position:stoppedPosition,stock:screenRows.find(r=>r.symbol==='MPC')});
- assert.equal(expected.label,'SELL — STOP TRIGGERED');assert.match(stopped,/SELL — STOP TRIGGERED/);assert.doesNotMatch(section(stopped,'C1 account opportunities'),/ADD 1 share of MPC/);
- assert.match(section(stopped,'Watch opportunities'),/<small>Last verified quote: (?!unavailable)[^<]+ · regular session<\/small>/,'Held opportunities separately disclose the verified current quote timestamp');
+ assert.equal(expected.label,'SELL — STOP TRIGGERED');assert.match(stopped,/SELL — STOP TRIGGERED/);assert.doesNotMatch(section(stopped,'C1 account opportunities'),/ADD 1 share/);
+ assert.match(section(renderRaw(stoppedProps),'Watch opportunities'),/class="[^"]*pill red[^\"]*"[^>]*>SELL — STOP TRIGGERED</,'A confirmed stop keeps its red action in Watch');
+ assert.match(section(stopped,'Watch opportunities'),/<dt>Last verified quote<\/dt><dd>2026-10-15 17:00:00 UTC<\/dd>/,'Held opportunities retain the verified quote timestamp in Data freshness');
  assert.match(stopped,/Signals based on 2026-10-14 close/,'The completed signal session is not replaced by the intraday timestamp');
  const staleRows=screenRows.map(r=>({...r,quoteVerification:verifyC1Quote(r,new Date()),stale:true,clientSnapshotFallback:true}));
  const stale=render({...stoppedProps,positionRows:staleRows,screenRows:staleRows});
  assert.doesNotMatch(section(stale,'C1 account opportunities'),/BUY 2 shares|ADD 1 share/,'Stale price/screen evidence fails closed for all new capital');
  assert.match(stale,/VERIFY STOP URGENTLY/,'A stale apparent stop breach is urgent rather than an ordinary Hold');
- assert.match(stale,/URGENT VERIFICATION REQUIRED/,'The unresolved stop is prominent in the actual Watch rendering');
+ assert.match(section(renderRaw({...stoppedProps,positionRows:staleRows,screenRows:staleRows}),'Watch opportunities'),/class="[^"]*pill orange[^\"]*"[^>]*>VERIFY STOP URGENTLY</,'Unverified apparent stop risk is prominent and orange');
  assert.doesNotMatch(stale,/SELL — STOP TRIGGERED/,'A stale quote cannot fabricate a stop confirmation');
- assert.match(section(stale,'Watch opportunities'),/<small>Last verified quote: (?!unavailable)[^<]+ · current verification unavailable<\/small>/,'A retained last verified timestamp is not presented as current verification');
+ assert.match(section(stale,'Watch opportunities'),/<dt>Quote<\/dt><dd>Fallback \/ unverified<\/dd>/,'A retained last verified timestamp is not presented as current verification');
  const missingProofRows=screenRows.map(row=>({...row,_fmpQuoteObservation:undefined}));
  const missingProof=render({...stoppedProps,positionRows:missingProofRows,screenRows:missingProofRows});
  assert.match(missingProof,/VERIFY STOP URGENTLY/,'A bare cached quote without bound provenance stays an urgent verification condition');
- assert.match(section(missingProof,'Watch opportunities'),/Last verified quote: unavailable · current verification unavailable/,'Missing verification history does not invent a verified timestamp');
- assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|ADD 1 share of MPC/,'Missing proof cannot confirm an exit or authorize adding through the apparent stop');
+ assert.match(section(missingProof,'Watch opportunities'),/<dt>Last verified quote<\/dt><dd>Unavailable<\/dd>/,'Missing verification history does not invent a verified timestamp');
+ assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|ADD 1 share/,'Missing proof cannot confirm an exit or authorize adding through the apparent stop');
  assert.equal(JSON.stringify(props),baseline,'Stop, stale, momentum and expiry projections preserve all original inputs');
  console.log('PASS: compact actual-render opportunities require checked capital; rated but unfunded/blocked candidates remain neutral Watch; partial completions, shared stop decisions, expiry, stale checks and accounting immutability are preserved.');
 }finally{global.Date=RealDate;}

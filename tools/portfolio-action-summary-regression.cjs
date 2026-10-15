@@ -10,7 +10,7 @@ assert(page.includes('Sell {x.shares}')&&page.includes('Buy {x.shares}'),'trade 
 assert(page.includes('estimatedCashAfterActions')&&page.includes('Cash remaining'),'trade ticket does not reconcile estimated remaining cash');
 assert(!page.includes('→ NTRA')&&!page.includes('g.items.map(x=>tradeLabel'),'legacy source-to-target arrow presentation still exists');
 assert(!page.includes('momentumEvidenceRows')&&!page.includes('momentumEvidenceCompact')&&!page.includes('momentumEvidenceItem'),'redundant momentum evidence summary strip is still present');
-assert(page.includes('momentumBadge ${evidence.tone}')&&page.includes('<p>{evidence.explanation}</p>'),'Swing rows must retain their momentum evidence');
+assert(page.includes('<C1PositionDetails')&&page.includes('evidence={momentumEvidenceFor(s)}'),'Swing rows must retain their existing momentum evidence in structured Details');
 assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');
 assert(page.includes('timing:"Await Confirmation"')&&page.includes('size:"Qualified — Not Funded"'),'Buy cards can still imply executable deployment when the portfolio capital signal is not fundable');
 assert(page.includes('timing:"Await Capital"')&&page.includes('bp.blockReason||funded<minFundingAction'),'Buy cards are not reconciled against the final portfolio allocator');

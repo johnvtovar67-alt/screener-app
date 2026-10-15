@@ -4,6 +4,8 @@ import {useEffect,useRef,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
 import {c1PositionPresentation} from '../lib/c1PositionPresentation';
+import C1PositionDetails from './C1PositionDetails';
+import {c1DisplaySector} from '../lib/c1DisplayFormat';
 export default function C1AccountOpportunities({decision,executionDecision=decision,openingPlan,openingError,manualRecommendations,screenRows=[],positionRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
  const [,expire]=useState(0);
  useEffect(()=>{
@@ -55,38 +57,59 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
   ...row,rating:watch[index]?.rating,priority:heldSymbols.has(String(row.symbol||'').toUpperCase())?'Held':++nextWatchPriority,
   holding:holdingPresentation(row.symbol),review:evidence.pending?{why:evidence.reason,next:'Fresh capital is paused.'}:row.review
  }))};
+ const stockFor=symbol=>positionRows.find(row=>(row.symbol||row.ticker)===symbol)||screenRows.find(row=>(row.symbol||row.ticker)===symbol);
+ const positionFor=symbol=>decision.positions?.find(row=>row.symbol===symbol);
+ const entryReason=text=>{
+  const value=String(text||'');
+  if(/all three.*slots|position slots/i.test(value))return 'All position slots are allocated.';
+  if(/brokerage cash.*insufficient|insufficient.*cash|allocation cash cannot fund/i.test(value))return 'Insufficient cash for a purchase.';
+  if(/brokerage cash.*(required|update|balance)|enter.*brokerage cash/i.test(value))return 'Update brokerage cash before buying.';
+  if(/recent.*(unavailable|missing|incomplete)|six consecutive/i.test(value))return 'Recent momentum data needs verification.';
+  if(/recent.*momentum|MACD/i.test(value))return 'Recent momentum does not clear the entry checks.';
+  if(/below the three selected|rank.*below/i.test(value))return 'Outside the selected entry ranks.';
+  if(/verification.*pending|refresh|unavailable|paused/i.test(value))return 'Current checks do not authorize a purchase.';
+  if(!value)return 'No purchase is authorized.';
+  const sentence=value.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim()||value;
+  return sentence.length<=130?sentence:'The current entry checks do not authorize a purchase.';
+ };
+ const toneFor=(held,order)=>held?.action==='Sell'?'red':held?.urgent||held?.label?.startsWith('VERIFY')?'orange':held?'yellow':order?'green':'gray';
+ const renderCard=(row,order=null,held=holdingPresentation(row.symbol))=>{
+  const stock=stockFor(row.symbol),position=positionFor(row.symbol),entry=row.entryEvidence||{};
+  const sourceCandidate=decision.stockScreen?.candidates?.find(candidate=>candidate.symbol===row.symbol);
+  const close=Number.isFinite(entry.close)?'$'+entry.close.toFixed(2):row.close||'Unavailable';
+  const score=Number.isFinite(entry.momentumScore)?entry.momentumScore.toFixed(1)+'/100':row.momentum||'Unavailable';
+  const rating=row.rating||'Unavailable',tone=toneFor(held,order);
+  const label=held?.label||(order?(rating==='Strong Buy'?'STRONG BUY':'BUY'):['Buy','Strong Buy'].includes(rating)?'NO PURCHASE':'WATCH');
+  const why=held?.reason||(order?`BUY ${order.shares} ${order.shares===1?'share':'shares'}; opening checks passed.`:entryReason(row.review?.why||row.detail));
+  return <article className={`idea opportunityCard ${order&&!held?'green':''}`} key={row.symbol}>
+   <div className="top"><h3>{row.symbol}</h3><b className={`pill ${tone}`}>{label}</b></div>
+   <p className="sub opportunityMeta">{c1DisplaySector(stock,position,entry,row)} · {decision.sourceSessionDate}</p>
+   <div className="price"><b>{close}<small>Signal close</small></b><span className="momentumScore">{score}<small>Momentum score</small></span></div>
+   <p className="compactReason">{why}</p>
+   {held&&order&&<small className="checkedCapital">ADD {order.shares} {order.shares===1?'share':'shares'}; opening checks passed.</small>}
+   <C1PositionDetails position={position} decision={decision} stock={stock} presentation={held} evidence={{...entry,recentMomentumGate:sourceCandidate?.recentMomentumGate}}><small>Investment rating: {rating}</small>{order&&<small>Opening reference: ${order.estimatedPrice.toFixed(2)}</small>}{!held&&(row.review?.why||row.detail)&&(row.review?.why||row.detail)!==why&&<small>Entry check: {row.review?.why||row.detail}</small>}</C1PositionDetails>
+  </article>;
+ };
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
   {!portfolioOnly&&evidence.pending&&<p role="status">{evidence.reason}</p>}
   <p className="sub">Signals based on {decision.sourceSessionDate} close · C1 strategy cash: {Number.isFinite(decision.strategyCash)?decision.strategyCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Unavailable'} · Brokerage cash: {Number.isFinite(decision.brokerageCash)?decision.brokerageCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Not entered'} · Available to deploy: {Number.isFinite(decision.executableCash)?decision.executableCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'$0.00'}</p>
   {decision.brokerageCashCurrent===false&&<p role="status">{decision.brokerageCashReason||'Update brokerage cash in My Portfolio before a new C1 purchase.'}</p>}
-  {exits.length>0&&<div><h3>Sell decisions</h3><ul>{exits.map(o=>{const held=holdingPresentation(o.symbol);return <li key={o.id}><b>{o.symbol}: {held?.label||'SELL'}</b><p>{held?.reason||'An existing exit is pending.'}</p><details><summary>Details</summary><p>Sell {o.shares} {o.shares===1?'share':'shares'}; estimated opening price ${o.estimatedPrice.toFixed(2)}.</p><p>{held?.detail}</p><p>Check the current broker price; no broker order has been placed by C1.</p></details></li>;})}</ul></div>}
+  {exits.length>0&&<div><h3>Sell decisions</h3><div className="grid buyGrid">{exits.map(o=>{const held=holdingPresentation(o.symbol);return <article className="idea opportunityCard" key={o.id}>
+   <div className="top"><h3>{o.symbol}</h3><b className={`pill ${held?toneFor(held):'red'}`}>{held?.label||'SELL'}</b></div>
+   <p className="compactReason">{held?.reason||'An existing exit is pending.'}</p>
+   <small className="checkedCapital">Sell {o.shares} {o.shares===1?'share':'shares'} · opening reference ${o.estimatedPrice.toFixed(2)}</small>
+   <C1PositionDetails position={positionFor(o.symbol)} decision={decision} stock={stockFor(o.symbol)} presentation={held}/>
+  </article>;})}</div></div>}
   {ready&&buys.length>0&&(exits.length>0||orders.some(order=>order.side==='sell'&&!order.condition))&&<p className="actionHelp">Complete the C1 exits before replacement purchases. Buy quantities assume those sales; check the proceeds and current prices first.</p>}
-  {!portfolioOnly&&actionableTiles.length>0?<div className="grid buyGrid">{actionableTiles.map(tile=>{const held=holdingPresentation(tile.symbol);return <article className="idea green" key={tile.symbol}>
-   <div className="top"><h3>{tile.symbol}</h3><b className="pill green">{held?'ADD':tile.rating.toUpperCase()}</b></div>
-   <p className="sub">Ranked {tile.rating} · {tile.entryEvidence?.sector||'Sector unavailable'}</p>
-   <div className="price"><b>${tile.order.estimatedPrice.toFixed(2)}</b><small>Verified opening reference</small></div>
-   <div className="plan"><b>{held?'ADD':'BUY'} {tile.order.shares} {tile.order.shares===1?'share':'shares'} of {tile.symbol}</b><p>Account, cash and opening checks passed for this quantity.</p></div>
-   {held&&<p className="holdingAction"><b>{held.label}</b> · {held.reason}</p>}
-   <details><summary>Details</summary><p>Signal close {Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'unavailable'} · Momentum score {Number.isFinite(tile.entryEvidence?.momentumScore)?tile.entryEvidence.momentumScore.toFixed(1)+'/100':'unavailable'} · {decision.sourceSessionDate}</p><p>Check the current broker price and cash before placing an order; C1 has not placed a broker order.</p></details>
-  </article>;})}</div>:portfolioOnly&&buys.length?<>
-   <div className="grid buyGrid">{buys.map(o=>{const held=holdingPresentation(o.symbol);if(held&&!held.canAdd)return null;return <article className="idea green" key={o.id}>
-    <div className="top"><h3>{o.symbol}</h3><b className="pill green">{held?'ADD':'BUY'}</b></div>
-    <div className="price"><b>${o.estimatedPrice.toFixed(2)}</b><small>Verified opening reference</small></div>
-    <div className="plan"><b>{held?'ADD':'BUY'} {o.shares} {o.shares===1?'share':'shares'} of {o.symbol}</b><p>Account, cash and opening checks passed for this quantity.</p></div>
-    {held&&<p className="holdingAction"><b>{held.label}</b> · {held.reason}</p>}
-    <details><summary>Details</summary><p>Check the current price and available cash at your broker before submitting; after purchase, record the shares and fill price in the screener.</p></details>
-   </article>;})}</div>
-  </>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No actionable C1 purchases right now.':'C1 ratings awaiting update.'}</b>{!ready&&<span>{waitingReason}</span>}</div>}
-
+  {!portfolioOnly&&actionableTiles.length>0?<div className="grid buyGrid">{actionableTiles.map(tile=>renderCard(tile,tile.order))}</div>:portfolioOnly&&buys.length?<div className="grid buyGrid">{buys.map(o=>{const held=holdingPresentation(o.symbol);if(held&&!held.canAdd)return null;return renderCard(ratedRows.find(row=>row.symbol===o.symbol)||{symbol:o.symbol},o,held);})}</div>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No actionable C1 purchases right now.':'C1 ratings awaiting update.'}</b>{!ready&&<span>{waitingReason}</span>}</div>}
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Refresh after {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} to update the recommendation.</p>}
  </section>
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">
   <h2>🟡 Watch</h2>
   <p className="sub">Rankings remain visible when signal or account checks do not authorize a purchase · {decision.sourceSessionDate}</p>
-  {watch.length?<div className="scroll watchScroll"><table className="watchTable"><thead><tr><th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Signal closing price</th><th>Action / Entry check</th></tr></thead><tbody>{watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td><td><b>{row.symbol}</b><div>{row.sector}</div><small>Ranked {row.rating||'Watch'}</small><small className="watchMobileEvidence">Score {row.momentum} · Signal {row.close}</small></td><td>{row.momentum}</td><td>{row.close}</td><td className={row.holding?.label==='VERIFY STOP URGENTLY'?'urgentAction':''}><b>{row.holding?.label||'WATCH / NO PURCHASE'}</b><div>{row.holding?.reason||row.review.why}</div>{row.holding&&<small className="quoteTime">Last verified quote: {row.holding.lastVerifiedQuoteAt?new Date(row.holding.lastVerifiedQuoteAt).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'}):'unavailable'}{row.holding.quoteVerified?' · regular session':' · current verification unavailable'}</small>}{row.holding?.label==='VERIFY STOP URGENTLY'&&<strong>URGENT VERIFICATION REQUIRED</strong>}{row.holding?.detail&&row.holding.detail!==row.holding.reason&&<details><summary>Details</summary><p>{row.holding.detail}</p></details>}</td></tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
-
+  {watch.length?<div className="grid buyGrid">{watchView.rows.map(row=>renderCard(row))}</div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
  </section>}
- <style jsx>{`.buyGrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.price small{font-size:12px;color:#64748b}.holdingAction{font-size:12px;color:#475569}.quoteTime{display:block;font-size:11px;color:#64748b;overflow-wrap:anywhere}details summary{cursor:pointer;color:#475569;font-size:12px}details p{font-size:12px;color:#475569}.urgentAction{background:#fff1f2;color:#9f1239}.urgentAction strong{display:block;font-size:11px}.watchMobileEvidence{display:none}@media(max-width:700px){.watchScroll{width:100%;min-width:0;max-width:100%}.watchTable{table-layout:fixed;width:100%;min-width:0}.watchTable th,.watchTable td{padding:8px 6px;white-space:normal;overflow-wrap:anywhere}.watchTable th:nth-child(1),.watchTable td:nth-child(1),.watchTable th:nth-child(3),.watchTable td:nth-child(3),.watchTable th:nth-child(4),.watchTable td:nth-child(4){display:none}.watchTable th:nth-child(2),.watchTable td:nth-child(2){width:30%}.watchTable th:nth-child(5),.watchTable td:nth-child(5){width:70%}.watchMobileEvidence{display:block;font-size:11px;color:#64748b}}`}</style>
+ <style jsx global>{`.opportunityCard{padding:12px}.opportunityCard .top{gap:8px;align-items:flex-start}.opportunityCard .pill{font-size:11px;max-width:65%;text-align:center;white-space:normal;overflow-wrap:anywhere}.opportunityCard .opportunityMeta{font-size:12px;margin:5px 0 0}.opportunityCard .price{margin:8px 0;font-size:14px;gap:12px}.opportunityCard .price small{display:block;font-size:11px;font-weight:400;color:#64748b}.opportunityCard .momentumScore{text-align:right;font-size:14px;font-weight:800}.opportunityCard .compactReason{font-size:13px;margin:0 0 6px;line-height:1.35}.opportunityCard .checkedCapital{display:block;font-size:12px;margin:0 0 8px;color:#475569}.opportunityCard details{margin-top:8px}.opportunityCard details summary{cursor:pointer;color:#475569;font-size:12px}`}</style>
  </>;
 }

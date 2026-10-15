@@ -7,7 +7,7 @@ const modules=createResearchModuleLoader(process.cwd());
 function component(relative,react=React){
  const file=path.resolve(relative),record={exports:{}};
  const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
- new Function('require','module','exports',code)(name=>name==='react'?react:name.startsWith('../lib/')?modules.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
+ new Function('require','module','exports',code)(name=>name==='react'?react:name.startsWith('../lib/')?modules.load(name,file):name.startsWith('.')?{__esModule:true,default:component(path.resolve(path.dirname(file),name.endsWith('.js')?name:name+'.js'),react)}:require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
  return record.exports.default;
 }
 // Exercise the real component handlers and hook state without adding a DOM
@@ -130,11 +130,11 @@ async function main(){
   const opportunities=renderToStaticMarkup(React.createElement(Opportunities,props));
   assert.match(opportunities,/C1 strategy cash: \$3,037\.90/);
   assert.match(opportunities,new RegExp('Brokerage cash: \\$'+balance.toFixed(2).replace('.','\\.')));
-  assert.doesNotMatch(opportunities,/<h3[^>]*>BBB<\/h3>/,'A cash cap cannot create an actionable opportunity tile');
-  assert.match(opportunities,/<b[^>]*>BBB<\/b>[\s\S]*?Ranked Buy[\s\S]*?WATCH \/ NO PURCHASE/,'The unchanged investment rating remains visible in neutral Watch without purchase authorization');
+  assert.doesNotMatch(opportunities.slice(0,opportunities.indexOf('aria-label="Watch opportunities"')),/<h3[^>]*>BBB<\/h3>/,'A cash cap cannot create an actionable opportunity tile');
+  assert.match(opportunities,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>[\s\S]*?<details[^>]*>[\s\S]*?Investment rating: Buy/,'The unchanged investment rating remains available in neutral Watch Details without purchase authorization');
   assert.doesNotMatch(opportunities,/<article[^>]*class="[^"]*green/,'Cash-blocked candidates do not receive a green opportunity impression');
   assert.match(opportunities,/C1 qualifies this stock, but available brokerage cash is insufficient for a new purchase/);
-  assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<b[^>]*>CCC<\/b>/,'Existing Watch analysis remains visible');
+  assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<h3[^>]*>CCC<\/h3>/,'Existing Watch analysis remains visible');
   assert.doesNotMatch(opportunities,/currently ineligible|BUY \d+ shares/);
   const exits=renderToStaticMarkup(React.createElement(Opportunities,{...props,view:'portfolio'}));
   assert.match(exits,/Sell 10 shares/,'Zero brokerage cash must preserve checked exits');
@@ -142,7 +142,7 @@ async function main(){
  }
  const oldAccount={...decision,brokerageCash:null,executableCash:0,brokerageCashCurrent:false,brokerageCashReason:'Enter current brokerage cash.'};
  const oldHtml=renderToStaticMarkup(React.createElement(Opportunities,{decision:oldAccount,screenRows,screenCurrent:true}));
- assert.match(oldHtml,/Brokerage cash: Not entered/);assert.doesNotMatch(oldHtml,/<h3[^>]*>BBB<\/h3>/);assert.match(oldHtml,/<b[^>]*>BBB<\/b>[\s\S]*?Ranked Buy[\s\S]*?WATCH \/ NO PURCHASE/);assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Enter current brokerage cash/);
+ assert.match(oldHtml,/Brokerage cash: Not entered/);assert.doesNotMatch(oldHtml.slice(0,oldHtml.indexOf('aria-label="Watch opportunities"')),/<h3[^>]*>BBB<\/h3>/);assert.match(oldHtml,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>[\s\S]*?<details[^>]*>[\s\S]*?Investment rating: Buy/);assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Enter current brokerage cash/);
  await exerciseCashEditor(decision);
  console.log('PASS: compact cash summary reveals the unchanged editor, collapses only after successful save, preserves disabled/error/freshness status, and retains Buy/Watch analysis and checked exits without authorizing purchases.');
 }

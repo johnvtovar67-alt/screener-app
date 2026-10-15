@@ -8,7 +8,7 @@ const {readTop5Response}=loader.load('lib/top5Response.js');
 const specs=[['MRNA','Health Care'],['HPE','Technology'],['MPC','Energy'],['DELL','Technology'],['VLO','Energy'],['ILMN','Health Care'],['AAA','Other'],['BBB','Other'],['CCC','Other']];
 const session={date:'2026-10-09',signals:specs.map(([symbol,sector],i)=>({symbol,sector,companyName:symbol,cik:String(100+i),price:100,researchFactors:{momentumPercentile:99-i},entryTiming:{available:true,asOf:'2026-10-09',liquidityPass:true,averageDollarVolume20:500000000}}))};
 const snapshot=buildC1StockScreenSnapshot(session);
-const decision={contract:'c1-account-decision-v1',current:true,decisionId:'accepted-hash:1',sourceSessionDate:session.date,stockScreen:snapshot,positions:[{symbol:'DELL',exits:[],reason:'Momentum rank #4; original account holding explanation.',entryContext:{stage:'full'}}]};
+const decision={contract:'c1-account-decision-v1',current:true,decisionId:'accepted-hash:1',sourceSessionDate:session.date,stockScreen:snapshot,positions:[{symbol:'DELL',exits:[],holdingRank:{base:{verified:true,eligible:true,rank:4,eligibleCount:500}},reason:'Momentum rank #4; original account holding explanation.',entryContext:{stage:'full'}}]};
 const rows=specs.map(([symbol,sector])=>({symbol,sector,price:100,entryTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000},expertDecision:{metrics:{quoteFreshnessPass:true}},eventRisk:{status:'Clear'},finalDecision:{action:'Watch',relativeCapitalScore:['DELL','ILMN'].includes(symbol)?200:0}}));
 const crowded=[...rows,...Array.from({length:110},(_,i)=>({symbol:'X'+i,finalDecision:{action:'Watch',relativeCapitalScore:100-i}}))];
 const api=fs.readFileSync('pages/api/top5.js','utf8'),start=api.indexOf('function compactRowsForClient('),end=api.indexOf('\n}',start)+2;
@@ -63,23 +63,26 @@ async function main(){
  const React=require('react'),{renderToStaticMarkup}=require('react-dom/server'),babel=require('next/dist/compiled/babel/core');
  const file=path.resolve('components/C1AccountOpportunities.js'),effects=[],refs=[],states=[];let refIndex=0,stateIndex=0;
  const mockReact={...React,useRef:value=>refs[refIndex++]||(refs[refIndex-1]={current:value}),useState:value=>{const index=stateIndex++;if(!(index in states))states[index]=value;return [states[index],next=>{states[index]=typeof next==='function'?next(states[index]):next;}];},useEffect:fn=>effects.push(fn)};
- const compiled=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code,record={exports:{}};
- new Function('require','module','exports',compiled)(name=>name==='react'?mockReact:name.startsWith('../lib/')?loader.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
- const Component=record.exports.default;
+ function component(file,libs=loader){
+  const compiled=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code,record={exports:{}};
+  new Function('require','module','exports',compiled)(name=>name==='react'?mockReact:name.startsWith('../lib/')?libs.load(name,file):name.startsWith('.')?component(path.resolve(path.dirname(file),name.endsWith('.js')?name:name+'.js'),libs):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
+  return record.exports;
+ }
+ const Component=component(file).default;
  function render(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Component({decision,screenRows,screenCurrent:true});const html=renderToStaticMarkup(node);effects.slice(1).forEach(effect=>effect());return html.replace(/\sclass="[^"]*"/g,'');}
- const html=render(rows),heldRow=html.match(/<tr><td>Held<\/td><td><b>DELL<\/b>[\s\S]*?<\/tr>/)?.[0];
- assert.ok(heldRow,'The existing holding retains the Held priority');
+ const html=render(rows),heldRow=[...html.matchAll(/<article\b[^>]*>[\s\S]*?<\/article>/g)].map(match=>match[0]).find(card=>card.includes('<h3>DELL</h3>'));
+ assert.ok(heldRow,'The existing holding remains in the same ranked compact-card composition');
  assert.match(heldRow,/<b>HOLD<\/b>/,'A held stock without a confirmed exit has an action-first Hold status');
- assert.match(heldRow,/<details><summary>Details<\/summary>[\s\S]*?Momentum rank #4/,'The original holding rank remains available in Details');
+ assert.match(heldRow,/<details[^>]*>[\s\S]*?<dt>Momentum rank<\/dt><dd>#4 \/ 500<\/dd>/,'The supplied verified holding rank remains available in structured Details');
  assert.doesNotMatch(heldRow.replace(/<details>[\s\S]*?<\/details>/g,''),/Momentum rank/,'The full holding explanation remains secondary to the primary action');
- assert.match(heldRow,/<td>96\.0\/100<\/td><td>\$100\.00<\/td>/,'The original compact score and signal-price columns remain readable');
+ assert.match(heldRow,/96\.0\/100/);assert.match(heldRow,/\$100\.00/,'The original score and signal price remain readable');
  assert.doesNotMatch(heldRow,/<details[^>]*\bopen(?:\s|=|>)/,'Holding details start collapsed');
- assert.match(html,/<td>4<\/td><td><b>VLO/);assert.match(html,/<td>5<\/td><td><b>ILMN/);
+ equal([...html.matchAll(/<h3>([^<]+)<\/h3>/g)].map(match=>match[1]),specs.map(([symbol])=>symbol),'Compact cards preserve the exact accepted ranked membership and display order');
  const pendingHtml=render(partial);assert.match(pendingHtml,/verification is pending/);assert.doesNotMatch(pendingHtml,/currently ineligible/);
- for(const symbol of first.buySymbols)assert.ok(pendingHtml.includes('<b>'+symbol+'</b>'),'Retain verified ranked candidates in neutral Watch while new capital is paused');
- assert.doesNotMatch(pendingHtml,/<h3>/,'Unverified purchase quantities cannot appear as actionable opportunity tiles');
- for(const symbol of ['DELL','VLO','ILMN'])assert.ok(pendingHtml.includes('<b>'+symbol+'</b>'),'Retain Watch members');
- assert.match(pendingHtml,/<td>4<\/td><td><b>VLO/);assert.match(pendingHtml,/<td>5<\/td><td><b>ILMN/);
+ for(const symbol of first.buySymbols)assert.ok(pendingHtml.includes('<h3>'+symbol+'</h3>'),'Retain verified ranked candidates in neutral Watch while new capital is paused');
+ assert.doesNotMatch(pendingHtml.slice(0,pendingHtml.indexOf('aria-label="Watch opportunities"')),/<article/,'Unverified purchase quantities cannot appear as actionable opportunity tiles');
+ for(const symbol of ['DELL','VLO','ILMN'])assert.ok(pendingHtml.includes('<h3>'+symbol+'</h3>'),'Retain Watch members');
+ equal([...pendingHtml.matchAll(/<h3>([^<]+)<\/h3>/g)].map(match=>match[1]),specs.map(([symbol])=>symbol),'Pending evidence preserves every accepted ranked card in order');
  // Browser omission can suppress a server-checked Buy/Add recommendation,
  // but cannot generate or mutate the independent server recommendation.
  const RealDate=Date;
@@ -88,9 +91,8 @@ async function main(){
   const fixed=createResearchModuleLoader(process.cwd()),entryDecision={...decision,contract:'c1-account-decision-v1',revision:1,decisionId:'quantity-source:1',positions:[{symbol:'DELL',exits:[],entryContext:{stage:'full'}},{symbol:'HPE',exits:[],entryContext:{stage:'half'}}]};
   const plan={contract:'c1-actual-account-opening-plan-v1',providerVerified:true,sourceSessionDate:session.date,date:'2026-10-12',observedAt:'2026-10-12T14:00:00Z',quoteValidUntil:'2026-10-12T14:02:00Z',sourceReceipt:{observedAt:'2026-10-12T14:00:00Z',membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true},orders:[{id:'new',symbol:'MRNA',side:'buy',shares:2,estimatedPrice:100,phase:3},{id:'add',symbol:'HPE',side:'buy',shares:3,estimatedPrice:100,phase:3},{id:'exit',symbol:'DELL',side:'sell',shares:4,estimatedPrice:100,phase:1}]};
   const manual=fixed.load('lib/c1ManualRecommendations.js'),review=manual.buildC1ManualRecommendations({decision:entryDecision,openingPlan:plan});assert.equal(review.status,'ready');
-  const serverEvidence=JSON.stringify({plan,review}),entryRecord={exports:{}};
-  new Function('require','module','exports',compiled)(name=>name==='react'?mockReact:name.startsWith('../lib/')?fixed.load(name,file):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),entryRecord,entryRecord.exports);
-  function actions(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=entryRecord.exports.default({decision:entryDecision,executionDecision:entryDecision,manualRecommendations:review,openingPlan:plan,screenRows,screenCurrent:true,view:'portfolio'});const html=renderToStaticMarkup(node);effects.at(-1)();return html;}
+  const serverEvidence=JSON.stringify({plan,review}),Entry=component(file,fixed).default;
+  function actions(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Entry({decision:entryDecision,executionDecision:entryDecision,manualRecommendations:review,openingPlan:plan,screenRows,screenCurrent:true,view:'portfolio'});const html=renderToStaticMarkup(node);effects.at(-1)();return html;}
   const checked=actions(rows);assert.match(checked,/BUY 2 shares/);assert.match(checked,/ADD 3 shares/);assert.match(checked,/Sell 4 shares/);
   const omitted=actions(partial);assert.doesNotMatch(omitted,/BUY 2 shares|ADD 3 shares/);assert.match(omitted,/Sell 4 shares/,'Missing entry evidence does not suppress checked exits');
   assert.equal(JSON.stringify({plan,review}),serverEvidence,'Compact evidence cannot change server orders or quantities');
@@ -100,8 +102,8 @@ async function main(){
   global.window={localStorage:storage};refs.length=0;states.length=0;
   assert.match(render(partial),/verification is pending/,'A new mount must restore before trusting browser cache');
   const restoredMarkup=render(partial);
-  for(const symbol of first.buySymbols)assert.ok(restoredMarkup.includes('<b>'+symbol+'</b>'),'Page remount retains verified composition in neutral Watch when new response is partial');
-  assert.doesNotMatch(restoredMarkup,/<h3>/,'Restoring cached ranks alone cannot authorize a fresh opportunity tile');
+  for(const symbol of first.buySymbols)assert.ok(restoredMarkup.includes('<h3>'+symbol+'</h3>'),'Page remount retains verified composition in neutral Watch when new response is partial');
+  assert.doesNotMatch(restoredMarkup.slice(0,restoredMarkup.indexOf('aria-label="Watch opportunities"')),/<article/,'Restoring cached ranks alone cannot authorize a fresh opportunity tile');
   assert.doesNotMatch(restoredMarkup,/currently ineligible/);assert.match(restoredMarkup,/verification is pending/);
   equal(readC1ScreenEvidence(storage,decision).ratings,first.ratings);
  }finally{if(previousWindow===undefined)delete global.window;else global.window=previousWindow;}
