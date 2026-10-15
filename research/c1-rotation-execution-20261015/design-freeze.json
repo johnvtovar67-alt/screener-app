@@ -1,0 +1,8 @@
+{
+  "protocol": "C1-GICS-ROTATION-H1-2025Q1-v1",
+  "protocol_sha256": "761043b94b7b578727777b837549cc444b3097fe2d7d8be7c670937d3d3972ab",
+  "before_new_price_acquisition": true,
+  "before_new_evaluation_outcomes": true,
+  "source_commit": "77bfb86a8980e29921fa69a88258caf673045190",
+  "source_h_sha256": "362bbb3d29ecc0d99dc55786f1041d746fa7ade519e8fbfd2eff8e6518d902dc"
+}

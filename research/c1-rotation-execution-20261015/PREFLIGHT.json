@@ -1,0 +1,20 @@
+{
+  "contract": "c1-rotation-execution-preflight-v1",
+  "user_local_date": "2026-10-14",
+  "user_timezone": "America/Chicago",
+  "approximate_reconstruction_authorized": true,
+  "exhaustive_metadata_certification_required": false,
+  "subscription_receipt_verified": true,
+  "current_provider_bandwidth_headroom_verified": false,
+  "current_usage_requested_from_owner": true,
+  "fresh_private_nonlicensed_write_passed": true,
+  "separate_process_private_retrieval_passed": true,
+  "retrieval_checksum_matched": true,
+  "original_archive_accessed": false,
+  "storage_or_credential_configuration_changed": false,
+  "fmp_execution_phase_requests": 0,
+  "licensed_execution_inputs_acquired": false,
+  "experiment_implementation_started": false,
+  "intervention_design_frozen": "Preserved H: age>=5, five-session return<=-7%, first causal eligible position, one sleeve event, deterministic ties",
+  "dependent_work_status": "Await current FMP headroom under the owner's explicit execution condition"
+}
