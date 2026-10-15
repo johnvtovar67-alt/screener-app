@@ -1,0 +1,23 @@
+# C1 lifecycle partial historical diagnostic — fixed specification
+
+Status: specified before examining comparative outcome statistics. Research only; no production, PR #262 or frozen 48-study modification. Date: 2026-10-14 America/Chicago.
+
+Use only the two existing c1-*-accounting.json.gz.base64 historical output fixtures at production source f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde. They are historical simulated fills and held-name closes, not current-production account replays or authenticated raw market data. Preserve source and decoded hashes. Do not reacquire or substitute prices.
+
+Reference: each original complete sleeve position episode, with original entry fills, share quantities and actual saved modeled exit fills. This is an archived historical reference, NOT the current-production Champion. Exclude every episode with a sale on the final source date 2026-09-01 because terminal liquidation may be artificial. Log partial fills, same-day reentries, missing marks and unclosed episodes. Never infer an unobserved opening price from a sale fill.
+
+Three independent partial alternatives, each compared separately with that episode's original outcome, with original entries/quantities fixed:
+
+- H7: at age >=5 source sessions, first completed close with five-session close return <= -7.00%. Require six consecutive within-episode close marks. No rank condition.
+- P50: peak completed-close gain over entry basis reaches >=12%; activation is latched. At age >=5, trigger when current completed-close gain is <=50% of the peak completed-close gain. No rank condition and no requirement current gain stays positive.
+- V2: peak completed-close gain reaches >=12%, latched. At age >=5, log peak-to-close drawdown >=2 * trailing daily-log-return sample volatility * sqrt(5). Volatility uses 20 consecutive within-episode returns ending five sessions before the decision (26 consecutive closes required). No volatility extrapolation for short histories. Report coverage separately.
+
+Execution: decision after completed close t; model a precommitted market-on-close sale in session t+1 at its held close minus adverse exit cost. This is a deliberate one-session-delayed close execution sensitivity because daily opens are missing, not next-open performance. If the original reference exits in session t+1 or earlier, preserve that original exit instead. If any required closing observation is missing, log unavailable and do not invent a price. Original next-session exits take priority; do not backfill a decision-close fill. No reentries or replacement trades are fabricated.
+
+Costs: saved reference entry/exit fills embed 12 bps. Compare hypothetical and reference exits at independent 12/25/50 bps EXIT-cost assumptions by de-costing reference sale price by (1-.0012) then applying (1-cost). Original entries are shared, so exit-proceeds differences are valid fixed-quantity episode diagnostics; these are NOT independently replayed strategy cost paths. Primary exit sensitivity 25 bps; report all. No parameter selection.
+
+Outcomes: complete episode and trigger/coverage counts; aggregate fixed-quantity proceeds difference; mean/median per-share exit-price difference; early-exit win/loss frequency; released source sessions and notional-session capacity; hypothetical/recorded holding duration; close-based maximum favorable excursion, peak-to-exit giveback, gain retention; close-based adverse excursion/drawdown; original later recovery versus earlier sale; break-even replacement return needed to match the reference exit. Stratify by entry year and observed within-position volatility, explicitly not market regimes. Merge overlapping same-issuer sleeve episodes for dependence diagnostics; never call sleeves/universes independent replicates.
+
+No CAGR, Sharpe, portfolio maximum drawdown, portfolio stop frequency, new-entry performance, ranking responsiveness performance or replacement alpha claim is permitted from these inputs. Daily ranks, exit reasons, unheld opportunities, benchmarks, intraday highs, full OHLCV, verified raw corporate-action economics and point-in-time complete inputs are absent. Complete-case fixed +30-day forward returns are prohibited because marks vanish on original exits. Compare through each original episode endpoint instead, report that endpoint is endogenous to the archived reference.
+
+No significance-based winner, optimization, revised threshold or extrapolation to DELL. DELL October 14 is outside these data. Preserve all alternative results, failures and limitations and the executable analysis script under this scratch research directory.

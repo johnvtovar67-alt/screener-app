@@ -1,0 +1,124 @@
+{
+  "contract": "c1-lifecycle-public-provenance-v1",
+  "source_review_commit": "f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde",
+  "original_specification_sha256": "124e84d1ef7821812d1fd710ecb10ccf5e76ccc05837078d1c0d51c0b5ddb470",
+  "original_inputs": [
+    {
+      "universe": "sp500",
+      "encoded_fixture_sha256": "06959bc52f6fb6f4ec664ff3f8aa3fa36a3778e76c993a619208ffd81dd039b5",
+      "decoded_fixture_sha256": "817fa451af5b17fa695092a68226add3166f25cee2bc65e51305826728b9e5bc"
+    },
+    {
+      "universe": "nasdaq",
+      "encoded_fixture_sha256": "9b5a19a7f13ac5adacbeb6d2edff4e9038ead6f645ef3207056212b9a0751ee8",
+      "decoded_fixture_sha256": "9e486707592769542d61f374ae04474577672369a761a4fceb23864d619b121c"
+    }
+  ],
+  "original_research_artifact_sha256": {
+    "partial-study-plan.md": {
+      "sha256": "124e84d1ef7821812d1fd710ecb10ccf5e76ccc05837078d1c0d51c0b5ddb470",
+      "bytes": 4609
+    },
+    "prepare_fixture_inputs.py": {
+      "sha256": "3f79fb9b118aec885df9270275efa1688bda44612b17ae7d749708e8db9e066e",
+      "bytes": 1497
+    },
+    "verify_inputs.py": {
+      "sha256": "344ca091f7f88c49969d0c03a70bded6a77010b573247f58346e7ed7bae8a37a",
+      "bytes": 2482
+    },
+    "analyze_partial.py": {
+      "sha256": "ee431eccb51ecaf17021f9cf631b86dddd5c40d21382163c56a21e76e709c7af",
+      "bytes": 24476
+    },
+    "validate_partial.py": {
+      "sha256": "0ccf949db3ab313e2160f8a6218f9d0332ca421279a110e9d7f4624f1178dc1d",
+      "bytes": 6206
+    },
+    "measure_giveback.py": {
+      "sha256": "21579d04f7d6c9e8646134cc3d9b444f6ba98113026a61255f791be61505a37d",
+      "bytes": 3154
+    },
+    "REPRODUCE.md": {
+      "sha256": "4d865f8ae41478fba40864bc813e0473ffb2811c2fddb654313a04b1d2e05118",
+      "bytes": 3675
+    },
+    "input-accounting-check.json": {
+      "sha256": "2411bf4e0b6510e89222fca5ffb51d7d2c0de60322f3aba4740f1efa917731e7",
+      "bytes": 1855
+    },
+    "partial-results.json": {
+      "sha256": "a1d2269f41aca2ad751c9f36da2f26301c4a9fba51228b25996067aee08e63af",
+      "bytes": 481656
+    },
+    "partial-episodes.csv": {
+      "sha256": "61382a93a61d742cf14749c385b0ea0164e37b55ede6f28b42ade20dcd34f6d6",
+      "bytes": 2095665
+    },
+    "partial-coverage.csv": {
+      "sha256": "765614f38d4da9f40c2e209fc5bc336b3f607a454a3a0d954b3687e66b574243",
+      "bytes": 107248
+    },
+    "partial-manifest.json": {
+      "sha256": "234ac1eb4510e17305927c0e760ab71e1cccac9a52335486cc0c406a79facab7",
+      "bytes": 1160
+    },
+    "independent-validation.json": {
+      "sha256": "fba55907cbce3483d589eb8e2df9d22bf9f80a31ea9987890a9fe1b373de9f0c",
+      "bytes": 5372
+    },
+    "giveback-summary.json": {
+      "sha256": "5d29f87dbc2946c4bdffe896785dfddd1e29a1d31eb39b673e266765ce837e5f",
+      "bytes": 94970
+    },
+    "data/fixture-inventory.json": {
+      "sha256": "b80680aa67b8207bfa073cfd0c76d1e5158e7082d9b41eeb2b64ad29315b1399",
+      "bytes": 5246
+    }
+  },
+  "script_adaptations": [
+    {
+      "file": "prepare_fixture_inputs.py",
+      "original_sha256": "3f79fb9b118aec885df9270275efa1688bda44612b17ae7d749708e8db9e066e",
+      "published_sha256": "48fde31e35257f5c9aa9d1ae65f8cc7b205e192dd2241c1b0bdb5584040782ba",
+      "normalized_computation_ast_sha256": "e4e60a5624af7e7110943a159e8ae626d2712cf04b52f2c7271839af4ae094ef",
+      "computation_ast_matches_original": true,
+      "adaptation": "Explicit external input/output roots only; computation preserved."
+    },
+    {
+      "file": "verify_inputs.py",
+      "original_sha256": "344ca091f7f88c49969d0c03a70bded6a77010b573247f58346e7ed7bae8a37a",
+      "published_sha256": "5f4397c39e39a4712faed5c5f7fd929162f867e30dc057ac1e8aa97f3d31910a",
+      "normalized_computation_ast_sha256": "a0c3c769a17f010de66f6d20f9e6fe59d2f19319d995a81dca3c345e4ae3bb33",
+      "computation_ast_matches_original": true,
+      "adaptation": "Explicit external input/output roots only; computation preserved."
+    },
+    {
+      "file": "analyze_partial.py",
+      "original_sha256": "ee431eccb51ecaf17021f9cf631b86dddd5c40d21382163c56a21e76e709c7af",
+      "published_sha256": "069a993e3d7e17ec3ccb69caff39bfd7c9197d33cdbaddfcc8b028f3b0faf187",
+      "normalized_computation_ast_sha256": "c3c1a6e4f16a63632943841ce51ff18471009ad8d885816fb20fce5e4e3a01da",
+      "computation_ast_matches_original": true,
+      "adaptation": "Explicit external input/output roots only; computation preserved."
+    },
+    {
+      "file": "validate_partial.py",
+      "original_sha256": "0ccf949db3ab313e2160f8a6218f9d0332ca421279a110e9d7f4624f1178dc1d",
+      "published_sha256": "3aebc53f06f9f19817f83010608db04992d39dc3dc5f9bc619b1981580aa852d",
+      "normalized_computation_ast_sha256": "0425e7a497ea23ad2d8b1224ee8892f14bf97eb48f9d512e834c17ad89a03098",
+      "computation_ast_matches_original": true,
+      "adaptation": "Explicit external input/output roots only; computation preserved."
+    },
+    {
+      "file": "measure_giveback.py",
+      "original_sha256": "21579d04f7d6c9e8646134cc3d9b444f6ba98113026a61255f791be61505a37d",
+      "published_sha256": "e433c52ff6f8050efb8ba13189dbaf78ac38305c5c632d979b252fdad5e88620",
+      "normalized_computation_ast_sha256": "3c881a0b56761f5585f411054a954aa519acb40003a019b58bbf2f731ea81a2c",
+      "computation_ast_matches_original": true,
+      "adaptation": "Explicit external input/output roots only; computation preserved."
+    }
+  ],
+  "private_exact_bytes_published": false,
+  "retention_statement": "Original row-level results and inputs remain local only. No claim of durable private preservation or fresh-session empirical reproduction is made. Public code, specification, aggregate evidence and byte identities are the durable scope.",
+  "proof_scope": "Saved output arithmetic and independent fixed-episode calculations; not independently authenticated raw market history or current-policy portfolio performance."
+}

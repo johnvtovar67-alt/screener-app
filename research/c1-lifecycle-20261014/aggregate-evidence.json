@@ -1,0 +1,1466 @@
+{
+  "contract": "c1-lifecycle-public-aggregate-evidence-v1",
+  "source_review_commit": "f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde",
+  "reference_is_current_champion": false,
+  "is_portfolio_backtest": false,
+  "historical_window": {
+    "start": "2023-01-04",
+    "end": "2026-09-01",
+    "sessions_per_universe": 918
+  },
+  "primary_exit_cost_bps": 25,
+  "execution": "next-session-close sensitivity; NOT next-open",
+  "included_episodes": 470,
+  "excluded_final_date_episodes": 18,
+  "dependent_episode_groups": 166,
+  "saved_accounting_checkpoints": 5508,
+  "fills_checked": 976,
+  "independently_recomputed_episode_rule_pairs": 1410,
+  "coverage": [
+    {
+      "universe": "sp500",
+      "rule": "H7",
+      "complete_nonterminal_episodes": 245,
+      "episodes_with_age_eligible_days": 219,
+      "episodes_with_feature_coverage": 219,
+      "age_eligible_days": 5716,
+      "feature_available_days": 5716,
+      "activated_feature_days": 2867,
+      "missing_within_holding_marks": 0
+    },
+    {
+      "universe": "sp500",
+      "rule": "P50",
+      "complete_nonterminal_episodes": 245,
+      "episodes_with_age_eligible_days": 219,
+      "episodes_with_feature_coverage": 219,
+      "age_eligible_days": 5716,
+      "feature_available_days": 5716,
+      "activated_feature_days": 2867,
+      "missing_within_holding_marks": 0
+    },
+    {
+      "universe": "sp500",
+      "rule": "V2",
+      "complete_nonterminal_episodes": 245,
+      "episodes_with_age_eligible_days": 219,
+      "episodes_with_feature_coverage": 152,
+      "age_eligible_days": 5716,
+      "feature_available_days": 2023,
+      "activated_feature_days": 1612,
+      "missing_within_holding_marks": 0
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "H7",
+      "complete_nonterminal_episodes": 225,
+      "episodes_with_age_eligible_days": 209,
+      "episodes_with_feature_coverage": 209,
+      "age_eligible_days": 5820,
+      "feature_available_days": 5820,
+      "activated_feature_days": 2851,
+      "missing_within_holding_marks": 0
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "P50",
+      "complete_nonterminal_episodes": 225,
+      "episodes_with_age_eligible_days": 209,
+      "episodes_with_feature_coverage": 209,
+      "age_eligible_days": 5820,
+      "feature_available_days": 5820,
+      "activated_feature_days": 2851,
+      "missing_within_holding_marks": 0
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "V2",
+      "complete_nonterminal_episodes": 225,
+      "episodes_with_age_eligible_days": 209,
+      "episodes_with_feature_coverage": 150,
+      "age_eligible_days": 5820,
+      "feature_available_days": 2302,
+      "activated_feature_days": 1801,
+      "missing_within_holding_marks": 0
+    }
+  ],
+  "aggregate_fixed_episode_results": [
+    {
+      "universe": "sp500",
+      "rule": "H7",
+      "exit_cost_bps": 12,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 118,
+        "changed_exit": 115,
+        "reference_exit_priority": 12
+      },
+      "changed_episodes": 115,
+      "saved_exit_proceeds_episodes": 61,
+      "harmed_exit_proceeds_episodes": 54,
+      "weighted_fixed_episode_proceeds_difference": -103110.12912785224,
+      "weighted_saved_proceeds": 96274.74156814774,
+      "weighted_foregone_proceeds": 199384.870696,
+      "sessions_freed_sleeve_weighted_sum": 477.25,
+      "released_notional_sessions_sleeve_weighted": 38393314.71954,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 22.440816326530612,
+        "median": 18,
+        "minimum": 1,
+        "maximum": 113
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 115,
+        "mean": -2.5418248361446096,
+        "median": 0.5918807703837424,
+        "minimum": -68.83675449457492,
+        "maximum": 22.475046687695865
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -1.1931014537005311,
+        "median": 0.0,
+        "minimum": -68.83675449457492,
+        "maximum": 22.475046687695865
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.822475249230331,
+        "median": 10.350230542725658,
+        "minimum": -0.9479366448241553,
+        "maximum": 41.72042766977253
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 10.347271166010389,
+        "median": 9.844314240431395,
+        "minimum": -0.553805156353393,
+        "maximum": 33.821053415692724
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 115,
+        "mean": 1.95068459798928,
+        "median": -0.6038547439821462,
+        "minimum": -21.291922531884744,
+        "maximum": 49.100906969940226
+      },
+      "changed_original_later_recovery_count": 54
+    },
+    {
+      "universe": "sp500",
+      "rule": "H7",
+      "exit_cost_bps": 25,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 118,
+        "changed_exit": 115,
+        "reference_exit_priority": 12
+      },
+      "changed_episodes": 115,
+      "saved_exit_proceeds_episodes": 61,
+      "harmed_exit_proceeds_episodes": 54,
+      "weighted_fixed_episode_proceeds_difference": -102975.9249149306,
+      "weighted_saved_proceeds": 96149.43403506943,
+      "weighted_foregone_proceeds": 199125.35895000002,
+      "sessions_freed_sleeve_weighted_sum": 477.25,
+      "released_notional_sessions_sleeve_weighted": 38343343.444875,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 22.440816326530612,
+        "median": 18,
+        "minimum": 1,
+        "maximum": 113
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 115,
+        "mean": -2.538516493846866,
+        "median": 0.5911104009389051,
+        "minimum": -68.74715919937773,
+        "maximum": 22.445794023805195
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -1.191548558336284,
+        "median": 0.0,
+        "minimum": -68.74715919937773,
+        "maximum": 22.445794023805195
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.961163728262257,
+        "median": 10.50948133045442,
+        "minimum": -0.8011287768726394,
+        "maximum": 41.90064568724827
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 10.484406749678067,
+        "median": 9.975729037919805,
+        "minimum": -0.41599307860877843,
+        "maximum": 34.01155295752798
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 115,
+        "mean": 1.9506845979892804,
+        "median": -0.6038547439821351,
+        "minimum": -21.291922531884744,
+        "maximum": 49.100906969940226
+      },
+      "changed_original_later_recovery_count": 54
+    },
+    {
+      "universe": "sp500",
+      "rule": "H7",
+      "exit_cost_bps": 50,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 118,
+        "changed_exit": 115,
+        "reference_exit_priority": 12
+      },
+      "changed_episodes": 115,
+      "saved_exit_proceeds_episodes": 61,
+      "harmed_exit_proceeds_episodes": 54,
+      "weighted_fixed_episode_proceeds_difference": -102717.83989008109,
+      "weighted_saved_proceeds": 95908.45800991888,
+      "weighted_foregone_proceeds": 198626.29789999998,
+      "sessions_freed_sleeve_weighted_sum": 477.25,
+      "released_notional_sessions_sleeve_weighted": 38247244.83975,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 22.440816326530612,
+        "median": 18,
+        "minimum": 1,
+        "maximum": 113
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 115,
+        "mean": -2.5321542971204316,
+        "median": 0.5896289212373067,
+        "minimum": -68.57486055476775,
+        "maximum": 22.389538900938522
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -1.1885622210973454,
+        "median": 0.0,
+        "minimum": -68.57486055476775,
+        "maximum": 22.389538900938522
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 12.2278723417852,
+        "median": 10.90933399765589,
+        "minimum": -0.5188059538889345,
+        "maximum": 42.24721879777851
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 10.748129025962074,
+        "median": 10.226787314681829,
+        "minimum": -0.150969852176841,
+        "maximum": 34.37789823028812
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 115,
+        "mean": 1.9506845979892793,
+        "median": -0.6038547439821462,
+        "minimum": -21.291922531884744,
+        "maximum": 49.100906969940226
+      },
+      "changed_original_later_recovery_count": 54
+    },
+    {
+      "universe": "sp500",
+      "rule": "P50",
+      "exit_cost_bps": 12,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 201,
+        "changed_exit": 42,
+        "reference_exit_priority": 2
+      },
+      "changed_episodes": 42,
+      "saved_exit_proceeds_episodes": 25,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": -19867.15670723396,
+      "weighted_saved_proceeds": 49472.21108276602,
+      "weighted_foregone_proceeds": 69339.36778999999,
+      "sessions_freed_sleeve_weighted_sum": 212.75,
+      "released_notional_sessions_sleeve_weighted": 17724216.441734,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 25.653061224489797,
+        "median": 27,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 42,
+        "mean": -1.6104566341574342,
+        "median": 1.8194147618421972,
+        "minimum": -76.80792072069904,
+        "maximum": 25.339113064322806
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -0.27607828014127445,
+        "median": 0.0,
+        "minimum": -76.80792072069904,
+        "maximum": 25.339113064322806
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.822475249230331,
+        "median": 10.350230542725658,
+        "minimum": -0.9479366448241553,
+        "maximum": 41.72042766977253
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 10.668415795803853,
+        "median": 10.172183430161652,
+        "minimum": -0.9479366448241553,
+        "maximum": 41.72042766977253
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 42,
+        "mean": 1.5445585016755712,
+        "median": -1.6285931584221702,
+        "minimum": -21.03080568720378,
+        "maximum": 73.28244274809157
+      },
+      "changed_original_later_recovery_count": 17
+    },
+    {
+      "universe": "sp500",
+      "rule": "P50",
+      "exit_cost_bps": 25,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 201,
+        "changed_exit": 42,
+        "reference_exit_priority": 2
+      },
+      "changed_episodes": 42,
+      "saved_exit_proceeds_episodes": 25,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": -19841.298373514088,
+      "weighted_saved_proceeds": 49407.819938985915,
+      "weighted_foregone_proceeds": 69249.1183125,
+      "sessions_freed_sleeve_weighted_sum": 212.75,
+      "released_notional_sessions_sleeve_weighted": 17701147.277362503,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 25.653061224489797,
+        "median": 27,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 42,
+        "mean": -1.60836052520228,
+        "median": 1.8170466809547463,
+        "minimum": -76.70795045944864,
+        "maximum": 25.30613264083098
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -0.2757189471775337,
+        "median": 0.0,
+        "minimum": -76.70795045944864,
+        "maximum": 25.30613264083098
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.961163728262257,
+        "median": 10.50948133045442,
+        "minimum": -0.8011287768726394,
+        "maximum": 41.90064568724827
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 10.806744941872036,
+        "median": 10.289099891455988,
+        "minimum": -0.8011287768726394,
+        "maximum": 41.90064568724827
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 42,
+        "mean": 1.5445585016755679,
+        "median": -1.6285931584221758,
+        "minimum": -21.03080568720379,
+        "maximum": 73.28244274809157
+      },
+      "changed_original_later_recovery_count": 17
+    },
+    {
+      "universe": "sp500",
+      "rule": "P50",
+      "exit_cost_bps": 50,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 201,
+        "changed_exit": 42,
+        "reference_exit_priority": 2
+      },
+      "changed_episodes": 42,
+      "saved_exit_proceeds_episodes": 25,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": -19791.570808668173,
+      "weighted_saved_proceeds": 49283.990816331825,
+      "weighted_foregone_proceeds": 69075.561625,
+      "sessions_freed_sleeve_weighted_sum": 212.75,
+      "released_notional_sessions_sleeve_weighted": 17656783.499725,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 25.653061224489797,
+        "median": 27,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 42,
+        "mean": -1.6043295464423741,
+        "median": 1.8124926792480935,
+        "minimum": -76.515699957044,
+        "maximum": 25.242708749500594
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -0.27502792224726413,
+        "median": 0.0,
+        "minimum": -76.515699957044,
+        "maximum": 25.242708749500594
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 12.2278723417852,
+        "median": 10.90933399765589,
+        "minimum": -0.5188059538889345,
+        "maximum": 42.24721879777851
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.072762530464711,
+        "median": 10.545005687917275,
+        "minimum": -0.5188059538889345,
+        "maximum": 42.24721879777851
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 42,
+        "mean": 1.5445585016755683,
+        "median": -1.6285931584221758,
+        "minimum": -21.030805687203802,
+        "maximum": 73.2824427480916
+      },
+      "changed_original_later_recovery_count": 17
+    },
+    {
+      "universe": "sp500",
+      "rule": "V2",
+      "exit_cost_bps": 12,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 208,
+        "changed_exit": 31,
+        "reference_exit_priority": 6
+      },
+      "changed_episodes": 31,
+      "saved_exit_proceeds_episodes": 14,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": -15236.150591233954,
+      "weighted_saved_proceeds": 17870.293944766043,
+      "weighted_foregone_proceeds": 33106.444535999995,
+      "sessions_freed_sleeve_weighted_sum": 76.5,
+      "released_notional_sessions_sleeve_weighted": 6137463.143163,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 27.244897959183675,
+        "median": 30,
+        "minimum": 1,
+        "maximum": 111
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 31,
+        "mean": -3.260172517835176,
+        "median": -1.6938409848193103,
+        "minimum": -30.939659105747264,
+        "maximum": 14.182587561592747
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -0.4125116247056753,
+        "median": 0.0,
+        "minimum": -30.939659105747264,
+        "maximum": 14.182587561592747
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.822475249230331,
+        "median": 10.350230542725658,
+        "minimum": -0.9479366448241553,
+        "maximum": 41.72042766977253
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.76317988057862,
+        "median": 10.659924301618439,
+        "minimum": -0.9479366448241553,
+        "maximum": 41.72042766977253
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 31,
+        "mean": 2.308005166547002,
+        "median": 1.7149039761969354,
+        "minimum": -12.693452380952374,
+        "maximum": 24.76661175178474
+      },
+      "changed_original_later_recovery_count": 17
+    },
+    {
+      "universe": "sp500",
+      "rule": "V2",
+      "exit_cost_bps": 25,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 208,
+        "changed_exit": 31,
+        "reference_exit_priority": 6
+      },
+      "changed_episodes": 31,
+      "saved_exit_proceeds_episodes": 14,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": -15216.319798514081,
+      "weighted_saved_proceeds": 17847.034651485905,
+      "weighted_foregone_proceeds": 33063.354449999984,
+      "sessions_freed_sleeve_weighted_sum": 76.5,
+      "released_notional_sessions_sleeve_weighted": 6129474.85513125,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 27.244897959183675,
+        "median": 30,
+        "minimum": 1,
+        "maximum": 111
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 31,
+        "mean": -3.2559292015824832,
+        "median": -1.691636345972415,
+        "minimum": -30.899389225052943,
+        "maximum": 14.164128046344393
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -0.4119747153022734,
+        "median": 0.0,
+        "minimum": -30.899389225052943,
+        "maximum": 14.164128046344393
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.961163728262257,
+        "median": 10.50948133045442,
+        "minimum": -0.8011287768726394,
+        "maximum": 41.90064568724827
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 11.901331450207145,
+        "median": 10.777386675410272,
+        "minimum": -0.8011287768726394,
+        "maximum": 41.90064568724827
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 31,
+        "mean": 2.308005166546997,
+        "median": 1.7149039761969354,
+        "minimum": -12.693452380952387,
+        "maximum": 24.766611751784716
+      },
+      "changed_original_later_recovery_count": 17
+    },
+    {
+      "universe": "sp500",
+      "rule": "V2",
+      "exit_cost_bps": 50,
+      "episodes": 245,
+      "status_counts": {
+        "no_trigger": 208,
+        "changed_exit": 31,
+        "reference_exit_priority": 6
+      },
+      "changed_episodes": 31,
+      "saved_exit_proceeds_episodes": 14,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": -15178.183658668171,
+      "weighted_saved_proceeds": 17802.305241331804,
+      "weighted_foregone_proceeds": 32980.488899999975,
+      "sessions_freed_sleeve_weighted_sum": 76.5,
+      "released_notional_sessions_sleeve_weighted": 6114112.7627625,
+      "original_duration_sessions": {
+        "n": 245,
+        "mean": 28.16734693877551,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 120
+      },
+      "hypothetical_duration_sessions": {
+        "n": 245,
+        "mean": 27.244897959183675,
+        "median": 30,
+        "minimum": 1,
+        "maximum": 111
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 31,
+        "mean": -3.2477689780196197,
+        "median": -1.6873966558822586,
+        "minimum": -30.82194714679467,
+        "maximum": 14.128628978559071
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 245,
+        "mean": -0.41094219721880904,
+        "median": 0.0,
+        "minimum": -30.82194714679467,
+        "maximum": 14.128628978559071
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 12.2278723417852,
+        "median": 10.90933399765589,
+        "minimum": -0.5188059538889345,
+        "maximum": 42.24721879777851
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 245,
+        "mean": 12.167007545646625,
+        "median": 11.003275855779194,
+        "minimum": -0.5188059538889345,
+        "maximum": 42.24721879777851
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 31,
+        "mean": 2.308005166547,
+        "median": 1.7149039761969354,
+        "minimum": -12.693452380952387,
+        "maximum": 24.766611751784716
+      },
+      "changed_original_later_recovery_count": 17
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "H7",
+      "exit_cost_bps": 12,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 108,
+        "reference_exit_priority": 9,
+        "no_trigger": 108
+      },
+      "changed_episodes": 108,
+      "saved_exit_proceeds_episodes": 51,
+      "harmed_exit_proceeds_episodes": 57,
+      "weighted_fixed_episode_proceeds_difference": -100191.55427071797,
+      "weighted_saved_proceeds": 62359.64243828202,
+      "weighted_foregone_proceeds": 162551.19670899998,
+      "sessions_freed_sleeve_weighted_sum": 551.5,
+      "released_notional_sessions_sleeve_weighted": 36454401.448355004,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 23.43111111111111,
+        "median": 20,
+        "minimum": 1,
+        "maximum": 106
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 108,
+        "mean": -3.4649385638796537,
+        "median": -0.4188531564970154,
+        "minimum": -68.83675449457488,
+        "maximum": 21.99511212866889
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": -1.6631705106622339,
+        "median": 0.0,
+        "minimum": -68.83675449457488,
+        "maximum": 21.99511212866889
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 12.835988414632219,
+        "median": 10.78442245118789,
+        "minimum": -1.824442282799943,
+        "maximum": 72.88719814405701
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 10.985873001666805,
+        "median": 9.93990627972663,
+        "minimum": -1.824442282799943,
+        "maximum": 29.495788844992376
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 108,
+        "mean": 3.242478773959668,
+        "median": 0.3512312383903926,
+        "minimum": -20.38624739770867,
+        "maximum": 49.100906969940205
+      },
+      "changed_original_later_recovery_count": 57
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "H7",
+      "exit_cost_bps": 25,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 108,
+        "reference_exit_priority": 9,
+        "no_trigger": 108
+      },
+      "changed_episodes": 108,
+      "saved_exit_proceeds_episodes": 51,
+      "harmed_exit_proceeds_episodes": 57,
+      "weighted_fixed_episode_proceeds_difference": -100061.14876355752,
+      "weighted_saved_proceeds": 62278.47750519251,
+      "weighted_foregone_proceeds": 162339.62626875003,
+      "sessions_freed_sleeve_weighted_sum": 551.5,
+      "released_notional_sessions_sleeve_weighted": 36406953.78928125,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 23.43111111111111,
+        "median": 20,
+        "minimum": 1,
+        "maximum": 106
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 108,
+        "mean": -3.460428731948296,
+        "median": -0.41830799319761247,
+        "minimum": -68.74715919937769,
+        "maximum": 21.966484129302373
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": -1.6610057913351821,
+        "median": 0.0,
+        "minimum": -68.74715919937769,
+        "maximum": 21.966484129302373
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 12.975095304073568,
+        "median": 10.902815406349475,
+        "minimum": -1.685210740867138,
+        "maximum": 73.07024800455137
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 11.122815171781102,
+        "median": 10.05794476221098,
+        "minimum": -1.685210740867138,
+        "maximum": 29.639205680456172
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 108,
+        "mean": 3.2424787739596703,
+        "median": 0.3512312383904037,
+        "minimum": -20.38624739770867,
+        "maximum": 49.100906969940205
+      },
+      "changed_original_later_recovery_count": 57
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "H7",
+      "exit_cost_bps": 50,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 108,
+        "reference_exit_priority": 9,
+        "no_trigger": 108
+      },
+      "changed_episodes": 108,
+      "saved_exit_proceeds_episodes": 51,
+      "harmed_exit_proceeds_episodes": 57,
+      "weighted_fixed_episode_proceeds_difference": -99810.36894209497,
+      "weighted_saved_proceeds": 62122.391095405066,
+      "weighted_foregone_proceeds": 161932.76003750003,
+      "sessions_freed_sleeve_weighted_sum": 551.5,
+      "released_notional_sessions_sleeve_weighted": 36315708.2910625,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 23.43111111111111,
+        "median": 20,
+        "minimum": 1,
+        "maximum": 106
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 108,
+        "mean": -3.4517559782341403,
+        "median": -0.4172596022372213,
+        "minimum": -68.57486055476771,
+        "maximum": 21.911430284366773
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": -1.6568428695523874,
+        "median": 0.0,
+        "minimum": -68.57486055476771,
+        "maximum": 21.911430284366773
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 13.242608552999256,
+        "median": 11.316533795808681,
+        "minimum": -1.4174577756117746,
+        "maximum": 73.42226696704053
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 11.386165498923997,
+        "median": 10.284941843911666,
+        "minimum": -1.4174577756117746,
+        "maximum": 30.040769258707783
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 108,
+        "mean": 3.242478773959671,
+        "median": 0.3512312383903926,
+        "minimum": -20.386247397708658,
+        "maximum": 49.10090696994018
+      },
+      "changed_original_later_recovery_count": 57
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "P50",
+      "exit_cost_bps": 12,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 46,
+        "no_trigger": 172,
+        "reference_exit_priority": 7
+      },
+      "changed_episodes": 46,
+      "saved_exit_proceeds_episodes": 25,
+      "harmed_exit_proceeds_episodes": 21,
+      "weighted_fixed_episode_proceeds_difference": -73388.43433470532,
+      "weighted_saved_proceeds": 26032.18258729467,
+      "weighted_foregone_proceeds": 99420.61692199999,
+      "sessions_freed_sleeve_weighted_sum": 263.25,
+      "released_notional_sessions_sleeve_weighted": 17635766.936161,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 27.12,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 46,
+        "mean": -7.409844714122012,
+        "median": 0.7386098220596943,
+        "minimum": -52.807995742434024,
+        "maximum": 21.02390833700328
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": -1.514901585998278,
+        "median": 0.0,
+        "minimum": -52.807995742434024,
+        "maximum": 21.02390833700328
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 12.835988414632219,
+        "median": 10.78442245118789,
+        "minimum": -1.824442282799943,
+        "maximum": 72.88719814405701
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 11.637610604687875,
+        "median": 10.769732988865432,
+        "minimum": -1.824442282799943,
+        "maximum": 72.88719814405701
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 46,
+        "mean": 6.670515102500934,
+        "median": -0.6069204697722208,
+        "minimum": -19.6630836663914,
+        "maximum": 44.813540912382344
+      },
+      "changed_original_later_recovery_count": 21
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "P50",
+      "exit_cost_bps": 25,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 46,
+        "no_trigger": 172,
+        "reference_exit_priority": 7
+      },
+      "changed_episodes": 46,
+      "saved_exit_proceeds_episodes": 25,
+      "harmed_exit_proceeds_episodes": 21,
+      "weighted_fixed_episode_proceeds_difference": -73292.91474656445,
+      "weighted_saved_proceeds": 25998.300090935558,
+      "weighted_foregone_proceeds": 99291.21483750001,
+      "sessions_freed_sleeve_weighted_sum": 263.25,
+      "released_notional_sessions_sleeve_weighted": 17612812.89429375,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 27.12,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 46,
+        "mean": -7.400200342748007,
+        "median": 0.7376484756753532,
+        "minimum": -52.73926286852018,
+        "maximum": 20.996544419464133
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": -1.5129298478507036,
+        "median": 0.0,
+        "minimum": -52.73926286852018,
+        "maximum": 20.996544419464133
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 12.975095304073568,
+        "median": 10.902815406349475,
+        "minimum": -1.685210740867138,
+        "maximum": 73.07024800455137
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 11.77474575598165,
+        "median": 10.902815406349475,
+        "minimum": -1.685210740867138,
+        "maximum": 73.07024800455137
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 46,
+        "mean": 6.670515102500935,
+        "median": -0.6069204697722208,
+        "minimum": -19.6630836663914,
+        "maximum": 44.813540912382365
+      },
+      "changed_original_later_recovery_count": 21
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "P50",
+      "exit_cost_bps": 50,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 46,
+        "no_trigger": 172,
+        "reference_exit_priority": 7
+      },
+      "changed_episodes": 46,
+      "saved_exit_proceeds_episodes": 25,
+      "harmed_exit_proceeds_episodes": 21,
+      "weighted_fixed_episode_proceeds_difference": -73109.22323090892,
+      "weighted_saved_proceeds": 25933.141444091103,
+      "weighted_foregone_proceeds": 99042.36467500003,
+      "sessions_freed_sleeve_weighted_sum": 263.25,
+      "released_notional_sessions_sleeve_weighted": 17568670.5060875,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 27.12,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 46,
+        "mean": -7.381653474721071,
+        "median": 0.7357997326285479,
+        "minimum": -52.60708426483968,
+        "maximum": 20.9439215011196
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": -1.5091380437207524,
+        "median": 0.0,
+        "minimum": -52.60708426483968,
+        "maximum": 20.9439215011196
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 13.242608552999256,
+        "median": 11.316533795808681,
+        "minimum": -1.4174577756117746,
+        "maximum": 73.42226696704053
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 12.038467200777387,
+        "median": 11.161441121573578,
+        "minimum": -1.4174577756117746,
+        "maximum": 73.42226696704053
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 46,
+        "mean": 6.670515102500938,
+        "median": -0.6069204697722208,
+        "minimum": -19.66308366639139,
+        "maximum": 44.813540912382365
+      },
+      "changed_original_later_recovery_count": 21
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "V2",
+      "exit_cost_bps": 12,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 38,
+        "reference_exit_priority": 10,
+        "no_trigger": 177
+      },
+      "changed_episodes": 38,
+      "saved_exit_proceeds_episodes": 21,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": 20845.507837,
+      "weighted_saved_proceeds": 34244.21507100002,
+      "weighted_foregone_proceeds": 13398.707234000018,
+      "sessions_freed_sleeve_weighted_sum": 107.0,
+      "released_notional_sessions_sleeve_weighted": 7115553.986508,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 29.244444444444444,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 104
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 38,
+        "mean": 3.780875869183547,
+        "median": 1.674899856042542,
+        "minimum": -31.129744306831814,
+        "maximum": 48.29904695135893
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": 0.6385479245732213,
+        "median": 0.0,
+        "minimum": -31.129744306831814,
+        "maximum": 48.29904695135893
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 12.835988414632219,
+        "median": 10.78442245118789,
+        "minimum": -1.824442282799943,
+        "maximum": 72.88719814405701
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 11.58521183977371,
+        "median": 9.884664122320851,
+        "minimum": -1.824442282799943,
+        "maximum": 52.125728868909405
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 38,
+        "mean": -2.284848581500497,
+        "median": -1.1467978437124937,
+        "minimum": -25.563482803836735,
+        "maximum": 21.019595835884886
+      },
+      "changed_original_later_recovery_count": 17
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "V2",
+      "exit_cost_bps": 25,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 38,
+        "reference_exit_priority": 10,
+        "no_trigger": 177
+      },
+      "changed_episodes": 38,
+      "saved_exit_proceeds_episodes": 21,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": 20818.37611874999,
+      "weighted_saved_proceeds": 34199.64410625001,
+      "weighted_foregone_proceeds": 13381.267987500018,
+      "sessions_freed_sleeve_weighted_sum": 107.0,
+      "released_notional_sessions_sleeve_weighted": 7106292.652725,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 29.244444444444444,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 104
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 38,
+        "mean": 3.775954825300949,
+        "median": 1.6727198702467243,
+        "minimum": -31.08922701848689,
+        "maximum": 48.23618275328448
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": 0.6377168149397159,
+        "median": 0.0,
+        "minimum": -31.08922701848689,
+        "maximum": 48.23618275328448
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 12.975095304073568,
+        "median": 10.902815406349475,
+        "minimum": -1.685210740867138,
+        "maximum": 73.07024800455137
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 11.725149838848564,
+        "median": 10.02151276358516,
+        "minimum": -1.685210740867138,
+        "maximum": 52.35148351024918
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 38,
+        "mean": -2.284848581500494,
+        "median": -1.1467978437124937,
+        "minimum": -25.563482803836735,
+        "maximum": 21.019595835884864
+      },
+      "changed_original_later_recovery_count": 17
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "V2",
+      "exit_cost_bps": 50,
+      "episodes": 225,
+      "status_counts": {
+        "changed_exit": 38,
+        "reference_exit_priority": 10,
+        "no_trigger": 177
+      },
+      "changed_episodes": 38,
+      "saved_exit_proceeds_episodes": 21,
+      "harmed_exit_proceeds_episodes": 17,
+      "weighted_fixed_episode_proceeds_difference": 20766.199737499996,
+      "weighted_saved_proceeds": 34113.9307125,
+      "weighted_foregone_proceeds": 13347.730975,
+      "sessions_freed_sleeve_weighted_sum": 107.0,
+      "released_notional_sessions_sleeve_weighted": 7088482.39545,
+      "original_duration_sessions": {
+        "n": 225,
+        "mean": 30.72888888888889,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 114
+      },
+      "hypothetical_duration_sessions": {
+        "n": 225,
+        "mean": 29.244444444444444,
+        "median": 31,
+        "minimum": 1,
+        "maximum": 104
+      },
+      "changed_entry_normalized_exit_delta_pp": {
+        "n": 38,
+        "mean": 3.7664912793728766,
+        "median": 1.6685275898701797,
+        "minimum": -31.011309156285176,
+        "maximum": 48.11529006467973
+      },
+      "all_episode_entry_normalized_exit_delta_pp": {
+        "n": 225,
+        "mean": 0.6361185271829748,
+        "median": 0.0,
+        "minimum": -31.011309156285176,
+        "maximum": 48.11529006467973
+      },
+      "reference_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 13.242608552999256,
+        "median": 11.316533795808681,
+        "minimum": -1.4174577756117746,
+        "maximum": 73.42226696704053
+      },
+      "hypothetical_peak_to_net_exit_giveback_pp": {
+        "n": 225,
+        "mean": 11.994261375530993,
+        "median": 10.284683227555002,
+        "minimum": -1.4174577756117746,
+        "maximum": 52.78562705128728
+      },
+      "changed_break_even_replacement_return_pct": {
+        "n": 38,
+        "mean": -2.284848581500496,
+        "median": -1.1467978437124993,
+        "minimum": -25.563482803836724,
+        "maximum": 21.019595835884886
+      },
+      "changed_original_later_recovery_count": 17
+    }
+  ],
+  "age_and_profit_diagnostics": [
+    {
+      "universe": "sp500",
+      "rule": "H7",
+      "changed_episodes": 115,
+      "exits_after_age30": 22,
+      "after_age30_weighted_delta": -15818.255250000004,
+      "median_sessions_freed_among_changed": 9,
+      "mean_sessions_freed_among_changed": 12.2,
+      "original_endpoint_recovery_median_pct": -0.6038547439821351,
+      "original_peak_ge12_episodes": 106,
+      "original_peak_ge12_median_signed_giveback_pp": 8.747791449927822,
+      "hypothetical_same_set_median_signed_giveback_pp": 10.337642981742222,
+      "original_peak_ge12_median_gain_retention_pct": 65.7884733727783,
+      "hypothetical_same_set_retention_available": 104,
+      "hypothetical_same_set_median_gain_retention_pct": 64.65416016160427
+    },
+    {
+      "universe": "sp500",
+      "rule": "P50",
+      "changed_episodes": 42,
+      "exits_after_age30": 8,
+      "after_age30_weighted_delta": 868.4235000000087,
+      "median_sessions_freed_among_changed": 8.5,
+      "mean_sessions_freed_among_changed": 14.666666666666666,
+      "original_endpoint_recovery_median_pct": -1.6285931584221758,
+      "original_peak_ge12_episodes": 106,
+      "original_peak_ge12_median_signed_giveback_pp": 8.747791449927822,
+      "hypothetical_same_set_median_signed_giveback_pp": 8.045041217151173,
+      "original_peak_ge12_median_gain_retention_pct": 65.7884733727783,
+      "hypothetical_same_set_retention_available": 106,
+      "hypothetical_same_set_median_gain_retention_pct": 62.855998639406025
+    },
+    {
+      "universe": "sp500",
+      "rule": "V2",
+      "changed_episodes": 31,
+      "exits_after_age30": 15,
+      "after_age30_weighted_delta": 3508.4892937500244,
+      "median_sessions_freed_among_changed": 5,
+      "mean_sessions_freed_among_changed": 7.290322580645161,
+      "original_endpoint_recovery_median_pct": 1.7149039761969354,
+      "original_peak_ge12_episodes": 106,
+      "original_peak_ge12_median_signed_giveback_pp": 8.747791449927822,
+      "hypothetical_same_set_median_signed_giveback_pp": 10.113071069744308,
+      "original_peak_ge12_median_gain_retention_pct": 65.7884733727783,
+      "hypothetical_same_set_retention_available": 106,
+      "hypothetical_same_set_median_gain_retention_pct": 67.13828261262336
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "H7",
+      "changed_episodes": 108,
+      "exits_after_age30": 20,
+      "after_age30_weighted_delta": 12551.260706249996,
+      "median_sessions_freed_among_changed": 13.0,
+      "mean_sessions_freed_among_changed": 15.203703703703704,
+      "original_endpoint_recovery_median_pct": 0.3512312383904037,
+      "original_peak_ge12_episodes": 91,
+      "original_peak_ge12_median_signed_giveback_pp": 17.142827760425128,
+      "hypothetical_same_set_median_signed_giveback_pp": 13.702280018990297,
+      "original_peak_ge12_median_gain_retention_pct": 53.1925448121536,
+      "hypothetical_same_set_retention_available": 90,
+      "hypothetical_same_set_median_gain_retention_pct": 49.628948614431344
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "P50",
+      "changed_episodes": 46,
+      "exits_after_age30": 13,
+      "after_age30_weighted_delta": 1496.9682000000016,
+      "median_sessions_freed_among_changed": 14.0,
+      "mean_sessions_freed_among_changed": 17.652173913043477,
+      "original_endpoint_recovery_median_pct": -0.6069204697722208,
+      "original_peak_ge12_episodes": 91,
+      "original_peak_ge12_median_signed_giveback_pp": 17.142827760425128,
+      "hypothetical_same_set_median_signed_giveback_pp": 12.81373616950876,
+      "original_peak_ge12_median_gain_retention_pct": 53.1925448121536,
+      "hypothetical_same_set_retention_available": 91,
+      "hypothetical_same_set_median_gain_retention_pct": 52.066292160148684
+    },
+    {
+      "universe": "nasdaq",
+      "rule": "V2",
+      "changed_episodes": 38,
+      "exits_after_age30": 32,
+      "after_age30_weighted_delta": 19130.611106249984,
+      "median_sessions_freed_among_changed": 4.0,
+      "mean_sessions_freed_among_changed": 8.789473684210526,
+      "original_endpoint_recovery_median_pct": -1.1467978437124937,
+      "original_peak_ge12_episodes": 91,
+      "original_peak_ge12_median_signed_giveback_pp": 17.142827760425128,
+      "hypothetical_same_set_median_signed_giveback_pp": 14.970828316534755,
+      "original_peak_ge12_median_gain_retention_pct": 53.1925448121536,
+      "hypothetical_same_set_retention_available": 91,
+      "hypothetical_same_set_median_gain_retention_pct": 58.31050362544508
+    }
+  ],
+  "running_peak_current_close_giveback": {
+    "sp500": {
+      "included_episodes": 245,
+      "episodes_with_close_peak_ge12": 106,
+      "episodes_that_later_lost_all_observed_gain_while_still_held": 16,
+      "held_days_at_or_below_basis_after_close_peak_ge12": 40,
+      "median_max_running_peak_to_current_drawdown_pct_among_peak_ge12": 10.50740907049843,
+      "median_max_gain_giveback_entry_pp_among_peak_ge12": 14.199360400377788
+    },
+    "nasdaq": {
+      "included_episodes": 225,
+      "episodes_with_close_peak_ge12": 91,
+      "episodes_that_later_lost_all_observed_gain_while_still_held": 16,
+      "held_days_at_or_below_basis_after_close_peak_ge12": 51,
+      "median_max_running_peak_to_current_drawdown_pct_among_peak_ge12": 12.253573959071396,
+      "median_max_gain_giveback_entry_pp_among_peak_ge12": 16.571858763354015
+    }
+  },
+  "limitations": [
+    "Archived historical modeled output reference, not current-production Champion replay or certified raw-price provenance.",
+    "Original entries, quantities, selection, stop outcomes and endogenous episode endpoints stay fixed; no portfolio or replacement simulation.",
+    "Hypothetical execution is the following session CLOSE after a close decision, with adverse cost; opens are absent and next-open performance is unknown.",
+    "An original exit on or before hypothetical execution retains priority. Stops/breakers cannot be separately inferred from these fill-only outputs.",
+    "All final-source-date sales are excluded as potentially artificial liquidations; all outcomes are otherwise complete episodes, never survivor-only +30 returns.",
+    "Observed volatility strata and issuer overlaps are descriptive dependence diagnostics, not causal market regimes or independent samples.",
+    "25/50 bps results change EXIT-price costs only on fixed episodes after de-costing saved 12 bps exits; they are not independently replayed cost paths.",
+    "Aggregate proceeds differences use 25/50/25 sleeve weights; they are not portfolio returns, realizable strategy profits or replacement alpha.",
+    "Missing unheld prices, ranks, benchmarks, raw corporate actions and operational input verification prohibit new-entry or momentum-ranking efficacy conclusions.",
+    "Hypothetical exits can alter future capital and opportunities; those effects are not observed. No extrapolation to October 14 DELL.",
+    "Age groups are descriptive, not a corrected 30-session backtest.",
+    "Reference-close peaks may miss intraday highs and a later opening fill above all observed closes; signed giveback may be negative.",
+    "Gain retention relative to the hypothetical truncated peak is not directly comparable to retention of the full original peak.",
+    "No thresholds or strategy parameters were changed during this validation.",
+    "Exit-cost variants mechanically scale fixed-exit proceeds differences and do not establish strategy cost or turnover robustness.",
+    "Coverage describes observations on original archived paths, not counterfactual time in market.",
+    "Original inputs and complete row outputs are deliberately not published. Hashes do not preserve missing bytes."
+  ]
+}

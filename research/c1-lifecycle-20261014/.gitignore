@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+data/
+*.csv
+*.gz
+*.base64
+partial-results.json
+partial-manifest.json
+input-accounting-check.json
+independent-validation.json
+giveback-summary.json
+research-file-manifest.json

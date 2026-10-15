@@ -1,0 +1,107 @@
+{
+  "contract": "c1-lifecycle-six-challenger-design-v1",
+  "status": "preserved_design_no_portfolio_runs",
+  "production_changes_authorized": false,
+  "execution_authorized_without_data_checks": false,
+  "independent_of_frozen_48": true,
+  "priority": [
+    "F",
+    "H",
+    "P"
+  ],
+  "reference_source_commit": "f0d46ffceb98ba3fd5fca121beba6d8f23ccbdde",
+  "notation": "R(L,k)=100*(C[t-k]/C[t-k-L]-1); L included return sessions, k excluded recent sessions.",
+  "champion_factors": {
+    "slow": {
+      "included_sessions": 100,
+      "skip_sessions": 20
+    },
+    "fast": {
+      "included_sessions": 55,
+      "skip_sessions": 5
+    },
+    "weights": {
+      "global_slow": 0.4,
+      "global_fast": 0.25,
+      "sector_slow": 0.22,
+      "sector_fast": 0.13
+    }
+  },
+  "challengers": [
+    {
+      "id": "F",
+      "name": "Ranking freshness",
+      "sole_change": "Set both skips to zero; preserve included lengths, percentile reference universe, transforms and weights.",
+      "slow": {
+        "included_sessions": 100,
+        "skip_sessions": 0
+      },
+      "fast": {
+        "included_sessions": 55,
+        "skip_sessions": 0
+      },
+      "affects": "Rank-driven entries and exits; all thresholds and age windows unchanged."
+    },
+    {
+      "id": "L",
+      "name": "Formation length",
+      "sole_change": "Change included lengths only, retaining Champion skips.",
+      "slow": {
+        "included_sessions": 30,
+        "skip_sessions": 20
+      },
+      "fast": {
+        "included_sessions": 15,
+        "skip_sessions": 5
+      },
+      "comparison": "L versus Champion isolates length at existing skips; do not substitute fresh windows or conflate with F."
+    },
+    {
+      "id": "E",
+      "name": "New entry deterioration veto",
+      "sole_change": "Reject new sleeve-position initiation when R(5,0)<=-7.00%; existing positions, topups, leadership pool and held ranks unchanged.",
+      "application": "Downstream new-buy filter, never shared rank-pool filter."
+    },
+    {
+      "id": "H",
+      "name": "Independent holding deterioration",
+      "sole_change": "At holding age >=5, first close with R(5,0)<=-7.00% queues sale at next executable price. No rank condition.",
+      "preserve": "Champion new entries/ranks and existing hard protections."
+    },
+    {
+      "id": "X",
+      "name": "Early rank confirmation",
+      "sole_change": "Change early outside-top-nine confirmation from three to one completed close.",
+      "preserve": "Ages5-29 only; profit top-six two closes and age30+ ordinary top-six one close unchanged."
+    },
+    {
+      "id": "P",
+      "name": "Independent peak-gain retention",
+      "sole_change": "From age >=5, latch activation once observed completed-close peak gain>=12%; queue sale when current gain<=50% of peak gain, independent of rank, including at/below basis.",
+      "peak_basis": "Completed-close peak since entry and actual source cost basis, matching P50 diagnostic; not the Champion intraday peak.",
+      "age_scope": "No new age30 cutoff; all other exit rules retain source priority."
+    }
+  ],
+  "preserved_in_all_arms": [
+    "Canonical seeded account continuation",
+    "25/50/25 independent sleeves and whole-share mapping",
+    "Initial14percent stop and portfolio12percent controls",
+    "Cash, issuer/sector limits, entry gap and order sequence",
+    "Universe-removal/delisting handling",
+    "Other exits and confirmation windows",
+    "No discretionary symbol exceptions"
+  ],
+  "portfolio_requirements": [
+    "Complete chronology with no-op source parity before comparative runs",
+    "Independent 12/25/50 bps executable portfolio paths including affordability",
+    "Actual replacement queue and reentries after earlier exits",
+    "Missed recoveries versus matched Champion ownership endpoints",
+    "Cash opportunity cost on total capital",
+    "Running gain giveback, turnover, stops and holding duration",
+    "Calendar and observable market regimes with dependent-sample uncertainty",
+    "Six prespecified Champion comparisons with multiplicity controls",
+    "Reused history explicitly separated from genuinely untouched validation"
+  ],
+  "no_combination_or_threshold_grid": true,
+  "V2_role": "Completed partial diagnostic only; no selected portfolio winner or automatic addition to these six."
+}
