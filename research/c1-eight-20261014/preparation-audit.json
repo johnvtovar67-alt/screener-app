@@ -1,0 +1,25 @@
+{
+  "status": "prepared_not_executed_acquisition_paused",
+  "owner_instruction": "No additional FMP data acquisition until processing-location requirement is resolved",
+  "new_market_data_calls": 0,
+  "licensed_inputs_read_or_saved": false,
+  "real_eight_security_numerical_results": false,
+  "private_output_create_write_fsync": "passed",
+  "private_directory_mode": "0700",
+  "private_output_file_mode": "0600",
+  "location_notification_gate": "unresolved",
+  "account_remaining_quota_gate": "unverified",
+  "email_draft": "owner_private_unsent",
+  "new_synthetic_tests_passed": 15,
+  "preserved_synthetic_tests_passed": 16,
+  "production_changes": false,
+  "pr262_changes": false,
+  "frozen48_changes": false,
+  "prior_checkpoint": "21addcfbf4d38711e6170b8cf786c2bb1908043b",
+  "source_sha256": {
+    "research/c1-eight-20261014/analysis.py": "8ff56c11f97e36c2a7a98a49d97c926411bb4575c2d703780a157e7ac531410a",
+    "research/c1-eight-20261014/test_analysis.py": "0a62746be6436296ab1087044f1d08b41e11134c3c231daee3760f3effb188df",
+    "research/c1-eight-20261014/PROTOCOL.md": "27e142b7c21dfcd4248e3851748cacfbbd698e50116426dc48ff8bf90d957dd4",
+    "research/c1-fresh-20261014/analyze.py": "b1b4c733ef82f55627395764fdaca322f52b5545ad448c8436ead313ab5ad174"
+  }
+}
