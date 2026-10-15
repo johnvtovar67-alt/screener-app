@@ -1,5 +1,8 @@
 # Capital rotation: bounded acquisition and offline implementation
 
+Latest checkpoint: [tranche 2 completed](TRANCHE-2-RESULTS.md) under its separate
+250-request/20-MiB authorization. The stage-1 report below remains historical.
+
 Status: **stage 1 completed; GO for a separately approved acquisition expansion;
 NO-GO for a historical portfolio result from this partial input.**
 

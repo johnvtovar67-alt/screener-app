@@ -122,3 +122,26 @@ boundaries, pacing, first-security isolation, repeated validation failure,
 cross-view volume disagreement, HTTP-200 provider errors, HTTP/rate/transport
 failures, storage failures, duplicate manifests and recovery-receipt scope.
 They make no FMP or other network calls.
+
+## Private stage recovery
+
+Restore the completed stage in a fresh process, with inherited private-store
+bindings and proxy settings. Supply the privately retained SHA-256 of the
+**uncompressed final sealed journal**; the compressed storage object's digest
+is different. The output directory must be new and outside the repository.
+
+```sh
+NODE_USE_ENV_PROXY=1 VERCEL_BLOB_RETRIES=0 \
+  node research/c1-rotation-execution-20261015/recover_stage2.mjs \
+  stage2-NEW-UNIQUE-ID /private/path/new-recovery-output "$EXPECTED_JOURNAL_SHA256"
+```
+
+Recovery reads only that exact stage prefix, checks journal, manifest, recovery
+gate and raw response integrity, and writes private files plus a count-only
+receipt. It makes no FMP calls. Four concurrent private reads are allowed;
+metadata has a 5 MiB per-file allocation bound and response bodies retain the
+20 MiB aggregate bound. Run the twelve manufactured, offline recovery checks:
+
+```sh
+node research/c1-rotation-execution-20261015/test-recover-stage2.mjs
+```
