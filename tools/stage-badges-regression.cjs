@@ -4,18 +4,20 @@ const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
 const babel=require('next/dist/compiled/babel/core');
 const modules=require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd());
 const page=fs.readFileSync('pages/index.js','utf8');
+const {c1PositionPresentation}=modules.load('lib/c1PositionPresentation.js');
 
 for(const [tone,color] of [['accelerating','#dbeafe'],['intact','#dcfce7'],['weakening','#fef9c3'],['exit-risk','#fee2e2'],['unknown','#e5e7eb']]){
  assert.ok(page.includes(`momentumBadge.${tone}{background:${color}`),`${tone} evidence needs a distinct visual tone`);
 }
-assert.ok(page.includes('<th>Evidence</th>'),'Desktop evidence must have its own column');
+assert.ok(page.includes('<th>Details</th>'),'Desktop technical evidence belongs in the Details column');
+assert.ok(!page.includes('<th>Why</th>'),'The full technical reason must not occupy a separate primary column');
 assert.doesNotMatch(page,/momentumEvidenceRows|momentumEvidenceBox|momentumEvidenceCompact|momentumEvidenceItem|Momentum Evidence/,'The redundant momentum summary strip must be absent');
 assert.ok(page.includes('specialSituationBadge'),'Special-situation presentation must remain available');
 assert.doesNotMatch(page,/stageTone\(|stageBadge|time\.stage|timeReviewRows/,'Duration stages must not appear as portfolio evidence');
 
 // Render the production desktop and mobile row with controlled account evidence.
 // Classification logic is tested independently; this boundary fixture verifies
-// that evidence never changes the existing position decision or Why text.
+// collapsed evidence preserves source reasons and cannot change holding actions.
 const start=page.indexOf('  function momentumEvidenceFor(s){'),end=page.indexOf('  const missingOpenDateSymbols=',start);
 assert.ok(start>=0&&end>start,'Portfolio evidence helper and row must be present');
 const code=babel.transformSync('import React from "react";\n'+page.slice(start,end)+'\nmodule.exports={PortfolioRow};',{
@@ -27,8 +29,10 @@ const classifications=[['Momentum Accelerating','accelerating'],['Momentum Intac
 const why='Original C1 decision explanation; 7 of 30 trading sessions completed.';
 const holding={symbol:'AAA',role:'Swing',shares:10,avgCost:100,price:105,value:1050,weightPct:10,gainLoss:50,gainLossPct:5,openedAt:'2026-09-11'};
 function render({evidence=unavailable,action='Hold',source='c1-actual-account',mobile=false,row=holding,accountMatches=true,accountHoldingMismatch=false,resolver,current=true,date='2026-09-11'}={}){
- const calls=[],position={symbol:row.symbol,momentumEvidence:evidence},accountView={decision:{positions:[position],current,sourceSessionDate:date}},record={exports:{}};
+ const calls=[],position={symbol:row.symbol,momentumEvidence:evidence,action,reason:why,
+  exits:['Exit candidate','Sell'].includes(action)?[{reason:'rank-deterioration'}]:[]},accountView={decision:{contract:'c1-account-decision-v1',positions:[position],current,sourceSessionDate:date}},record={exports:{}};
  const bindings={accountView,accountMatches,accountHoldingMismatch,CASH:['CASH'],displayedPortfolioValue:10000,
+  c1PositionPresentation,
   c1PortfolioMomentumEvidence:args=>{calls.push(args);return resolver?resolver(args):args.position?.momentumEvidence||unavailable;},
   pd:()=>({action,source,reason:why,openedAt:row.openedAt}),swingTimeReview:()=>({held:500,stage:'Long Swing Review'}),holdingReason:(s,d)=>d.reason,
   sym:s=>s.symbol,price:s=>s.price,cls:a=>a==='Hold'?'yellow':'red',factorFor:()=> 'Technology',portfolioDateDisplay:()=> 'Sep 11, 2026',
@@ -39,13 +43,16 @@ function render({evidence=unavailable,action='Hold',source='c1-actual-account',m
 }
 for(const [classification,tone] of classifications){
  const evidence={classification,status:'available',label:classification,tone,explanation:'Rank improved from 5 to 2; completed closes gained 3.1%.',sourceSessionDate:'2026-09-11',limitations:[]};
- for(const mobile of [false,true])for(const [action,displayAction] of [['Hold','Hold'],['Add candidate','Add candidate'],['Exit candidate','Exit'],['Buy','Buy'],['Sell','Sell']]){
+ for(const mobile of [false,true])for(const [action,displayAction] of [['Hold','HOLD'],['Add candidate','HOLD'],['Exit candidate','SELL'],['Buy','HOLD'],['Sell','SELL']]){
   const {html,calls,accountView}=render({evidence,action,mobile});
   assert.match(html,new RegExp(`class="momentumBadge ${tone}"[^>]*>${classification}<`));
   assert.match(html,/Rank improved from 5 to 2; completed closes gained 3\.1%\./);
   assert.match(html,/As of 2026-09-11/);
   assert.ok(html.includes(`>${displayAction}</b>`),`${classification} must preserve ${action}`);
   assert.ok(html.includes(why),'Evidence must preserve the independent decision explanation and trading-session restriction');
+  assert.match(html,/<details\b/,'Technical evidence remains available on expansion');
+  assert.doesNotMatch(html,/<details\b[^>]*\sopen(?:[=\s>])/,'Technical evidence starts collapsed');
+  assert.doesNotMatch(html.replace(/<details\b[^>]*>[\s\S]*?<\/details>/g,''),/Rank improved from 5 to 2|Original C1 decision explanation/,'Technical evidence and the full original reason stay out of the primary view');
   assert.doesNotMatch(html,/Long Swing Review|Proof|Re-underwrite/);
   assert.equal(calls[0].position,accountView.decision.positions[0]);
   assert.equal(calls[0].decision,accountView.decision);
@@ -99,7 +106,7 @@ for(const mobile of [false,true]){
  assert.match(changed,/Evidence unavailable/,'Changed position risk cannot retain the prior momentum classification');
  assert.match(changed,/Position risk evidence changed/);
  assert.doesNotMatch(changed,/Momentum Intact/);
- assert.ok(changed.includes('>Hold</b>')&&changed.includes(why),'Invalid evidence signature cannot change the position action or Why');
+ assert.ok(changed.includes('>HOLD</b>')&&changed.includes(why),'Invalid evidence signature cannot change the holding status or remove its original explanation');
  assert.match(render({evidence:{},mobile,resolver,date}).html,/Evidence unavailable/,'An older server without serialized evidence cannot manufacture a label');
 }
-console.log('MOMENTUM EVIDENCE UI PASS: Swing classifications and unavailable/stale states retained; Core evidence is absent while desktop/mobile actions, Why, price and gain/loss remain unchanged.');
+console.log('MOMENTUM EVIDENCE UI PASS: collapsed Swing evidence retains classifications and trust checks; action-first desktop/mobile holding status, original details, Core separation, price and gain/loss remain intact.');
