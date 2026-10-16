@@ -78,4 +78,4 @@ No live parameters, holdings, cash or roles change. Minimum holding periods are 
 
 ## Deployment prevention
 
-The PR changes `vercel.json` **only** to set `git.deploymentEnabled["research/c1-program-20261016"]=false`, preventing automatic previews for this research branch. Existing branch settings, cron schedules and production configuration are retained. No freeze manifest, checker, build hook or CI requirement is weakened. This branch must not be merged or deployed.
+The PR changes `vercel.json` **only** to set `git.deploymentEnabled["research/c1-program-20261016"]=false`, preventing automatic previews for this research branch. Existing branch settings, cron schedules and production configuration are retained. No freeze manifest, checker, build hook or CI requirement is weakened. Research tests join the existing canonical CI through tools/c1-research-program-regression.cjs; no additional workflow is added. This branch must not be merged or deployed.

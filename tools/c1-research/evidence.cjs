@@ -26,7 +26,9 @@ function validateEvidence(manifestPath,spec){
   }catch{fail('Artifact unavailable or invalid JSON: '+a.path);}
  }
  const dataset=loaded.get('normalized_sessions'),calendar=loaded.get('calendar');
- const dated=(role,securityId,date,at)=>{const rows=loaded.get(role);if(!Array.isArray(rows))return null;const found=rows.filter(r=>r.securityId===securityId&&r.from<=date&&(!r.to||r.to>=date)&&Number.isFinite(Date.parse(r.availableAt))&&Date.parse(r.availableAt)<=at);return found.length===1?found[0]:null;};
+ const intervalIndex=new Map();for(const role of ['membership','sector_history','issuer_history','event_history']){const index=new Map();for(const row of Array.isArray(loaded.get(role))?loaded.get(role):[]){const values=index.get(row.securityId)||[];values.push(row);index.set(row.securityId,values);}intervalIndex.set(role,index);}
+ const dated=(role,securityId,date,at)=>{const found=(intervalIndex.get(role)?.get(securityId)||[]).filter(r=>r.from<=date&&(!r.to||r.to>=date)&&Number.isFinite(Date.parse(r.availableAt))&&Date.parse(r.availableAt)<=at);return found.length===1?found[0]:null;};
+ const rawIndex=new Map();for(const row of Array.isArray(loaded.get('raw_prices'))?loaded.get('raw_prices'):[]){const key=row.securityId+'|'+row.date;if(rawIndex.has(key))fail('Ambiguous duplicate raw security/date');rawIndex.set(key,row);}
 
  if(dataset){
   if(!Array.isArray(dataset.sessions)||!dataset.sessions.length)fail('Empty sessions');
@@ -45,7 +47,7 @@ function validateEvidence(manifestPath,spec){
      if(p.adjusted!==true||!['open','high','low','close'].every(k=>typeof p[k]==='number'&&Number.isFinite(p[k])&&p[k]>0)||p.low>Math.min(p.open,p.close)||p.high<Math.max(p.open,p.close))fail('Invalid adjusted OHLC: '+s.date);
      if(p.date!==s.date||!p.securityId)fail('Price identity/date missing');
      if(!Number.isFinite(Date.parse(p.availableAt))||Date.parse(p.availableAt)>at)fail('Price availability missing/future');
-     const raw=loaded.get('raw_prices');if(!Array.isArray(raw)||!raw.some(r=>r.securityId===p.securityId&&r.date===s.date&&['open','high','low','close','volume'].every(k=>r[k]===p[k])))fail('Normalized price differs from raw adjusted-price evidence');
+     const raw=rawIndex.get(p.securityId+'|'+s.date);if(!raw||!['open','high','low','close','volume'].every(k=>raw[k]===p[k]))fail('Normalized price differs from raw adjusted-price evidence');
      if(members.has(p.symbol)){const member=dated('membership',p.securityId,s.date,at);if(member?.symbol!==p.symbol)fail('Dated membership mismatch');}
 
     }

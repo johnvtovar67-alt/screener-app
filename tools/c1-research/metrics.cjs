@@ -1,5 +1,5 @@
 const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
-const sd=a=>a.length<2?0:Math.sqrt(a.reduce((s,x)=>s+(x-mean(a))**2,0)/(a.length-1));
+const sd=a=>{if(a.length<2)return 0;const average=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-average)**2,0)/(a.length-1));};
 function metrics(run){
  const c=run.curve;if(c.length<2||c.some(x=>!(x.equity>0)))throw Error('Positive equity path of at least two dates required');
  const returns=c.slice(1).map((x,i)=>x.equity/c[i].equity-1),years=(Date.parse(c.at(-1).date)-Date.parse(c[0].date))/86400000/365.25;

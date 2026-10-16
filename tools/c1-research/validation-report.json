@@ -1,4 +1,5 @@
 {
+  "ciIntegration": "Existing canonical runner discovers tools/c1-research-program-regression.cjs. Initial separate-workflow proposal was rejected by intact canonical guard and removed.",
   "datasetQualified": false,
   "existingAssertions": {
     "giveback": 86,
@@ -13,7 +14,7 @@
     "Independent historical screen/actual-dollar adapter parity review is mandatory before historical comparisons.",
     "No full application build was needed for unchanged application files; existing application CI remains intact."
   ],
-  "newResearchAssertions": 813,
+  "newResearchAssertions": 814,
   "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
   "releaseFreeze": "PASS; application source unchanged relative to pinned production",
   "results": null,
