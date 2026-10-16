@@ -76,6 +76,47 @@ try{
  const noOrders={...plan,orders:[]},noReview=buildC1ManualRecommendations({decision,openingPlan:noOrders});
  const paused=render({openingPlan:noOrders,manualRecommendations:noReview});
  assert.doesNotMatch(paused,/Buy 2 shares|Add 1 share/,'A ranking alone cannot create an executable quantity');
+ // Rating, authorization and cash explanations are independent presentation concerns.
+ assert.match(paused,/No purchases currently authorized\./);
+ assert.doesNotMatch(paused,/No C1 Buy ratings|Candidates awaiting a C1 Buy rating/);
+ assert.match(paused,/Includes blocked Buy-rated candidates/);
+ assert.match(section(paused,'Watch opportunities'),/Strong Buy rating/,'Blocked candidates retain their investment rating');
+ const {c1CashAvailability}=loader.load('lib/c1BrokerageCash.js');
+ const {c1OpportunityPresentation}=loader.load('lib/c1EntryReview.js');
+ for(const [name,balance,observedAt,strategyCash,reasons,expected] of [
+  ['stale',363.36,'2026-10-14T17:00:00Z',1000,[],/earlier Eastern date/],
+  ['strategy',363.36,now,0,[],/C1 strategy cash is exhausted/],
+  ['strategy quantity',363.36,now,10,['insufficient-cash'],/C1 strategy cash cannot fund/],
+  ['broker quantity',363.36,now,1000,['brokerage-cash-insufficient'],/brokerage cash is insufficient/],
+ ]){
+  const cash=c1CashAvailability({strategyCash,brokerageCash:{source:'manual-broker-balance',balance,observedAt},now:new Date()});
+  const cashDecision={...decision,...cash},cashPlan={...noOrders,entryReviews:[],cashBlockedOrders:reasons.map(reason=>({symbol:'BBB',reason}))};
+  const before=JSON.stringify({cashDecision,cashPlan});
+  const output=c1OpportunityPresentation({decision:{...cashDecision,opportunities:[{symbol:'BBB',rating:'Buy'}]},plan:cashPlan,ready:true});
+  assert.match(output.cashReason,expected,name+' exposes the actual cash gate');
+  if(name==='strategy'||name==='stale')assert.equal(cash.executableCash,0);
+  const cashHtml=render({decision:cashDecision,executionDecision:cashDecision,openingPlan:cashPlan,manualRecommendations:buildC1ManualRecommendations({decision:cashDecision,openingPlan:cashPlan})});
+  assert.match(cashHtml,expected,name+' renders the authoritative cash reason');
+  assert.equal(JSON.stringify({cashDecision,cashPlan}),before,name+' preserves cash, positions, review reasons and quantities');
+ }
+ const unknownCash=c1OpportunityPresentation({decision:{...decision,executableCash:0},plan:{...noOrders,entryReviews:[]}});
+ assert.equal(unknownCash.cashReason,null,'A zero display alone cannot invent a cash blocker');
+ const mrnaDecision={...decision,positions:[],stockScreen:{...decision.stockScreen,candidates:[{...candidate('MRNA',0),momentumPercentile:100,sector:'Healthcare'}]}};
+ const mrnaRows=[{...screenRows[0],symbol:'MRNA'}];
+ const mrnaPlan={...noOrders,entryReviews:[{symbol:'MRNA',reason:'brokerage-cash-insufficient'}]};
+ const mrnaProps={decision:mrnaDecision,executionDecision:mrnaDecision,screenRows:mrnaRows,positionRows:[],openingPlan:mrnaPlan,manualRecommendations:buildC1ManualRecommendations({decision:mrnaDecision,openingPlan:mrnaPlan})};
+ const staleMrna={...mrnaDecision,brokerageCashCurrent:false,brokerageCashReason:'Brokerage cash is from an earlier Eastern date. Update Brokerage Cash before a new C1 purchase.'};
+ const staleReason=c1OpportunityPresentation({decision:{...staleMrna,opportunities:[{symbol:'MRNA',rating:'Strong Buy'}]},plan:mrnaPlan,ready:true});
+ assert.match(staleReason.tiles[0].detail,/earlier Eastern date/,'Current freshness status takes priority over a prior quantity cash review');
+ const mrna=render(mrnaProps);
+ assert.match(mrna,/100\.0\/100/);assert.match(mrna,/Strong Buy rating/);
+ assert.doesNotMatch(section(mrna,'C1 account opportunities'),/<article/,'MRNA score and rating cannot create an executable order');
+ if(process.env.C1_PRESENTATION_RENDER_DIR){
+  fs.mkdirSync(process.env.C1_PRESENTATION_RENDER_DIR,{recursive:true});
+  fs.writeFileSync(path.join(process.env.C1_PRESENTATION_RENDER_DIR,'opportunities.html'),renderRaw(mrnaProps));
+  const staleCash=c1CashAvailability({strategyCash:1000,brokerageCash:{source:'manual-broker-balance',balance:363.36,observedAt:'2026-10-14T17:00:00Z'},now:new Date()});
+  fs.writeFileSync(path.join(process.env.C1_PRESENTATION_RENDER_DIR,'cash.html'),renderRaw({...mrnaProps,decision:{...mrnaDecision,...staleCash}}));
+ }
  const expired=render({manualRecommendations:{...review,validUntil:'2026-10-15T16:59:59Z'}});
  assert.doesNotMatch(expired,/Buy 2 shares|Add 1 share/,'Expired checks cannot authorize fresh capital');
  const fullSlots={...decision,positions:[position,{...position,symbol:'XXX'},{...position,symbol:'YYY'}]},fullPlan={...plan,orders:[]};

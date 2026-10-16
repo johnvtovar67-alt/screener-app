@@ -1,0 +1,44 @@
+[
+  {
+    "view": "opportunities",
+    "width": 1440,
+    "documentWidth": 1440,
+    "viewportWidth": 1440,
+    "bodyText": "C1 Screener\n\nRepresentative fixtures · presentation review · not production account data\n\nOpportunities\n\nSignals based on 2026-10-14 close · C1 strategy cash: $1,000.00 · Brokerage cash: $500.00 · Available to deploy: $500.00\n\nC1 qualifies this stock, but available brokerage cash is insufficient for a new purchase.\n\nNo purchases currently authorized.\n🟡 Watch\n\nIncludes blocked Buy-rated candidates and candidates awaiting a Buy rating · 2026-10-14\n\nPriority\tStock / Sector\tMomentum score\tSignal closing price\tEntry check\n1\tMRNA\nHealthcare\nStrong Buy rating\t100.0/100\t$100.00\tWATCH Available brokerage cash cannot fund this purchase."
+  },
+  {
+    "view": "cash",
+    "width": 1440,
+    "documentWidth": 1440,
+    "viewportWidth": 1440,
+    "bodyText": "C1 Screener\n\nRepresentative fixtures · presentation review · not production account data\n\nOpportunities\n\nSignals based on 2026-10-14 close · C1 strategy cash: $1,000.00 · Brokerage cash: $363.36 · Available to deploy: $0.00\n\nBrokerage cash is from an earlier Eastern date. Update Brokerage Cash before a new C1 purchase.\n\nNo purchases currently authorized.\n🟡 Watch\n\nIncludes blocked Buy-rated candidates and candidates awaiting a Buy rating · 2026-10-14\n\nPriority\tStock / Sector\tMomentum score\tSignal closing price\tEntry check\n1\tMRNA\nHealthcare\nStrong Buy rating\t100.0/100\t$100.00\tWATCH Brokerage cash is stale; update the current broker balance before buying."
+  },
+  {
+    "view": "portfolio",
+    "width": 1440,
+    "documentWidth": 1440,
+    "viewportWidth": 1440,
+    "bodyText": "C1 Screener\n\nRepresentative fixtures · presentation review · not production account data\n\nPortfolio Intelligence\nPosition\tOpen Date\tDecision\tEvidence\tWhy\tPrice\tGain/Loss\nDELL\nSwing · 46.0% of portfolio · Technology\nMomentum Intact\n\tOct 1, 2026\tSELL — STOP TRIGGERED\t\n\nRecent price momentum remains supported.\n\nAs of 2026-10-14\n\tStop triggered at $468.85 (recorded low $460.00 on 2026-10-14, stop $468.85); C1 sell signal; verify Schwab order/fill status.\t$460.00\t$-851.70 / -15.62%\nMPC\nSwing · 11.5% of portfolio · Energy\nMomentum Weakening\n\tOct 1, 2026\tHOLD\t\n\nRecent price momentum is weakening.\n\nAs of 2026-10-14\n\tMomentum weakening; no sell signal confirmed.\t$115.00\t$150.00 / 15.00%\nVEEV\nSwing · 11.5% of portfolio · Healthcare\nMomentum Weakening\n\tOct 1, 2026\tHOLD\t\n\nRecent price momentum is weakening.\n\nAs of 2026-10-14\n\tMomentum weakening; no sell signal confirmed.\t$115.00\t$150.00 / 15.00%"
+  },
+  {
+    "view": "opportunities",
+    "width": 390,
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "bodyText": "C1 Screener\n\nRepresentative fixtures · presentation review · not production account data\n\nOpportunities\n\nSignals based on 2026-10-14 close · C1 strategy cash: $1,000.00 · Brokerage cash: $500.00 · Available to deploy: $500.00\n\nC1 qualifies this stock, but available brokerage cash is insufficient for a new purchase.\n\nNo purchases currently authorized.\n🟡 Watch\n\nIncludes blocked Buy-rated candidates and candidates awaiting a Buy rating · 2026-10-14\n\nPriority\tStock / Sector\tMomentum score\tSignal closing price\tEntry check\n1\tMRNA\nHealthcare\nStrong Buy rating\t100.0/100\t$100.00\tWATCH Available brokerage cash cannot fund this purchase."
+  },
+  {
+    "view": "cash",
+    "width": 390,
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "bodyText": "C1 Screener\n\nRepresentative fixtures · presentation review · not production account data\n\nOpportunities\n\nSignals based on 2026-10-14 close · C1 strategy cash: $1,000.00 · Brokerage cash: $363.36 · Available to deploy: $0.00\n\nBrokerage cash is from an earlier Eastern date. Update Brokerage Cash before a new C1 purchase.\n\nNo purchases currently authorized.\n🟡 Watch\n\nIncludes blocked Buy-rated candidates and candidates awaiting a Buy rating · 2026-10-14\n\nPriority\tStock / Sector\tMomentum score\tSignal closing price\tEntry check\n1\tMRNA\nHealthcare\nStrong Buy rating\t100.0/100\t$100.00\tWATCH Brokerage cash is stale; update the current broker balance before buying."
+  },
+  {
+    "view": "portfolio",
+    "width": 390,
+    "documentWidth": 390,
+    "viewportWidth": 390,
+    "bodyText": "C1 Screener\n\nRepresentative fixtures · presentation review · not production account data\n\nPortfolio Intelligence\nDELL\nSwing · 46.0% of portfolio · Technology\nMomentum Intact\nSELL — STOP TRIGGERED\nOpen Date\n\nOct 1, 2026\n\nEvidence\n\nRecent price momentum remains supported.\n\nAs of 2026-10-14\nWhy\n\nStop triggered at $468.85 (recorded low $460.00 on 2026-10-14, stop $468.85); C1 sell signal; verify Schwab order/fill status.\n\nPrice\n$460.00\nGain / Loss\n$-851.70 / -15.62%\nMPC\nSwing · 11.5% of portfolio · Energy\nMomentum Weakening\nHOLD\nOpen Date\n\nOct 1, 2026\n\nEvidence\n\nRecent price momentum is weakening.\n\nAs of 2026-10-14\nWhy\n\nMomentum weakening; no sell signal confirmed.\n\nPrice\n$115.00\nGain / Loss\n$150.00 / 15.00%\nVEEV\nSwing · 11.5% of portfolio · Healthcare\nMomentum Weakening\nHOLD\nOpen Date\n\nOct 1, 2026\n\nEvidence\n\nRecent price momentum is weakening.\n\nAs of 2026-10-14\nWhy\n\nMomentum weakening; no sell signal confirmed.\n\nPrice\n$115.00\nGain / Loss\n$150.00 / 15.00%"
+  }
+]

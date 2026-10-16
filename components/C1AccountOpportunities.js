@@ -71,7 +71,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
   <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
   {!portfolioOnly&&evidence.pending&&<p role="status">{c1PlainDecisionReason({action:'NO PURCHASE',reason:evidence.reason})}</p>}
   <p className="sub">Signals based on {decision.sourceSessionDate} close · C1 strategy cash: {Number.isFinite(decision.strategyCash)?decision.strategyCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Unavailable'} · Brokerage cash: {Number.isFinite(decision.brokerageCash)?decision.brokerageCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Not entered'} · Available to deploy: {Number.isFinite(decision.executableCash)?decision.executableCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'$0.00'}</p>
-  {decision.brokerageCashCurrent===false&&<p role="status">{c1PlainDecisionReason({action:'NO PURCHASE',reason:decision.brokerageCashReason||'Update brokerage cash before buying.'})}</p>}
+  {presentation.cashReason&&<p role="status">{presentation.cashReason}</p>}
   {exits.length>0&&<div><h3>Sell decisions</h3><ul>{exits.map(o=>{const held=holdingPresentation(o.symbol),sell=held?.action==='Sell'?held:null;return <li key={o.id}><b>{o.symbol}: {sell?.label||'SELL'}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; opening reference ${o.estimatedPrice.toFixed(2)}. {plainReason(o.symbol,sell?.label||'SELL',sell?.reason||o.reason,sell)}</li>;})}</ul></div>}
   {ready&&buys.length>0&&(exits.length>0||orders.some(order=>order.side==='sell'&&!order.condition))&&<p className="actionHelp">Complete the listed sales before buying replacements.</p>}
   {!portfolioOnly&&actionableTiles.length>0?<div className="grid buyGrid">{actionableTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className="idea green" key={tile.symbol}>
@@ -88,14 +88,14 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
     <div className="plan"><small>C1 recommendation</small><b>{decision.positions.some(p=>p.symbol===o.symbol)?'Add':'Buy'} {o.shares} {o.shares===1?'share':'shares'} of {o.symbol}</b></div>
     <p>Confirm price and cash at your broker, then record only the actual fill.</p>
    </article>;})}</div>
-  </>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No C1 Buy ratings right now.':'C1 ratings awaiting update.'}</b>{!ready&&<span>{c1PlainDecisionReason({action:'NO PURCHASE',reason:waitingReason})}</span>}</div>}
+  </>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No purchases currently authorized.':'C1 ratings awaiting update.'}</b>{!ready&&<span>{c1PlainDecisionReason({action:'NO PURCHASE',reason:waitingReason})}</span>}</div>}
 
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Refresh after {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} to update the recommendation.</p>}
  </section>
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">
   <h2>🟡 Watch</h2>
-  <p className="sub">Candidates awaiting a C1 Buy rating · {decision.sourceSessionDate}</p>
-  {watch.length?<div className="scroll"><table><thead><tr><th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Signal closing price</th><th>Entry check</th></tr></thead><tbody>{watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td><td><b>{row.symbol}</b><div>{row.sector}</div></td><td>{row.momentum}</td><td>{row.close}</td><td><b className={`pill ${row.holding?actionTone(row.holding,false):'gray'}`}>{row.holding?.label||'WATCH'}</b> {plainReason(row.symbol,row.holding?.label||'WATCH',row.review.why,row.holding)}</td></tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
+  <p className="sub">Includes blocked Buy-rated candidates and candidates awaiting a Buy rating · {decision.sourceSessionDate}</p>
+  {watch.length?<div className="scroll"><table><thead><tr><th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Signal closing price</th><th>Entry check</th></tr></thead><tbody>{watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td><td><b>{row.symbol}</b><div>{row.sector}</div><small>{ratedRows.find(r=>r.symbol===row.symbol)?.rating} rating</small></td><td>{row.momentum}</td><td>{row.close}</td><td><b className={`pill ${row.holding?actionTone(row.holding,false):'gray'}`}>{row.holding?.label||'WATCH'}</b> {plainReason(row.symbol,row.holding?.label||'WATCH',row.review.why,row.holding)}</td></tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
 
  </section>}
  <style jsx>{`.buyGrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.price small{font-size:12px;color:#64748b}`}</style>
