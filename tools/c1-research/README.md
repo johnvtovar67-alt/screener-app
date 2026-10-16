@@ -62,7 +62,7 @@ The validator checks structural consistency and reviewer coverage. It does **not
 
 1. Accounting replay applies factual fills to original books. Saved accounting fixtures are suitable references for this arithmetic, not historical signals.
 2. Exact historical production decision replay requires accepted vintages, actual account state and captured execution/quote/cash receipts. That evidence remains unavailable.
-3. This program's control uses the exact current model source with a **common retrospective screen and dollar-unit adapter**, applying October rules throughout the historical interval. It is current-policy retrospective simulation, not a claim that production used October rules in 2023 or that historical live authority is reproduced. Independent adapter parity approval is required before execution. The old comparison wrapper's pre-October "Champion" is not used as this control.
+3. The former direct dollar-unit control is retired after a demonstrated pre-queue screening defect. `control-adapter.cjs` uses unchanged production normalized projection, whole-share conversion, subsequent current-screen intersection, execution cash cap, and actual-fill ledger continuation. This is a research orchestration API, not historical live authority. Its synthetic differential evidence does not approve a full retrospective replay. Full-window October activation and an independently qualified execution profile remain blocking work.
 
 Daily bars cannot reproduce 120-second quote freshness or unrecorded discretionary account actions. Historical `screenRows` require explicit source/reconstruction methodology and substantive review; setting quoteFreshnessPass=true is not evidence. No historical Schwab balance is invented. All arms use the same research cash/fee assumptions; production brokerage-cash rules are untouched.
 
@@ -70,7 +70,7 @@ Daily bars cannot reproduce 120-second quote freshness or unrecorded discretiona
 
 No historical comparison was run and no historical alpha result exists. Mechanical tests use explicitly synthetic inputs only; their returns are never reported as investment evidence.
 
-The common managed proxy is unreachable (`Failed to connect to proxy port 8080`) for independent FMP access as well as prior Blob access, despite runtime reporting credentials ready. This is an acquisition transport blocker, not a reason to stop engineering. Once transport works, acquisition can proceed separately from production recovery. Dated sectors, complete event history, delisting outcomes and independent corroboration still need entitled/official sources; FMP membership and adjusted bars alone cannot establish them. An alternative is an immutable independently sourced export satisfying the manifest contract.
+Authorized executor network permission resolved the prior transport failure without changing proxy, TLS, credentials or policy. Private research objects were recovered and FMP acquisition now succeeds. Access is no longer the execution blocker. Dated sectors, complete event history, delisting outcomes and independent corroboration still need entitled/official sources; FMP membership and adjusted bars alone cannot establish them. An alternative is an immutable independently sourced export satisfying the manifest contract.
 
 Previously recovered GitHub audit logs document original-vintage revisions and a baseline clock issue. Those diagnostic logs are not substituted for missing daily inputs. Reused historical periods remain exploratory; there is no sealed holdout. Bootstrap intervals resample realized returns rather than rerunning path-dependent decisions, and cannot capture all model/data uncertainty. Opportunity cost is measured through full portfolio path differences. Screen-capacity suppression counts only candidates passing a nine-name shadow screen, so sector/issuer failures are not mislabeled as missed eligible names. Execution capacity skips are reported separately because later execution/risk checks may still reject them. Rejected-candidate counts are descriptive and never added as hypothetical profits.
 
@@ -79,3 +79,25 @@ No live parameters, holdings, cash or roles change. Minimum holding periods are 
 ## Deployment prevention
 
 The PR changes `vercel.json` **only** to set `git.deploymentEnabled["research/c1-program-20261016"]=false`, preventing automatic previews for this research branch. Existing branch settings, cron schedules and production configuration are retained. No freeze manifest, checker, build hook or CI requirement is weakened. Research tests join the existing canonical CI through tools/c1-research-program-regression.cjs; no additional workflow is added. This branch must not be merged or deployed.
+
+## Sequencing repair and execution hold (technical amendment v2)
+
+`preregistration-lock.json` and `research-spec-v1.json` remain unchanged. `technical-amendment-v2.json` records the authorized adapter repair, tests and explicit execution gate before any historical results. Legacy prototype synthetic tests are not parity evidence. `run.cjs run` is disabled, and requesting the legacy C engine fails closed. Challenger parameters A/B/C and the nine-name queue remain unapproved.
+
+Reproduce the source differential suite:
+
+```sh
+node tools/c1-research/control-parity-test.cjs
+node tools/c1-research/control-only.cjs validate /private/path/manifest.json /private/path/execution-profile.json
+```
+
+Separate control-only command (prepared but BLOCKED):
+
+```sh
+node tools/c1-research/control-only.cjs freeze MANIFEST PROFILE NEW_LOCK
+node tools/c1-research/control-only.cjs run MANIFEST PROFILE LOCK NEW_OUTPUT
+```
+
+This command never loads challenger arms and never generates fills from price assumptions. It requires audited, immutable, explicitly hypothetical execution observations, timestamps, screen facts, cash assumptions and fills, plus qualified dataset evidence and a code/data/profile lock. It emits a control decision/accounting audit only. Current-source 12bps is the only implemented audit profile; 25/50bps and full-window October activation require differential evidence before a performance control can run. No execution profile, independent approval or qualified dataset has been manufactured. The frozen historical window therefore remains deliberately blocked.
+
+See `docs/research/c1-control-sequencing-20261016.md` for exact scope, test tolerances and remaining gates.

@@ -4,7 +4,7 @@ const {createResearchModuleLoader}=require('./module-loader.cjs');
 const hash=x=>crypto.createHash('sha256').update(x).digest('hex');
 function replaceOnce(source,from,to){if(source.split(from).length!==2)throw Error('Research seam changed or ambiguous: '+from.slice(0,90));return source.replace(from,to);}
 function verifySources(root){const manifest=require('./champion-source-manifest.json');for(const f of manifest.files){let bytes=fs.readFileSync(path.join(root,f.path));if(f.path==='vercel.json'){const v=JSON.parse(bytes);delete v.git.deploymentEnabled['research/c1-program-20261016'];bytes=Buffer.from(JSON.stringify(v,null,2)+'\n');}if(hash(bytes)!==f.sha256)throw Error('Champion source mismatch: '+f.path);}return manifest.production_commit;}
-function createEngine(root,arm,cost=12){
+function createPrototypeEngine(root,arm,cost=12){
  const changes=[];const change=(file,source,from,to)=>{changes.push({file,seam:from});return replaceOnce(source,from,to);};
  const sizing=typeof arm.sizing==='object'?arm.sizing:null,cap=arm.entry_selection_cap??3;
  const loader=createResearchModuleLoader(root,(file,source)=>{
@@ -49,7 +49,7 @@ function createEngine(root,arm,cost=12){
  const {simulatePointInTimePortfolio}=loader.load('lib/c1RecentMomentumChallengerSimulator.js');
  function run(dataset,startDate,endDate,cost){
   const snapshots=new Map(),allowed=new Map(),screenDecisions=[];
-  const shadowClassify=cap===3?createEngine(root,{...arm,entry_selection_cap:9},cost).loader.load('lib/c1StockClassification.js').classifyC1StockScreen:classifyC1StockScreen;
+  const shadowClassify=cap===3?createPrototypeEngine(root,{...arm,entry_selection_cap:9},cost).loader.load('lib/c1StockClassification.js').classifyC1StockScreen:classifyC1StockScreen;
   for(let i=0;i<dataset.sessions.length;i++){
    const s=dataset.sessions[i];if(s.date<startDate||s.date>endDate)continue;
    let snap;try{snap=buildC1StockScreenSnapshot(s,new Date(s.decisionAt),dataset.sessions.slice(0,i+1));}catch(e){if(!/insufficient qualified/.test(e.message))throw e;snap={sourceSessionDate:s.date,candidates:[]};}
@@ -72,4 +72,5 @@ function createEngine(root,arm,cost=12){
  }
  return {run,loader,changes};
 }
-module.exports={createEngine,verifySources,replaceOnce};
+function createEngine(root,arm,cost){if(arm.id==='C')throw Error('Legacy control retired: use control-adapter.cjs and the control-only execution gate');return createPrototypeEngine(root,arm,cost);}
+module.exports={createEngine,createPrototypeEngine,verifySources,replaceOnce};

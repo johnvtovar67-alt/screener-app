@@ -1,0 +1,38 @@
+{
+  "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "productionFreeze": "PASS",
+  "canonicalIntegrity": "PASS",
+  "researchPrototypeSyntheticAssertions": 820,
+  "replacementControlDifferentialAssertions": 795,
+  "replacementControlScenarios": 13,
+  "canonicalSuite": {
+    "initialRunPassed": 100,
+    "initialRunTotal": 104,
+    "initialFailures": [
+      "c1-compact-opportunities-regression.cjs",
+      "c1-position-presentation-regression.cjs",
+      "c1-stock-classification-regression.cjs",
+      "c1-ui-authority-regression.cjs"
+    ],
+    "diagnosis": "Local checkout contained pre-main UI regression tests paired with current-main presentation files. Read exact five changed test files from production commit, including c1-live-display-regression.cjs. All five pass after local alignment. These baseline files are not PR changes.",
+    "targetedCurrentMainReruns": "5/5 PASS; every initial failure resolved",
+    "aggregateVerifiedScripts": 104,
+    "singleCleanFullSuiteRerun": false
+  },
+  "negativeExecutionGates": {
+    "legacyMatrix": "PASS: refuses before data loading",
+    "legacyCEngine": "PASS: retired",
+    "controlOnlyIncompleteManifest": "PASS: returns exit 2 and executionReady=false"
+  },
+  "historicalControlsExecuted": 0,
+  "historicalChallengersExecuted": 0,
+  "independentParityApproval": false,
+  "qualifiedHistoricalInputs": false,
+  "localLogHashes": {
+    "c1-research-program-regression.cjs.log": "7e906a296e2caa4b6e856e8fbe12f1939e206779adf0583039e4e8d39158df16"
+  },
+  "limitations": [
+    "No full Next build rerun for this research-only CJS/docs change.",
+    "Synthetic source differential checks are not historical data approval or full-window retrospective policy/cost parity approval."
+  ]
+}

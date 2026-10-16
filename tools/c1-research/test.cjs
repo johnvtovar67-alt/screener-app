@@ -1,6 +1,6 @@
 // Synthetic mechanics only. Never emits investment performance or uses private data.
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
-const {createEngine,verifySources,replaceOnce}=require('./engine.cjs'),{metrics,bootstrapDifferences}=require('./metrics.cjs'),{validateEvidence,sha}=require('./evidence.cjs');
+const {createPrototypeEngine:createEngine,verifySources,replaceOnce}=require('./engine.cjs'),{metrics,bootstrapDifferences}=require('./metrics.cjs'),{validateEvidence,sha}=require('./evidence.cjs');
 const spec=require('./research-spec-v1.json'),root=path.resolve(__dirname,'../..');let checks=0;
 const ok=(v,m)=>{checks++;assert.ok(v,m);},eq=(a,b,m)=>{checks++;assert.deepEqual(JSON.parse(JSON.stringify(a)),JSON.parse(JSON.stringify(b)),m);};
 verifySources(root);ok(true,'Pinned sources verified');assert.throws(()=>replaceOnce('aa aa','aa','x'),/ambiguous/);checks++;

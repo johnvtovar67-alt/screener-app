@@ -1,0 +1,806 @@
+{
+  "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "qualified": false,
+  "status": "BLOCKED",
+  "newAcquisition": [
+    {
+      "directory": "/workspace/work/c1-control-validation/next-tranche-20261016",
+      "planSha256": "2dd0abb89a10216e4c6da3ce6fd8521c44a79d5c5772a2bd45e7d8a13106b24d",
+      "responses": 35,
+      "bytes": 4694331,
+      "responseHashesVerified": true,
+      "receipts": [
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "ANSS",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=ANSS&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 157443,
+          "sha256": "b6544de262406e3b487c4286e2e1a344d36204ac2e41f30748c132f603a0385f",
+          "rows": 930,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:22.317965+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2025-07-17"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "ANSS",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=ANSS&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 211620,
+          "sha256": "223c59910243be4d789c4f7b03af8cb29c78a515581e5dfc789ee92285090b0c",
+          "rows": 930,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:22.529510+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2025-07-17"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "ANSS",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=ANSS&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 157681,
+          "sha256": "c1e98a4175f6d8ce7e0903f0dc05ea333e41733836e6ebd38e9e73f812ce87f8",
+          "rows": 930,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:22.643389+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2025-07-17"
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "AVB",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=AVB&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 203681,
+          "sha256": "3d882128716e50a2804dd1e2c7975ee646510873878424ec859936e87c8a0323",
+          "rows": 1207,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:22.787775+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-08-24"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "AVB",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=AVB&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 274619,
+          "sha256": "eacf0daa97e054366cfe1811f8d538e95ef2a52785d244e6853e52425ffd03a6",
+          "rows": 1207,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:22.930675+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-08-24"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "AVB",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=AVB&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 203440,
+          "sha256": "0e1ae138810846301870e797f3a362db3fffd7d30781a1568e85ff5230f8ee7d",
+          "rows": 1207,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.041563+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-08-24"
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "BF.B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=BF.B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.161299+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "BF.B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=BF.B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.257757+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "BF.B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=BF.B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.348622+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "BK",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=BK&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 188820,
+          "sha256": "5f6ab30d8921074ccc212bbda4795fa6baf2b087c9939f4120937b72d03ed263",
+          "rows": 1143,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.449956+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-05-21"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "BK",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=BK&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 255139,
+          "sha256": "6647c5ba957dd6d9cd82f5ebca60b76e1e4a300baa96f4e1e399f483d392bfc5",
+          "rows": 1143,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.555626+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-05-21"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "BK",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=BK&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 188719,
+          "sha256": "8e61807301477c8ef5cde1035b4ce6da09f9bf4189d6230dcd73e9b0c01f3d6a",
+          "rows": 1143,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.660697+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-05-21"
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "BRK.B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=BRK.B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.735876+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "BRK.B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=BRK.B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.810486+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "BRK.B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=BRK.B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:23.884894+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "CBRE",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=CBRE&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 209329,
+          "sha256": "e30ed802d70c111a921efbc86dab631bbaaef98a235ab8b72e8efd2f2fb042fa",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:24.000752+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "CBRE",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=CBRE&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 281242,
+          "sha256": "1338697eb648273bb13356a427eaaf01330d270535d79f26b2ea4dcc58550b2e",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:24.121455+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "CBRE",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=CBRE&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 209483,
+          "sha256": "f125bd020a8a997caecffd27da1c192c5ce805dc16ea9726d60f61a083ec5af7",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:24.223554+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "CCI",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=CCI&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 207568,
+          "sha256": "aa2d6d9ba58fbf5047038e7fd0482d20b9b28887442844166c32732726606389",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:24.928196+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "CCI",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=CCI&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 281220,
+          "sha256": "e3c7f2ead3ef568a46e67b7e1c4c19a8ea9d1b46e2bc6127fd020ac49e1e5a56",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:25.037678+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "CCI",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=CCI&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 208598,
+          "sha256": "3ce518f81bb264e34c8fe4a0bacde648d3f4639ac48b1075c74e00c5f5b30a28",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:25.404549+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "CCL",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=CCL&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 206470,
+          "sha256": "70ffd2cfe7c3a7e496a6d5042c875ec808a1a51d4d9c4a9522a2e324f83b4f2b",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:25.510282+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "CCL",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=CCL&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 276731,
+          "sha256": "5d0851b36fe8dc915605bdbb12837db426c54502fdf67a98fb3922067a178fdc",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:25.623776+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "CCL",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=CCL&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 206680,
+          "sha256": "d18ee6c92ca33e3f33f93db2fb056d482f0a5991180f6db427198b6c142f38e2",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:25.722912+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "CDNS",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=CDNS&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 211393,
+          "sha256": "4891d3ee077f01e3480b005627d2652dcd53687d6387714ec92c725962e142bd",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:25.820350+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "CDNS",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=CDNS&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 283764,
+          "sha256": "75ab3bfa8b908e867aa4e89ccc42169ddb1ac732a78a4e2f909fb3735ceab211",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:25.923106+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "CDNS",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=CDNS&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 211633,
+          "sha256": "f1c7ea5e2f770b4aa55034e5d836c985d116e8229459a9f5fc0172fefed4c764",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.021179+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "splits",
+          "params": {
+            "symbol": "LEN"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/splits?symbol=LEN",
+          "status": 200,
+          "bytes": 917,
+          "sha256": "1f155aa3d630daf13e8ce1803bdb4905c8d87777387ec7c0bc0bd181fd73a8f2",
+          "rows": 7,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.109380+00:00",
+          "firstDate": "1979-09-18",
+          "lastDate": "2025-01-21"
+        },
+        {
+          "endpoint": "dividends",
+          "params": {
+            "symbol": "LEN"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/dividends?symbol=LEN",
+          "status": 200,
+          "bytes": 46060,
+          "sha256": "dcc4189d3edfbc2f1dac21b91657ff91c1aea7901bf23f92741519574da6a987",
+          "rows": 172,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.195924+00:00",
+          "firstDate": "1984-01-31",
+          "lastDate": "2026-10-07"
+        },
+        {
+          "endpoint": "splits",
+          "params": {
+            "symbol": "MRP"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/splits?symbol=MRP",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.276561+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "dividends",
+          "params": {
+            "symbol": "MRP"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/dividends?symbol=MRP",
+          "status": 200,
+          "bytes": 1867,
+          "sha256": "a108e120d770cff2dd8dc62b2b7db25f3c1d5445e3986ae9e3702a834c7ea8e7",
+          "rows": 7,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.355290+00:00",
+          "firstDate": "2025-04-04",
+          "lastDate": "2026-10-05"
+        },
+        {
+          "endpoint": "splits",
+          "params": {
+            "symbol": "WDC"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/splits?symbol=WDC",
+          "status": 200,
+          "bytes": 266,
+          "sha256": "690031b1522ea32fa7b30ac992cd27ecd23749f2151d0650ba932fcc784df585",
+          "rows": 2,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.431955+00:00",
+          "firstDate": "1997-06-04",
+          "lastDate": "2025-02-24"
+        },
+        {
+          "endpoint": "dividends",
+          "params": {
+            "symbol": "WDC"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/dividends?symbol=WDC",
+          "status": 200,
+          "bytes": 9930,
+          "sha256": "721706dfbc2555398472dc11ad360501033fef5bb31e61cdd49e8018b099e69b",
+          "rows": 37,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.508443+00:00",
+          "firstDate": "2012-09-26",
+          "lastDate": "2026-09-08"
+        },
+        {
+          "endpoint": "splits",
+          "params": {
+            "symbol": "SNDK"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/splits?symbol=SNDK",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.595295+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "dividends",
+          "params": {
+            "symbol": "SNDK"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/dividends?symbol=SNDK",
+          "status": 200,
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "rows": 0,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:25:26.680781+00:00",
+          "firstDate": null,
+          "lastDate": null
+        }
+      ]
+    },
+    {
+      "directory": "/workspace/work/c1-control-validation/alias-evidence-20261016",
+      "planSha256": "bde2f23e194bf8ef22a1c23956a116231d0f94d1c500388738463a7ba54986cf",
+      "responses": 8,
+      "bytes": 1422798,
+      "responseHashesVerified": true,
+      "receipts": [
+        {
+          "endpoint": "profile",
+          "params": {
+            "symbol": "BF-B"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/profile?symbol=BF-B",
+          "status": 200,
+          "bytes": 2627,
+          "sha256": "cb197caffd7dd1a9ec2bf907e50cc58d2b3b8dba065186794d456966a2d460af",
+          "rows": 1,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:27:39.946260+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "BF-B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=BF-B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 206948,
+          "sha256": "c89c803d5b5e5677bf70b8a86d87cd63cab71965f3e36ede54e6fd74d24711a1",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:27:40.197585+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "BF-B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=BF-B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 278563,
+          "sha256": "77b0927497b6bad663fd58d46c8ccfa5cc9bf8a5663dd36d5fd69c056ad09cba",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:27:40.357512+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "BF-B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=BF-B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 206801,
+          "sha256": "b12048d2b787f24c9bd8387f838f19f6d0383c5a0802cb41f666b0cd04b6a221",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:27:40.503980+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "profile",
+          "params": {
+            "symbol": "BRK-B"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/profile?symbol=BRK-B",
+          "status": 200,
+          "bytes": 3515,
+          "sha256": "31bff9ca12b50cbf16a7111876ad289143b9c016f84104231e683c08a2a75f84",
+          "rows": 1,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:27:40.577574+00:00",
+          "firstDate": null,
+          "lastDate": null
+        },
+        {
+          "endpoint": "historical-price-eod/dividend-adjusted",
+          "params": {
+            "symbol": "BRK-B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted?symbol=BRK-B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 212636,
+          "sha256": "5dda91f00ec434e0232c51f66ae1bb777a1090adde5337b971cb9ec09bc8caa0",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:27:40.670497+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/full",
+          "params": {
+            "symbol": "BRK-B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=BRK-B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 293077,
+          "sha256": "4f39eb0c1a8c54ea5cd291651cf710fee8830dfdf344657fa006d13298e8943b",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:27:40.787820+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        },
+        {
+          "endpoint": "historical-price-eod/non-split-adjusted",
+          "params": {
+            "symbol": "BRK-B",
+            "from": "2021-11-01",
+            "to": "2026-10-15"
+          },
+          "sourceUrl": "https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted?symbol=BRK-B&from=2021-11-01&to=2026-10-15",
+          "status": 200,
+          "bytes": 218631,
+          "sha256": "acc9099d21663088ac962718624c71bdde5d807816e6d5268af13e2d3c827a70",
+          "rows": 1244,
+          "certifiedPointInTime": false,
+          "license": "REQUIRES_ENTITLEMENT_REVIEW",
+          "retrievedAt": "2026-10-16T19:27:40.909310+00:00",
+          "firstDate": "2021-11-01",
+          "lastDate": "2026-10-15"
+        }
+      ]
+    }
+  ],
+  "newResponses": 43,
+  "newBytes": 6117129,
+  "newPriceSymbolsAttempted": [
+    "ANSS",
+    "AVB",
+    "BF.B",
+    "BK",
+    "BRK.B",
+    "CBRE",
+    "CCI",
+    "CCL",
+    "CDNS"
+  ],
+  "rawCoverageNotClearance": true,
+  "original81NotCompleteUniverse": true,
+  "unchangedQualifiedCount": 81,
+  "qualificationApproval": false,
+  "historicalExecutions": 0,
+  "blockers": [
+    "Frozen interval requires complete constituent/session coverage for both universes; old conditional 505-name Q1 union is neither verified final membership nor complete 2023-2026 union. 414 old-union names remain without acquired price requests after nine new attempts; acquired names still need qualification.",
+    "Dated sector/membership/issuer original-availability proof is incomplete: prior sealed disposition records 1521 unverified facts and 192 continuity gaps; no new evidence resolves those.",
+    "FMP splits/dividends add dated observations but not a complete spin-off/security-action membership ledger or original publication evidence. LEN Jan21 1033/1000 and WDC Feb24 1323/1000 vendor adjustments must not be treated as membership events.",
+    "BDX remains quarantined: 316 volume-unit failures at the frozen tolerance; no new review clears it.",
+    "ANSS stops 2025-07-17; AVB stops 2026-08-24; BK stops 2026-05-21. Each needs a dated security continuity/delisting explanation, not forward fills.",
+    "BF.B/BRK.B returned empty; BF-B/BRK-B return 1244 bars each with current profiles. These are vendor alias observations, not dated identity approval.",
+    "Fundamental/event history, adjusted-bar as-of vintages, independent source corroboration and entitlement review remain unqualified."
+  ]
+}
