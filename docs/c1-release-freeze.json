@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "83b096666b8f7f701c018d05cd63dbc49d8f9742",
+    "components/C1AccountOpportunities.js": "2a2526ed5c0aac0572dc903c7cfa6333df4adc80",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -199,7 +199,7 @@
     "lib/c1RecentMomentumLivePolicy.js": "cf53be149a811182e84cdd5e6e36f5c00099e96e",
     "lib/c1PositionPresentation.js": "7861bc1407609f1f96e96345d12b3d9af7c70c58",
     "lib/c1QuoteVerification.js": "0459f5ab5d4c17cfcf01b1870f055a0665b5b92e",
-    "lib/c1DecisionCopy.js": "ecf750696aaf0c623110e3988aeca766c972e8a0"
+    "lib/c1DecisionCopy.js": "17c314b2d4af2773d47c3d0a63056941b9c1a9cb"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",

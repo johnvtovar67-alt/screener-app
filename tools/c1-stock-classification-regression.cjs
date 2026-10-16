@@ -36,7 +36,8 @@ assert.equal(present({decision:{...decision,current:false},buys:orders,plan,read
 assert.ok(view.watch.every(x=>x.screenReview.why.includes('below the three selected')));
 const component=fs.readFileSync('components/C1AccountOpportunities.js','utf8');
 assert.ok(component.includes('resolveC1ScreenEvidence({decision,rows:screenRows'));
-assert.ok(component.includes(':portfolioOnly&&buys.length?'),'Account orders cannot become extra stock rating tiles');
+assert.ok(component.includes('!portfolioOnly&&actionableTiles.length>0'),'Only the existing authorized stock tiles appear in Opportunities');
+assert.ok(!component.includes('buys.map(o=>'),'Portfolio orders cannot become duplicate stock rating cards');
 console.log('PASS: original-deployment oracle matches 3 Buy/6 Watch, quote/event/liquidity/gap gates, sector/issuer substitutions, expert Strong Buy; holdings affect only account actions, stale checks hide quantities, and account orders cannot promote Watch ratings.');
 
 const top5=fs.readFileSync('pages/api/top5.js','utf8');
