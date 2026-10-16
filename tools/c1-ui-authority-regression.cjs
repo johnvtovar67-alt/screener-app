@@ -54,15 +54,16 @@ try{
  const render=patch=>renderToStaticMarkup(React.createElement(Component,{...props,...patch}));
  const html=render({});
  assert.match(html,/sell 10 shares/);assert.match(html,/Buy 5 shares/);
- assert.ok(html.indexOf('Sell decisions')<html.indexOf('C1 recommendation'),'Funded replacement buys follow exits');
- assert.match(html,/Opening reference price/,'The original reference-price and quantity layout is retained');
+ assert.ok(html.indexOf('data-action="SELL"')<html.indexOf('BUY — BBB'),'Funded replacement buys follow exits');
+ assert.match(html,/opening reference \$100\.00/,'The checked reference price remains with the purchase quantity');
+ assert.doesNotMatch(html,/<article|data-action="HOLD"|data-action="WAIT"/,'Portfolio actions stays compact without duplicate purchase cards or routine status rows');
  const inconsistent=render({screenRows:[{...screenRows[0],recommendation:{expertDecision:{strongBuyPass:false,metrics:{quoteFreshnessPass:false}}}}]});
  assert.match(inconsistent,/sell 10 shares/);assert.doesNotMatch(inconsistent,/Buy 5 shares/,'Portfolio must fail closed when the current opportunity screen does not authorize the replacement buy');
  const fullSlots={...current,positions:[row,{...row,symbol:'CCC'},{...row,symbol:'DDD'}],stockScreen:{...current.stockScreen,candidates:[{...current.stockScreen.candidates[0],symbol:'BBB'}]}};
  const fullSlotsHtml=render({decision:fullSlots,view:'opportunities',openingPlan:{...openingPlan,orders:[]},manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:{...openingPlan,orders:[]}})});
  assert.match(fullSlotsHtml,/All C1 position slots are occupied\./,'Full account must explain why an unowned Buy-rated candidate has no purchase');
  assert.doesNotMatch(fullSlotsHtml,/No detailed entry-check result is available/);
- for(const patch of [{manualRecommendations:{...review,status:'waiting'}},{decision:{...current,revision:3}},{decision:{...current,current:false}},{manualRecommendations:{...review,validUntil:'2026-09-14T13:59:59Z'}}]){const output=render(patch);assert.match(output,/C1 action summary/);assert.match(output,/WAIT/);assert.doesNotMatch(output,/(?:Buy 5|sell 10) shares/,'Stale authorization cannot display checked instructions');}
+ for(const patch of [{manualRecommendations:{...review,status:'waiting'}},{decision:{...current,revision:3}},{decision:{...current,current:false}},{manualRecommendations:{...review,validUntil:'2026-09-14T13:59:59Z'}}]){const output=render(patch);assert.doesNotMatch(output,/data-action="WAIT"|data-action="HOLD"/);assert.doesNotMatch(output,/(?:Buy 5|sell 10) shares/,'Stale authorization cannot display checked instructions');}
  const conditional={...review,orders:[{...openingPlan.orders[0],condition:'stop-triggered'}]};
  assert.doesNotMatch(render({manualRecommendations:conditional}),/data-action="SELL"|sell 10 shares/,'Standing stops alone are not action instructions');
  console.log('PASS: real React action rendering, sell-before-buy sequence, expired/mismatched/conditional suppression, C1-only Swing authority and retained Core analysis.');

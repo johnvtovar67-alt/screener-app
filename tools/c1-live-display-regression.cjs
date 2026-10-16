@@ -24,7 +24,7 @@ assert.equal(JSON.stringify(orders),saved,'Aggregation must preserve original fi
 const fs=require('node:fs'),component=fs.readFileSync('components/C1AccountOpportunities.js','utf8');
 assert.ok(component.includes('const positionOrders=c1OrderDisplayGroups'),'Checked sells remain available in both tabs');
 assert.ok(component.includes(".filter(order=>order.side==='sell'&&!order.condition)"));
-assert.ok(!component.includes('if(portfolioOnly&&!buys.length&&!positionOrders.length)return null;'),'HOLD/WAIT summaries remain visible without checked trades');
+assert.ok(component.includes('if(portfolioOnly&&!sellActions.length&&!verifyActions.length&&!actionableBuys.length)return null;'),'The orange box hides when only routine HOLD/WAIT conditions remain');
 assert.ok(component.includes('portfolioOnly?"card rotationBox":"card"'));
 assert.ok(!component.includes('<summary>Recorded stops ('));
 assert.ok(!component.includes('Existing position actions'));

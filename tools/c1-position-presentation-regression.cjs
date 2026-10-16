@@ -403,7 +403,8 @@ async function main(){try{
   }
   const recordedDell=holding('DELL',{stops:[{price:468.85}],exits:[{reason:'initial-stop'}],stopTriggerEvidence:{low:460,date:source,stop:468.85}});
   const recorded=portfolioHtml(recordedDell,quote('DELL',480),{mobile,sector:'Technology'});
-  match(recorded,/recorded low \$460\.00 on 2026-10-14, stop \$468\.85/,'A recovered quote retains the existing confirmed stop evidence');
+  match(recorded,/recorded low \$460\.00 on 2026-10-14/,'A recovered quote retains the existing confirmed stop evidence');
+  eq((recorded.match(/\$468\.85/g)||[]).length,1,'The existing portfolio row displays the confirmed DELL stop once');
   match(recorded,/C1 sell signal; verify Schwab order\/fill status/,'A C1 signal makes no claim that Schwab received an order');
   absent(recorded,/sale pending|submitted|executed/i,'A model exit is not presented as a submitted or executed broker sale');
   const protectedWinner=portfolioHtml(holding('MPC',{exits:[{reason:'recent-momentum-profit-protection'}]}),quote('MPC',115),{mobile});
