@@ -149,6 +149,101 @@ try{
  assert.doesNotMatch(coreRow,/HOLD|SELL|VERIFY STOP/,'A Core quote cannot receive a Swing action adapter');
  assert.match(coreRow,/>WATCH</,'The original Watch row retains its neutral non-Swing action');
  assert.equal(JSON.stringify(coreInput),coreBefore,'The Core mismatch cannot rewrite saved ownership or role classifications');
+ // The summary renders the existing authority exactly once per checked instruction.
+ const summary=markup=>markup.match(/<div[^>]*aria-label="C1 action summary"[^>]*>([\s\S]*?)<\/ul><\/div>/)?.[1]||'';
+ const summaryBase=summary(html);
+ const allocations={...plan,orders:[{...plan.orders[0],id:'new.base',sleeve:'base',shares:1},{...plan.orders[0],id:'new.cooldown',sleeve:'cooldown15',shares:1},plan.orders[1]]};
+ const allocationBefore=JSON.stringify(allocations);
+ const allocationHtml=render({openingPlan:allocations,manualRecommendations:buildC1ManualRecommendations({decision,openingPlan:allocations})});
+ assert.equal((allocationHtml.match(/Buy 2 shares/g)||[]).length,1,'The existing lossless display grouping combines identical sleeve instructions exactly once');
+ assert.equal(JSON.stringify(allocations),allocationBefore,'Grouping preserves original per-sleeve quantities and order IDs');
+ const distinct={...allocations,orders:allocations.orders.map(order=>order.id==='new.cooldown'?{...order,estimatedPrice:101}:order)};
+ const distinctHtml=render({openingPlan:distinct,manualRecommendations:buildC1ManualRecommendations({decision,openingPlan:distinct}),view:'portfolio'});
+ assert.equal((distinctHtml.match(/Buy 1 share/g)||[]).length,2,'Different checked references remain separate instructions rather than losing a group or inventing a combined price');
+ assert.match(summary(distinctHtml),/opening reference \$100\.00/);assert.match(summary(distinctHtml),/opening reference \$101\.00/);
+
+
+ assert.equal((html.match(/Buy 2 shares/g)||[]).length,1,'The Buy quantity appears once; its detail card refers to the summary');
+ assert.equal((html.match(/Add 1 share/g)||[]).length,1,'The Add quantity appears once; no second instruction is created');
+ assert.match(summaryBase,/data-action="ADD"[\s\S]*?Add 1 share/);
+ assert.match(summaryBase,/Holding decision: HOLD/,'An authorized addition does not rewrite the held-position action');
+ assert.match(summaryBase,/Update the current broker balance or record completed C1 sale proceeds/,'A cash-blocked purchase retains its existing next step');
+ assert.match(watch,/Next: Update the current broker balance or record completed C1 sale proceeds/,'Watch restores the existing entry-review next step');
+ const stopRow={...position,symbol:'DELL',action:'Exit candidate',stops:[{price:86}],exits:[{reason:'initial-stop'}],stopTriggerEvidence:{low:85,stop:86,date:decision.sourceSessionDate}};
+ const verifyRow={...position,symbol:'UUU',stops:[{price:86}]};
+ const weakRow={...position,symbol:'VEEV',action:'Review',momentumEvidence:{status:'available',classification:'Momentum Weakening'}};
+ const quoteFor=(symbol,price,verified=true)=>({...screenRows[0],symbol,price,_fmpQuoteObservation:verified?{...screenRows[0]._fmpQuoteObservation,symbol,price}:undefined});
+ const mixedDecision={...decision,positions:[stopRow,verifyRow,weakRow]};
+ const mixedPlan={...plan,orders:[plan.orders[0],{id:'sell-dell',symbol:'DELL',side:'sell',shares:3,estimatedPrice:85,reason:'initial-stop',phase:1}]};
+ const mixedProps={decision:mixedDecision,executionDecision:mixedDecision,openingPlan:mixedPlan,manualRecommendations:buildC1ManualRecommendations({decision:mixedDecision,openingPlan:mixedPlan}),positionRows:[quoteFor('DELL',85),quoteFor('UUU',85,false),quoteFor('VEEV',100)]};
+ const mixedBefore=JSON.stringify(mixedProps);
+ for(const view of ['opportunities','portfolio']){
+  const rendered=render({...mixedProps,view}),actions=summary(rendered);
+  const ordered=[...actions.matchAll(/<li data-action="([^"]+)"/g)].map(match=>match[1]);
+  assert.equal(ordered[0],'SELL');assert.equal(ordered[1],'VERIFY');assert.equal(ordered[2],'BUY');
+  assert.match(actions,/DELL: SELL — STOP TRIGGERED/);assert.match(actions,/stop \$86\.00/);
+  assert.match(actions,/recorded low \$85\.00/);assert.match(actions,/verify Schwab order\/fill status/);
+  assert.equal((rendered.match(/sell 3 shares/g)||[]).length,1,'Only the checked remaining sale quantity is instructed');
+  assert.match(actions,/VERIFY — UUU/);assert.doesNotMatch(actions,/UUU: SELL/,'An apparent breach cannot become a confirmed sell');
+  assert.match(actions,/HOLD — VEEV/);assert.match(actions,/Momentum weakening; no sell signal confirmed/,'A holding absent from Watch keeps its existing Hold');
+  assert.doesNotMatch(actions,/sale pending|order submitted|order executed/i,'The summary never asserts brokerage submission or execution');
+ }
+ assert.equal(JSON.stringify(mixedProps),mixedBefore,'Summary rendering preserves holdings, stops, account identity and checked order allocations');
+ const mismatched=summary(render({...mixedProps,decision:{...mixedDecision,current:false,accountMismatch:true},openingPlan:null}));
+ assert.doesNotMatch(mismatched,/data-action="SELL"|data-action="BUY"|data-action="ADD"|data-action="HOLD"/,'Account differences retain the existing ownership verification gate');
+ assert.match(mismatched,/Resolve the differences in Account settings/,'An ownership mismatch names its specific resolution');
+ const noQuantityProps={...mixedProps,openingPlan:null,manualRecommendations:{...mixedProps.manualRecommendations,status:'waiting',orders:[]}};
+ const noQuantity=summary(render({...noQuantityProps,view:'portfolio'}));
+ assert.match(noQuantity,/DELL: SELL — STOP TRIGGERED/);assert.match(noQuantity,/No checked sell quantity is available/);
+ assert.doesNotMatch(noQuantity,/sell \d+ shares|Buy \d+ shares|Add \d+ shares/,'A recorded signal alone cannot authorize any quantity');
+ for(const [exit,label] of [['recent-momentum-deterioration','SELL — MOMENTUM EXIT'],['recent-momentum-profit-protection','SELL — PROFIT PROTECTION']]){
+  const exitPosition={...stopRow,stops:[{price:86},{price:87}],stopTriggerEvidence:undefined,exits:[{reason:exit}]};
+  const exitDecision={...decision,positions:[exitPosition]};
+  const exitHtml=summary(render({decision:exitDecision,executionDecision:exitDecision,openingPlan:null,manualRecommendations:null,positionRows:[quoteFor('DELL',100)]}));
+  assert.match(exitHtml,new RegExp(label));assert.match(exitHtml,/Recorded stops: \$86\.00, \$87\.00/,'Non-stop exits retain every recorded stop without changing thresholds');
+  assert.match(exitHtml,/No checked sell quantity is available/);assert.doesNotMatch(exitHtml,/sell \d+ shares/);
+ }
+ const multiStop={...stopRow,stops:[{price:86},{price:87}]},multiDecision={...decision,positions:[multiStop]};
+ assert.match(summary(render({decision:multiDecision,executionDecision:multiDecision,openingPlan:null,manualRecommendations:null,positionRows:[quoteFor('DELL',85)]})),/Recorded stops: \$86\.00, \$87\.00/,'A confirmed stop displays multiple original recorded levels without manufacturing a single threshold');
+ const quoteOnlyDecision={...decision,positions:[{...stopRow,action:'Hold',exits:[],stopTriggerEvidence:undefined}]};
+ const quoteOnly={decision:quoteOnlyDecision,executionDecision:quoteOnlyDecision,openingPlan:null,manualRecommendations:null,positionRows:[quoteFor('DELL',85)]};
+ assert.match(summary(render(quoteOnly)),/DELL: SELL — STOP TRIGGERED/,'Existing verified quote-based stop presentation is reused');
+ const expiredQuote={...quoteOnly,positionRows:[{...quoteFor('DELL',85),timestamp:Date.now()/1000-121}]};
+ assert.match(summary(render(expiredQuote)),/VERIFY — DELL/);assert.doesNotMatch(summary(render(expiredQuote)),/data-action="SELL"/,'Expired quote proof cannot remain a confirmed intraday breach');
+ const conditionalPlan={...mixedPlan,orders:mixedPlan.orders.map(order=>({...order,condition:'stop-triggered'}))};
+ const conditionalDecision={...decision,positions:[position]};
+ const conditionalHtml=render({decision:conditionalDecision,executionDecision:conditionalDecision,openingPlan:conditionalPlan,manualRecommendations:buildC1ManualRecommendations({decision:conditionalDecision,openingPlan:conditionalPlan})});
+ assert.doesNotMatch(summary(conditionalHtml),/data-action="BUY"|data-action="ADD"|data-action="SELL"/,'Conditional orders are not immediate instructions');
+ for(const patch of [{manualRecommendations:{...review,validUntil:now}},{executionDecision:{...decision,revision:2}},{decision:{...decision,current:false}},{decision:{...decision,current:false,accountMismatch:true},openingPlan:null}]){
+  const actions=summary(render({...patch,view:'portfolio'}));assert.match(actions,/WAIT/);assert.doesNotMatch(actions,/Buy \d+ shares|Add \d+ shares/,'Stale or mismatched authority never creates purchases');
+ }
+ // Consume the real existing fill-reconciliation output, never subtract fills in the view.
+ const {reconcileC1ActualAccountFills}=loader.load('lib/c1AccountLedger.js');
+ const fillPlan={...plan,openingBooks:{base:{cash:1000,positions:{}},cooldown15:{cash:0,positions:{}},sector40:{cash:0,positions:{}}},orders:[{...plan.orders[0],sleeve:'base'}]};
+ const fill={id:'posted-buy',orderId:'new',symbol:'BBB',side:'buy',shares:1,price:100,fee:0,executedAt:now};
+ const fillState={plan:fillPlan,fills:[fill]},fillBefore=JSON.stringify(fillState);
+ const reconciled=reconcileC1ActualAccountFills({plan:fillPlan,fills:[fill],observedAt:now});
+ const remainingPlan={...fillPlan,openingBooks:reconciled.books,orders:reconciled.outstanding},remainingReview=buildC1ManualRecommendations({decision,openingPlan:remainingPlan});
+ const remainingHtml=render({openingPlan:remainingPlan,manualRecommendations:remainingReview});
+ assert.equal((remainingHtml.match(/Buy 1 share/g)||[]).length,1,'The existing outstanding quantity is shown once after a recorded fill');
+ assert.doesNotMatch(remainingHtml,/Buy 2 shares/,'A filled share cannot be offered again');
+ const complete=reconcileC1ActualAccountFills({plan:fillPlan,fills:[{...fill,shares:2}],observedAt:now});
+ const completePlan={...fillPlan,openingBooks:complete.books,orders:complete.outstanding};
+ assert.doesNotMatch(summary(render({openingPlan:completePlan,manualRecommendations:buildC1ManualRecommendations({decision,openingPlan:completePlan})})),/data-action="BUY"|data-action="ADD"/,'A complete fill leaves no purchase instruction');
+ const sellPlan={...mixedPlan,openingBooks:{base:{cash:0,positions:{DELL:{shares:10,avgCost:100,openedAt:'2026-10-01'}}},cooldown15:{cash:0,positions:{}},sector40:{cash:0,positions:{}}},orders:[{...mixedPlan.orders[1],sleeve:'base'}]};
+ const saleFill={id:'posted-sale',orderId:'sell-dell',symbol:'DELL',side:'sell',shares:1,price:85,fee:0,executedAt:now};
+ const saleBefore=JSON.stringify({sellPlan,saleFill});
+ const sale=reconcileC1ActualAccountFills({plan:sellPlan,fills:[saleFill],observedAt:now});
+ const remainingSale={...sellPlan,openingBooks:sale.books,orders:sale.outstanding};
+ const saleHtml=render({...mixedProps,openingPlan:remainingSale,manualRecommendations:buildC1ManualRecommendations({decision:mixedDecision,openingPlan:remainingSale})});
+ assert.equal((saleHtml.match(/sell 2 shares/g)||[]).length,1);assert.doesNotMatch(saleHtml,/sell 3 shares/,'The already recorded sale is never recommended twice');
+ assert.equal(JSON.stringify({sellPlan,saleFill}),saleBefore,'Remaining-sale display leaves original books and actual fill records intact');
+ assert.equal(JSON.stringify(fillState),fillBefore,'The summary cannot rewrite original fill identities or account books');
+ if(process.env.C1_ACTION_SUMMARY_RENDER_DIR){
+  fs.mkdirSync(process.env.C1_ACTION_SUMMARY_RENDER_DIR,{recursive:true});
+  fs.writeFileSync(path.join(process.env.C1_ACTION_SUMMARY_RENDER_DIR,'authorized.html'),renderRaw({view:'portfolio'}));
+  for(const view of ['opportunities','portfolio'])fs.writeFileSync(path.join(process.env.C1_ACTION_SUMMARY_RENDER_DIR,view+'.html'),renderRaw({...mixedProps,view}));
+ }
  assert.equal(JSON.stringify(props),baseline,'Every historical-layout projection preserves checked orders, cash, holdings, costs and evidence');
  console.log('PASS: literal historical Buy tiles and separate Watch table retain checked quantities, current stop/urgency, momentum eligibility, cash limits, Core separation and immutable account facts.');
 
