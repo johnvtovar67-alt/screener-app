@@ -131,8 +131,8 @@ async function main(){
   assert.match(opportunities,/C1 strategy cash: \$3,037\.90/);
   assert.match(opportunities,new RegExp('Brokerage cash: \\$'+balance.toFixed(2).replace('.','\\.')));
   assert.doesNotMatch(opportunities,/<article[^>]*class="[^"]*idea green/,'Cash-blocked stocks cannot have green opportunity cards');
-  assert.doesNotMatch(opportunities,/<h3[^>]*>BBB<\\/h3>/,'Cash-blocked BBB is not an actionable opportunity');
-  assert.match(opportunities,/<td><b[^>]*>BBB<\\/b>/,'The Buy-rated but blocked BBB remains visible in Watch');
+  assert.doesNotMatch(opportunities,/<h3[^>]*>BBB<\/h3>/,'Cash-blocked BBB is not an actionable opportunity');
+  assert.match(opportunities,/<td><b[^>]*>BBB<\/b>/,'The Buy-rated but blocked BBB remains visible in Watch');
   assert.match(opportunities,/Available cash cannot fund this purchase\\./);
   assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<b[^>]*>CCC<\/b>/,'Existing Watch analysis remains visible');
   assert.doesNotMatch(opportunities,/currently ineligible|(?:buy|add) \d+ shares?/i);
