@@ -76,7 +76,7 @@ async function main(){
  assert.equal(decision.positions[0].holdingRank.base.rank,4,'The supplied verified holding rank remains unchanged by presentation');
  assert.equal(decision.positions[0].reason,'Momentum rank #4; original account holding explanation.','The original account explanation remains unchanged');
  assert.match(heldRow,/96\.0\/100/);assert.match(heldRow,/\$100\.00/,'The original score and signal price remain readable');
- assert.match(html,/<td>4<\/td><td><b>DELL<\/b>/);assert.match(html,/<td>5<\/td><td><b>VLO<\/b>/,'Held identity does not consume an independent Watch priority');
+ assert.match(html,/<td>4<\/td><td><b>VLO<\/b>/);assert.match(html,/<td>5<\/td><td><b>ILMN<\/b>/,'Held identity does not consume an independent Watch priority');
  equal([...html.matchAll(/<h3>([^<]+)<\/h3>/g)].map(match=>match[1]),[],'Without checked orders no green opportunities are rendered');
  const watchSymbols=markup=>[...markup.slice(markup.indexOf('aria-label="Watch opportunities"')).matchAll(/<tr><td>[^<]+<\/td><td><b>([^<]+)<\/b>/g)].map(match=>match[1]);
  equal(watchSymbols(html),['MRNA','HPE','MPC','DELL','VLO','ILMN','AAA','BBB','CCC'],'The original Watch table preserves accepted membership and order');
