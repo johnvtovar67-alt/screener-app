@@ -167,8 +167,17 @@ try{
  assert.equal((html.match(/Add 1 share/g)||[]).length,1,'The Add quantity appears once; no second instruction is created');
  assert.match(summaryBase,/data-action="ADD"[\s\S]*?Add 1 share/);
  assert.match(summaryBase,/Holding decision: HOLD/,'An authorized addition does not rewrite the held-position action');
- assert.match(summaryBase,/Update the current broker balance or record completed C1 sale proceeds/,'A cash-blocked purchase retains its existing next step');
+ assert.equal((summaryBase.match(/data-action="WAIT"/g)||[]).length,1,'Mixed candidate restrictions produce one compact WAIT instruction');
+ assert.match(summaryBase,/Some purchases remain blocked/);assert.match(summaryBase,/See Watch for individual restrictions and next steps/);
+ assert.doesNotMatch(summaryBase,/WAIT —|CCC|DDD/,'Individual non-held candidate instructions stay in Watch');
  assert.match(watch,/Next: Update the current broker balance or record completed C1 sale proceeds/,'Watch restores the existing entry-review next step');
+ const commonDecision={...decision,stockScreen:{...decision.stockScreen,candidates:[decision.stockScreen.candidates[0]]}};
+ const commonPlan={...plan,orders:[],entryReviews:[{symbol:'BBB',reason:'brokerage-cash-insufficient'}]};
+ const commonHtml=render({decision:commonDecision,executionDecision:commonDecision,openingPlan:commonPlan,manualRecommendations:buildC1ManualRecommendations({decision:commonDecision,openingPlan:commonPlan})});
+ const commonSummary=summary(commonHtml);
+ assert.equal((commonSummary.match(/data-action="WAIT"/g)||[]).length,1);
+ assert.match(commonSummary,/brokerage cash is insufficient/);assert.match(commonSummary,/Update the current broker balance or record completed C1 sale proceeds/,'A shared restriction keeps its existing specific next step');
+
  const stopRow={...position,symbol:'DELL',action:'Exit candidate',stops:[{price:86}],exits:[{reason:'initial-stop'}],stopTriggerEvidence:{low:85,stop:86,date:decision.sourceSessionDate}};
  const verifyRow={...position,symbol:'UUU',stops:[{price:86}]};
  const weakRow={...position,symbol:'VEEV',action:'Review',momentumEvidence:{status:'available',classification:'Momentum Weakening'}};
@@ -180,7 +189,8 @@ try{
  for(const view of ['opportunities','portfolio']){
   const rendered=render({...mixedProps,view}),actions=summary(rendered);
   const ordered=[...actions.matchAll(/<li data-action="([^"]+)"/g)].map(match=>match[1]);
-  assert.equal(ordered[0],'SELL');assert.equal(ordered[1],'VERIFY');assert.equal(ordered[2],'BUY');
+  assert.equal(ordered[0],'SELL');assert.equal(ordered[1],'VERIFY');assert.equal(ordered[2],'BUY');assert.equal(ordered.filter(action=>action==='WAIT').length,1,'Both tabs retain one WAIT row rather than repeating Watch');
+  assert.doesNotMatch(actions,/WAIT — MPC|WAIT — CCC|WAIT — DDD/);
   assert.match(actions,/DELL: SELL — STOP TRIGGERED/);assert.match(actions,/stop \$86\.00/);
   assert.match(actions,/recorded low \$85\.00/);assert.match(actions,/verify Schwab order\/fill status/);
   assert.equal((rendered.match(/sell 3 shares/g)||[]).length,1,'Only the checked remaining sale quantity is instructed');
@@ -215,7 +225,7 @@ try{
  const conditionalHtml=render({decision:conditionalDecision,executionDecision:conditionalDecision,openingPlan:conditionalPlan,manualRecommendations:buildC1ManualRecommendations({decision:conditionalDecision,openingPlan:conditionalPlan})});
  assert.doesNotMatch(summary(conditionalHtml),/data-action="BUY"|data-action="ADD"|data-action="SELL"/,'Conditional orders are not immediate instructions');
  for(const patch of [{manualRecommendations:{...review,validUntil:now}},{executionDecision:{...decision,revision:2}},{decision:{...decision,current:false}},{decision:{...decision,current:false,accountMismatch:true},openingPlan:null}]){
-  const actions=summary(render({...patch,view:'portfolio'}));assert.match(actions,/WAIT/);assert.doesNotMatch(actions,/Buy \d+ shares|Add \d+ shares/,'Stale or mismatched authority never creates purchases');
+  const actions=summary(render({...patch,view:'portfolio'}));assert.match(actions,/WAIT/);assert.equal((actions.match(/data-action="WAIT"/g)||[]).length,1,'Stale authorization is summarized once');assert.match(actions,/Next:/);assert.doesNotMatch(actions,/Buy \d+ shares|Add \d+ shares/,'Stale or mismatched authority never creates purchases');
  }
  // Consume the real existing fill-reconciliation output, never subtract fills in the view.
  const {reconcileC1ActualAccountFills}=loader.load('lib/c1AccountLedger.js');

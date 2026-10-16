@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "3525de4daa4adff8f7f22bae7ebc51574f3adb8f",
+    "components/C1AccountOpportunities.js": "83b096666b8f7f701c018d05cd63dbc49d8f9742",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
