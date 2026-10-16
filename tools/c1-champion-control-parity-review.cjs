@@ -12,7 +12,7 @@ const {createC1ProspectiveSeeds}=loader.load('lib/c1AccountSeed.js');
 const {portfolioCompositionSignature}=loader.load('lib/portfolioGovernor.js');
 const {planC1ActualAccountOpening}=loader.load('lib/c1AccountExecution.js');
 const {buildC1StockScreenSnapshot,classifyC1StockScreen}=loader.load('lib/c1StockClassification.js');
-function input(prices=[100,100,100]){const f=fixture(prices);let dates=['2026-10-14'];for(let i=0;i<220;i++)dates.unshift(previousMarketSessionDay(dates[0]));let next=new Date('2026-10-14T12:00:00Z');while(dates.length<f.dataset.sessions.length){next.setUTCDate(next.getUTCDate()+1);const d=next.toISOString().slice(0,10);if(isUsMarketSessionDay(d))dates.push(d);}
+function input(prices=[100,100,100],firstDate='2026-10-14'){const f=fixture(prices);let dates=[firstDate];for(let i=0;i<220;i++)dates.unshift(previousMarketSessionDay(dates[0]));let next=new Date(firstDate+'T12:00:00Z');while(dates.length<f.dataset.sessions.length){next.setUTCDate(next.getUTCDate()+1);const d=next.toISOString().slice(0,10);if(isUsMarketSessionDay(d))dates.push(d);}
  for(let i=0;i<f.dataset.sessions.length;i++){const s=f.dataset.sessions[i];s.date=dates[i];s.decisionAt=s.date+'T21:00:00Z';for(const p of s.prices)p.date=s.date;for(const field of ['signals','positionSignals'])for(const x of s[field]||[]){x.entryTiming.asOf=s.date;for(const k of ['marketAvailableAt','fundamentalsAvailableAt','eventRiskAvailableAt'])if(x[k])x[k]=s.decisionAt;}
  s.screenRows=s.signals.map(x=>({...x,expertDecision:{strongBuyPass:true,metrics:{quoteFreshnessPass:true}},eventRisk:{blockNewCapital:false}}));}return f;}
 module.exports={input};

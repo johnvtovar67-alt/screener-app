@@ -6,9 +6,9 @@ Production source: `0a65e20964ae080b8718332e5f6f16daa6def452` (PR #276), confirm
 
 ## What is implemented
 
-- Twelve fixed arms at 12/25/50 bps per side: production-current control; four recent-momentum ablations (entry veto, MACD, deterioration exit, giveback exit); nine-candidate selection with three-position capacity; A/B/C sizing at three- and nine-position capacity. These are research hypotheses, not approved trading rules.
+- A frozen twelve-arm specification and legacy synthetic prototypes, with historical matrix execution disabled: production-current control; four recent-momentum ablations (entry veto, MACD, deterioration exit, giveback exit); nine-candidate selection with three-position capacity; A/B/C sizing at three- and nine-position capacity. These are research hypotheses, not approved trading rules.
 - A network-disabled, isolated module loader and exact-count transformation seams over the pinned source. Changes occur in memory, not in `lib/`, application routes or account storage. Changed/missing source seams fail rather than silently drifting.
-- Independent actual-dollar books with $25,000/$50,000/$25,000 initial capital; no inter-sleeve transfers. Model seed validation is adjusted only for research dollar units and frozen research parameters. The original $750 minimum trade in $100,000 model units becomes $187.50/$375/$187.50 in the three actual-dollar books; it is not silently raised to $750 per small sleeve. Current risk thresholds, ordinary holding rule, stops and rank retention stay fixed independently of capacity. Only the named momentum ablation is removed in each diagnostic arm.
+- The replacement control retains production's normalized$100,000 model seeds and source conversion to independent$25,000/$50,000/$25,000 actual research books, including whole-share rounding. No inter-sleeve transfers or production seed validation changes are made. Legacy challenger prototypes remain unapproved; their dollar-unit implementation is not current-control parity evidence. Current risk thresholds, ordinary holding rules, stops and rank retention remain source-pinned.
 - The existing stock classifier supplies historical-screen eligibility from audited `screenRows`; the source nine-name queue, sector and issuer selection, liquidity, event, price, gap and personal exclusions are retained. Sizing targets use absolute source rank, with equal Buy/Strong Buy treatment. No price-filling, fabricated MACD or fixture substitution.
 - Offline manifest hashing, path containment, causal availability, calendar coverage, adjusted-bar parity, complete dated membership, sector/issuer/event cross-checks, and independent-review requirements. Substantive provenance review is an attestation, not cryptographic proof of historical facts.
 - Append-only, credential-redacted FMP raw acquisition, using inherited proxy/CA behavior. This does not collect all required sources or certify point-in-time history.
@@ -24,13 +24,11 @@ From repository root, with Node 24 and the existing dependencies:
 node tools/c1-research/test.cjs
 node tools/c1-research/run.cjs inspect
 node tools/c1-research/run.cjs validate /absolute/research-data/manifest.json
-node tools/c1-research/run.cjs freeze /absolute/research-data/manifest.json /absolute/work/experiment-lock.json
-node tools/c1-research/run.cjs run /absolute/research-data/manifest.json /absolute/work/experiment-lock.json /absolute/work/new-results.json
 ```
 
 Keep raw data, experiment locks and results outside the source tree and out of Git. The first target interval is 2023-01-04 through 2026-10-15, with inputs from 2021-11-01 for warmup. Incomplete coverage requires a new versioned preregistration before any returns are computed, not outcome-driven date selection. Run each universe separately; do not pool overlapping Nasdaq and S&P observations as independent samples. Universe field is `sp500` or `nasdaq100`; historical Nasdaq-100 is a separate independent dataset, not a claim about the exact prior Nasdaq research universe.
 
-Raw FMP collection example (not executed successfully here):
+Raw FMP collection example (authorized acquisition now works):
 
 ```sh
 python tools/c1-research/acquire.py historical-sp500-constituent /absolute/work/raw-membership
@@ -62,7 +60,7 @@ The validator checks structural consistency and reviewer coverage. It does **not
 
 1. Accounting replay applies factual fills to original books. Saved accounting fixtures are suitable references for this arithmetic, not historical signals.
 2. Exact historical production decision replay requires accepted vintages, actual account state and captured execution/quote/cash receipts. That evidence remains unavailable.
-3. The former direct dollar-unit control is retired after a demonstrated pre-queue screening defect. `control-adapter.cjs` uses unchanged production normalized projection, whole-share conversion, subsequent current-screen intersection, execution cash cap, and actual-fill ledger continuation. This is a research orchestration API, not historical live authority. Its synthetic differential evidence does not approve a full retrospective replay. Full-window October activation and an independently qualified execution profile remain blocking work.
+3. The former direct dollar-unit control is retired after a demonstrated pre-queue screening defect. `control-adapter.cjs` uses unchanged production normalized projection, whole-share conversion, execution cash cap before current-screen intersection, and source fill-ledger continuation. This is a research orchestration API, not historical live authority. Its synthetic differential evidence does not approve a full retrospective replay. Retrospective October activation and all three costs now have independently passing component checks. Historical inputs and an independently qualified deterministic execution profile remain blocking work.
 
 Daily bars cannot reproduce 120-second quote freshness or unrecorded discretionary account actions. Historical `screenRows` require explicit source/reconstruction methodology and substantive review; setting quoteFreshnessPass=true is not evidence. No historical Schwab balance is invented. All arms use the same research cash/fee assumptions; production brokerage-cash rules are untouched.
 
@@ -80,24 +78,40 @@ No live parameters, holdings, cash or roles change. Minimum holding periods are 
 
 The PR changes `vercel.json` **only** to set `git.deploymentEnabled["research/c1-program-20261016"]=false`, preventing automatic previews for this research branch. Existing branch settings, cron schedules and production configuration are retained. No freeze manifest, checker, build hook or CI requirement is weakened. Research tests join the existing canonical CI through tools/c1-research-program-regression.cjs; no additional workflow is added. This branch must not be merged or deployed.
 
-## Sequencing repair and execution hold (technical amendment v2)
+## Current recovery status — technical amendment v3
 
-`preregistration-lock.json` and `research-spec-v1.json` remain unchanged. `technical-amendment-v2.json` records the authorized adapter repair, tests and explicit execution gate before any historical results. Legacy prototype synthetic tests are not parity evidence. `run.cjs run` is disabled, and requesting the legacy C engine fails closed. Challenger parameters A/B/C and the nine-name queue remain unapproved.
+The original specification, dates, preregistration and technical amendment v2 are retained unchanged. V3 repairs the separately reviewed cash-before-screen defect, adds explicit source-only October retrospective activation and12/25/50bps seams, and binds the acquisition/audit tools before historical execution. Source decision, sizing, risk and account policy remains untouched.
 
-Reproduce the source differential suite:
+The independent reviewer found that production caps the full projection before the UI screen intersection. The replacement now retains that full authority as execution evidence and permits only the screened subset as hypothetical fills. A blocked candidate cannot release its reserved budget to another purchase. Full quote/provider/membership authority and a deterministic historical hypothetical fill profile remain outside component approval.
+
+Reproduce the synthetic differential and independent reviews:
 
 ```sh
-node tools/c1-research/control-parity-test.cjs
-node tools/c1-research/control-only.cjs validate /private/path/manifest.json /private/path/execution-profile.json
+node tools/c1-research/control-parity-test.cjs --full-policy-cost
+node tools/c1-research/independent-review/review.cjs
+node tools/c1-research/independent-review/policy-cost-review.cjs
+node tools/c1-research/independent-review/profile-temporal-review.cjs
 ```
 
-Separate control-only command (prepared but BLOCKED):
+Immutable/resumable raw acquisition and offline qualification accounting:
 
 ```sh
+python3 tools/c1-research/acquire-cohort.py PRIVATE_EVIDENCE_ROOT --verify-only
+python3 tools/c1-research/acquire-cohort.py PRIVATE_EVIDENCE_ROOT --phase extension --verify-only
+python3 tools/c1-research/acquire-cohort.py PRIVATE_EVIDENCE_ROOT --phase aliases --verify-only
+python3 tools/c1-research/acquire-reference.py EXPLICIT_PRIVATE_PLAN NEW_PRIVATE_OUTPUT
+python3 tools/c1-research/audit-acquisition.py PRIVATE_EVIDENCE_ROOT
+python3 tools/c1-research/diagnose-bdx.py PRIVATE_EVIDENCE_ROOT
+```
+
+Acquisition is not approval. Current FMP classifications are never substituted for dated historical facts. Received prices, symbol changes, delisting claims and calendars require reference/action/availability corroboration. The audit measures complete universe-session packets rather than downloaded file percentage. See `docs/research/c1-recovery-progress-v3.md` and its machine evidence for completed work, exact source limits and qualification status.
+
+The explicit control-only audit command remains gated:
+
+```sh
+node tools/c1-research/control-only.cjs validate MANIFEST PROFILE
 node tools/c1-research/control-only.cjs freeze MANIFEST PROFILE NEW_LOCK
 node tools/c1-research/control-only.cjs run MANIFEST PROFILE LOCK NEW_OUTPUT
 ```
 
-This command never loads challenger arms and never generates fills from price assumptions. It requires audited, immutable, explicitly hypothetical execution observations, timestamps, screen facts, cash assumptions and fills, plus qualified dataset evidence and a code/data/profile lock. It emits a control decision/accounting audit only. Current-source 12bps is the only implemented audit profile; 25/50bps and full-window October activation require differential evidence before a performance control can run. No execution profile, independent approval or qualified dataset has been manufactured. The frozen historical window therefore remains deliberately blocked.
-
-See `docs/research/c1-control-sequencing-20261016.md` for exact scope, test tolerances and remaining gates.
+The profile must explicitly bind `policyMode: retrospective-current`, one cost12/25/50, hypothetical fills, separate decision-input availability, frozen execution assumptions, clock alignment and independent review. The source ledger accepting a fill is not proof its trigger/price/time follows the frozen assumptions. This command never constructs brokerage evidence or launches challengers; it requires a qualified dataset and an audited deterministic fill profile before proceeding. No such inputs have been invented. Historical execution remains blocked. A/B/C and queue-nine candidates remain unapproved.

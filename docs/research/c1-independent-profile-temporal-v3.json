@@ -1,0 +1,39 @@
+{
+  "author": "independent_control_review agent",
+  "cases": [
+    {
+      "case": "aligned synthetic profile",
+      "status": "PASS"
+    },
+    {
+      "case": "future decision inputs",
+      "status": "PASS rejection"
+    },
+    {
+      "case": "wrong session",
+      "status": "PASS rejection"
+    },
+    {
+      "case": "preopen",
+      "status": "PASS rejection"
+    },
+    {
+      "case": "unclosed session",
+      "status": "PASS rejection"
+    },
+    {
+      "case": "not hypothetical",
+      "status": "PASS rejection"
+    },
+    {
+      "case": "unapproved cost",
+      "status": "PASS rejection"
+    },
+    {
+      "case": "implicit policy",
+      "status": "PASS rejection"
+    }
+  ],
+  "historicalExecutions": 0,
+  "fullDatasetApproval": false
+}

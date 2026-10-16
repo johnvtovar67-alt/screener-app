@@ -1,0 +1,128 @@
+{
+  "schema": "c1-acquisition-audit-v3",
+  "status": "BLOCKED_FOR_HISTORICAL_CONTROL",
+  "requiredQualification": {
+    "unit": "universe-decision-session packet",
+    "universes": [
+      "sp500",
+      "nasdaq100"
+    ],
+    "start": "2023-01-04",
+    "end": "2026-10-15",
+    "sourceExpectedSessionsPerUniverse": 949,
+    "requiredPackets": 1898,
+    "allStandardQualifiedPackets": 0,
+    "allStandardQualifiedPercent": 0.0,
+    "securitySessionPercent": null,
+    "securitySessionPercentReason": "Historical membership/security-action denominator is not certified; no pseudo-percentage based on provisional ticker lists.",
+    "whyZero": [
+      "No complete dated historical sector/action continuity proof covers either universe over the frozen interval.",
+      "Complete publication-vintage membership, issuer/corporate-action/event coverage and independent source corroboration remain unresolved."
+    ],
+    "notDownloadCompletionPercent": true
+  },
+  "newVerifiedResponses": 2485,
+  "newResponseBytes": 653069285,
+  "responseCountsByTranche": {
+    "remaining-cohort-v1": 1248,
+    "full-window-and-membership-candidates-v1": 633,
+    "metadata-20261016-v1": 12,
+    "event-calendars-20261016-v1": 18,
+    "event-partitions-v1": 240,
+    "transitions-20261016-v1": 43,
+    "delist-continuation-v1": 110,
+    "targeted-identity-v1": 8,
+    "next-tranche-20261016": 35,
+    "alias-evidence-20261016": 8,
+    "symbol-change-limit-review-v1": 1,
+    "transition-price-candidates-v1": 129
+  },
+  "receiptRoots": {
+    "remaining-cohort-v1": {
+      "receipts": 1248,
+      "rawBytes": 287461113,
+      "receiptIndexSha256": "961195de4b53350ef4ef393a9d14e0a5f792d578597f1bf1c6861f780873630a"
+    },
+    "full-window-and-membership-candidates-v1": {
+      "receipts": 633,
+      "rawBytes": 128892591,
+      "receiptIndexSha256": "2390cd054493d78dc3fb2a6fdbca0124acb7563e2ecd76cd9d99f01fb53ac9e0"
+    },
+    "metadata-20261016-v1": {
+      "receipts": 12,
+      "rawBytes": 976075,
+      "receiptIndexSha256": "4f50a606e8c4d3bc299123fb135ac31aded00dbf417c180df94604c6c82bf0d7"
+    },
+    "event-calendars-20261016-v1": {
+      "receipts": 18,
+      "rawBytes": 11945198,
+      "receiptIndexSha256": "e905e44023ba1fca69f6dd9c35e288c1fc81023769933213dc9d38f88e70087b"
+    },
+    "event-partitions-v1": {
+      "receipts": 240,
+      "rawBytes": 205326228,
+      "receiptIndexSha256": "7271f870bbfefeddfe0cff3ca12d28a3aa94aa92c413449a34783a45c58674f0"
+    },
+    "transitions-20261016-v1": {
+      "receipts": 43,
+      "rawBytes": 1100862,
+      "receiptIndexSha256": "5ad63dea73e767d4a126267996973416f98a8d0dff20a62aae7633e833d91b7e"
+    },
+    "delist-continuation-v1": {
+      "receipts": 110,
+      "rawBytes": 1844614,
+      "receiptIndexSha256": "917aacad2b47b4c7e01c46a2d13cefbdb5d067e9488f84e666662e2bf41dcfab"
+    },
+    "targeted-identity-v1": {
+      "receipts": 8,
+      "rawBytes": 40479,
+      "receiptIndexSha256": "e6886c7860b8ca12021dedb3bb9ef2659d2d3d6e87722fbb5cf92817daf99a48"
+    },
+    "next-tranche-20261016": {
+      "receipts": 35,
+      "rawBytes": 4694331,
+      "receiptIndexSha256": "03665783a5d3facc1d479b04d7ea3b0b566d742faffb4670e13b20f7bd1ef5b6"
+    },
+    "alias-evidence-20261016": {
+      "receipts": 8,
+      "rawBytes": 1422798,
+      "receiptIndexSha256": "95576db83dd18e30f9d79ef92de8276189deb4163567aaea9d2ff463fd0b8d2b"
+    },
+    "symbol-change-limit-review-v1": {
+      "receipts": 1,
+      "rawBytes": 729821,
+      "receiptIndexSha256": "561f2b98749bae6ff92f1f22974f21037f0272e0255f9b812eb78ddb5adff5b8"
+    },
+    "transition-price-candidates-v1": {
+      "receipts": 129,
+      "rawBytes": 8635175,
+      "receiptIndexSha256": "dc4718937813bb845619b9c4c90efd320fa0ae31f92cf858e27eff34bdc5c56b"
+    }
+  },
+  "hashFailures": 0,
+  "requestFailures": [],
+  "newPriceSeries": 2043,
+  "newPriceSymbols": 681,
+  "completeSourceCalendarSeries": 1713,
+  "seriesWithLeadingGaps": 126,
+  "seriesWithTrailingGaps": 249,
+  "historicalPerformanceExecutions": 0,
+  "sourceCalendarIsNotIndependentExchangeCertification": true,
+  "rawAuditFile": "/workspace/work/c1-control-validation/audit-v3-22c0631b833cecd4b8d0dbc001139883bb9e6aa809ace79c7f07beb5839bd08b.json",
+  "rawAuditSha256": "22c0631b833cecd4b8d0dbc001139883bb9e6aa809ace79c7f07beb5839bd08b",
+  "newInThisOwnerInstruction": {
+    "responses": 2442,
+    "bytes": 646952156,
+    "priceRequests": 2010,
+    "correctedRemainingNames": 416,
+    "remainingNamePriceResponses": 1248,
+    "otherFullWindowOrCandidatePriceResponses": 762
+  },
+  "priorTurnResponsesIncludedInCumulativeAudit": 43,
+  "nonemptyPriceSeries": 2007,
+  "nonemptyVendorSymbols": 669,
+  "invalidNumericOrOHLCSeries": 0,
+  "duplicateDateSeries": 0,
+  "nonMarketDateSeries": 0,
+  "qualificationApproval": false
+}

@@ -1,0 +1,60 @@
+{
+  "author": "independent_control_review agent",
+  "scope": "Synthetic current-policy source seam and component accounting, not live operational authority or historical data approval",
+  "results": [
+    {
+      "costBps": 12,
+      "status": "PASS",
+      "sourceDate": "2025-11-18",
+      "sessions": 5,
+      "sales": 3,
+      "seams": [
+        {
+          "file": "lib/c1RecentMomentumLivePolicy.js",
+          "kind": "explicit-current-policy-retrospective-activation",
+          "historicalDeploymentClaim": false
+        }
+      ]
+    },
+    {
+      "costBps": 25,
+      "status": "PASS",
+      "sourceDate": "2025-11-18",
+      "sessions": 5,
+      "sales": 3,
+      "seams": [
+        {
+          "file": "lib/c1FrozenOptions.js",
+          "kind": "common-research-cost",
+          "costBps": 25
+        },
+        {
+          "file": "lib/c1RecentMomentumLivePolicy.js",
+          "kind": "explicit-current-policy-retrospective-activation",
+          "historicalDeploymentClaim": false
+        }
+      ]
+    },
+    {
+      "costBps": 50,
+      "status": "PASS",
+      "sourceDate": "2025-11-18",
+      "sessions": 5,
+      "sales": 3,
+      "seams": [
+        {
+          "file": "lib/c1FrozenOptions.js",
+          "kind": "common-research-cost",
+          "costBps": 50
+        },
+        {
+          "file": "lib/c1RecentMomentumLivePolicy.js",
+          "kind": "explicit-current-policy-retrospective-activation",
+          "historicalDeploymentClaim": false
+        }
+      ]
+    }
+  ],
+  "historicalExecutions": 0,
+  "numericTolerance": "exact deep equality; no decimal rounding"
+}

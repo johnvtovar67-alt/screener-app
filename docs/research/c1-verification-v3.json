@@ -1,0 +1,53 @@
+{
+  "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "releaseFreeze": "PASS",
+  "canonicalIntegrity": "PASS",
+  "historicalControlsExecuted": 0,
+  "historicalChallengersExecuted": 0,
+  "researchOnlySyntheticAssertions": {
+    "legacyPrototype": 820,
+    "sourceDifferential": 5324,
+    "sourceDifferentialScenarios": 84,
+    "independentCostCases": 3,
+    "independentProfileChecks": 8,
+    "independentCashScreenCounterexample": "PASS repaired"
+  },
+  "cooldownExpiry": "All three sleeve cooldown expiries are explicitly asserted under each of six mode/cost profiles; no forced purchases required.",
+  "researchRegressionLogSha256": "b388284cfb19e3ddb115307e7c68956fe3e7861a8cef14ad9c0fe387168bd4fc",
+  "pythonSyntaxChecks": "PASS for four acquisition/audit/diagnosis tools",
+  "networkFreeResumption": {
+    "remainingResponses": 1248,
+    "extensionResponses": 633,
+    "additionalAliasResponses": 129,
+    "referenceResponses": 12,
+    "allReceiptHashesVerified": true
+  },
+  "dataQualification": {
+    "unit": "universe-decision-session packet",
+    "universes": [
+      "sp500",
+      "nasdaq100"
+    ],
+    "start": "2023-01-04",
+    "end": "2026-10-15",
+    "sourceExpectedSessionsPerUniverse": 949,
+    "requiredPackets": 1898,
+    "allStandardQualifiedPackets": 0,
+    "allStandardQualifiedPercent": 0.0,
+    "securitySessionPercent": null,
+    "securitySessionPercentReason": "Historical membership/security-action denominator is not certified; no pseudo-percentage based on provisional ticker lists.",
+    "whyZero": [
+      "No complete dated historical sector/action continuity proof covers either universe over the frozen interval.",
+      "Complete publication-vintage membership, issuer/corporate-action/event coverage and independent source corroboration remain unresolved."
+    ],
+    "notDownloadCompletionPercent": true
+  },
+  "independentScope": "Source-policy and component-accounting only; not dataset, live operational quote authority or hypothetical execution-profile approval",
+  "negativeControlTemplate": "PASS rejects with exit2 and executionReady=false",
+  "originalResearchSpecUnchanged": true,
+  "originalPreregistrationUnchanged": true,
+  "priorTechnicalAmendmentUnchanged": true,
+  "sourceCalendarIsNotIndependentExchangeCertification": true,
+  "fullNextBuildRerun": false,
+  "previousDraftHeadCI": "777fe7c completed successfully; next commit CI separate"
+}

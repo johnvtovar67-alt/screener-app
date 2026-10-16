@@ -4,7 +4,7 @@ const {validateEvidence,sha}=require('./evidence.cjs');const {verifySources,crea
 const root=path.resolve(__dirname,'../..'),spec=require('./research-spec-v1.json');
 function codeHashes(){return Object.fromEntries(fs.readdirSync(__dirname).filter(x=>/\.(cjs|json|py)$/.test(x)).sort().map(x=>[x,sha(fs.readFileSync(path.join(__dirname,x)))]));}
 function saveNew(file,value){fs.writeFileSync(file,JSON.stringify(value,null,2)+'\n',{flag:'wx'});}
-function verifyPreregistration(){const lock=require('./preregistration-lock.json'),amendment=require('./technical-amendment-v2.json');for(const [file,expected] of Object.entries(lock.files)){const actual=sha(fs.readFileSync(path.join(root,file)));if(actual!==expected&&amendment.files[file]!==actual)throw Error('Preregistration changed: '+file);}for(const [file,expected] of Object.entries(amendment.files))if(sha(fs.readFileSync(path.join(root,file)))!==expected)throw Error('Technical amendment changed: '+file);}
+function verifyPreregistration(){const lock=require('./preregistration-lock.json'),amendment=require('./technical-amendment-v3.json');for(const [file,expected] of Object.entries(lock.files)){const actual=sha(fs.readFileSync(path.join(root,file)));if(actual!==expected&&amendment.files[file]!==actual)throw Error('Preregistration changed: '+file);}for(const [file,expected] of Object.entries(amendment.files))if(sha(fs.readFileSync(path.join(root,file)))!==expected)throw Error('Technical amendment changed: '+file);}
 function main(args){
  if(args[0]==='run')throw Error('Historical matrix execution disabled: legacy adapter parity defect. Use control-only.cjs; challengers require separate authorization.');
  verifyPreregistration();

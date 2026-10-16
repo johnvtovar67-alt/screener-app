@@ -1,0 +1,36 @@
+{"status":"PASS","assertions":820,"scope":"Synthetic mechanics, source pinning and evidence integrity only; no historical performance evaluated"}
+{"controlAdapter":"PASS","assertions":5324,"scope":"Synthetic source/adapter orchestration only; not historical qualification or independent parity approval"}
+{
+  "reviewer": "independent_control_review agent; independent source inspection",
+  "case": "event-blocked-first-candidate-with-10000-broker-cash",
+  "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "expectedProductionCashThenVisibleScreen": [
+    {
+      "id": "base:2026-10-15:1",
+      "symbol": "BBB",
+      "shares": 17,
+      "price": 102.33365320000001
+    }
+  ],
+  "actualAdapter": [
+    {
+      "id": "base:2026-10-15:1",
+      "symbol": "BBB",
+      "shares": 17,
+      "price": 102.33365320000001
+    }
+  ],
+  "exact": true,
+  "historicalExecutions": 0
+}
+[{"costBps":12,"status":"PASS","sourceDate":"2025-11-18","sessions":5,"sales":3,"seams":[{"file":"lib/c1RecentMomentumLivePolicy.js","kind":"explicit-current-policy-retrospective-activation","historicalDeploymentClaim":false}]},{"costBps":25,"status":"PASS","sourceDate":"2025-11-18","sessions":5,"sales":3,"seams":[{"file":"lib/c1FrozenOptions.js","kind":"common-research-cost","costBps":25},{"file":"lib/c1RecentMomentumLivePolicy.js","kind":"explicit-current-policy-retrospective-activation","historicalDeploymentClaim":false}]},{"costBps":50,"status":"PASS","sourceDate":"2025-11-18","sessions":5,"sales":3,"seams":[{"file":"lib/c1FrozenOptions.js","kind":"common-research-cost","costBps":50},{"file":"lib/c1RecentMomentumLivePolicy.js","kind":"explicit-current-policy-retrospective-activation","historicalDeploymentClaim":false}]}]
+[
+  { case: 'aligned synthetic profile', status: 'PASS' },
+  { case: 'future decision inputs', status: 'PASS rejection' },
+  { case: 'wrong session', status: 'PASS rejection' },
+  { case: 'preopen', status: 'PASS rejection' },
+  { case: 'unclosed session', status: 'PASS rejection' },
+  { case: 'not hypothetical', status: 'PASS rejection' },
+  { case: 'unapproved cost', status: 'PASS rejection' },
+  { case: 'implicit policy', status: 'PASS rejection' }
+]
