@@ -12,7 +12,8 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "fix/c1-engineering-repairs-20261012": false
+      "fix/c1-engineering-repairs-20261012": false,
+      "research/c1-program-20261016": false
     }
   }
 }

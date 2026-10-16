@@ -1,0 +1,274 @@
+{
+  "acceptance": {
+    "before_results": [
+      "Raw-source provenance and file integrity checks pass",
+      "Dated sector/issuer, membership, events and delisting audit independently signed off",
+      "No unexplained signal/decision accounting discrepancies",
+      "Champion current-policy semantics independently reviewed; explicit retrospective activation across full interval",
+      "No-trigger and nominated-ablation isolation parity",
+      "Position-capacity changes do not change exit thresholds",
+      "Same dataset/date/cost manifest for every arm",
+      "Paired metrics and costs cross-checked independently",
+      "Normal production repository remains clean"
+    ],
+    "research_success_proposal": {
+      "max_drawdown_delta_pp": "no worse than Champion by more than2",
+      "net_cagr_delta_each_universe": ">0 at 12bps and >=0 at25bps",
+      "opportunity_days_reduction": "at least20 percent among capacity-policy-blocked eligible opportunities where baseline nonzero",
+      "superiority_claim": "Holm-adjusted primary test passes; otherwise inconclusive. Returns, drawdown and capital efficiency reported separately; no composite optimization.",
+      "turnover_ratio": "<=1.25 Champion"
+    }
+  },
+  "arms": [
+    {
+      "description": "Exact current production policy semantics, applied retrospectively throughout research interval; no historical deployment claim",
+      "entry_selection_cap": 3,
+      "family": "control",
+      "id": "C",
+      "momentum": "production",
+      "position_capacity": 3,
+      "sizing": "production"
+    },
+    {
+      "description": "Remove only October fresh-capital momentum veto; retain every other eligibility check and all exits",
+      "family": "momentum-ablation",
+      "id": "M-entry-off"
+    },
+    {
+      "description": "Omit MACD confirmation only in October momentum branches. Entry: not(R3<0 and R5<0) or R1>0. Deterioration starts on all R1/R3/R5 negative, continues on R3/R5 negative. Giveback requires negative R1 and existing peak/confirmation conditions. Other rules unchanged.",
+      "family": "momentum-ablation",
+      "id": "M-macd-off"
+    },
+    {
+      "description": "Disable only October ordinary/accelerated deterioration exits; retain peak arming, giveback exit, rank exits, stops and breakers",
+      "family": "momentum-ablation",
+      "id": "M-deterioration-off"
+    },
+    {
+      "description": "Disable only October half-earned-gain giveback exit; retain entry veto, ordinary/accelerated deterioration and all prior exits",
+      "family": "momentum-ablation",
+      "id": "M-giveback-off"
+    },
+    {
+      "description": "Remove only three-selected-name screen suppression; nine source ranks, unchanged sector/issuer selection, unchanged sleeve capacity",
+      "entry_selection_cap": 9,
+      "family": "selection",
+      "id": "Q9-cap3",
+      "momentum": "production",
+      "position_capacity": 3,
+      "sizing": "production"
+    },
+    {
+      "entry_selection_cap": 3,
+      "family": "sizing-selection",
+      "id": "S-A-cap3",
+      "momentum": "production",
+      "position_capacity": 3,
+      "sizing": {
+        "formula": "p(r)=low+(high-low)*(9-r)/8; absolute original source rank r=1..9; same for Buy and Strong Buy",
+        "high": 0.2,
+        "low": 0.05
+      }
+    },
+    {
+      "entry_selection_cap": 9,
+      "family": "sizing-selection",
+      "id": "S-A-cap9",
+      "momentum": "production",
+      "position_capacity": 9,
+      "sizing": {
+        "formula": "p(r)=low+(high-low)*(9-r)/8; absolute original source rank r=1..9; same for Buy and Strong Buy",
+        "high": 0.2,
+        "low": 0.05
+      }
+    },
+    {
+      "entry_selection_cap": 3,
+      "family": "sizing-selection",
+      "id": "S-B-cap3",
+      "momentum": "production",
+      "position_capacity": 3,
+      "sizing": {
+        "formula": "p(r)=low+(high-low)*(9-r)/8; absolute original source rank r=1..9; same for Buy and Strong Buy",
+        "high": 0.25,
+        "low": 0.075
+      }
+    },
+    {
+      "entry_selection_cap": 9,
+      "family": "sizing-selection",
+      "id": "S-B-cap9",
+      "momentum": "production",
+      "position_capacity": 9,
+      "sizing": {
+        "formula": "p(r)=low+(high-low)*(9-r)/8; absolute original source rank r=1..9; same for Buy and Strong Buy",
+        "high": 0.25,
+        "low": 0.075
+      }
+    },
+    {
+      "entry_selection_cap": 3,
+      "family": "sizing-selection",
+      "id": "S-C-cap3",
+      "momentum": "production",
+      "position_capacity": 3,
+      "sizing": {
+        "formula": "p(r)=low+(high-low)*(9-r)/8; absolute original source rank r=1..9; same for Buy and Strong Buy",
+        "high": 0.3,
+        "low": 0.1
+      }
+    },
+    {
+      "entry_selection_cap": 9,
+      "family": "sizing-selection",
+      "id": "S-C-cap9",
+      "momentum": "production",
+      "position_capacity": 9,
+      "sizing": {
+        "formula": "p(r)=low+(high-low)*(9-r)/8; absolute original source rank r=1..9; same for Buy and Strong Buy",
+        "high": 0.3,
+        "low": 0.1
+      }
+    }
+  ],
+  "construction": {
+    "adds": "Only existing authorized partial completion paths; no new automatic top-up or resize sale.",
+    "capital_flows": "none",
+    "critical_dependency": "Current engine clamps retained rank buffer to target count. Isolated future research adapter must separate capacity from retention; never widen exits when capacity rises.",
+    "equity": "C1 trading equity equals sum of independent sleeve marked securities plus cash. Excludes MSTR and all unadmitted holdings including existing Core MRNA.",
+    "funding": "Actual remaining research sleeve cash, less fees and reserved purchases; aggregate research cash ceiling. No historical Schwab cash is invented.",
+    "independent_exit_rank": 6,
+    "initial_capital": 100000,
+    "new_entry_floor": "Require lower-bound allocation, allowing less than one share of rounding deficit, and preserve the $750 normalized-model minimum trade: $187.50/$375/$187.50 for initial $25k/$50k/$25k actual-dollar books. Otherwise skip.",
+    "ordering": "Existing exits first under production precedence, then authorized partial completions, then new names by source rank, symbol, base/cooldown15/sector40. No hypothetical sale funding before simulated execution.",
+    "queue": "Nine original source ranks; do not compress ranks or backfill beyond nine after exclusions.",
+    "rank_7_9": "Eligible entry queue does not grant retention beyond rank-six threshold after existing minimum hold. Measure resulting churn.",
+    "restrictions": "Preserve one selected name per sector/issuer in screen; sleeve two-name sector limit, 50/50/40 percent sector caps, issuer ceiling, SCHW/MSTR restrictions, liquidity, price, events, gap, cooldown, timing and risk checks. Unknown evidence never passes.",
+    "rounding": "Floor whole actual shares per sleeve; consolidate broker presentation only after ownership allocation, never transfer historical sleeve interests.",
+    "sizing_dollars": "p(r)*E_s at decision close; aggregate issuer exposure cannot exceed high*sum(E_s); target dollars fixed into next open",
+    "sleeve_capital": {
+      "base": 25000,
+      "cooldown15": 50000,
+      "sector40": 25000
+    },
+    "weights": "initial only; no rebalance or inter-sleeve transfers"
+  },
+  "created_date": "2026-10-16",
+  "data": {
+    "date_selection": "Use exact target interval only when coverage passes; otherwise freeze new coverage-derived dates before any outcome calculation. Never select dates by returns.",
+    "fmp_candidate_endpoints": [
+      "historical-sp500-constituent",
+      "historical-nasdaq-constituent",
+      "historical-price-eod/dividend-adjusted"
+    ],
+    "label": "Retrospective independently reconstructed research, not recovered production history",
+    "macd": "Independent research may causally recompute through pinned entryTiming algorithm and exact lookback/initialization; label reconstructed. Exact production replay requires accepted canonical timing.",
+    "membership": "Stable security IDs, dated effective changes, historical additions/removals and delistings; removal retains valuation/exit evidence for holdings.",
+    "missing": "Missing provenance blocks certification; missing sessions cannot be filled, carried or replaced with accounting fixtures. IPO history follows exact current eligibility. Unavailable event evidence is not event-clear.",
+    "primary_source_track": "independent point-in-time dataset; recovered originals optional separate track",
+    "raw_capture": "Read-only acquisition into research workspace; raw bytes immutable with URL excluding credentials, retrievedAt UTC, entitlement, license, request parameters, byte count, SHA256, provider methodology and publication/effective timestamps.",
+    "required_artifact_roles": [
+      "calendar",
+      "raw_prices",
+      "membership",
+      "sector_history",
+      "issuer_history",
+      "corporate_actions",
+      "delisting_outcomes",
+      "event_history",
+      "normalized_sessions",
+      "independent_verification"
+    ],
+    "revision_policy": "Never overwrite raw inputs. Corrections create new version and force re-freeze before results.",
+    "source_limit": "FMP membership history and adjusted bars alone do not establish dated sectors, event history, delisting returns or historical data vintages. A second entitled source or contemporaneous official records is required.",
+    "target_end": "2026-10-15",
+    "target_start": "2023-01-04",
+    "universes": [
+      "historical S&P 500",
+      "historical Nasdaq-100 separately if complete; never substitute Nasdaq Composite without new preregistration"
+    ],
+    "verification": "Two independent origins for membership changes, corporate-action/delisting outcomes and classification exceptions; same-vendor endpoints are not independent. Causal availability of inputs must be independently reviewed.",
+    "warmup_start": "2021-11-01"
+  },
+  "execution": {
+    "account_facts": "All production historical fills and cash remain unchanged; research fills exist only in isolated hypothetical ledgers",
+    "cash_return": 0,
+    "commissions_per_order": 0,
+    "cost_bps_per_side": [
+      12,
+      25,
+      50
+    ],
+    "decision_time": "After completed regular-session close using only then-available inputs",
+    "fees": "No actual account fills substituted in retrospective simulations; identical modeled costs across arms",
+    "live_limit": "Completed-session research cannot reproduce 120-second quote freshness or live account/manual authority without captured receipts",
+    "taxes": "excluded and explicitly disclosed",
+    "trade_time": "Next regular-session open; retain existing stop/breaker precedence and gap-through-stop treatment",
+    "valuation": "Same adjusted price basis for signals and simulator OHLC/positions; explicit corporate-action reconciliation. No double-counted dividends. Marks at each close; no forced terminal liquidation; report common estimated liquidation-cost sensitivity separately."
+  },
+  "execution_status": {
+    "comparison_runs": 0,
+    "dataset": "NOT ESTABLISHED: shared proxy transport unavailable for independent FMP source as well as Blob",
+    "preregistration_refinements": "Before historical results: corrected normalized minimum-trade dollar conversion and implemented reporting/validation metadata. No empirical parameter optimization.",
+    "research_runner": "Implemented isolated runner; no historical dataset qualified and independent adapter parity approval remains required.",
+    "spec_change_rule": "Any material change creates v2 with reason and new hash before results; never overwrite v1.",
+    "status": "Final preregistration before any historical evaluation; mechanics-only tests excluded from investment evidence."
+  },
+  "id": "c1-retrospective-research-v1",
+  "production_commit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "research_questions": [
+    "Incremental effects of recent returns, MACD confirmation, deterioration exits and profit giveback",
+    "Rank-based sizing with independently accounted sleeves",
+    "Nine-name entry consideration subject to unchanged restrictions",
+    "Cash utilization, costs, turnover, opportunity loss and holding-age effects"
+  ],
+  "risk_and_holding": {
+    "deployment": "Momentum-removal arms are diagnostic only, not deployable trading proposals",
+    "holding_period_analysis": "Descriptive attribution by 0-4,5-29,30-59,60+ completed sessions. No new minimum-hold variants; count risk exits before day 30 and queue/rank-blocked opportunities without inventing counterfactual gains.",
+    "unchanged": "14 percent initial stops, 12 percent sleeve breaker, 10/15-session cooldowns, rank thresholds 6/9, issuer/sector limits, ordinary 30-session holding rule, 252-session time exit, universe/delisting handling, early/profit-rank confirmations. October branches differ only in named diagnostic ablations."
+  },
+  "scope": {
+    "account_migration": false,
+    "broker_execution": false,
+    "fixtures_as_historical_inputs": false,
+    "new_research_only": true,
+    "parameter_optimization": false,
+    "prior_completed_experiments_rerun": false,
+    "production_writes": false
+  },
+  "source_manifest_sha256": "f529e2cead4d01e18af766258127c851dabbe95386bc4e2a8c239cac5a186aca",
+  "statistics": {
+    "benchmark": [
+      "SPY",
+      "QQQ total-return on same dates"
+    ],
+    "cagr": "(E_end/E_start)^(365.25/calendar_days)-1",
+    "daily_return": "E_t/E_(t-1)-1 with no external flows",
+    "drawdown": "min(E_t/running_max(E)-1)",
+    "holdout": "All reused historical data labeled exploratory; no sealed holdout or independent-universe claim from overlapping dates",
+    "metrics": [
+      "CAGR",
+      "total return",
+      "annualized Sharpe",
+      "maximum drawdown",
+      "time under water",
+      "turnover",
+      "transaction count",
+      "cost drag",
+      "mean median and percentile cash weight",
+      "funded and blocked opportunity-days",
+      "incremental and displaced portfolio returns",
+      "missed recovery after exits",
+      "holding-age attribution",
+      "issuer/sector and top-profit concentration"
+    ],
+    "multiplicity": "11 non-control comparisons; Holm family-wise alpha .05 on primary net daily-return differential tests at 12 bps. Costs 25/50 bps fixed stress reports, no selective cost-based winner. Sharpe and CAGR CIs descriptive.",
+    "opportunity_cost": "Pairwise actual full-path equity differences and blocked candidate counts; descriptive 5/20-session forward candidate returns are labeled diagnostics, never added to portfolio P&L or used for selection",
+    "promotion": "No automatic promotion; report all arms including negative and inconclusive results.",
+    "sharpe": "sqrt(252)*mean(daily returns)/sample std; zero risk-free rate explicitly, undefined if zero variance",
+    "subperiods": "Fixed calendar-year and predefined drawdown/volatility regimes using lagged benchmark information; no best-window selection",
+    "turnover": "annualized sum(abs(executed notional))/mean equity; report two-sided convention",
+    "uncertainty": "Paired stationary time-block bootstrap, expected block length 20 sessions, 10000 replicates, seed 20261016. Same sampled dates across all arms and costs. Preserve per-arm return vectors; dependence and path-dependent-strategy limitations disclosed. Also report descriptive paired CAGR, Sharpe and drawdown difference intervals."
+  },
+  "status": "FROZEN_BEFORE_RESULTS; no performance runs executed"
+}
