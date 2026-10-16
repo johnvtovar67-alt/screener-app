@@ -12,7 +12,7 @@ for(const cost of [12,25,50])for(const arm of spec.arms){
  ok(run.curve.length===14&&run.trades.length>0,arm.id+' executes checked queues at '+cost);
  ok(run.curve.every(x=>x.cash>=0),arm.id+' nonnegative independent cash');
  for(const [id,r] of Object.entries(run.sleeves)){eq(r.config.rankedExitBuffer,6,arm.id+' fixed rank threshold');eq(r.config.rankedMinimumHoldSessions,30,'Holding rule preserved');eq(r.config.minimumTrade,id==='cooldown15'?375:187.5,'Normalized minimum-trade economics preserved');eq(r.config.minimumInitialStopPct,14,'Initial stop preserved');eq(r.config.portfolioDrawdownStopPct,12,'Breaker preserved');ok(r.trades.every(t=>Number.isSafeInteger(t.shares)),'Whole actual shares');}
- if(arm.id==='C')controlByCost.set(cost,run);
+ if(arm.id==='C'){controlByCost.set(cost,run);ok(run.screenDecisions.some(x=>x.screenCapacitySuppressed),'Shadow screen identifies capacity-suppressed screen-eligible candidates');ok(run.screenDecisions.filter(x=>x.screenCapacitySuppressed).every(x=>x.entryEvidence.sector!=='Sector 0'&&x.entryEvidence.sector!=='Sector 1'&&x.entryEvidence.sector!=='Sector 2'),'Sector duplicates are not counted as missed screen opportunities');}
  if(arm.family==='momentum-ablation'){eq(run.curve,controlByCost.get(cost).curve,'No-trigger ablation equity parity');eq(run.trades,controlByCost.get(cost).trades,'No-trigger ablation fill parity');}
  if(arm.id==='S-A-cap9')ok(Object.values(run.sleeves).some(r=>r.curve.some(x=>x.positions>3)),'Nine-capacity adapter permits more than three without combining books');
  const m=metrics(run);ok(Number.isFinite(m.cagr)&&m.transactionCount===run.trades.length,'Metric extraction');

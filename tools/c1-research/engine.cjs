@@ -49,12 +49,13 @@ function createEngine(root,arm,cost=12){
  const {simulatePointInTimePortfolio}=loader.load('lib/c1RecentMomentumChallengerSimulator.js');
  function run(dataset,startDate,endDate,cost){
   const snapshots=new Map(),allowed=new Map(),screenDecisions=[];
+  const shadowClassify=cap===3?createEngine(root,{...arm,entry_selection_cap:9},cost).loader.load('lib/c1StockClassification.js').classifyC1StockScreen:classifyC1StockScreen;
   for(let i=0;i<dataset.sessions.length;i++){
    const s=dataset.sessions[i];if(s.date<startDate||s.date>endDate)continue;
    let snap;try{snap=buildC1StockScreenSnapshot(s,new Date(s.decisionAt),dataset.sessions.slice(0,i+1));}catch(e){if(!/insufficient qualified/.test(e.message))throw e;snap={sourceSessionDate:s.date,candidates:[]};}
    snapshots.set(s.date,snap);
    // No invented quote/event facts: required screenRows arrive in audited inputs.
-   const classifications=classifyC1StockScreen({snapshot:snap,rows:s.screenRows,current:true});screenDecisions.push(...classifications.map(row=>({date:s.date,...row})));allowed.set(s.date,new Set(classifications.filter(x=>['Buy','Strong Buy'].includes(x.rating)).map(x=>x.symbol)));
+   const classifications=classifyC1StockScreen({snapshot:snap,rows:s.screenRows,current:true});const shadowAllowed=new Set(shadowClassify({snapshot:snap,rows:s.screenRows,current:true}).filter(row=>['Buy','Strong Buy'].includes(row.rating)).map(row=>row.symbol));screenDecisions.push(...classifications.map(row=>({date:s.date,...row,screenCapacitySuppressed:!['Buy','Strong Buy'].includes(row.rating)&&shadowAllowed.has(row.symbol)})));allowed.set(s.date,new Set(classifications.filter(x=>['Buy','Strong Buy'].includes(x.rating)).map(x=>x.symbol)));
   }
   const runs={};
   for(const id of ['base','cooldown15','sector40']){

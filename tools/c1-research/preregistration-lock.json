@@ -1,18 +1,18 @@
 {
   "files": {
     "tools/c1-research-program-regression.cjs": "cc966e10723c525725183b4dfe3103d570f948d283738340ae681abec5e7cff5",
-    "tools/c1-research/README.md": "de575a6d193543b83b1d80d1760fe7ee33fe89f0046a1ff2b1107a4fba32ab49",
+    "tools/c1-research/README.md": "073dcf8968d3313cf120405e0a1e632d7a4091f86a6416de578aa8477842d58e",
     "tools/c1-research/acquire.py": "c94bf20d56ddc65f7090532e576ac9f41e445e53e9afb88ce5654dee6e6d5cec",
     "tools/c1-research/champion-source-manifest.json": "f529e2cead4d01e18af766258127c851dabbe95386bc4e2a8c239cac5a186aca",
-    "tools/c1-research/engine.cjs": "2bae4b8c65a5e6d84e06e6a2398510021466b47690b3452d73068e004e629054",
+    "tools/c1-research/engine.cjs": "e8e997a7e21612117aa1bb29d56b032fc194bb9a27dc41e3870c900d1412beef",
     "tools/c1-research/evidence-manifest.template.json": "6f5b4b344b71e783b375a7c01cf454d9328be60279159640de4548d14862191d",
     "tools/c1-research/evidence.cjs": "420948dc1f93c66fcd13f5c67057b6145a1f5ce20cb402ad0a1dbaf6e8c96d40",
-    "tools/c1-research/metrics.cjs": "fa983677c29a4b605afb748fc514af19e7319b2a7ba11a7bed34eab25df154ac",
+    "tools/c1-research/metrics.cjs": "82beb8f7614f79e06837a673e72d1f32659b90c4c261ebaf23aa126e0835ac24",
     "tools/c1-research/module-loader.cjs": "159bd915326f5d3594ef8b667ec43e0ee5f8b9c8e7b03b5d723eb6908fc0e9ad",
     "tools/c1-research/research-spec-v1.json": "7d5ce3add178c7a1b1f385a07ce87fa746a6241569521ed72654852c0cec8665",
     "tools/c1-research/run.cjs": "0768f828d959c8b5d80d345f7685e4c275826f07b8ea7114c74fc5a389b09ed1",
-    "tools/c1-research/test.cjs": "e2a7fa711cdf06df785f14fef3c9304ea34c986cc95b75322656a6cfad4df43a",
-    "tools/c1-research/validation-report.json": "052fcc34a24e79c0327e8a5c3884fcfe9649ff676633215d242345677d867590"
+    "tools/c1-research/test.cjs": "4863c1145850b4388512a74b69a46c8d9895747f29f79c56259970e99f390b3b",
+    "tools/c1-research/validation-report.json": "f30ba78d24a12ff0baaca1e0bbd253b27d09b3427dc5381b493e5ffd111d522b"
   },
   "historical_comparisons_executed": 0,
   "production_commit": "0a65e20964ae080b8718332e5f6f16daa6def452",
