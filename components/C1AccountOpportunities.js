@@ -33,6 +33,14 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  const waitingReason=evidence.pending?evidence.reason:decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
  const ratedDecision={...decision,opportunities:ratedRows};
  const presentation=c1OpportunityPresentation({decision:ratedDecision,buys,plan:openingPlan,ready,waitingReason});
+ const heldSymbols=new Set([
+  ...(decision.positions||[]).map(position=>String(position?.symbol||'').toUpperCase()),
+  ...(portfolio||[]).filter(position=>position?.role==='Swing'&&Number(position?.shares)>0).map(position=>String(position?.symbol||'').toUpperCase())
+ ]);
+ const holdingPresentation=symbol=>heldSymbols.has(String(symbol||'').toUpperCase())?c1PositionPresentation({decision,
+  position:decision.positions?.find(position=>position.symbol===symbol),symbol,
+  stock:positionRows.find(row=>(row.symbol||row.ticker)===symbol)||screenRows.find(row=>(row.symbol||row.ticker)===symbol),
+  executionDecision,openingPlan,manualRecommendations,checkedAddOrders:rawBuys,now:new Date()}):null;
  // A historical Buy rating is not an authorized purchase. Only verified,
  // currently executable orders belong in the green opportunity cards.
  const actionableTiles=presentation.tiles.filter(tile=>{
@@ -46,14 +54,6 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  const watch=[...blockedTiles,...presentation.watch];
  const currentWatch=watch;
  const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
- const heldSymbols=new Set([
-  ...(decision.positions||[]).map(position=>String(position?.symbol||'').toUpperCase()),
-  ...(portfolio||[]).filter(position=>position?.role==='Swing'&&Number(position?.shares)>0).map(position=>String(position?.symbol||'').toUpperCase())
- ]);
- const holdingPresentation=symbol=>heldSymbols.has(String(symbol||'').toUpperCase())?c1PositionPresentation({decision,
-  position:decision.positions?.find(position=>position.symbol===symbol),symbol,
-  stock:positionRows.find(row=>(row.symbol||row.ticker)===symbol)||screenRows.find(row=>(row.symbol||row.ticker)===symbol),
-  executionDecision,openingPlan,manualRecommendations,checkedAddOrders:rawBuys,now:new Date()}):null;
  const actionTone=(held,canPurchase)=>held?.action==='Sell'?'red':held?.urgent?'orange':held?'yellow':canPurchase?'green':'gray';
  const plainReason=(symbol,action,reason,presentation)=>c1PlainDecisionReason({action,reason,presentation,position:decision.positions?.find(position=>position.symbol===symbol),opportunity:ratedRows.find(row=>row.symbol===symbol),sourceCandidate:decision.stockScreen?.candidates?.find(row=>row.symbol===symbol)});
  let nextWatchPriority=actionableTiles.length;
