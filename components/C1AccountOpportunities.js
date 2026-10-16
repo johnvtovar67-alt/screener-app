@@ -33,9 +33,6 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  const waitingReason=evidence.pending?evidence.reason:decision.accountMismatch?'Resolve the differences in Account settings.':openingError?'Opening checks unavailable: '+openingError:manualRecommendations?.status==='ready'?'Refresh to recheck the account and opening prices.':manualRecommendations?.reason||'Refresh for the current account review.';
  const ratedDecision={...decision,opportunities:ratedRows};
  const presentation=c1OpportunityPresentation({decision:ratedDecision,buys,plan:openingPlan,ready,waitingReason});
- const watch=presentation.watch;
- const currentWatch=watch;
- const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
  const heldSymbols=new Set([
   ...(decision.positions||[]).map(position=>String(position?.symbol||'').toUpperCase()),
   ...(portfolio||[]).filter(position=>position?.role==='Swing'&&Number(position?.shares)>0).map(position=>String(position?.symbol||'').toUpperCase())
@@ -44,9 +41,22 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
   position:decision.positions?.find(position=>position.symbol===symbol),symbol,
   stock:positionRows.find(row=>(row.symbol||row.ticker)===symbol)||screenRows.find(row=>(row.symbol||row.ticker)===symbol),
   executionDecision,openingPlan,manualRecommendations,checkedAddOrders:rawBuys,now:new Date()}):null;
+ // A historical Buy rating is not an authorized purchase. Only verified,
+ // currently executable orders belong in the green opportunity cards.
+ const actionableTiles=presentation.tiles.filter(tile=>{
+  const held=holdingPresentation(tile.symbol);
+  return ready&&Boolean(tile.order)&&(!held||held.canAdd);
+ });
+ const blockedTiles=presentation.tiles.filter(tile=>!actionableTiles.includes(tile)).map(tile=>({
+  ...tile,
+  screenReview:{why:tile.detail||'No purchase currently authorized.',next:''}
+ }));
+ const watch=[...blockedTiles,...presentation.watch];
+ const currentWatch=watch;
+ const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
  const actionTone=(held,canPurchase)=>held?.action==='Sell'?'red':held?.urgent?'orange':held?'yellow':canPurchase?'green':'gray';
  const plainReason=(symbol,action,reason,presentation)=>c1PlainDecisionReason({action,reason,presentation,position:decision.positions?.find(position=>position.symbol===symbol),opportunity:ratedRows.find(row=>row.symbol===symbol),sourceCandidate:decision.stockScreen?.candidates?.find(row=>row.symbol===symbol)});
- let nextWatchPriority=presentation.tiles.length;
+ let nextWatchPriority=actionableTiles.length;
  const watchView={
   shared:null,
   rows:[
@@ -64,7 +74,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
   {decision.brokerageCashCurrent===false&&<p role="status">{c1PlainDecisionReason({action:'NO PURCHASE',reason:decision.brokerageCashReason||'Update brokerage cash before buying.'})}</p>}
   {exits.length>0&&<div><h3>Sell decisions</h3><ul>{exits.map(o=>{const held=holdingPresentation(o.symbol),sell=held?.action==='Sell'?held:null;return <li key={o.id}><b>{o.symbol}: {sell?.label||'SELL'}</b>: sell {o.shares} {o.shares===1?'share':'shares'}; opening reference ${o.estimatedPrice.toFixed(2)}. {plainReason(o.symbol,sell?.label||'SELL',sell?.reason||o.reason,sell)}</li>;})}</ul></div>}
   {ready&&buys.length>0&&(exits.length>0||orders.some(order=>order.side==='sell'&&!order.condition))&&<p className="actionHelp">Complete the listed sales before buying replacements.</p>}
-  {!portfolioOnly&&presentation.tiles.length>0?<div className="grid buyGrid">{presentation.tiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className="idea green" key={tile.symbol}>
+  {!portfolioOnly&&actionableTiles.length>0?<div className="grid buyGrid">{actionableTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className="idea green" key={tile.symbol}>
    <div className="top"><h3>{tile.symbol}</h3><b className={`pill ${actionTone(held,canPurchase)}`}>{held?.label||(canPurchase?tile.rating:'NO PURCHASE')}</b></div>
    <p className="sub">{tile.entryEvidence?.sector||'Sector unavailable'} · {tile.rating} rating as of {decision.sourceSessionDate}</p>
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Signal closing price</small></div>

@@ -55,25 +55,19 @@ try{
  assert.match(main,/Add 1 share/,'The original checked partial-position completion is retained separately');
  assert.match(main,/Signal closing price/);assert.match(main,/Momentum score: 99\.0\/100/);
  assert.match(main,/Sector0 · Strong Buy rating as of 2026-10-14/,'The historical rating and source metadata remain in the original tile');
- assert.match(main,/<h3>CCC<\/h3><b>NO PURCHASE<\/b>/,'A ranked Buy with insufficient capital retains the NO PURCHASE action');
- assert.match(article(main,'CCC'),/Buy rating as of/,'Insufficient cash does not rewrite the underlying investment rating');
- assert.match(article(main,'CCC'),/Available cash cannot fund this purchase\./);
- assert.doesNotMatch(article(main,'CCC'),/Buy \d+ shares|Add \d+ shares/,'A cash cap cannot create a checked quantity');
  const raw=renderRaw({}),rawMain=section(raw,'C1 account opportunities');
- assert.equal([...rawMain.matchAll(/<article\b[^>]*class="[^"]*\bidea green\b[^"]*"/g)].length,3,'All three eligible ranked cards retain their exact historical green frames');
- for(const symbol of ['BBB','MPC','CCC'])assert.match(article(rawMain,symbol),/class="[^"]*\bidea green\b[^"]*"/,'Historical green frames do not depend on purchase authority');
  assert.match(article(rawMain,'BBB'),/class="[^"]*pill green[^"]*"[^>]*>Strong Buy</,'A checked purchase retains its green investment action');
- assert.match(article(rawMain,'CCC'),/class="[^"]*pill gray[^"]*"[^>]*>NO PURCHASE</,'Cash-blocked capital retains a neutral NO PURCHASE action inside the historical frame');
  assert.match(article(rawMain,'MPC'),/class="[^"]*pill yellow[^"]*"[^>]*>HOLD</,'The current Hold status remains distinct from its checked Add proposal');
- for(const symbol of ['BBB','MPC','CCC']){
+ for(const symbol of ['BBB','MPC']){
   const rawCard=article(rawMain,symbol),plan=rawCard.match(/class="[^"]*\bplan\b[^"]*">([\s\S]*?)<\/div>/)?.[1]||'';
-  assert.equal([...plan.matchAll(/<p(?:\s[^>]*)?>/g)].length,symbol==='CCC'?1:2,'The original plan contains one concise reason and an opening reference only for checked quantities');
   assert.match(plan,/<small[^>]*>Your next action<\/small>/,'The original next-action label remains in its original slot');
   if(symbol!=='CCC')assert.match(plan,/Opening reference \$100\.00; confirm the current broker price\./,'Checked orders retain the original execution-reference slot');
   const sentence=plan.match(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/)?.[1]||'';
   assert.equal((sentence.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each decision reason is one sentence');
   assert.doesNotMatch(sentence,/MACD|histogram|confirmation|top[- ](?:six|nine)|rank #|1\/3\/5|bps|cooldown|\d+[- ]session/i,'Technical calculations and rules remain internal');
  }
+ assert.match(watch,/<b>CCC<\/b>/,'Blocked Buy stays visible in Watch');
+ assert.doesNotMatch(main,/<h3>CCC<\/h3>/,'Blocked Buy has no green card');
  assert.equal((article(main,'MPC').match(/>HOLD</g)||[]).length,1,'The holding action is not duplicated inside its reason');
  assert.match(watch,/<th>Priority<\/th><th>Stock \/ Sector<\/th><th>Momentum score<\/th><th>Signal closing price<\/th><th>Entry check<\/th>/,'The original five-column Watch table is restored');
  assert.match(watch,/<td>4<\/td><td><b>DDD<\/b>/,'The original independent Watch priority is retained');
@@ -81,8 +75,6 @@ try{
  assert.doesNotMatch(main+watch,/<details|Recent momentum<\/h4>|compactReason/,'The rejected rebuilt card/details layout is absent');
  const noOrders={...plan,orders:[]},noReview=buildC1ManualRecommendations({decision,openingPlan:noOrders});
  const paused=render({openingPlan:noOrders,manualRecommendations:noReview});
- assert.match(section(paused,'C1 account opportunities'),/<h3>BBB<\/h3><b>NO PURCHASE<\/b>/,'The historical ranked tile retains NO PURCHASE without checked capital');
- assert.match(section(paused,'C1 account opportunities'),/Strong Buy rating as of/,'Historical rating eligibility is preserved without purchase authority');
  assert.doesNotMatch(paused,/Buy 2 shares|Add 1 share/,'A ranking alone cannot create an executable quantity');
  const expired=render({manualRecommendations:{...review,validUntil:'2026-10-15T16:59:59Z'}});
  assert.doesNotMatch(expired,/Buy 2 shares|Add 1 share/,'Expired checks cannot authorize fresh capital');
@@ -97,19 +89,17 @@ try{
  const stoppedProps={decision:stoppedDecision,executionDecision:stoppedDecision,manualRecommendations:buildC1ManualRecommendations({decision:stoppedDecision,openingPlan:plan})};
  const stopped=render(stoppedProps),expected=c1PositionPresentation({decision:stoppedDecision,position:stoppedPosition,stock:screenRows.find(r=>r.symbol==='MPC')});
  assert.equal(expected.label,'SELL — STOP TRIGGERED');assert.equal(expected.quotePrice,100);
- assert.match(stopped,/SELL — STOP TRIGGERED/);assert.doesNotMatch(stopped,/Add 1 share/,'A verified stop overrides the existing checked Add');
- assert.match(article(section(renderRaw(stoppedProps),'C1 account opportunities'),'MPC'),/class="[^"]*pill red[^"]*"[^>]*>SELL — STOP TRIGGERED</,'The historical tile consumes the same red stop action as Portfolio');
+ assert.match(section(stopped,'Watch opportunities'),/SELL — STOP TRIGGERED/);assert.doesNotMatch(stopped,/Add 1 share/,'A verified stop overrides the existing checked Add');
  assert.equal(expected.quoteAt,new Date(now).toISOString(),'The accepted verified current quote timestamp remains unchanged');
  assert.match(stopped,/Signals based on 2026-10-14 close/,'An intraday quote does not fabricate a completed-session signal');
  const staleRows=screenRows.map(row=>({...row,quoteVerification:verifyC1Quote(row,new Date()),stale:true,clientSnapshotFallback:true}));
  const stale=render({...stoppedProps,positionRows:staleRows,screenRows:staleRows});
  assert.doesNotMatch(stale,/Buy 2 shares|Add 1 share/,'Stale prices and incomplete screen evidence fail closed for all fresh capital');
- assert.match(stale,/VERIFY STOP URGENTLY/,'An unverified apparent breach remains urgent in the historical UI');
+ assert.match(section(stale,'Watch opportunities'),/VERIFY STOP URGENTLY/,'An unverified apparent breach remains urgent in the historical UI');
  assert.doesNotMatch(stale,/SELL — STOP TRIGGERED/,'Stale quotes cannot manufacture a confirmed stop');
- assert.match(renderRaw({...stoppedProps,positionRows:staleRows,screenRows:staleRows}),/class="[^"]*pill orange[^"]*"[^>]*>VERIFY STOP URGENTLY</,'Urgent unresolved stop evidence retains its orange action');
  const missingProofRows=screenRows.map(row=>({...row,_fmpQuoteObservation:undefined}));
  const missingProof=render({...stoppedProps,positionRows:missingProofRows,screenRows:missingProofRows});
- assert.match(missingProof,/VERIFY STOP URGENTLY/);assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|Add 1 share/,'Missing proof cannot authorize a new exit or addition');
+ assert.match(section(missingProof,'Watch opportunities'),/VERIFY STOP URGENTLY/);assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|Add 1 share/,'Missing proof cannot authorize a new exit or addition');
  assert.equal(c1PositionPresentation({decision:stoppedDecision,position:stoppedPosition,stock:missingProofRows.find(row=>row.symbol==='MPC')}).lastVerifiedQuoteAt,null,'Missing verification history cannot invent a verified timestamp');
  const coreDecision={...decision,positions:[position,{symbol:'DDD',role:'Swing',shares:2,exits:[]}]},coreRows=screenRows.map(row=>row.symbol==='DDD'?{...row,role:'Core'}:row);
  const coreInput={decision:coreDecision,executionDecision:coreDecision,positionRows:coreRows},coreBefore=JSON.stringify(coreInput);
