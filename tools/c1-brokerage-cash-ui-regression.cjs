@@ -130,11 +130,10 @@ async function main(){
   const opportunities=renderToStaticMarkup(React.createElement(Opportunities,props));
   assert.match(opportunities,/C1 strategy cash: \$3,037\.90/);
   assert.match(opportunities,new RegExp('Brokerage cash: \\$'+balance.toFixed(2).replace('.','\\.')));
-  assert.match(opportunities,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>/,'A cash cap retains the original ranked tile without purchase authority');
-  assert.match(opportunities,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>[\s\S]*?Buy rating as of/,'The unchanged investment rating remains available in the original ranked tile without purchase authorization');
-  assert.match(opportunities,/<article[^>]*class="[^"]*idea green[^"]*"/,'The authorized restoration retains the historical green ranked-card frame');
-  assert.match(opportunities,/<h3[^>]*>BBB<\/h3><b[^>]*class="[^"]*pill gray[^"]*"[^>]*>NO PURCHASE<\/b>/,'Cash-blocked capital retains its neutral action badge inside the historical frame');
-  assert.match(opportunities,/Available cash cannot fund this purchase\./);
+  assert.doesNotMatch(opportunities,/<article[^>]*class="[^"]*idea green/,'Cash-blocked stocks cannot have green opportunity cards');
+  assert.doesNotMatch(opportunities,/<h3[^>]*>BBB<\\/h3>/,'Cash-blocked BBB is not an actionable opportunity');
+  assert.match(opportunities,/<td><b[^>]*>BBB<\\/b>/,'The Buy-rated but blocked BBB remains visible in Watch');
+  assert.match(opportunities,/Available cash cannot fund this purchase\\./);
   assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<b[^>]*>CCC<\/b>/,'Existing Watch analysis remains visible');
   assert.doesNotMatch(opportunities,/currently ineligible|(?:buy|add) \d+ shares?/i);
   const exits=renderToStaticMarkup(React.createElement(Opportunities,{...props,view:'portfolio'}));
