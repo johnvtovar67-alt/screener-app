@@ -133,7 +133,7 @@ async function main(){
   assert.doesNotMatch(opportunities,/<article[^>]*class="[^"]*idea green/,'Cash-blocked stocks cannot have green opportunity cards');
   assert.doesNotMatch(opportunities,/<h3[^>]*>BBB<\/h3>/,'Cash-blocked BBB is not an actionable opportunity');
   assert.match(opportunities,/<td><b[^>]*>BBB<\/b>/,'The Buy-rated but blocked BBB remains visible in Watch');
-  assert.match(opportunities,/Available cash cannot fund this purchase\\./);
+  assert.match(opportunities,/Available cash cannot fund this purchase\./);
   assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<b[^>]*>CCC<\/b>/,'Existing Watch analysis remains visible');
   assert.doesNotMatch(opportunities,/currently ineligible|(?:buy|add) \d+ shares?/i);
   const exits=renderToStaticMarkup(React.createElement(Opportunities,{...props,view:'portfolio'}));
@@ -142,7 +142,7 @@ async function main(){
  }
  const oldAccount={...decision,brokerageCash:null,executableCash:0,brokerageCashCurrent:false,brokerageCashReason:'Enter current brokerage cash.'};
  const oldHtml=renderToStaticMarkup(React.createElement(Opportunities,{decision:oldAccount,screenRows,screenCurrent:true}));
- assert.match(oldHtml,/Brokerage cash: Not entered/);assert.match(oldHtml,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>/);assert.match(oldHtml,/<h3[^>]*>BBB<\/h3><b[^>]*>NO PURCHASE<\/b>[\s\S]*?Buy rating as of/);assert.doesNotMatch(oldHtml,/(?:buy|add) \d+ shares?/i,'Missing brokerage cash cannot authorize a checked purchase quantity');assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Update brokerage cash before making a purchase\./);
+ assert.match(oldHtml,/Brokerage cash: Not entered/);assert.doesNotMatch(oldHtml,/<h3[^>]*>BBB<\/h3>/);assert.match(oldHtml,/<td><b[^>]*>BBB<\/b>/);assert.doesNotMatch(oldHtml,/(?:buy|add) \d+ shares?/i,'Missing brokerage cash cannot authorize a checked purchase quantity');assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Update brokerage cash before making a purchase\./);
  await exerciseCashEditor(decision);
  console.log('PASS: compact cash summary reveals the unchanged editor, collapses only after successful save, preserves disabled/error/freshness status, and retains Buy/Watch analysis and checked exits without authorizing purchases.');
 }
