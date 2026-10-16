@@ -340,10 +340,10 @@ async function main(){try{
   filename:'portfolio-action-first-regression.jsx',babelrc:false,configFile:false,
   presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]
  }).code;
- function portfolioHtml(position,stock,{mobile=false,current=true}={}){
-  const decision=decisionFor(position,{current}),record={exports:{}};
+ function portfolioHtml(position,stock,{mobile=false,current=true,sector,sourceDate=source}={}){
+  const decision=decisionFor(position,{current,stockScreen:{sourceSessionDate:sourceDate,candidates:sector?[{symbol:position.symbol,sector}]:[]}}),record={exports:{}};
   const before=copy({position,stock,decision});
-  const evidence={classification:'Momentum Intact',status:'available',label:'Momentum Intact',tone:'intact',explanation:'Technical evidence sentinel: source rank and MACD.',sourceSessionDate:source,limitations:[]};
+  const evidence={classification:stock.testWeak?'Momentum Weakening':'Momentum Intact',status:'available',label:stock.testWeak?'Momentum Weakening':'Momentum Intact',tone:stock.testWeak?'weakening':'intact',explanation:'Technical evidence sentinel: source rank and MACD.',sourceSessionDate:source,limitations:[]};
   const bindings={...helpers,c1PlainDecisionReason,c1CompactMomentumEvidence,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
    c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
    swingTimeReview:()=>({}),holdingReason:(s,decision)=>decision.reason,sym:s=>s.symbol,price:s=>s.price,cls:action=>/sell|exit|stop/i.test(action)?'red':'yellow',factorFor:()=> 'Sector',
@@ -373,7 +373,7 @@ async function main(){try{
   match(stop,/Recent price momentum remains supported/,'The original Evidence slot has concise accepted momentum evidence');
   match(stop,/As of 2026-10-14/,'The accepted source date remains visible in the original Evidence slot');
   absent(stop,/Technical evidence sentinel|MACD|histogram|confirmation streak|1\/3\/5/,'The original evidence slots do not expose raw technical calculations');
-  match(stop,/Stop triggered at \$86\.00; sale pending\./,'The verified stop has one plain reason using the existing recorded stop');
+  match(stop,/Stop triggered at \$86\.00 \(verified price \$85\.00\); C1 sell signal; verify Schwab order\/fill status\./,'The verified stop has one plain reason using the existing recorded stop');
   absent(stop,/<details\b/,'Technical rules are not reintroduced in a disclosure');
   const reason=mobile?stop.match(/<small>Why<\/small><p>([\s\S]*?)<\/p>/)?.[1]:[...stop.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)][4]?.[1];
   eq((reason?.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each Portfolio row has exactly one plain-English reason sentence');
@@ -391,8 +391,35 @@ async function main(){try{
   const veev=holding('VEEV',{recentMomentumReviews:[{available:false}]});
   match(portfolioHtml(veev,quote('VEEV',100),{mobile}),/>HOLD</,'VEEV missing recent evidence cannot manufacture a new exit');
   eq(present(args(veev,quote('VEEV',100))).canAdd,false,'VEEV missing recent evidence cannot authorize fresh capital');
+  for(const [symbol,sector] of [['MPC','Energy'],['VEEV','Healthcare']]){
+   const weakPosition=holding(symbol,{stops:[{price:86}]}),weakStock={...quote(symbol,115),testWeak:true,sector:'UNVERIFIED',primaryTheme:'Other'};
+   const rendered=portfolioHtml(weakPosition,weakStock,{mobile,sector});
+   match(rendered,new RegExp(' · '+sector),'Portfolio displays accepted sector metadata instead of a thematic factor');
+   match(rendered,/>HOLD</,'Weakening momentum does not change the existing holding decision');
+   match(rendered,/Momentum weakening; no sell signal confirmed/,'Weakening Hold explains the absence of a confirmed exit');
+   absent(rendered,/UNVERIFIED|Unclassified|sale pending/i,'Unverified row labels and brokerage-order implications are absent');
+   match(portfolioHtml(weakPosition,weakStock,{mobile}),/Sector unavailable/,'Missing accepted metadata cannot invent a sector');
+   match(portfolioHtml(weakPosition,weakStock,{mobile,sector,sourceDate:'2026-10-13'}),/Sector unavailable/,'A mismatched snapshot is not sector evidence for this review');
+  }
+  const recordedDell=holding('DELL',{stops:[{price:468.85}],exits:[{reason:'initial-stop'}],stopTriggerEvidence:{low:460,date:source,stop:468.85}});
+  const recorded=portfolioHtml(recordedDell,quote('DELL',480),{mobile,sector:'Technology'});
+  match(recorded,/recorded low \$460\.00 on 2026-10-14, stop \$468\.85/,'A recovered quote retains the existing confirmed stop evidence');
+  match(recorded,/C1 sell signal; verify Schwab order\/fill status/,'A C1 signal makes no claim that Schwab received an order');
+  absent(recorded,/sale pending|submitted|executed/i,'A model exit is not presented as a submitted or executed broker sale');
   const protectedWinner=portfolioHtml(holding('MPC',{exits:[{reason:'recent-momentum-profit-protection'}]}),quote('MPC',115),{mobile});
   match(protectedWinner,/class="[^"]*pill red[^\"]*"[^>]*>SELL — PROFIT PROTECTION</,'MPC retains its independent profit-protection exit');
+ }
+
+ if(process.env.C1_PRESENTATION_RENDER_DIR){
+  fs.mkdirSync(process.env.C1_PRESENTATION_RENDER_DIR,{recursive:true});
+  const fixtureRows=[
+   [holding('DELL',{avgCost:545.17,stops:[{price:468.85}],exits:[{reason:'initial-stop'}],stopTriggerEvidence:{low:460,date:source,stop:468.85}}),quote('DELL',460,{avgCost:545.17,gainLoss:-851.70,gainLossPct:-15.62265}),'Technology'],
+   [holding('MPC'),{...quote('MPC',115),testWeak:true},'Energy'],
+   [holding('VEEV'),{...quote('VEEV',115),testWeak:true},'Healthcare']
+  ];
+  for(const mobile of [false,true])fs.writeFileSync(path.join(process.env.C1_PRESENTATION_RENDER_DIR,'portfolio-'+(mobile?'mobile':'desktop')+'.html'),
+   mobile?'<div class="mobilePortfolio">'+fixtureRows.map(([p,s,sector])=>portfolioHtml(p,s,{mobile,sector})).join('')+'</div>':
+   '<div class="scroll"><table><thead><tr><th>Position</th><th>Open Date</th><th>Decision</th><th>Evidence</th><th>Why</th><th>Price</th><th>Gain/Loss</th></tr></thead><tbody>'+fixtureRows.map(([p,s,sector])=>portfolioHtml(p,s,{sector})).join('')+'</tbody></table></div>');
  }
 
  // The copy layer is read-only: raw technical evidence and action authority
@@ -441,7 +468,7 @@ async function main(){try{
  for(const [exit,pattern] of [['recent-momentum-deterioration',/Recent price momentum deteriorated/],['rank-deterioration',/Holding rank no longer qualifies/],['profit-rank-deterioration',/Holding rank deteriorated while profit protection was active/],['recent-momentum-profit-protection',/profit protection/]]){
   const position=holding('MPC',{exits:[{reason:exit}]}),presentation=present(args(position,quote('MPC',115))),input={action:presentation.label,presentation,position},before=copy(input);
   match(c1PlainDecisionReason(input),pattern,`${exit}: the concise reason describes the supplied decision mechanism`);
-  eq(c1DecisionTrigger(input),'Sale pending; verify the execution price.',`${exit}: a confirmed exit does not wait for another signal`);
+  eq(c1DecisionTrigger(input),'C1 sell signal; verify Schwab order/fill status and execution price.',`${exit}: a confirmed exit does not wait for another signal`);
   same(input,before,`${exit}: reason and trigger cannot mutate the position or exit authority`);
  }
  const weakEvidence={status:'available',classification:'Momentum Weakening',sourceSessionDate:source};
