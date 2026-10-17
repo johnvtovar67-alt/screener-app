@@ -5,7 +5,7 @@ const babel=require('next/dist/compiled/babel/core');
 const modules=require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd());
 const page=fs.readFileSync('pages/index.js','utf8');
 const {c1PositionPresentation}=modules.load('lib/c1PositionPresentation.js');
-const {c1PlainDecisionReason,c1CompactMomentumEvidence}=modules.load('lib/c1DecisionCopy.js');
+const {c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming}=modules.load('lib/c1DecisionCopy.js');
 assert.ok(page.includes('<th>Evidence</th>')&&page.includes('<th>Why</th>'),'The original Portfolio retains separate Evidence and Why columns');
 assert.doesNotMatch(page,/momentumEvidenceRows|momentumEvidenceBox|momentumEvidenceCompact|momentumEvidenceItem|Momentum Evidence/,'The redundant momentum summary strip must be absent');
 assert.ok(page.includes('specialSituationBadge'),'Special-situation presentation must remain available');
@@ -24,11 +24,11 @@ const unavailable={classification:null,status:'unavailable',label:'Evidence unav
 const classifications=[['Momentum Accelerating','accelerating'],['Momentum Intact','intact'],['Momentum Weakening','weakening'],['Exit Risk','exit-risk']];
 const why='Original C1 decision explanation; 7 of 30 trading sessions completed.';
 const holding={symbol:'AAA',role:'Swing',shares:10,avgCost:100,price:105,value:1050,weightPct:10,gainLoss:50,gainLossPct:5,openedAt:'2026-09-11'};
-function render({evidence=unavailable,action='Hold',source='c1-actual-account',mobile=false,row=holding,accountMatches=true,accountHoldingMismatch=false,resolver,current=true,date='2026-09-11'}={}){
+function render({evidence=unavailable,action='Hold',source='c1-actual-account',mobile=false,row=holding,accountMatches=true,accountHoldingMismatch=false,resolver,current=true,date='2026-09-11',positionData={}}={}){
  const calls=[],resolved=[],position={symbol:row.symbol,momentumEvidence:evidence,action,reason:why,
-  exits:['Exit candidate','Sell'].includes(action)?[{reason:'rank-deterioration'}]:[]},accountView={decision:{contract:'c1-account-decision-v1',positions:[position],current,sourceSessionDate:date}},record={exports:{}};
+  exits:['Exit candidate','Sell'].includes(action)?[{reason:'rank-deterioration'}]:[],...positionData},accountView={decision:{contract:'c1-account-decision-v1',positions:[position],current,sourceSessionDate:date}},record={exports:{}};
  const bindings={...modules.load('lib/c1HoldPill.js'),accountView,accountMatches,accountHoldingMismatch,CASH:['CASH'],displayedPortfolioValue:10000,
-  c1PositionPresentation,c1PlainDecisionReason,c1CompactMomentumEvidence,stocks:[row],portfolio:[row],
+  c1PositionPresentation,c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming,stocks:[row],portfolio:[row],
   c1PortfolioMomentumEvidence:args=>{calls.push(args);const result=resolver?resolver(args):args.position?.momentumEvidence||unavailable;resolved.push(result);return result;},
   pd:()=>({action,source,reason:why,openedAt:row.openedAt}),swingTimeReview:()=>({held:500,stage:'Long Swing Review'}),holdingReason:(s,d)=>d.reason,
   sym:s=>s.symbol,price:s=>s.price,cls:a=>a==='Hold'?'yellow':'red',factorFor:()=> 'Technology',portfolioDateDisplay:()=> 'Sep 11, 2026',
@@ -129,3 +129,14 @@ for(const mobile of [false,true]){
  assert.doesNotMatch(missing.html,/Momentum Intact/,'Missing evidence cannot manufacture a supported classification');
 }
 console.log('MOMENTUM EVIDENCE UI PASS: original evidence slots show validated badges and concise explanations; internal freshness/risk trust, current actions, Core separation, price and gain/loss remain intact.');
+
+// Existing row renderer: saved counter copy on desktop/mobile, never Core.
+const timingPosition={stops:[{price:86}],reviewRules:[{sleeve:'base',heldSessions:12,minimumHold:30,close:105,rankVerified:true,profitProtectionArmed:true,earlyStreak:2,earlyConfirmations:3,profitStreak:1,profitConfirmations:2}],recentMomentumReviews:[{sleeve:'base',available:true,state:{streak:1,profitGivebackStreak:1,profitProtectionArmed:true},metrics:{confirmations:2}}]};
+const timingEvidence={status:'available',label:'Momentum Weakening',tone:'weakening',sourceSessionDate:'2026-09-11'};
+for(const mobile of [false,true]){
+ const original=JSON.stringify(timingPosition),result=render({mobile,positionData:timingPosition,evidence:timingEvidence});
+ for(const text of ['Holding period: 12/30 sessions · 18 remaining','Stop: not triggered at last C1 close','Profit protection: active','Rank momentum: 2/3 · 1 remaining','Profit rank: 1/2 · 1 remaining','Momentum: 1/2 · 1 remaining','Profit giveback: 1/2 · 1 remaining'])assert(result.html.includes(text),text);
+ assert.equal(JSON.stringify(timingPosition),original);assert.equal(result.accountView.decision.positions[0].action,'Hold');
+ const core=render({mobile,row:{...holding,symbol:'MSTR',role:'Core'},positionData:timingPosition,evidence:timingEvidence,source:'legacy-core'});assert.doesNotMatch(core.html,/Holding period:|Rank momentum:|Profit rank:/);
+ const stale=render({mobile,positionData:timingPosition,evidence:{...timingEvidence,status:'stale'}});assert.doesNotMatch(stale.html,/12\/30|2\/3/);
+}

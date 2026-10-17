@@ -1,0 +1,147 @@
+{
+  "scope": "Synthetic HOLD rendering in real Chromium; production CSS and helper",
+  "cases": [
+    {
+      "viewport": 1440,
+      "contexts": [
+        "Portfolio desktop",
+        "Portfolio mobile",
+        "Card",
+        "Opportunities",
+        "Watch holding"
+      ],
+      "status": "PASS",
+      "geometry": [
+        {
+          "height": "23px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "10px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        },
+        {
+          "height": "28px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "14px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        },
+        {
+          "height": "33px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "18px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        },
+        {
+          "height": "38px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "22px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        },
+        {
+          "height": "43px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "26px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        }
+      ],
+      "colorsPreserved": true,
+      "nonHoldGeometryUnchanged": true
+    },
+    {
+      "viewport": 390,
+      "contexts": [
+        "Portfolio desktop",
+        "Portfolio mobile",
+        "Card",
+        "Opportunities",
+        "Watch holding"
+      ],
+      "status": "PASS",
+      "geometry": [
+        {
+          "height": "23px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "10px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        },
+        {
+          "height": "28px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "14px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        },
+        {
+          "height": "33px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "18px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        },
+        {
+          "height": "38px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "22px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        },
+        {
+          "height": "43px",
+          "paddingTop": "5px",
+          "paddingRight": "9px",
+          "paddingBottom": "5px",
+          "paddingLeft": "9px",
+          "fontSize": "26px",
+          "lineHeight": "normal",
+          "borderRadius": "999px",
+          "fontWeight": "800"
+        }
+      ],
+      "colorsPreserved": true,
+      "nonHoldGeometryUnchanged": true
+    }
+  ],
+  "liveWrites": 0,
+  "status": "PASS"
+}

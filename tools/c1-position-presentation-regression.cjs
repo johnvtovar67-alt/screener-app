@@ -32,7 +32,7 @@ async function main(){try{
  }
  const helpers=modules.load('lib/c1PositionPresentation.js');
  const {c1PositionPresentation:present}=helpers;
- const {c1PlainDecisionReason,c1DecisionTrigger,c1CompactMomentumEvidence}=modules.load('lib/c1DecisionCopy.js');
+ const {c1PlainDecisionReason,c1DecisionTrigger,c1CompactMomentumEvidence,c1HoldingTiming}=modules.load('lib/c1DecisionCopy.js');
  const {verifyC1Quote}=modules.load('lib/c1QuoteVerification.js');
  const {buildC1ManualRecommendations}=modules.load('lib/c1ManualRecommendations.js');
  function holding(symbol='DELL',patch={}){
@@ -344,7 +344,7 @@ async function main(){try{
   const decision=decisionFor(position,{current,stockScreen:{sourceSessionDate:sourceDate,candidates:sector?[{symbol:position.symbol,sector}]:[]}}),record={exports:{}};
   const before=copy({position,stock,decision});
   const evidence={classification:stock.testWeak?'Momentum Weakening':'Momentum Intact',status:'available',label:stock.testWeak?'Momentum Weakening':'Momentum Intact',tone:stock.testWeak?'weakening':'intact',explanation:'Technical evidence sentinel: source rank and MACD.',sourceSessionDate:source,limitations:[]};
-  const bindings={...require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1HoldPill.js'),...helpers,c1PlainDecisionReason,c1CompactMomentumEvidence,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
+  const bindings={...require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1HoldPill.js'),...helpers,c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
    c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
    swingTimeReview:()=>({}),holdingReason:(s,decision)=>decision.reason,sym:s=>s.symbol,price:s=>s.price,cls:action=>/sell|exit|stop/i.test(action)?'red':'yellow',factorFor:()=> 'Sector',
    portfolioDateDisplay:()=> 'Oct 1, 2026',specialSituation:()=>null,money:n=>'$'+Number(n).toFixed(2),pct:n=>Number(n).toFixed(2)+'%'};
@@ -370,7 +370,8 @@ async function main(){try{
   match(stop,/SELL — STOP TRIGGERED/,'The historical Portfolio renders the current verified stop action');
   match(stop,/class="[^"]*pill red[^\"]*"[^>]*>SELL — STOP TRIGGERED</,'The current confirmed stop retains its red action');
   match(stop,/Momentum Intact/,'The original momentum badge remains visible without overriding the independent stop');
-  match(stop,/Recent price momentum remains supported/,'The original Evidence slot has concise accepted momentum evidence');
+  match(stop,/Holding period: 9\/30 sessions · 21 remaining/,'The existing Evidence slot shows actual saved holding timing');
+  match(stop,/Stop: triggered/,'The existing stop presentation supplies the timing status');
   match(stop,/As of 2026-10-14/,'The accepted source date remains visible in the original Evidence slot');
   absent(stop,/Technical evidence sentinel|MACD|histogram|confirmation streak|1\/3\/5/,'The original evidence slots do not expose raw technical calculations');
   match(stop,/Stop triggered at \$86\.00 \(verified price \$85\.00\); C1 sell signal; verify Schwab order\/fill status\./,'The verified stop has one plain reason using the existing recorded stop');
