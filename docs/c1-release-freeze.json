@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "db33a1a44fd62e702c9e3e21712ff41cf99821c3",
+    "components/C1AccountOpportunities.js": "80faa94a186934b618e21da92ba65db316e09d92",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -165,7 +165,7 @@
     "pages/api/research/v11-stress-test.js": "c6923fcd7d54f9250b498e9273caffe0ca6c2c38",
     "pages/api/top5.js": "6c0b454ff6594d6bc5a53c4413a7455b1f422871",
     "pages/api/version.js": "76d9d808fe0153a18b139acb29545b92ea901734",
-    "pages/index.js": "af309985c27459a081d7b9673a222854fe452548",
+    "pages/index.js": "eed0a13e0a63f6ef2265ed5a10c5ade6fa322791",
     "styles/card-layout.css": "b652f6ff7a40fbe70ebbbd6cd465f68c58563b08",
     "lib/c1OrderDisplay.js": "5236d94b2a67bd8bddd8e54d7c7dbe8eae26f746",
     "lib/c1EntryReview.js": "9b497fb369495b3d448fcedeff7166d69d731c4e",
@@ -204,7 +204,8 @@
     "lib/c1NonCashAdoption.js": "3510dec11cafb19778c9fabbb02b277438f69110",
     "components/C1NonCashAdoption.js": "4decfe49c34145953205b153b10de16f210fd7c2",
     "lib/c1NonCashPortfolio.js": "39d9e323a0d53701510c39a46486002e2b6a6eca",
-    "lib/c1NonCashAdoptionReview.js": "e18c4759dbe49308906f908c438866bbe55997b7"
+    "lib/c1NonCashAdoptionReview.js": "e18c4759dbe49308906f908c438866bbe55997b7",
+    "lib/c1HoldPill.js": "31255f351918deefe19b5b35214c9783b7e64dd2"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
@@ -242,5 +243,6 @@
   "operationalFundingAuthorization": "Owner explicitly requested the C1 Buy/Sell/cash workflow repair on 2026-10-17: manually entered Schwab cash is the only purchase-funding balance; retain independent historical sleeve accounting, original capital/sizing basis and every investment decision/risk rule. Three generated purchase-funding seams only; original production source is exactly recovered by reversing them. Existing owned-share stops remain recordable when Buy opening evidence fails. Display recorded Sell quantities without implying Schwab order status. Only these 17 reviewed application hashes change; release guard, build hooks, historical references, original records and research PR #277 remain unchanged. See docs/operations/c1-trading-workflow-20261017.md.",
   "additionalSwingCapacityAuthorization": "Owner October 17, 2026 explicitly requests one prospective qualified additional Swing-position capacity exception: preserve the three independently accounted sleeves, existing Buy/Strong Buy selection, all rankings, sizing percentages, issuer/sector/liquidity/risk/entry gates, existing Add/Sell/rotation rules and historical fills. Additional orders follow ordinary orders, use current manually verified brokerage cash, and carry server-captured qualification and private actual-fill replay evidence. Core MRNA is not migrated. Only these 11 reviewed application hashes change; guard implementation/build hooks and original frozen/legacy sources remain unchanged. No merge/deployment authorized. See docs/operations/c1-additional-swing-capacity-20261017.md.",
   "nonCashAdoptionAuthorization": "Owner explicitly authorizes the smallest append-only, non-cash existing MRNA Core-to-Swing adoption. Prospective between-session confirmation, immutable saved portfolio facts, separate whole-share sleeve allocations, non-cash capital-flow/high-water accounting and existing full holding lifecycle. No broker cash changes or fictitious trades; original seeds/fills retained. Only listed reviewed application hashes change; guard and build hooks unchanged. See docs/operations/c1-mrna-non-cash-adoption-20261017.md.",
-  "supplementalReplayAuthorization": "Owner authorizes the smallest NTRA supplemental-price replay repair, tests then merge/deploy on October 17, 2026. Permit only privately provenance-bound identical in-memory reapplication; native accepted prices, changed evidence, original account records and all trading rules remain protected. Only lib/c1AccountInput.js hash changes; guard/build hooks unchanged. See docs/operations/c1-ntra-supplemental-replay-20261017.md."
+  "supplementalReplayAuthorization": "Owner authorizes the smallest NTRA supplemental-price replay repair, tests then merge/deploy on October 17, 2026. Permit only privately provenance-bound identical in-memory reapplication; native accepted prices, changed evidence, original account records and all trading rules remain protected. Only lib/c1AccountInput.js hash changes; guard/build hooks unchanged. See docs/operations/c1-ntra-supplemental-replay-20261017.md.",
+  "holdActionCosmeticAuthorization": "Owner explicitly requests reuse of PR #280 HOLD-only presentation helper/bindings and the exact visible Portfolio Action heading; focused checks, mandatory CI, merge/deploy if passing. Only these three presentation entries change. Preserve decisions, all other labels, colors/layout, accounting, records and guard/build hooks. Receipt check is read-only and blocked by access; no reconstruction or workaround. See docs/operations/c1-hold-action-cosmetics-20261017.md."
 }
