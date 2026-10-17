@@ -34,7 +34,7 @@ const repairedCalendarSha256 = '611abb854f8f0e87bf589acd056824ea03b119d2b9496aab
 // after hypothetical account allocation. Pin that current account runtime plus the private historical-fact replay seam;
 // c1-validation-repairs-regression.cjs proves the original slot defect and the
 // repaired all-sleeve projection and unchanged holding ranks. Other pins stay unchanged.
-const repairedAccountSha256 = '02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb';
+const repairedAccountSha256 = '8a3e1544efd3c612201127ea1e9a1f82e22ca7758ef94c10419d588025b50ec9';
 // Owner-authorized historical compatibility seams are pinned exactly. The
 // original fixture and all other source pins remain immutable; focused tests
 // verify legacy identities, old-date economics and strict new-activity gates.
@@ -43,14 +43,14 @@ const compatibilitySourceSha256 = {
   // adapters change current/future recommendations only. The comparisons below
   // still require exact pre-cutover account, cash, fill and raw-plan parity.
   // Canonical simulator/options and the original production fixture stay pinned.
-  "lib/c1AccountExecution.js": "1dc178b9a9d23a41597434d1317af01160d4c79bd9507591a6d4a06d2a8c239b",
+  "lib/c1AccountExecution.js": "d1b2cfc1ac6144f53355e65df6b543bb257359bd2a72c36c1d4c616acff9ccad",
   "lib/c1AccountInput.js": "fa2f6f9691ed06575b7491898ef10b1709bab8d17a427463fb0b21c47f80a432",
-  "lib/c1AccountLedger.js": "ebe1ca8a9cfd48c187a21ef003f70e4c6c8dc9a32ed3be996425d6725bf5ecc8",
-  "lib/c1AccountProjection.js": "db5e8f11d0a85f3749f8396d3c6a4de3beb87900d28f141390ab72dea93e12d8",
+  "lib/c1AccountLedger.js": "1dd1236b1d4325e124e9f52f7b5e6ba745ea8cf299795e7a1607db9d368731ab",
+  "lib/c1AccountProjection.js": "3e0fa298c643da4e7a21ceba57f860f562dacf5bc665a742eb7beb23507045a5",
   "lib/c1PaperEvents.js": "1f0db7fb8fcf4d95dc69169cb2b8a10261e259504166cdd01b254eae8a2f6a80",
   "lib/c1StockClassification.js": "611632b4b266cc365211af28bf637c9111c1ddb18e3ee7b74f778ca3d29ccebe",
   "lib/c1AccountSeed.js": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
-  "lib/c1ActualFillReplay.js": "b5946115f94b6185368d2488d23cbf3427ba7797b17be892939560db966a75b6"
+  "lib/c1ActualFillReplay.js": "a3f50a0650a461d316a818e485876b9d4fa69bc0e36da25765b88b313d98dd4c"
 };
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   assert.equal(hash(fs.readFileSync(path.join(root, file))),
@@ -149,7 +149,7 @@ function accountFor(loader, held = false) {
 }
 const cashFields = new Set(['strategyCash', 'brokerageCash', 'executableCash',
   'brokerageCashCurrent', 'brokerageCashObservedAt', 'brokerageCashStatus',
-  'brokerageCashReason', 'cashAuthority', 'cashBlockedOrders']);
+  'brokerageCashReason', 'cashAuthority', 'cashBlockedOrders', 'purchaseFundingPolicy']);
 function withoutCashOverlay(value, rawPlan = false) {
   const original = Object.fromEntries(Object.entries(value).filter(([key]) =>
     !cashFields.has(key) && !(rawPlan && key === 'actualCash')));
@@ -199,7 +199,7 @@ for (const [active, original] of [[currentAccount, baselineAccount], [currentHel
       'Broker cash changes cannot alter the independent informational momentum evidence');
     assert.equal(decision.actualCash, decision.strategyCash, 'actualCash remains only a strategy cash alias');
     assert.ok(Math.abs(decision.strategyCash - 3037.90) < 1e-7);
-    assert.equal(decision.executableCash, Math.min(decision.strategyCash, balance));
+    assert.equal(decision.executableCash, balance, 'Only current brokerage cash funds execution');
     const capped = capC1ExecutionCash({ plan: rawPlan, account: withBroker,
       strategyCash: decision.strategyCash, now });
     const originalById = new Map(rawPlan.orders.map(order => [order.id, order]));
@@ -276,8 +276,8 @@ const observedOpening = { ...nextSession, corporateActions: [],
     assert.ok(prepared.openingPlan, 'Low cash must leave checked opening analysis visible');
     const buyCost = prepared.manualRecommendations.orders.filter(order => order.side === 'buy')
       .reduce((sum, order) => sum + order.shares * order.estimatedPrice, 0);
-    assert.ok(buyCost <= Math.min(3037.90, balance) + 1e-7,
-      'The public prepare boundary must never grant aggregate buy authority above either cash source');
+    assert.ok(buyCost <= balance + 1e-7,
+      'The public prepare boundary must never grant aggregate buy authority above current brokerage cash');
     if (balance === 10000) {
       same(withoutCashOverlay(prepared.openingPlan, true), oldPrepared.openingPlan,
         'Ample cash preserves the production prepare plan, exact quantities and verification');

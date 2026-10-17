@@ -216,6 +216,10 @@ replace('      const eligibleForRankedEntry = (signal) =>\n        entrySignalQu
 // A repaired holding age can change today's recommendation, never a posted
 // historical sale. Only the ledger's transient capability enables this seam.
 replace("      const todaysOrders = pending.splice(0, pending.length);", "      if(actualReplay)for(const recorded of actualReplay.reconciledRankSales(session.date)){\n        const position=positions.get(recorded.symbol);\n        if(!position)throw new Error('Reconciled rank sale has no owned position');\n        executeSale({date:session.date,symbol:recorded.symbol,position,reason:recorded.reason,shares:position.shares,fill:0});\n      }\n      const todaysOrders = pending.splice(0, pending.length);");
+// Operational funding repair explicitly authorized 2026-10-17. The original
+// source, legacy reconstruction and all decision-policy bodies remain pinned.
+assert.equal(createHash('sha256').update(source).digest('hex'),'02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb');
+for(const [before,after] of require('./c1-operational-funding-seams.cjs'))replace(before,after);
 if(process.argv.includes('--check')){
   assert.equal(fs.readFileSync(path,'utf8'),source,'Generated account simulator changed outside declared seams');
   assert.equal(fs.readFileSync(legacyPath,'utf8'),legacySource,'Legacy account identity source changed from the immutable pre-SCHW runtime');

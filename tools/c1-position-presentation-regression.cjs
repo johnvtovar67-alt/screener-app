@@ -89,7 +89,7 @@ async function main(){try{
   eq(verification.newDataAccepted,false,'A provider response with no new price/timestamp remains explicitly unchanged');
   eq(verification.refreshStatus,'provider-unchanged','A manually refreshed unchanged provider result is distinguishable from newly accepted data');
   eq(result.label,'SELL — STOP TRIGGERED','Real DELL $460 is below the recorded $468.85 stop despite high historical rank');
-  eq(result.reason,'Verified price reached the recorded stop; sale remains pending.','The immediate action uses the approved concise stop explanation');
+  eq(result.reason,'Verified price reached the recorded stop; a Sell signal requires action. No Schwab order is confirmed.','The immediate action uses the approved concise stop explanation');
   eq(result.quotePrice,460,'The authoritative verified stop price remains available to structured Details');
   absent(result.reason,/already sold|sale executed|order submitted|broker confirmed/i,'The real DELL case does not imply broker execution');
   const unverified={...normalized,_fmpQuoteObservation:undefined},urgent=present(args(row,unverified));

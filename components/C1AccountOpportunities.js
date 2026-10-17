@@ -3,7 +3,7 @@ import {c1WatchPresentation,c1OpportunityPresentation} from '../lib/c1EntryRevie
 import {useEffect,useRef,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
-import {c1PositionPresentation} from '../lib/c1PositionPresentation';
+import {c1PositionPresentation,c1RecordedSellInstruction} from '../lib/c1PositionPresentation';
 import {c1PlainDecisionReason} from '../lib/c1DecisionCopy';
 export default function C1AccountOpportunities({decision,executionDecision=decision,openingPlan,openingError,manualRecommendations,screenRows=[],positionRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
  const [,expire]=useState(0);
@@ -70,7 +70,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  // Group existing presentations for display only; never calculate an action or quantity.
  const heldActions=[...heldSymbols].map(symbol=>{
   const position=decision.positions?.find(row=>row.symbol===symbol);
-  return {symbol,holding:holdingPresentation(symbol),stops:[...new Set((position?.stops||[]).map(stop=>stop.price).filter(price=>Number.isFinite(price)&&price>0))]};
+  return {symbol,holding:holdingPresentation(symbol),sellInstruction:c1RecordedSellInstruction(position,holdingPresentation(symbol)),stops:[...new Set((position?.stops||[]).map(stop=>stop.price).filter(price=>Number.isFinite(price)&&price>0))]};
  }).filter(row=>row.holding);
  const sellActions=heldActions.filter(row=>row.holding.action==='Sell');
  const verifyActions=heldActions.filter(row=>row.holding.urgent);
@@ -78,12 +78,12 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>
   {!portfolioOnly&&evidence.pending&&<p role="status">{c1PlainDecisionReason({action:'NO PURCHASE',reason:evidence.reason})}</p>}
-  {!portfolioOnly&&<><p className="sub">Signals based on {decision.sourceSessionDate} close · C1 strategy cash: {Number.isFinite(decision.strategyCash)?decision.strategyCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Unavailable'} · Brokerage cash: {Number.isFinite(decision.brokerageCash)?decision.brokerageCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Not entered'} · Available to deploy: {Number.isFinite(decision.executableCash)?decision.executableCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'$0.00'}</p>
+  {!portfolioOnly&&<><p className="sub">Signals based on {decision.sourceSessionDate} close · Schwab cash available to trade: {Number.isFinite(decision.brokerageCash)?decision.brokerageCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Not entered'}</p>
   {presentation.cashReason&&<p role="status">{presentation.cashReason}</p>}</>}
   {portfolioOnly&&<div className="plan" aria-label="C1 action summary">
    <small>C1 action summary · signals and checked recommendations, not Schwab orders</small>
    <ul>
-    {sellActions.map(row=><li key={'sell:'+row.symbol} data-action="SELL"><span className="pill red">{row.symbol}: {row.holding.label}</span> {plainReason(row.symbol,row.holding.label,row.holding.reason,row.holding)}{(!row.holding.stopTriggered||row.stops.length>1)&&<span> Recorded stops: {row.stops.map(price=>'$'+price.toFixed(2)).join(', ')||'unavailable'}.</span>} {positionOrders.filter(order=>order.symbol===row.symbol).map(order=><span key={order.id}>Checked recommendation: sell {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. </span>)}{!positionOrders.some(order=>order.symbol===row.symbol)&&<span>No checked sell quantity is available; verify the account and execution review.</span>}</li>)}
+    {sellActions.map(row=><li key={'sell:'+row.symbol} data-action="SELL"><span className="pill red">{row.symbol}: {row.holding.label}</span> {plainReason(row.symbol,row.holding.label,row.holding.reason,row.holding)}{(!row.holding.stopTriggered||row.stops.length>1)&&<span> Recorded stops: {row.stops.map(price=>'$'+price.toFixed(2)).join(', ')||'unavailable'}.</span>} {positionOrders.filter(order=>order.symbol===row.symbol).map(order=><span key={order.id}>Checked recommendation: sell {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. </span>)}{row.sellInstruction&&<span> Recorded holding: {row.sellInstruction.recordedShares??'Unavailable'} shares. {row.sellInstruction.next} {row.sellInstruction.status}</span>}</li>)}
     {actionableBuys.map(order=>{const held=holdingPresentation(order.symbol);return <li key={'buy:'+order.id} data-action={held?'ADD':'BUY'}><span className="pill green">{held?'ADD':'BUY'} — {order.symbol}</span> {held?'Add':'Buy'} {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. Confirm current broker price and cash before placing an order.</li>;})}
    </ul>
    {sellActions.length>0&&!actionableBuys.length&&<p>After any confirmed sale is executed, keep the proceeds unallocated pending a verified C1 Buy. No replacement purchase is currently authorized.</p>}
@@ -96,14 +96,14 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Signal closing price</small></div>
    <p className="why">Momentum score: {Number.isFinite(tile.entryEvidence?.momentumScore)?tile.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable'}</p>
    <div className="plan"><small>Your next action</small><b>{canPurchase?<>{actionableBuys.filter(order=>order.symbol===tile.symbol).map(order=><span key={order.id}>{held?'Add':'Buy'} {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. </span>)}</>:held?.label||'NO PURCHASE'}</b><p>{plainReason(tile.symbol,held?.label||(canPurchase?tile.accountAction:'NO PURCHASE'),held?.reason||tile.detail,held)}</p>{canPurchase&&<p>Confirm current broker price and cash before placing an order.</p>}</div>
-  </article>;})}</div>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No purchases currently authorized.':'C1 ratings awaiting update.'}</b>{!ready&&<span>{c1PlainDecisionReason({action:'NO PURCHASE',reason:waitingReason})}</span>}</div>}
+  </article>;})}</div>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No purchases currently authorized.':'C1 ratings awaiting update.'}</b>{!ready&&<span> {openingError?'Opening checks unavailable: '+openingError:c1PlainDecisionReason({action:'NO PURCHASE',reason:waitingReason})}</span>}</div>}
 
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Refresh after {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} to update the recommendation.</p>}
  </section>
  {!portfolioOnly&&<section className="card" aria-label="Watch opportunities">
   <h2>🟡 Watch</h2>
   <p className="sub">Includes blocked Buy-rated candidates and candidates awaiting a Buy rating · {decision.sourceSessionDate}</p>
-  {watch.length?<div className="scroll"><table><thead><tr><th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Signal closing price</th><th>Entry check</th></tr></thead><tbody>{watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td><td><b>{row.symbol}</b><div>{row.sector}</div><small>{ratedRows.find(r=>r.symbol===row.symbol)?.rating} rating</small></td><td>{row.momentum}</td><td>{row.close}</td><td><b className={`pill ${row.holding?actionTone(row.holding,false):'gray'}`}>{row.holding?.label||'WATCH'}</b> {plainReason(row.symbol,row.holding?.label||'WATCH',row.review.why,row.holding)}{row.review.next&&<div><small>Next: {row.review.next}</small></div>}</td></tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
+  {watch.length?<div className="scroll"><table><thead><tr><th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Signal closing price</th><th>Entry check</th></tr></thead><tbody>{watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td><td><b>{row.symbol}</b><div>{row.sector}</div><small>{ratedRows.find(r=>r.symbol===row.symbol)?.rating} rating</small></td><td>{row.momentum}</td><td>{row.close}</td><td><b className={`pill ${row.holding?actionTone(row.holding,false):'gray'}`}>{row.holding?.label||'WATCH'}</b> {row.holding?plainReason(row.symbol,row.holding.label,row.review.why,row.holding):row.review.why||plainReason(row.symbol,'WATCH',row.review.why)}{row.review.next&&<div><small>Next: {row.review.next}</small></div>}</td></tr>)}</tbody></table></div>:<div className="emptyState"><b>{decision.current&&!decision.accountMismatch?'No additional Watch candidates.':'Watch list unavailable until the account analysis is current.'}</b></div>}
 
  </section>}
  <style jsx>{`.buyGrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.price small{font-size:12px;color:#64748b}`}</style>

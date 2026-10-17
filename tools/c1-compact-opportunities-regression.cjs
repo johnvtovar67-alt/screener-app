@@ -85,18 +85,18 @@ try{
  const {c1OpportunityPresentation}=loader.load('lib/c1EntryReview.js');
  for(const [name,balance,observedAt,strategyCash,reasons,expected] of [
   ['stale',363.36,'2026-10-14T17:00:00Z',1000,[],/earlier Eastern date/],
-  ['strategy',363.36,now,0,[],/C1 strategy cash is exhausted/],
-  ['strategy quantity',363.36,now,10,['insufficient-cash'],/C1 strategy cash cannot fund/],
+  ['strategy independent',363.36,now,0,[],null],
+  ['legacy funding review',363.36,now,10,['insufficient-cash'],/historical sleeve cash is not a brokerage funding limit/],
   ['broker quantity',363.36,now,1000,['brokerage-cash-insufficient'],/brokerage cash is insufficient/],
  ]){
   const cash=c1CashAvailability({strategyCash,brokerageCash:{source:'manual-broker-balance',balance,observedAt},now:new Date()});
   const cashDecision={...decision,...cash},cashPlan={...noOrders,entryReviews:[],cashBlockedOrders:reasons.map(reason=>({symbol:'BBB',reason}))};
   const before=JSON.stringify({cashDecision,cashPlan});
   const output=c1OpportunityPresentation({decision:{...cashDecision,opportunities:[{symbol:'BBB',rating:'Buy'}]},plan:cashPlan,ready:true});
-  assert.match(output.cashReason,expected,name+' exposes the actual cash gate');
-  if(name==='strategy'||name==='stale')assert.equal(cash.executableCash,0);
+  if(expected)assert.match(output.cashReason,expected,name+' exposes the actual cash gate');else assert.equal(output.cashReason,null,'Low accounting cash cannot invent a funding block');
+  if(name==='stale')assert.equal(cash.executableCash,0);else assert.equal(cash.executableCash,balance);
   const cashHtml=render({decision:cashDecision,executionDecision:cashDecision,openingPlan:cashPlan,manualRecommendations:buildC1ManualRecommendations({decision:cashDecision,openingPlan:cashPlan})});
-  assert.match(cashHtml,expected,name+' renders the authoritative cash reason');
+  if(expected)assert.match(cashHtml,expected,name+' renders the authoritative cash reason');else assert.doesNotMatch(cashHtml,/strategy cash is exhausted/);
   assert.equal(JSON.stringify({cashDecision,cashPlan}),before,name+' preserves cash, positions, review reasons and quantities');
  }
  const unknownCash=c1OpportunityPresentation({decision:{...decision,executableCash:0},plan:{...noOrders,entryReviews:[]}});
@@ -121,7 +121,7 @@ try{
  assert.doesNotMatch(expired,/Buy 2 shares|Add 1 share/,'Expired checks cannot authorize fresh capital');
  const fullSlots={...decision,positions:[position,{...position,symbol:'XXX'},{...position,symbol:'YYY'}]},fullPlan={...plan,orders:[]};
  const full=render({decision:fullSlots,executionDecision:fullSlots,openingPlan:fullPlan,manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:fullPlan})});
- assert.match(full,/All C1 position slots are occupied\./);assert.doesNotMatch(full,/Buy 2 shares|Add 1 share/,'Full slots cannot create a new checked purchase');
+ assert.match(full,/All three C1 position slots are currently allocated\./);assert.doesNotMatch(full,/Buy 2 shares|Add 1 share/,'Full slots cannot create a new checked purchase');
  const poor={...decision,stockScreen:{...decision.stockScreen,candidates:decision.stockScreen.candidates.map(c=>c.symbol==='BBB'?{...c,recentMomentumGate:{...c.recentMomentumGate,entryAllowed:false}}:c)}};
  const blocked=render({decision:poor,executionDecision:poor});
  assert.doesNotMatch(section(blocked,'C1 account opportunities'),/Buy 2 shares/,'A checked order cannot override failed current momentum eligibility');
@@ -211,7 +211,7 @@ try{
  const noQuantityProps={...mixedProps,openingPlan:null,manualRecommendations:{...mixedProps.manualRecommendations,status:'waiting',orders:[]}};
  const noQuantity=summary(render({...noQuantityProps,view:'portfolio'}));
  assert.match(noQuantity,/keep the proceeds unallocated pending a verified C1 Buy/);
- assert.match(noQuantity,/DELL: SELL — STOP TRIGGERED/);assert.match(noQuantity,/No checked sell quantity is available/);
+ assert.match(noQuantity,/DELL: SELL — STOP TRIGGERED/);assert.match(noQuantity,/Recorded holding: 10 shares/);assert.match(noQuantity,/Verify the exit quantity against the recorded sleeve holdings/);
  assert.doesNotMatch(noQuantity,/sell \d+ shares|Buy \d+ shares|Add \d+ shares/,'A recorded signal alone cannot authorize any quantity');
  const duplicatedStopDecision={...mixedDecision,positions:[{...stopRow,stops:[{price:468.85},{price:468.85}]}]};
  const duplicateStops=summary(render({...noQuantityProps,decision:duplicatedStopDecision,executionDecision:duplicatedStopDecision,view:'portfolio'}));
@@ -222,7 +222,7 @@ try{
   const exitDecision={...decision,positions:[exitPosition]};
   const exitHtml=summary(render({decision:exitDecision,executionDecision:exitDecision,openingPlan:null,manualRecommendations:null,positionRows:[quoteFor('DELL',100)],view:'portfolio'}));
   assert.match(exitHtml,new RegExp(label));assert.match(exitHtml,/Recorded stops: \$86\.00, \$87\.00/,'Non-stop exits retain every recorded stop without changing thresholds');
-  assert.match(exitHtml,/No checked sell quantity is available/);assert.doesNotMatch(exitHtml,/sell \d+ shares/);
+  assert.match(exitHtml,/Recorded holding: 10 shares/);assert.doesNotMatch(exitHtml,/sell \d+ shares/);
  }
  const multiStop={...stopRow,stops:[{price:86},{price:87}],stopTriggerEvidence:{low:85,stop:86,date:decision.sourceSessionDate}},multiDecision={...decision,positions:[multiStop]};
  assert.match(summary(render({decision:multiDecision,executionDecision:multiDecision,openingPlan:null,manualRecommendations:null,positionRows:[quoteFor('DELL',85)],view:'portfolio'})),/Recorded stops: \$86\.00, \$87\.00/,'A confirmed stop displays multiple original recorded levels without manufacturing a single threshold');

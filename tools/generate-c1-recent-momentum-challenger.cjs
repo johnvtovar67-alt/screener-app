@@ -7,7 +7,7 @@ const canonical = 'lib/c1AccountSimulator.js';
 const target = 'lib/c1RecentMomentumChallengerSimulator.js';
 let source = fs.readFileSync(canonical, 'utf8');
 assert.equal(createHash('sha256').update(source).digest('hex'),
-  '02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb',
+  '8a3e1544efd3c612201127ea1e9a1f82e22ca7758ef94c10419d588025b50ec9',
   'Re-review Challenger seams after any canonical account-engine change');
 function replace(from, to) {
   assert.equal(source.split(from).length, 2, 'Expected exactly one Challenger seam: ' + from.slice(0, 100));
