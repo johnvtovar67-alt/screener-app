@@ -1,0 +1,25 @@
+{
+  "status": "BLOCKED — conversion not implemented",
+  "scope": "Synthetic existing-account guard and immutable facts only",
+  "coreBefore": {
+    "symbol": "MRNA",
+    "role": "Core",
+    "shares": 20,
+    "avgCost": 72.34,
+    "openedAt": "2026-09-01"
+  },
+  "coreAfter": {
+    "symbol": "MRNA",
+    "role": "Core",
+    "shares": 20,
+    "avgCost": 72.34,
+    "openedAt": "2026-09-01"
+  },
+  "brokerageCashBefore": 5000,
+  "brokerageCashAfter": 5000,
+  "writes": 0,
+  "adoptionAndFillsUnchanged": true,
+  "apiStatus": 409,
+  "apiError": "The existing C1 account cannot be reset.",
+  "lifecycleClaim": "None for Core MRNA: it remains outside C1 management."
+}

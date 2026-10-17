@@ -27,7 +27,7 @@ const holding={symbol:'AAA',role:'Swing',shares:10,avgCost:100,price:105,value:1
 function render({evidence=unavailable,action='Hold',source='c1-actual-account',mobile=false,row=holding,accountMatches=true,accountHoldingMismatch=false,resolver,current=true,date='2026-09-11'}={}){
  const calls=[],resolved=[],position={symbol:row.symbol,momentumEvidence:evidence,action,reason:why,
   exits:['Exit candidate','Sell'].includes(action)?[{reason:'rank-deterioration'}]:[]},accountView={decision:{contract:'c1-account-decision-v1',positions:[position],current,sourceSessionDate:date}},record={exports:{}};
- const bindings={accountView,accountMatches,accountHoldingMismatch,CASH:['CASH'],displayedPortfolioValue:10000,
+ const bindings={...modules.load('lib/c1HoldPill.js'),accountView,accountMatches,accountHoldingMismatch,CASH:['CASH'],displayedPortfolioValue:10000,
   c1PositionPresentation,c1PlainDecisionReason,c1CompactMomentumEvidence,stocks:[row],portfolio:[row],
   c1PortfolioMomentumEvidence:args=>{calls.push(args);const result=resolver?resolver(args):args.position?.momentumEvidence||unavailable;resolved.push(result);return result;},
   pd:()=>({action,source,reason:why,openedAt:row.openedAt}),swingTimeReview:()=>({held:500,stage:'Long Swing Review'}),holdingReason:(s,d)=>d.reason,
@@ -90,7 +90,7 @@ for(const symbol of ['MRNA','MSTR'])for(const mobile of [false,true])for(const a
   const {html,calls}=render({evidence,action,source:'legacy-core',mobile,row:{...holding,symbol,role:'Core'}});
   assert.equal(calls.length,0,`${symbol} Core must not request Swing momentum evidence`);
   assert.doesNotMatch(html,/momentumBadge|momentumEvidenceText|Evidence unavailable|Evidence stale|Momentum Accelerating|Momentum Intact|Momentum Weakening|Exit Risk|Injected C1 rank|As of \d{4}-\d{2}-\d{2}|<small>Evidence<\/small>/,'Core rows must have no momentum evidence presentation');
-  assert.ok(html.includes(`>${action}</b>`),`Core ${symbol} must retain its ${action} action`);
+  assert.ok(html.includes(`>${action==='Hold'?'HOLD':action}</b>`),`Core ${symbol} must retain its ${action} action`);
   assert.equal(render({evidence,action,source:'legacy-core',mobile,row:{...holding,symbol,role:'Core'}}).accountView.decision.positions[0].reason,why,'Core source reason must remain unchanged');
   assert.ok(html.includes(c1PlainDecisionReason({action,reason:why})),'Core displays its plain reason without changing the underlying action');
   assert.match(html,/\$105\.00/,'Core price must remain unchanged');
