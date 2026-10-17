@@ -4,7 +4,8 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const crypto=require('node:crypto');
-const page=fs.readFileSync('pages/index.js','utf8');
+let page=fs.readFileSync('pages/index.js','utf8');
+for(const [before,after] of require('./c1-non-cash-ui-seams.cjs')){assert.equal(page.split(after).length,2,'Only the declared adoption UI seam');page=page.replace(after,before);}
 const opportunities=fs.readFileSync('components/C1AccountOpportunities.js','utf8');
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
 const exact=(name,value,expected)=>assert.equal(sha(value),expected,`${name} must match the pinned historical UI region`);

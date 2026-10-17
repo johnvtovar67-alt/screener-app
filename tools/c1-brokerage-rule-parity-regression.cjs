@@ -34,23 +34,24 @@ const repairedCalendarSha256 = '611abb854f8f0e87bf589acd056824ea03b119d2b9496aab
 // after hypothetical account allocation. Pin that current account runtime plus the private historical-fact replay seam;
 // c1-validation-repairs-regression.cjs proves the original slot defect and the
 // repaired all-sleeve projection and unchanged holding ranks. Other pins stay unchanged.
-const repairedAccountSha256 = 'f2715db509bfea0ae51b56d0691a6e6666120547b65321178eaa71a4482ffad7';
+const repairedAccountSha256 = '63b1909359361e35ae7d0c2e833fecbb043013f7b337f9f2c96dc0a3adb2f31e';
 // Owner-authorized historical compatibility seams are pinned exactly. The
 // original fixture and all other source pins remain immutable; focused tests
 // verify legacy identities, old-date economics and strict new-activity gates.
 const compatibilitySourceSha256 = {
+  "lib/c1PositionContext.js": "ab1eff75fb3c3b960db4617db21f1f3e9087ba48260271625bc16b0227cb09fc",
   // October 15 owner-authorized recent-momentum release: these reviewed
   // adapters change current/future recommendations only. The comparisons below
   // still require exact pre-cutover account, cash, fill and raw-plan parity.
   // Canonical simulator/options and the original production fixture stay pinned.
-  "lib/c1AccountExecution.js": "5653272334c7410f3c76e6df8c749356fc88b8e40e837480216163edfa984ad4",
+  "lib/c1AccountExecution.js": "e960416107dbbbd10e074946a81d215099c5ef30edff87ed8dbb7ef81a5251a8",
   "lib/c1AccountInput.js": "fa2f6f9691ed06575b7491898ef10b1709bab8d17a427463fb0b21c47f80a432",
-  "lib/c1AccountLedger.js": "c3efb7b9ef35b3070b4f10dfa74873bef47948c140b6ac1aa6ada96661d62c29",
-  "lib/c1AccountProjection.js": "edb15f9572cd8bb7d2987ebc3ca6067f39a6288c31998d230013cfa68f0ebf6b",
+  "lib/c1AccountLedger.js": "47ba20989a191dfba13f5f974d3e429324fc4e35d2ebabe98c8a558a06c58c3b",
+  "lib/c1AccountProjection.js": "b452a7c454ad116ddefdb02b3023dde22f5369007aed42bc4ad1e74cc94541fc",
   "lib/c1PaperEvents.js": "1f0db7fb8fcf4d95dc69169cb2b8a10261e259504166cdd01b254eae8a2f6a80",
   "lib/c1StockClassification.js": "611632b4b266cc365211af28bf637c9111c1ddb18e3ee7b74f778ca3d29ccebe",
   "lib/c1AccountSeed.js": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
-  "lib/c1ActualFillReplay.js": "c8a8e39d0642f06680d0a78bb05a5d9de595e9d113e1446e05957b95f1f969ef"
+  "lib/c1ActualFillReplay.js": "597aa46f3d9a50aec7cdde4bc58e4fc6fcfc6d234ec10180f37534587b51e5d8"
 };
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   assert.equal(hash(fs.readFileSync(path.join(root, file))),

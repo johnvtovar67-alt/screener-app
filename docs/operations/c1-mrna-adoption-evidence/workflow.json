@@ -1,0 +1,63 @@
+{
+  "scope": "Synthetic only; no real owner data or live writes",
+  "status": "PASS",
+  "adopted": {
+    "shares": 20,
+    "basis": 1760,
+    "purchaseDate": "2026-10-01",
+    "sleeves": {
+      "base": 5,
+      "cooldown15": 10,
+      "sector40": 5
+    },
+    "brokerCashBefore": 5000,
+    "brokerCashAfter": 5000,
+    "newFills": 0
+  },
+  "sale": {
+    "shares": 20,
+    "price": 75,
+    "fee": 0.25,
+    "cashBefore": 0,
+    "cashAfter": 1499.75,
+    "reload": "PASS"
+  },
+  "retry": "one event, one save",
+  "blocks": [
+    {
+      "name": "during-session",
+      "reason": "Adopt MRNA between regular sessions, after reconciling the latest completed close"
+    },
+    {
+      "name": "fractional",
+      "reason": "Original whole shares, positive basis and valid purchase date are required"
+    },
+    {
+      "name": "missing-date",
+      "reason": "Holding basis, dates and historical sessions required"
+    },
+    {
+      "name": "intraday",
+      "reason": "Complete the saved intraday session before adopting MRNA"
+    },
+    {
+      "name": "missing-history",
+      "reason": "Complete verified MRNA price history since purchase is required for stops and profit protection"
+    },
+    {
+      "name": "corporate-action",
+      "reason": "MRNA corporate-action history requires a separate basis review before adoption"
+    }
+  ],
+  "additionalChecks": {
+    "qualifiedAddShares": 52,
+    "profitRankRotation": true,
+    "completedSaleReplay": true,
+    "priorFillsAndLegacyReplay": true,
+    "earlierOwnershipUnchanged": true,
+    "capturedHistorySurvivesCacheLoss": true,
+    "negativeResidualsPreserved": true,
+    "pausedBreakerPreserved": true
+  },
+  "sourceRuleParity": "exact pre-adoption engine after reversing declared seams"
+}

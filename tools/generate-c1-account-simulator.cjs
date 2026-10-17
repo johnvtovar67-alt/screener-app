@@ -222,6 +222,8 @@ assert.equal(createHash('sha256').update(source).digest('hex'),'02e1edad62c96360
 for(const [before,after] of require('./c1-operational-funding-seams.cjs'))replace(before,after);
 // Owner-authorized prospective qualified capacity exception.
 for(const [before,after] of require('./c1-additional-capacity-seams.cjs'))replace(before,after);
+// Owner-authorized append-only non-cash balance admission.
+for(const [before,after] of require('./c1-non-cash-adoption-seams.cjs'))replace(before,after);
 if(process.argv.includes('--check')){
   assert.equal(fs.readFileSync(path,'utf8'),source,'Generated account simulator changed outside declared seams');
   assert.equal(fs.readFileSync(legacyPath,'utf8'),legacySource,'Legacy account identity source changed from the immutable pre-SCHW runtime');
