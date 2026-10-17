@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "compilerPrefixSessions": 2,
+  "earlyOutputIdentity": "exact JSON serialization; signed zero canonicalized by saved dataset",
+  "futureDataRequired": false,
+  "scope": "Signal causality only; not historical authenticity or data qualification",
+  "compiledHash": "cde08a727abc539d2ac7a36d539f3203928f4bcd4baa64255d48e952ed1f661b"
+}

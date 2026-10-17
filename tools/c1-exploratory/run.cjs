@@ -1,0 +1,28 @@
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const {execute}=require('./runner.cjs'),{metrics,bootstrapDifferences}=require('../c1-research/metrics.cjs'),{verifySources}=require('../c1-research/engine.cjs');
+const root=path.resolve(__dirname,'../..'),dir=path.resolve(process.argv[3]||''),command=process.argv[2],hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'),read=p=>JSON.parse(fs.readFileSync(p));
+const lockPath=path.join(dir,'exploratory-freeze.json'),write=(name,obj)=>fs.writeFileSync(path.join(dir,name),JSON.stringify(obj,null,2)+'\n',{flag:'wx'});
+function check(){const lock=read(lockPath);for(const [p,h]of Object.entries(lock.files))if(hash(p)!==h)throw Error('Frozen input/code mismatch: '+p);verifySources(root);if(read(path.join(dir,'causal-gates.json')).status!=='PASS')throw Error('Causal gates not passed');return lock;}
+function runOne(ds,a,c,suffix=''){
+ const name='run-'+a.id+'-'+c+suffix+'.json';if(fs.existsSync(path.join(dir,name)))return read(path.join(dir,name));
+ const t=Date.now(),r=execute(ds,a,c,{checkCausality:true});write(name,r);console.log(JSON.stringify({arm:a.id,cost:c,sensitivity:suffix,status:'PASS',sessions:r.curve.length,orders:r.trades.length,seconds:(Date.now()-t)/1000}));return r;
+}
+function sensitivity(ds,name){const d=structuredClone(ds);if(name==='volume80')for(const s of [...d.historyWarmup,...d.sessions]){for(const p of s.prices)p.volume*=.8;for(const field of ['signals','positionSignals','screenRows'])for(const r of s[field]||[]){if(r.entryTiming){r.entryTiming.averageDollarVolume20*=.8;if(r.entryTiming.averageDollarVolume20<300000000)r.entryTiming.liquidityPass=false;}if(r.volume)r.volume*=.8;if(r.avgVolume)r.avgVolume*=.8;}}
+ if(name==='eventsBlocked')for(const s of d.sessions)for(const field of ['signals','positionSignals','screenRows'])for(const r of s[field]||[])r.eventRisk={status:'Blocked',blockNewCapital:true,checkComplete:false};
+ if(name==='currentSector'){const m=read(path.join(dir,'current-sector-proxies.json'));for(const s of d.sessions)for(const field of ['signals','positionSignals','screenRows'])for(const r of s[field]||[])if(m[r.symbol])r.sector=m[r.symbol];}
+ return d;
+}
+if(command==='freeze'){
+ if(!fs.existsSync(path.join(dir,'causal-gates.json'))||!fs.existsSync(path.join(dir,'gates/exploratory-gates.json')))throw Error('Required independent/causal gates absent');
+ const cg=read(path.join(dir,'causal-gates.json')),ig=read(path.join(dir,'gates/exploratory-gates.json'));if(cg.status!=='PASS'||!ig.cases.every(c=>c.strictControlIdentity==='PASS'&&c.futureOHLCDecisionInvariance==='PASS'&&c.independentCashSharesBasis==='PASS')||ig.stopTriggerAndGapPrice!=='PASS')throw Error('Required gates failed');
+ const files=[...fs.readdirSync(__dirname).filter(n=>/\.(cjs|json|py)$/.test(n)).map(n=>path.join(__dirname,n)),...['raw.json','compiled.json','dataset-manifest.json','current-sector-proxies.json','causal-gates.json','gates/exploratory-gates.json'].map(n=>path.join(dir,n)),...['research-spec-v1.json','control-adapter.cjs','module-loader.cjs','metrics.cjs','champion-source-manifest.json'].map(n=>path.join(root,'tools/c1-research',n))];
+ write('exploratory-freeze.json',{track:'exploratory-retrospective-v1',frozenBeforePerformance:true,at:new Date().toISOString(),productionCommit:verifySources(root),files:Object.fromEntries(files.map(p=>[p,hash(p)])),assumptions:read(path.join(__dirname,'spec.json'))});console.log('Exploratory parameters/data/code frozen; no historical execution');
+}else if(command==='control'){
+ check();const ds=read(path.join(dir,'compiled.json')),C=read(path.join(root,'tools/c1-research/research-spec-v1.json')).arms[0];for(const c of [12,25,50])runOne(ds,C,c);write('control-gate.json',{status:'PASS',scope:'Exploratory source-control and daily ledger consistency only; not strict qualification',costs:[12,25,50]});
+}else if(command==='matrix'){
+ check();if(read(path.join(dir,'control-gate.json')).status!=='PASS')throw Error('Explicit control pass required first');const ds=read(path.join(dir,'compiled.json')),arms=read(path.join(root,'tools/c1-research/research-spec-v1.json')).arms;for(const c of [12,25,50])for(const a of arms)runOne(ds,a,c);for(const s of ['volume80','currentSector','eventsBlocked'])for(const a of arms)runOne(sensitivity(ds,s),a,12,'-'+s);
+}else if(command==='report'){
+ const lock=check(),dataset=read(path.join(dir,'compiled.json')),arms=read(path.join(root,'tools/c1-research/research-spec-v1.json')).arms,result={label:'EXPLORATORY RETROSPECTIVE, NOT VALIDATED PERFORMANCE',freezeHash:hash(lockPath),metrics:{},uncertainty:{},sensitivity:{}};
+ for(const c of [12,25,50]){const runs=Object.fromEntries(arms.map(a=>[a.id,read(path.join(dir,'run-'+a.id+'-'+c+'.json'))]));result.metrics[c]=Object.fromEntries(Object.entries(runs).map(([id,r])=>{const m=metrics(r);delete m.returns;m.opportunity=require('./opportunity.cjs').opportunity(r,dataset);return[id,m];}));const returns=Object.fromEntries(Object.entries(runs).map(([id,r])=>[id,metrics(r).returns]));result.uncertainty[c]=bootstrapDifferences(returns.C,Object.fromEntries(Object.entries(returns).filter(([id])=>id!=='C')),{replicates:10000,block:20,seed:20261016,years:(Date.parse(runs.C.curve.at(-1).date)-Date.parse(runs.C.curve[0].date))/86400000/365.25});}
+ for(const s of ['volume80','currentSector','eventsBlocked'])result.sensitivity[s]=Object.fromEntries(arms.map(a=>{const r=read(path.join(dir,'run-'+a.id+'-12-'+s+'.json')),m=metrics(r);delete m.returns;return[a.id,m];}));write('results.json',result);console.log(JSON.stringify(result.metrics,null,2));
+}else throw Error('Use freeze | control | matrix | report DATA_DIRECTORY. Matrix never starts implicitly.');
