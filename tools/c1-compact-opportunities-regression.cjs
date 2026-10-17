@@ -51,7 +51,7 @@ try{
  assert.match(main,/Buy 2 shares/,'Only the original checked Buy quantity is displayed');
  assert.match(article(main,'BBB'),/Historical strength and recent momentum qualify this purchase\./,'A checked purchase has a consistent positive plain-English reason');
  assert.doesNotMatch(article(main,'BBB'),/does not currently qualify|insufficient for a purchase/,'A current checked Buy cannot be described as ineligible');
- assert.match(main,/<h3>MPC<\/h3><b>HOLD<\/b>/,'The current held-share Hold action replaces the historical generic Add headline');
+ assert.match(main,/<h3>MPC<\/h3><b(?: style="[^"]*")?>HOLD<\/b>/,'The current held-share Hold action replaces the historical generic Add headline');
  assert.match(main,/Add 1 share/,'The original checked partial-position completion is retained separately');
  assert.match(main,/Signal closing price/);assert.match(main,/Momentum score: 99\.0\/100/);
  assert.match(main,/Sector0 · Strong Buy rating as of 2026-10-14/,'The historical rating and source metadata remain in the original tile');

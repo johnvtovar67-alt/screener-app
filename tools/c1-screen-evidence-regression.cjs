@@ -72,7 +72,7 @@ async function main(){
  function render(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Component({decision,screenRows,screenCurrent:true});const html=renderToStaticMarkup(node);effects.slice(1).forEach(effect=>effect());return html.replace(/\sclass="[^"]*"/g,'');}
  const html=render(rows),heldRow=html.match(/<tr><td>Held<\/td><td><b>DELL<\/b>[\s\S]*?<\/tr>/)?.[0];
  assert.ok(heldRow,'The existing holding remains in the original separate Watch table');
- assert.match(heldRow,/<b>HOLD<\/b>/,'A held stock without a confirmed exit retains the current Hold action');
+ assert.match(heldRow,/<b(?: style="[^"]*")?>HOLD<\/b>/,'A held stock without a confirmed exit retains the current Hold action');
  assert.equal(decision.positions[0].holdingRank.base.rank,4,'The supplied verified holding rank remains unchanged by presentation');
  assert.equal(decision.positions[0].reason,'Momentum rank #4; original account holding explanation.','The original account explanation remains unchanged');
  assert.match(heldRow,/96\.0\/100/);assert.match(heldRow,/\$100\.00/,'The original score and signal price remain readable');
