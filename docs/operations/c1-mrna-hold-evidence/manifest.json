@@ -1,0 +1,28 @@
+{
+  "baseline": "8e29b817197a212cb2c74434a97a3dc6fe3810dc",
+  "scope": "HOLD presentation and synthetic evidence of blocked adoption; no conversion implemented",
+  "build": "PASS",
+  "regressions": "107/107 PASS",
+  "holdBrowser": "PASS",
+  "adoption": "BLOCKED: existing-account non-cash ownership event absent",
+  "liveWrites": 0,
+  "sha256": {
+    "components/C1AccountOpportunities.js": "99789bfda86a33cbcd88ebfa0ab8bdd37692552dd5749474f92a90e23bb57d62",
+    "docs/c1-release-freeze.json": "b352c4e93eabd24372cd5b52c704528f7e35944ffec6e1ce636c600a8c862b88",
+    "docs/operations/c1-mrna-adoption-hold-20261017.md": "67fd468e6eac763eb50d20ebaff62fce62a3d1391ee37d7b379c67c802db6eb8",
+    "docs/operations/c1-mrna-hold-evidence/adoption-conflict.json": "ac0ecd77c413a9b0f92762ae4f65153ba9720e2e362e50fb7992d26308494bf1",
+    "docs/operations/c1-mrna-hold-evidence/hold-browser.json": "78388707b6b41a9bb08acef380a6c1d8f31a544818aac05c3ddc201741273550",
+    "docs/operations/c1-mrna-hold-evidence/regression-results.json": "0f001faac90c33aa7a3fd01d7a871cc560f2fb778e8c21d85e472d991c7718fe",
+    "lib/c1HoldPill.js": "5582ef57232482e7a2ace081a495b4f86c598de3b8e9f0418d743deabcffef44",
+    "pages/index.js": "0f389eba0d2138de1980288c9fec2993b4ebd47675d821f2a70d7d39d1deb633",
+    "tools/c1-compact-opportunities-regression.cjs": "44dba15da0ec54649894113752a7fa839059be309bc4d36e140ec58ea97d2c9f",
+    "tools/c1-core-adoption-conflict-regression.cjs": "4101799dcff540e06baa35a889e7f2bb338b17cb1cea832cb59d51e793f08430",
+    "tools/c1-historical-ui-restore-regression.cjs": "b40758ac5c0723e0afed1f87e70f0a3700d6d1e22d76ae3ff002dd6cff7f997b",
+    "tools/c1-hold-pill-browser.cjs": "2113867d63674e04cf5f8c47ab39f7a3375a079e1652f9d8250706acda058dcc",
+    "tools/c1-hold-pill-regression.cjs": "ebac7ae0c647ffe1e9f8fbf1981aa90900d74e43ffa8511b17fe3d3c0b2c1f82",
+    "tools/c1-position-presentation-regression.cjs": "69b1ee97018a3a054e7f9116df2e1be89984a049715faeaf1d2af52b9c0ae4e1",
+    "tools/c1-screen-evidence-regression.cjs": "a3d7828e127210b8abdb9689f6622afd644b1f1e18a257d3dab2c79e2219eb3d",
+    "tools/stage-badges-regression.cjs": "e78c5e5f36d2a97d15aa73f474a6e3cdcda1dd7ee6de0426cf713c55be12fcef",
+    "vercel.json": "baa1e1b158f36612b6179d85f8c2cd3662fe013a71d786d213b9014225ea91df"
+  }
+}

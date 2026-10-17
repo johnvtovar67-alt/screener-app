@@ -4,7 +4,8 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const crypto=require('node:crypto');
-const page=fs.readFileSync('pages/index.js','utf8');
+// Reverse only the owner-authorized HOLD presentation adapter; historical hashes remain pinned.
+const page=fs.readFileSync('pages/index.js','utf8').replace(/ style=\{c1HoldPillStyle\((a|displayAction)\)\} /g,'').replace(/\{c1HoldPillLabel\((a|displayAction)\)\}/g,'{$1}');
 const opportunities=fs.readFileSync('components/C1AccountOpportunities.js','utf8');
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
 const exact=(name,value,expected)=>assert.equal(sha(value),expected,`${name} must match the pinned historical UI region`);

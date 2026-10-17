@@ -1,0 +1,55 @@
+{
+  "scope": "Synthetic HOLD rendering in real Chromium; production CSS and helper",
+  "cases": [
+    {
+      "viewport": 1440,
+      "contexts": [
+        "Portfolio desktop",
+        "Portfolio mobile",
+        "Card",
+        "Opportunities",
+        "Watch holding"
+      ],
+      "status": "PASS",
+      "geometry": {
+        "height": "26px",
+        "paddingTop": "0px",
+        "paddingRight": "9px",
+        "paddingBottom": "0px",
+        "paddingLeft": "9px",
+        "fontSize": "12px",
+        "lineHeight": "24px",
+        "borderRadius": "999px",
+        "fontWeight": "800"
+      },
+      "colorsPreserved": true,
+      "nonHoldGeometryUnchanged": true
+    },
+    {
+      "viewport": 390,
+      "contexts": [
+        "Portfolio desktop",
+        "Portfolio mobile",
+        "Card",
+        "Opportunities",
+        "Watch holding"
+      ],
+      "status": "PASS",
+      "geometry": {
+        "height": "26px",
+        "paddingTop": "0px",
+        "paddingRight": "9px",
+        "paddingBottom": "0px",
+        "paddingLeft": "9px",
+        "fontSize": "12px",
+        "lineHeight": "24px",
+        "borderRadius": "999px",
+        "fontWeight": "800"
+      },
+      "colorsPreserved": true,
+      "nonHoldGeometryUnchanged": true
+    }
+  ],
+  "liveWrites": 0,
+  "status": "PASS"
+}
