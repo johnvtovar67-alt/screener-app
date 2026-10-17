@@ -1,0 +1,26 @@
+{
+  "author": "independent_control_review agent",
+  "scope": "Synthetic source/ledger/fill gates only",
+  "cases": [
+    {
+      "costBps": 12,
+      "strictControlIdentity": "PASS",
+      "futureOHLCDecisionInvariance": "PASS",
+      "independentCashSharesBasis": "PASS"
+    },
+    {
+      "costBps": 25,
+      "strictControlIdentity": "PASS",
+      "futureOHLCDecisionInvariance": "PASS",
+      "independentCashSharesBasis": "PASS"
+    },
+    {
+      "costBps": 50,
+      "strictControlIdentity": "PASS",
+      "futureOHLCDecisionInvariance": "PASS",
+      "independentCashSharesBasis": "PASS"
+    }
+  ],
+  "stopTriggerAndGapPrice": "PASS",
+  "historicalExecutions": 0
+}

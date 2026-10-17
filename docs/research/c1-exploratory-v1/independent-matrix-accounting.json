@@ -1,0 +1,1414 @@
+{
+  "author": "independent_control_review agent",
+  "scope": "Postprocessing only; no strategies rerun; conditional exploratory cohort only",
+  "completedPrimaryRuns": 36,
+  "runs": {
+    "C-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 3.637978807091713e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 6403.445563645222,
+      "unrealizedPnl": -5699.250020000006,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 8812.121675645232,
+          "riskSales": 25
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -2408.6761120000106,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 40,
+      "riskSellFills": 31
+    },
+    "C-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 5423.164614432533,
+      "unrealizedPnl": -5811.797499999987,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 7937.983914432527,
+          "riskSales": 25
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -2514.8192999999937,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 40,
+      "riskSellFills": 31
+    },
+    "C-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 8036.133179895054,
+      "unrealizedPnl": -4463.561549999988,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 10170.112279895051,
+          "riskSales": 23
+        },
+        "0-4": {
+          "sales": 5,
+          "realizedPnl": -2133.979099999997,
+          "riskSales": 5
+        }
+      },
+      "sellFills": 39,
+      "riskSellFills": 28
+    },
+    "M-deterioration-off-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 0,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 5242.820003839404,
+      "unrealizedPnl": -2924.683892000008,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 24,
+          "realizedPnl": 5242.820003839404,
+          "riskSales": 12
+        }
+      },
+      "sellFills": 24,
+      "riskSellFills": 12
+    },
+    "M-deterioration-off-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 0,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 4091.123112452505,
+      "unrealizedPnl": -3292.7173249999923,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 25,
+          "realizedPnl": 4091.123112452505,
+          "riskSales": 12
+        }
+      },
+      "sellFills": 25,
+      "riskSellFills": 12
+    },
+    "M-deterioration-off-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 3.637978807091713e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 3873.9743944400243,
+      "unrealizedPnl": -3898.9142999999854,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 24,
+          "realizedPnl": 4985.274148940023,
+          "riskSales": 11
+        },
+        "0-4": {
+          "sales": 1,
+          "realizedPnl": -1111.2997544999992,
+          "riskSales": 1
+        }
+      },
+      "sellFills": 25,
+      "riskSellFills": 12
+    },
+    "M-entry-off-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -2549.0821070736856,
+      "unrealizedPnl": 1490.4453519999945,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 28,
+          "realizedPnl": 4285.965199934321,
+          "riskSales": 23
+        },
+        "0-4": {
+          "sales": 9,
+          "realizedPnl": -6835.047307008007,
+          "riskSales": 9
+        }
+      },
+      "sellFills": 37,
+      "riskSellFills": 32
+    },
+    "M-entry-off-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -3215.900181559976,
+      "unrealizedPnl": 1369.7761250000033,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 28,
+          "realizedPnl": 3747.615422190017,
+          "riskSales": 23
+        },
+        "0-4": {
+          "sales": 9,
+          "realizedPnl": -6963.515603749993,
+          "riskSales": 9
+        }
+      },
+      "sellFills": 37,
+      "riskSellFills": 32
+    },
+    "M-entry-off-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -4708.040590009965,
+      "unrealizedPnl": 1127.5153500000074,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 28,
+          "realizedPnl": 2490.3074599900333,
+          "riskSales": 23
+        },
+        "0-4": {
+          "sales": 9,
+          "realizedPnl": -7198.348049999998,
+          "riskSales": 9
+        }
+      },
+      "sellFills": 37,
+      "riskSellFills": 32
+    },
+    "M-giveback-off-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 3.637978807091713e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 6815.290755645223,
+      "unrealizedPnl": -5752.067856000005,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 9223.966867645233,
+          "riskSales": 25
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -2408.6761120000106,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 40,
+      "riskSellFills": 31
+    },
+    "M-giveback-off-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 5830.593489432535,
+      "unrealizedPnl": -5858.025749999987,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 8345.412789432528,
+          "riskSales": 25
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -2514.8192999999937,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 40,
+      "riskSellFills": 31
+    },
+    "M-giveback-off-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 8036.133179895054,
+      "unrealizedPnl": -4463.561549999988,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 10170.112279895051,
+          "riskSales": 23
+        },
+        "0-4": {
+          "sales": 5,
+          "realizedPnl": -2133.979099999997,
+          "riskSales": 5
+        }
+      },
+      "sellFills": 39,
+      "riskSellFills": 28
+    },
+    "M-macd-off-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -1625.6123406568622,
+      "unrealizedPnl": -127.20729200000784,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 11,
+          "realizedPnl": -7502.960024656844,
+          "riskSales": 11
+        },
+        "5-29": {
+          "sales": 38,
+          "realizedPnl": 5877.347683999982,
+          "riskSales": 35
+        }
+      },
+      "sellFills": 49,
+      "riskSellFills": 46
+    },
+    "M-macd-off-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -3334.6979477512086,
+      "unrealizedPnl": -66.43479999999266,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 12,
+          "realizedPnl": -8042.047347751242,
+          "riskSales": 12
+        },
+        "5-29": {
+          "sales": 38,
+          "realizedPnl": 4707.349400000034,
+          "riskSales": 35
+        }
+      },
+      "sellFills": 50,
+      "riskSellFills": 47
+    },
+    "M-macd-off-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -4243.551704924948,
+      "unrealizedPnl": -577.5551999999891,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 11,
+          "realizedPnl": -7419.014504924995,
+          "riskSales": 11
+        },
+        "5-29": {
+          "sales": 38,
+          "realizedPnl": 3175.462800000047,
+          "riskSales": 35
+        }
+      },
+      "sellFills": 49,
+      "riskSellFills": 46
+    },
+    "Q9-cap3-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 3.637978807091713e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 6403.445563645222,
+      "unrealizedPnl": -5699.250020000006,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 8812.121675645232,
+          "riskSales": 25
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -2408.6761120000106,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 40,
+      "riskSellFills": 31
+    },
+    "Q9-cap3-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 5423.164614432533,
+      "unrealizedPnl": -5811.797499999987,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 7937.983914432527,
+          "riskSales": 25
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -2514.8192999999937,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 40,
+      "riskSellFills": 31
+    },
+    "Q9-cap3-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 8036.133179895054,
+      "unrealizedPnl": -4463.561549999988,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 10170.112279895051,
+          "riskSales": 23
+        },
+        "0-4": {
+          "sales": 5,
+          "realizedPnl": -2133.979099999997,
+          "riskSales": 5
+        }
+      },
+      "sellFills": 39,
+      "riskSellFills": 28
+    },
+    "S-A-cap3-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 2922.748565404784,
+      "unrealizedPnl": 232.5000079999955,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 36,
+          "realizedPnl": 6197.824176164786,
+          "riskSales": 24
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -3275.075610760002,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 42,
+      "riskSellFills": 30
+    },
+    "S-A-cap3-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 2544.9887331662712,
+      "unrealizedPnl": 176.26825000000548,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 36,
+          "realizedPnl": 5875.79102847877,
+          "riskSales": 24
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -3330.802295312499,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 42,
+      "riskSellFills": 30
+    },
+    "S-A-cap3-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 1626.467457665026,
+      "unrealizedPnl": 49.82925000000688,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 36,
+          "realizedPnl": 5013.851213915024,
+          "riskSales": 24
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -3387.3837562499984,
+          "riskSales": 6
+        }
+      },
+      "sellFills": 42,
+      "riskSellFills": 30
+    },
+    "S-A-cap9-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -4374.426860074176,
+      "unrealizedPnl": -1706.5751400000058,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 9,
+        "cooldown15": 9,
+        "sector40": 9
+      },
+      "maxAccountDistinctNames": 9,
+      "maxAccountSleeveLots": 27,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 29,
+          "realizedPnl": -8122.822243869072,
+          "riskSales": 29
+        },
+        "5-29": {
+          "sales": 79,
+          "realizedPnl": 3748.395383794895,
+          "riskSales": 61
+        }
+      },
+      "sellFills": 108,
+      "riskSellFills": 90
+    },
+    "S-A-cap9-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -5161.589978626207,
+      "unrealizedPnl": -1826.07519999999,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 9,
+        "cooldown15": 9,
+        "sector40": 9
+      },
+      "maxAccountDistinctNames": 9,
+      "maxAccountSleeveLots": 27,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 29,
+          "realizedPnl": -8259.22310412499,
+          "riskSales": 29
+        },
+        "5-29": {
+          "sales": 79,
+          "realizedPnl": 3097.6331254987836,
+          "riskSales": 61
+        }
+      },
+      "sellFills": 108,
+      "riskSellFills": 90
+    },
+    "S-A-cap9-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -7142.87303730496,
+      "unrealizedPnl": -1869.9921999999895,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 9,
+        "cooldown15": 9,
+        "sector40": 9
+      },
+      "maxAccountDistinctNames": 9,
+      "maxAccountSleeveLots": 27,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 29,
+          "realizedPnl": -8658.344766499995,
+          "riskSales": 29
+        },
+        "5-29": {
+          "sales": 79,
+          "realizedPnl": 1515.471729195035,
+          "riskSales": 60
+        }
+      },
+      "sellFills": 108,
+      "riskSellFills": 89
+    },
+    "S-B-cap3-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 4.3655745685100555e-11,
+      "realizedPnl": 4600.373798944116,
+      "unrealizedPnl": -1198.0265320000055,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 40,
+          "realizedPnl": 6940.039778944116,
+          "riskSales": 31
+        },
+        "0-4": {
+          "sales": 3,
+          "realizedPnl": -2339.66598,
+          "riskSales": 3
+        }
+      },
+      "sellFills": 43,
+      "riskSellFills": 34
+    },
+    "S-B-cap3-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 3998.3728481950275,
+      "unrealizedPnl": -1257.2536499999958,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 40,
+          "realizedPnl": 6396.575648195027,
+          "riskSales": 31
+        },
+        "0-4": {
+          "sales": 3,
+          "realizedPnl": -2398.202799999999,
+          "riskSales": 3
+        }
+      },
+      "sellFills": 43,
+      "riskSellFills": 34
+    },
+    "S-B-cap3-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 2857.3539649450354,
+      "unrealizedPnl": -1405.2644999999934,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 5,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 40,
+          "realizedPnl": 5349.64896494503,
+          "riskSales": 31
+        },
+        "0-4": {
+          "sales": 3,
+          "realizedPnl": -2492.294999999994,
+          "riskSales": 3
+        }
+      },
+      "sellFills": 43,
+      "riskSellFills": 34
+    },
+    "S-B-cap9-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 3.637978807091713e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -5414.142055152581,
+      "unrealizedPnl": -1536.4538760000037,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 7,
+        "cooldown15": 8,
+        "sector40": 8
+      },
+      "maxAccountDistinctNames": 9,
+      "maxAccountSleeveLots": 21,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 24,
+          "realizedPnl": -9025.049632649614,
+          "riskSales": 24
+        },
+        "5-29": {
+          "sales": 64,
+          "realizedPnl": 3610.9075774970333,
+          "riskSales": 48
+        }
+      },
+      "sellFills": 88,
+      "riskSellFills": 72
+    },
+    "S-B-cap9-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 4.3655745685100555e-11,
+      "realizedPnl": -6317.860084074953,
+      "unrealizedPnl": -1665.4335499999904,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 7,
+        "cooldown15": 8,
+        "sector40": 8
+      },
+      "maxAccountDistinctNames": 9,
+      "maxAccountSleeveLots": 21,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 24,
+          "realizedPnl": -9227.31397712499,
+          "riskSales": 24
+        },
+        "5-29": {
+          "sales": 64,
+          "realizedPnl": 2909.4538930500366,
+          "riskSales": 48
+        }
+      },
+      "sellFills": 88,
+      "riskSellFills": 72
+    },
+    "S-B-cap9-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 3.637978807091713e-12,
+      "maxEquityError": 4.3655745685100555e-11,
+      "realizedPnl": -3369.6816305649572,
+      "unrealizedPnl": -1461.0688999999886,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 7,
+        "cooldown15": 7,
+        "sector40": 7
+      },
+      "maxAccountDistinctNames": 10,
+      "maxAccountSleeveLots": 21,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 22,
+          "realizedPnl": -8459.033294354991,
+          "riskSales": 22
+        },
+        "5-29": {
+          "sales": 63,
+          "realizedPnl": 5089.351663790034,
+          "riskSales": 44
+        }
+      },
+      "sellFills": 85,
+      "riskSellFills": 66
+    },
+    "S-C-cap3-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 8622.13225338545,
+      "unrealizedPnl": -1128.2486680000065,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 39,
+          "realizedPnl": 11065.582189385454,
+          "riskSales": 30
+        },
+        "0-4": {
+          "sales": 3,
+          "realizedPnl": -2443.4499360000023,
+          "riskSales": 3
+        }
+      },
+      "sellFills": 42,
+      "riskSellFills": 33
+    },
+    "S-C-cap3-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 7899.718572680037,
+      "unrealizedPnl": -1226.117774999994,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 39,
+          "realizedPnl": 10406.439547680036,
+          "riskSales": 30
+        },
+        "0-4": {
+          "sales": 3,
+          "realizedPnl": -2506.7209749999993,
+          "riskSales": 3
+        }
+      },
+      "sellFills": 42,
+      "riskSellFills": 33
+    },
+    "S-C-cap3-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": 7174.725468555049,
+      "unrealizedPnl": -1494.7132499999939,
+      "perSleevePositionCap": 3,
+      "maxPositionsPerSleeve": {
+        "base": 3,
+        "cooldown15": 3,
+        "sector40": 3
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 9,
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 39,
+          "realizedPnl": 9020.393568555044,
+          "riskSales": 30
+        },
+        "0-4": {
+          "sales": 2,
+          "realizedPnl": -1845.6680999999958,
+          "riskSales": 2
+        }
+      },
+      "sellFills": 41,
+      "riskSellFills": 32
+    },
+    "S-C-cap9-12": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -5224.761913563399,
+      "unrealizedPnl": -1110.444912000004,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 6,
+        "cooldown15": 7,
+        "sector40": 6
+      },
+      "maxAccountDistinctNames": 7,
+      "maxAccountSleeveLots": 18,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 22,
+          "realizedPnl": -10184.7442080324,
+          "riskSales": 22
+        },
+        "5-29": {
+          "sales": 52,
+          "realizedPnl": 4959.982294469001,
+          "riskSales": 37
+        }
+      },
+      "sellFills": 74,
+      "riskSellFills": 59
+    },
+    "S-C-cap9-25": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 1.4551915228366852e-11,
+      "maxEquityError": 1.4551915228366852e-11,
+      "realizedPnl": -5800.5035867074575,
+      "unrealizedPnl": -1251.0579749999915,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 6,
+        "cooldown15": 7,
+        "sector40": 6
+      },
+      "maxAccountDistinctNames": 7,
+      "maxAccountSleeveLots": 18,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 22,
+          "realizedPnl": -10399.715513208736,
+          "riskSales": 22
+        },
+        "5-29": {
+          "sales": 51,
+          "realizedPnl": 4599.211926501278,
+          "riskSales": 36
+        }
+      },
+      "sellFills": 73,
+      "riskSellFills": 58
+    },
+    "S-C-cap9-50": {
+      "ledgerStatus": "PASS",
+      "maxCashError": 7.275957614183426e-12,
+      "maxEquityError": 2.9103830456733704e-11,
+      "realizedPnl": -2662.3124138699504,
+      "unrealizedPnl": -1886.0236999999865,
+      "perSleevePositionCap": 9,
+      "maxPositionsPerSleeve": {
+        "base": 6,
+        "cooldown15": 6,
+        "sector40": 6
+      },
+      "maxAccountDistinctNames": 6,
+      "maxAccountSleeveLots": 18,
+      "holdingAgeExternal": {
+        "0-4": {
+          "sales": 23,
+          "realizedPnl": -10261.297671794986,
+          "riskSales": 23
+        },
+        "5-29": {
+          "sales": 51,
+          "realizedPnl": 7598.9852579250355,
+          "riskSales": 37
+        }
+      },
+      "sellFills": 74,
+      "riskSellFills": 60
+    }
+  },
+  "commonOpportunity": {
+    "C-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 70,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 145,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "C-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 70,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 145,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "C-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 80,
+      "referenceNewBuyNameDays": 21,
+      "referenceUncoveredNameDays": 132,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "M-deterioration-off-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 103,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 112,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "M-deterioration-off-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 99,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 116,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "M-deterioration-off-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 95,
+      "referenceNewBuyNameDays": 17,
+      "referenceUncoveredNameDays": 121,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "M-entry-off-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 82,
+      "referenceNewBuyNameDays": 7,
+      "referenceUncoveredNameDays": 144,
+      "armOnlyEligibleNameDays": 85,
+      "armOnlyNewBuyNameDays": 13,
+      "referenceEligibleButArmScreenExcludedNameDays": 129
+    },
+    "M-entry-off-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 82,
+      "referenceNewBuyNameDays": 7,
+      "referenceUncoveredNameDays": 144,
+      "armOnlyEligibleNameDays": 85,
+      "armOnlyNewBuyNameDays": 13,
+      "referenceEligibleButArmScreenExcludedNameDays": 129
+    },
+    "M-entry-off-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 82,
+      "referenceNewBuyNameDays": 7,
+      "referenceUncoveredNameDays": 144,
+      "armOnlyEligibleNameDays": 85,
+      "armOnlyNewBuyNameDays": 13,
+      "referenceEligibleButArmScreenExcludedNameDays": 129
+    },
+    "M-giveback-off-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 70,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 145,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "M-giveback-off-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 70,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 145,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "M-giveback-off-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 80,
+      "referenceNewBuyNameDays": 21,
+      "referenceUncoveredNameDays": 132,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "M-macd-off-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 81,
+      "referenceNewBuyNameDays": 17,
+      "referenceUncoveredNameDays": 135,
+      "armOnlyEligibleNameDays": 49,
+      "armOnlyNewBuyNameDays": 6,
+      "referenceEligibleButArmScreenExcludedNameDays": 106
+    },
+    "M-macd-off-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 79,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 136,
+      "armOnlyEligibleNameDays": 49,
+      "armOnlyNewBuyNameDays": 5,
+      "referenceEligibleButArmScreenExcludedNameDays": 106
+    },
+    "M-macd-off-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 79,
+      "referenceNewBuyNameDays": 17,
+      "referenceUncoveredNameDays": 137,
+      "armOnlyEligibleNameDays": 49,
+      "armOnlyNewBuyNameDays": 7,
+      "referenceEligibleButArmScreenExcludedNameDays": 106
+    },
+    "Q9-cap3-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 70,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 145,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "Q9-cap3-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 70,
+      "referenceNewBuyNameDays": 18,
+      "referenceUncoveredNameDays": 145,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "Q9-cap3-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 80,
+      "referenceNewBuyNameDays": 21,
+      "referenceUncoveredNameDays": 132,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-A-cap3-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 58,
+      "referenceNewBuyNameDays": 19,
+      "referenceUncoveredNameDays": 156,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-A-cap3-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 58,
+      "referenceNewBuyNameDays": 19,
+      "referenceUncoveredNameDays": 156,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-A-cap3-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 58,
+      "referenceNewBuyNameDays": 19,
+      "referenceUncoveredNameDays": 156,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-A-cap9-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 135,
+      "referenceNewBuyNameDays": 45,
+      "referenceUncoveredNameDays": 53,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-A-cap9-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 135,
+      "referenceNewBuyNameDays": 45,
+      "referenceUncoveredNameDays": 53,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-A-cap9-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 135,
+      "referenceNewBuyNameDays": 46,
+      "referenceUncoveredNameDays": 52,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-B-cap3-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 59,
+      "referenceNewBuyNameDays": 20,
+      "referenceUncoveredNameDays": 154,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-B-cap3-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 59,
+      "referenceNewBuyNameDays": 20,
+      "referenceUncoveredNameDays": 154,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-B-cap3-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 59,
+      "referenceNewBuyNameDays": 20,
+      "referenceUncoveredNameDays": 154,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-B-cap9-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 135,
+      "referenceNewBuyNameDays": 42,
+      "referenceUncoveredNameDays": 56,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-B-cap9-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 135,
+      "referenceNewBuyNameDays": 42,
+      "referenceUncoveredNameDays": 56,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-B-cap9-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 142,
+      "referenceNewBuyNameDays": 41,
+      "referenceUncoveredNameDays": 50,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-C-cap3-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 70,
+      "referenceNewBuyNameDays": 22,
+      "referenceUncoveredNameDays": 141,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-C-cap3-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 70,
+      "referenceNewBuyNameDays": 22,
+      "referenceUncoveredNameDays": 141,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-C-cap3-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 71,
+      "referenceNewBuyNameDays": 22,
+      "referenceUncoveredNameDays": 140,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 70
+    },
+    "S-C-cap9-12": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 107,
+      "referenceNewBuyNameDays": 35,
+      "referenceUncoveredNameDays": 91,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-C-cap9-25": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 106,
+      "referenceNewBuyNameDays": 35,
+      "referenceUncoveredNameDays": 92,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    },
+    "S-C-cap9-50": {
+      "referenceQ9EligibleNameDays": 233,
+      "referenceAlreadyHeldNameDays": 119,
+      "referenceNewBuyNameDays": 34,
+      "referenceUncoveredNameDays": 80,
+      "armOnlyEligibleNameDays": 0,
+      "armOnlyNewBuyNameDays": 0,
+      "referenceEligibleButArmScreenExcludedNameDays": 0
+    }
+  },
+  "sourceHashes": {
+    "run-C-12.json": "bd447ea8e8dca65af53500d1035e35a2bc706689b7b9cbbdf0a659e547d9e250",
+    "run-C-25.json": "0fe4458aad26a26bfad2f0499f4816c1374f526980b3cd89bbef63626279754f",
+    "run-C-50.json": "7765c544b1c0e526160ac20a5b52db143c1cf5bcf4c33dd64cc11042c65a851e",
+    "run-M-deterioration-off-12.json": "e1ab8c6ceb4a1a37bb8e1d405aa6cc2cdb51221723dedf40d315e8a4d0b16d86",
+    "run-M-deterioration-off-25.json": "8580d040aa054cea686219de23d0a31ed25f56103b6e6f7b6822f458f3e10577",
+    "run-M-deterioration-off-50.json": "057eb1eca1ab7d5b9ca8782d59f932d88857037740e79a505f0161f21f11246c",
+    "run-M-entry-off-12.json": "11a65bd5c26ed01a5576ae856657ca67f7577c75748bad97baa617ba6c8fc164",
+    "run-M-entry-off-25.json": "1b2cd4b038a689cf92b0e0e8ceab7eb6141d403597e7643f33a3679992dd9727",
+    "run-M-entry-off-50.json": "37feee2793134842de112b8a403cabad8615d72a2fed150981ce0b4cd407ac50",
+    "run-M-giveback-off-12.json": "a11f7af265e64cbe016cbb82b6ad53b0f071f15b7d8cbec2b0b5d621761a775c",
+    "run-M-giveback-off-25.json": "1d284520ae4dd0f8efc104004703116b605db9cdf834511a221f1702f58deb66",
+    "run-M-giveback-off-50.json": "f7404a8617f7190043eaa255bd61fcafcef5e9152334d1ecc6d8bdd450ec7608",
+    "run-M-macd-off-12.json": "a96d32f4668d320e73f1a55a4f8c4c8a4b28551a626a024088ad584b82e8a039",
+    "run-M-macd-off-25.json": "862f5a558c21989f44662f22e7c58854af815f711628b2f666872c5fcb78f8cb",
+    "run-M-macd-off-50.json": "905ed0e1e749891ce6e366bc07eb6a088b301e5b4649bdb6c66c6f0e37fa271c",
+    "run-Q9-cap3-12.json": "b5085e1b25b3455902a6517250c2bd7b1841af91de9eb84bcfa4ec30c9d9c3aa",
+    "run-Q9-cap3-25.json": "4af6358eda34d608640a2fd4acdc13225f36643f554177fe6978b896765a429d",
+    "run-Q9-cap3-50.json": "7415885ea112aa47b7eb3715dd9cdd37f98067dfb45266e553eb47d71edd34fa",
+    "run-S-A-cap3-12.json": "3e0cddef7f588f9de053ae8bde2efdf4ff614c274f74126070379d6b07d55f85",
+    "run-S-A-cap3-25.json": "f8aa55079c60370e633bff2e8f580c12d8e97a4e3e8895d352dcd35a1ee5dd10",
+    "run-S-A-cap3-50.json": "1a7b7e4fffba547c4320df0e64f0f0c59fe76098da61db6dfea92142f7d678d3",
+    "run-S-A-cap9-12.json": "663065f3b3a328205321a0d9ec0fba8ec15b9a04942d803682043a085b32b8ab",
+    "run-S-A-cap9-25.json": "3c262903ecb50e9f16c9755393332016bb9ed2b7a1093332878e6149e068a7be",
+    "run-S-A-cap9-50.json": "2d1261263826e8eaa6c5481e00ecee4c9fc24f8361abbb9653fce6594d6291d6",
+    "run-S-B-cap3-12.json": "74e299ac9c82a2cfcdb89275a92f19b34f46c70240f4912af49678959f50f1ae",
+    "run-S-B-cap3-25.json": "c84673ec7d7b6eef9a7a29c4263dda0a0e0e996a1ed6c72e069f5196ec2c91b3",
+    "run-S-B-cap3-50.json": "8360dd860d00413a71bad7f0d186098d0e318285f4f2a101de5696f208b072b2",
+    "run-S-B-cap9-12.json": "e33152b8fe50d80ed0191d28967393033a93a19451f88cb9cdda366c28c9644b",
+    "run-S-B-cap9-25.json": "fe221267ea524db5f35149e1670110f49b4927f2daedb31a483da18761643c2e",
+    "run-S-B-cap9-50.json": "c6e9ee04b031c0d5d165ea2c358299d925a52a77c2319d2ebf7034bce7f9bdc9",
+    "run-S-C-cap3-12.json": "edf7e306d4ee56d3ee028fe8530ddeb1465ad4ef670782deef906a34020a1bad",
+    "run-S-C-cap3-25.json": "0e6d83f609fd8adf12f392dfa9ad91dee833631930ff0b73a4d210f293cf9ee7",
+    "run-S-C-cap3-50.json": "1ce3b4f903ee418c06bb21bba756b4028526b515d7b3412bd5762be9c96eb73c",
+    "run-S-C-cap9-12.json": "4ffcab113ab89977af68144c77cc632cd79ca651569aeb84c90f520172f65389",
+    "run-S-C-cap9-25.json": "5f225fccc875309c62b14e3456767b3f9ed08320f8b2b328c172666001d8530b",
+    "run-S-C-cap9-50.json": "72646b5efd4ad440be2b8d9211f339d9ca8c3aa2f32a24645eea3c8070b891c0"
+  },
+  "historicalSimulations": 0,
+  "limitations": [
+    "Q9 eligible reference is screen-only, not certified sleeve/risk/issuer/funding execution permission; uncovered is not necessarily missed attainable profit.",
+    "Reference uses current-momentum baseline; arm-only eligibility and purchases reported separately, especially entry-off.",
+    "Counts are exact name-days; holding coverage at account union level differs from sleeve completion opportunity.",
+    "Holding age computed session-index distance and independent average-cost fill accounting; realized PnL excludes remaining open gains/losses.",
+    "Momentum ablations remove components: improvement by ablation does not mean original enhancement helped.",
+    "Caps3/9 are per sleeve, not per account; daily-close and intraday-after-fill maxima audited."
+  ]
+}

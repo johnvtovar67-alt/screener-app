@@ -1,0 +1,490 @@
+{
+  "status": "PASS",
+  "freezeHash": "b5c5e2b5163ed4ffe31e7423019bef4dedea8dc8d999b2e71a1465ba2621eef7",
+  "completed": 69,
+  "receipts": [
+    {
+      "arm": "M-entry-off",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-entry-off-12.json",
+      "sha256": "11a65bd5c26ed01a5576ae856657ca67f7577c75748bad97baa617ba6c8fc164"
+    },
+    {
+      "arm": "M-macd-off",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-macd-off-12.json",
+      "sha256": "a96d32f4668d320e73f1a55a4f8c4c8a4b28551a626a024088ad584b82e8a039"
+    },
+    {
+      "arm": "M-deterioration-off",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-deterioration-off-12.json",
+      "sha256": "e1ab8c6ceb4a1a37bb8e1d405aa6cc2cdb51221723dedf40d315e8a4d0b16d86"
+    },
+    {
+      "arm": "M-giveback-off",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-giveback-off-12.json",
+      "sha256": "a11f7af265e64cbe016cbb82b6ad53b0f071f15b7d8cbec2b0b5d621761a775c"
+    },
+    {
+      "arm": "Q9-cap3",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-Q9-cap3-12.json",
+      "sha256": "b5085e1b25b3455902a6517250c2bd7b1841af91de9eb84bcfa4ec30c9d9c3aa"
+    },
+    {
+      "arm": "S-A-cap3",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap3-12.json",
+      "sha256": "3e0cddef7f588f9de053ae8bde2efdf4ff614c274f74126070379d6b07d55f85"
+    },
+    {
+      "arm": "S-A-cap9",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap9-12.json",
+      "sha256": "663065f3b3a328205321a0d9ec0fba8ec15b9a04942d803682043a085b32b8ab"
+    },
+    {
+      "arm": "S-B-cap3",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap3-12.json",
+      "sha256": "74e299ac9c82a2cfcdb89275a92f19b34f46c70240f4912af49678959f50f1ae"
+    },
+    {
+      "arm": "S-B-cap9",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap9-12.json",
+      "sha256": "e33152b8fe50d80ed0191d28967393033a93a19451f88cb9cdda366c28c9644b"
+    },
+    {
+      "arm": "S-C-cap3",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap3-12.json",
+      "sha256": "edf7e306d4ee56d3ee028fe8530ddeb1465ad4ef670782deef906a34020a1bad"
+    },
+    {
+      "arm": "S-C-cap9",
+      "cost": 12,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap9-12.json",
+      "sha256": "4ffcab113ab89977af68144c77cc632cd79ca651569aeb84c90f520172f65389"
+    },
+    {
+      "arm": "M-entry-off",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-entry-off-25.json",
+      "sha256": "1b2cd4b038a689cf92b0e0e8ceab7eb6141d403597e7643f33a3679992dd9727"
+    },
+    {
+      "arm": "M-macd-off",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-macd-off-25.json",
+      "sha256": "862f5a558c21989f44662f22e7c58854af815f711628b2f666872c5fcb78f8cb"
+    },
+    {
+      "arm": "M-deterioration-off",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-deterioration-off-25.json",
+      "sha256": "8580d040aa054cea686219de23d0a31ed25f56103b6e6f7b6822f458f3e10577"
+    },
+    {
+      "arm": "M-giveback-off",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-giveback-off-25.json",
+      "sha256": "1d284520ae4dd0f8efc104004703116b605db9cdf834511a221f1702f58deb66"
+    },
+    {
+      "arm": "Q9-cap3",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-Q9-cap3-25.json",
+      "sha256": "4af6358eda34d608640a2fd4acdc13225f36643f554177fe6978b896765a429d"
+    },
+    {
+      "arm": "S-A-cap3",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap3-25.json",
+      "sha256": "f8aa55079c60370e633bff2e8f580c12d8e97a4e3e8895d352dcd35a1ee5dd10"
+    },
+    {
+      "arm": "S-A-cap9",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap9-25.json",
+      "sha256": "3c262903ecb50e9f16c9755393332016bb9ed2b7a1093332878e6149e068a7be"
+    },
+    {
+      "arm": "S-B-cap3",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap3-25.json",
+      "sha256": "c84673ec7d7b6eef9a7a29c4263dda0a0e0e996a1ed6c72e069f5196ec2c91b3"
+    },
+    {
+      "arm": "S-B-cap9",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap9-25.json",
+      "sha256": "fe221267ea524db5f35149e1670110f49b4927f2daedb31a483da18761643c2e"
+    },
+    {
+      "arm": "S-C-cap3",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap3-25.json",
+      "sha256": "0e6d83f609fd8adf12f392dfa9ad91dee833631930ff0b73a4d210f293cf9ee7"
+    },
+    {
+      "arm": "S-C-cap9",
+      "cost": 25,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap9-25.json",
+      "sha256": "5f225fccc875309c62b14e3456767b3f9ed08320f8b2b328c172666001d8530b"
+    },
+    {
+      "arm": "M-entry-off",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-entry-off-50.json",
+      "sha256": "37feee2793134842de112b8a403cabad8615d72a2fed150981ce0b4cd407ac50"
+    },
+    {
+      "arm": "M-macd-off",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-macd-off-50.json",
+      "sha256": "905ed0e1e749891ce6e366bc07eb6a088b301e5b4649bdb6c66c6f0e37fa271c"
+    },
+    {
+      "arm": "M-deterioration-off",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-deterioration-off-50.json",
+      "sha256": "057eb1eca1ab7d5b9ca8782d59f932d88857037740e79a505f0161f21f11246c"
+    },
+    {
+      "arm": "M-giveback-off",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-giveback-off-50.json",
+      "sha256": "f7404a8617f7190043eaa255bd61fcafcef5e9152334d1ecc6d8bdd450ec7608"
+    },
+    {
+      "arm": "Q9-cap3",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-Q9-cap3-50.json",
+      "sha256": "7415885ea112aa47b7eb3715dd9cdd37f98067dfb45266e553eb47d71edd34fa"
+    },
+    {
+      "arm": "S-A-cap3",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap3-50.json",
+      "sha256": "1a7b7e4fffba547c4320df0e64f0f0c59fe76098da61db6dfea92142f7d678d3"
+    },
+    {
+      "arm": "S-A-cap9",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap9-50.json",
+      "sha256": "2d1261263826e8eaa6c5481e00ecee4c9fc24f8361abbb9653fce6594d6291d6"
+    },
+    {
+      "arm": "S-B-cap3",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap3-50.json",
+      "sha256": "8360dd860d00413a71bad7f0d186098d0e318285f4f2a101de5696f208b072b2"
+    },
+    {
+      "arm": "S-B-cap9",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap9-50.json",
+      "sha256": "c6e9ee04b031c0d5d165ea2c358299d925a52a77c2319d2ebf7034bce7f9bdc9"
+    },
+    {
+      "arm": "S-C-cap3",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap3-50.json",
+      "sha256": "1ce3b4f903ee418c06bb21bba756b4028526b515d7b3412bd5762be9c96eb73c"
+    },
+    {
+      "arm": "S-C-cap9",
+      "cost": 50,
+      "sensitivity": "",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap9-50.json",
+      "sha256": "72646b5efd4ad440be2b8d9211f339d9ca8c3aa2f32a24645eea3c8070b891c0"
+    },
+    {
+      "arm": "C",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-C-12-volume80.json",
+      "sha256": "5a7a8919b6d99c58c563afcd37a0e23f2f13b6b6ab5a96624758e61edeabe447"
+    },
+    {
+      "arm": "M-entry-off",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-entry-off-12-volume80.json",
+      "sha256": "2c2d99697be1d648124a3653b660e61d351cf5ce5993d454e285d480c52644cb"
+    },
+    {
+      "arm": "M-macd-off",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-macd-off-12-volume80.json",
+      "sha256": "4ec9b851000c0c901fe9b20707223cd658d5cbbcec877855295238043d7b799b"
+    },
+    {
+      "arm": "M-deterioration-off",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-deterioration-off-12-volume80.json",
+      "sha256": "a214c856885a48fb87e3722a123775b90d28613f9a0c72c85d7e2b374a392a09"
+    },
+    {
+      "arm": "M-giveback-off",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-giveback-off-12-volume80.json",
+      "sha256": "38643807028f4539e3d8059a0b09e727c96e1de21c3673aa99607ddc1bc12a30"
+    },
+    {
+      "arm": "Q9-cap3",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-Q9-cap3-12-volume80.json",
+      "sha256": "89b6af31d3ca5bd79c943720f63a81f24ab2a0c30963455512630497958c8250"
+    },
+    {
+      "arm": "S-A-cap3",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap3-12-volume80.json",
+      "sha256": "d605d2b0f75ad2d3746efe19bd730fc051368aba3e1a34909cedc0b00890f5de"
+    },
+    {
+      "arm": "S-A-cap9",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap9-12-volume80.json",
+      "sha256": "c9d3d8ccd665a19b37a6cae68f63b085a9907507aebe4b08e47bb5376aba01d2"
+    },
+    {
+      "arm": "S-B-cap3",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap3-12-volume80.json",
+      "sha256": "34a906799046ebb561edeb2e0bc485111fb572152a4fe7e70d01ad66d48ea32a"
+    },
+    {
+      "arm": "S-B-cap9",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap9-12-volume80.json",
+      "sha256": "9fa72fbbba116da0e3e3c029f51f5e544ec8dcad26b1d0b4bfeb6a17c9368d15"
+    },
+    {
+      "arm": "S-C-cap3",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap3-12-volume80.json",
+      "sha256": "72dc76e29af97d620b8fd5a82ef6b4df50f38db8fe12fcd604a76cbaf0b238f1"
+    },
+    {
+      "arm": "S-C-cap9",
+      "cost": 12,
+      "sensitivity": "volume80",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap9-12-volume80.json",
+      "sha256": "82b73e4440ee6dfae747d89d98801bd0d2656c9005d0e33efe9a44c2b90102db"
+    },
+    {
+      "arm": "C",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-C-12-currentSector.json",
+      "sha256": "813c2e5bfed354bf6e17d6a81dbe8c5e61a0108bedd7333ee8709d5fadbc1ac8"
+    },
+    {
+      "arm": "M-entry-off",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-entry-off-12-currentSector.json",
+      "sha256": "ba2db4cbbc4f7a3e2d591dbdb3705715622643e4c8d1ae62f96dc1b55826f9b6"
+    },
+    {
+      "arm": "M-macd-off",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-macd-off-12-currentSector.json",
+      "sha256": "27ca2edb0bc5f3ca593cb5549fecc3850c383ff2c907f561a714c795c6cca0c0"
+    },
+    {
+      "arm": "M-deterioration-off",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-deterioration-off-12-currentSector.json",
+      "sha256": "ccebc28075a6e6c3d02156a88ab28e052ac5691d3bfafba7ea171aed4b54b78c"
+    },
+    {
+      "arm": "M-giveback-off",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-giveback-off-12-currentSector.json",
+      "sha256": "9736f661b82b8551821a52a4d058d1545643fd81a55813c9c6fa1839d1e8b42e"
+    },
+    {
+      "arm": "Q9-cap3",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-Q9-cap3-12-currentSector.json",
+      "sha256": "0632ba8507d45b250f6b888ce019ef9ad25fb8f7a15c5d090560feffa59967e0"
+    },
+    {
+      "arm": "S-A-cap3",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap3-12-currentSector.json",
+      "sha256": "4624e3c0a246424cceefd5c77e0a195ff49c98b05b4e30ae69c88675b9e8d2a4"
+    },
+    {
+      "arm": "S-A-cap9",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap9-12-currentSector.json",
+      "sha256": "448fc92933c124dbe29d07a909c5f3f6d6893825cc8c68368e7976e9aa99640e"
+    },
+    {
+      "arm": "S-B-cap3",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap3-12-currentSector.json",
+      "sha256": "ea69234240a0001ebd0cc0c6df2ece10319c7870c1d58b2c30613a0e01c4ea77"
+    },
+    {
+      "arm": "S-B-cap9",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap9-12-currentSector.json",
+      "sha256": "5a868207abf06e99e375f0b42744175a7ccf8f4f66826b37dbe9d98dfa336e34"
+    },
+    {
+      "arm": "S-C-cap3",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap3-12-currentSector.json",
+      "sha256": "3d2aad9d7485c16ae0e33492adb587f52db6ddb0c33043fc028e66ff6618ef08"
+    },
+    {
+      "arm": "S-C-cap9",
+      "cost": 12,
+      "sensitivity": "currentSector",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap9-12-currentSector.json",
+      "sha256": "62a14e11c81061f611531a7579d0a42e9c08f11bdb58dd7da050d439282a1704"
+    },
+    {
+      "arm": "C",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-C-12-eventsBlocked.json",
+      "sha256": "42c7e38e0fbfdef09a3236adde5523b91c661b0f6f0c81dea1a7b563c4d3aa8c"
+    },
+    {
+      "arm": "M-entry-off",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-entry-off-12-eventsBlocked.json",
+      "sha256": "720caa90181e33847501dd2e807088a2ecb43dcd06fd6e616799ebc0037059f8"
+    },
+    {
+      "arm": "M-macd-off",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-macd-off-12-eventsBlocked.json",
+      "sha256": "398cf7edab60108963c9cbbd2da100d80b296b862d9287fbeb5b8bc6a0ee142a"
+    },
+    {
+      "arm": "M-deterioration-off",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-deterioration-off-12-eventsBlocked.json",
+      "sha256": "89b520260030cc124672b8ed886e25fd6ccef4e7c5b0da54b8c4cbb3251417ee"
+    },
+    {
+      "arm": "M-giveback-off",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-M-giveback-off-12-eventsBlocked.json",
+      "sha256": "af16afabcf338237ad206c518b3b2c3f110ea42dcbfd0a79a5ee48f39a3576b1"
+    },
+    {
+      "arm": "Q9-cap3",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-Q9-cap3-12-eventsBlocked.json",
+      "sha256": "84880dbea357c7cfd0695e2fdaee9767b497c7055dc02104197c83f530526c7a"
+    },
+    {
+      "arm": "S-A-cap3",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap3-12-eventsBlocked.json",
+      "sha256": "949b6cc475090a59218a35873ae8244fece1b9d8a96e90c64081122c6bede1cb"
+    },
+    {
+      "arm": "S-A-cap9",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-A-cap9-12-eventsBlocked.json",
+      "sha256": "67869cff5b57324bc0826ae1ddf76ba5c2437719df646971c00cba208ae394de"
+    },
+    {
+      "arm": "S-B-cap3",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap3-12-eventsBlocked.json",
+      "sha256": "1014dd7de80d289aceadd7bcca37821c9a91f93720d05d4319790e2eccc8a21d"
+    },
+    {
+      "arm": "S-B-cap9",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-B-cap9-12-eventsBlocked.json",
+      "sha256": "9399cf494c7deb9f0a4344bee8cc4fb1ca560e8373e10d5cc722128776402bcd"
+    },
+    {
+      "arm": "S-C-cap3",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap3-12-eventsBlocked.json",
+      "sha256": "49fdda2ad379b803cb8f7c6e7099c589ed345685d550ec6bd360b25381b450e5"
+    },
+    {
+      "arm": "S-C-cap9",
+      "cost": 12,
+      "sensitivity": "eventsBlocked",
+      "path": "/workspace/work/c1-exploratory-v1/run-S-C-cap9-12-eventsBlocked.json",
+      "sha256": "07da7a160cebe0aa65363286bfe8c0f500b22e1d16de4a771c295425c7cf8334"
+    }
+  ]
+}

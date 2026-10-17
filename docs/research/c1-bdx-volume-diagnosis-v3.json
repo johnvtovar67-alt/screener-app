@@ -1,0 +1,39 @@
+{
+  "status": "ROOT_CAUSE_REPRODUCED_BUT_QUALIFICATION_FAIL",
+  "sourceReceipts": [
+    {
+      "endpoint": "historical-price-eod/dividend-adjusted",
+      "sha256": "d0531e9b2e495ea8e8bd0809add296f617ddb3dea1fb7c4fdc601aeda94f6172"
+    },
+    {
+      "endpoint": "historical-price-eod/full",
+      "sha256": "314741e5dcfabe77a60089d126bfa393c6bd6b6e46b20dc94ebd009387b26477"
+    },
+    {
+      "endpoint": "historical-price-eod/non-split-adjusted",
+      "sha256": "7c04001bc7778ffab9a6f711966017dc54b1b72357cf579b3c9b7b42b232354a"
+    }
+  ],
+  "newAdjustmentReceiptSha256": "843116565ef8576710b67fa57e9e6f1bbf4cd649f54b1351ee0d2a800894d7db",
+  "providerAdjustment": {
+    "date": "2026-02-10",
+    "numerator": "159",
+    "denominator": "125",
+    "factor": "1.272",
+    "providerType": "stock-split",
+    "notAnApprovedEconomicShareSplit": true
+  },
+  "observations": 316,
+  "reportedTwoDecimalIdentityMatches": 316,
+  "identity": "non_split_volume = ROUND_HALF_UP(full_volume / (159/125), 2)",
+  "fullIntegerVolumes": 316,
+  "nominalFractionalVolumes": 257,
+  "frozenAbsoluteShareTolerance": "0.00001",
+  "unroundedResidualFailuresAtUnchangedTolerance": 257,
+  "maximumResidualShares": "0.004465408805031446541",
+  "earlierPriceRatioInferenceFailures": 316,
+  "cleared": false,
+  "performanceRuns": 0,
+  "interpretation": "Later vendor adjustment plus two-decimal volume rounding explains all316 observed relationships. This does not independently certify the original exchange share-volume field. Reconstructing one reported field from the other still violates the frozen tolerance on257 dates.",
+  "requiredResolution": "Provider or exchange documentation/corroboration of native traded-share volume and non-stock-split distribution semantics; do not apply a1.272 ownership multiplier or use a2026 action as2025 original decision evidence."
+}

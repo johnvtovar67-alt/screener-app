@@ -1,0 +1,1344 @@
+{
+  "author": "independent_control_review agent",
+  "scope": "Independent reporting bootstrap arithmetic on existing completed curves only",
+  "seed": 20261016,
+  "block": 20,
+  "replicates": 10000,
+  "costs": {
+    "12": {
+      "M-entry-off": {
+        "meanDailyReturnDifference": -0.00033818025898750613,
+        "ci95": [
+          -0.0042423367317355794,
+          0.0035905378296508077
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0042423367317355794,
+              0.0035905378296508077
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.4632697498283394,
+              0.715223611159369
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -3.0103124202166143,
+              3.5398148610290754
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.06355238604449875,
+              0.15436789429805864
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.589041095890411,
+        "holmAdjustedP": 1
+      },
+      "M-macd-off": {
+        "meanDailyReturnDifference": -0.0003632658619824367,
+        "ci95": [
+          -0.003246809766933082,
+          0.0025229501801874725
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.003246809766933082,
+              0.0025229501801874725
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.121638002414199,
+              0.4276971699057236
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.8447340888838584,
+              1.7430198626417914
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.041259125432259625,
+              0.14553225178815565
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.6234376562343765,
+        "holmAdjustedP": 1
+      },
+      "M-deterioration-off": {
+        "meanDailyReturnDifference": 0.00022107640033794176,
+        "ci95": [
+          -0.0016532188192772742,
+          0.002127550238318338
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0016532188192772742,
+              0.002127550238318338
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.1245768142277064,
+              0.44140348002367125
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.136236353279383,
+              1.931003878423458
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.031993383901693484,
+              0.09831519592387716
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.38846115388461155,
+        "holmAdjustedP": 1
+      },
+      "M-giveback-off": {
+        "meanDailyReturnDifference": 5.645863945403202e-05,
+        "ci95": [
+          0.0,
+          0.0001667213935655199
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0.0,
+              0.0001667213935655199
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0.0,
+              0.049716450258281863
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -0.0008837723109325069,
+              0.13837792484116784
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -2.220446049250313e-16,
+              0.0059718294792049376
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.11758824117588242,
+        "holmAdjustedP": 1
+      },
+      "Q9-cap3": {
+        "meanDailyReturnDifference": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 1.0,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap3": {
+        "meanDailyReturnDifference": 0.0002631976319525448,
+        "ci95": [
+          -0.0024905577167834286,
+          0.0032856421127310464
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0024905577167834286,
+              0.0032856421127310464
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.73104830861194,
+              0.686870487040632
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.6974437141108079,
+              3.4868874069334557
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.009102461457554778,
+              0.19574899021443237
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.39476052394760525,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap9": {
+        "meanDailyReturnDifference": -0.001159709226378187,
+        "ci95": [
+          -0.0040186472539752854,
+          0.0015576146895588837
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0040186472539752854,
+              0.0015576146895588837
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.5094481187237614,
+              0.20475132169034804
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9447078845783556,
+              0.7192527886491833
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.04396967295034837,
+              0.09886418090955984
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.7973202679732027,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap3": {
+        "meanDailyReturnDifference": 0.0003321289983907989,
+        "ci95": [
+          -0.0016248514331765039,
+          0.0025852583079868092
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0016248514331765039,
+              0.0025852583079868092
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.1226234712802108,
+              0.6358026669032268
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.5227573920146318,
+              2.498194087483239
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.01809189157727009,
+              0.15734219192451815
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.33026697330266974,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap9": {
+        "meanDailyReturnDifference": -0.001316026188352666,
+        "ci95": [
+          -0.004093265937817613,
+          0.0013203619277666633
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.004093265937817613,
+              0.0013203619277666633
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.553255233853309,
+              0.16674824351951156
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.922087254986611,
+              0.4805680055170356
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.042120416411064565,
+              0.0867292220100001
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8276172382761724,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap3": {
+        "meanDailyReturnDifference": 0.0009776827765364453,
+        "ci95": [
+          -0.000558951433142876,
+          0.0028078039195633254
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.000558951433142876,
+              0.0028078039195633254
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -0.26954841866785384,
+              1.1024843489005787
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -0.8496301013598693,
+              2.6598347658780113
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.0105829951703994,
+              0.14828760563396648
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.13958604139586042,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap9": {
+        "meanDailyReturnDifference": -0.0012024014398428783,
+        "ci95": [
+          -0.0036982040253311695,
+          0.0011854749122894965
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0036982040253311695,
+              0.0011854749122894965
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.3805514757186135,
+              0.1583972816161543
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.611071854966159,
+              0.5387760690793733
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.042162276616232286,
+              0.07065000472940264
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8313168683131686,
+        "holmAdjustedP": 1
+      }
+    },
+    "25": {
+      "M-entry-off": {
+        "meanDailyReturnDifference": -0.00029052490490440815,
+        "ci95": [
+          -0.0041836751282857,
+          0.0036447180094884984
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0041836751282857,
+              0.0036447180094884984
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.356367772786421,
+              0.7022038895043313
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9886488093462362,
+              3.5571416720198767
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.06452108898309006,
+              0.15825895418939206
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.5817418258174183,
+        "holmAdjustedP": 1
+      },
+      "M-macd-off": {
+        "meanDailyReturnDifference": -0.0004570933057931555,
+        "ci95": [
+          -0.0032795934207307947,
+          0.0023527083445264462
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0032795934207307947,
+              0.0023527083445264462
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.070711772981925,
+              0.36776604906084254
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.8404165870197104,
+              1.4687470158839393
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.042553939453825684,
+              0.13117382272045885
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.6481351864813518,
+        "holmAdjustedP": 1
+      },
+      "M-deterioration-off": {
+        "meanDailyReturnDifference": 0.00016720646516602913,
+        "ci95": [
+          -0.0015994156274963152,
+          0.0019492213272850193
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0015994156274963152,
+              0.0019492213272850193
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.0876619735576991,
+              0.36972102872075374
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.065752893378943,
+              1.8867093998161768
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.02744418511644542,
+              0.0863871899663261
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.404959504049595,
+        "holmAdjustedP": 1
+      },
+      "M-giveback-off": {
+        "meanDailyReturnDifference": 5.7397586029797476e-05,
+        "ci95": [
+          -1.1208482409898884e-06,
+          0.00016946101031230362
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -1.1208482409898884e-06,
+              0.00016946101031230362
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -0.0006788916003279688,
+              0.04888922846443178
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -0.0026487728119107823,
+              0.14204508212199096
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -5.551115123125783e-16,
+              0.006106008135602026
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.12018798120187982,
+        "holmAdjustedP": 1
+      },
+      "Q9-cap3": {
+        "meanDailyReturnDifference": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 1.0,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap3": {
+        "meanDailyReturnDifference": 0.00036958246631036746,
+        "ci95": [
+          -0.0024043479428380427,
+          0.0034229942994952823
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0024043479428380427,
+              0.0034229942994952823
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.6165047573316116,
+              0.7060406698728993
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.6378534976048302,
+              3.5023026886993267
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.008077014451137843,
+              0.2002898360388674
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.36936306369363064,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap9": {
+        "meanDailyReturnDifference": -0.0011391282710284595,
+        "ci95": [
+          -0.0039925947610489915,
+          0.0015789174100964568
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0039925947610489915,
+              0.0015789174100964568
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.4056272045406635,
+              0.1990778902935766
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9421315668856782,
+              0.6871602447328824
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.044631033509827334,
+              0.09867321777929627
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.7937206279372063,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap3": {
+        "meanDailyReturnDifference": 0.00040399300263945236,
+        "ci95": [
+          -0.0015717080774881203,
+          0.0026773689068155873
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0015717080774881203,
+              0.0026773689068155873
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.050199282511454,
+              0.6494151404143125
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.5034940350186772,
+              2.524372029711827
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.017655780422168865,
+              0.16087613917000088
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.30626937306269375,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap9": {
+        "meanDailyReturnDifference": -0.001319062515933539,
+        "ci95": [
+          -0.004099012483100013,
+          0.001321357480497261
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.004099012483100013,
+              0.001321357480497261
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.456200416713614,
+              0.16145712391889633
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9441583410351804,
+              0.4418458202178661
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.04443955217707973,
+              0.08610299951583245
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8283171682831717,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap3": {
+        "meanDailyReturnDifference": 0.001029808791352501,
+        "ci95": [
+          -0.0005239970144671445,
+          0.0028843897807964273
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0005239970144671445,
+              0.0028843897807964273
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -0.2355388148106301,
+              1.1159371492892696
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -0.8500523835873128,
+              2.682053385390652
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.010801425401327891,
+              0.1510344874212065
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.13138686131386862,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap9": {
+        "meanDailyReturnDifference": -0.0011492584239689116,
+        "ci95": [
+          -0.0035936415474989995,
+          0.001190339705167329
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0035936415474989995,
+              0.001190339705167329
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.260296867443798,
+              0.15492753500608436
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.5568200432702306,
+              0.5288510632391078
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.04333512706355647,
+              0.07071321980537992
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8234176582341766,
+        "holmAdjustedP": 1
+      }
+    },
+    "50": {
+      "M-entry-off": {
+        "meanDailyReturnDifference": -0.001168659882769136,
+        "ci95": [
+          -0.004437022215392574,
+          0.001979414775573301
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.004437022215392574,
+              0.001979414775573301
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.510552736317063,
+              0.39780241585715537
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -3.225213724131724,
+              2.3087961560263164
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.07706984966662633,
+              0.08880898079064126
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.7649235076492351,
+        "holmAdjustedP": 1
+      },
+      "M-macd-off": {
+        "meanDailyReturnDifference": -0.0012962140856947442,
+        "ci95": [
+          -0.0034171406541218747,
+          0.000764857605426201
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0034171406541218747,
+              0.000764857605426201
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.20109407847555,
+              0.11855359264231269
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -3.0267223367406664,
+              0.32411493403465075
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.053287687786339744,
+              0.06850085067857414
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8924107589241076,
+        "holmAdjustedP": 1
+      },
+      "M-deterioration-off": {
+        "meanDailyReturnDifference": -0.0005585267531864649,
+        "ci95": [
+          -0.0017435648057326043,
+          0.0005943904424790987
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0017435648057326043,
+              0.0005943904424790987
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.190621446080116,
+              0.10941957668114732
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.1878181549122786,
+              0.9535079775936941
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.036519170155929426,
+              0.024881108437486588
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8393160683931606,
+        "holmAdjustedP": 1
+      },
+      "M-giveback-off": {
+        "meanDailyReturnDifference": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 1.0,
+        "holmAdjustedP": 1
+      },
+      "Q9-cap3": {
+        "meanDailyReturnDifference": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 1.0,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap3": {
+        "meanDailyReturnDifference": -0.0003884312554242024,
+        "ci95": [
+          -0.002619302436057421,
+          0.0020333120972260425
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.002619302436057421,
+              0.0020333120972260425
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.7848354149945584,
+              0.4159558801743779
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.2328623883672662,
+              2.447706372749711
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.022021819129059428,
+              0.1405478286213161
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.6398360163983602,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap9": {
+        "meanDailyReturnDifference": -0.00207826658586586,
+        "ci95": [
+          -0.004471826015900746,
+          5.671831294554782e-05
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.004471826015900746,
+              5.671831294554782e-05
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.677912498743771,
+              0.009721567407023457
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -3.4121444520859887,
+              -0.399009585861124
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.07036681535659006,
+              0.03401971497569667
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.9561043895610439,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap3": {
+        "meanDailyReturnDifference": -0.00039119372312536516,
+        "ci95": [
+          -0.0018923417221970605,
+          0.001267969741434824
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0018923417221970605,
+              0.001267969741434824
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.2156651635473668,
+              0.3072345609209941
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.391280028011832,
+              1.4561341802127432
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.03579645439499701,
+              0.097370948143505
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.6972302769723028,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap9": {
+        "meanDailyReturnDifference": -0.0013746905053934372,
+        "ci95": [
+          -0.0038143600838214673,
+          0.0007821423631777251
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0038143600838214673,
+              0.0007821423631777251
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.4308575829049937,
+              0.11685523314729862
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.788118864533258,
+              0.5950807826103373
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.03236556174848393,
+              0.04756905343759377
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8696130386961304,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap3": {
+        "meanDailyReturnDifference": 0.0002845300804189085,
+        "ci95": [
+          -0.0008629851085586852,
+          0.0015688905550834758
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0008629851085586852,
+              0.0015688905550834758
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -0.3992729923797036,
+              0.6305293423033724
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.553232894513322,
+              1.5915039607877493
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.018836221690244237,
+              0.08736176092826742
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.2873712628737126,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap9": {
+        "meanDailyReturnDifference": -0.0012958776165333085,
+        "ci95": [
+          -0.00257781922908285,
+          -7.285014243114344e-05
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.00257781922908285,
+              -7.285014243114344e-05
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.7858919846396017,
+              -0.00873448784193509
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.030471733253002,
+              -0.1269759821033798
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.051876369817248524,
+              0.01292712572122312
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.9763023697630236,
+        "holmAdjustedP": 1
+      }
+    }
+  },
+  "historicalSimulations": 0,
+  "sourceHashes": {
+    "run-C-12.json": "bd447ea8e8dca65af53500d1035e35a2bc706689b7b9cbbdf0a659e547d9e250",
+    "run-M-entry-off-12.json": "11a65bd5c26ed01a5576ae856657ca67f7577c75748bad97baa617ba6c8fc164",
+    "run-M-macd-off-12.json": "a96d32f4668d320e73f1a55a4f8c4c8a4b28551a626a024088ad584b82e8a039",
+    "run-M-deterioration-off-12.json": "e1ab8c6ceb4a1a37bb8e1d405aa6cc2cdb51221723dedf40d315e8a4d0b16d86",
+    "run-M-giveback-off-12.json": "a11f7af265e64cbe016cbb82b6ad53b0f071f15b7d8cbec2b0b5d621761a775c",
+    "run-Q9-cap3-12.json": "b5085e1b25b3455902a6517250c2bd7b1841af91de9eb84bcfa4ec30c9d9c3aa",
+    "run-S-A-cap3-12.json": "3e0cddef7f588f9de053ae8bde2efdf4ff614c274f74126070379d6b07d55f85",
+    "run-S-A-cap9-12.json": "663065f3b3a328205321a0d9ec0fba8ec15b9a04942d803682043a085b32b8ab",
+    "run-S-B-cap3-12.json": "74e299ac9c82a2cfcdb89275a92f19b34f46c70240f4912af49678959f50f1ae",
+    "run-S-B-cap9-12.json": "e33152b8fe50d80ed0191d28967393033a93a19451f88cb9cdda366c28c9644b",
+    "run-S-C-cap3-12.json": "edf7e306d4ee56d3ee028fe8530ddeb1465ad4ef670782deef906a34020a1bad",
+    "run-S-C-cap9-12.json": "4ffcab113ab89977af68144c77cc632cd79ca651569aeb84c90f520172f65389",
+    "run-C-25.json": "0fe4458aad26a26bfad2f0499f4816c1374f526980b3cd89bbef63626279754f",
+    "run-M-entry-off-25.json": "1b2cd4b038a689cf92b0e0e8ceab7eb6141d403597e7643f33a3679992dd9727",
+    "run-M-macd-off-25.json": "862f5a558c21989f44662f22e7c58854af815f711628b2f666872c5fcb78f8cb",
+    "run-M-deterioration-off-25.json": "8580d040aa054cea686219de23d0a31ed25f56103b6e6f7b6822f458f3e10577",
+    "run-M-giveback-off-25.json": "1d284520ae4dd0f8efc104004703116b605db9cdf834511a221f1702f58deb66",
+    "run-Q9-cap3-25.json": "4af6358eda34d608640a2fd4acdc13225f36643f554177fe6978b896765a429d",
+    "run-S-A-cap3-25.json": "f8aa55079c60370e633bff2e8f580c12d8e97a4e3e8895d352dcd35a1ee5dd10",
+    "run-S-A-cap9-25.json": "3c262903ecb50e9f16c9755393332016bb9ed2b7a1093332878e6149e068a7be",
+    "run-S-B-cap3-25.json": "c84673ec7d7b6eef9a7a29c4263dda0a0e0e996a1ed6c72e069f5196ec2c91b3",
+    "run-S-B-cap9-25.json": "fe221267ea524db5f35149e1670110f49b4927f2daedb31a483da18761643c2e",
+    "run-S-C-cap3-25.json": "0e6d83f609fd8adf12f392dfa9ad91dee833631930ff0b73a4d210f293cf9ee7",
+    "run-S-C-cap9-25.json": "5f225fccc875309c62b14e3456767b3f9ed08320f8b2b328c172666001d8530b",
+    "run-C-50.json": "7765c544b1c0e526160ac20a5b52db143c1cf5bcf4c33dd64cc11042c65a851e",
+    "run-M-entry-off-50.json": "37feee2793134842de112b8a403cabad8615d72a2fed150981ce0b4cd407ac50",
+    "run-M-macd-off-50.json": "905ed0e1e749891ce6e366bc07eb6a088b301e5b4649bdb6c66c6f0e37fa271c",
+    "run-M-deterioration-off-50.json": "057eb1eca1ab7d5b9ca8782d59f932d88857037740e79a505f0161f21f11246c",
+    "run-M-giveback-off-50.json": "f7404a8617f7190043eaa255bd61fcafcef5e9152334d1ecc6d8bdd450ec7608",
+    "run-Q9-cap3-50.json": "7415885ea112aa47b7eb3715dd9cdd37f98067dfb45266e553eb47d71edd34fa",
+    "run-S-A-cap3-50.json": "1a7b7e4fffba547c4320df0e64f0f0c59fe76098da61db6dfea92142f7d678d3",
+    "run-S-A-cap9-50.json": "2d1261263826e8eaa6c5481e00ecee4c9fc24f8361abbb9653fce6594d6291d6",
+    "run-S-B-cap3-50.json": "8360dd860d00413a71bad7f0d186098d0e318285f4f2a101de5696f208b072b2",
+    "run-S-B-cap9-50.json": "c6e9ee04b031c0d5d165ea2c358299d925a52a77c2319d2ebf7034bce7f9bdc9",
+    "run-S-C-cap3-50.json": "1ce3b4f903ee418c06bb21bba756b4028526b515d7b3412bd5762be9c96eb73c",
+    "run-S-C-cap9-50.json": "72646b5efd4ad440be2b8d9211f339d9ca8c3aa2f32a24645eea3c8070b891c0"
+  },
+  "numpyVersion": "2.3.5",
+  "specSha256": "7d5ce3add178c7a1b1f385a07ce87fa746a6241569521ed72654852c0cec8665",
+  "indicesSha256": "0fe036adec7a1a4eb7eccfc6ed03a559626160535120ccc7beb5c0fc7915e348"
+}

@@ -1,0 +1,130 @@
+{
+  "author": "independent_control_review agent",
+  "cases": [
+    {
+      "scenario": "deterioration",
+      "status": "PASS",
+      "final": {
+        "C": {
+          "exit": "recent-momentum-deterioration",
+          "streak": 5,
+          "giveback": 0
+        },
+        "M-entry-off": {
+          "exit": "recent-momentum-deterioration",
+          "streak": 5,
+          "giveback": 0
+        },
+        "M-macd-off": {
+          "exit": "recent-momentum-deterioration",
+          "streak": 5,
+          "giveback": 0
+        },
+        "M-deterioration-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        },
+        "M-giveback-off": {
+          "exit": "recent-momentum-deterioration",
+          "streak": 5,
+          "giveback": 0
+        }
+      }
+    },
+    {
+      "scenario": "MACD-confirmation-removal",
+      "status": "PASS",
+      "final": {
+        "C": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        },
+        "M-entry-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        },
+        "M-macd-off": {
+          "exit": "recent-momentum-deterioration",
+          "streak": 5,
+          "giveback": 0
+        },
+        "M-deterioration-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        },
+        "M-giveback-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        }
+      }
+    },
+    {
+      "scenario": "positive-no-trigger",
+      "status": "PASS",
+      "final": {
+        "C": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        },
+        "M-entry-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        },
+        "M-macd-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        },
+        "M-deterioration-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        },
+        "M-giveback-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        }
+      }
+    },
+    {
+      "scenario": "independent-profit-giveback",
+      "status": "PASS",
+      "final": {
+        "C": {
+          "exit": "recent-momentum-profit-protection",
+          "streak": 0,
+          "giveback": 2
+        },
+        "M-entry-off": {
+          "exit": "recent-momentum-profit-protection",
+          "streak": 0,
+          "giveback": 2
+        },
+        "M-macd-off": {
+          "exit": "recent-momentum-profit-protection",
+          "streak": 0,
+          "giveback": 2
+        },
+        "M-deterioration-off": {
+          "exit": "recent-momentum-profit-protection",
+          "streak": 0,
+          "giveback": 2
+        },
+        "M-giveback-off": {
+          "exit": null,
+          "streak": 0,
+          "giveback": 0
+        }
+      }
+    }
+  ],
+  "historicalExecutions": 0
+}

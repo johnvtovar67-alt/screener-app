@@ -1,0 +1,33 @@
+{
+  "author": "independent_control_review agent",
+  "status": "PASS",
+  "scope": "Faithful publication of separately labeled exploratory retrospective research only",
+  "runReceiptsAndCurves": {
+    "status": "PASS",
+    "runs": 72,
+    "sha256Verified": true,
+    "curvesExact": true
+  },
+  "pairedBootstrap": {
+    "status": "PASS",
+    "comparisons": 33,
+    "maxAbsoluteDifference": 1.7763568394002505e-15,
+    "tolerance": 1e-10,
+    "pValuesHolmFiniteCounts": "exact in completed primary arithmetic verification"
+  },
+  "pilotClassifications": {
+    "status": "PASS",
+    "KEEP": 0,
+    "INVESTIGATE": 11,
+    "REJECT": 0,
+    "frozenThresholdsAndDocumentedConservativeInterpretation": true
+  },
+  "causalScope": "First-opening decision invariance tests; not every-session mutation testing",
+  "volumeSensitivityProminentlyDisclosed": true,
+  "strictHistoricalQualification": "UNQUALIFIED; no strict data pass or alpha certification",
+  "remainingMaterialIssues": [],
+  "productionOrAccountChangesByReviewer": false,
+  "newStrategySimulationsByReviewer": 0,
+  "reportSha256": "1bbc65ebc7d3ea1904e2442de5e30b5f3e5aac64db9190b0c8fb766f5515e7ca",
+  "comparativeResultsSha256": "62677535ec5ea2dc1c6588c588163d158636bcef757d44ed0eb11a82aad4006e"
+}

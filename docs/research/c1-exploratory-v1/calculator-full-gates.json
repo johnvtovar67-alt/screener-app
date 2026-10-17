@@ -1,0 +1,162 @@
+{
+  "author": "independent_control_review agent",
+  "cases": [
+    {
+      "case": "immutable signal config variation",
+      "status": "PASS"
+    },
+    {
+      "case": "immutable signal config variation",
+      "status": "PASS"
+    },
+    {
+      "case": "immutable signal config variation",
+      "status": "PASS"
+    },
+    {
+      "case": "immutable signal config variation",
+      "status": "PASS"
+    },
+    {
+      "case": "immutable signal config variation",
+      "status": "PASS"
+    },
+    {
+      "case": "immutable signal config variation",
+      "status": "PASS"
+    },
+    {
+      "case": "immutable signal config variation",
+      "status": "PASS"
+    },
+    {
+      "case": "immutable signal config variation",
+      "status": "PASS"
+    },
+    {
+      "case": "mutable config before",
+      "status": "PASS"
+    },
+    {
+      "case": "mutable config after",
+      "status": "PASS"
+    },
+    {
+      "case": "inherited getter before",
+      "status": "PASS"
+    },
+    {
+      "case": "inherited getter after",
+      "status": "PASS"
+    },
+    {
+      "case": "mutable signal before",
+      "status": "PASS"
+    },
+    {
+      "case": "mutable signal after",
+      "status": "PASS"
+    },
+    {
+      "case": "context exact vector",
+      "status": "PASS"
+    },
+    {
+      "case": "context output mutation",
+      "status": "PASS"
+    },
+    {
+      "case": "context reordered vector",
+      "status": "PASS"
+    },
+    {
+      "case": "context samefirst replacedsecond",
+      "status": "PASS"
+    },
+    {
+      "case": "context nonfinite output original fallback",
+      "status": "PASS"
+    },
+    {
+      "case": "context null row fallback",
+      "status": "PASS"
+    },
+    {
+      "case": "own getter before",
+      "status": "PASS"
+    },
+    {
+      "case": "own getter after",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm C",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm M-entry-off",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm M-macd-off",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm M-deterioration-off",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm M-giveback-off",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm Q9-cap3",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm S-A-cap3",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm S-A-cap9",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm S-B-cap3",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm S-B-cap9",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm S-C-cap3",
+      "status": "PASS"
+    },
+    {
+      "case": "full simulator arm S-C-cap9",
+      "status": "PASS"
+    },
+    {
+      "case": "primitive numeric config fallback",
+      "status": "PASS"
+    },
+    {
+      "case": "primitive string config fallback",
+      "status": "PASS"
+    },
+    {
+      "case": "primitive signal fallback",
+      "status": "PASS"
+    },
+    {
+      "case": "null signal exception parity",
+      "status": "PASS"
+    },
+    {
+      "case": "null config exception parity",
+      "status": "PASS"
+    }
+  ],
+  "historicalExecutions": 0
+}

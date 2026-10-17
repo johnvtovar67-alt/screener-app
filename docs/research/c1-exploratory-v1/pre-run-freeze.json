@@ -1,0 +1,95 @@
+{
+  "track": "exploratory-retrospective-v1",
+  "frozenBeforePerformance": true,
+  "at": "2026-10-17T00:32:46.776Z",
+  "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "files": {
+    "/workspace/work/c1-program/tools/c1-exploratory/account-adapter.cjs": "d138abf1046d2efcc91184144a67ad10e48c954084e52589e0f963b6ac859420",
+    "/workspace/work/c1-program/tools/c1-exploratory/causal-check.cjs": "d68f7c1583e09168ae2066c7e16ae424461d9257337cef7795fbd53670fdd420",
+    "/workspace/work/c1-program/tools/c1-exploratory/compile.cjs": "5da11e50f0c2de4e6c91fdf0e9143330510e08c06318858d096681c80d479c37",
+    "/workspace/work/c1-program/tools/c1-exploratory/independent-gates.cjs": "fc9d746ebd47361840f6a388e0035210215fee61c6f6b37d088f8fd322226aac",
+    "/workspace/work/c1-program/tools/c1-exploratory/opportunity.cjs": "055901cb4f38c3c66c68a85b8d285b3cd277e64266540f132050f7f9171066a0",
+    "/workspace/work/c1-program/tools/c1-exploratory/prepare.py": "9a41aefc3f40f817caa68cfceb51462d60c6b59419232e70edcf2ff44ec2782d",
+    "/workspace/work/c1-program/tools/c1-exploratory/run.cjs": "3cff82edb31f712c2c6de093388c302c7dffb9cf293d79269b3f60748ccafbb3",
+    "/workspace/work/c1-program/tools/c1-exploratory/runner.cjs": "2f4ae74c2f32832845e5ed83df23cfbb197f58c43734f074870cfe07a9970780",
+    "/workspace/work/c1-program/tools/c1-exploratory/spec.json": "e5b36406c885bb657d363f7f923f859560258e7c19e3dc6354953ff7e2dc7dab",
+    "/workspace/work/c1-program/tools/c1-exploratory/transform.cjs": "580199cd44d586582b29b30b3a375378444e2329dd9a73ff5bd9d1f1dffc36de",
+    "/workspace/work/c1-exploratory-v1/raw.json": "c13dfba5259caffaa351df9afeffe1e11994ba892a8008c2dfe197596a95bfce",
+    "/workspace/work/c1-exploratory-v1/compiled.json": "cde08a727abc539d2ac7a36d539f3203928f4bcd4baa64255d48e952ed1f661b",
+    "/workspace/work/c1-exploratory-v1/dataset-manifest.json": "80544cb30616d39318a1141c85bc43f8b3abba8a2d26fd4a2deb9828cc3d4d88",
+    "/workspace/work/c1-exploratory-v1/current-sector-proxies.json": "4211c2ec1ca2b8e106f7b3845fb90ddcb0f8667eaacd2bd51e27c7a1f55cb451",
+    "/workspace/work/c1-exploratory-v1/causal-gates.json": "6d762e5d839d7651e64a2040cc2eacbba0082de0f4392e2eb7e563b69996df66",
+    "/workspace/work/c1-exploratory-v1/gates/exploratory-gates.json": "8a5844d112bf6b5a4c65df0458a8d76329e7eedd611c2e0d74599889926daa30",
+    "/workspace/work/c1-program/tools/c1-research/research-spec-v1.json": "7d5ce3add178c7a1b1f385a07ce87fa746a6241569521ed72654852c0cec8665",
+    "/workspace/work/c1-program/tools/c1-research/control-adapter.cjs": "c17502011b0a4aac1a155b36e9fbf581ff8a0b937a195a3338c3796c4d0c4bd2",
+    "/workspace/work/c1-program/tools/c1-research/module-loader.cjs": "159bd915326f5d3594ef8b667ec43e0ee5f8b9c8e7b03b5d723eb6908fc0e9ad",
+    "/workspace/work/c1-program/tools/c1-research/metrics.cjs": "82beb8f7614f79e06837a673e72d1f32659b90c4c261ebaf23aa126e0835ac24",
+    "/workspace/work/c1-program/tools/c1-research/champion-source-manifest.json": "f529e2cead4d01e18af766258127c851dabbe95386bc4e2a8c239cac5a186aca"
+  },
+  "assumptions": {
+    "track": "EXPLORATORY RETROSPECTIVE v1 \u2014 not validated historical performance",
+    "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+    "strictProgram": "Unchanged and independently gated; no strict pass is conferred by these results",
+    "evaluation": {
+      "baseline": "2024-12-31",
+      "firstExecution": "2025-01-02",
+      "end": "2025-04-03",
+      "warmup": "2023-12-29",
+      "reason": "Existing dated public baseline roster/GICS/CIK plus common recovered prices; chosen before any returns",
+      "initialCapital": 100000,
+      "sleeves": [
+        25000,
+        50000,
+        25000
+      ],
+      "mstrCapital": 0,
+      "costBpsPerSide": [
+        12,
+        25,
+        50
+      ],
+      "cashInterest": 0,
+      "dividendCredits": 0,
+      "terminalLiquidation": false
+    },
+    "arms": "Exact 12 labels and research proposals from tools/c1-research/research-spec-v1.json; all current October semantics retrospectively activated, no historical deployment claim",
+    "execution": "Source normalized model projection, source cash cap on full plan, subsequent source screen, hypothetical whole-share fills and source ledger continuation. No backfill of rejected screen orders. Fresh hypothetical funding limit equals prior-close cash floored to cents; no same-opening proposed sale funding. Nonconditional prices already include side cost. Standing stop: daily low <= known stop; min(open,stop) minus sell cost once, clipped to actual held shares. Open09:30Eastern; conditional fill19:00UTC is bookkeeping only, not observed intraday timestamp. No claimed live quotes.",
+    "sizing": "Frozen rank schedules: p(r)=low+(high-low)*(9-r)/8 using causal original snapshot rank. Low/high A=.05/.20 B=.075/.25 C=.10/.30 of each separate sleeve decision-close equity, total C1 equity excludes MSTR. Target fixed until next-open execution, whole-share floor, existing sector/issuer/cash/minimumtrade caps and one-share lowerbound allowance. No inter-sleeve transfers. Retention rank6 independent of capacity. Unscreened shadow ranks must be resolved explicitly, never silently extrapolated.",
+    "assumptions": [
+      "Fixed conditional December2024 baseline roster, no subsequent additions/removals; ex-post action/price-gap exclusions explicitly induce selection bias",
+      "Carry dated December2024 sector/issuer labels forward; no historical classification-continuity claim",
+      "Unknown events treated clear as explicit omission; no invented publication times or original vintage",
+      "Vendor full split-adjusted price view rebased to baseline non-split close; target-window split/distribution/BDX/LEN/WDC exclusions. Source adjusted flag denotes simulation price basis only, not certification",
+      "No dividend, interest or tax cashflows; reported portfolio return is price P&L after modeled costs, not verified historical total investment return",
+      "Provider full-view volume may have unit revisions; no independent historical volume confirmation"
+    ],
+    "sensitivities": [
+      "All12 arms at12bps with volume multiplied by0.8, including warmup, tests liquidity-threshold sensitivity",
+      "All12 arms at12bps on same panel with only supported current provider sector proxies substituted; missing current labels retain dated baseline labels explicitly. This is taxonomy/date sensitivity, not historical sector evidence",
+      "All12 arms at12bps with event-unverified entries entirely blocked: conservative omission bound, unchanged exits, expected cash-only from cash seed; no performance superiority inference from this bound"
+    ],
+    "causalGates": [
+      "All used raw response hashes match receipts",
+      "Price chronology, common close dates, positive consistent OHLC and targetcrossview completeness/agreement",
+      "Datedbaseline-only roster and sector anchor; no current fundamentals or future return features",
+      "Compiler prefix output unchanged on truncation; mutate future bars and compare earlier signals",
+      "StrictC and exploratoryC exact decision/order identity on synthetic differential cases at12/25/50",
+      "Source ledger agrees with independently recomputed cash, integer shares and basis; daily reconciliation",
+      "Projected opening decisions invariant to same-session later OHLC; no missing held quote or silent ticker splice"
+    ],
+    "metrics": [
+      "CAGR and portfolio return (priceP&L only; short-period annualization unstable)",
+      "Sharpe zeroRF annualizedsqrt252",
+      "maximumdrawdown",
+      "two-sided annualturnover",
+      "mean cash utilization",
+      "unfilled eligible candidate days and descriptive5session forward price returns net roundtrip costs (not attainable counterfactual alpha)",
+      "paired stationary20session-block bootstrap10000replicates seed20261016 with95percent intervals; Holm11comparisons; shortsample and ex-post selection uncertainty remain outside intervals"
+    ],
+    "decisionsBeforeResults": {
+      "KEEP": "Keep research candidate only if positive deltaCAGR12 and nonnegative25, drawdown not more than2percentagepoints worse, turnover<=1.25control, HolmP<.05 and sensitivity direction stable. No production approval.",
+      "REJECT": "Reject pilot case if negative delta at all3costs, paired95percent deltaCAGR upper bound<0 and direction stable across informative sensitivities. No universal rejection from one short regime.",
+      "INVESTIGATE": "All other outcomes, including inadequate sample or incomplete sensitivity execution. Current production stays unchanged."
+    }
+  }
+}

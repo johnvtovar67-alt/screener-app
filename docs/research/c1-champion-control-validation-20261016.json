@@ -1,0 +1,25 @@
+{
+  "access": "Supported executor network permission, inherited proxy and existing credentials; no security bypass",
+  "adapterParity": "FAIL: pre-queue screen filter backfills source-plan absent candidate",
+  "historicalControlsRun": 0,
+  "originalBytes": 16960898,
+  "qualifiedDataset": false,
+  "rawDataRemainPrivate": true,
+  "recovered": [
+    {
+      "journalSha256": "c09c2b7b252520d706f0335fe357d3a257fb0287039b0f1d1034880b1edba6a9",
+      "originalBytes": 2273904,
+      "responseHashesVerified": true,
+      "responses": 25,
+      "stage": "stage1"
+    },
+    {
+      "journalSha256": "759b1307257f148bbb08ada823333626729a2b614b1e6afca200e1b34371a98e",
+      "originalBytes": 14686994,
+      "responseHashesVerified": true,
+      "responses": 248,
+      "stage": "stage2"
+    }
+  ],
+  "totalResponses": 273
+}

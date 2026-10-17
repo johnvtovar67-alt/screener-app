@@ -1,0 +1,23 @@
+{
+  "reviewer": "independent_control_review agent; independent source inspection",
+  "case": "event-blocked-first-candidate-with-10000-broker-cash",
+  "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "expectedProductionCashThenVisibleScreen": [
+    {
+      "id": "base:2026-10-15:1",
+      "symbol": "BBB",
+      "shares": 17,
+      "price": 102.33365320000001
+    }
+  ],
+  "actualAdapter": [
+    {
+      "id": "base:2026-10-15:1",
+      "symbol": "BBB",
+      "shares": 17,
+      "price": 102.33365320000001
+    }
+  ],
+  "exact": true,
+  "historicalExecutions": 0
+}

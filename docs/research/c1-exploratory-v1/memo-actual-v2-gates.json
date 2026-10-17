@@ -1,0 +1,71 @@
+{
+  "author": "independent_control_review agent",
+  "scope": "Proposed frozen JSON row symbol index equivalence, no cached policy results",
+  "cases": [
+    {
+      "case": "baseline false",
+      "status": "PASS"
+    },
+    {
+      "case": "stale price false",
+      "status": "PASS"
+    },
+    {
+      "case": "duplicate normalized price false",
+      "status": "PASS"
+    },
+    {
+      "case": "duplicate published signal priority false",
+      "status": "PASS"
+    },
+    {
+      "case": "nested mutation before false",
+      "status": "PASS"
+    },
+    {
+      "case": "nested timing future after false",
+      "status": "PASS"
+    },
+    {
+      "case": "baseline true",
+      "status": "PASS"
+    },
+    {
+      "case": "stale price true",
+      "status": "PASS"
+    },
+    {
+      "case": "duplicate normalized price true",
+      "status": "PASS"
+    },
+    {
+      "case": "duplicate published signal priority true",
+      "status": "PASS"
+    },
+    {
+      "case": "nested mutation before true",
+      "status": "PASS"
+    },
+    {
+      "case": "nested timing future after true",
+      "status": "PASS"
+    },
+    {
+      "case": "mutable before row rename",
+      "status": "PASS"
+    },
+    {
+      "case": "mutable after row rename",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen arrays mutable rows before",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen arrays mutable rows after",
+      "status": "PASS"
+    }
+  ],
+  "historicalExecutions": 0
+}

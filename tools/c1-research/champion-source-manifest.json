@@ -1,0 +1,1213 @@
+{
+  "basis": "GitHub compare establishes one intervening commit; changed application files and release manifest read from production commit through GitHub connector. Other listed sources match local base.",
+  "files": [
+    {
+      "bytes": 2534,
+      "path": "AGENTS.md",
+      "sha256": "071d2541f1d49d8b1d423a4c06e6e741794f4fac0e46c40eb7105da4d0d5c994",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3527,
+      "path": "components/C1AccountActivity.js",
+      "sha256": "328f686a2266e88d9fa67808dc14e167ce38bb9a12bdf852d7b75cfa340ddc59",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1342,
+      "path": "components/C1AccountDifferences.js",
+      "sha256": "5838377aacb154f521f0b873f4abacdd0979719f7f9b7a8bd16fccfaa5a94775",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 12789,
+      "path": "components/C1AccountOpportunities.js",
+      "sha256": "dd56766d6aea897cde23507c7a993c457b47e536814d4506595c47cd9b5b248b",
+      "source": "github-production-ref"
+    },
+    {
+      "bytes": 3002,
+      "path": "components/C1BrokerageCash.js",
+      "sha256": "44a9535e9f5dabc8b0faaf797ba0d8f1afcb41fdb285a225929712bddb639e1d",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 8397,
+      "path": "components/C1IntradayActivity.js",
+      "sha256": "095ce58f984a81b3f1caa1b791fdf40707c01e44f1656d59d4bc48782adc910c",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3580,
+      "path": "components/C1PositionContextImport.js",
+      "sha256": "51ed13cf7815ca56421a8ad423ea0417f31632f3ef73bd3f44b6760b65afaa28",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1834,
+      "path": "components/C1ReconciliationDetails.js",
+      "sha256": "b1f175fc473fad07880113c4355b35b8dcde5158c079501eaef76ab77791de55",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 20704,
+      "path": "data/top5.js",
+      "sha256": "74b5b4189e42d2e6f4206118f2cdd390ae55a82886890aa80794668ce4e1643a",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 47397,
+      "path": "docs/c1-release-freeze.json",
+      "sha256": "8d3a47a67c9e2ad084c2bf8b4b6b3e0f964eb05ee4c1fd18358f43df6007399a",
+      "source": "github-production-ref"
+    },
+    {
+      "bytes": 5933,
+      "path": "lib/brokerageReconciliation.js",
+      "sha256": "266024dba014fdf42a9dae48471fdaf2c920fab23afbbca8d7596d8dc61ad34e",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 16151,
+      "path": "lib/c1AccountDecision.js",
+      "sha256": "6d7f63c0b05f1e3a7f37e0bc44a1305266144dc8ef4dddced0b4c9e70b09c18b",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1367,
+      "path": "lib/c1AccountDifferences.js",
+      "sha256": "f8393ce7fd55266dfe18f725500589d32927a80ce6d6cf40fb4a98d3c0940960",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6142,
+      "path": "lib/c1AccountExecution.js",
+      "sha256": "1dc178b9a9d23a41597434d1317af01160d4c79bd9507591a6d4a06d2a8c239b",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 16268,
+      "path": "lib/c1AccountExecutionView.js",
+      "sha256": "50774dd06f338df51590e8c01697a4a940053b56353b80f5a65d06241d4c7b73",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 8280,
+      "path": "lib/c1AccountInput.js",
+      "sha256": "fa2f6f9691ed06575b7491898ef10b1709bab8d17a427463fb0b21c47f80a432",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 14906,
+      "path": "lib/c1AccountLedger.js",
+      "sha256": "ebe1ca8a9cfd48c187a21ef003f70e4c6c8dc9a32ed3be996425d6725bf5ecc8",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7668,
+      "path": "lib/c1AccountOpeningProvider.js",
+      "sha256": "4e17d960ba2b931afbc6d5a769046e465ffca68137d65ae461b5575cb0a42a74",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2135,
+      "path": "lib/c1AccountPortfolio.js",
+      "sha256": "a30d41807bdc0a2d34c24c29c208bf62d97d6c4c6a5d6b07bf31e96c5f7ba43c",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 12036,
+      "path": "lib/c1AccountProjection.js",
+      "sha256": "db5e8f11d0a85f3749f8396d3c6a4de3beb87900d28f141390ab72dea93e12d8",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4868,
+      "path": "lib/c1AccountReconciliation.js",
+      "sha256": "7cdb99d826867c93d9b2d06dcf268603efe5d83a8e5a5e906cc2d7b17a080a40",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1859,
+      "path": "lib/c1AccountSave.js",
+      "sha256": "d090258c176e3f986fec6ffba49cd1195c64d86d238ca513bfafc55ca3a12f6f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 13840,
+      "path": "lib/c1AccountSeed.js",
+      "sha256": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 14699,
+      "path": "lib/c1AccountService.js",
+      "sha256": "54c6c249ee415f6ed3ce36886707c3153705df4324e011097296133518f2b6cd",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 142535,
+      "path": "lib/c1AccountSimulator.js",
+      "sha256": "02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6462,
+      "path": "lib/c1ActualFillReplay.js",
+      "sha256": "b5946115f94b6185368d2488d23cbf3427ba7797b17be892939560db966a75b6",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 11525,
+      "path": "lib/c1BaselineReconciliation.js",
+      "sha256": "4fc75ed721b4e8cc5471f12ddccd3626cce7122e63de789e537348c09d1b6c40",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2796,
+      "path": "lib/c1BaselineRevisionReview.js",
+      "sha256": "43f5e2034248caa7675d96447d3284e2648c3e10950a4881ccde290024e51fa7",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6074,
+      "path": "lib/c1BrokerageCash.js",
+      "sha256": "b668bd0d9e2997a8ef0cd25c110d47ef65c9668118fce0ebb2272bfa57978dff",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1288,
+      "path": "lib/c1CapitalState.js",
+      "sha256": "ef3490a2c4dd66ef622582e1a8e8f430605e2ddd2011112cc5a03fa828789997",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1726,
+      "path": "lib/c1CombinedPortfolio.js",
+      "sha256": "61dcab55c624a6938e6480f2904a45f889d080cee7dcf8ff1374ce3127b9ef93",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7550,
+      "path": "lib/c1DatedBook.js",
+      "sha256": "795f7c3e63c5d43b2959701af8b8ab7a1fcd2d6b84d1092d00902a6389367e76",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4685,
+      "path": "lib/c1DatedBookStore.js",
+      "sha256": "6b8c4dbd344ace1969559f453ac67102135a86aaca0193f49ac5ee255d650716",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 8928,
+      "path": "lib/c1DecisionCopy.js",
+      "sha256": "0fa4463b5dcb19f3c5dfb342fecb905eb20503c2c24e8befbebbcc50610d2237",
+      "source": "github-production-ref"
+    },
+    {
+      "bytes": 4207,
+      "path": "lib/c1DecisionSnapshot.js",
+      "sha256": "2a81edadf8d60cbc48d8017a4021a7d533b5463846c80b1cf416507dd9f65d8d",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 8947,
+      "path": "lib/c1EntryReview.js",
+      "sha256": "f54a2b28e30b6ef856e900f8aeea030cadb022cfee156e790d41069a7fd93306",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4380,
+      "path": "lib/c1ExecutionAdapter.js",
+      "sha256": "e756c4496f693de577c4a9bfc9556452ff72aa0a2d1760ad2378bd82dfa49dd5",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3183,
+      "path": "lib/c1ExecutionCashAuthority.js",
+      "sha256": "c9db74739a96494a25cecc2abca8e9926f0760aea14a2a2256a850781b6ceb75",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4099,
+      "path": "lib/c1ExecutionReconciliation.js",
+      "sha256": "203032d6b2d2f53fa4e59196361d4f231634b6d372252440544813a6a31758e5",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 9939,
+      "path": "lib/c1ForwardModel.js",
+      "sha256": "8dab82bc4ec0b4a02c7b6283390eaee23f98e56b9fa8f935b6d227bcbf398851",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4516,
+      "path": "lib/c1ForwardStore.js",
+      "sha256": "48081097b3af1422128999adbce02c5dd21963d97e12ab05c0f4440898420945",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7080,
+      "path": "lib/c1FrozenOptions.js",
+      "sha256": "a401105178824417b9d7823c2d6f5bb6dc809b6ed536fcee60a4085681be5dff",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 131959,
+      "path": "lib/c1FrozenSimulator.js",
+      "sha256": "2d2c94f532f1370453f93c6d488d4f19d896e97ee636e2aae79ad9e201cbecf3",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 778,
+      "path": "lib/c1HeldCloseRevisionReview.js",
+      "sha256": "2f83b72310aa0220e18c7b597b929b576329c203c7552977c72dd8eaa14ccc92",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5015,
+      "path": "lib/c1HeldRankProvider.js",
+      "sha256": "595a8d2308195864d420241de69962d0ee916f09e370e08bfc5f96cf0d178bbb",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5331,
+      "path": "lib/c1HeldRankReview.js",
+      "sha256": "d304330c0216fdcc2773d671cb76858d1ee0ab64dbb01fb1b376f078e48f2380",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4471,
+      "path": "lib/c1HoldingCoverage.js",
+      "sha256": "2a2838fa15334632cfd746e5d21d3ea2a38a7117a8f1d59e9363721bb32179ef",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2169,
+      "path": "lib/c1HoldingRisk.js",
+      "sha256": "191244659e422da2fcd4e974f4890a0ede41cc294967d8d690b94e555e193c8e",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2748,
+      "path": "lib/c1HoldingsComparison.js",
+      "sha256": "10d0a1a17f09ce0430d7bc6b99e2986540c78156f6746f026e19ccc234ca36c3",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3856,
+      "path": "lib/c1IndexLifecycle.js",
+      "sha256": "2f68eb63796b5a0a74423f197cf2ca503989f67ce501744918b10b1a6d1dd060",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5279,
+      "path": "lib/c1IndexObservationStore.js",
+      "sha256": "89bbe02e2deeb5b339568c3e539803b08db3febd9934457e24ed8eda02649cf0",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3467,
+      "path": "lib/c1InputArchive.js",
+      "sha256": "1f94e77fc0ed24f7f0f2b080ef995c2df9a8e0b90c364de9fb7326779e2a6928",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 19147,
+      "path": "lib/c1IntradayActivity.js",
+      "sha256": "e346ce7c68b60af8a7b556465f71587d7ea5a46d7120c2548bc73a46fbb60eaf",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 13082,
+      "path": "lib/c1LegacyAccountSeed.js",
+      "sha256": "1581fab9c8d81c3dd5d557001ee1632b4b735795d36141b27013ec9cc44abe27",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 142011,
+      "path": "lib/c1LegacyAccountSimulator.js",
+      "sha256": "f87a1d94d200444056884972158e290d0442548bf131aa4b38ab23f3c687b659",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2266,
+      "path": "lib/c1LegacyCapitalAdoption.js",
+      "sha256": "a497af37b77cbf684b4915c6c53ca075f49cbb21fae07b60f8f344b18be3f16a",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6317,
+      "path": "lib/c1LegacyMarketSession.js",
+      "sha256": "2b12b67b5000249f05431908e21c8b8e0979d881f2390d11430287aafe818cc6",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1498,
+      "path": "lib/c1LegacyOrderIdentity.js",
+      "sha256": "b2a52a74b6aa98baa312110ff14c114e39bc4142953c041ed1d29403e7e85de6",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7925,
+      "path": "lib/c1LiveInput.js",
+      "sha256": "0f5aec4a92bac256e863c15d48181b0bd7ca312bce37bd4dbd45347a8a13266b",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6297,
+      "path": "lib/c1LiveInputProvider.js",
+      "sha256": "52396cd4db6f55cf95fe81f9cb42135e09c3f9a1b1d2a29ec94ba3b49ae475bc",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4104,
+      "path": "lib/c1ManualRecommendations.js",
+      "sha256": "8e2859b2a942fb9fa09e0d18c75244949bdd30aeed8db59091be6dc541035095",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 13837,
+      "path": "lib/c1MomentumEvidence.js",
+      "sha256": "1d8d90fd9b5f8be9c1d549bfa5c9c07d85a4a477b8ba92217e6dab2560f162d9",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6548,
+      "path": "lib/c1MomentumEvidenceInput.js",
+      "sha256": "a42d4a5dce10f599a3636406f82fd6445ab4ba958ae3ad75111fff575506c544",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5842,
+      "path": "lib/c1OpeningPlan.js",
+      "sha256": "28b3754ae0a81fb3d0dee5ffa72e86bcdf6e07ba720b77656767b59bf4c848e7",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5017,
+      "path": "lib/c1OpeningPriceReview.js",
+      "sha256": "7bfca1bd64fcf02255d924171cebc5ff8faf8c4a276b3cad7dcf1dfd51863884",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 587,
+      "path": "lib/c1OrderDisplay.js",
+      "sha256": "1c3b0e210c2c4231a76f657abfea23f725f2edabe62388655ed37f1de992d230",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6731,
+      "path": "lib/c1PaperEvents.js",
+      "sha256": "1f0db7fb8fcf4d95dc69169cb2b8a10261e259504166cdd01b254eae8a2f6a80",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5527,
+      "path": "lib/c1PositionContext.js",
+      "sha256": "c1a906c57d200c87d409bcf23d25749f92e9b2e28fd248f9139db2f80d8bf648",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 8376,
+      "path": "lib/c1PositionPresentation.js",
+      "sha256": "f4d95cb2b607f88be672594cbd2817de335531a7406f628f4c88d99d2cc83877",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1821,
+      "path": "lib/c1Presentation.js",
+      "sha256": "f007cba6155367d6f4468ed7f325ce75c9f55d41a597bf2aa814103736d285a7",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4790,
+      "path": "lib/c1QuoteVerification.js",
+      "sha256": "f52a6ae7669791d0e35b3418d9532f0de5436e00f6043b4d9c059aa2ff596168",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3022,
+      "path": "lib/c1RecentMomentumAccountSimulator.js",
+      "sha256": "d57812d34650d40794eab007b522e2ad29cbc7fc92da659d04dd277b7f9bc470",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5405,
+      "path": "lib/c1RecentMomentumChallenger.js",
+      "sha256": "708aac40b5a1bff38689bd569e5a8c244be11410e9ff462ff0e5fdefac484eeb",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 155476,
+      "path": "lib/c1RecentMomentumChallengerSimulator.js",
+      "sha256": "1d44ba99d111539246d556043f88274c1375b94c08e33cf859eda0dc276f1738",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 14884,
+      "path": "lib/c1RecentMomentumGate.js",
+      "sha256": "98904717d59bc84043ad473dfb4317e48afa1d19ba8da2b873eaa99c235490d0",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7248,
+      "path": "lib/c1RecentMomentumLivePolicy.js",
+      "sha256": "5ab797610f2abc467b9ffbc96193801c45642b4fe60aa02ae75825a3aa4c4a1d",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 9089,
+      "path": "lib/c1ReviewedSessionRevision.js",
+      "sha256": "a2530f6861298d2058f01dc0fb1d5d59423409aa152fc9dc8852168844bf4797",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2941,
+      "path": "lib/c1ScreenEvidence.js",
+      "sha256": "071043dcd7d357c5ce1df4c3c2ba3279764db0f4f70580476f49b7581e98eeb4",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 546,
+      "path": "lib/c1SessionRevisionReview.js",
+      "sha256": "80f53eab5d4ed4768f3c3e56306128319363dee21063533c8e99bb46ac369639",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6036,
+      "path": "lib/c1SleeveAccounting.js",
+      "sha256": "439f8917979948e441764a4d84bf53f3c0d5d2e7d46ee7827548cfc9014f0a03",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 11390,
+      "path": "lib/c1StockClassification.js",
+      "sha256": "611632b4b266cc365211af28bf637c9111c1ddb18e3ee7b74f778ca3d29ccebe",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2099,
+      "path": "lib/capitalSimulation.js",
+      "sha256": "0e33af8d6ff0e98946871cbd64df7b10fa20a3fd479442bfe9e3d39d940bb286",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 18111,
+      "path": "lib/entryTiming.js",
+      "sha256": "fd66774f4fdb3cb5f1688b05346ebdc3dc0c69bc411287f91e103049e92d08d5",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 19243,
+      "path": "lib/eventRisk.js",
+      "sha256": "1611726aca562700472eb56bd4ad8cfad5eadc5f0f3475beb089c97c5ff41ecd",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 27119,
+      "path": "lib/expertDecision.js",
+      "sha256": "cc1446eaecfcc2d81963baa2a6b2c5882c19db6ccdb0f0ad61afe9d411070853",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 21934,
+      "path": "lib/fmpFundamentals.js",
+      "sha256": "19045b8989613414487f627d80195079c146d5a0560358fd1641ce499d969e6f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4880,
+      "path": "lib/fmpQuotes.js",
+      "sha256": "50ec0aef2524af0e859e07df7549ec016e760a12ded4aaa15d4d5d593f045214",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 792870,
+      "path": "lib/fmpResearchBacktest.js",
+      "sha256": "c0008a435852b2e6eb036d29e958eaff87fea84a999ba56cc1f78d224c79c7de",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1442,
+      "path": "lib/formatters.js",
+      "sha256": "c934ab8315c2ad65db1733a8e73bb68236f7dba0650cc8d81e029e100db31702",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 27583,
+      "path": "lib/fullMarketDiscovery.js",
+      "sha256": "26277a09f06b7af4f37e164713d1b19c30adfa2b55ea799ddaf634e156a7cdae",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 40008,
+      "path": "lib/historicalSignalEvaluator.js",
+      "sha256": "e782d935b1ead9e2634938602961f56fa5191fb4728c16f5ba93aa98d072e7f5",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4668,
+      "path": "lib/marketCycleUniverse.js",
+      "sha256": "61b8170d9b711a15fe4ffd844c8176b98fca8442c70ac175d351bcbc6508e551",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6569,
+      "path": "lib/marketSession.js",
+      "sha256": "611abb854f8f0e87bf589acd056824ea03b119d2b9496aabdbf9c6c492aee69f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7646,
+      "path": "lib/momentumSpineResearch.js",
+      "sha256": "b3fb034ef9190cceff8096f4a8d7be077c2aebc7ff96c0415ece92721dfcd863",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4739,
+      "path": "lib/nasdaqAdaptiveReplacementResearch.js",
+      "sha256": "ab2c017329a0a0a8e3f46c80bce0973c261ec0df6dcd03d9395e3a22e50ed91c",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7018,
+      "path": "lib/nasdaqAdaptiveRunnerResearch.js",
+      "sha256": "1b995da2985365b41d7750e6c6f5d142182fe7c4e0caabe14839e75d093781b1",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6383,
+      "path": "lib/nasdaqConcentratedRunnerResearch.js",
+      "sha256": "9c80140f6861e973f9529ec07845dcd0680676440f40946f43a4c30bb207066c",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5700,
+      "path": "lib/nasdaqContinuousRunnerResearch.js",
+      "sha256": "b936be738832297c2e9ee1b867d05cadd10f65407b76d8698326ce18cf643507",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2096,
+      "path": "lib/nasdaqDistinctAlphaResearch.js",
+      "sha256": "74aca9703f3b1e3c249366d18e9e9df4a76bbee8b0e5b31d8f8475a5534060d5",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3852,
+      "path": "lib/nasdaqEventAlphaResearch.js",
+      "sha256": "6fdccbb50558531c1284c0b010abe2ebb68f8d29013e9214bb374d630d56d621",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6967,
+      "path": "lib/nasdaqRunnerResearch.js",
+      "sha256": "614110f7ee6b977b64426794b79dfe3242fc725a825b95294e591278058d34e2",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 25683,
+      "path": "lib/opportunityDecision.js",
+      "sha256": "b27ff4844b105a88970005eca9c6823276dc97859f02e50ea0ca9a5295667128",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 14200,
+      "path": "lib/optionsAnalysis.js",
+      "sha256": "75f29d834bc4e6df6d69f90fd3131ae5ddd90009dd38f3dc9a5a52bf74d61f10",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7986,
+      "path": "lib/performanceLedger.js",
+      "sha256": "10909cf5d77e084e01f7eb749040ca0425447fd130657d92591926519d76d1d3",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4776,
+      "path": "lib/performanceStore.js",
+      "sha256": "489711f1d13fc0b212a9ca751e0f08fc1b704f31c47c2338bb1bb49a59be0063",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1229,
+      "path": "lib/personalCapitalPolicy.js",
+      "sha256": "f446c5b70a50162332215bfb28a68c608717988cf09083efbf2e40585ad540a1",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 511,
+      "path": "lib/portfolioDateDisplay.js",
+      "sha256": "28d01f44ff5c6837f5bd8a7145eb2b3a614fc4ee2a20c988f546c96be0cd884a",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 21651,
+      "path": "lib/portfolioGovernor.js",
+      "sha256": "b7ff28dd656393d94161de18c7860bd7fcf6db9c3c1f7e7326ac831bd16f8720",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 17932,
+      "path": "lib/positionReunderwrite.js",
+      "sha256": "e2d22fa0499381f7c051d1e2cbc654db1024011c1740cd4458014cbe96eae550",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2245,
+      "path": "lib/releaseManifest.js",
+      "sha256": "f5d12b8a981dd2602ddd103c23d567c705c393a69dd400f2719960c89facd623",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 10860,
+      "path": "lib/replayDatasetCompaction.js",
+      "sha256": "ff609cd3f01d84eed331545eec8b83889bdec0544a67e10331b584b9ae921c45",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 764,
+      "path": "lib/researchMutationAuth.js",
+      "sha256": "2d38332f26b581936139ae0f90a646b918e65b2e4440b5d1e9e4b1a565aa498d",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 36340,
+      "path": "lib/scoring.js",
+      "sha256": "d892b90ad936cc25e61dfb0bf026badda6c6c630a59c67ba1192045a774450c6",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 15524,
+      "path": "lib/secFilingResearch.js",
+      "sha256": "3cc9bfe042a319c375da00f579a242e9ce9fec2a656fb6df097b7106c3ec04cc",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6508,
+      "path": "lib/secPointInTimeFundamentals.js",
+      "sha256": "b1a75f75e6c89436418220091f1aa9003bfc62674f7769562caf9ce8304b5dee",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2892,
+      "path": "lib/strongBuyPersistence.js",
+      "sha256": "5cb795e34406fab7cae46e8e2267bfa724243af580b02422d1bcdb095f9ae407",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4279,
+      "path": "lib/top5Diagnostics.js",
+      "sha256": "a77fadf04fed990c5974ec332410b24c4697432aa2483e5f1894e3f2fb895324",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1038,
+      "path": "lib/top5Response.js",
+      "sha256": "67d320ff89e87cf8f18d35c78a1eaf27a7c2756352764e29102e93245bdc151f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5710,
+      "path": "lib/universeBuilder.js",
+      "sha256": "62657f555f6919a7e3da76ab7fd0df68889806de76b64d4398578dcc6d6c3dfd",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 11975,
+      "path": "lib/v10AlphaAudit.js",
+      "sha256": "6bb8218277dca5e49a83818abef4dabfc6094a31ca416c67857699b68aeee259",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2761,
+      "path": "lib/v10ResearchContract.js",
+      "sha256": "90cdc8e1d3a5c497c83b2365bf0b22f2d0d219f4fffeac056ca7d245eea84479",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 27254,
+      "path": "lib/v11ProductionPolicy.js",
+      "sha256": "a6b4536f69f2d3f518877fac36ba34d2a9818db524361dc6eecbcf47b44f8887",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 10930,
+      "path": "lib/v11ProductionSnapshot.js",
+      "sha256": "b3ff2fd7c2ff408b0a16fb21404221ca5564016474552c8af373dcb26ed6c596",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3714,
+      "path": "lib/v11ResearchContract.js",
+      "sha256": "205bb15318efcc777a1c3f3409b3e431de734cd840b1ef6563f633276aa424b0",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4417,
+      "path": "lib/v12ResearchContract.js",
+      "sha256": "1989ab87df9adb753780c197bb9078d7a71b1e1c09ed3acafbb8fc6032d1b03f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 129965,
+      "path": "lib/walkForwardBacktest.js",
+      "sha256": "4c5126e58aea6f480bc6c8599a9c0b806978013e00ff5adbdbfffc099bebe9dd",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4530,
+      "path": "lib/winnerLifecycle.js",
+      "sha256": "0780c7aa9f9a8ae422e771ab235f9b5e0c058b5da8eb70ecbe69c1979e5c3534",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 43968,
+      "path": "package-lock.json",
+      "sha256": "054ebc9dc1f2e92b06fa64ba92e73b016d60799f84b277997f35173ee9b7bafc",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 710,
+      "path": "package.json",
+      "sha256": "ef225a665404ffc98eaff3f64b8182ba3aee6a27cfa9766d6bf342ae25aee1d1",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 6969,
+      "path": "pages/_app.js",
+      "sha256": "8f1e86eaae17cbdb381e8e947b4acb8c5e50f44679da4ac425e37c3dc12b1367",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 11801,
+      "path": "pages/api/c1-account.js",
+      "sha256": "727a627b7101ea1530e467a2fe217a367fcb87197bb2a68b0b03a274c39764ce",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 742,
+      "path": "pages/api/catalysts.js",
+      "sha256": "d6dcd2c12895b01dc22ca7d99e2af3246fbdb639523521b719576ab8b11d13f2",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 7540,
+      "path": "pages/api/cron/c1-index.js",
+      "sha256": "d9ecefaeabb19b07907c307465c5ed28b65a5ca102c716ca93a7ea14601b832f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 50093,
+      "path": "pages/api/cron/fmp-research-backtest.js",
+      "sha256": "ab75124ed957c562fb13181eacc12a7e0c3aa8046f5fe8a71910b40c96f8c93c",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2180,
+      "path": "pages/api/cron/full-market-discovery.js",
+      "sha256": "6bf5a8797523323c2f0f2ca67bc61283deeb7034790d70fde12b5098d90196c9",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1173,
+      "path": "pages/api/entry-timing.js",
+      "sha256": "f52677b8ca781c52552017252f21930a0e3466d621939c4bae11bb6cd4704fb6",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2590,
+      "path": "pages/api/health.js",
+      "sha256": "af2e3d1ae4af338c220bad61e59806350023e32fc4db538e9a33e814555614d2",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 10249,
+      "path": "pages/api/index.js",
+      "sha256": "045ac9f0461a64d10e84e7eb18d3c950c3329ab0cdab96640de6384edef868b1",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3581,
+      "path": "pages/api/lookup.js",
+      "sha256": "3703b53f1c8ef87d0f21556fe5c307488881392d78cc79904f49048c18232f04",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 10595,
+      "path": "pages/api/options.js",
+      "sha256": "a23a51dc5e6b384fd0398fcbb178b55f626ce0346378f5be99840cb278a94ae7",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1240,
+      "path": "pages/api/performance.js",
+      "sha256": "e925ecf1b96e0b8a5dcbf9739e0fdc5408012b742a0a7a2c270b51831d23732c",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 4851,
+      "path": "pages/api/portfolio-sync.js",
+      "sha256": "525b3aa63bc66aef2346ab479d88e6a56934ed00bb93efbc0375c4da5f6d0073",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 3132,
+      "path": "pages/api/research/alpha-creator.js",
+      "sha256": "d0237156c1562741fca191f101c355e2306f7ff5c0bc4a7a8d89783f0e82202b",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 671,
+      "path": "pages/api/research/alpha-prospective-challenger.js",
+      "sha256": "590223daa90aeddd619d3b462969b874a5634cb108dfad5b902adcca4de00d0f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 633,
+      "path": "pages/api/research/alpha-regime-map.js",
+      "sha256": "e755c14dc68d0017d94e4e89d48ebb8d710b428538779dd8c1623d001bd190e8",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 494,
+      "path": "pages/api/research/backtest-status.js",
+      "sha256": "05e67db0396c51eb63e856db295acfdf220edd5465fdddb8663d16dee0da821e",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 974,
+      "path": "pages/api/research/c1-forward-accounting.js",
+      "sha256": "04e3551dceaad4ff38b7efbff60695df9a9bac30a9b92bde3877ccd5469ba5c1",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1015,
+      "path": "pages/api/research/c1-holdings-comparison.js",
+      "sha256": "f8ba76f7b1c24d1a5aaf3bedc8a32e4441f20fd68e5b89c82bd3c4ee1400a6de",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2725,
+      "path": "pages/api/research/c1-live-decision.js",
+      "sha256": "101b3a379279903f11bb9535aa8f05f63e52bb6a1741d8b0afb4610cfb96a7f1",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2435,
+      "path": "pages/api/research/c1-live-input.js",
+      "sha256": "1b45286050d356846eeede49aa490dc3f06979648eda6a736f192c333d5c67b1",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 592,
+      "path": "pages/api/research/data-capabilities.js",
+      "sha256": "5043e8844b4c6adad9f72e20caed298038834adb54d29a2732e768a41c38258d",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 739,
+      "path": "pages/api/research/factor-leadership-audit.js",
+      "sha256": "17c31a802014af327ec332f735981de80fb6906adcefd40b5d98e8eb5fbae629",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1005,
+      "path": "pages/api/research/pit-nasdaq-adaptive-replacement-r40-r44-placebo-worker.js",
+      "sha256": "4f5020c1998e181b32ea881ffde92257a811958fc3d0efc9dbe791296d570dd7",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1004,
+      "path": "pages/api/research/pit-nasdaq-adaptive-replacement-r40-r44-worker.js",
+      "sha256": "62d1156c28a049fc9b142de79be0917c367f70af3b9dbfde8cf08bd204b187f0",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 859,
+      "path": "pages/api/research/pit-nasdaq-adaptive-replacement-r40-r44.js",
+      "sha256": "aa0786f013b56808a155d9713dab0cd396f0a26b20a76ed703c939ff367ade17",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 994,
+      "path": "pages/api/research/pit-nasdaq-adaptive-runner-r35-r39-worker.js",
+      "sha256": "b084ae10e4386907ce6741be264e0dc1f70a9752840abc683e289c80c05ee8f2",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 849,
+      "path": "pages/api/research/pit-nasdaq-adaptive-runner-r35-r39.js",
+      "sha256": "e8a354a97c9ef9fa3324f82ac5e95364a7300a505be539651057acf0ecb1d26b",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2662,
+      "path": "pages/api/research/pit-nasdaq-alpha-parallel-r11.js",
+      "sha256": "31084ed9ee0489af2f2d021f4b3278b93f15c649c54b0bfb9791503da9e80583",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1060,
+      "path": "pages/api/research/pit-nasdaq-concentrated-runner-r25-r29-worker.js",
+      "sha256": "8b769119a257b5bded9dc27589016643757ca8fe7107b0f96ac69750c8aac899",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 946,
+      "path": "pages/api/research/pit-nasdaq-concentrated-runner-r25-r29.js",
+      "sha256": "67d01d25b2fc0e4a1a234232bfc63e5a882ccfd532713859abe3ff302c8ebce7",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1056,
+      "path": "pages/api/research/pit-nasdaq-continuous-runner-r30-r34-worker.js",
+      "sha256": "53ef4892b45cf274fe583db41c08d79cd2efee8143b13d7fa62f014716c30837",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 942,
+      "path": "pages/api/research/pit-nasdaq-continuous-runner-r30-r34.js",
+      "sha256": "099a5223fd7b7492541ec7b977343aa23fd52f5907ba36183793031e58fe9097",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1326,
+      "path": "pages/api/research/pit-nasdaq-dataset-status.js",
+      "sha256": "36b80886f57d91b74305a07300fdc7b2593196929aef15019a4a37a04b268a07",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 780,
+      "path": "pages/api/research/pit-nasdaq-distinct-alpha-r45-r54-worker.js",
+      "sha256": "9a5ce88953844c50272325bef876428cd251ac6650cc611268af69a4df4c5b50",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 461,
+      "path": "pages/api/research/pit-nasdaq-distinct-alpha-r45-r54.js",
+      "sha256": "c30dcab6fbf1d0566cd38a7bc296187824b5d046154ef1c9e45a0e5ecc29b981",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 748,
+      "path": "pages/api/research/pit-nasdaq-event-alpha-r55-r64-worker.js",
+      "sha256": "54c29bd607e31374092eb193d8d57b33216d1694ea35742e706baa82ba7cf29f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 488,
+      "path": "pages/api/research/pit-nasdaq-event-alpha-r55-r64.js",
+      "sha256": "9af22c15d7940f282be48e67cefb0c1525f9d60b5ed3b8f4ace80f7e519a8f88",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1615,
+      "path": "pages/api/research/pit-nasdaq-price-integrity.js",
+      "sha256": "156401eb34afc62ad6582441f7a3bf4a5e9544c4a69adb8e07f28c8696ff9540",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1036,
+      "path": "pages/api/research/pit-nasdaq-runner-r20-r24-worker.js",
+      "sha256": "eb195e5fe77243e2da36cdc0ac32c679d70d304b714a2d7ec01d751992b3fafc",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 922,
+      "path": "pages/api/research/pit-nasdaq-runner-r20-r24.js",
+      "sha256": "ab26f198b6822af018d64c53508c2ac21c8f591bea0136b60390bef4124d43d5",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1262,
+      "path": "pages/api/research/pit-nasdaq-universe.js",
+      "sha256": "fb56979445bb7e998e7f43631a260f47f6a6c8714407b98306654eb44264e1f2",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1427,
+      "path": "pages/api/research/pit-sp500-alpha-batch-r8.js",
+      "sha256": "db599a227bbeb2108249ccf495c27a5a969eafd4ec8218807c54eb43f262128f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1201,
+      "path": "pages/api/research/pit-sp500-alpha-creator-v2-integrity.js",
+      "sha256": "0e1d9fad962533737c4e384a1093aa0a44b2ed728e78b2d511386f73820f4eee",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1285,
+      "path": "pages/api/research/pit-sp500-alpha-creator-v2.js",
+      "sha256": "aad4a318008e0f96b05196589b4dfea240763381383ad621edecebb4456f6de4",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1200,
+      "path": "pages/api/research/pit-sp500-alpha-creator.js",
+      "sha256": "4faf7f87ff1a4e386bdc66466382f3974db6a7f4b6c5967afa0ba9c22ada8f19",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1467,
+      "path": "pages/api/research/pit-sp500-alpha-earnings-drift-r10.js",
+      "sha256": "79f97f7d9914430f1e42d632503e2af59de80dfa460a60a421c57c1bd9754e00",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1439,
+      "path": "pages/api/research/pit-sp500-alpha-research-r3.js",
+      "sha256": "a9fd3ed4c7f43ca961e098f8285f406feda9db1c39c57bd3b85d82c48e6b10ca",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1439,
+      "path": "pages/api/research/pit-sp500-alpha-research-r4.js",
+      "sha256": "fec4fc778cac5d96cf50e7d11b7a13001fc1cc06e5a7fed63dd765bfa04552bb",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1439,
+      "path": "pages/api/research/pit-sp500-alpha-research-r5.js",
+      "sha256": "51ac9d5f69058dd6108e4be02b01eb317aa64b115330777f91a7fda87a004c47",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1439,
+      "path": "pages/api/research/pit-sp500-alpha-research-r6.js",
+      "sha256": "6756791720175c1e8cbb29d7889fe819d06ee564cf3ab50c746ba8544757dfde",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1439,
+      "path": "pages/api/research/pit-sp500-alpha-research-r7.js",
+      "sha256": "33ec3411fccf99f3c4e9e1bb694d8d534479fba58de3bed297f8252d424f69e0",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1260,
+      "path": "pages/api/research/pit-sp500-alpha-sec-filing-r14.js",
+      "sha256": "9c2936547221b3b7e3949368a33c167dea9211b07ae3f5b01413d3b07ba4a2c1",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1431,
+      "path": "pages/api/research/pit-sp500-alpha-sizing-r9.js",
+      "sha256": "cda9fbc9ca4458c10a0db4cb808e6f2619ac968425a3469d76c78860a10a29d8",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 664,
+      "path": "pages/api/research/pit-sp500-dataset-status.js",
+      "sha256": "f0b37432d3c0fefd07c80ef06936d0835aa9da55902da34b4f9d029c83c5bf16",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1049,
+      "path": "pages/api/research/pit-sp500-momentum-spine-r15-r19-worker.js",
+      "sha256": "39307c749cce107a9d788c5448e9040f526d900807c1cd5aaaea784bc97b8b91",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1281,
+      "path": "pages/api/research/pit-sp500-momentum-spine-r15-r19.js",
+      "sha256": "a97a36b7fbf6a62e9f42de89112f374b1d87eb5dcb9b4299460635b938a320bd",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 586,
+      "path": "pages/api/research/pit-sp500-universe.js",
+      "sha256": "b0ae7b6cb2f90704836464abf24a10398760a380733a1d0f879dd2eeefa416ca",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 564,
+      "path": "pages/api/research/preview-alpha-lab.js",
+      "sha256": "1161b48f9461f6dc7c55f3fb4772a22a9ff0a3efe16514a93a4e13436c6da2c5",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1486,
+      "path": "pages/api/research/preview-dataset-export.js",
+      "sha256": "e44942f6aeba1520fe66e31480098668fa6a524c77370b20a8ca26abf9e05f72",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1320,
+      "path": "pages/api/research/preview-nasdaq-dataset.js",
+      "sha256": "2345b3a49c376589aa4b957e7874a7a63667476b99519e34e149b04cd0cef141",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 747,
+      "path": "pages/api/research/price-pattern-model-search.js",
+      "sha256": "392f45a7a2a7f26ba6e77074c7252e53f15ea38f9dff8aaa8759d8a8b15d3c1e",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 795,
+      "path": "pages/api/research/quality-confirmed-historical.js",
+      "sha256": "cfa8e9f7d71f938679d109af03feab2c4bfe824aaaedc98152b838e065601e0d",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 1106,
+      "path": "pages/api/research/v11-bounded-review.js",
+      "sha256": "e08076a7b609ce353b7ab9d3282bc209f5c874c7def2edc8d9d6167ac6e6e32e",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 912,
+      "path": "pages/api/research/v11-forward-extension.js",
+      "sha256": "5c91054b9fa9c91ee0f0f3f4c4db56c740ffdfb8ff07208dd8911683c115d98f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 482,
+      "path": "pages/api/research/v11-stress-test.js",
+      "sha256": "93c84a461dd606a367cb54967f68cc014d0d9232f50015c44e82590f18ce7439",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 49862,
+      "path": "pages/api/top5.js",
+      "sha256": "f65d3059f4b3e7686c42924d9b287c0e2d6e06ae69f140e08572a6225a4b0d59",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 551,
+      "path": "pages/api/version.js",
+      "sha256": "d7915c46c9f9ca5d47e596df4a2bfd6ceec513a84a1984e78084ac00dcbb6450",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 108998,
+      "path": "pages/index.js",
+      "sha256": "3697e36a01ecd7c5105125dd6365456302e7021d82b84c343964e5532b890849",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 2068,
+      "path": "src/lib/liquidity-filter.ts",
+      "sha256": "c215c5f8c88679ecf75351ee838f3afc1e67ac5fe916af8da822cac06e033526",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 5555,
+      "path": "src/lib/universe.ts",
+      "sha256": "2c87adb681c942314d9e7ee42938dccc84e33c0c236e39d33dee7ff2b81c386f",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    },
+    {
+      "bytes": 357,
+      "path": "vercel.json",
+      "sha256": "4f623aad57c4b1616f62510ac270f9121b1d272a8efe510e2b9a92cf5e0ec2e0",
+      "source": "clean-local-base-unchanged-in-production-diff"
+    }
+  ],
+  "local_base": "d004204e45307fa74a09248031ad9edc25846d09",
+  "production_commit": "0a65e20964ae080b8718332e5f6f16daa6def452"
+}

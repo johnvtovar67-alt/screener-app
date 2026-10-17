@@ -1,0 +1,163 @@
+{
+  "author": "independent_control_review agent",
+  "scope": "Pure read gate caching only; no policy state cache",
+  "cases": [
+    {
+      "case": "frozen full-history 220",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 220",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 221",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 221",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 222",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 222",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 223",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 223",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 224",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 224",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 225",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 225",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 220",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 220",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 221",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 221",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 222",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 222",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 223",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 223",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 224",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 224",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen full-history 225",
+      "status": "PASS"
+    },
+    {
+      "case": "repeat equivalent normalized symbol 225",
+      "status": "PASS"
+    },
+    {
+      "case": "warm cache",
+      "status": "PASS"
+    },
+    {
+      "case": "returned output mutation isolated",
+      "status": "PASS"
+    },
+    {
+      "case": "same end session earlier identity changed",
+      "status": "PASS"
+    },
+    {
+      "case": "new end identity future timing",
+      "status": "PASS"
+    },
+    {
+      "case": "default or invalid input",
+      "status": "PASS"
+    },
+    {
+      "case": "default or invalid input",
+      "status": "PASS"
+    },
+    {
+      "case": "default or invalid input",
+      "status": "PASS"
+    },
+    {
+      "case": "default or invalid input",
+      "status": "PASS"
+    },
+    {
+      "case": "default or invalid input",
+      "status": "PASS"
+    },
+    {
+      "case": "default or invalid input",
+      "status": "PASS"
+    },
+    {
+      "case": "mutable before",
+      "status": "PASS"
+    },
+    {
+      "case": "mutable after nested change",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen cyclic extra falls back",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen non-JSON Date falls back",
+      "status": "PASS"
+    },
+    {
+      "case": "frozen getter falls back without invocation",
+      "status": "PASS"
+    }
+  ],
+  "historicalExecutions": 0
+}

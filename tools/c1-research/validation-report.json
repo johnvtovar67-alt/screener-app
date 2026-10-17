@@ -1,0 +1,23 @@
+{
+  "ciIntegration": "Existing canonical runner discovers tools/c1-research-program-regression.cjs. Initial separate-workflow proposal was rejected by intact canonical guard and removed.",
+  "datasetQualified": false,
+  "existingAssertions": {
+    "giveback": 86,
+    "recentMomentumChallenger": 222,
+    "recordedFillCompatibility": 56
+  },
+  "historicalComparisonRuns": 0,
+  "independentFmpTransport": "BLOCKED: configured proxy port8080 unreachable",
+  "limits": [
+    "All strategy runs during verification were synthetic mechanics tests, not historical investment performance.",
+    "No complete independent PIT dataset or exact production input replay is claimed.",
+    "Independent historical screen/actual-dollar adapter parity review is mandatory before historical comparisons.",
+    "No full application build was needed for unchanged application files; existing application CI remains intact."
+  ],
+  "newResearchAssertions": 820,
+  "opportunityReporting": "Screen-suppressed counts require passing nine-name shadow screen; execution-stage capacity skips separate, not certified missed profits.",
+  "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "releaseFreeze": "PASS; application source unchanged relative to pinned production",
+  "results": null,
+  "status": "MECHANICS_PASS_HISTORICAL_COMPARISONS_NOT_RUN"
+}

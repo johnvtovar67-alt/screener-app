@@ -1,0 +1,15 @@
+{
+  "artifacts": [],
+  "audit": {
+    "findingsResolved": false,
+    "independentReviewer": null,
+    "reviewedArtifactHashes": []
+  },
+  "endDate": "2026-10-15",
+  "label": "retrospective-independent-research",
+  "note": "Template only; empty artifacts must fail validation. Never treat as a dataset.",
+  "schema": "c1-independent-evidence-v1",
+  "startDate": "2023-01-04",
+  "universe": "sp500",
+  "warmupStart": "2021-11-01"
+}

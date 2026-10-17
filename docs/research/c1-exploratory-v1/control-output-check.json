@@ -1,0 +1,252 @@
+{
+  "author": "independent_control_review agent",
+  "scope": "Independent arithmetic replay of already-completed controls; no strategy simulation",
+  "costs": {
+    "12": {
+      "ledgerStatus": "PASS",
+      "all64CloseMarksReconciled": true,
+      "maxDollarDifference": 2.9103830456733704e-11,
+      "independentMetrics": {
+        "totalReturn": 0.007041955436452474,
+        "cagr": 0.027943072101686006,
+        "sharpe": 0.24320815683712377,
+        "maxDrawdown": -0.1925646252671901,
+        "twoSidedAnnualTurnover": 30.084846568591338,
+        "meanCashWeight": 0.3757832889319926,
+        "estimatedCostFromFillAssumptions": 988.8388853147953
+      },
+      "independentOpportunity": {
+        "eligibleNotPurchasedNameDays": 83,
+        "forwardFiveSessionObservableNameDays": 76,
+        "meanForwardFiveSessionNetPriceReturn": -0.01488601550162313,
+        "forwardFiveSessionWinShare": 0.4605263157894737,
+        "descriptiveCashTimesSpyPriceReturnDollars": -3758.2188047641275
+      },
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 8812.121675645232
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -2408.6761120000106
+        }
+      },
+      "feb26Risk": {
+        "date": "2025-02-26",
+        "base": {
+          "preBreakerOpenEquity": 28021.102382952507,
+          "openHighWater": 31747.88707199999,
+          "drawdown": -0.11738685729212872
+        },
+        "cooldown15": {
+          "preBreakerOpenEquity": 55381.76181269273,
+          "openHighWater": 60413.306399999994,
+          "drawdown": -0.08328537017976012
+        },
+        "sector40": {
+          "preBreakerOpenEquity": 28802.682159999997,
+          "openHighWater": 31828.655627999993,
+          "drawdown": -0.09507072819431361
+        }
+      }
+    },
+    "25": {
+      "ledgerStatus": "PASS",
+      "all64CloseMarksReconciled": true,
+      "maxDollarDifference": 2.9103830456733704e-11,
+      "independentMetrics": {
+        "totalReturn": -0.0038863288556744147,
+        "cagr": -0.015176635455171783,
+        "sharpe": 0.10443857840497565,
+        "maxDrawdown": -0.1969829047670657,
+        "twoSidedAnnualTurnover": 30.106645579291094,
+        "meanCashWeight": 0.3755366833101142,
+        "estimatedCostFromFillAssumptions": 2049.6979125674525
+      },
+      "independentOpportunity": {
+        "eligibleNotPurchasedNameDays": 83,
+        "forwardFiveSessionObservableNameDays": 76,
+        "meanForwardFiveSessionNetPriceReturn": -0.01744399416299494,
+        "forwardFiveSessionWinShare": 0.4342105263157895,
+        "descriptiveCashTimesSpyPriceReturnDollars": -3710.3203095562017
+      },
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 7937.983914432527
+        },
+        "0-4": {
+          "sales": 6,
+          "realizedPnl": -2514.8192999999937
+        }
+      },
+      "feb26Risk": {
+        "date": "2025-02-26",
+        "base": {
+          "preBreakerOpenEquity": 27846.86480863376,
+          "openHighWater": 31552.433750000004,
+          "drawdown": -0.11744162021626126
+        },
+        "cooldown15": {
+          "preBreakerOpenEquity": 54975.29215579876,
+          "openHighWater": 60112.51112500001,
+          "drawdown": -0.08546006269009032
+        },
+        "sector40": {
+          "preBreakerOpenEquity": 28595.095300000004,
+          "openHighWater": 31666.347724999996,
+          "drawdown": -0.0969878955309802
+        }
+      }
+    },
+    "50": {
+      "ledgerStatus": "PASS",
+      "all64CloseMarksReconciled": true,
+      "maxDollarDifference": 2.9103830456733704e-11,
+      "independentMetrics": {
+        "totalReturn": 0.035725716298950605,
+        "cagr": 0.14781676529973864,
+        "sharpe": 0.6191831226645653,
+        "maxDrawdown": -0.15791349728456683,
+        "twoSidedAnnualTurnover": 29.55511589028585,
+        "meanCashWeight": 0.3716052553750846,
+        "estimatedCostFromFillAssumptions": 4011.3265911049425
+      },
+      "independentOpportunity": {
+        "eligibleNotPurchasedNameDays": 75,
+        "forwardFiveSessionObservableNameDays": 68,
+        "meanForwardFiveSessionNetPriceReturn": -0.02549987277087573,
+        "forwardFiveSessionWinShare": 0.38235294117647056,
+        "descriptiveCashTimesSpyPriceReturnDollars": -3933.2817262848553
+      },
+      "holdingAgeExternal": {
+        "5-29": {
+          "sales": 34,
+          "realizedPnl": 10170.112279895051
+        },
+        "0-4": {
+          "sales": 5,
+          "realizedPnl": -2133.979099999997
+        }
+      },
+      "feb26Risk": {
+        "date": "2025-02-26",
+        "base": {
+          "preBreakerOpenEquity": 27518.109784535012,
+          "openHighWater": 31297.634400000014,
+          "drawdown": -0.12076071204490135
+        },
+        "cooldown15": {
+          "preBreakerOpenEquity": 54352.064395360016,
+          "openHighWater": 59582.58115000002,
+          "drawdown": -0.08778600479680632
+        },
+        "sector40": {
+          "preBreakerOpenEquity": 28262.940200000015,
+          "openHighWater": 31421.47935000001,
+          "drawdown": -0.10052165637452692
+        }
+      }
+    }
+  },
+  "historicalSimulations": 0,
+  "firstIdentityDivergence12vs25": null,
+  "firstIdentityDivergence12vs50": {
+    "date": "2025-02-26",
+    "12": [
+      {
+        "id": "exploratory:base:2025-02-26:0",
+        "orderId": "base:2025-02-26:0",
+        "symbol": "TPR",
+        "side": "sell",
+        "shares": 116,
+        "price": 84.538432,
+        "fee": 0,
+        "executedAt": "2025-02-26T14:30:00Z"
+      },
+      {
+        "id": "exploratory:cooldown15:2025-02-26:0",
+        "orderId": "cooldown15:2025-02-26:0",
+        "symbol": "TPR",
+        "side": "sell",
+        "shares": 189,
+        "price": 84.538432,
+        "fee": 0,
+        "executedAt": "2025-02-26T14:30:00Z"
+      },
+      {
+        "id": "exploratory:sector40:2025-02-26:0",
+        "orderId": "sector40:2025-02-26:0",
+        "symbol": "TPR",
+        "side": "sell",
+        "shares": 119,
+        "price": 84.538432,
+        "fee": 0,
+        "executedAt": "2025-02-26T14:30:00Z"
+      }
+    ],
+    "50": [
+      {
+        "id": "exploratory:base:2025-02-26:0",
+        "orderId": "base:2025-02-26:0",
+        "symbol": "TPR",
+        "side": "sell",
+        "shares": 114,
+        "price": 84.2168,
+        "fee": 0,
+        "executedAt": "2025-02-26T14:30:00Z"
+      },
+      {
+        "id": "exploratory:cooldown15:2025-02-26:0",
+        "orderId": "cooldown15:2025-02-26:0",
+        "symbol": "TPR",
+        "side": "sell",
+        "shares": 189,
+        "price": 84.2168,
+        "fee": 0,
+        "executedAt": "2025-02-26T14:30:00Z"
+      },
+      {
+        "id": "exploratory:sector40:2025-02-26:0",
+        "orderId": "sector40:2025-02-26:0",
+        "symbol": "TPR",
+        "side": "sell",
+        "shares": 117,
+        "price": 84.2168,
+        "fee": 0,
+        "executedAt": "2025-02-26T14:30:00Z"
+      },
+      {
+        "id": "exploratory:base:2025-02-26:1",
+        "orderId": "base:2025-02-26:1",
+        "symbol": "LULU",
+        "side": "sell",
+        "shares": 11,
+        "price": 364.49834999999996,
+        "fee": 0,
+        "executedAt": "2025-02-26T14:30:00Z"
+      },
+      {
+        "id": "exploratory:base:2025-02-26:2",
+        "orderId": "base:2025-02-26:2",
+        "symbol": "DXCM",
+        "side": "sell",
+        "shares": 100,
+        "price": 87.2416,
+        "fee": 0,
+        "executedAt": "2025-02-26T14:30:00Z"
+      }
+    ]
+  },
+  "sourceMetricsCrosscheck": {
+    "status": "PASS",
+    "maxAbsoluteDifferenceByCost": {
+      "12": 3.552713678800501e-15,
+      "25": 7.105427357601002e-15,
+      "50": 7.105427357601002e-15
+    },
+    "threshold": 1e-10
+  },
+  "sourceOpportunityCrosscheck": "PASS"
+}

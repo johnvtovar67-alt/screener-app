@@ -1,0 +1,3871 @@
+{
+  "label": "EXPLORATORY RETROSPECTIVE, NOT VALIDATED PERFORMANCE",
+  "freezeHash": "b5c5e2b5163ed4ffe31e7423019bef4dedea8dc8d999b2e71a1465ba2621eef7",
+  "metrics": {
+    "12": {
+      "C": {
+        "cashPercentiles": {
+          "0.1": 0.04114785150210863,
+          "0.5": 0.2439781067592148,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6242167110680072,
+        "liquidationAdjustedTotalReturn": 0.005940043556452501,
+        "totalReturn": 0.007041955436452474,
+        "cagr": 0.027943072101686006,
+        "sharpe": 0.24320815683712377,
+        "maxDrawdown": -0.1925646252671901,
+        "twoSidedAnnualTurnover": 30.08484656859134,
+        "transactionCount": 89,
+        "meanCashWeight": 0.3757832889319927,
+        "medianCashWeight": 0.2439781067592148,
+        "estimatedCostFromFillAssumptions": 988.8388853147953,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 83,
+          "forwardFiveSessionObservableNameDays": 76,
+          "meanForwardFiveSessionNetPriceReturn": -0.01488601550162313,
+          "forwardFiveSessionWinShare": 0.4605263157894737,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3758.218804764127,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-entry-off": {
+        "cashPercentiles": {
+          "0.1": 0.14909638618822024,
+          "0.5": 0.19831914105341758,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 578,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 457,
+        "cashUtilization": 0.6260514426305764,
+        "liquidationAdjustedTotalReturn": -0.011577065350737104,
+        "totalReturn": -0.010586367550737052,
+        "cagr": -0.040937223349316376,
+        "sharpe": -0.033440468597295867,
+        "maxDrawdown": -0.1658549709135707,
+        "twoSidedAnnualTurnover": 29.981260787768704,
+        "transactionCount": 83,
+        "meanCashWeight": 0.37394855736942356,
+        "medianCashWeight": 0.19831914105341758,
+        "estimatedCostFromFillAssumptions": 915.4482497936967,
+        "blockedByReason": {
+          "position-limit": 1191,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 66,
+          "forwardFiveSessionObservableNameDays": 64,
+          "meanForwardFiveSessionNetPriceReturn": -0.009512383191912718,
+          "forwardFiveSessionWinShare": 0.40625,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5069.417491779072,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-macd-off": {
+        "cashPercentiles": {
+          "0.1": 0.0023239048011339507,
+          "0.5": 0.25712603850919735,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 717,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 449,
+        "cashUtilization": 0.6339166307260058,
+        "liquidationAdjustedTotalReturn": -0.018615948326568765,
+        "totalReturn": -0.017528196326568768,
+        "cagr": -0.06709419940810823,
+        "sharpe": -0.04432175241482993,
+        "maxDrawdown": -0.142140088101938,
+        "twoSidedAnnualTurnover": 37.95420874750675,
+        "transactionCount": 107,
+        "meanCashWeight": 0.36608336927399415,
+        "medianCashWeight": 0.25712603850919735,
+        "estimatedCostFromFillAssumptions": 1180.8629800168685,
+        "blockedByReason": {
+          "position-limit": 1019,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 552,
+          "entry-invalidated-at-open": 2
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 68,
+          "forwardFiveSessionObservableNameDays": 68,
+          "meanForwardFiveSessionNetPriceReturn": -0.004449444206420242,
+          "forwardFiveSessionWinShare": 0.5441176470588235,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3428.3376231505426,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-deterioration-off": {
+        "cashPercentiles": {
+          "0.1": 0.026057833722355213,
+          "0.5": 0.24171095294408684,
+          "0.9": 0.9058183123639262
+        },
+        "blockedOpportunityDays": 832,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 564,
+        "cashUtilization": 0.6305625043432262,
+        "liquidationAdjustedTotalReturn": 0.022072447238393744,
+        "totalReturn": 0.02318136111839375,
+        "cagr": 0.09417833933210695,
+        "sharpe": 0.4595920859258993,
+        "maxDrawdown": -0.14853187124242195,
+        "twoSidedAnnualTurnover": 19.62356330299928,
+        "transactionCount": 57,
+        "meanCashWeight": 0.36943749565677375,
+        "medianCashWeight": 0.24171095294408684,
+        "estimatedCostFromFillAssumptions": 628.6210886406047,
+        "blockedByReason": {
+          "position-limit": 1200,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 59,
+          "forwardFiveSessionObservableNameDays": 56,
+          "meanForwardFiveSessionNetPriceReturn": -0.011670600781759941,
+          "forwardFiveSessionWinShare": 0.5,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5221.2430361906845,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-giveback-off": {
+        "cashPercentiles": {
+          "0.1": 0.04114785150210863,
+          "0.5": 0.24537199888736175,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6235961491533707,
+        "liquidationAdjustedTotalReturn": 0.009524865276452354,
+        "totalReturn": 0.01063222899645222,
+        "cagr": 0.04241151855735947,
+        "sharpe": 0.28849575118442145,
+        "maxDrawdown": -0.18968598266281578,
+        "twoSidedAnnualTurnover": 30.11179208084715,
+        "transactionCount": 89,
+        "meanCashWeight": 0.3764038508466293,
+        "medianCashWeight": 0.24537199888736175,
+        "estimatedCostFromFillAssumptions": 989.9415293147961,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 83,
+          "forwardFiveSessionObservableNameDays": 76,
+          "meanForwardFiveSessionNetPriceReturn": -0.01488601550162313,
+          "forwardFiveSessionWinShare": 0.4605263157894737,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3709.682776355451,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "Q9-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.04114785150210863,
+          "0.5": 0.2439781067592148,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6242167110680072,
+        "liquidationAdjustedTotalReturn": 0.005940043556452501,
+        "totalReturn": 0.007041955436452474,
+        "cagr": 0.027943072101686006,
+        "sharpe": 0.24320815683712377,
+        "maxDrawdown": -0.1925646252671901,
+        "twoSidedAnnualTurnover": 30.08484656859134,
+        "transactionCount": 89,
+        "meanCashWeight": 0.3757832889319927,
+        "medianCashWeight": 0.2439781067592148,
+        "estimatedCostFromFillAssumptions": 988.8388853147953,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 145,
+          "forwardFiveSessionObservableNameDays": 134,
+          "meanForwardFiveSessionNetPriceReturn": -0.01266836827074424,
+          "forwardFiveSessionWinShare": 0.48507462686567165,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3758.218804764127,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-A-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.3984437765016208,
+          "0.5": 0.6824960700028766,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 693,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 378,
+        "cashUtilization": 0.3330179686044371,
+        "liquidationAdjustedTotalReturn": 0.030908527334047697,
+        "totalReturn": 0.031552485734047675,
+        "cagr": 0.12975978173633473,
+        "sharpe": 0.733247772590414,
+        "maxDrawdown": -0.12715843775764102,
+        "twoSidedAnnualTurnover": 16.806666165892203,
+        "transactionCount": 93,
+        "meanCashWeight": 0.6669820313955629,
+        "medianCashWeight": 0.6824960700028766,
+        "estimatedCostFromFillAssumptions": 540.0869225952226,
+        "blockedByReason": {
+          "position-limit": 1076,
+          "entry-invalidated-at-open": 7,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 92,
+          "forwardFiveSessionObservableNameDays": 88,
+          "meanForwardFiveSessionNetPriceReturn": -0.011011555080982588,
+          "forwardFiveSessionWinShare": 0.4772727272727273,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5799.391411647698,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-A-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.01309126661682951,
+          "0.5": 0.2983581894458998,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 435,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 46,
+        "cashUtilization": 0.6086017342027465,
+        "liquidationAdjustedTotalReturn": -0.06191644316074174,
+        "totalReturn": -0.06081002000074176,
+        "cagr": -0.218387719483653,
+        "sharpe": -0.8091474138978922,
+        "maxDrawdown": -0.1642590359047571,
+        "twoSidedAnnualTurnover": 34.24312860334377,
+        "transactionCount": 239,
+        "meanCashWeight": 0.3913982657972535,
+        "medianCashWeight": 0.2983581894458998,
+        "estimatedCostFromFillAssumptions": 1048.247995194188,
+        "blockedByReason": {
+          "position-limit": 112,
+          "sector-position-limit": 103,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 53,
+          "forwardFiveSessionObservableNameDays": 52,
+          "meanForwardFiveSessionNetPriceReturn": 0.0004492984358859723,
+          "forwardFiveSessionWinShare": 0.5769230769230769,
+          "descriptiveCashTimesSpyPriceReturnDollars": -2344.3832160594284,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-B-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.2518805587384565,
+          "0.5": 0.5749759450867813,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 706,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 385,
+        "cashUtilization": 0.4159633677720882,
+        "liquidationAdjustedTotalReturn": 0.033335341669440854,
+        "totalReturn": 0.034023472669440835,
+        "cagr": 0.14042561752536709,
+        "sharpe": 0.6881404215928911,
+        "maxDrawdown": -0.15359535372684807,
+        "twoSidedAnnualTurnover": 21.13082173487277,
+        "transactionCount": 95,
+        "meanCashWeight": 0.5840366322279118,
+        "medianCashWeight": 0.5749759450867813,
+        "estimatedCostFromFillAssumptions": 688.8690796158983,
+        "blockedByReason": {
+          "position-limit": 1092,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 92,
+          "forwardFiveSessionObservableNameDays": 89,
+          "meanForwardFiveSessionNetPriceReturn": -0.007523610862220842,
+          "forwardFiveSessionWinShare": 0.5168539325842697,
+          "descriptiveCashTimesSpyPriceReturnDollars": -6036.098118404952,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-B-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.010505045311510088,
+          "0.5": 0.24601165635375183,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 416,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.6348656419080856,
+        "liquidationAdjustedTotalReturn": -0.07060970563152613,
+        "totalReturn": -0.06950595931152614,
+        "cagr": -0.24642727414280885,
+        "sharpe": -0.9878476644604061,
+        "maxDrawdown": -0.16523833561966705,
+        "twoSidedAnnualTurnover": 36.03110571389731,
+        "transactionCount": 193,
+        "meanCashWeight": 0.3651343580919144,
+        "medianCashWeight": 0.24601165635375183,
+        "estimatedCostFromFillAssumptions": 1095.4811582725893,
+        "blockedByReason": {
+          "sector-position-limit": 93,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 56,
+          "forwardFiveSessionObservableNameDays": 55,
+          "meanForwardFiveSessionNetPriceReturn": -0.004458724942194196,
+          "forwardFiveSessionWinShare": 0.5454545454545454,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3109.7604575857563,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-C-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.2027997660174007,
+          "0.5": 0.4731213314472454,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 734,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 430,
+        "cashUtilization": 0.49856550411517775,
+        "liquidationAdjustedTotalReturn": 0.07403388729385463,
+        "totalReturn": 0.07493883585385475,
+        "cagr": 0.3281806876509148,
+        "sharpe": 1.2230112878633284,
+        "maxDrawdown": -0.15058648584442924,
+        "twoSidedAnnualTurnover": 24.661058405564823,
+        "transactionCount": 93,
+        "meanCashWeight": 0.5014344958848223,
+        "medianCashWeight": 0.4731213314472454,
+        "estimatedCostFromFillAssumptions": 824.4864600545584,
+        "blockedByReason": {
+          "position-limit": 1090,
+          "portfolio-cooldown": 342,
+          "entry-invalidated-at-open": 3,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 83,
+          "forwardFiveSessionObservableNameDays": 80,
+          "meanForwardFiveSessionNetPriceReturn": -0.01053248587404727,
+          "forwardFiveSessionWinShare": 0.4875,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5511.269614408118,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-C-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.019270176469226862,
+          "0.5": 0.27426668210157346,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 404,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.6495369866661772,
+        "liquidationAdjustedTotalReturn": -0.06445062469563378,
+        "totalReturn": -0.06335206825563378,
+        "cagr": -0.2266634819291088,
+        "sharpe": -0.847082791302971,
+        "maxDrawdown": -0.16073031979230168,
+        "twoSidedAnnualTurnover": 36.79716808256295,
+        "transactionCount": 162,
+        "meanCashWeight": 0.3504630133338228,
+        "medianCashWeight": 0.27426668210157346,
+        "estimatedCostFromFillAssumptions": 1115.4371283634073,
+        "blockedByReason": {
+          "sector-position-limit": 70,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 91,
+          "forwardFiveSessionObservableNameDays": 88,
+          "meanForwardFiveSessionNetPriceReturn": -0.0059715438063012195,
+          "forwardFiveSessionWinShare": 0.5113636363636364,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3887.3829040178407,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      }
+    },
+    "25": {
+      "C": {
+        "cashPercentiles": {
+          "0.1": 0.03764436462635855,
+          "0.5": 0.24418120434414065,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6244633166898859,
+        "liquidationAdjustedTotalReturn": -0.0061576353556743735,
+        "totalReturn": -0.0038863288556744147,
+        "cagr": -0.015176635455171783,
+        "sharpe": 0.10443857840497563,
+        "maxDrawdown": -0.1969829047670657,
+        "twoSidedAnnualTurnover": 30.106645579291087,
+        "transactionCount": 89,
+        "meanCashWeight": 0.37553668331011414,
+        "medianCashWeight": 0.24418120434414065,
+        "estimatedCostFromFillAssumptions": 2049.6979125674525,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 83,
+          "forwardFiveSessionObservableNameDays": 76,
+          "meanForwardFiveSessionNetPriceReturn": -0.017443994162994945,
+          "forwardFiveSessionWinShare": 0.4342105263157895,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3710.320309556201,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-entry-off": {
+        "cashPercentiles": {
+          "0.1": 0.14785447822847556,
+          "0.5": 0.20285342510677717,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 578,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 457,
+        "cashUtilization": 0.626072051394881,
+        "liquidationAdjustedTotalReturn": -0.02050764156559981,
+        "totalReturn": -0.018461240565599724,
+        "cagr": -0.07056894856680673,
+        "sharpe": -0.15316287040386534,
+        "maxDrawdown": -0.16863101039909167,
+        "twoSidedAnnualTurnover": 29.957395573595,
+        "transactionCount": 83,
+        "meanCashWeight": 0.37392794860511896,
+        "medianCashWeight": 0.20285342510677717,
+        "estimatedCostFromFillAssumptions": 1897.9762805599698,
+        "blockedByReason": {
+          "position-limit": 1191,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 66,
+          "forwardFiveSessionObservableNameDays": 64,
+          "meanForwardFiveSessionNetPriceReturn": -0.012084315199799337,
+          "forwardFiveSessionWinShare": 0.390625,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5039.544782189447,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-macd-off": {
+        "cashPercentiles": {
+          "0.1": 0.008590299496545281,
+          "0.5": 0.25770746610274436,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 712,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 436,
+        "cashUtilization": 0.6391219305716626,
+        "liquidationAdjustedTotalReturn": -0.03623646772751188,
+        "totalReturn": -0.0340113274775119,
+        "cagr": -0.12707109457725274,
+        "sharpe": -0.2410413904658147,
+        "maxDrawdown": -0.1503944358853445,
+        "twoSidedAnnualTurnover": 38.50941934228732,
+        "transactionCount": 109,
+        "meanCashWeight": 0.36087806942833744,
+        "medianCashWeight": 0.25770746610274436,
+        "estimatedCostFromFillAssumptions": 2478.022048251203,
+        "blockedByReason": {
+          "position-limit": 1025,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 552,
+          "entry-invalidated-at-open": 2
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 70,
+          "forwardFiveSessionObservableNameDays": 70,
+          "meanForwardFiveSessionNetPriceReturn": -0.008561115860880637,
+          "forwardFiveSessionWinShare": 0.5142857142857142,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3544.969439416592,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-deterioration-off": {
+        "cashPercentiles": {
+          "0.1": 0.0259994479425398,
+          "0.5": 0.24546017775763063,
+          "0.9": 0.9107551636810537
+        },
+        "blockedOpportunityDays": 828,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 535,
+        "cashUtilization": 0.6211988603704928,
+        "liquidationAdjustedTotalReturn": 0.0058807521245252126,
+        "totalReturn": 0.007984057874525385,
+        "cagr": 0.03172507225634069,
+        "sharpe": 0.25296373003472056,
+        "maxDrawdown": -0.1560835122672739,
+        "twoSidedAnnualTurnover": 19.817237980291715,
+        "transactionCount": 58,
+        "meanCashWeight": 0.3788011396295073,
+        "medianCashWeight": 0.24546017775763063,
+        "estimatedCostFromFillAssumptions": 1317.4568315474764,
+        "blockedByReason": {
+          "position-limit": 1193,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 59,
+          "forwardFiveSessionObservableNameDays": 56,
+          "meanForwardFiveSessionNetPriceReturn": -0.01148730554563579,
+          "forwardFiveSessionWinShare": 0.48214285714285715,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5612.397876870215,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-giveback-off": {
+        "cashPercentiles": {
+          "0.1": 0.03764436462635855,
+          "0.5": 0.24556477747890565,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6238896654960773,
+        "liquidationAdjustedTotalReturn": -0.002556987105674313,
+        "totalReturn": -0.00027432260567439304,
+        "cagr": -0.001076947388329863,
+        "sharpe": 0.1504669143890632,
+        "maxDrawdown": -0.19407108571381837,
+        "twoSidedAnnualTurnover": 30.133172401202106,
+        "transactionCount": 89,
+        "meanCashWeight": 0.37611033450392267,
+        "medianCashWeight": 0.24556477747890565,
+        "estimatedCostFromFillAssumptions": 2051.967287567451,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 83,
+          "forwardFiveSessionObservableNameDays": 76,
+          "meanForwardFiveSessionNetPriceReturn": -0.017443994162994945,
+          "forwardFiveSessionWinShare": 0.4342105263157895,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3662.8582639114325,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "Q9-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.03764436462635855,
+          "0.5": 0.24418120434414065,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6244633166898859,
+        "liquidationAdjustedTotalReturn": -0.0061576353556743735,
+        "totalReturn": -0.0038863288556744147,
+        "cagr": -0.015176635455171783,
+        "sharpe": 0.10443857840497563,
+        "maxDrawdown": -0.1969829047670657,
+        "twoSidedAnnualTurnover": 30.106645579291087,
+        "transactionCount": 89,
+        "meanCashWeight": 0.37553668331011414,
+        "medianCashWeight": 0.24418120434414065,
+        "estimatedCostFromFillAssumptions": 2049.6979125674525,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 145,
+          "forwardFiveSessionObservableNameDays": 134,
+          "meanForwardFiveSessionNetPriceReturn": -0.015232105346253211,
+          "forwardFiveSessionWinShare": 0.4701492537313433,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3710.320309556201,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-A-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.40012255323133683,
+          "0.5": 0.6856479771327572,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 693,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 378,
+        "cashUtilization": 0.3320996137278658,
+        "liquidationAdjustedTotalReturn": 0.025875221581662666,
+        "totalReturn": 0.02721256983166276,
+        "cagr": 0.11120704633996747,
+        "sharpe": 0.6458342566276144,
+        "maxDrawdown": -0.128617263129025,
+        "twoSidedAnnualTurnover": 16.75477567280192,
+        "transactionCount": 93,
+        "meanCashWeight": 0.6679003862721342,
+        "medianCashWeight": 0.6856479771327572,
+        "estimatedCostFromFillAssumptions": 1119.093150333727,
+        "blockedByReason": {
+          "position-limit": 1076,
+          "entry-invalidated-at-open": 7,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 92,
+          "forwardFiveSessionObservableNameDays": 88,
+          "meanForwardFiveSessionNetPriceReturn": -0.013579594290916576,
+          "forwardFiveSessionWinShare": 0.45454545454545453,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5801.823165738426,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-A-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.011969103124840497,
+          "0.5": 0.2989836886331791,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 435,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 46,
+        "cashUtilization": 0.6083937653842325,
+        "liquidationAdjustedTotalReturn": -0.07215625053626196,
+        "totalReturn": -0.0698766517862619,
+        "cagr": -0.2476056378773096,
+        "sharpe": -0.9488363717789412,
+        "maxDrawdown": -0.16856396054386757,
+        "twoSidedAnnualTurnover": 34.18261309950782,
+        "transactionCount": 239,
+        "meanCashWeight": 0.3916062346157675,
+        "medianCashWeight": 0.2989836886331791,
+        "estimatedCostFromFillAssumptions": 2169.106829126202,
+        "blockedByReason": {
+          "position-limit": 112,
+          "sector-position-limit": 103,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 53,
+          "forwardFiveSessionObservableNameDays": 52,
+          "meanForwardFiveSessionNetPriceReturn": -0.002148500394963536,
+          "forwardFiveSessionWinShare": 0.5576923076923077,
+          "descriptiveCashTimesSpyPriceReturnDollars": -2331.919252105142,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-B-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.25160628174530447,
+          "0.5": 0.5762159968563302,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 706,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 385,
+        "cashUtilization": 0.41610329839985893,
+        "liquidationAdjustedTotalReturn": 0.025984650981950574,
+        "totalReturn": 0.027411191981950633,
+        "cagr": 0.1120511436770848,
+        "sharpe": 0.57675216064468,
+        "maxDrawdown": -0.15671357019022003,
+        "twoSidedAnnualTurnover": 21.12859337706205,
+        "transactionCount": 95,
+        "meanCashWeight": 0.5838967016001411,
+        "medianCashWeight": 0.5762159968563302,
+        "estimatedCostFromFillAssumptions": 1430.2903238049694,
+        "blockedByReason": {
+          "position-limit": 1092,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 92,
+          "forwardFiveSessionObservableNameDays": 89,
+          "meanForwardFiveSessionNetPriceReturn": -0.010100706980313727,
+          "forwardFiveSessionWinShare": 0.4943820224719101,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5995.1072679427125,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-B-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.011046145492795464,
+          "0.5": 0.246387240379782,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 416,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.6349561477101435,
+        "liquidationAdjustedTotalReturn": -0.08210871509074946,
+        "totalReturn": -0.0798329363407494,
+        "cagr": -0.2787442044605333,
+        "sharpe": -1.1561307807882149,
+        "maxDrawdown": -0.1701428176299653,
+        "twoSidedAnnualTurnover": 36.008267302666646,
+        "transactionCount": 193,
+        "meanCashWeight": 0.36504385228985653,
+        "medianCashWeight": 0.246387240379782,
+        "estimatedCostFromFillAssumptions": 2267.6292640749525,
+        "blockedByReason": {
+          "sector-position-limit": 93,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 56,
+          "forwardFiveSessionObservableNameDays": 55,
+          "meanForwardFiveSessionNetPriceReturn": -0.007043779441658522,
+          "forwardFiveSessionWinShare": 0.5272727272727272,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3062.31763939936,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-C-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.20164325741820727,
+          "0.5": 0.4735007018266339,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 734,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 430,
+        "cashUtilization": 0.49901632041837074,
+        "liquidationAdjustedTotalReturn": 0.06486554222680052,
+        "totalReturn": 0.06673600797680046,
+        "cagr": 0.2888175116861391,
+        "sharpe": 1.104400766030028,
+        "maxDrawdown": -0.15445159699164934,
+        "twoSidedAnnualTurnover": 24.660855187462946,
+        "transactionCount": 93,
+        "meanCashWeight": 0.5009836795816293,
+        "medianCashWeight": 0.4735007018266339,
+        "estimatedCostFromFillAssumptions": 1711.1413303199624,
+        "blockedByReason": {
+          "position-limit": 1090,
+          "portfolio-cooldown": 342,
+          "entry-invalidated-at-open": 3,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 83,
+          "forwardFiveSessionObservableNameDays": 80,
+          "meanForwardFiveSessionNetPriceReturn": -0.013101769050494727,
+          "forwardFiveSessionWinShare": 0.4625,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5476.010955746627,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-C-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.019513129084594554,
+          "0.5": 0.2715710892356491,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 404,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.6520404959832904,
+        "liquidationAdjustedTotalReturn": -0.07278455511707438,
+        "totalReturn": -0.07051561561707431,
+        "cagr": -0.2496335625496624,
+        "sharpe": -0.9539413711316985,
+        "maxDrawdown": -0.1659381309881962,
+        "twoSidedAnnualTurnover": 36.83350569797507,
+        "transactionCount": 160,
+        "meanCashWeight": 0.3479595040167096,
+        "medianCashWeight": 0.2715710892356491,
+        "estimatedCostFromFillAssumptions": 2317.819444707453,
+        "blockedByReason": {
+          "sector-position-limit": 70,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 92,
+          "forwardFiveSessionObservableNameDays": 89,
+          "meanForwardFiveSessionNetPriceReturn": -0.00847088065750939,
+          "forwardFiveSessionWinShare": 0.4943820224719101,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3925.0354692756355,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      }
+    },
+    "50": {
+      "C": {
+        "cashPercentiles": {
+          "0.1": 0.06425175176773541,
+          "0.5": 0.24543172414159828,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 765,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 470,
+        "cashUtilization": 0.6283947446249153,
+        "liquidationAdjustedTotalReturn": 0.03099151529895061,
+        "totalReturn": 0.035725716298950605,
+        "cagr": 0.14781676529973864,
+        "sharpe": 0.6191831226645657,
+        "maxDrawdown": -0.15791349728456683,
+        "twoSidedAnnualTurnover": 29.555115890285844,
+        "transactionCount": 87,
+        "meanCashWeight": 0.3716052553750847,
+        "medianCashWeight": 0.24543172414159828,
+        "estimatedCostFromFillAssumptions": 4011.3265911049425,
+        "blockedByReason": {
+          "position-limit": 1090,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624,
+          "entry-invalidated-at-open": 1
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 75,
+          "forwardFiveSessionObservableNameDays": 68,
+          "meanForwardFiveSessionNetPriceReturn": -0.025499872770875735,
+          "forwardFiveSessionWinShare": 0.38235294117647056,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3933.2817262848544,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-entry-off": {
+        "cashPercentiles": {
+          "0.1": 0.1466400712373158,
+          "0.5": 0.20118361094424703,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 578,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 457,
+        "cashUtilization": 0.6260430160868662,
+        "liquidationAdjustedTotalReturn": -0.039822480400099725,
+        "totalReturn": -0.035805252400099685,
+        "cagr": -0.13342056741617903,
+        "sharpe": -0.4230461302103943,
+        "maxDrawdown": -0.17305686730572623,
+        "twoSidedAnnualTurnover": 29.971017879239348,
+        "transactionCount": 83,
+        "meanCashWeight": 0.37395698391313387,
+        "medianCashWeight": 0.20118361094424703,
+        "estimatedCostFromFillAssumptions": 3760.8736420099503,
+        "blockedByReason": {
+          "position-limit": 1191,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 66,
+          "forwardFiveSessionObservableNameDays": 64,
+          "meanForwardFiveSessionNetPriceReturn": -0.017011636911043636,
+          "forwardFiveSessionWinShare": 0.375,
+          "descriptiveCashTimesSpyPriceReturnDollars": -4960.56576932346,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-macd-off": {
+        "cashPercentiles": {
+          "0.1": 0.0031599646173846364,
+          "0.5": 0.2669049470423807,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 712,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 433,
+        "cashUtilization": 0.6364371659844841,
+        "liquidationAdjustedTotalReturn": -0.05256354104924932,
+        "totalReturn": -0.04821106904924932,
+        "cagr": -0.176392803863611,
+        "sharpe": -0.42879401561892905,
+        "maxDrawdown": -0.15802682591237505,
+        "twoSidedAnnualTurnover": 38.37814223622539,
+        "transactionCount": 107,
+        "meanCashWeight": 0.3635628340155159,
+        "medianCashWeight": 0.2669049470423807,
+        "estimatedCostFromFillAssumptions": 4900.224889924936,
+        "blockedByReason": {
+          "position-limit": 1027,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 552,
+          "entry-invalidated-at-open": 2
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 70,
+          "forwardFiveSessionObservableNameDays": 70,
+          "meanForwardFiveSessionNetPriceReturn": -0.014661698935066884,
+          "forwardFiveSessionWinShare": 0.5,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3462.6024045143777,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-deterioration-off": {
+        "cashPercentiles": {
+          "0.1": 0.025384330121161515,
+          "0.5": 0.24636158714740364,
+          "0.9": 0.9145098649408198
+        },
+        "blockedOpportunityDays": 819,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 513,
+        "cashUtilization": 0.6196485541287282,
+        "liquidationAdjustedTotalReturn": -0.0044315730555994914,
+        "totalReturn": -0.0002493990555995085,
+        "cagr": -0.0009791371729414022,
+        "sharpe": 0.14209518374620822,
+        "maxDrawdown": -0.1577762518857737,
+        "twoSidedAnnualTurnover": 19.861293963661097,
+        "transactionCount": 59,
+        "meanCashWeight": 0.3803514458712718,
+        "medianCashWeight": 0.24636158714740364,
+        "estimatedCostFromFillAssumptions": 2624.5634175599585,
+        "blockedByReason": {
+          "position-limit": 1199,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 63,
+          "forwardFiveSessionObservableNameDays": 59,
+          "meanForwardFiveSessionNetPriceReturn": -0.018926800012093944,
+          "forwardFiveSessionWinShare": 0.4406779661016949,
+          "descriptiveCashTimesSpyPriceReturnDollars": -6249.6777014264635,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "M-giveback-off": {
+        "cashPercentiles": {
+          "0.1": 0.06425175176773541,
+          "0.5": 0.24543172414159828,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 765,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 470,
+        "cashUtilization": 0.6283947446249153,
+        "liquidationAdjustedTotalReturn": 0.03099151529895061,
+        "totalReturn": 0.035725716298950605,
+        "cagr": 0.14781676529973864,
+        "sharpe": 0.6191831226645657,
+        "maxDrawdown": -0.15791349728456683,
+        "twoSidedAnnualTurnover": 29.555115890285844,
+        "transactionCount": 87,
+        "meanCashWeight": 0.3716052553750847,
+        "medianCashWeight": 0.24543172414159828,
+        "estimatedCostFromFillAssumptions": 4011.3265911049425,
+        "blockedByReason": {
+          "position-limit": 1090,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624,
+          "entry-invalidated-at-open": 1
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 75,
+          "forwardFiveSessionObservableNameDays": 68,
+          "meanForwardFiveSessionNetPriceReturn": -0.025499872770875735,
+          "forwardFiveSessionWinShare": 0.38235294117647056,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3933.2817262848544,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "Q9-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.06425175176773541,
+          "0.5": 0.24543172414159828,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 765,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 470,
+        "cashUtilization": 0.6283947446249153,
+        "liquidationAdjustedTotalReturn": 0.03099151529895061,
+        "totalReturn": 0.035725716298950605,
+        "cagr": 0.14781676529973864,
+        "sharpe": 0.6191831226645657,
+        "maxDrawdown": -0.15791349728456683,
+        "twoSidedAnnualTurnover": 29.555115890285844,
+        "transactionCount": 87,
+        "meanCashWeight": 0.3716052553750847,
+        "medianCashWeight": 0.24543172414159828,
+        "estimatedCostFromFillAssumptions": 4011.3265911049425,
+        "blockedByReason": {
+          "position-limit": 1090,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624,
+          "entry-invalidated-at-open": 1
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 132,
+          "forwardFiveSessionObservableNameDays": 122,
+          "meanForwardFiveSessionNetPriceReturn": -0.02237927684683876,
+          "forwardFiveSessionWinShare": 0.4344262295081967,
+          "descriptiveCashTimesSpyPriceReturnDollars": -3933.2817262848544,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-A-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.4048071569917898,
+          "0.5": 0.686387671506378,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 693,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 378,
+        "cashUtilization": 0.3316654277256631,
+        "liquidationAdjustedTotalReturn": 0.014113197576649972,
+        "totalReturn": 0.016762967076650037,
+        "cagr": 0.06746800597004188,
+        "sharpe": 0.4363809016396046,
+        "maxDrawdown": -0.13220083150861472,
+        "twoSidedAnnualTurnover": 16.726346442731312,
+        "transactionCount": 93,
+        "meanCashWeight": 0.6683345722743369,
+        "medianCashWeight": 0.686387671506378,
+        "estimatedCostFromFillAssumptions": 2221.7651593349665,
+        "blockedByReason": {
+          "position-limit": 1076,
+          "entry-invalidated-at-open": 7,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 92,
+          "forwardFiveSessionObservableNameDays": 88,
+          "meanForwardFiveSessionNetPriceReturn": -0.018499458158092397,
+          "forwardFiveSessionWinShare": 0.42045454545454547,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5728.910879157991,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-A-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.013728813546538933,
+          "0.5": 0.28951062359707763,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 435,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 46,
+        "cashUtilization": 0.6058692728376835,
+        "liquidationAdjustedTotalReturn": -0.09460058837304941,
+        "totalReturn": -0.09012865237304946,
+        "cagr": -0.309923536548649,
+        "sharpe": -1.249326610801482,
+        "maxDrawdown": -0.1762687311939236,
+        "twoSidedAnnualTurnover": 34.06744287360062,
+        "transactionCount": 239,
+        "meanCashWeight": 0.3941307271623164,
+        "medianCashWeight": 0.28951062359707763,
+        "estimatedCostFromFillAssumptions": 4267.544898304941,
+        "blockedByReason": {
+          "position-limit": 112,
+          "sector-position-limit": 103,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 52,
+          "forwardFiveSessionObservableNameDays": 51,
+          "meanForwardFiveSessionNetPriceReturn": -0.007289426783649395,
+          "forwardFiveSessionWinShare": 0.5294117647058824,
+          "descriptiveCashTimesSpyPriceReturnDollars": -2386.7137114407415,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-B-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.25166076173053165,
+          "0.5": 0.5767245014413036,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 706,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 385,
+        "cashUtilization": 0.41614288838864344,
+        "liquidationAdjustedTotalReturn": 0.011692893649450697,
+        "totalReturn": 0.01452089464945061,
+        "cagr": 0.05825311841576242,
+        "sharpe": 0.3598827564303748,
+        "maxDrawdown": -0.16233569696087824,
+        "twoSidedAnnualTurnover": 21.11278524235277,
+        "transactionCount": 95,
+        "meanCashWeight": 0.5838571116113566,
+        "medianCashWeight": 0.5767245014413036,
+        "estimatedCostFromFillAssumptions": 2839.979746054957,
+        "blockedByReason": {
+          "position-limit": 1092,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 92,
+          "forwardFiveSessionObservableNameDays": 89,
+          "meanForwardFiveSessionNetPriceReturn": -0.015037922122745361,
+          "forwardFiveSessionWinShare": 0.4606741573033708,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5922.928183858626,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-B-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.009780841534972553,
+          "0.5": 0.24535353457826142,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 420,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.6292467524636962,
+        "liquidationAdjustedTotalReturn": -0.05305954630564924,
+        "totalReturn": -0.0483075053056492,
+        "cagr": -0.17672049349009533,
+        "sharpe": -0.6165766852507718,
+        "maxDrawdown": -0.1388162540913105,
+        "twoSidedAnnualTurnover": 33.680136232277825,
+        "transactionCount": 188,
+        "meanCashWeight": 0.37075324753630373,
+        "medianCashWeight": 0.24535353457826142,
+        "estimatedCostFromFillAssumptions": 4272.399243564943,
+        "blockedByReason": {
+          "sector-position-limit": 91,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 50,
+          "forwardFiveSessionObservableNameDays": 47,
+          "meanForwardFiveSessionNetPriceReturn": -0.02645870677876277,
+          "forwardFiveSessionWinShare": 0.40425531914893614,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5288.178714633114,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-C-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.2026866270388719,
+          "0.5": 0.47179297148488514,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 736,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 430,
+        "cashUtilization": 0.5005501227202331,
+        "liquidationAdjustedTotalReturn": 0.0530946181855505,
+        "totalReturn": 0.05680012218555053,
+        "cagr": 0.24231006091520446,
+        "sharpe": 0.9656292523003033,
+        "maxDrawdown": -0.15545967112633208,
+        "twoSidedAnnualTurnover": 24.182373376851682,
+        "transactionCount": 91,
+        "meanCashWeight": 0.49944987727976686,
+        "medianCashWeight": 0.47179297148488514,
+        "estimatedCostFromFillAssumptions": 3334.2218704449506,
+        "blockedByReason": {
+          "position-limit": 1096,
+          "portfolio-cooldown": 342,
+          "entry-invalidated-at-open": 2,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 82,
+          "forwardFiveSessionObservableNameDays": 79,
+          "meanForwardFiveSessionNetPriceReturn": -0.01787450248925528,
+          "forwardFiveSessionWinShare": 0.4430379746835443,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5599.23531930151,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      },
+      "S-C-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.002805689771283845,
+          "0.5": 0.208580376282329,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 387,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.65081773035718,
+        "liquidationAdjustedTotalReturn": -0.05024626213869943,
+        "totalReturn": -0.04548336113869944,
+        "cagr": -0.16708374157055694,
+        "sharpe": -0.48655756820729346,
+        "maxDrawdown": -0.16736271401485603,
+        "twoSidedAnnualTurnover": 35.89660882450522,
+        "transactionCount": 164,
+        "meanCashWeight": 0.34918226964282,
+        "medianCashWeight": 0.208580376282329,
+        "estimatedCostFromFillAssumptions": 4601.533687869936,
+        "blockedByReason": {
+          "sector-position-limit": 66,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        },
+        "opportunity": {
+          "eligibleNotPurchasedNameDays": 80,
+          "forwardFiveSessionObservableNameDays": 76,
+          "meanForwardFiveSessionNetPriceReturn": -0.010242392105771025,
+          "forwardFiveSessionWinShare": 0.5394736842105263,
+          "descriptiveCashTimesSpyPriceReturnDollars": -5138.259050552699,
+          "limitations": "Overlapping descriptive returns; eligibility alone does not prove capacity, sleeve/risk/issuer/sector permission or attainable execution. Cash-times-SPY is an alternative exposure diagnostic, not realized loss or a trading recommendation."
+        }
+      }
+    }
+  },
+  "uncertainty": {
+    "12": {
+      "M-entry-off": {
+        "meanDailyReturnDifference": -0.00033818025898750613,
+        "ci95": [
+          -0.0042423367317355794,
+          0.0035905378296508077
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0042423367317355794,
+              0.0035905378296508077
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.4632697498283402,
+              0.715223611159369
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -3.010312420216615,
+              3.5398148610290754
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.06355238604449875,
+              0.15436789429805864
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.589041095890411,
+        "holmAdjustedP": 1
+      },
+      "M-macd-off": {
+        "meanDailyReturnDifference": -0.0003632658619824367,
+        "ci95": [
+          -0.003246809766933082,
+          0.0025229501801874725
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.003246809766933082,
+              0.0025229501801874725
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.121638002414199,
+              0.4276971699057236
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.8447340888838584,
+              1.7430198626417914
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.041259125432259625,
+              0.14553225178815565
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.6234376562343765,
+        "holmAdjustedP": 1
+      },
+      "M-deterioration-off": {
+        "meanDailyReturnDifference": 0.00022107640033794176,
+        "ci95": [
+          -0.0016532188192772742,
+          0.002127550238318338
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0016532188192772742,
+              0.002127550238318338
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.1245768142277064,
+              0.44140348002367125
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.1362363532793827,
+              1.9310038784234576
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.031993383901693484,
+              0.09831519592387716
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.38846115388461155,
+        "holmAdjustedP": 1
+      },
+      "M-giveback-off": {
+        "meanDailyReturnDifference": 5.645863945403202e-05,
+        "ci95": [
+          0,
+          0.0001667213935655199
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0,
+              0.0001667213935655199
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0,
+              0.049716450258281863
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -0.0008837723109320628,
+              0.13837792484116784
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -2.220446049250313e-16,
+              0.0059718294792049376
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.11758824117588242,
+        "holmAdjustedP": 1
+      },
+      "Q9-cap3": {
+        "meanDailyReturnDifference": 0,
+        "ci95": [
+          0,
+          0
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 1,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap3": {
+        "meanDailyReturnDifference": 0.0002631976319525448,
+        "ci95": [
+          -0.0024905577167834286,
+          0.0032856421127310464
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0024905577167834286,
+              0.0032856421127310464
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.73104830861194,
+              0.686870487040632
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.6974437141108079,
+              3.486887406933456
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.009102461457554778,
+              0.19574899021443237
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.39476052394760525,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap9": {
+        "meanDailyReturnDifference": -0.001159709226378187,
+        "ci95": [
+          -0.0040186472539752854,
+          0.0015576146895588837
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0040186472539752854,
+              0.0015576146895588837
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.5094481187237614,
+              0.20475132169034804
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9447078845783556,
+              0.7192527886491833
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.04396967295034837,
+              0.09886418090955984
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.7973202679732027,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap3": {
+        "meanDailyReturnDifference": 0.0003321289983907989,
+        "ci95": [
+          -0.0016248514331765039,
+          0.0025852583079868092
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0016248514331765039,
+              0.0025852583079868092
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.1226234712802108,
+              0.6358026669032268
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.5227573920146318,
+              2.498194087483239
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.01809189157727009,
+              0.15734219192451815
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.33026697330266974,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap9": {
+        "meanDailyReturnDifference": -0.001316026188352666,
+        "ci95": [
+          -0.004093265937817613,
+          0.0013203619277666633
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.004093265937817613,
+              0.0013203619277666633
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.553255233853309,
+              0.16674824351951156
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9220872549866117,
+              0.4805680055170356
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.042120416411064565,
+              0.0867292220100001
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8276172382761724,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap3": {
+        "meanDailyReturnDifference": 0.0009776827765364453,
+        "ci95": [
+          -0.000558951433142876,
+          0.0028078039195633254
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.000558951433142876,
+              0.0028078039195633254
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -0.26954841866785384,
+              1.1024843489005796
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -0.8496301013598693,
+              2.6598347658780113
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.0105829951703994,
+              0.14828760563396648
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.13958604139586042,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap9": {
+        "meanDailyReturnDifference": -0.0012024014398428783,
+        "ci95": [
+          -0.0036982040253311695,
+          0.0011854749122894965
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0036982040253311695,
+              0.0011854749122894965
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.3805514757186135,
+              0.1583972816161543
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.6110718549661596,
+              0.5387760690793741
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.042162276616232286,
+              0.07065000472940264
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8313168683131686,
+        "holmAdjustedP": 1
+      }
+    },
+    "25": {
+      "M-entry-off": {
+        "meanDailyReturnDifference": -0.00029052490490440815,
+        "ci95": [
+          -0.0041836751282857,
+          0.0036447180094884984
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0041836751282857,
+              0.0036447180094884984
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.356367772786422,
+              0.7022038895043313
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9886488093462367,
+              3.5571416720198767
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.06452108898309006,
+              0.15825895418939206
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.5817418258174183,
+        "holmAdjustedP": 1
+      },
+      "M-macd-off": {
+        "meanDailyReturnDifference": -0.0004570933057931555,
+        "ci95": [
+          -0.0032795934207307947,
+          0.0023527083445264462
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0032795934207307947,
+              0.0023527083445264462
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.0707117729819244,
+              0.36776604906084254
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.8404165870197104,
+              1.4687470158839402
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.042553939453825684,
+              0.13117382272045885
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.6481351864813518,
+        "holmAdjustedP": 1
+      },
+      "M-deterioration-off": {
+        "meanDailyReturnDifference": 0.00016720646516602913,
+        "ci95": [
+          -0.0015994156274963152,
+          0.0019492213272850193
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0015994156274963152,
+              0.0019492213272850193
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.0876619735576991,
+              0.36972102872075396
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.065752893378943,
+              1.8867093998161768
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.02744418511644542,
+              0.0863871899663261
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.404959504049595,
+        "holmAdjustedP": 1
+      },
+      "M-giveback-off": {
+        "meanDailyReturnDifference": 5.7397586029797476e-05,
+        "ci95": [
+          -1.1208482409898884e-06,
+          0.00016946101031230362
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -1.1208482409898884e-06,
+              0.00016946101031230362
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -0.0006788916003275247,
+              0.048889228464431334
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -0.0026487728119107823,
+              0.14204508212199096
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -5.551115123125783e-16,
+              0.006106008135602026
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.12018798120187982,
+        "holmAdjustedP": 1
+      },
+      "Q9-cap3": {
+        "meanDailyReturnDifference": 0,
+        "ci95": [
+          0,
+          0
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 1,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap3": {
+        "meanDailyReturnDifference": 0.00036958246631036746,
+        "ci95": [
+          -0.0024043479428380427,
+          0.0034229942994952823
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0024043479428380427,
+              0.0034229942994952823
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.6165047573316116,
+              0.7060406698728994
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.6378534976048302,
+              3.5023026886993276
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.008077014451137843,
+              0.2002898360388674
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.36936306369363064,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap9": {
+        "meanDailyReturnDifference": -0.0011391282710284595,
+        "ci95": [
+          -0.0039925947610489915,
+          0.0015789174100964568
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0039925947610489915,
+              0.0015789174100964568
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.4056272045406635,
+              0.19907789029357648
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9421315668856782,
+              0.6871602447328824
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.044631033509827334,
+              0.09867321777929627
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.7937206279372063,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap3": {
+        "meanDailyReturnDifference": 0.00040399300263945236,
+        "ci95": [
+          -0.0015717080774881203,
+          0.0026773689068155873
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0015717080774881203,
+              0.0026773689068155873
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.050199282511454,
+              0.6494151404143125
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.503494035018677,
+              2.5243720297118264
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.017655780422168865,
+              0.16087613917000088
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.30626937306269375,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap9": {
+        "meanDailyReturnDifference": -0.001319062515933539,
+        "ci95": [
+          -0.004099012483100013,
+          0.001321357480497261
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.004099012483100013,
+              0.001321357480497261
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.456200416713614,
+              0.16145712391889633
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.9441583410351813,
+              0.4418458202178661
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.04443955217707973,
+              0.08610299951583245
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8283171682831717,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap3": {
+        "meanDailyReturnDifference": 0.001029808791352501,
+        "ci95": [
+          -0.0005239970144671445,
+          0.0028843897807964273
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0005239970144671445,
+              0.0028843897807964273
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -0.2355388148106301,
+              1.1159371492892696
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -0.8500523835873128,
+              2.6820533853906525
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.010801425401327891,
+              0.1510344874212065
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.13138686131386862,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap9": {
+        "meanDailyReturnDifference": -0.0011492584239689116,
+        "ci95": [
+          -0.0035936415474989995,
+          0.001190339705167329
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0035936415474989995,
+              0.001190339705167329
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.260296867443798,
+              0.15492753500608436
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.5568200432702306,
+              0.5288510632391079
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.04333512706355647,
+              0.07071321980537992
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8234176582341766,
+        "holmAdjustedP": 1
+      }
+    },
+    "50": {
+      "M-entry-off": {
+        "meanDailyReturnDifference": -0.001168659882769136,
+        "ci95": [
+          -0.004437022215392574,
+          0.001979414775573301
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.004437022215392574,
+              0.001979414775573301
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.510552736317063,
+              0.39780241585715537
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -3.2252137241317236,
+              2.3087961560263164
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.07706984966662633,
+              0.08880898079064126
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.7649235076492351,
+        "holmAdjustedP": 1
+      },
+      "M-macd-off": {
+        "meanDailyReturnDifference": -0.0012962140856947442,
+        "ci95": [
+          -0.0034171406541218747,
+          0.000764857605426201
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0034171406541218747,
+              0.000764857605426201
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.20109407847555,
+              0.11855359264231269
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -3.0267223367406664,
+              0.3241149340346508
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.053287687786339744,
+              0.06850085067857414
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8924107589241076,
+        "holmAdjustedP": 1
+      },
+      "M-deterioration-off": {
+        "meanDailyReturnDifference": -0.0005585267531864649,
+        "ci95": [
+          -0.0017435648057326043,
+          0.0005943904424790987
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0017435648057326043,
+              0.0005943904424790987
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.190621446080116,
+              0.10941957668114732
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.1878181549122786,
+              0.9535079775936941
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.036519170155929426,
+              0.024881108437486588
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8393160683931606,
+        "holmAdjustedP": 1
+      },
+      "M-giveback-off": {
+        "meanDailyReturnDifference": 0,
+        "ci95": [
+          0,
+          0
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 1,
+        "holmAdjustedP": 1
+      },
+      "Q9-cap3": {
+        "meanDailyReturnDifference": 0,
+        "ci95": [
+          0,
+          0
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              0,
+              0
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 1,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap3": {
+        "meanDailyReturnDifference": -0.0003884312554242024,
+        "ci95": [
+          -0.002619302436057421,
+          0.0020333120972260425
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.002619302436057421,
+              0.0020333120972260425
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.7848354149945576,
+              0.4159558801743778
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.2328623883672662,
+              2.447706372749711
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.022021819129059428,
+              0.1405478286213161
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.6398360163983602,
+        "holmAdjustedP": 1
+      },
+      "S-A-cap9": {
+        "meanDailyReturnDifference": -0.00207826658586586,
+        "ci95": [
+          -0.004471826015900746,
+          5.671831294554782e-05
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.004471826015900746,
+              5.671831294554782e-05
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.677912498743771,
+              0.009721567407023457
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -3.4121444520859896,
+              -0.399009585861124
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.07036681535659006,
+              0.03401971497569667
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.9561043895610439,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap3": {
+        "meanDailyReturnDifference": -0.00039119372312536516,
+        "ci95": [
+          -0.0018923417221970605,
+          0.001267969741434824
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0018923417221970605,
+              0.001267969741434824
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.2156651635473668,
+              0.3072345609209939
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.391280028011832,
+              1.456134180212743
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.03579645439499701,
+              0.097370948143505
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.6972302769723028,
+        "holmAdjustedP": 1
+      },
+      "S-B-cap9": {
+        "meanDailyReturnDifference": -0.0013746905053934372,
+        "ci95": [
+          -0.0038143600838214673,
+          0.0007821423631777251
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0038143600838214673,
+              0.0007821423631777251
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -2.430857582904994,
+              0.11685523314729862
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.788118864533258,
+              0.5950807826103368
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.03236556174848393,
+              0.04756905343759377
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.8696130386961304,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap3": {
+        "meanDailyReturnDifference": 0.0002845300804189085,
+        "ci95": [
+          -0.0008629851085586852,
+          0.0015688905550834758
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.0008629851085586852,
+              0.0015688905550834758
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -0.3992729923797036,
+              0.6305293423033724
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -1.553232894513322,
+              1.5915039607877488
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.018836221690244237,
+              0.08736176092826742
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.2873712628737126,
+        "holmAdjustedP": 1
+      },
+      "S-C-cap9": {
+        "meanDailyReturnDifference": -0.0012958776165333085,
+        "ci95": [
+          -0.00257781922908285,
+          -7.285014243114344e-05
+        ],
+        "intervals": {
+          "mean": {
+            "ci95": [
+              -0.00257781922908285,
+              -7.285014243114344e-05
+            ],
+            "finiteReplicates": 10000
+          },
+          "cagr": {
+            "ci95": [
+              -1.7858919846396017,
+              -0.00873448784193509
+            ],
+            "finiteReplicates": 10000
+          },
+          "sharpe": {
+            "ci95": [
+              -2.030471733253002,
+              -0.12697598210337802
+            ],
+            "finiteReplicates": 10000
+          },
+          "drawdown": {
+            "ci95": [
+              -0.051876369817248524,
+              0.01292712572122312
+            ],
+            "finiteReplicates": 10000
+          }
+        },
+        "pValue": 0.9763023697630236,
+        "holmAdjustedP": 1
+      }
+    }
+  },
+  "sensitivity": {
+    "volume80": {
+      "C": {
+        "cashPercentiles": {
+          "0.1": 0.05187736013243291,
+          "0.5": 0.22383348464760713,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 677,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 400,
+        "cashUtilization": 0.6221712407236697,
+        "liquidationAdjustedTotalReturn": 0.11739506799999999,
+        "totalReturn": 0.1185202327599999,
+        "cagr": 0.5525470700923862,
+        "sharpe": 1.7000972828353047,
+        "maxDrawdown": -0.13929320117483546,
+        "twoSidedAnnualTurnover": 32.51612636561766,
+        "transactionCount": 95,
+        "meanCashWeight": 0.37782875927633025,
+        "medianCashWeight": 0.22383348464760713,
+        "estimatedCostFromFillAssumptions": 1116.9567240000415,
+        "blockedByReason": {
+          "position-limit": 1028,
+          "portfolio-cooldown": 342,
+          "entry-invalidated-at-open": 2,
+          "recent-momentum-entry-blocked": 507
+        }
+      },
+      "M-entry-off": {
+        "cashPercentiles": {
+          "0.1": 0.09966060236732469,
+          "0.5": 0.23572643335040713,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 575,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 465,
+        "cashUtilization": 0.6148672899013425,
+        "liquidationAdjustedTotalReturn": -0.06152493666595127,
+        "totalReturn": -0.06066329790595115,
+        "cagr": -0.217908052280817,
+        "sharpe": -0.8015611847105327,
+        "maxDrawdown": -0.13795291280352795,
+        "twoSidedAnnualTurnover": 30.517913153641835,
+        "transactionCount": 87,
+        "meanCashWeight": 0.3851327100986574,
+        "medianCashWeight": 0.23572643335040713,
+        "estimatedCostFromFillAssumptions": 911.9718865151324,
+        "blockedByReason": {
+          "position-limit": 1188,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342
+        }
+      },
+      "M-macd-off": {
+        "cashPercentiles": {
+          "0.1": 0.026346710995926434,
+          "0.5": 0.18530797661820023,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 695,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 431,
+        "cashUtilization": 0.6288861719045493,
+        "liquidationAdjustedTotalReturn": -0.03669971200328448,
+        "totalReturn": -0.035728459003284474,
+        "cagr": -0.13314946998728594,
+        "sharpe": -0.24293810717464812,
+        "maxDrawdown": -0.1552188078281247,
+        "twoSidedAnnualTurnover": 37.980172124160816,
+        "transactionCount": 107,
+        "meanCashWeight": 0.3711138280954506,
+        "medianCashWeight": 0.18530797661820023,
+        "estimatedCostFromFillAssumptions": 1173.9675740084585,
+        "blockedByReason": {
+          "position-limit": 1037,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 459
+        }
+      },
+      "M-deterioration-off": {
+        "cashPercentiles": {
+          "0.1": 0.05674778354323689,
+          "0.5": 0.21177133737498616,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 751,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 464,
+        "cashUtilization": 0.6346290597697706,
+        "liquidationAdjustedTotalReturn": 0.15146127356287997,
+        "totalReturn": 0.15260301728287984,
+        "cagr": 0.7467962558458303,
+        "sharpe": 1.8856069209602835,
+        "maxDrawdown": -0.14549206677265014,
+        "twoSidedAnnualTurnover": 21.38224446925304,
+        "transactionCount": 61,
+        "meanCashWeight": 0.3653709402302294,
+        "medianCashWeight": 0.21177133737498616,
+        "estimatedCostFromFillAssumptions": 740.3680317120329,
+        "blockedByReason": {
+          "position-limit": 1189,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 507
+        }
+      },
+      "M-giveback-off": {
+        "cashPercentiles": {
+          "0.1": 0.05187736013243291,
+          "0.5": 0.22383348464760713,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 677,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 400,
+        "cashUtilization": 0.6221712407236697,
+        "liquidationAdjustedTotalReturn": 0.11739506799999999,
+        "totalReturn": 0.1185202327599999,
+        "cagr": 0.5525470700923862,
+        "sharpe": 1.7000972828353047,
+        "maxDrawdown": -0.13929320117483546,
+        "twoSidedAnnualTurnover": 32.51612636561766,
+        "transactionCount": 95,
+        "meanCashWeight": 0.37782875927633025,
+        "medianCashWeight": 0.22383348464760713,
+        "estimatedCostFromFillAssumptions": 1116.9567240000415,
+        "blockedByReason": {
+          "position-limit": 1028,
+          "portfolio-cooldown": 342,
+          "entry-invalidated-at-open": 2,
+          "recent-momentum-entry-blocked": 507
+        }
+      },
+      "Q9-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.05187736013243291,
+          "0.5": 0.22383348464760713,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 677,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 400,
+        "cashUtilization": 0.6221712407236697,
+        "liquidationAdjustedTotalReturn": 0.11739506799999999,
+        "totalReturn": 0.1185202327599999,
+        "cagr": 0.5525470700923862,
+        "sharpe": 1.7000972828353047,
+        "maxDrawdown": -0.13929320117483546,
+        "twoSidedAnnualTurnover": 32.51612636561766,
+        "transactionCount": 95,
+        "meanCashWeight": 0.37782875927633025,
+        "medianCashWeight": 0.22383348464760713,
+        "estimatedCostFromFillAssumptions": 1116.9567240000415,
+        "blockedByReason": {
+          "position-limit": 1028,
+          "portfolio-cooldown": 342,
+          "entry-invalidated-at-open": 2,
+          "recent-momentum-entry-blocked": 507
+        }
+      },
+      "S-A-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.4604671644893504,
+          "0.5": 0.6711002888706326,
+          "0.9": 0.8181328130463854
+        },
+        "blockedOpportunityDays": 659,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 451,
+        "cashUtilization": 0.33783701693505575,
+        "liquidationAdjustedTotalReturn": 0.016652858146383842,
+        "totalReturn": 0.016907825266383902,
+        "cagr": 0.0680654208581799,
+        "sharpe": 0.438866109899639,
+        "maxDrawdown": -0.1273441386299814,
+        "twoSidedAnnualTurnover": 17.75831695711465,
+        "transactionCount": 104,
+        "meanCashWeight": 0.6621629830649443,
+        "medianCashWeight": 0.6711002888706326,
+        "estimatedCostFromFillAssumptions": 568.7019413616176,
+        "blockedByReason": {
+          "position-limit": 1222,
+          "entry-invalidated-at-open": 3,
+          "recent-momentum-entry-blocked": 507,
+          "portfolio-cooldown": 135
+        }
+      },
+      "S-A-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.044948427348023935,
+          "0.5": 0.28472710331870127,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 369,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.5514229517916693,
+        "liquidationAdjustedTotalReturn": -0.08453144633235832,
+        "totalReturn": -0.08351658449235833,
+        "cagr": -0.2900177976455194,
+        "sharpe": -1.282140019150189,
+        "maxDrawdown": -0.1552727647105956,
+        "twoSidedAnnualTurnover": 32.05191104735805,
+        "transactionCount": 228,
+        "meanCashWeight": 0.4485770482083306,
+        "medianCashWeight": 0.28472710331870127,
+        "estimatedCostFromFillAssumptions": 964.8376790758457,
+        "blockedByReason": {
+          "sector-position-limit": 148,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 507
+        }
+      },
+      "S-B-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.3274838904555127,
+          "0.5": 0.5581797153947237,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 649,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 367,
+        "cashUtilization": 0.39899758764205306,
+        "liquidationAdjustedTotalReturn": 0.0308233297999998,
+        "totalReturn": 0.03151146079999978,
+        "cagr": 0.1295833305158105,
+        "sharpe": 0.6529558751268937,
+        "maxDrawdown": -0.14402770521575614,
+        "twoSidedAnnualTurnover": 22.280186054310786,
+        "transactionCount": 101,
+        "meanCashWeight": 0.6010024123579469,
+        "medianCashWeight": 0.5581797153947237,
+        "estimatedCostFromFillAssumptions": 726.8239200000218,
+        "blockedByReason": {
+          "position-limit": 1038,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 507
+        }
+      },
+      "S-B-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.02031252764049576,
+          "0.5": 0.2317196282460398,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 378,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.607271698398941,
+        "liquidationAdjustedTotalReturn": -0.09770617617472921,
+        "totalReturn": -0.09669381657472909,
+        "cagr": -0.32927351151424,
+        "sharpe": -1.4162789450865514,
+        "maxDrawdown": -0.15544723448394004,
+        "twoSidedAnnualTurnover": 36.43135591648388,
+        "transactionCount": 190,
+        "meanCashWeight": 0.392728301601059,
+        "medianCashWeight": 0.2317196282460398,
+        "estimatedCostFromFillAssumptions": 1084.516818192908,
+        "blockedByReason": {
+          "sector-position-limit": 100,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 507
+        }
+      },
+      "S-C-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.22141861557090184,
+          "0.5": 0.4538169732326134,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 649,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 367,
+        "cashUtilization": 0.47904995184538546,
+        "liquidationAdjustedTotalReturn": 0.03159223383999987,
+        "totalReturn": 0.0324382394799998,
+        "cagr": 0.13357448575242525,
+        "sharpe": 0.6008091513884302,
+        "maxDrawdown": -0.17072570629034045,
+        "twoSidedAnnualTurnover": 26.941398786383104,
+        "transactionCount": 101,
+        "meanCashWeight": 0.5209500481546145,
+        "medianCashWeight": 0.4538169732326134,
+        "estimatedCostFromFillAssumptions": 888.2360520000267,
+        "blockedByReason": {
+          "position-limit": 1038,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 507
+        }
+      },
+      "S-C-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.01763893424155942,
+          "0.5": 0.23301764065184236,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 352,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.632218162495265,
+        "liquidationAdjustedTotalReturn": -0.08795888718248146,
+        "totalReturn": -0.08691435582248142,
+        "cagr": -0.30029954131355774,
+        "sharpe": -1.1652030413879433,
+        "maxDrawdown": -0.16642542860444276,
+        "twoSidedAnnualTurnover": 37.771306978294554,
+        "transactionCount": 163,
+        "meanCashWeight": 0.36778183750473503,
+        "medianCashWeight": 0.23301764065184236,
+        "estimatedCostFromFillAssumptions": 1135.877522328142,
+        "blockedByReason": {
+          "sector-position-limit": 59,
+          "entry-invalidated-at-open": 9,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 507
+        }
+      }
+    },
+    "currentSector": {
+      "C": {
+        "cashPercentiles": {
+          "0.1": 0.04114785150210863,
+          "0.5": 0.2439781067592148,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6242167110680072,
+        "liquidationAdjustedTotalReturn": 0.005940043556452501,
+        "totalReturn": 0.007041955436452474,
+        "cagr": 0.027943072101686006,
+        "sharpe": 0.24320815683712377,
+        "maxDrawdown": -0.1925646252671901,
+        "twoSidedAnnualTurnover": 30.08484656859134,
+        "transactionCount": 89,
+        "meanCashWeight": 0.3757832889319927,
+        "medianCashWeight": 0.2439781067592148,
+        "estimatedCostFromFillAssumptions": 988.8388853147953,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "M-entry-off": {
+        "cashPercentiles": {
+          "0.1": 0.14909638618822024,
+          "0.5": 0.19831914105341758,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 578,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 457,
+        "cashUtilization": 0.6260514426305764,
+        "liquidationAdjustedTotalReturn": -0.011577065350737104,
+        "totalReturn": -0.010586367550737052,
+        "cagr": -0.040937223349316376,
+        "sharpe": -0.033440468597295867,
+        "maxDrawdown": -0.1658549709135707,
+        "twoSidedAnnualTurnover": 29.981260787768704,
+        "transactionCount": 83,
+        "meanCashWeight": 0.37394855736942356,
+        "medianCashWeight": 0.19831914105341758,
+        "estimatedCostFromFillAssumptions": 915.4482497936967,
+        "blockedByReason": {
+          "position-limit": 1191,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342
+        }
+      },
+      "M-macd-off": {
+        "cashPercentiles": {
+          "0.1": 0.0023239048011339507,
+          "0.5": 0.25712603850919735,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 717,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 449,
+        "cashUtilization": 0.6339166307260058,
+        "liquidationAdjustedTotalReturn": -0.018615948326568765,
+        "totalReturn": -0.017528196326568768,
+        "cagr": -0.06709419940810823,
+        "sharpe": -0.04432175241482993,
+        "maxDrawdown": -0.142140088101938,
+        "twoSidedAnnualTurnover": 37.95420874750675,
+        "transactionCount": 107,
+        "meanCashWeight": 0.36608336927399415,
+        "medianCashWeight": 0.25712603850919735,
+        "estimatedCostFromFillAssumptions": 1180.8629800168685,
+        "blockedByReason": {
+          "position-limit": 1019,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 552,
+          "entry-invalidated-at-open": 2
+        }
+      },
+      "M-deterioration-off": {
+        "cashPercentiles": {
+          "0.1": 0.026057833722355213,
+          "0.5": 0.24171095294408684,
+          "0.9": 0.9058183123639262
+        },
+        "blockedOpportunityDays": 832,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 564,
+        "cashUtilization": 0.6305625043432262,
+        "liquidationAdjustedTotalReturn": 0.022072447238393744,
+        "totalReturn": 0.02318136111839375,
+        "cagr": 0.09417833933210695,
+        "sharpe": 0.4595920859258993,
+        "maxDrawdown": -0.14853187124242195,
+        "twoSidedAnnualTurnover": 19.62356330299928,
+        "transactionCount": 57,
+        "meanCashWeight": 0.36943749565677375,
+        "medianCashWeight": 0.24171095294408684,
+        "estimatedCostFromFillAssumptions": 628.6210886406047,
+        "blockedByReason": {
+          "position-limit": 1200,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "M-giveback-off": {
+        "cashPercentiles": {
+          "0.1": 0.04114785150210863,
+          "0.5": 0.24537199888736175,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6235961491533707,
+        "liquidationAdjustedTotalReturn": 0.009524865276452354,
+        "totalReturn": 0.01063222899645222,
+        "cagr": 0.04241151855735947,
+        "sharpe": 0.28849575118442145,
+        "maxDrawdown": -0.18968598266281578,
+        "twoSidedAnnualTurnover": 30.11179208084715,
+        "transactionCount": 89,
+        "meanCashWeight": 0.3764038508466293,
+        "medianCashWeight": 0.24537199888736175,
+        "estimatedCostFromFillAssumptions": 989.9415293147961,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "Q9-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.04114785150210863,
+          "0.5": 0.2439781067592148,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 738,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 437,
+        "cashUtilization": 0.6242167110680072,
+        "liquidationAdjustedTotalReturn": 0.005940043556452501,
+        "totalReturn": 0.007041955436452474,
+        "cagr": 0.027943072101686006,
+        "sharpe": 0.24320815683712377,
+        "maxDrawdown": -0.1925646252671901,
+        "twoSidedAnnualTurnover": 30.08484656859134,
+        "transactionCount": 89,
+        "meanCashWeight": 0.3757832889319927,
+        "medianCashWeight": 0.2439781067592148,
+        "estimatedCostFromFillAssumptions": 988.8388853147953,
+        "blockedByReason": {
+          "position-limit": 1084,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-A-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.3984437765016208,
+          "0.5": 0.6824960700028766,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 693,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 378,
+        "cashUtilization": 0.3330179686044371,
+        "liquidationAdjustedTotalReturn": 0.030908527334047697,
+        "totalReturn": 0.031552485734047675,
+        "cagr": 0.12975978173633473,
+        "sharpe": 0.733247772590414,
+        "maxDrawdown": -0.12715843775764102,
+        "twoSidedAnnualTurnover": 16.806666165892203,
+        "transactionCount": 93,
+        "meanCashWeight": 0.6669820313955629,
+        "medianCashWeight": 0.6824960700028766,
+        "estimatedCostFromFillAssumptions": 540.0869225952226,
+        "blockedByReason": {
+          "position-limit": 1076,
+          "entry-invalidated-at-open": 7,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-A-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.01309126661682951,
+          "0.5": 0.2983581894458998,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 417,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 20,
+        "cashUtilization": 0.6086849681503407,
+        "liquidationAdjustedTotalReturn": -0.06303006588074178,
+        "totalReturn": -0.0619660978807417,
+        "cagr": -0.2221595287755529,
+        "sharpe": -0.8279414535288632,
+        "maxDrawdown": -0.16528777520412774,
+        "twoSidedAnnualTurnover": 34.40418708507268,
+        "transactionCount": 239,
+        "meanCashWeight": 0.3913150318496593,
+        "medianCashWeight": 0.2983581894458998,
+        "estimatedCostFromFillAssumptions": 1053.1157831941882,
+        "blockedByReason": {
+          "position-limit": 60,
+          "sector-position-limit": 119,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-B-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.2518805587384565,
+          "0.5": 0.5749759450867813,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 706,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 385,
+        "cashUtilization": 0.4159633677720882,
+        "liquidationAdjustedTotalReturn": 0.033335341669440854,
+        "totalReturn": 0.034023472669440835,
+        "cagr": 0.14042561752536709,
+        "sharpe": 0.6881404215928911,
+        "maxDrawdown": -0.15359535372684807,
+        "twoSidedAnnualTurnover": 21.13082173487277,
+        "transactionCount": 95,
+        "meanCashWeight": 0.5840366322279118,
+        "medianCashWeight": 0.5749759450867813,
+        "estimatedCostFromFillAssumptions": 688.8690796158983,
+        "blockedByReason": {
+          "position-limit": 1092,
+          "entry-invalidated-at-open": 3,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-B-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.010505045311510088,
+          "0.5": 0.24601165635375183,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 419,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.6348656419080856,
+        "liquidationAdjustedTotalReturn": -0.07060970563152613,
+        "totalReturn": -0.06950595931152614,
+        "cagr": -0.24642727414280885,
+        "sharpe": -0.9878476644604061,
+        "maxDrawdown": -0.16523833561966705,
+        "twoSidedAnnualTurnover": 36.03110571389731,
+        "transactionCount": 193,
+        "meanCashWeight": 0.3651343580919144,
+        "medianCashWeight": 0.24601165635375183,
+        "estimatedCostFromFillAssumptions": 1095.4811582725893,
+        "blockedByReason": {
+          "sector-position-limit": 96,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-C-cap3": {
+        "cashPercentiles": {
+          "0.1": 0.2027997660174007,
+          "0.5": 0.4731213314472454,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 734,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 430,
+        "cashUtilization": 0.49856550411517775,
+        "liquidationAdjustedTotalReturn": 0.07403388729385463,
+        "totalReturn": 0.07493883585385475,
+        "cagr": 0.3281806876509148,
+        "sharpe": 1.2230112878633284,
+        "maxDrawdown": -0.15058648584442924,
+        "twoSidedAnnualTurnover": 24.661058405564823,
+        "transactionCount": 93,
+        "meanCashWeight": 0.5014344958848223,
+        "medianCashWeight": 0.4731213314472454,
+        "estimatedCostFromFillAssumptions": 824.4864600545584,
+        "blockedByReason": {
+          "position-limit": 1090,
+          "portfolio-cooldown": 342,
+          "entry-invalidated-at-open": 3,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-C-cap9": {
+        "cashPercentiles": {
+          "0.1": 0.019270176469226862,
+          "0.5": 0.27426668210157346,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 404,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0.6495369866661772,
+        "liquidationAdjustedTotalReturn": -0.06445062469563378,
+        "totalReturn": -0.06335206825563378,
+        "cagr": -0.2266634819291088,
+        "sharpe": -0.847082791302971,
+        "maxDrawdown": -0.16073031979230168,
+        "twoSidedAnnualTurnover": 36.79716808256295,
+        "transactionCount": 162,
+        "meanCashWeight": 0.3504630133338228,
+        "medianCashWeight": 0.27426668210157346,
+        "estimatedCostFromFillAssumptions": 1115.4371283634073,
+        "blockedByReason": {
+          "sector-position-limit": 70,
+          "entry-invalidated-at-open": 6,
+          "portfolio-cooldown": 342,
+          "recent-momentum-entry-blocked": 624
+        }
+      }
+    },
+    "eventsBlocked": {
+      "C": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "M-entry-off": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 8,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24
+        }
+      },
+      "M-macd-off": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 191,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 552
+        }
+      },
+      "M-deterioration-off": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "M-giveback-off": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "Q9-cap3": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-A-cap3": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-A-cap9": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-B-cap3": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-B-cap9": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-C-cap3": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      },
+      "S-C-cap9": {
+        "cashPercentiles": {
+          "0.1": 1,
+          "0.5": 1,
+          "0.9": 1
+        },
+        "blockedOpportunityDays": 215,
+        "screenCapacitySuppressedDays": null,
+        "positionCapacitySkipDays": 0,
+        "cashUtilization": 0,
+        "liquidationAdjustedTotalReturn": 0,
+        "totalReturn": 0,
+        "cagr": 0,
+        "sharpe": null,
+        "maxDrawdown": 0,
+        "twoSidedAnnualTurnover": 0,
+        "transactionCount": 0,
+        "meanCashWeight": 1,
+        "medianCashWeight": 1,
+        "estimatedCostFromFillAssumptions": 0,
+        "blockedByReason": {
+          "entry-invalidated-at-open": 24,
+          "recent-momentum-entry-blocked": 624
+        }
+      }
+    }
+  },
+  "availabilityNotes": {
+    "screenCapacitySuppressedDays": "Not instrumented. Null does not mean zero.",
+    "holdingAge": "Removed empty legacy field; see independent completed-fill replay.",
+    "blockedOpportunityDays": "Source-model skipped-buy diagnostic, not complete attainable account opportunities.",
+    "totalReturn": "Model price-P&L return, not verified historical total investment return: no dividends, interest or taxes."
+  },
+  "pilotDecisions": {
+    "M-entry-off": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": -0.06888029545100238,
+        "25": -0.05539231311163495,
+        "50": -0.28123733271591767
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": -0.7704551223732032,
+        "currentSector": -0.06888029545100238
+      },
+      "deltaCagr95ci12bps": [
+        -2.4632697498283402,
+        0.715223611159369
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": false,
+        "nonnegativeDelta25": false,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": true,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": true
+      }
+    },
+    "M-macd-off": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": -0.09503727150979424,
+        "25": -0.11189445912208096,
+        "50": -0.32420956916334964
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": -0.6856965400796722,
+        "currentSector": -0.09503727150979424
+      },
+      "deltaCagr95ci12bps": [
+        -2.121638002414199,
+        0.4276971699057236
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": false,
+        "nonnegativeDelta25": false,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": false,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": true,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": true
+      }
+    },
+    "M-deterioration-off": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": 0.06623526723042095,
+        "25": 0.046901707711512475,
+        "50": -0.14879590247268004
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": 0.19424918575344408,
+        "currentSector": 0.06623526723042095
+      },
+      "deltaCagr95ci12bps": [
+        -1.1245768142277064,
+        0.44140348002367125
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": true,
+        "nonnegativeDelta25": true,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": true
+      },
+      "rejectChecks": {
+        "negativeAllCosts": false,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": false
+      }
+    },
+    "M-giveback-off": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": 0.014468446455673467,
+        "25": 0.01409968806684192,
+        "50": 0.0
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": 0.0,
+        "currentSector": 0.014468446455673467
+      },
+      "deltaCagr95ci12bps": [
+        0,
+        0.049716450258281863
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": true,
+        "nonnegativeDelta25": true,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": false,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": false
+      }
+    },
+    "Q9-cap3": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": 0.0,
+        "25": 0.0,
+        "50": 0.0
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": 0.0,
+        "currentSector": 0.0
+      },
+      "deltaCagr95ci12bps": [
+        0,
+        0
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": false,
+        "nonnegativeDelta25": true,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": false,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": false
+      }
+    },
+    "S-A-cap3": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": 0.10181670963464873,
+        "25": 0.12638368179513926,
+        "50": -0.08034875932969676
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": -0.48448164923420634,
+        "currentSector": 0.10181670963464873
+      },
+      "deltaCagr95ci12bps": [
+        -1.73104830861194,
+        0.686870487040632
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": true,
+        "nonnegativeDelta25": true,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": false,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": false
+      }
+    },
+    "S-A-cap9": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": -0.246330791585339,
+        "25": -0.23242900242213782,
+        "50": -0.45774030184838765
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": -0.8425648677379056,
+        "currentSector": -0.2501026008772389
+      },
+      "deltaCagr95ci12bps": [
+        -2.5094481187237614,
+        0.20475132169034804
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": false,
+        "nonnegativeDelta25": false,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": true,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": true
+      }
+    },
+    "S-B-cap3": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": 0.11248254542368108,
+        "25": 0.12722777913225658,
+        "50": -0.08956364688397622
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": -0.42296373957657574,
+        "currentSector": 0.11248254542368108
+      },
+      "deltaCagr95ci12bps": [
+        -1.1226234712802108,
+        0.6358026669032268
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": true,
+        "nonnegativeDelta25": true,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": false,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": false
+      }
+    },
+    "S-B-cap9": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": -0.27437034624449486,
+        "25": -0.2635675690053615,
+        "50": -0.32453725878983397
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": -0.8818205816066262,
+        "currentSector": -0.27437034624449486
+      },
+      "deltaCagr95ci12bps": [
+        -2.553255233853309,
+        0.16674824351951156
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": false,
+        "nonnegativeDelta25": false,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": true,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": true
+      }
+    },
+    "S-C-cap3": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": 0.3002376155492288,
+        "25": 0.3039941471413109,
+        "50": 0.09449329561546582
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": -0.418972584339961,
+        "currentSector": 0.3002376155492288
+      },
+      "deltaCagr95ci12bps": [
+        -0.26954841866785384,
+        1.1024843489005796
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": true,
+        "nonnegativeDelta25": true,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": false,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": false
+      }
+    },
+    "S-C-cap9": {
+      "decision": "INVESTIGATE",
+      "scope": "Research pilot only; no production recommendation",
+      "deltaCagr": {
+        "12": -0.2546065540307948,
+        "25": -0.23445692709449062,
+        "50": -0.3149005068702956
+      },
+      "informativeSensitivityDeltaCagr12bps": {
+        "volume80": -0.852846611405944,
+        "currentSector": -0.2546065540307948
+      },
+      "deltaCagr95ci12bps": [
+        -2.3805514757186135,
+        0.1583972816161543
+      ],
+      "holmP12bps": 1,
+      "keepChecks": {
+        "positiveDelta12": false,
+        "nonnegativeDelta25": false,
+        "drawdownWithin2ppAllCosts": true,
+        "turnoverWithin125pctAllCosts": true,
+        "holmP12Below05": false,
+        "positiveDirectionBothInformativeSensitivities": false
+      },
+      "rejectChecks": {
+        "negativeAllCosts": true,
+        "ciUpperBelowZero": false,
+        "negativeBothInformativeSensitivities": true
+      }
+    }
+  },
+  "queueOnlyIdentity": {
+    "12": {
+      "curve": true,
+      "trades": true,
+      "finalBooks": true
+    },
+    "25": {
+      "curve": true,
+      "trades": true,
+      "finalBooks": true
+    },
+    "50": {
+      "curve": true,
+      "trades": true,
+      "finalBooks": true
+    }
+  }
+}
