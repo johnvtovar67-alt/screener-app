@@ -1,0 +1,7 @@
+{
+  "sourceControlPath": "/workspace/work/c1-exploratory-v1/source-reference-v2/run-C-12.json",
+  "sha256": "bd447ea8e8dca65af53500d1035e35a2bc706689b7b9cbbdf0a659e547d9e250",
+  "scope": "Full63-session currentpolicy control at12bps before eligibility/context calculator memoization; compare exact entire serialized run before challengers",
+  "policyParametersChanged": false,
+  "privateRawControlNotCommitted": true
+}

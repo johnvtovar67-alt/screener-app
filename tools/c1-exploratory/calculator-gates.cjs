@@ -1,0 +1,25 @@
+// Owner-authorized independent reviewer; synthetic tests only. No historical execution.
+const path=require('node:path'),os=require('node:os');
+const assert=require('assert/strict'),fs=require('fs'),root=process.env.C1_RESEARCH_ROOT||path.resolve(__dirname,'../..');process.chdir(root);
+const reviewOutputDir=process.argv[2]||process.env.C1_REVIEW_OUTPUT_DIR||fs.mkdtempSync(path.join(os.tmpdir(),'c1-calculator-review-'));fs.mkdirSync(reviewOutputDir,{recursive:true});const plain=x=>JSON.parse(JSON.stringify(x));
+const {createResearchModuleLoader}=require(root+'/tools/c1-research/module-loader.cjs'),{calculatorTransform}=require(root+'/tools/c1-exploratory/pure-calculator-cache.cjs'),{freezeRows}=require(root+'/tools/c1-exploratory/immutable-index.cjs'),{input}=require(root+'/tools/c1-champion-control-parity-review.cjs');
+const original=createResearchModuleLoader(root),fast=createResearchModuleLoader(root,calculatorTransform),o=original.load('lib/c1RecentMomentumChallengerSimulator.js'),f=fast.load('lib/c1RecentMomentumChallengerSimulator.js'),base=original.load('lib/c1FrozenOptions.js').C1_FROZEN_OPTIONS.base;
+const dataset=input([100,101,102]).dataset;freezeRows(dataset);const signal=dataset.sessions[220].signals[0],cases=[];
+function eq(name,s,c){assert.equal(f.c1AccountRankEligible(s,c),o.c1AccountRankEligible(s,c),name);cases.push({case:name,status:'PASS'});}
+for(const extra of [{},{minimumResearchFactorCoverage:-Infinity},{minimumResearchFactorCoverage:Infinity},{minimumResearchFactorCoverage:NaN},{minimumResearchFactorCoverage:undefined},{requireLiquidityPass:false},{allowedBenchmarkRegimes:['defensive']},{researchSignalSource:'other'}])eq('immutable signal config variation',signal,{...base,...extra});
+let cfg={...base};eq('mutable config before',signal,cfg);cfg.minimumResearchFactorCoverage=999;eq('mutable config after',signal,cfg);
+let threshold=0;const inherited=Object.create({get minimumResearchFactorCoverage(){return threshold;}});for(const[k,v]of Object.entries(base))if(k!=='minimumResearchFactorCoverage')inherited[k]=v;Object.freeze(inherited);eq('inherited getter before',signal,inherited);threshold=999;eq('inherited getter after',signal,inherited);
+let s=plain(signal);eq('mutable signal before',s,base);s.entryTiming.available=false;eq('mutable signal after',s,base);
+
+const expose=(file,s)=>file==='lib/c1RecentMomentumChallengerSimulator.js'?s+'\nexport function reviewContext(rows){return crossSectionalRankContext(rows);}\n':s;
+const contextO=createResearchModuleLoader(root,expose).load('lib/c1RecentMomentumChallengerSimulator.js'),contextF=createResearchModuleLoader(root,(file,s)=>expose(file,calculatorTransform(file,s))).load('lib/c1RecentMomentumChallengerSimulator.js');
+let vector=[signal,dataset.sessions[220].signals[1]];function context(name,rows){assert.deepEqual(structuredClone(contextF.reviewContext(rows)),structuredClone(contextO.reviewContext(rows)));cases.push({case:name,status:'PASS'});}
+context('context exact vector',vector);const output=contextF.reviewContext(vector);output.sectorLeadershipBySymbol.AAA=999;context('context output mutation',vector);context('context reordered vector',vector.slice().reverse());
+const replaced=plain(vector[1]);replaced.entryTiming.alpha120VsSpy=70;freezeRows({sessions:[{signals:[replaced]}]});context('context samefirst replacedsecond',[signal,replaced]);
+const huge=plain(signal);huge.entryTiming.alpha120VsSpy=Number.MAX_VALUE;huge.entryTiming.alpha120VsQqq=Number.MAX_VALUE;freezeRows({sessions:[{signals:[huge]}]});context('context nonfinite output original fallback',[huge]);context('context null row fallback',[null]);
+let value=0;const own={...base};Object.defineProperty(own,'minimumResearchFactorCoverage',{get(){return value;}});Object.freeze(own);eq('own getter before',signal,own);value=999;eq('own getter after',signal,own);
+const originalExecute=require(root+'/tools/c1-exploratory/runner.cjs').execute;
+for(const arm of require(root+'/tools/c1-research/research-spec-v1.json').arms){const all=input([100,100,100]).dataset.sessions,ds={sessions:all.slice(220),historyWarmup:all.slice(0,220)},a=originalExecute(ds,arm,12,{limit:2,checkCausality:true,calculatorCache:false}),b=originalExecute(ds,arm,12,{limit:2,checkCausality:true,calculatorCache:true});assert.deepEqual(plain(b),plain(a));cases.push({case:'full simulator arm '+arm.id,status:'PASS'});}
+eq('primitive numeric config fallback',signal,0);eq('primitive string config fallback',signal,'value');eq('primitive signal fallback',0,base);
+for(const [name,s,c] of [['null signal',null,base],['null config',signal,null]]){let left,right;try{o.c1AccountRankEligible(s,c);}catch(e){left=e.name;}try{f.c1AccountRankEligible(s,c);}catch(e){right=e.name;}assert.equal(right,left);cases.push({case:name+' exception parity',status:'PASS'});}
+fs.writeFileSync(path.join(reviewOutputDir,'calculator-full-gates.json'),JSON.stringify({author:'independent_control_review agent',cases,historicalExecutions:0},null,2)+'\n',{flag:'wx'});console.log({fullCases:cases.length,status:'PASS'});

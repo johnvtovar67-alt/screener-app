@@ -1,5 +1,5 @@
 // Independent reviewer synthetic-only exploratory gates; no network/historical execution.
-const fs=require('fs'),path=require('path'),os=require('os'),assert=require('assert/strict'),root=process.env.C1_RESEARCH_ROOT||path.resolve(__dirname,'../../..');process.chdir(root);
+const fs=require('fs'),path=require('path'),os=require('os'),assert=require('assert/strict'),root=process.env.C1_RESEARCH_ROOT||path.resolve(__dirname,'../..');process.chdir(root);
 const out=process.argv[2]||process.env.C1_REVIEW_OUTPUT_DIR||fs.mkdtempSync(path.join(os.tmpdir(),'c1-exploratory-review-'));fs.mkdirSync(out,{recursive:true});
 const plain=x=>JSON.parse(JSON.stringify(x));
 const {input}=require(root+'/tools/c1-champion-control-parity-review.cjs'),{createControlAdapter:strict}=require(root+'/tools/c1-research/control-adapter.cjs'),{createControlAdapter:explore}=require(root+'/tools/c1-exploratory/account-adapter.cjs'),{challengerTransform}=require(root+'/tools/c1-exploratory/transform.cjs'),{fillsFor,execute}=require(root+'/tools/c1-exploratory/runner.cjs');

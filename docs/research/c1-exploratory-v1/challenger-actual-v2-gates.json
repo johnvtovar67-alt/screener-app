@@ -1,0 +1,110 @@
+{
+  "author": "independent_control_review agent",
+  "scope": "Synthetic12arm source seam isolation, frozen safeguards and execution smoke gates only; not performance evidence",
+  "cases": [
+    {
+      "arm": "C",
+      "status": "PASS synthetic execution",
+      "changedFiles": [],
+      "fills": 9
+    },
+    {
+      "arm": "M-entry-off",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1RecentMomentumGate.js"
+      ],
+      "fills": 9
+    },
+    {
+      "arm": "M-macd-off",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1RecentMomentumGate.js"
+      ],
+      "fills": 9
+    },
+    {
+      "arm": "M-deterioration-off",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1RecentMomentumGate.js"
+      ],
+      "fills": 9
+    },
+    {
+      "arm": "M-giveback-off",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1RecentMomentumGate.js"
+      ],
+      "fills": 9
+    },
+    {
+      "arm": "Q9-cap3",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1StockClassification.js"
+      ],
+      "fills": 9
+    },
+    {
+      "arm": "S-A-cap3",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1FrozenOptions.js",
+        "lib/c1RecentMomentumChallengerSimulator.js"
+      ],
+      "fills": 9
+    },
+    {
+      "arm": "S-A-cap9",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1FrozenOptions.js",
+        "lib/c1RecentMomentumChallengerSimulator.js",
+        "lib/c1StockClassification.js"
+      ],
+      "fills": 18
+    },
+    {
+      "arm": "S-B-cap3",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1FrozenOptions.js",
+        "lib/c1RecentMomentumChallengerSimulator.js"
+      ],
+      "fills": 9
+    },
+    {
+      "arm": "S-B-cap9",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1FrozenOptions.js",
+        "lib/c1RecentMomentumChallengerSimulator.js",
+        "lib/c1StockClassification.js"
+      ],
+      "fills": 15
+    },
+    {
+      "arm": "S-C-cap3",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1FrozenOptions.js",
+        "lib/c1RecentMomentumChallengerSimulator.js"
+      ],
+      "fills": 9
+    },
+    {
+      "arm": "S-C-cap9",
+      "status": "PASS synthetic execution",
+      "changedFiles": [
+        "lib/c1FrozenOptions.js",
+        "lib/c1RecentMomentumChallengerSimulator.js",
+        "lib/c1StockClassification.js"
+      ],
+      "fills": 12
+    }
+  ],
+  "historicalExecutions": 0
+}

@@ -19,15 +19,16 @@ function fillsFor(review,opening,bps){
 }
 function mark(books,s){const prices=new Map(s.prices.map(p=>[p.symbol,p.close]));let equity=0,cash=0;for(const b of Object.values(books)){assert(b.cash>=-1e-6);cash+=b.cash;equity+=b.cash;for(const [symbol,p] of Object.entries(b.positions)){assert(Number.isSafeInteger(p.shares)&&p.shares>0);if(!(prices.get(symbol)>0))throw Error('Missing held close '+symbol);equity+=p.shares*prices.get(symbol);}}return{date:s.date,equity,cash};}
 function openTime(date){return date+(date>='2025-03-10'?'T13:30:00Z':'T14:30:00Z');}
-function execute(dataset,arm,cost,{limit=Infinity,checkCausality=false}={}){
+function execute(dataset,arm,cost,{limit=Infinity,checkCausality=false,onProgress=()=>{},calculatorCache=true}={}){
  verifySources(root);
- const adapter=createControlAdapter(root,{costBps:cost,policyMode:'retrospective-current',transform:challengerTransform(arm)}),loader=adapter.loader;
+ require('./immutable-index.cjs').freezeRows(dataset);
+ const adapter=createControlAdapter(root,{costBps:cost,policyMode:'retrospective-current',transform:challengerTransform(arm),calculatorCache}),loader=adapter.loader;
  const {buildC1StockScreenSnapshot,classifyC1StockScreen}=loader.load('lib/c1StockClassification.js'),{createC1ProspectiveSeeds}=loader.load('lib/c1AccountSeed.js');
  const sessions=dataset.sessions.slice(0,limit+1),warm=dataset.historyWarmup||[],snapshots=new Map();
  for(let i=0;i<sessions.length;i++)snapshots.set(sessions[i].date,buildC1StockScreenSnapshot(sessions[i],new Date(sessions[i].decisionAt),[...warm,...sessions.slice(0,i+1)]));
  if(typeof arm.sizing==='object')for(const cfg of Object.values(loader.load('lib/c1FrozenOptions.js').C1_FROZEN_OPTIONS)){
   cfg.researchLowerPct=arm.sizing.low;
-  cfg.researchTargetPct=(signal,s)=>{const r=snapshots.get(s.date)?.candidates.find(c=>c.symbol===signal.symbol)?.researchRank;if(!r||r>9)throw Error('Unavailable absolute queue rank '+s.date+' '+signal.symbol);return arm.sizing.low+(arm.sizing.high-arm.sizing.low)*(9-r)/8;};
+  cfg.researchTargetPct=(signal,s)=>{const r=snapshots.get(s.date)?.candidates.find(c=>c.symbol===signal.symbol)?.researchRank;if(!snapshots.has(s.date))throw Error('Missing causal snapshot '+s.date);if(!r||r>9)return null;return arm.sizing.low+(arm.sizing.high-arm.sizing.low)*(9-r)/8;};
  }
  const portfolio=[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],adoption=createC1ProspectiveSeeds({portfolio,baseline:sessions[0],capitalRecord:{version:2,highWater:100000,triggerDay:null,reconciliationRequired:false,portfolioSignature:loader.load('lib/portfolioGovernor.js').portfolioCompositionSignature(portfolio)},adoptionConfirmed:true});
  let books=loader.load('lib/c1AccountLedger.js').c1AccountBooks(adoption),records=[],curve=[mark(books,sessions[0])],trades=[],audit=[],screenDecisions=[],last;
@@ -45,7 +46,7 @@ function execute(dataset,arm,cost,{limit=Infinity,checkCausality=false}={}){
   last=adapter.continue({adoption,sessions:sessions.slice(0,i+1),historySessions:[...warm,...sessions.slice(0,i+1)],records,observedAt:opening.date+'T22:00:00Z'});assert.deepEqual(plain(last.books),plain(books));
   for(const f of fills){const o=review.plan.orders.find(o=>o.id===f.orderId);trades.push({...f,date:opening.date,sleeve:o.sleeve,reason:o.reason});}
   const classified=classifyC1StockScreen({snapshot:screen.decision.stockScreen,rows:screen.rows,current:true});screenDecisions.push(...classified.map(r=>({date:s.date,...r})));
-  audit.push({date:opening.date,heldBefore:[...new Set(Object.values(review.plan.openingBooks).flatMap(b=>Object.keys(b.positions)))],rawOrderIds:review.rawPlan.orders.map(o=>o.id),permittedOrderIds:review.plan.orders.map(o=>o.id),fills,screenBlocked:review.screenBlockedOrders.map(o=>({id:o.id,symbol:o.symbol,sleeve:o.sleeve})),eligibleSymbols:review.screenEvidence.buySymbols,cashBlocked:review.authorityPlan.cashBlockedOrders.length,entryReviews:review.rawPlan.entryReviews});curve.push(mark(books,opening));
+  audit.push({date:opening.date,heldBefore:[...new Set(Object.values(review.plan.openingBooks).flatMap(b=>Object.keys(b.positions)))],rawOrderIds:review.rawPlan.orders.map(o=>o.id),permittedOrderIds:review.plan.orders.map(o=>o.id),fills,screenBlocked:review.screenBlockedOrders.map(o=>({id:o.id,symbol:o.symbol,sleeve:o.sleeve})),eligibleSymbols:review.screenEvidence.buySymbols,cashBlocked:review.authorityPlan.cashBlockedOrders.length,entryReviews:review.rawPlan.entryReviews});curve.push(mark(books,opening));onProgress({arm:arm.id,cost,date:opening.date,completed:i,total:sessions.length-1});
  }
  return {arm:arm.id,cost,curve,trades,sleeves:last?.sleeves||{},screenDecisions,audit,finalBooks:books,label:'EXPLORATORY RETROSPECTIVE conditional fixed-cohort price-P&L; not historical production replay'};
 }

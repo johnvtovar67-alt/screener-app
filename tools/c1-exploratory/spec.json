@@ -1,14 +1,67 @@
 {
-  "track": "EXPLORATORY RETROSPECTIVE v1 — not validated historical performance",
+  "track": "EXPLORATORY RETROSPECTIVE v1 \u2014 not validated historical performance",
   "productionCommit": "0a65e20964ae080b8718332e5f6f16daa6def452",
   "strictProgram": "Unchanged and independently gated; no strict pass is conferred by these results",
-  "evaluation": {"baseline": "2024-12-31", "firstExecution": "2025-01-02", "end": "2025-04-03", "warmup": "2023-12-29", "reason": "Existing dated public baseline roster/GICS/CIK plus common recovered prices; chosen before any returns", "initialCapital": 100000, "sleeves": [25000,50000,25000], "mstrCapital": 0, "costBpsPerSide": [12,25,50], "cashInterest": 0, "dividendCredits": 0, "terminalLiquidation": false},
+  "evaluation": {
+    "baseline": "2024-12-31",
+    "firstExecution": "2025-01-02",
+    "end": "2025-04-03",
+    "warmup": "2023-12-29",
+    "reason": "Existing dated public baseline roster/GICS/CIK plus common recovered prices; chosen before any returns",
+    "initialCapital": 100000,
+    "sleeves": [
+      25000,
+      50000,
+      25000
+    ],
+    "mstrCapital": 0,
+    "costBpsPerSide": [
+      12,
+      25,
+      50
+    ],
+    "cashInterest": 0,
+    "dividendCredits": 0,
+    "terminalLiquidation": false
+  },
   "arms": "Exact 12 labels and research proposals from tools/c1-research/research-spec-v1.json; all current October semantics retrospectively activated, no historical deployment claim",
   "execution": "Source normalized model projection, source cash cap on full plan, subsequent source screen, hypothetical whole-share fills and source ledger continuation. No backfill of rejected screen orders. Fresh hypothetical funding limit equals prior-close cash floored to cents; no same-opening proposed sale funding. Nonconditional prices already include side cost. Standing stop: daily low <= known stop; min(open,stop) minus sell cost once, clipped to actual held shares. Open09:30Eastern; conditional fill19:00UTC is bookkeeping only, not observed intraday timestamp. No claimed live quotes.",
-  "sizing": "Frozen rank schedules: p(r)=low+(high-low)*(9-r)/8 using causal original snapshot rank. Low/high A=.05/.20 B=.075/.25 C=.10/.30 of each separate sleeve decision-close equity, total C1 equity excludes MSTR. Target fixed until next-open execution, whole-share floor, existing sector/issuer/cash/minimumtrade caps and one-share lowerbound allowance. No inter-sleeve transfers. Retention rank6 independent of capacity. Unscreened shadow ranks must be resolved explicitly, never silently extrapolated.",
-  "assumptions": ["Fixed conditional December2024 baseline roster, no subsequent additions/removals; ex-post action/price-gap exclusions explicitly induce selection bias", "Carry dated December2024 sector/issuer labels forward; no historical classification-continuity claim", "Unknown events treated clear as explicit omission; no invented publication times or original vintage", "Vendor full split-adjusted price view rebased to baseline non-split close; target-window split/distribution/BDX/LEN/WDC exclusions. Source adjusted flag denotes simulation price basis only, not certification", "No dividend, interest or tax cashflows; reported portfolio return is price P&L after modeled costs, not verified historical total investment return", "Provider full-view volume may have unit revisions; no independent historical volume confirmation"],
-  "sensitivities": ["All12 arms at12bps with volume multiplied by0.8, including warmup, tests liquidity-threshold sensitivity", "All12 arms at12bps on same panel with only supported current provider sector proxies substituted; missing current labels retain dated baseline labels explicitly. This is taxonomy/date sensitivity, not historical sector evidence", "All12 arms at12bps with event-unverified entries entirely blocked: conservative omission bound, unchanged exits, expected cash-only from cash seed; no performance superiority inference from this bound"],
-  "causalGates": ["All used raw response hashes match receipts", "Price chronology, common close dates, positive consistent OHLC and targetcrossview completeness/agreement", "Datedbaseline-only roster and sector anchor; no current fundamentals or future return features", "Compiler prefix output unchanged on truncation; mutate future bars and compare earlier signals", "StrictC and exploratoryC exact decision/order identity on synthetic differential cases at12/25/50", "Source ledger agrees with independently recomputed cash, integer shares and basis; daily reconciliation", "Projected opening decisions invariant to same-session later OHLC; no missing held quote or silent ticker splice"],
-  "metrics": ["CAGR and portfolio return (priceP&L only; short-period annualization unstable)", "Sharpe zeroRF annualizedsqrt252", "maximumdrawdown", "two-sided annualturnover", "mean cash utilization", "unfilled eligible candidate days and descriptive5session forward price returns net roundtrip costs (not attainable counterfactual alpha)", "paired stationary20session-block bootstrap10000replicates seed20261016 with95percent intervals; Holm11comparisons; shortsample and ex-post selection uncertainty remain outside intervals"],
-  "decisionsBeforeResults": {"KEEP": "Keep research candidate only if positive deltaCAGR12 and nonnegative25, drawdown not more than2percentagepoints worse, turnover<=1.25control, HolmP<.05 and sensitivity direction stable. No production approval.", "REJECT": "Reject pilot case if negative delta at all3costs, paired95percent deltaCAGR upper bound<0 and direction stable across informative sensitivities. No universal rejection from one short regime.", "INVESTIGATE": "All other outcomes, including inadequate sample or incomplete sensitivity execution. Current production stays unchanged."}
+  "sizing": "Frozen rank schedules: p(r)=low+(high-low)*(9-r)/8 using causal original snapshot rank. Low/high A=.05/.20 B=.075/.25 C=.10/.30 of each separate sleeve decision-close equity, total C1 equity excludes MSTR. Target fixed until next-open execution, whole-share floor, existing sector/issuer/cash/minimumtrade caps and one-share lowerbound allowance. No inter-sleeve transfers. Retention rank6 independent of capacity. A source model candidate outside the canonical snapshot nine receives no invented rank: nullable target plus named postqueue execution rejection. Holding/exit rank universe remains complete; no screening prefilter or rerank.",
+  "assumptions": [
+    "Fixed conditional December2024 baseline roster, no subsequent additions/removals; ex-post action/price-gap exclusions explicitly induce selection bias",
+    "Carry dated December2024 sector/issuer labels forward; no historical classification-continuity claim",
+    "Unknown events treated clear as explicit omission; no invented publication times or original vintage",
+    "Vendor full split-adjusted price view rebased to baseline non-split close; target-window split/distribution/BDX/LEN/WDC exclusions. Source adjusted flag denotes simulation price basis only, not certification",
+    "No dividend, interest or tax cashflows; reported portfolio return is price P&L after modeled costs, not verified historical total investment return",
+    "Provider full-view volume may have unit revisions; no independent historical volume confirmation"
+  ],
+  "sensitivities": [
+    "All12 arms at12bps with volume multiplied by0.8, including warmup, tests liquidity-threshold sensitivity",
+    "All12 arms at12bps on same panel with only supported current provider sector proxies substituted; missing current labels retain dated baseline labels explicitly. This is taxonomy/date sensitivity, not historical sector evidence",
+    "All12 arms at12bps with event-unverified entries entirely blocked: conservative omission bound, unchanged exits, expected cash-only from cash seed; no performance superiority inference from this bound"
+  ],
+  "causalGates": [
+    "All used raw response hashes match receipts",
+    "Price chronology, common close dates, positive consistent OHLC and targetcrossview completeness/agreement",
+    "Datedbaseline-only roster and sector anchor; no current fundamentals or future return features",
+    "Compiler prefix output unchanged on truncation; mutate future bars and compare earlier signals",
+    "StrictC and exploratoryC exact decision/order identity on synthetic differential cases at12/25/50",
+    "Source ledger agrees with independently recomputed cash, integer shares and basis; daily reconciliation",
+    "Projected opening decisions invariant to same-session later OHLC; no missing held quote or silent ticker splice"
+  ],
+  "metrics": [
+    "CAGR and portfolio return (priceP&L only; short-period annualization unstable)",
+    "Sharpe zeroRF annualizedsqrt252",
+    "maximumdrawdown",
+    "two-sided annualturnover",
+    "mean cash utilization",
+    "unfilled eligible candidate days and descriptive5session forward price returns net roundtrip costs (not attainable counterfactual alpha)",
+    "paired stationary20session-block bootstrap10000replicates seed20261016 with95percent intervals; Holm11comparisons; shortsample and ex-post selection uncertainty remain outside intervals"
+  ],
+  "decisionsBeforeResults": {
+    "KEEP": "Keep research candidate only if positive deltaCAGR12 and nonnegative25, drawdown not more than2percentagepoints worse, turnover<=1.25control, HolmP<.05 and sensitivity direction stable. No production approval.",
+    "REJECT": "Reject pilot case if negative delta at all3costs, paired95percent deltaCAGR upper bound<0 and direction stable across informative sensitivities. No universal rejection from one short regime.",
+    "INVESTIGATE": "All other outcomes, including inadequate sample or incomplete sensitivity execution. Current production stays unchanged."
+  },
+  "technicalAmendment": "v2 before any completed control result or challenger metrics: normal shadow queue after held-name removal required nullable sizing and postqueue execution guard. Exact immutable JSON row indexing/pure recent-momentum input memoization accelerates source reconstruction; no position/evaluation state cached. Original incomplete slow control stopped without a result file; v1 source preserved in commit e6ac112f7af29af2cfea8c153132eb5c9c5588a3. All strategy schedules, costs and dates unchanged. v3 adds independently tested pure eligibility/context calculator memoization keyed to all59 pinned eligibility option fields and immutable signals. No source condition changed. Completed v2C12 reference is preserved privately and full63session serialized run identity is required before challengers. Dates, costs and all strategy parameters unchanged; no return metrics inspected before amendment."
 }

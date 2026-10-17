@@ -2,12 +2,14 @@
 // Research-only orchestration of unchanged production projection and accounting.
 // No network/storage; callers must explicitly supply evidence and hypothetical fills.
 const {createResearchModuleLoader}=require('../c1-research/module-loader.cjs');
-function createControlAdapter(root,{costBps=12,policyMode='production-dated',transform=(file,source)=>source}={}){
+function createControlAdapter(root,{costBps=12,policyMode='production-dated',transform=(file,source)=>source,calculatorCache=true}={}){
  if(![12,25,50].includes(costBps))throw Error('Cost must be frozen 12/25/50bps');
  if(!['production-dated','retrospective-current'].includes(policyMode))throw Error('Explicit qualified policy mode required');
  const seams=[];
  const loader=createResearchModuleLoader(root,(file,source)=>{
   source=transform(file,source);
+  source=require('./immutable-index.cjs').indexTransform(file,source);
+  if(calculatorCache)source=require('./pure-calculator-cache.cjs').calculatorTransform(file,source);
   if(file==='lib/c1FrozenOptions.js'&&costBps!==12){
    const from='"slippageBps": 12';
    if(source.split(from).length!==4)throw Error('Cost seam changed: expected three frozen sleeves');

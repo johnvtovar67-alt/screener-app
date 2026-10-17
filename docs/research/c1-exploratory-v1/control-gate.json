@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "scope": "Exploratory source-control and daily ledger consistency only; not strict qualification",
+  "costs": [
+    12,
+    25,
+    50
+  ],
+  "full63SessionPreCalculatorMemoIdentity12bps": "exact serialized entire run PASS"
+}
