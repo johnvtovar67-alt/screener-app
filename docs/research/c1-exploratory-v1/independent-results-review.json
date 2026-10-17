@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "primaryRuns": 36,
+  "dailyMarks": 2304,
+  "maxCashDollarDifference": 1.4551915228366852e-11,
+  "maxEquityDollarDifference": 4.3655745685100555e-11,
+  "commonQueueReports": 36,
+  "bootstrapComparisons": 33,
+  "maxBootstrapNumericDifference": 1.7763568394002505e-15,
+  "bootstrapTolerance": 1e-10,
+  "pValuesHolmFiniteCounts": "exact",
+  "maxPositionsPerSleeveAcrossRuns": 9,
+  "maxDistinctAccountNamesAcrossRuns": 10,
+  "historicalSimulations": 0,
+  "scalarMetricRuns": 36,
+  "scalarMetricMaxDifference": 1.8189894035458565e-12
+}
