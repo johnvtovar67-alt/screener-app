@@ -356,7 +356,7 @@ async function main(){try{
    const headers=[...heading.matchAll(/<th(?:\s[^>]*)?>([\s\S]*?)<\/th>/g)].map(match=>match[1]);
    const cells=[...html.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)].map(match=>match[1]);
    eq(cells.length,headers.length,'Actual desktop position cells align with the visible table headings');
-   same(headers,['Position','Open Date','Decision','Evidence','Why','Price','Gain/Loss'],'The original seven styled Portfolio columns are preserved');
+   same(headers,['Position','Open Date','Decision','Why / Evidence','Price','Gain/Loss'],'The combined six-column Portfolio preserves every other financial column');
    eq(headers.at(-2),'Price','The displayed price remains in the Price column');
    eq(headers.at(-1),'Gain/Loss','The gain/loss amount remains in the Gain/Loss column');
   }
@@ -376,7 +376,7 @@ async function main(){try{
   absent(stop,/Technical evidence sentinel|MACD|histogram|confirmation streak|1\/3\/5/,'The original evidence slots do not expose raw technical calculations');
   match(stop,/Stop triggered at \$86\.00 \(verified price \$85\.00\); C1 sell signal; verify Schwab order\/fill status\./,'The verified stop has one plain reason using the existing recorded stop');
   absent(stop,/<details\b/,'Technical rules are not reintroduced in a disclosure');
-  const reason=mobile?stop.match(/<small>Why<\/small><p>([\s\S]*?)<\/p>/)?.[1]:[...stop.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)][4]?.[1];
+  const reason=mobile?stop.match(/<small>Why \/ Evidence<\/small><p>([\s\S]*?)<\/p>/)?.[1]:[...stop.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)][3]?.[1]?.match(/^<p>([\s\S]*?)<\/p>/)?.[1];
   eq((reason?.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each Portfolio row has exactly one plain-English reason sentence');
   const hold=portfolioHtml(holding('MPC'),quote('MPC',115),{mobile});
   match(hold,/>HOLD</,'MPC without an exit retains the current Hold action in the historical layout');
@@ -421,7 +421,7 @@ async function main(){try{
   ];
   for(const mobile of [false,true])fs.writeFileSync(path.join(process.env.C1_PRESENTATION_RENDER_DIR,'portfolio-'+(mobile?'mobile':'desktop')+'.html'),
    mobile?'<div class="mobilePortfolio">'+fixtureRows.map(([p,s,sector])=>portfolioHtml(p,s,{mobile,sector})).join('')+'</div>':
-   '<div class="scroll"><table><thead><tr><th>Position</th><th>Open Date</th><th>Decision</th><th>Evidence</th><th>Why</th><th>Price</th><th>Gain/Loss</th></tr></thead><tbody>'+fixtureRows.map(([p,s,sector])=>portfolioHtml(p,s,{sector})).join('')+'</tbody></table></div>');
+   '<div class="scroll"><table><thead><tr><th>Position</th><th>Open Date</th><th>Decision</th><th>Why / Evidence</th><th>Price</th><th>Gain/Loss</th></tr></thead><tbody>'+fixtureRows.map(([p,s,sector])=>portfolioHtml(p,s,{sector})).join('')+'</tbody></table></div>');
  }
 
  // The copy layer is read-only: raw technical evidence and action authority

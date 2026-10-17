@@ -6,7 +6,7 @@ const modules=require('./research-module-loader.cjs').createResearchModuleLoader
 const page=fs.readFileSync('pages/index.js','utf8');
 const {c1PositionPresentation}=modules.load('lib/c1PositionPresentation.js');
 const {c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming}=modules.load('lib/c1DecisionCopy.js');
-assert.ok(page.includes('<th>Evidence</th>')&&page.includes('<th>Why</th>'),'The original Portfolio retains separate Evidence and Why columns');
+assert.ok(page.includes('<th>Why / Evidence</th>')&&!page.includes('<th>Evidence</th><th>Why</th>'),'Portfolio combines the existing reason and evidence into one column');
 assert.doesNotMatch(page,/momentumEvidenceRows|momentumEvidenceBox|momentumEvidenceCompact|momentumEvidenceItem|Momentum Evidence/,'The redundant momentum summary strip must be absent');
 assert.ok(page.includes('specialSituationBadge'),'Special-situation presentation must remain available');
 assert.doesNotMatch(page,/stageTone\(|stageBadge|time\.stage|timeReviewRows/,'Duration stages must not appear as portfolio evidence');
@@ -97,8 +97,8 @@ for(const symbol of ['MRNA','MSTR'])for(const mobile of [false,true])for(const a
   assert.match(html,/\$50\.00 \/ 5\.00%/,'Core gain/loss must remain unchanged');
   if(!mobile){
    const cells=[...html.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)];
-   assert.equal(cells.length,7,'Core shares the original seven-column financial layout');
-   assert.equal(cells[3][1],'','Core cannot receive Swing evidence in the restored column');
+   assert.equal(cells.length,6,'Core shares the six-column financial layout');
+   assert.equal(cells[3][1],c1PlainDecisionReason({action,reason:why}),'Core combined cell contains only its unchanged reason');
   }
  }
 }

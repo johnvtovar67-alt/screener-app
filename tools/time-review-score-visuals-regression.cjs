@@ -19,5 +19,5 @@ const checks=[
 const failed=checks.filter(([,needle])=>!s.includes(needle)).map(([name])=>name);
 if(failed.length){console.error('TIME REVIEW SCORE VISUALS FAIL:',failed.join(', '));process.exit(1);}
 if(s.includes('<p>{evidence.explanation}</p>'))throw new Error('The full technical narrative must not replace concise evidence');
-if(!s.includes('<th>Evidence</th>'))throw new Error('The original Evidence column must remain present');
+if(!s.includes('<th>Why / Evidence</th>'))throw new Error('The combined Why / Evidence column must remain present');
 console.log('TIME REVIEW SCORE VISUALS PASS: capital-score thresholds and internal momentum evidence are preserved with original evidence and plan-trigger slots.');
