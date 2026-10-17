@@ -81,7 +81,7 @@ async function main(){
  sell.advance();sell.setCash(9199.75);sell.setOpeningFailure(false);near((await sell.prepare()).decision.brokerageCash,9199.75);
  evidence.cases.push({case:'DELL-triggered-stop-with-zero-cash',recordedShares:20,stop:468.85,verifiedPrice:460,saleInstructionShares:20,actualFillShares:20,fee:.25,brokerageCashAfter:9199.75,retryAndResnapshot:'PASS',noAssumedBrokerOrder:true});
  // Invert only the declared funding seams and require exact production source.
- let source=fs.readFileSync('lib/c1AccountSimulator.js','utf8');for(const [old,next] of require('./c1-operational-funding-seams.cjs')){assert.equal(source.split(next).length,2);source=source.replace(next,old);}
+ let source=fs.readFileSync('lib/c1AccountSimulator.js','utf8');for(const [old,next] of require('./c1-additional-capacity-seams.cjs')){assert.equal(source.split(next).length,2);source=source.replace(next,old);}for(const [old,next] of require('./c1-operational-funding-seams.cjs')){assert.equal(source.split(next).length,2);source=source.replace(next,old);}
  assert.equal(crypto.createHash('sha256').update(source).digest('hex'),'02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb');
  // JSON/client flags cannot authorize a negative historical sleeve debit.
  const replayModule=f.loader.load('lib/c1ActualFillReplay.js'),replayDate='2026-10-15';

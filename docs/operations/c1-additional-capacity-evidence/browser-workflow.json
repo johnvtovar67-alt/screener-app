@@ -1,0 +1,46 @@
+{
+  "scope": "Real Chromium → production React components → HTTP → production API → isolated memory account",
+  "cases": [
+    {
+      "case": "MRNA-qualified-insufficient-cash",
+      "brokerCash": 50,
+      "buyInstruction": false
+    },
+    {
+      "case": "verified-Buy-actual-fill-reload-cash-resnapshot",
+      "shares": 265,
+      "actualPrice": 100.12,
+      "cashAfter": 73468.2,
+      "doubleCount": false
+    },
+    {
+      "case": "MRNA-rating-not-purchase-authority",
+      "cash": 100000,
+      "buyInstruction": false
+    },
+    {
+      "case": "DELL-20-stop-sale-zero-cash-Buy-verification-unavailable",
+      "shares": 20,
+      "actualPrice": 460,
+      "fee": 0.25,
+      "cashAfter": 9199.75,
+      "reload": "PASS"
+    },
+    {
+      "case": "three-held-5000-cash-fourth-Swing-then-stop-sale",
+      "shares": 49,
+      "buyPrice": 100.12,
+      "cashAfterBuy": 94.12,
+      "positionsAfterBuy": 4,
+      "sellPrice": 75,
+      "sellFee": 0.25,
+      "cashBeforeSale": 0,
+      "cashAfterSale": 3674.75,
+      "positionsAfterSale": 3,
+      "reload": "PASS"
+    }
+  ],
+  "liveWrites": 0,
+  "status": "PASS",
+  "browser": "Chrome/151.0.7922.173"
+}

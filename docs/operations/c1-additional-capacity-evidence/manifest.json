@@ -1,0 +1,50 @@
+{
+  "scope": "Synthetic operational software checks only; no live account records or historical performance",
+  "baselineCommit": "bb31b12e11c103f9e66a5068ca6fd12f4f78b7ab",
+  "branch": "fix/c1-qualified-swing-capacity-20261017",
+  "checks": {
+    "productionBuild": "PASS",
+    "fullRegressions": "105/105 PASS",
+    "latestFocusedCases": "17 PASS",
+    "realChromiumWorkflow": "PASS",
+    "noExceptionOrdersQuantitiesRisk": "exact PASS",
+    "CorePreserved": "PASS"
+  },
+  "tolerances": {
+    "dollarConservation": 1e-06,
+    "ordersSharesReasons": "exact"
+  },
+  "sourceAndEvidenceSha256": {
+    "docs/c1-release-freeze.json": "608cecfdf9ca747582c478adc499c350a6a45bb60b5d6fa37ffe51c91e8f66a7",
+    "docs/operations/c1-additional-capacity-evidence/browser-workflow.json": "fa68ebcdf3b65d329a29dca30f86552a5d4efb502fa73b9eff64c1ba8f4cad8d",
+    "docs/operations/c1-additional-capacity-evidence/regression-results.json": "cff18544a03bc7d05cf318e696c42101f541340a571f39b8441546e785e24b43",
+    "docs/operations/c1-additional-capacity-evidence/workflow.json": "f86f1ecac17a4cbfbdf7fdffe674c362669ce3787add43a96e9ec3fbf5f4c2eb",
+    "docs/operations/c1-additional-swing-capacity-20261017.md": "435448779bcde203ebb3319ca85d6297dab18a3e022bf640af0e5dc75319edeb",
+    "lib/c1AccountExecution.js": "5653272334c7410f3c76e6df8c749356fc88b8e40e837480216163edfa984ad4",
+    "lib/c1AccountExecutionView.js": "4288fb463da19fc80934f57991a6b976733deb7c6245a16e100a03c527b17140",
+    "lib/c1AccountLedger.js": "c3efb7b9ef35b3070b4f10dfa74873bef47948c140b6ac1aa6ada96661d62c29",
+    "lib/c1AccountProjection.js": "edb15f9572cd8bb7d2987ebc3ca6067f39a6288c31998d230013cfa68f0ebf6b",
+    "lib/c1AccountSimulator.js": "f2715db509bfea0ae51b56d0691a6e6666120547b65321178eaa71a4482ffad7",
+    "lib/c1ActualFillReplay.js": "c8a8e39d0642f06680d0a78bb05a5d9de595e9d113e1446e05957b95f1f969ef",
+    "lib/c1AdditionalSwingCapacity.js": "944f247966017067aad63f2030b958044a6dce7c00aa961b8297974f16b7a9f5",
+    "lib/c1EntryReview.js": "83d65049e90f930f5de79243d5599a05480b6d6b21f56a9ed5a6deff5f1fc98e",
+    "lib/c1ExecutionCashAuthority.js": "e865c27388828e23cb8284ae4b81ca2ff11d84a26b49186a8fb9ebbff53a8010",
+    "lib/c1IntradayActivity.js": "964cb776406afde7833494ca76b822c6acfe5469aa37c769e3b1223c4ba8c0aa",
+    "lib/c1RecentMomentumChallengerSimulator.js": "fab0f7af6a672a28bd8e3dcf65c0b1aafdbe160ff28e209410f93a75bb1179dc",
+    "tools/c1-additional-capacity-regression.cjs": "e1e931584af90858f10e3af7d847a01b76be71e14ae8582b98eb883a554375b9",
+    "tools/c1-additional-capacity-seams.cjs": "a616ea360c0facd9dbea9afd257665951e2e5cd2f014bde5e300d668c8299712",
+    "tools/c1-brokerage-rule-parity-regression.cjs": "2431e71ffea6b47593ab2fd2a99766f397bc8616438c77b0728d7466d5a89c80",
+    "tools/c1-trading-workflow-browser.cjs": "37d45f306e6d42b8ef67720ce8fd5d0fc0e37a1e0f5d7c6164af2bc7b6ec5293",
+    "tools/c1-trading-workflow-regression.cjs": "8c21bb21fe69e8b0e1ee5a6411a85c1e9eb42518f25addd169c0033e57e45045",
+    "tools/fixtures/c1-trading-workflow-api.cjs": "cb53b555ac763cf14a7398c46d01ec7469437bca65f566488a94406dfb629b01",
+    "tools/fixtures/c1-trading-workflow-browser.jsx": "a060e1cfb84b96b1d6a5270af8d9bbe3f5ac603a553f85182f1c6ad5baf1d750",
+    "tools/fixtures/c1-trading-workflow.cjs": "3a90ee4905a837514aae8fa089d2962e17f51d375f3b8642ff71fbaa04f06737",
+    "tools/generate-c1-account-simulator.cjs": "4c57118a32d19b5d50f777d97dd2d8dd27b7b819ab59ed7cb4b6df37582e7a0d",
+    "tools/generate-c1-recent-momentum-challenger.cjs": "75a700cabac5630fedd102a5b21500263ab531d4b2d652c335ce5d0825d6fe61",
+    "vercel.json": "f1d729291dc096aefef40d603b924b098e90cbf6bc1ada20ff5fa70ecb9cae8d"
+  },
+  "noImagesOrDownloadedData": true,
+  "credentialPatternScan": "PASS",
+  "mergeAuthorized": false,
+  "deploymentAuthorized": false
+}

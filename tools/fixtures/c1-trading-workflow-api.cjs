@@ -3,7 +3,7 @@ const {createWorkflowFixture}=require('./c1-trading-workflow.cjs');
 // The real production API handler with isolated memory storage and supplied
 // quote evidence. No live Blob, FMP or Schwab connection can be used here.
 function createWorkflowApi(kind='buy'){
- const fixture=createWorkflowFixture(kind==='sell-missing'?'sell':kind);if(kind==='sell-missing')fixture.setOpeningFailure(true);
+ const fixture=createWorkflowFixture(kind==='sell-missing'?'sell':kind,kind==='capacity'?{portfolio:[...['BBB','CCC','LLL'].map(symbol=>({symbol,role:'Swing',shares:40,avgCost:100,openedAt:'2026-10-14'})),{symbol:'CASH',role:'Swing',shares:8000,avgCost:1}]}:{});if(kind==='sell-missing')fixture.setOpeningFailure(true);
  const file=path.join(fixture.root,'pages/api/c1-account.js'),imports={};
  const never=()=>{throw Error('Live provider/storage access forbidden in workflow test');};
  const coverageSource=fs.readFileSync(path.join(fixture.root,'lib/c1HoldingCoverage.js'),'utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');

@@ -3,7 +3,7 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {createResearchModuleLoader}=require('../research-module-loader.cjs');
 const root=path.resolve(__dirname,'../..'),clone=x=>JSON.parse(JSON.stringify(x));
-function createWorkflowFixture(kind='buy'){
+function createWorkflowFixture(kind='buy',options={}){
  const loader=createResearchModuleLoader(root),service=loader.load('lib/c1AccountService.js');
  const market=loader.load('lib/marketSession.js'),{analyzeEntryTiming}=loader.load('lib/entryTiming.js');
  const symbols=['MRNA','BBB','CCC','DDD','EEE','FFF','GGG','HHH','III','JJJ','KKK','LLL','DELL'];
@@ -22,24 +22,24 @@ function createWorkflowFixture(kind='buy'){
   return {date,decisionAt:date+'T21:00:00Z',prices,signals,positionSignals:signals,universeSymbols:symbols,corporateActions:[]};
  });
  const book={universe:'sp500',model:{sessions:sessions.slice(0,221)},captures:sessions.slice(0,221).map(s=>({sessionDate:s.date,hash:'synthetic-workflow:'+s.date,observedAt:s.decisionAt}))};
- const portfolio=kind==='sell'?[{symbol:'DELL',role:'Swing',shares:20,avgCost:545.17,openedAt:baselineDate},{symbol:'CASH',role:'Swing',shares:0,avgCost:1}]:
+ const portfolio=options.portfolio?clone(options.portfolio):kind==='sell'?[{symbol:'DELL',role:'Swing',shares:20,avgCost:545.17,openedAt:baselineDate},{symbol:'CASH',role:'Swing',shares:0,avgCost:1}]:
   [{symbol:'LLL',role:'Swing',shares:800,avgCost:100,openedAt:baselineDate},{symbol:'CASH',role:'Swing',shares:1000,avgCost:1}];
  const equity=portfolio.reduce((sum,p)=>sum+p.shares*(p.symbol==='DELL'?500:p.symbol==='CASH'?1:100),0);
  const signature=loader.load('lib/portfolioGovernor.js').portfolioCompositionSignature(portfolio);
  let account=service.adoptC1Account({portfolio,capitalRecord:{version:2,highWater:equity,portfolioSignature:signature,reconciliationRequired:false},book,now:new Date(baselineDate+'T22:00:00Z')});
- let now=new Date('2026-10-15T17:00:00Z'),openingFailure=kind==='missing',writes=0;
+ let now=new Date('2026-10-15T17:00:00Z'),openingFailure=kind==='missing',writes=0;const quotes={};
  const opening=()=>({date:now.toISOString().slice(0,10),decisionAt:now.toISOString(),universeSymbols:symbols,corporateActions:[],
-  prices:sessions[221].prices.map(p=>({...p,open:p.symbol==='DELL'?500:100,observedPrice:p.symbol==='DELL'?460:100,observedAt:now.toISOString()})),
+  prices:sessions[221].prices.map(p=>({...p,open:p.symbol==='DELL'?500:100,observedPrice:quotes[p.symbol]??(p.symbol==='DELL'?460:100),observedAt:now.toISOString()})),
   receipt:{observedAt:now.toISOString(),membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true}});
  const collectOpening=async()=>{if(openingFailure)throw Error('MRNA entry verification incomplete: current opening quote unavailable');return opening();};
  async function prepare(ticket){return loader.load('lib/c1AccountExecutionView.js').prepareC1AccountExecution({account,book,now,collectOpening,recordTicket:ticket,expectedRevision:account.revision});}
- function screenRows(){return symbols.map((symbol,i)=>({symbol,sector:symbol==='MRNA'?'Healthcare':symbol==='DELL'?'Technology':'Sector'+i,price:symbol==='DELL'?460:100,timestamp:now.getTime()/1000,
+ function screenRows(){return symbols.map((symbol,i)=>({symbol,sector:symbol==='MRNA'?'Healthcare':symbol==='DELL'?'Technology':'Sector'+i,price:quotes[symbol]??(symbol==='DELL'?460:100),timestamp:now.getTime()/1000,
   _fmpQuoteCache:'live',_fmpQuoteProvider:'FMP',_fmpQuoteEndpoint:'quote',_fmpQuoteFetchedAt:now.toISOString(),
-  _fmpQuoteObservation:{provider:'FMP',endpoint:'stable/quote',symbol,price:symbol==='DELL'?460:100,timestamp:now.getTime()/1000,fetchedAt:now.toISOString()},
+  _fmpQuoteObservation:{provider:'FMP',endpoint:'stable/quote',symbol,price:quotes[symbol]??(symbol==='DELL'?460:100),timestamp:now.getTime()/1000,fetchedAt:now.toISOString()},
   eventRisk:{status:'Clear'},entryTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000},recommendation:{expertDecision:{strongBuyPass:symbol==='MRNA',metrics:{quoteFreshnessPass:true}}}}));}
  return {root,loader,service,book,sessions,portfolio,prepare,opening,collectOpening,screenRows,
   get account(){return account;},set account(value){account=value;},get now(){return now;},set now(value){now=new Date(value);},
-  get writes(){return writes;},persist(value){account=value;writes++;},setOpeningFailure(value){openingFailure=value;},
+  setQuote(symbol,price){quotes[symbol]=price;},get writes(){return writes;},persist(value){account=value;writes++;},setOpeningFailure(value){openingFailure=value;},
   setCash(balance){account=service.updateC1BrokerageCash({account,brokerageCash:balance,expectedRevision:account.revision,now});},
   advance(){now=new Date(now.getTime()+60000);},clone};
 }
