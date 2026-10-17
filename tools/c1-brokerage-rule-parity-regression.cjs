@@ -45,7 +45,7 @@ const compatibilitySourceSha256 = {
   // still require exact pre-cutover account, cash, fill and raw-plan parity.
   // Canonical simulator/options and the original production fixture stay pinned.
   "lib/c1AccountExecution.js": "e960416107dbbbd10e074946a81d215099c5ef30edff87ed8dbb7ef81a5251a8",
-  "lib/c1AccountInput.js": "fa2f6f9691ed06575b7491898ef10b1709bab8d17a427463fb0b21c47f80a432",
+  "lib/c1AccountInput.js": "1163cd1f40340a5e76bbfc77c6b46ac0f3108dcf2c1fd7d2f81503a7d2ebafc4",
   "lib/c1AccountLedger.js": "47ba20989a191dfba13f5f974d3e429324fc4e35d2ebabe98c8a558a06c58c3b",
   "lib/c1AccountProjection.js": "b452a7c454ad116ddefdb02b3023dde22f5369007aed42bc4ad1e74cc94541fc",
   "lib/c1PaperEvents.js": "1f0db7fb8fcf4d95dc69169cb2b8a10261e259504166cdd01b254eae8a2f6a80",

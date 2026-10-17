@@ -1,0 +1,36 @@
+{
+  "scope": "Synthetic software fixtures; no real NTRA/account data or live writes",
+  "status": "PASS",
+  "baseline": "b6b074e6cce8d735fa57d231e732505a5cba034b",
+  "adoptionReview": {
+    "writes": 0,
+    "shares": 20,
+    "basis": 1760,
+    "sleeves": {
+      "base": 5,
+      "cooldown15": 10,
+      "sector40": 5
+    }
+  },
+  "tradeEntry": {
+    "shares": 265,
+    "price": 100.12,
+    "cashAfter": 73468.2,
+    "reload": "PASS",
+    "completedReplay": "PASS",
+    "completedTradeEntry": "PASS"
+  },
+  "integrity": {
+    "nativeAcceptedReplacement": "REJECT",
+    "changedPriceOrVolume": "REJECT",
+    "changedSource": "REJECT",
+    "unverifiedObservation": "REJECT",
+    "changedClassification": "REJECT",
+    "duplicateRowWithinReceipt": "REJECT",
+    "mutatedDerivedPrice": "REJECT",
+    "serializedProvenance": "REJECT",
+    "unchangedOverlayReplay": "PASS",
+    "exactDecisionAndOrderParity": "PASS",
+    "sourceAndSavedRecordsUnchanged": true
+  }
+}
