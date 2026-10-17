@@ -1,0 +1,755 @@
+{
+  "passed": 107,
+  "failed": 0,
+  "results": [
+    {
+      "script": "blob-consistent-read-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 161
+    },
+    {
+      "script": "bounded-review-backtest-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 62
+    },
+    {
+      "script": "brokerage-reconciliation-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 68
+    },
+    {
+      "script": "c1-account-client-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 73
+    },
+    {
+      "script": "c1-account-compatibility-api-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 303
+    },
+    {
+      "script": "c1-account-reconciliation-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 79
+    },
+    {
+      "script": "c1-account-seed-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1228
+    },
+    {
+      "script": "c1-additional-capacity-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4867
+    },
+    {
+      "script": "c1-baseline-reconciliation-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 149
+    },
+    {
+      "script": "c1-brokerage-cash-api-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 144
+    },
+    {
+      "script": "c1-brokerage-cash-client-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 61
+    },
+    {
+      "script": "c1-brokerage-cash-service-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 190
+    },
+    {
+      "script": "c1-brokerage-cash-ui-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 781
+    },
+    {
+      "script": "c1-brokerage-rule-parity-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 790
+    },
+    {
+      "script": "c1-combined-portfolio-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4015
+    },
+    {
+      "script": "c1-compact-opportunities-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 684
+    },
+    {
+      "script": "c1-dated-book-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 147
+    },
+    {
+      "script": "c1-decision-snapshot-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 94
+    },
+    {
+      "script": "c1-execution-adapter-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 53
+    },
+    {
+      "script": "c1-execution-cash-cap-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 107
+    },
+    {
+      "script": "c1-execution-reconciliation-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 78
+    },
+    {
+      "script": "c1-forward-model-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 131
+    },
+    {
+      "script": "c1-held-close-review-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 183
+    },
+    {
+      "script": "c1-historical-date-compatibility-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 210
+    },
+    {
+      "script": "c1-historical-ledger-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1546
+    },
+    {
+      "script": "c1-historical-ui-restore-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 38
+    },
+    {
+      "script": "c1-holding-risk-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 71
+    },
+    {
+      "script": "c1-holdings-comparison-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 65
+    },
+    {
+      "script": "c1-index-lifecycle-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 91
+    },
+    {
+      "script": "c1-input-archive-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 73
+    },
+    {
+      "script": "c1-intraday-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1897
+    },
+    {
+      "script": "c1-intraday-risk-stabilization-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2979
+    },
+    {
+      "script": "c1-legacy-order-identity-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 698
+    },
+    {
+      "script": "c1-live-display-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 77
+    },
+    {
+      "script": "c1-live-input-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2226
+    },
+    {
+      "script": "c1-manual-recommendations-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 194
+    },
+    {
+      "script": "c1-market-hours-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 168
+    },
+    {
+      "script": "c1-momentum-evidence-input-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 338
+    },
+    {
+      "script": "c1-momentum-evidence-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 295
+    },
+    {
+      "script": "c1-momentum-exit-production-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 198
+    },
+    {
+      "script": "c1-non-cash-adoption-client-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 523
+    },
+    {
+      "script": "c1-non-cash-adoption-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 5599
+    },
+    {
+      "script": "c1-observation-archive-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 114
+    },
+    {
+      "script": "c1-opening-performance-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 111
+    },
+    {
+      "script": "c1-paper-events-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 121
+    },
+    {
+      "script": "c1-partial-completion-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 429
+    },
+    {
+      "script": "c1-pending-decisions-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 99
+    },
+    {
+      "script": "c1-position-presentation-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 913
+    },
+    {
+      "script": "c1-presentation-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 99
+    },
+    {
+      "script": "c1-price-anchors-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 125
+    },
+    {
+      "script": "c1-production-policy-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 98
+    },
+    {
+      "script": "c1-quote-verification-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 118
+    },
+    {
+      "script": "c1-recent-momentum-challenger-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 13700
+    },
+    {
+      "script": "c1-recent-momentum-giveback-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 72
+    },
+    {
+      "script": "c1-recent-momentum-production-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4793
+    },
+    {
+      "script": "c1-recent-momentum-recorded-fill-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3602
+    },
+    {
+      "script": "c1-recent-momentum-ui-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 142
+    },
+    {
+      "script": "c1-reviewed-session-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 79
+    },
+    {
+      "script": "c1-screen-evidence-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 838
+    },
+    {
+      "script": "c1-service-equivalence-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 13207
+    },
+    {
+      "script": "c1-sleeve-accounting-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 69
+    },
+    {
+      "script": "c1-stock-classification-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 74
+    },
+    {
+      "script": "c1-sync-state-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 75
+    },
+    {
+      "script": "c1-trading-workflow-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3234
+    },
+    {
+      "script": "c1-ui-authority-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 565
+    },
+    {
+      "script": "c1-unexposed-price-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 237
+    },
+    {
+      "script": "c1-validation-repairs-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 231
+    },
+    {
+      "script": "cash-display-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 33
+    },
+    {
+      "script": "data-integrity-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 34
+    },
+    {
+      "script": "decision-engine-state-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 55
+    },
+    {
+      "script": "entry-timing-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 32
+    },
+    {
+      "script": "exit-stability-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 28
+    },
+    {
+      "script": "fmp-fundamentals-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 32
+    },
+    {
+      "script": "fmp-research-backtest-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 453
+    },
+    {
+      "script": "full-market-walk-forward-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2131
+    },
+    {
+      "script": "market-cycle-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 32
+    },
+    {
+      "script": "market-session-reuse-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4564
+    },
+    {
+      "script": "material-event-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 31
+    },
+    {
+      "script": "momentum-spine-research-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 55
+    },
+    {
+      "script": "nasdaq-adaptive-replacement-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 60
+    },
+    {
+      "script": "nasdaq-adaptive-runner-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 63
+    },
+    {
+      "script": "nasdaq-concentrated-runner-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 79
+    },
+    {
+      "script": "nasdaq-continuous-runner-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 65
+    },
+    {
+      "script": "nasdaq-runner-research-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 65
+    },
+    {
+      "script": "open-date-display-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 74
+    },
+    {
+      "script": "personal-capital-policy-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 37
+    },
+    {
+      "script": "portfolio-action-summary-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 37
+    },
+    {
+      "script": "portfolio-sync-client-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 63
+    },
+    {
+      "script": "portfolio-sync-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 28
+    },
+    {
+      "script": "proof-followthrough-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 32
+    },
+    {
+      "script": "regression-check.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 52
+    },
+    {
+      "script": "replacement-edge-ticker-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 28
+    },
+    {
+      "script": "reunderwrite-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 30
+    },
+    {
+      "script": "sec-filing-research-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 63
+    },
+    {
+      "script": "sec-point-in-time-fundamentals-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 61
+    },
+    {
+      "script": "signal-stability-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 37
+    },
+    {
+      "script": "special-situation-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 29
+    },
+    {
+      "script": "stage-badges-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 471
+    },
+    {
+      "script": "time-review-score-visuals-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 27
+    },
+    {
+      "script": "time-review-ui-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 32
+    },
+    {
+      "script": "top5-deadline-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1339
+    },
+    {
+      "script": "top5-performance-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 23658
+    },
+    {
+      "script": "top5-response-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 84
+    },
+    {
+      "script": "ui-polish-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 31
+    },
+    {
+      "script": "v10-alpha-audit-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 209
+    },
+    {
+      "script": "v11-stress-test-regression.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 30
+    },
+    {
+      "script": "recommended-trade-simulation.cjs",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 37
+    }
+  ]
+}

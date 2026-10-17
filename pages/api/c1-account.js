@@ -1,3 +1,5 @@
+import {appendC1NonCashAdoption} from '../../lib/c1NonCashAdoption';
+import {reviewC1NonCashAdoption,verifyC1NonCashReceipts} from '../../lib/c1NonCashAdoptionReview';
 import {createHash} from 'node:crypto';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
@@ -19,6 +21,14 @@ const storage={
  async read(path){const r=await get(path,{access:'private',useCache:false,headers:{'accept-encoding':'identity'}});if(!r)return null;if(r.statusCode!==200||!r.blob?.etag)throw new Error('Account storage unavailable');return {record:JSON.parse(await new Response(r.stream).text()),etag:r.blob.etag};},
  async write(path,record,etag){return put(path,JSON.stringify(record),{access:'private',addRandomSuffix:false,allowOverwrite:Boolean(etag),...(etag?{ifMatch:etag}:{}),contentType:'application/json',cacheControlMaxAge:0});}
 };
+
+// Read the existing authorized portfolio; adoption never writes this object.
+async function readAdoptionPortfolio(key){
+ const path=`portfolio-sync/${createHash('sha256').update(key).digest('hex')}.json`;
+ const r=await get(path,{access:'private',useCache:false,headers:{'accept-encoding':'identity'}});
+ if(!r||r.statusCode!==200||!r.blob?.etag)throw new Error('Saved portfolio identity unavailable');
+ return {...JSON.parse(await new Response(r.stream).text()),etag:r.blob.etag};
+}
 
 function completedAnalysisView({account,book,now,holdingReviewError=null}){
  const {decision}=deriveC1AccountAnalysis({account,book,now});
@@ -73,7 +83,7 @@ async function reviewAccountHoldings({account,book,now,collectRanks}){
  return {account,holdingReviewError};
 }
 
-export function createC1AccountHandler({store=storage,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,collectHoldings=collectC1HoldingCoverage,collectRanks=collectC1HeldRankReviews,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local'}={}){
+export function createC1AccountHandler({store=storage,readPortfolio=readAdoptionPortfolio,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,collectHoldings=collectC1HoldingCoverage,collectRanks=collectC1HeldRankReviews,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local'}={}){
  return async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'Method not allowed'});}
@@ -87,6 +97,7 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
    // The stored daily dataset is authoritative; this cannot initialize it.
    const {record:book}=await readBook('sp500',{now});
    let account=saved?.record,holdingReviewError=null;
+   if(account?.adoption?.nonCashHoldings?.length)verifyC1NonCashReceipts(account);
    if(operation==='refresh-analysis'){
     account=await verifyAccountHoldingPrices({account,book,now,collectHoldings});
     return res.status(200).json(completedAnalysisView({account,book,now}));
@@ -97,6 +108,21 @@ export function createC1AccountHandler({store=storage,readBook=readStoredC1Dated
     if(operation==='record-intraday')await saveC1AccountUpdate({store,path,saved,account:prepared.account,operation,book,now});
     const {account:preparedAccount,...view}=prepared;
     return res.status(200).json({...view,holdingReviewError});
+   }
+   if(operation==='review-mrna-adoption'||operation==='confirm-mrna-adoption'){
+    if(operation==='confirm-mrna-adoption'&&body.confirmed===true&&account.adoption.nonCashHoldings?.some(e=>e.id===body.reviewId))return res.status(200).json(completedAnalysisView({account,book,now}));
+    const input=c1AccountBook(book,account.holdingCoverages||account.holdingCoverage);
+    const completed=deriveC1CompletedAccount({account,book:input,now});
+    const before=evaluateC1Account({account:completed,book:input,now});
+    const review=reviewC1NonCashAdoption({account:completed,decision:before,book:input,portfolioRecord:await readPortfolio(key),accountEtag:saved.etag,accountIdentity:createHash('sha256').update(path).digest('hex'),
+      completedActivity:account.intradayActivity&&!completed.intradayActivity?account.intradayActivity:null,
+      finalizedSessions:completed.records.slice(account.records.length).map(r=>r.date),expectedRevision:body.expectedRevision,now});
+    if(operation==='review-mrna-adoption')return res.status(200).json({adoptionReview:review});
+    const next=appendC1NonCashAdoption({account:completed,review,reviewId:body.reviewId,confirmed:body.confirmed===true,now});
+    const after=evaluateC1Account({account:next,book:input,now}),held=after.positions.find(p=>p.symbol==='MRNA');
+    if(!held||held.shares!==Number(review.original.shares)||Math.abs(held.avgCost-Number(review.original.avgCost))>1e-7||!Number.isFinite(held.totalCost)||Math.abs(held.totalCost-Number(review.original.shares)*Number(review.original.avgCost))>1e-6||held.openedAt!==String(review.original.openedAt).slice(0,10)||after.actualCash!==before.actualCash||JSON.stringify(next.brokerageCash)!==JSON.stringify(account.brokerageCash))throw new Error('Non-cash adoption failed ownership, basis, date or cash conservation');
+    account=await saveC1AccountUpdate({store,path,saved,account:next,operation,book:input,now});
+    return res.status(200).json(completedAnalysisView({account,book:input,now}));
    }
    switch(operation){
     case 'adopt':{

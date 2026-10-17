@@ -13,6 +13,7 @@ async function main(){
  const server=http.createServer(async(req,res)=>{
   try{
    let body='';for await(const data of req)body+=data;
+   if(req.url==='/fixture-adoption-stop'){api.fixture.now='2026-10-15T17:00:00Z';api.fixture.setQuote('MRNA',75);res.end('synthetic next session');return;}
    if(req.url==='/fixture-quote'){const q=JSON.parse(body);api.fixture.setQuote(q.symbol,q.price);res.end('updated fixture quote');return;}
    if(req.url==='/fixture-reset'){api=createWorkflowApi(body);res.end('reset');return;}
    if(req.url==='/api/c1-account'){
@@ -74,6 +75,22 @@ async function main(){
   await wait('window.__C1_LAST_VIEW?.decision?.positions.length===3&&window.__C1_LAST_VIEW?.intradaySession?.tickets.length===2','fourth position actual stop fill');assert.equal(await js('window.__C1_LAST_VIEW.decision.brokerageCash'),3674.75);
   await cdp('Page.reload');await wait('window.__C1_LAST_VIEW?.decision?.brokerageCash===3674.75&&window.__C1_LAST_VIEW?.decision?.positions.length===3','additional-position exit reload');
   trace.cases.push({case:'three-held-5000-cash-fourth-Swing-then-stop-sale',shares:49,buyPrice:100.12,cashAfterBuy:94.12,positionsAfterBuy:4,sellPrice:75,sellFee:.25,cashBeforeSale:0,cashAfterSale:3674.75,positionsAfterSale:3,reload:'PASS'});
+  await wait('document.querySelector("nav button")?.disabled===false','previous workflow settled');
+  await click('Load Core MRNA adoption example');await wait('window.__C1_LAST_VIEW?.decision?.positions.length===3&&document.querySelector("nav button")?.disabled===false','Core adoption fixture');
+  assert.equal(await js('window.__C1_LAST_VIEW.decision.brokerageCash'),5000);
+  await click('Review MRNA adoption');await wait('document.body.innerText.includes("MRNA: Core → Swing")','adoption review');
+  assert(await js('[...document.querySelectorAll("button")].find(b=>b.textContent==="Confirm MRNA adoption").disabled'));
+  assert.equal(await js('window.__C1_LAST_VIEW.decision.positions.some(p=>p.symbol==="MRNA")'),false);
+  await js('[...document.querySelectorAll("section")].find(s=>s.getAttribute("aria-label")==="Adopt existing MRNA").querySelector("input[type=checkbox]").click()');await click('Confirm MRNA adoption');
+  await wait('window.__C1_LAST_VIEW?.decision?.nonCashAdoptions?.length===1&&window.__C1_LAST_VIEW?.decision?.positions.length===4','confirmed non-cash adoption');
+  assert.equal(await js('window.__C1_LAST_VIEW.decision.brokerageCash'),5000);assert.equal(await js('window.__C1_LAST_VIEW.decision.positions.find(p=>p.symbol==="MRNA").totalCost'),1760);assert.equal(await js('window.__C1_LAST_VIEW.intradaySession'),null);
+  await cdp('Page.reload');await wait('window.__C1_LAST_VIEW?.decision?.positions.length===4&&document.querySelector("nav button")?.disabled===false','adoption reload');
+  assert.equal(await js('window.__C1_LAST_VIEW.decision.positions.find(p=>p.symbol==="MRNA").openedAt'),'2026-10-01');
+  await click('Verify adopted MRNA stop');await wait('document.body.innerText.includes("Sell 20 shares in Schwab")&&document.querySelector("nav button")?.disabled===false','adopted stop');await cash(0);
+  await input('Completed trade','stop:sell:MRNA');await input('Shares filled','20');await input('Execution price','75');await input('Fee','0.25');await input('Execution time',await js('new Date(Date.now()).toISOString().slice(0,16)'));await js('document.querySelector("input[type=checkbox]").click()');await click('Save trade and update C1');
+  await wait('window.__C1_LAST_VIEW?.decision?.positions.length===3&&window.__C1_LAST_VIEW?.decision?.brokerageCash===1499.75','adopted actual sale');
+  await cdp('Page.reload');await wait('window.__C1_LAST_VIEW?.decision?.brokerageCash===1499.75&&window.__C1_LAST_VIEW?.decision?.positions.length===3','adopted sale reload');
+  trace.cases.push({case:'confirmed-Core-adoption-without-trade-then-existing-stop-sale',shares:20,averageCost:88,totalCost:1760,purchaseDate:'2026-10-01',adoptionCashChange:0,cashAfterAdoption:5000,adoptionCreatedOrdersOrFills:false,sellPrice:75,sellFee:.25,cashBeforeSale:0,cashAfterSale:1499.75,oldCoreRowResurrection:false,reload:'PASS'});
   trace.status='PASS';trace.browser=(await send('Browser.getVersion')).product;fs.writeFileSync(path.join(out,'browser-workflow.json'),JSON.stringify(trace,null,2)+'\n');console.log('PASS: real Chromium operational workflow; '+out);
  }finally{try{socket?.close();}catch{}chrome.kill('SIGTERM');server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(profile,{recursive:true,force:true});}
 }

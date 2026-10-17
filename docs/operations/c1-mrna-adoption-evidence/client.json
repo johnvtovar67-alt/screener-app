@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "scope": "Real Home handlers → production API → memory fixtures",
+  "reviewWrites": 0,
+  "confirmationWrites": 1,
+  "brokerCashChange": 0,
+  "failedPortfolioSyncRecovered": true,
+  "bothReloadOrders": "PASS",
+  "duplicateShares": false,
+  "conversionCreatedTrade": false,
+  "liveWrites": 0
+}

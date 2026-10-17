@@ -4,7 +4,7 @@ const source=page.slice(page.indexOf('  async function pushCloudPortfolio('),pag
 const disconnect=page.slice(page.indexOf('  function disconnectSync('),page.indexOf('  async function copySyncKey('));
 function client(fetch){
  const saved=new Map([['key','synthetic-key'],['portfolio','[]']]),state={rows:[],status:''};
- const box={fetch,Date,SYNC_KEY:'key',KEY:'portfolio',C1_DRAWDOWN_KEY:'risk',syncKey:'synthetic-key',c1Control:{},
+ const box={...require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1NonCashPortfolio.js'),accountView:null,fetch,Date,SYNC_KEY:'key',KEY:'portfolio',C1_DRAWDOWN_KEY:'risk',syncKey:'synthetic-key',c1Control:{},
   syncQueue:{current:Promise.resolve()},syncRevision:{current:{key:'synthetic-key',etag:'v1'}},syncPullId:{current:0},syncWriteId:{current:0},syncDirty:{current:false},accountRequestId:{current:0},
   localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v),removeItem:k=>saved.delete(k)},
   setSyncStatus:v=>state.status=v,setPortfolio:v=>state.rows=v,setAccountView(){},setAccountAbsent(){},setAccountError(){},setSyncKey(){},setSyncInput(){}};

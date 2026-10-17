@@ -7,7 +7,7 @@ const canonical = 'lib/c1AccountSimulator.js';
 const target = 'lib/c1RecentMomentumChallengerSimulator.js';
 let source = fs.readFileSync(canonical, 'utf8');
 assert.equal(createHash('sha256').update(source).digest('hex'),
-  'f2715db509bfea0ae51b56d0691a6e6666120547b65321178eaa71a4482ffad7',
+  '63b1909359361e35ae7d0c2e833fecbb043013f7b337f9f2c96dc0a3adb2f31e',
   'Re-review Challenger seams after any canonical account-engine change');
 function replace(from, to) {
   assert.equal(source.split(from).length, 2, 'Expected exactly one Challenger seam: ' + from.slice(0, 100));
@@ -73,7 +73,9 @@ replace('  const skippedOrders = [];', `  const skippedOrders = [];
 // Separate validated peak provenance from the canonical mark, which deliberately
 // remains untouched. It is scoped to this ownership lifecycle; the helper keeps
 // the activation latch armed when a partial completion changes average cost.
-replace('positions.set(p.symbol,{...c1SeedPosition(p,sessionIndex,session.date,prices.get(p.symbol).close),issuer:issuerOf(stock),sector:sectorOf(stock),factor:factorOf(stock)});',
+// Apply the identical existing peak initialization to initial and in-kind balances.
+function replaceSeed(from,to){assert.equal(source.split(from).length,3,'Exactly two balance-admission sites');source=source.split(from).join(to);}
+replaceSeed('positions.set(p.symbol,{...c1SeedPosition(p,sessionIndex,session.date,prices.get(p.symbol).close),issuer:issuerOf(stock),sector:sectorOf(stock),factor:factorOf(stock)});',
 `const seeded = c1SeedPosition(p,sessionIndex,session.date,prices.get(p.symbol).close);
         const acceptedHighs = recentHistory.filter(item => item.date >= seeded.enteredAt && item.date <= session.date)
           .map(item => readC1RecentMomentumPrice({session:item,symbol:p.symbol}))
@@ -83,6 +85,14 @@ replace('positions.set(p.symbol,{...c1SeedPosition(p,sessionIndex,session.date,p
         const expectedPeakSessions = marketSessionDistance(seeded.enteredAt, session.date) + 1;
         seeded.recentMomentumOpeningPeakCoverage = {from:seeded.enteredAt,through:session.date,
           observed:acceptedHighs.length,expected:expectedPeakSessions,complete:acceptedHighs.length === expectedPeakSessions};
+        if(p.nonCashPriceProof===true){
+          // Same peak calculation, using the complete original observations
+          // archived in the confirmed in-kind receipt rather than re-fetching.
+          seeded.recentMomentumPeakPrice=Math.max(p.entryPrice,seeded.highWatermark);
+          seeded.recentMomentumPeakVerified=true;
+          seeded.recentMomentumOpeningPeakCoverage={from:seeded.enteredAt,through:session.date,
+            observed:p.historicalPriceEvidence.sessionsObserved,expected:p.historicalPriceEvidence.expectedSessions,complete:p.historicalPriceEvidence.complete};
+        }
         positions.set(p.symbol,{...seeded,issuer:issuerOf(stock),sector:sectorOf(stock),factor:factorOf(stock)});`);
 
 // A new close-generated exit is valid only for the following actual exchange

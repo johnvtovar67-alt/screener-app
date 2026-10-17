@@ -1,3 +1,5 @@
+import C1NonCashAdoption from '../components/C1NonCashAdoption';
+import {resolveC1NonCashPortfolio} from '../lib/c1NonCashPortfolio';
 import C1IntradayActivity from '../components/C1IntradayActivity';
 import {portfolioDateDisplay} from '../lib/portfolioDateDisplay';
 import {readTop5Response} from '../lib/top5Response';
@@ -150,6 +152,10 @@ export default function Home(){
         if([401,403].includes(r.status)){setAccountView(null);setAccountAbsent(false);}
         throw new Error(recovered?'Your saved account was reloaded. Please retry the change.':r.status===409&&body?.operation==='update-brokerage-cash'?'The saved account changed. Reload before updating brokerage cash.':d.error||"C1 account refresh failed.");
       }
+      if(d.decision?.nonCashAdoptions?.length){
+        const entered=JSON.parse(localStorage.getItem(KEY)||'[]'),resolved=resolveC1NonCashPortfolio(entered,d.decision);
+        if(JSON.stringify(entered)!==JSON.stringify(resolved)){localStorage.setItem(KEY,JSON.stringify(resolved));setPortfolio(resolved);}
+      }
       setAccountView(d);setAccountAbsent(false);setAccountError("");return d;
     }catch(error){
       if(requestId!==accountRequestId.current)return;
@@ -182,6 +188,25 @@ export default function Home(){
     catch(e){setAccountError(e.message);}finally{setAccountBusy(false);}
   }
   async function startC1Account(){setAccountBusy(true);setAccountError("");setErr("");try{const capitalRecord=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");await refreshC1Account({operation:'adopt',portfolio:portfolio.map(p=>({...p,shares:Number(p.shares),avgCost:Number(p.avgCost)})),capitalRecord,prospectiveLegacyAdoptionConfirmed:capitalRecord.version===null&&capitalRecord.portfolioSignature==null&&capitalRecord.reconciliationRequired===true});}catch(e){setAccountError(e.message);}finally{setAccountBusy(false);}}
+  async function reviewMRNAAdoption(expectedRevision){
+    await syncQueue.current;
+    if(syncDirty.current||syncStatus!=='Synced')throw new Error('Sync the saved portfolio before reviewing adoption.');
+    const key=localStorage.getItem(SYNC_KEY)||'';
+    const response=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify({operation:'review-mrna-adoption',expectedRevision})});
+    const value=await response.json();if(!response.ok)throw new Error(value.error||'Adoption review unavailable');return value.adoptionReview;
+  }
+  async function confirmMRNAAdoption(reviewId,expectedRevision){
+    setAccountBusy(true);setAccountError('');
+    try{
+      await syncQueue.current;
+      if(syncDirty.current||syncStatus!=='Synced')throw new Error('Sync the saved portfolio and review MRNA adoption again before confirming.');
+      const view=await refreshC1Account({operation:'confirm-mrna-adoption',reviewId,expectedRevision,confirmed:true});
+      if(!view?.decision?.nonCashAdoptions?.some(e=>e.id===reviewId))throw new Error('Adoption was not confirmed. Reload before retrying.');
+      const updated=resolveC1NonCashPortfolio(JSON.parse(localStorage.getItem(KEY)||'[]'),view.decision);
+      localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);
+      if(!await pushCloudPortfolio(updated))setAccountError('MRNA adoption is saved in C1. Portfolio sync needs a retry; do not convert or buy again. Reload restores ownership from the adoption receipt.');
+    }finally{setAccountBusy(false);}
+  }
   async function updateBrokerageCash(brokerageCash,expectedRevision){
     setAccountBusy(true);setAccountError('');
     try{
@@ -367,7 +392,7 @@ export default function Home(){
       if(requestId!==syncPullId.current||(localStorage.getItem(KEY)||'[]')!==signature)return false;
       if(r.status===404){if(quiet&&fallback.length){await pushCloudPortfolio(fallback,key);return true;}throw new Error('No portfolio found for this sync key.');}
       if(!r.ok)throw new Error(d.error||'Sync failed');
-      const rows=Array.isArray(d.portfolio)?d.portfolio:[];
+      const rows=resolveC1NonCashPortfolio(Array.isArray(d.portfolio)?d.portfolio:[],accountView?.decision);
       if(signature!==JSON.stringify(rows))localStorage.setItem('stock_screener_portfolio_before_sync_v1',JSON.stringify({savedAt:new Date().toISOString(),portfolio:JSON.parse(signature)}));
       setPortfolio(rows);localStorage.setItem(KEY,JSON.stringify(rows));
       if(d.c1ControlState&&typeof d.c1ControlState==='object')localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(d.c1ControlState));
@@ -441,12 +466,12 @@ export default function Home(){
   }
 
   async function analyze(inputPortfolio,{forceQuotes=false}={}){
-    const analysisPortfolio=Array.isArray(inputPortfolio)?inputPortfolio:portfolio;
+    let analysisPortfolio=Array.isArray(inputPortfolio)?inputPortfolio:portfolio;
     const holdingQuoteRequest=fetchHoldingQuotes(analysisPortfolio,forceQuotes).then(quoteRows=>{
       setResults(prior=>analysisPortfolio.map(p=>holdingQuoteRow(p,quoteRows.get(sym(p)),prior.find(row=>sym(row)===sym(p)))));
       return quoteRows;
     });
-    setLoading(true);setErr("");let freshAccount=null,accountRefreshFailed=false;try{freshAccount=await refreshC1Account({operation:'refresh-account-inputs'});accountRefreshFailed=freshAccount===undefined;if(freshAccount)void prepareC1Execution(freshAccount);}catch(e){accountRefreshFailed=true;setErr(e.message);}setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
+    setLoading(true);setErr("");let freshAccount=null,accountRefreshFailed=false;try{freshAccount=await refreshC1Account({operation:'refresh-account-inputs'});accountRefreshFailed=freshAccount===undefined;if(freshAccount)void prepareC1Execution(freshAccount);}catch(e){accountRefreshFailed=true;setErr(e.message);}if(freshAccount?.decision?.nonCashAdoptions?.length)analysisPortfolio=resolveC1NonCashPortfolio(analysisPortfolio,freshAccount.decision);setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
     try{
       try{const sd=await fetchScreen("opportunities",0,{screenSymbols:freshAccount?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[]});snapshot=sd.stocks||[];performance=sd.performance.records;currentProductionPolicy=sd.meta?.productionPolicy||{};screenLive=!sd.meta?.clientSnapshotFallback&&String(sd.meta?.quoteFeedStatus||"live")==="live";setFeedHealth(screenHealth(sd.meta,sd.performance));setMarketScope(sd.meta||null);setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}
       catch(e){setErr(`Portfolio positions were analyzed, but fresh-capital allocation is paused because the broad screen failed: ${e.message}`);setFeedHealth(h=>({...h,status:"unavailable"}));}
@@ -664,6 +689,7 @@ export default function Home(){
     <div hidden={tab!=="account-tools"} aria-label="Account settings">
       <section className="card"><div className="section"><h2>Account settings</h2><button onClick={()=>setTab("portfolio")}>Back to My Portfolio</button></div></section>
       <div className="syncBox"><div><b>☁ Portfolio Sync</b><small>One portfolio across your Mac and phone.</small></div><div className="syncControls"><input type={syncKey?'password':'text'} value={syncInput} onChange={e=>setSyncInput(e.target.value)} placeholder="Sync key" autoComplete="off" spellCheck="false"/>{syncKey?<><button onClick={copySyncKey}>Copy Key</button><button onClick={disconnectSync}>Disconnect</button></>:<><button onClick={enableSync}>Enable Sync</button><button onClick={connectSync}>Connect</button></>}</div>{syncStatus&&<span className="syncStatus">{syncStatus}</span>}</div>
+      <C1NonCashAdoption decision={accountView?.decision} portfolio={portfolio} onReview={reviewMRNAAdoption} onConfirm={confirmMRNAAdoption} busy={accountBusy||reloading||loading} ready={syncStatus==='Synced'&&!syncDirty.current}/>
       <C1PositionContextImport ready={syncStatus==='Synced'&&!reloading&&!loading&&!accountBusy} decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext} onRefresh={recoverC1Account} refreshing={accountBusy}/>
       {accountView?.intradaySession&&<C1IntradayActivity session={accountView.intradaySession} onSave={saveC1Intraday} onCorrectDetails={correctC1IntradayDetails} busy={accountBusy}/>}
       {accountView?.intradaySession&&accountView.openingError&&<p role="status">You can record a completed exit above. New recommendations are paused: {accountView.openingError}</p>}
