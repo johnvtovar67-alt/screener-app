@@ -6,7 +6,7 @@ const checks=[
   ['shared plain reason','c1PlainDecisionReason({action:displayAction'],
   ['internal evidence retained','evidence=showMomentumEvidence?momentumEvidenceFor(s):null'],
   ['original evidence badge','momentumBadge ${evidence.tone}'],
-  ['concise evidence explanation','c1CompactMomentumEvidence(evidence)'],
+  ['existing saved timing copy','c1HoldingTiming({position,presentation,current:accountDecision?.current===true,evidence})'],
   ['accepted evidence date','<small>As of {evidence.sourceSessionDate}</small>'],
   ['original plan trigger','c1DecisionTrigger({action:a'],
   ['none-qualified label','None qualified'],
