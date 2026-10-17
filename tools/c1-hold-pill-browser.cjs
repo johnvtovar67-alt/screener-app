@@ -29,10 +29,10 @@ try{
   await cdp('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<700});
   const response=await cdp('Runtime.evaluate',{returnByValue:true,expression:`(()=>{const props=['height','paddingTop','paddingRight','paddingBottom','paddingLeft','fontSize','lineHeight','borderRadius','fontWeight'];const read=e=>Object.fromEntries(props.map(k=>[k,getComputedStyle(e)[k]]));return [...document.querySelectorAll('section')].map(s=>{const q=x=>s.querySelector('[data-test="'+x+'"]'),c=e=>({background:getComputedStyle(e).backgroundColor,color:getComputedStyle(e).color,border:getComputedStyle(e).borderColor});return {geometry:read(q('hold')),label:q('hold').textContent,colorBefore:c(q('before')),colorAfter:c(q('hold')),otherBefore:read(q('sell-before')),otherAfter:read(q('sell-after'))};});})()`});
   assert(!response.exceptionDetails);const values=response.result.value;assert.equal(values.length,5);
-  for(const v of values){assert.deepEqual(v.geometry,values[0].geometry);assert.equal(v.geometry.height,'26px');assert.equal(v.geometry.paddingRight,'9px');assert.equal(v.geometry.fontSize,'12px');assert.equal(v.geometry.borderRadius,'999px');assert.equal(v.label,'HOLD');assert.deepEqual(v.colorAfter,v.colorBefore);assert.deepEqual(v.otherAfter,v.otherBefore);}
-  cases.push({viewport:width,contexts:rows,status:'PASS',geometry:values[0].geometry,colorsPreserved:true,nonHoldGeometryUnchanged:true});
+  for(const v of values){assert.deepEqual(v.geometry,v.otherBefore,'HOLD must match native SELL in the same context');assert.equal(v.geometry.paddingTop,'5px');assert.equal(v.geometry.paddingRight,'9px');assert.equal(v.geometry.borderRadius,'999px');assert.equal(v.label,'HOLD');assert.deepEqual(v.colorAfter,v.colorBefore);assert.deepEqual(v.otherAfter,v.otherBefore);}
+  cases.push({viewport:width,contexts:rows,status:'PASS',geometry:values.map(v=>v.geometry),colorsPreserved:true,nonHoldGeometryUnchanged:true});
  }
  fs.writeFileSync(path.join(out,'hold-browser.json'),JSON.stringify({scope:'Synthetic HOLD rendering in real Chromium; production CSS and helper',cases,liveWrites:0,status:'PASS'},null,2)+'\n');
- console.log('PASS: identical HOLD geometry/capitalization across five contexts at desktop/mobile sizes; existing colors and other pills preserved.');
+ console.log('PASS: HOLD matches native SELL geometry across five contexts at desktop/mobile sizes; existing colors and other pills preserved.');
 }finally{socket?.close();chrome.kill('SIGTERM');fs.rmSync(profile,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});

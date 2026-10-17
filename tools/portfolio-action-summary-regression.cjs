@@ -11,7 +11,7 @@ assert(page.includes('estimatedCashAfterActions')&&page.includes('Cash remaining
 assert(!page.includes('→ NTRA')&&!page.includes('g.items.map(x=>tradeLabel'),'legacy source-to-target arrow presentation still exists');
 assert(!page.includes('momentumEvidenceRows')&&!page.includes('momentumEvidenceCompact')&&!page.includes('momentumEvidenceItem'),'redundant momentum evidence summary strip is still present');
 assert(page.includes('evidence=showMomentumEvidence?momentumEvidenceFor(s):null')&&page.includes('c1PlainDecisionReason({action:displayAction'),'Swing rows must retain internal momentum evidence and concise actual decision reasons');
-assert(page.includes('momentumBadge ${evidence.tone}')&&page.includes('c1CompactMomentumEvidence(evidence)')&&page.includes('<th>Evidence</th>'),'The original evidence slots must retain validated badges and concise supporting evidence');
+assert(page.includes('momentumBadge ${evidence.tone}')&&page.includes('c1HoldingTiming({position,presentation,current:accountDecision?.current===true,evidence})')&&page.includes('<th>Evidence</th>'),'The original evidence slots must retain validated badges and concise supporting evidence');
 assert(!page.includes('<p>{evidence.explanation}</p>'),'Full technical narratives must not replace concise supporting evidence');
 assert(!page.includes('<b>⏱ Swing Time Reviews</b><p>'),'legacy oversized time-review panel still present');
 assert(page.includes('timing:"Await Confirmation"')&&page.includes('size:"Qualified — Not Funded"'),'Buy cards can still imply executable deployment when the portfolio capital signal is not fundable');
