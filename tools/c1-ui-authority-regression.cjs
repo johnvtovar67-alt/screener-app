@@ -61,7 +61,7 @@ try{
  assert.match(inconsistent,/sell 10 shares/);assert.doesNotMatch(inconsistent,/Buy 5 shares/,'Portfolio must fail closed when the current opportunity screen does not authorize the replacement buy');
  const fullSlots={...current,positions:[row,{...row,symbol:'CCC'},{...row,symbol:'DDD'}],stockScreen:{...current.stockScreen,candidates:[{...current.stockScreen.candidates[0],symbol:'BBB'}]}};
  const fullSlotsHtml=render({decision:fullSlots,view:'opportunities',openingPlan:{...openingPlan,orders:[]},manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:{...openingPlan,orders:[]}})});
- assert.match(fullSlotsHtml,/All C1 position slots are occupied\./,'Full account must explain why an unowned Buy-rated candidate has no purchase');
+ assert.match(fullSlotsHtml,/All three C1 position slots are currently allocated\./,'Full account must explain why an unowned Buy-rated candidate has no purchase');
  assert.doesNotMatch(fullSlotsHtml,/No detailed entry-check result is available/);
  for(const patch of [{manualRecommendations:{...review,status:'waiting'}},{decision:{...current,revision:3}},{decision:{...current,current:false}},{manualRecommendations:{...review,validUntil:'2026-09-14T13:59:59Z'}}]){const output=render(patch);assert.doesNotMatch(output,/data-action="WAIT"|data-action="HOLD"/);assert.doesNotMatch(output,/(?:Buy 5|sell 10) shares/,'Stale authorization cannot display checked instructions');}
  const conditional={...review,orders:[{...openingPlan.orders[0],condition:'stop-triggered'}]};

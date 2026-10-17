@@ -53,7 +53,7 @@ const stale=c1AccountCashAvailability({account:updated,strategyCash:3037.90,now:
 assert.equal(stale.brokerageCash,363.36);assert.equal(stale.executableCash,0);assert.equal(stale.brokerageCashStatus,'stale');
 const future=c1AccountCashAvailability({account:updated,strategyCash:3037.90,now:new Date('2026-10-08T12:00:00Z')});
 assert.equal(future.executableCash,0);assert.equal(future.brokerageCashStatus,'invalid');
-const strategyCap=c1AccountCashAvailability({account:updated,strategyCash:100,now});assert.equal(strategyCap.executableCash,100);
+const strategyCap=c1AccountCashAvailability({account:updated,strategyCash:100,now});assert.equal(strategyCap.executableCash,363.36,'Historical accounting cash cannot cap brokerage funding');
 assert.equal(c1CashAvailability({strategyCash:3037.90,brokerageCash:updated.brokerageCash,now}).executableCash,363.36);
 
 // A completed candidate and pending exit remain identical with zero broker
@@ -74,8 +74,9 @@ assert.equal(c1CashAvailability({strategyCash:3237.40,brokerageCash:updated.brok
 const afterSale=updateC1BrokerageCash({account:{...updated,intradayActivity:{fills:[sale]}},brokerageCash:562.86,expectedRevision:1,now:new Date('2026-10-08T14:00:30Z')});
 assert.equal(c1AccountCashAvailability({account:afterSale,strategyCash:3237.40,now}).brokerageCash,562.86);
 assertC1NewBuyCash({account:updated,strategyCash:3037.90,fills:[purchase],now});
-assert.throws(()=>assertC1NewBuyCash({account:updated,strategyCash:3037.90,fills:[{...purchase,shares:4}],now}),/exceeds available brokerage or strategy cash/);
-assert.throws(()=>assertC1NewBuyCash({account:updated,strategyCash:100,fills:[purchase],now}),/exceeds available brokerage or strategy cash/);
+assert.throws(()=>assertC1NewBuyCash({account:updated,strategyCash:3037.90,fills:[{...purchase,shares:4}],now}),/exceeds available brokerage cash/);
+assert.doesNotThrow(()=>assertC1NewBuyCash({account:updated,strategyCash:100,fills:[purchase],now}));
+assert.doesNotThrow(()=>assertC1NewBuyCash({account:updated,strategyCash:-100,fills:[purchase],now}), 'A signed accounting residual is not the brokerage balance');
 assert.throws(()=>assertC1NewBuyCash({account:original,strategyCash:3037.90,fills:[purchase],now}),/Update Brokerage Cash/);
 assert.throws(()=>assertC1NewBuyCash({account:afterSale,strategyCash:3037.90,fills:[{...purchase,executedAt:'2026-10-08T13:59:00Z'}],now}),/observation is invalid/,'A later balance cannot retroactively authorize a purchase');
 assertC1NewBuyCash({account:validZero,strategyCash:3037.90,fills:[sale],now});

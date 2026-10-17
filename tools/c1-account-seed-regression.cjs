@@ -312,7 +312,7 @@ for(const tz of ['America/Chicago','America/Los_Angeles','UTC','Asia/Tokyo']){
 assert.equal(dated('2026-02-30'),'—');
 const stopExplained=explainHolding({...explanationFixture,exits:[{reason:'initial-stop'}],stopTriggerEvidence:{date:'2026-09-14',low:85,stop:86}},'2026-09-14',95);
 assert.match(stopExplained,/Model-recorded low on 2026-09-14: \$85.00/);
-assert.match(stopExplained,/recovery does not clear the pending exit/);
+assert.match(stopExplained,/recovery does not clear the exit signal/);
 console.log('PASS: no-trade continuation is current, repeatable, preserves ownership and storage; multiple sessions and calendar dates verified.');
 const pending=pendingService({account:privateAccount,book:updatedBook,now:new Date(opening.date+'T21:00:00Z')});
 assert.equal(pending.date,opening.date);

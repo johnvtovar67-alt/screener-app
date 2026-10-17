@@ -68,8 +68,8 @@ async function exerciseCashEditor(decision){
  assert.equal(editor(harness).props.hidden,true,'A confirmed save collapses the editor');
  assert.equal(updateButton(harness).props['aria-expanded'],false);
  status(harness,'Brokerage cash saved. C1 strategy accounting is unchanged.');
- assert.match(content(harness.tree),/Brokerage cash \$400\.01/);
- assert.match(content(harness.tree),/C1 strategy cash \$3,037\.90/);
+ assert.match(content(harness.tree),/Schwab cash available to trade \$400\.01/);
+ assert.doesNotMatch(content(harness.tree),/C1 strategy cash|Available to deploy/);
 
  const failedCalls=[],failed=cashHarness({decision,onSave:async(...args)=>{failedCalls.push(args);throw new Error('Revision conflict');}});
  updateButton(failed).props.onClick();failed.render();
@@ -116,7 +116,7 @@ async function main(){
  const {buildC1ManualRecommendations}=modules.load('lib/c1ManualRecommendations.js');
  const renderCash=patch=>renderToStaticMarkup(React.createElement(Cash,{decision:{...decision,...patch},onSave:()=>{}}));
  const cash=renderCash({});
- assert.match(cash.replace(/<[^>]*>/g,''),/Brokerage cash \$363\.36 · C1 strategy cash \$3,037\.90 · Available to deploy \$363\.36/);
+ assert.match(cash.replace(/<[^>]*>/g,''),/Schwab cash available to trade \$363\.36/);
  assert.match(cash,/aria-label="Actual brokerage cash"/);assert.match(cash,/Update Brokerage Cash/);
  assert.match(cash,/aria-expanded="false"/);assert.match(cash,/hidden=""/);assert.doesNotMatch(cash,/<h2/);
  const missing=renderToStaticMarkup(React.createElement(Cash,{onSave:()=>{}}));
@@ -128,12 +128,12 @@ async function main(){
   assert.equal(review.status,'ready');
   const props={decision:current,openingPlan,manualRecommendations:review,screenRows,screenCurrent:true};
   const opportunities=renderToStaticMarkup(React.createElement(Opportunities,props));
-  assert.match(opportunities,/C1 strategy cash: \$3,037\.90/);
-  assert.match(opportunities,new RegExp('Brokerage cash: \\$'+balance.toFixed(2).replace('.','\\.')));
+  assert.doesNotMatch(opportunities,/C1 strategy cash|Available to deploy/);
+  assert.match(opportunities,new RegExp('Schwab cash available to trade: \\$'+balance.toFixed(2).replace('.','\\.')));
   assert.doesNotMatch(opportunities,/<article[^>]*class="[^"]*idea green/,'Cash-blocked stocks cannot have green opportunity cards');
   assert.doesNotMatch(opportunities,/<h3[^>]*>BBB<\/h3>/,'Cash-blocked BBB is not an actionable opportunity');
   assert.match(opportunities,/<td[^>]*><b[^>]*>BBB<\/b>/,'The Buy-rated but blocked BBB remains visible in Watch');
-  assert.match(opportunities,/Available brokerage cash cannot fund this purchase\./);
+  assert.match(opportunities,/available brokerage cash is insufficient for a new purchase\./);
   assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<b[^>]*>CCC<\/b>/,'Existing Watch analysis remains visible');
   assert.doesNotMatch(opportunities,/currently ineligible|(?:buy|add) \d+ shares?/i);
   const exits=renderToStaticMarkup(React.createElement(Opportunities,{...props,view:'portfolio'}));
@@ -142,7 +142,7 @@ async function main(){
  }
  const oldAccount={...decision,brokerageCash:null,executableCash:0,brokerageCashCurrent:false,brokerageCashReason:'Enter current brokerage cash.'};
  const oldHtml=renderToStaticMarkup(React.createElement(Opportunities,{decision:oldAccount,screenRows,screenCurrent:true}));
- assert.match(oldHtml,/Brokerage cash: Not entered/);assert.doesNotMatch(oldHtml,/<h3[^>]*>BBB<\/h3>/);assert.match(oldHtml,/<td[^>]*><b[^>]*>BBB<\/b>/);assert.doesNotMatch(oldHtml,/(?:buy|add) \d+ shares?/i,'Missing brokerage cash cannot authorize a checked purchase quantity');assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Update brokerage cash before making a purchase\./);
+ assert.match(oldHtml,/Schwab cash available to trade: Not entered/);assert.doesNotMatch(oldHtml,/<h3[^>]*>BBB<\/h3>/);assert.match(oldHtml,/<td[^>]*><b[^>]*>BBB<\/b>/);assert.doesNotMatch(oldHtml,/(?:buy|add) \d+ shares?/i,'Missing brokerage cash cannot authorize a checked purchase quantity');assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Enter current brokerage cash\./);
  await exerciseCashEditor(decision);
  console.log('PASS: compact cash summary reveals the unchanged editor, collapses only after successful save, preserves disabled/error/freshness status, and retains Buy/Watch analysis and checked exits without authorizing purchases.');
 }

@@ -18,12 +18,20 @@ const restricted=cap({plan,account:account(363.36),strategyCash:3037.90,now});
 assert.equal(restricted.executableCash,363.36);assert.equal(buyCost(restricted),300);
 assert.equal(restricted.orders.find(order=>order.id==='exit').shares,2,'Exits remain available under the cash cap');
 assert.equal(JSON.stringify(plan),snapshot,'The model plan and opening sleeve economics are immutable');
-assert.equal(cap({plan,account:account(1000),strategyCash:250,now}).executableCash,250);
-assert(buyCost(cap({plan,account:account(1000),strategyCash:250,now}))<=250);
+assert.equal(cap({plan,account:account(1000),strategyCash:250,now}).executableCash,1000);
+assert.equal(buyCost(cap({plan,account:account(1000),strategyCash:250,now})),1000);
 for(const brokerageCash of [undefined,metadata(0),{...metadata(1000),observedAt:'2026-09-13T14:00:00.000Z'}]){
  const result=cap({plan,account:{...account(0),brokerageCash},strategyCash:3037.90,now});
  assert.equal(buyCost(result),0);assert.equal(result.orders.find(order=>order.id==='exit').shares,2);
 }
+// New broker-funded plans retain source sell-before-replacement sequencing.
+const fundedPlan={...plan,purchaseFundingPolicy:'brokerage-cash-only-v1'};
+const prerequisite=cap({plan:fundedPlan,account:account(10000),strategyCash:0,now});
+assert.equal(buyCost(prerequisite),0,'Cash cannot bypass an outstanding required exit');
+assert.equal(prerequisite.orders.find(o=>o.id==='exit').shares,2);
+assert(prerequisite.cashBlockedOrders.every(o=>o.reason==='recorded-exit-required'));
+const afterRequiredExit=cap({plan:{...fundedPlan,orders:fundedPlan.orders.filter(o=>o.side==='buy')},account:account(10000),strategyCash:-100,now});
+assert.equal(buyCost(afterRequiredExit),1500,'Signed historical residual cannot cap a cleared funded target');
 const buy={id:'buy-ticket',symbol:'BUY',side:'buy',shares:1,price:100,fee:0,executedAt:'2026-09-14T15:00:00.000Z'};
 assert.throws(()=>record({account:{...account(100),brokerageCash:undefined},plan,ticket:buy,expectedRevision:0,now}),/Update Brokerage Cash/);
 assert.throws(()=>record({account:account(100),plan,ticket:{...buy,price:100.01},expectedRevision:0,now}),/exceeds available/);
@@ -61,4 +69,4 @@ assert.equal(firstCorrection.intradayActivity.tickets[0].price,99,'An earlier co
 assert.equal(firstCorrection.intradayActivity.tickets[1].price,100);
 assert.equal(firstCorrection.brokerageCash.balance,100,'Correction cannot rewrite the later broker observation');
 assert.throws(()=>correct({account:independentlyFunded,ticketId:buy.id,price:101,fee:0,executedAt:buy.executedAt,expectedRevision:3,now}),/exceeds available/,'A later external deposit cannot retroactively fund the earlier purchase');
-console.log('PASS: aggregate strategy/broker cash caps, old/stale accounts, fees and actual price, exit proceeds once, backdated buys, duplicate recording and corrections.');
+console.log('PASS: sole brokerage funding cap, required-exit precedence, old/stale accounts, fees and actual price, exit proceeds once, backdated buys, duplicate recording and corrections.');

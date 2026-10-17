@@ -1,0 +1,124 @@
+{
+  "scope": "Deterministic operational workflow, no live account or broker writes",
+  "productionBase": "0a65e20964ae080b8718332e5f6f16daa6def452",
+  "cases": [
+    {
+      "case": "cash-greater",
+      "brokerageCash": 54063.6,
+      "accountingCash": 1000.0000000000001,
+      "authorizedPurchaseCost": 53063.6,
+      "fundedCost": 53063.6,
+      "decisionParity": "PASS"
+    },
+    {
+      "case": "cash-equal",
+      "brokerageCash": 53063.6,
+      "accountingCash": 1000.0000000000001,
+      "authorizedPurchaseCost": 53063.6,
+      "fundedCost": 53063.6,
+      "decisionParity": "PASS"
+    },
+    {
+      "case": "cash-less",
+      "brokerageCash": 52963.6,
+      "accountingCash": 1000.0000000000001,
+      "authorizedPurchaseCost": 53063.6,
+      "fundedCost": 52963.48,
+      "decisionParity": "PASS"
+    },
+    {
+      "case": "cash-zero",
+      "brokerageCash": 0,
+      "accountingCash": 1000.0000000000001,
+      "authorizedPurchaseCost": 53063.6,
+      "fundedCost": 0,
+      "decisionParity": "PASS"
+    },
+    {
+      "case": "MRNA-rating-with-incomplete-entry-verification",
+      "ratingPreserved": true,
+      "purchaseInstruction": false,
+      "serverRecordingRejected": true
+    },
+    {
+      "case": "actual-buy-fill-retry-resnapshot-and-completed-replay",
+      "shares": 265,
+      "actualPrice": 100.12,
+      "cashBefore": 100000,
+      "cashAfter": 73468.2,
+      "duplicateCount": 1,
+      "originalAdoptionUnchanged": true,
+      "manufacturedTransfers": 0,
+      "completedReplay": "PASS",
+      "signedSleeveAccounting": {
+        "base": {
+          "cash": -6357.92,
+          "positions": {
+            "LLL": {
+              "shares": 200,
+              "avgCost": 100,
+              "openedAt": "2026-10-14"
+            },
+            "MRNA": {
+              "shares": 66,
+              "avgCost": 100.12,
+              "openedAt": "2026-10-15"
+            }
+          }
+        },
+        "cooldown15": {
+          "cash": -12815.960000000001,
+          "positions": {
+            "LLL": {
+              "shares": 400,
+              "avgCost": 100,
+              "openedAt": "2026-10-14"
+            },
+            "MRNA": {
+              "shares": 133,
+              "avgCost": 100.12,
+              "openedAt": "2026-10-15"
+            }
+          }
+        },
+        "sector40": {
+          "cash": -6357.92,
+          "positions": {
+            "LLL": {
+              "shares": 200,
+              "avgCost": 100,
+              "openedAt": "2026-10-14"
+            },
+            "MRNA": {
+              "shares": 66,
+              "avgCost": 100.12,
+              "openedAt": "2026-10-15"
+            }
+          }
+        }
+      }
+    },
+    {
+      "case": "next-session-partial-sale-with-negative-audit-residual",
+      "sold": 20,
+      "remaining": 245,
+      "brokerageCash": 1400,
+      "buyVerificationUnavailable": true
+    },
+    {
+      "case": "DELL-triggered-stop-with-zero-cash",
+      "recordedShares": 20,
+      "stop": 468.85,
+      "verifiedPrice": 460,
+      "saleInstructionShares": 20,
+      "actualFillShares": 20,
+      "fee": 0.25,
+      "brokerageCashAfter": 9199.75,
+      "retryAndResnapshot": "PASS",
+      "noAssumedBrokerOrder": true
+    }
+  ],
+  "privateFundingCapability": "Serialized flag rejected; reconciled identity only PASS",
+  "strategyBodiesOutsideFundingSeams": "Exact production SHA256 PASS",
+  "status": "PASS"
+}
