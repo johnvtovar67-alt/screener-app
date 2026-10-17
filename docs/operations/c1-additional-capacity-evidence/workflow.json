@@ -1,0 +1,115 @@
+{
+  "scope": "Synthetic prospective capacity workflow only; no account/provider writes",
+  "cases": [
+    {
+      "case": "three-held-5000-cash-fourth-purchase",
+      "shares": 49,
+      "price": 100.12,
+      "cashAfter": 94.12,
+      "heldPositions": 4,
+      "sleeves": [
+        {
+          "id": "base",
+          "shares": 16,
+          "stop": 86.1032
+        },
+        {
+          "id": "cooldown15",
+          "shares": 32,
+          "stop": 86.1032
+        },
+        {
+          "id": "sector40",
+          "shares": 1,
+          "stop": 86.1032
+        }
+      ],
+      "completedReplay": "PASS",
+      "equity": 19998.345
+    },
+    {
+      "case": "blocked-event",
+      "status": "PASS"
+    },
+    {
+      "case": "blocked-source-liquidity",
+      "sourceEligibility": "excluded",
+      "status": "PASS"
+    },
+    {
+      "case": "blocked-missing-opening",
+      "status": "PASS"
+    },
+    {
+      "case": "blocked-zero-cash",
+      "status": "PASS"
+    },
+    {
+      "case": "blocked-stale-cash",
+      "status": "PASS"
+    },
+    {
+      "case": "blocked-breaker",
+      "status": "PASS"
+    },
+    {
+      "case": "blocked-sector",
+      "status": "PASS"
+    },
+    {
+      "case": "blocked-issuer",
+      "status": "PASS"
+    },
+    {
+      "case": "blocked-gap",
+      "status": "PASS"
+    },
+    {
+      "case": "minimum-trade-after-cash-rounding",
+      "cash": 1000,
+      "status": "PASS"
+    },
+    {
+      "case": "exception-unused-parity",
+      "cash": [
+        0,
+        50,
+        5000
+      ],
+      "ordersAndQuantities": "exact",
+      "risk": "exact"
+    },
+    {
+      "case": "existing-Add-parity",
+      "ordersAndQuantities": "exact",
+      "cash": [
+        0,
+        1000
+      ]
+    },
+    {
+      "case": "real-api-fill-and-reload",
+      "status": "PASS"
+    },
+    {
+      "case": "captured-fill-survives-changed-current-qualification",
+      "status": "PASS"
+    },
+    {
+      "case": "negative-residual-fourth-position-and-stop",
+      "shares": 41,
+      "independentEquity": 12999.105,
+      "cashAfterBuy": 895.0799999999999,
+      "stopSaleCash": 3074.75,
+      "remainingPositions": 3,
+      "status": "PASS"
+    },
+    {
+      "case": "additional-position-rotation",
+      "queuedOn": "2026-10-26",
+      "reason": "early-rank-deterioration",
+      "allSleeves": true
+    }
+  ],
+  "status": "PASS"
+}

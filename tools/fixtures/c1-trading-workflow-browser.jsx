@@ -17,7 +17,7 @@ function Demo(){
  async function trade(ticket,revision){setBusy(true);setError('');try{const value=await request({operation:'record-intraday',ticket,expectedRevision:revision});return {ticket:value.intradaySession.tickets.find(t=>t.id===ticket.id),view:value};}catch(e){setError(e.message);throw e;}finally{setBusy(false);}}
  const props=view?{...view,executionDecision:view.executionDecision||view.decision,screenRows:view.testScreenRows,positionRows:view.testScreenRows,screenCurrent:true}:null;
  return <main><h1>Deterministic C1 workflow demonstration</h1><p>TEST ACCOUNT ONLY · production components and API handler · isolated memory storage · no live account or brokerage writes</p>
-  <nav>{[['buy','Load Buy example'],['missing','Load MRNA verification example'],['sell-missing','Load DELL stop example']].map(([id,label])=><button key={id} disabled={busy} onClick={()=>load(id)}>{label}</button>)}</nav>
+  <nav>{[['buy','Load Buy example'],['missing','Load MRNA verification example'],['sell-missing','Load DELL stop example'],['capacity','Load fourth-position example']].map(([id,label])=><button key={id} disabled={busy} onClick={()=>load(id)}>{label}</button>)}<button disabled={busy} onClick={async()=>{await fetch('/fixture-quote',{method:'POST',body:JSON.stringify({symbol:'MRNA',price:75})});await load();}}>Verify fourth-position stop</button></nav>
   {error&&<p role="alert">{error}</p>}
   {view&&<><Cash decision={view.decision} onSave={cash} busy={busy}/><Opportunities {...props} view="portfolio"/><Opportunities {...props}/>
    <section aria-label="Recorded test holdings"><h2>Recorded test holdings</h2>{view.decision.positions.map(p=><p key={p.symbol}>{p.symbol}: {p.shares} recorded shares</p>)}</section>

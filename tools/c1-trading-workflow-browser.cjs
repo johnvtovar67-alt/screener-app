@@ -13,6 +13,7 @@ async function main(){
  const server=http.createServer(async(req,res)=>{
   try{
    let body='';for await(const data of req)body+=data;
+   if(req.url==='/fixture-quote'){const q=JSON.parse(body);api.fixture.setQuote(q.symbol,q.price);res.end('updated fixture quote');return;}
    if(req.url==='/fixture-reset'){api=createWorkflowApi(body);res.end('reset');return;}
    if(req.url==='/api/c1-account'){
     const result=await api.request(req.method,body?JSON.parse(body):undefined,req.headers.authorization==='Bearer offline_workflow_fixture_key_000001');
@@ -61,6 +62,18 @@ async function main(){
   await wait('window.__C1_LAST_VIEW?.intradaySession?.tickets?.length===1&&!window.__C1_LAST_VIEW.decision.positions.some(p=>p.symbol==="DELL")','confirmed DELL fill');assert.equal(await js('window.__C1_LAST_VIEW.decision.brokerageCash'),9199.75);await shot('dell-sale-recorded');
   await cdp('Page.reload');await wait('window.__C1_LAST_VIEW?.decision?.brokerageCash===9199.75','reload sale proceeds');assert(!await js('window.__C1_LAST_VIEW.decision.positions.some(p=>p.symbol==="DELL")'));
   trace.cases.push({case:'DELL-20-stop-sale-zero-cash-Buy-verification-unavailable',shares:20,actualPrice:460,fee:.25,cashAfter:9199.75,reload:'PASS'});
+  await click('Load fourth-position example');await wait('window.__C1_LAST_VIEW?.decision?.positions.length===3&&document.querySelector("nav button")?.disabled===false','three existing Swing positions');await cash(5000);
+  await wait('document.body.innerText.includes("Buy 49 shares")','qualified fourth-position instruction');
+  assert(!/All three C1 position slots are currently allocated/.test(await js('document.body.innerText')));
+  await input('Completed trade','planned:buy:MRNA');await input('Shares filled','49');await input('Execution price','100.12');await input('Fee','0');await input('Execution time',await js('new Date(Date.now()).toISOString().slice(0,16)'));await js('document.querySelector("input[type=checkbox]").click()');await click('Save trade and update C1');
+  await wait('window.__C1_LAST_VIEW?.decision?.positions.length===4&&window.__C1_LAST_VIEW?.intradaySession?.tickets.length===1','fourth position recorded');assert.equal(await js('window.__C1_LAST_VIEW.decision.brokerageCash'),94.12);await shot('fourth-swing-recorded');
+  await cdp('Page.reload');await wait('window.__C1_LAST_VIEW?.decision?.positions.length===4&&document.querySelector("nav button")?.disabled===false','fourth position reload');
+  assert.equal(await js('window.__C1_LAST_VIEW.decision.positions.find(p=>p.symbol==="MRNA").shares'),49);await cash(0);await click('Verify fourth-position stop');
+  await wait('document.body.innerText.includes("Sell 49 shares in Schwab")&&document.querySelector("nav button")?.disabled===false','fourth position existing stop signal');await shot('fourth-swing-stop');
+  await input('Completed trade','stop:sell:MRNA');await input('Shares filled','49');await input('Execution price','75');await input('Fee','0.25');await input('Execution time',await js('new Date(Date.now()).toISOString().slice(0,16)'));await js('document.querySelector("input[type=checkbox]").click()');await click('Save trade and update C1');
+  await wait('window.__C1_LAST_VIEW?.decision?.positions.length===3&&window.__C1_LAST_VIEW?.intradaySession?.tickets.length===2','fourth position actual stop fill');assert.equal(await js('window.__C1_LAST_VIEW.decision.brokerageCash'),3674.75);
+  await cdp('Page.reload');await wait('window.__C1_LAST_VIEW?.decision?.brokerageCash===3674.75&&window.__C1_LAST_VIEW?.decision?.positions.length===3','additional-position exit reload');
+  trace.cases.push({case:'three-held-5000-cash-fourth-Swing-then-stop-sale',shares:49,buyPrice:100.12,cashAfterBuy:94.12,positionsAfterBuy:4,sellPrice:75,sellFee:.25,cashBeforeSale:0,cashAfterSale:3674.75,positionsAfterSale:3,reload:'PASS'});
   trace.status='PASS';trace.browser=(await send('Browser.getVersion')).product;fs.writeFileSync(path.join(out,'browser-workflow.json'),JSON.stringify(trace,null,2)+'\n');console.log('PASS: real Chromium operational workflow; '+out);
  }finally{try{socket?.close();}catch{}chrome.kill('SIGTERM');server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(profile,{recursive:true,force:true});}
 }
