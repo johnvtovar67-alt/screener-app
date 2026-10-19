@@ -35,6 +35,9 @@ const repairedCalendarSha256 = '611abb854f8f0e87bf589acd056824ea03b119d2b9496aab
 // c1-validation-repairs-regression.cjs proves the original slot defect and the
 // repaired all-sleeve projection and unchanged holding ranks. Other pins stay unchanged.
 const repairedAccountSha256 = '63b1909359361e35ae7d0c2e833fecbb043013f7b337f9f2c96dc0a3adb2f31e';
+// Owner-authorized October 19 opening membership exception: addition-only,
+// double-checked provider membership; all prior-close universe and trading gates remain.
+const additiveOpeningSha256 = '2a741e99b45eada02ebb0891f148b90595d9750ea90cebb0d9403ecc0515ed42';
 // Owner-authorized historical compatibility seams are pinned exactly. The
 // original fixture and all other source pins remain immutable; focused tests
 // verify legacy identities, old-date economics and strict new-activity gates.
@@ -56,7 +59,8 @@ const compatibilitySourceSha256 = {
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   assert.equal(hash(fs.readFileSync(path.join(root, file))),
     file === 'lib/marketSession.js' ? repairedCalendarSha256 :
-      file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 : compatibilitySourceSha256[file] || expected,
+      file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 :
+      file === 'lib/c1AccountOpeningProvider.js' ? additiveOpeningSha256 : compatibilitySourceSha256[file] || expected,
     file + ': the brokerage execution cap must not change the production trading rules');
 }
 
