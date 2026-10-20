@@ -399,6 +399,7 @@ async function main(){try{
    match(rendered,/>HOLD</,'Weakening momentum does not change the existing holding decision');
    match(rendered,/Momentum weakening; no sell signal confirmed/,'Weakening Hold explains the absence of a confirmed exit');
    absent(rendered,/UNVERIFIED|Unclassified|sale pending/i,'Unverified row labels and brokerage-order implications are absent');
+   match(portfolioHtml({...weakPosition,entryContext:{sector}},{...weakStock,sector:'UNVERIFIED'},{mobile}),new RegExp(' · '+sector),'Accepted holding entry-context sector remains visible without a current screen row');
    match(portfolioHtml(weakPosition,weakStock,{mobile}),/Sector unavailable/,'Missing accepted metadata cannot invent a sector');
    match(portfolioHtml(weakPosition,weakStock,{mobile,sector,sourceDate:'2026-10-13'}),/Sector unavailable/,'A mismatched snapshot is not sector evidence for this review');
   }
