@@ -4,7 +4,7 @@ const {c1HoldingTiming:copy}=createResearchModuleLoader(process.cwd()).load('lib
 const evidence={status:'available'},rule={sleeve:'base',heldSessions:7,minimumHold:30,close:100,profitProtectionArmed:false,earlyStreak:0,earlyConfirmations:3,profitStreak:0,profitConfirmations:2,rankVerified:true};
 const position={reviewRules:[rule],stops:[{price:86}],exits:[],recentMomentumReviews:[]};
 const original=JSON.stringify(position),lines=copy({position,current:true,evidence});
-assert.deepEqual(JSON.parse(JSON.stringify(lines)),['Holding period: 7/30 sessions · 23 remaining','Stop: not triggered at last C1 close','Profit protection: inactive']);assert.equal(JSON.stringify(position),original);
+assert.deepEqual(JSON.parse(JSON.stringify(lines)),['Holding period: 7/30 sessions · 23 remaining','Stop: not triggered at last C1 close','Profit protection: inactive','Rank momentum: 0/3 · 3 remaining']);assert.equal(JSON.stringify(position),original);
 const completed=copy({position:{...position,reviewRules:[{...rule,heldSessions:35}],exits:[{reason:'rank-deterioration'}]},current:true,evidence});assert(completed.includes('Holding period: 35/30 sessions · 0 remaining'));assert(completed.includes('Rank/rotation exit: confirmed'));
 const stopped=copy({position:{...position,exits:[{reason:'initial-stop'}]},current:true,evidence});assert(stopped.includes('Stop: triggered'));
 const unknown=copy({position:{reviewRules:[{sleeve:'base'}]},current:true,evidence});assert(unknown.includes('Holding period: unavailable'));assert(unknown.includes('Stop: verification unavailable'));assert(unknown.includes('Profit protection: unavailable'));assert(!unknown.some(x=>/0\/|NaN|undefined/.test(x)));

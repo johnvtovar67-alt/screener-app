@@ -161,8 +161,11 @@ function withoutCashOverlay(value, rawPlan = false) {
   // The owner authorized this new read-only portfolio annotation. Keep every
   // pre-existing action, economic and risk field in the pinned comparison.
   if (!rawPlan && Array.isArray(original.positions)) original.positions = original.positions.map(position => {
-    const { momentumEvidence, ...unchanged } = position;
-    return unchanged;
+    const { momentumEvidence, reviewRules, ...unchanged } = position;
+    return { ...unchanged, reviewRules: Array.isArray(reviewRules) ? reviewRules.map(rule => {
+      const { verifiedRank, eligibleCount, ...baselineRule } = rule;
+      return baselineRule;
+    }) : reviewRules };
   });
   return original;
 }

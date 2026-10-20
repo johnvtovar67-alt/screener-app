@@ -665,7 +665,9 @@ export default function Home(){
     // Sector evidence is separate from thematic risk factors and never changes exposure controls.
     const sectorEvidence=accountDecision?.stockScreen?.sourceSessionDate===accountDecision?.sourceSessionDate?
       accountDecision?.stockScreen?.candidates?.find(row=>row.symbol===sym(s))?.sector:null;
-    const sector=typeof sectorEvidence==='string'&&sectorEvidence.trim()&&!/^(other|unknown|unclassified)$/i.test(sectorEvidence.trim())?sectorEvidence.trim():'Sector unavailable';
+    const heldSector=position?.entryContext?.sector;
+    const displaySector=sectorEvidence||heldSector;
+    const sector=typeof displaySector==='string'&&displaySector.trim()&&!/^(other|unknown|unclassified)$/i.test(displaySector.trim())?displaySector.trim():'Sector unavailable';
     const displayAction=presentation?.label||(decision.source==="c1-capital-reconciliation"?"Verification needed":decision.source==="c1-actual-account"&&decision.action==="Exit candidate"?"Exit":decision.action),time=swingTimeReview(s),showMomentumEvidence=s.role==="Swing"&&!CASH.includes(sym(s)),evidence=showMomentumEvidence?momentumEvidenceFor(s):null,d={...decision,reason:c1PlainDecisionReason({action:displayAction,reason:presentation?.reason||holdingReason(s,decision,time),presentation,position,evidence})},label=`${s.role} · ${(Number.isFinite(accountView?.decision?.brokerageCash)?displayedPortfolioValue?(Number(s.value)||0)/displayedPortfolioValue*100:0:+s.weightPct||0).toFixed(1)}% of portfolio · ${sector}`,openDate=s.role==="Swing"&&!CASH.includes(sym(s))&&(decision.openedAt||s.openedAt)?portfolioDateDisplay(decision.openedAt||s.openedAt):"—",cashDryPowder=CASH.includes(sym(s));
     const actionClass=presentation?presentation.action==='Sell'?'red':presentation.urgent?'orange':'yellow':cls(d.action);
     const badge=showMomentumEvidence&&<span className={`momentumBadge ${evidence.tone}`}>{evidence.label}</span>;
