@@ -49,8 +49,12 @@ async function main(){
  const partial=compact(crowded,80),pending=resolveC1ScreenEvidence({decision,rows:partial,current:true,previous:first});
  assert.equal(pending.pending,true);equal(pending.ratings,first.ratings);equal(pending.buySymbols,[]);
  const cold=resolveC1ScreenEvidence({decision,rows:partial,current:true});assert.equal(cold.pending,true);assert.ok(cold.ratings.every(r=>r.rating==='Watch'));
+ assert(cold.issues.some(issue=>issue.startsWith('Missing screen rows: ')),'The specific missing symbols must be disclosed');
  assert.match(cold.reason,/verification is pending/);assert.doesNotMatch(cold.reason,/ineligible/);
  const stale=rows.map(r=>({...r,clientSnapshotFallback:true}));assert.equal(resolveC1ScreenEvidence({decision,rows:stale,current:true,previous:first}).pending,true);
+ assert(resolveC1ScreenEvidence({decision,rows:stale,current:true}).issues.some(issue=>issue.includes('Stale or fallback screen quotes: MRNA')));
+ const missingQuote=structuredClone(rows);missingQuote[0].expertDecision.metrics.quoteFreshnessPass=false;
+ equal(resolveC1ScreenEvidence({decision,rows:missingQuote,current:true}).issues,['Quote freshness not verified: MRNA.']);
  for(const mutate of [r=>r.eventRisk.blockNewCapital=true,r=>r.price=104,r=>r.expertDecision.metrics.quoteFreshnessPass=false,r=>r.entryTiming.averageDollarVolume20=1000000]){
   const blocked=structuredClone(rows);mutate(blocked[0]);const state=resolveC1ScreenEvidence({decision,rows:blocked,current:true,previous:first});
   assert.equal(state.pending,true);equal(state.ratings,first.ratings);equal(state.buySymbols,[],'Changed gates cannot authorize fresh capital or substitute lower names');
@@ -84,7 +88,7 @@ async function main(){
   return record.exports;
  }
  const Component=component(file).default;
- function render(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Component({decision,screenRows,screenCurrent:true});const html=renderToStaticMarkup(node);effects.slice(1).forEach(effect=>effect());return html.replace(/\sclass="[^"]*"/g,'');}
+ function render(screenRows,extra={}){refIndex=0;stateIndex=0;effects.length=0;const node=Component({decision,screenRows,screenCurrent:true,...extra});const html=renderToStaticMarkup(node);effects.slice(1).forEach(effect=>effect());return html.replace(/\sclass="[^"]*"/g,'');}
  const html=render(rows),heldRow=html.match(/<tr><td>Held<\/td><td><b>DELL<\/b>[\s\S]*?<\/tr>/)?.[0];
  assert.ok(heldRow,'The existing holding remains in the original separate Watch table');
  assert.match(heldRow,/<b(?: style="[^"]*")?>HOLD<\/b>/,'A held stock without a confirmed exit retains the current Hold action');
@@ -102,6 +106,10 @@ async function main(){
   equal(watchSymbols(markup),['MRNA','HPE','MPC','DELL','VLO','ILMN','AAA','BBB','CCC'],'Pending evidence retains the independent Watch members and order');
  };
  const pendingHtml=render(partial);assert.match(pendingHtml,/Current entry evidence needs verification; purchases are paused/);assert.doesNotMatch(pendingHtml,/currently ineligible/);assertPaused(pendingHtml);
+ assert.match(pendingHtml,/aria-label="Entry verification details"/);assert.match(pendingHtml,/Missing screen rows:/);
+ const openingFailure=render(missingQuote,{openingError:'Synthetic opening membership check failed.'});
+ assert.match(openingFailure,/Quote freshness not verified: MRNA/);assert.match(openingFailure,/Account\/opening review: Synthetic opening membership check failed/,'Screen pending must not hide the independent opening failure');
+ assertPaused(openingFailure);
  // Browser omission can suppress a server-checked Buy/Add recommendation,
  // but cannot generate or mutate the independent server recommendation.
  const RealDate=Date;

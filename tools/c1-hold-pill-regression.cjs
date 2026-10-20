@@ -22,6 +22,9 @@ for(const [file,labels,hash] of [
  if(file==='components/C1AccountOpportunities.js'){
   const binding=',reviewCurrent:Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,executionDecision)';
   assert.equal(source.split(binding).length,2);source=source.replace(binding,'');
+  const prior=`  {!portfolioOnly&&evidence.pending&&<p role="status">{c1PlainDecisionReason({action:'NO PURCHASE',reason:evidence.reason})}</p>}`;
+  const details=`  {!portfolioOnly&&evidence.pending&&<div role="status" aria-label="Entry verification details"><p>{c1PlainDecisionReason({action:'NO PURCHASE',reason:evidence.reason})}</p><ul>{evidence.issues.map(issue=><li key={issue}>{issue}</li>)}</ul>{!ready&&<p>Account/opening review: {openingError||manualRecommendations?.reason||'No checked opening review has returned. Tap Reload to request it.'}</p>}</div>}`;
+  assert.equal(source.split(details).length,2);source=source.replace(details,prior);
  }
  if(file==='pages/index.js'){assert.equal(source.split("    const heldSector=position?.entryContext?.sector;\n    const displaySector=sectorEvidence||heldSector;\n    const sector=typeof displaySector==='string'&&displaySector.trim()&&!/^(other|unknown|unclassified)$/i.test(displaySector.trim())?displaySector.trim():'Sector unavailable';").length,2);source=source.replace("    const heldSector=position?.entryContext?.sector;\n    const displaySector=sectorEvidence||heldSector;\n    const sector=typeof displaySector==='string'&&displaySector.trim()&&!/^(other|unknown|unclassified)$/i.test(displaySector.trim())?displaySector.trim():'Sector unavailable';","    const sector=typeof sectorEvidence==='string'&&sectorEvidence.trim()&&!/^(other|unknown|unclassified)$/i.test(sectorEvidence.trim())?sectorEvidence.trim():'Sector unavailable';");}
  if(file==='pages/index.js')for(const [a,b] of require('./c1-combined-evidence-ui-seams.cjs')){assert.equal(source.split(b).length,2);source=source.replace(b,a);}
