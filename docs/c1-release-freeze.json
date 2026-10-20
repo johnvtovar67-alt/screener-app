@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "80faa94a186934b618e21da92ba65db316e09d92",
+    "components/C1AccountOpportunities.js": "8bd7540e198a7fc11e19b81b071e46ad71d8a594",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -185,7 +185,7 @@
     "lib/c1ExecutionCashAuthority.js": "5a6790cafdde9b857c4b544efea6c5b283c5ac22",
     "lib/top5Diagnostics.js": "8c9aff62a852ac7204ee8538eb2a4f323bdab51d",
     "lib/top5Response.js": "1be53ba835d5f1ca36f9b3fc569ef536b3cf57b9",
-    "lib/c1ScreenEvidence.js": "567aedd7c0e240182bb8c26814269781b2e24fe5",
+    "lib/c1ScreenEvidence.js": "ad5791c714b691f58bdf5b3d57c70abd3eb03b7c",
     "lib/c1LegacyAccountSimulator.js": "a658e4b713ca7c6387259a43a0c752b83a278270",
     "lib/c1LegacyOrderIdentity.js": "f1c601ae0ed00fc1e0ced33178d3bfb9c17455ee",
     "lib/c1LegacyAccountSeed.js": "648bb54f208a4004fcc38d5d5d74e7105b0abf9d",
@@ -249,5 +249,6 @@
   "combinedEvidenceWhyAuthorization": "Owner explicitly requests one final tight presentation-only combination of Evidence and Why into a single readable Portfolio column, with merge/deployment after checks without another approval. Only pages/index.js application hash changes. Preserve all source reasons/timing values, Core/Swing behavior, other columns, trading logic, account records and guard/build hooks. See docs/operations/c1-combined-evidence-why-20261017.md.",
   "openingAdditionsAuthorization": "Owner requested on October 19, 2026 that legitimate provider-verified addition-only S&P membership changes (PSKY) no longer block opening Buy evaluation. This change admits no new constituent into the saved prior-close account universe, keeps twice-checked provider membership equality, and continues to reject removals, in-collection drift, price revisions and existing entry gates.",
   "recentMomentumOwnedHistoryAuthorization": "Owner-authorized October 19, 2026 production opening unblock: reconcile the recent-momentum historical view against the account's already-validated owned sessions on overlapping dates, retaining earlier history for momentum warmup. Do not mutate the saved index, the account ledger, accepted bars, momentum rules or trading qualifications.",
-  "heldRankSectorDisplayAuthorization": "Owner explicitly authorized repair of PR #289 VEEV verified rank-counter and sector-display presentation on October 19, 2026, and subsequent isolated CI repairs. Only pages/index.js application hash is updated to match the reviewed read-only presentation change; trading rules, guard code, build hooks, account history and risk checks remain unchanged. PR #289 must not be merged or deployed without separate approval."
+  "heldRankSectorDisplayAuthorization": "Owner explicitly authorized repair of PR #289 VEEV verified rank-counter and sector-display presentation on October 19, 2026, and subsequent isolated CI repairs. Only pages/index.js application hash is updated to match the reviewed read-only presentation change; trading rules, guard code, build hooks, account history and risk checks remain unchanged. PR #289 must not be merged or deployed without separate approval.",
+  "opportunitiesRefreshRecoveryAuthorization": "Owner requests Opportunities to update on October 20, 2026 after a persistent entry-verification pause. Repair the reproduced browser-continuity deadlock only: allow a changed selection to be published when complete current screen evidence and the existing independent current account/opening review both pass. Keep missing/stale evidence blocked and require each visible Buy/Add to match an unchanged checked server order. Only lib/c1ScreenEvidence.js and components/C1AccountOpportunities.js application hashes change. Strategy, ranking/classifier, sizing, cash, ownership, fills, server authority, guard implementation and build hooks remain unchanged. See docs/operations/c1-opportunities-refresh-recovery-20261020.md."
 }

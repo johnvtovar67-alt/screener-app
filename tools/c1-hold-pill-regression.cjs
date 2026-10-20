@@ -17,6 +17,12 @@ for(const [file,labels,hash] of [
 ]){
  let source=fs.readFileSync(file,'utf8').replace("<h2>{portfolioOnly?'Portfolio Action':'Opportunities'}</h2>","<h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>").replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
  for(const value of labels)source=source.replaceAll(' style={c1HoldPillStyle('+value+')} >{c1HoldPillLabel('+value+')}','>{'+value+'}');
+ // Reverse only the verified-refresh review binding; preserve the original
+ // deployed-source hash and every unrelated presentation assertion.
+ if(file==='components/C1AccountOpportunities.js'){
+  const binding=',reviewCurrent:Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,executionDecision)';
+  assert.equal(source.split(binding).length,2);source=source.replace(binding,'');
+ }
  if(file==='pages/index.js'){assert.equal(source.split("    const heldSector=position?.entryContext?.sector;\n    const displaySector=sectorEvidence||heldSector;\n    const sector=typeof displaySector==='string'&&displaySector.trim()&&!/^(other|unknown|unclassified)$/i.test(displaySector.trim())?displaySector.trim():'Sector unavailable';").length,2);source=source.replace("    const heldSector=position?.entryContext?.sector;\n    const displaySector=sectorEvidence||heldSector;\n    const sector=typeof displaySector==='string'&&displaySector.trim()&&!/^(other|unknown|unclassified)$/i.test(displaySector.trim())?displaySector.trim():'Sector unavailable';","    const sector=typeof sectorEvidence==='string'&&sectorEvidence.trim()&&!/^(other|unknown|unclassified)$/i.test(sectorEvidence.trim())?sectorEvidence.trim():'Sector unavailable';");}
  if(file==='pages/index.js')for(const [a,b] of require('./c1-combined-evidence-ui-seams.cjs')){assert.equal(source.split(b).length,2);source=source.replace(b,a);}
  if(file==='pages/index.js')for(const [a,b] of require('./c1-holding-timing-ui-seams.cjs')){assert.equal(source.split(b).length,2);source=source.replace(b,a);}
