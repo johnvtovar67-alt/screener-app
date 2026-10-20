@@ -55,6 +55,21 @@ async function main(){
   const blocked=structuredClone(rows);mutate(blocked[0]);const state=resolveC1ScreenEvidence({decision,rows:blocked,current:true,previous:first});
   assert.equal(state.pending,true);equal(state.ratings,first.ratings);equal(state.buySymbols,[],'Changed gates cannot authorize fresh capital or substitute lower names');
  }
+ // A changed browser selection must be able to recover after the independent
+ // server account/opening review passes. Missing/stale evidence still blocks.
+ const changedRows=structuredClone(rows);changedRows[0].eventRisk.blockNewCapital=true;
+ const refreshed=resolveC1ScreenEvidence({decision,rows:changedRows,current:true,previous:first,reviewCurrent:true});
+ assert.equal(refreshed.pending,false,'Complete evidence plus a current server review releases the old browser selection');
+ equal(refreshed.ratings,classifyC1StockScreen({snapshot,rows:changedRows,current:true}));
+ assert(!refreshed.buySymbols.includes('MRNA'),'The newly blocked candidate cannot remain purchasable');
+ writeC1ScreenEvidence(storage,refreshed);
+ equal(readC1ScreenEvidence(storage,decision).ratings,refreshed.ratings,'Reload/remount persists the newly verified selection');
+ for(const input of [{rows:partial,current:true},{rows:stale,current:true},{rows:changedRows,current:false}]){
+  assert.equal(resolveC1ScreenEvidence({decision,...input,previous:first,reviewCurrent:true}).pending,true,'Server review cannot bypass incomplete browser evidence');
+ }
+ const unverified=structuredClone(rows);unverified[0].expertDecision.metrics.quoteFreshnessPass=false;
+ assert.equal(resolveC1ScreenEvidence({decision,rows:unverified,current:true,previous:first,reviewCurrent:true}).pending,true);
+ writeC1ScreenEvidence(storage,first);
  equal(resolveC1ScreenEvidence({decision:{...decision,decisionId:'accepted-hash:2'},rows,current:true,previous:first}).ratings,first.ratings,'Cash/account revisions do not replace source identity');
  const revised={...decision,decisionId:'new-accepted-hash:2',stockScreen:structuredClone(snapshot)};revised.stockScreen.candidates[0].sourcePrice=90;
  assert.notDeepEqual(resolveC1ScreenEvidence({decision:revised,rows,current:true,previous:first}).key,first.key,'Accepted source revision invalidates old selection');
@@ -98,6 +113,10 @@ async function main(){
   const serverEvidence=JSON.stringify({plan,review}),Entry=component(file,fixed).default;
   function actions(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Entry({decision:entryDecision,executionDecision:entryDecision,manualRecommendations:review,openingPlan:plan,screenRows,screenCurrent:true,view:'portfolio'});const html=renderToStaticMarkup(node);effects.at(-1)();return html;}
   const checked=actions(rows);assert.match(checked,/Buy 2 shares/);assert.match(checked,/Add 3 shares/);assert.match(checked,/sell 4 shares/);
+  const rechecked=actions(changedRows);
+  assert.doesNotMatch(rechecked,/Buy 2 shares/,'A current server order cannot override a newly blocked screen candidate');
+  assert.match(rechecked,/Add 3 shares/,'A complete screen and current server review recover an independently checked Add');
+  assert.doesNotMatch(rechecked,/Buy \d+ shares/,'Reclassification cannot invent an order for a replacement candidate');
   const omitted=actions(partial);assert.doesNotMatch(omitted,/(?:buy 2|add 3) shares/i);assert.match(omitted,/sell 4 shares/,'Missing entry evidence does not suppress checked exits');
   assert.equal(JSON.stringify({plan,review}),serverEvidence,'Compact evidence cannot change server orders or quantities');
  }finally{global.Date=RealDate;}
