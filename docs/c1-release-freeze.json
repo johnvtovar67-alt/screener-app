@@ -180,7 +180,7 @@
     "lib/c1AccountLedger.js": "eeaac2fa02730cb0f33d318ef58dbf5f2ad6702d",
     "lib/c1AccountProjection.js": "24018b81056701b7fa5e3b8971d2b3b5ae1deab8",
     "lib/c1AccountExecutionView.js": "bd2c1a6351eb5c2eaa254ff1bcb45d73e08019c3",
-    "components/C1BrokerageCash.js": "ab6ab418b1d46551caa36747e8db7d2ac4046289",
+    "components/C1BrokerageCash.js": "80740c48081da1b69db7c117dafb5f535c71a40d",
     "lib/c1BrokerageCash.js": "e7f3f131c5773e34bf4075d4aec58199bd070a7d",
     "lib/c1ExecutionCashAuthority.js": "5a6790cafdde9b857c4b544efea6c5b283c5ac22",
     "lib/top5Diagnostics.js": "8c9aff62a852ac7204ee8538eb2a4f323bdab51d",
@@ -249,5 +249,6 @@
   "combinedEvidenceWhyAuthorization": "Owner explicitly requests one final tight presentation-only combination of Evidence and Why into a single readable Portfolio column, with merge/deployment after checks without another approval. Only pages/index.js application hash changes. Preserve all source reasons/timing values, Core/Swing behavior, other columns, trading logic, account records and guard/build hooks. See docs/operations/c1-combined-evidence-why-20261017.md.",
   "openingAdditionsAuthorization": "Owner requested on October 19, 2026 that legitimate provider-verified addition-only S&P membership changes (PSKY) no longer block opening Buy evaluation. This change admits no new constituent into the saved prior-close account universe, keeps twice-checked provider membership equality, and continues to reject removals, in-collection drift, price revisions and existing entry gates.",
   "recentMomentumOwnedHistoryAuthorization": "Owner-authorized October 19, 2026 production opening unblock: reconcile the recent-momentum historical view against the account's already-validated owned sessions on overlapping dates, retaining earlier history for momentum warmup. Do not mutate the saved index, the account ledger, accepted bars, momentum rules or trading qualifications.",
-  "heldRankSectorDisplayAuthorization": "Owner explicitly authorized repair of PR #289 VEEV verified rank-counter and sector-display presentation on October 19, 2026, and subsequent isolated CI repairs. Only pages/index.js application hash is updated to match the reviewed read-only presentation change; trading rules, guard code, build hooks, account history and risk checks remain unchanged. PR #289 must not be merged or deployed without separate approval."
+  "heldRankSectorDisplayAuthorization": "Owner explicitly authorized repair of PR #289 VEEV verified rank-counter and sector-display presentation on October 19, 2026, and subsequent isolated CI repairs. Only pages/index.js application hash is updated to match the reviewed read-only presentation change; trading rules, guard code, build hooks, account history and risk checks remain unchanged. PR #289 must not be merged or deployed without separate approval.",
+  "unchangedCashConfirmationAuthorization": "Owner requested on October 20, 2026 that unchanged Schwab cash not require retyping to refresh a new trading day. Add one-tap explicit confirmation of the existing saved amount, using the original guarded brokerage-cash update path. Preserve same-Eastern-day freshness policy, optimistic concurrency, recorded fill accounting, purchase limits, and all trading decisions. Only the brokerage cash UI component hash changes; guard/build hooks unchanged."
 }

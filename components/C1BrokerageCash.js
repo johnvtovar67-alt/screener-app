@@ -11,6 +11,11 @@ export default function C1BrokerageCash({decision,onSave,busy=false}){
  useEffect(()=>{
   if(expanded)input.current?.focus();else if(saved)updateButton.current?.focus();
  },[expanded,saved]);
+ async function confirmUnchanged(){
+  setError('');setSaved(false);
+  if(!Number.isFinite(decision?.brokerageCash)||decision.brokerageCash<0)return;
+  try{await onSave(decision.brokerageCash,decision.revision);setSaved(true);setExpanded(false);}catch(cause){setError(cause.message);}
+ }
  async function submit(event){
   event.preventDefault();setError('');setSaved(false);
   const value=Number(balance);
@@ -20,9 +25,11 @@ export default function C1BrokerageCash({decision,onSave,busy=false}){
  return <section className="card brokerageCash" aria-label="Brokerage cash">
   <div className="brokerageCashSummary">
    <p><span>Schwab cash available to trade <b>{money(decision?.brokerageCash)}</b></span></p>
+   {!decision?.brokerageCashCurrent&&Number.isFinite(decision?.brokerageCash)&&<button type="button" disabled={busy||!decision} onClick={confirmUnchanged}>{busy?'Confirming…':'Confirm cash unchanged'}</button>}
    <button ref={updateButton} type="button" aria-expanded={expanded} aria-controls={editorId} disabled={busy||!decision} onClick={()=>setExpanded(!expanded)}>Update</button>
   </div>
   {decision?.brokerageCashObservedAt&&<p className="sub">Broker balance observed {new Date(decision.brokerageCashObservedAt).toLocaleString()} · {decision.brokerageCashCurrent?'Current':'Update required'}</p>}
+  {!decision?.brokerageCashCurrent&&Number.isFinite(decision?.brokerageCash)&&<p className="sub">If Schwab cash has not changed, confirm the existing balance without retyping it. C1 cannot verify external Schwab activity automatically.</p>}
   {!decision?.brokerageCashCurrent&&<p role="status">{decision?.brokerageCashReason||'Enter a current brokerage balance before a new C1 purchase.'}</p>}
   <div id={editorId} className="brokerageCashEditor" hidden={!expanded}>
    <p className="sub">Manually enter cash available to trade shown at Schwab after any account activity. C1 has no live Schwab connection. Recorded fills after this observation adjust this value once. Historical sleeve accounting is retained.</p>
