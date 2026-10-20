@@ -78,7 +78,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  if(portfolioOnly&&!sellActions.length&&!verifyActions.length&&!actionableBuys.length)return null;
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio Action':'Opportunities'}</h2>
-  {!portfolioOnly&&evidence.pending&&<p role="status">{c1PlainDecisionReason({action:'NO PURCHASE',reason:evidence.reason})}</p>}
+  {!portfolioOnly&&evidence.pending&&<div role="status" aria-label="Entry verification details"><p>{c1PlainDecisionReason({action:'NO PURCHASE',reason:evidence.reason})}</p><ul>{evidence.issues.map(issue=><li key={issue}>{issue}</li>)}</ul>{!ready&&<p>Account/opening review: {openingError||manualRecommendations?.reason||'No checked opening review has returned. Tap Reload to request it.'}</p>}</div>}
   {!portfolioOnly&&<><p className="sub">Signals based on {decision.sourceSessionDate} close · Schwab cash available to trade: {Number.isFinite(decision.brokerageCash)?decision.brokerageCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Not entered'}</p>
   {presentation.cashReason&&<p role="status">{presentation.cashReason}</p>}</>}
   {portfolioOnly&&<div className="plan" aria-label="C1 action summary">
