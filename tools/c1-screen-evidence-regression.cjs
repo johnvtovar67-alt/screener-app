@@ -21,7 +21,7 @@ function client(){
   refreshC1Account:()=>new Promise(resolve=>{resolveAccount=resolve;}),prepareC1Execution:()=>{},
   performanceHistory:async()=>({records:[],available:true}),signalPersistence:()=>({}),sym:r=>r.symbol,
   fetch:async url=>{state.requests.push(url);const u=new URL(url,'https://offline.invalid');return new Response(JSON.stringify({stocks:compact(crowded,80,'',u.searchParams.get('screenSymbols')||''),meta:{quoteFeedStatus:'live',fundamentalFeedStatus:'healthy'}}));},
-  setReloading:()=>{},setErr:()=>{},setStocks:value=>{state.stocks=typeof value==='function'?value(state.stocks):value;},setFeedHealth:value=>{state.health=typeof value==='function'?value(state.health):value;},setMarketScope:()=>{},setMarketRadar:()=>{},setLastUpdated:()=>{},setApplicationRefreshAt:()=>{},setThemeStocks:()=>{},setThemeFeedHealth:()=>{}};
+  setReloading:value=>{state.reloading=value;},setErr:()=>{},setStocks:value=>{state.stocks=typeof value==='function'?value(state.stocks):value;},setFeedHealth:value=>{state.health=typeof value==='function'?value(state.health):value;},setMarketScope:()=>{},setMarketRadar:()=>{},setLastUpdated:()=>{},setApplicationRefreshAt:()=>{state.refreshed=true;},setThemeStocks:()=>{},setThemeFeedHealth:()=>{}};
  vm.createContext(box);vm.runInContext(boundary+';this.loadScreen=load;',box);
  return {state,box,load:box.loadScreen,get account(){return resolveAccount;}};
 }
@@ -33,6 +33,14 @@ async function main(){
  assert.equal(c.state.requests.length,1,'No fallback full-universe or second screen request');
  const symbols=new URL(c.state.requests[0],'https://offline.invalid').searchParams.get('screenSymbols').split(',');
  equal(symbols,snapshot.candidates.map(c=>c.symbol));
+ const delayedReview=client();let finishReview,refreshFinished=false;
+ delayedReview.box.prepareC1Execution=()=>new Promise(resolve=>{finishReview=resolve;});
+ const refreshing=delayedReview.load('opportunities').then(()=>{refreshFinished=true;});
+ delayedReview.account({decision});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(delayedReview.state.stocks.length,80,'Current screen rows publish while opening verification runs');
+ assert.equal(refreshFinished,false,'Reload must not report completion before opening verification returns');
+ assert.equal(delayedReview.state.reloading,true);assert.notEqual(delayedReview.state.refreshed,true);
+ finishReview();await refreshing;assert.equal(delayedReview.state.reloading,false);assert.equal(delayedReview.state.refreshed,true);
  const first=resolveC1ScreenEvidence({decision,rows:c.state.stocks,current:true});
  assert.equal(first.pending,false);equal(first.ratings,classifyC1StockScreen({snapshot,rows:c.state.stocks,current:true}));
  equal(first.buySymbols,['MRNA','HPE','MPC']);
@@ -90,6 +98,9 @@ async function main(){
  const Component=component(file).default;
  function render(screenRows,extra={}){refIndex=0;stateIndex=0;effects.length=0;const node=Component({decision,screenRows,screenCurrent:true,...extra});const html=renderToStaticMarkup(node);effects.slice(1).forEach(effect=>effect());return html.replace(/\sclass="[^"]*"/g,'');}
  const html=render(rows),heldRow=html.match(/<tr><td>Held<\/td><td><b>DELL<\/b>[\s\S]*?<\/tr>/)?.[0];
+ const accountWaiting=render(rows,{manualRecommendations:{status:'waiting',reason:'Synthetic account opening verification is still pending.'}});
+ assert.match(accountWaiting,/Synthetic account opening verification is still pending\./,'Complete screen evidence must show the actual independent account-review reason');
+ assert.doesNotMatch(accountWaiting,/aria-label="Entry verification details"/,'A complete screen is not mislabeled as a screen-evidence failure');
  assert.ok(heldRow,'The existing holding remains in the original separate Watch table');
  assert.match(heldRow,/<b(?: style="[^"]*")?>HOLD<\/b>/,'A held stock without a confirmed exit retains the current Hold action');
  assert.equal(decision.positions[0].holdingRank.base.rank,4,'The supplied verified holding rank remains unchanged by presentation');
