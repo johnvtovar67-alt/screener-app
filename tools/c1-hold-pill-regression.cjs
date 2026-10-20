@@ -16,6 +16,11 @@ for(const [file,labels,hash] of [
  ['components/C1AccountOpportunities.js',["held?.label||(canPurchase?tile.rating:'NO PURCHASE')","row.holding?.label||'WATCH'"],'37d8898ef55fa9db4e5de509ab91449a571a264295dfec5f9f2465b3e94391d5']
 ]){
  let source=fs.readFileSync(file,'utf8').replace("<h2>{portfolioOnly?'Portfolio Action':'Opportunities'}</h2>","<h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>").replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
+ if(file==='pages/index.js')for(const [before,after] of require('./c1-opening-refresh-ui-seams.cjs')){assert.equal(source.split(after).length,2);source=source.replace(after,before);}
+ if(file==='components/C1AccountOpportunities.js'){
+  const current="{!ready&&<span> {waitingReason}</span>}",prior="{!ready&&<span> {openingError?'Opening checks unavailable: '+openingError:c1PlainDecisionReason({action:'NO PURCHASE',reason:waitingReason})}</span>}";
+  assert.equal(source.split(current).length,2);source=source.replace(current,prior);
+ }
  for(const value of labels)source=source.replaceAll(' style={c1HoldPillStyle('+value+')} >{c1HoldPillLabel('+value+')}','>{'+value+'}');
  // Reverse only the verified-refresh review binding; preserve the original
  // deployed-source hash and every unrelated presentation assertion.

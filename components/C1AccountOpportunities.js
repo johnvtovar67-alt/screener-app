@@ -97,7 +97,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Signal closing price</small></div>
    <p className="why">Momentum score: {Number.isFinite(tile.entryEvidence?.momentumScore)?tile.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable'}</p>
    <div className="plan"><small>Your next action</small><b>{canPurchase?<>{actionableBuys.filter(order=>order.symbol===tile.symbol).map(order=><span key={order.id}>{held?'Add':'Buy'} {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. </span>)}</>:held?.label||'NO PURCHASE'}</b><p>{plainReason(tile.symbol,held?.label||(canPurchase?tile.accountAction:'NO PURCHASE'),held?.reason||tile.detail,held)}</p>{canPurchase&&<p>Confirm current broker price and cash before placing an order.</p>}</div>
-  </article>;})}</div>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No purchases currently authorized.':'C1 ratings awaiting update.'}</b>{!ready&&<span> {openingError?'Opening checks unavailable: '+openingError:c1PlainDecisionReason({action:'NO PURCHASE',reason:waitingReason})}</span>}</div>}
+  </article>;})}</div>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No purchases currently authorized.':'C1 ratings awaiting update.'}</b>{!ready&&<span> {waitingReason}</span>}</div>}
 
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Refresh after {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} to update the recommendation.</p>}
  </section>

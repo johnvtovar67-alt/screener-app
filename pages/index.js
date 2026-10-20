@@ -171,7 +171,7 @@ export default function Home(){
       const r=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify({operation:'prepare-execution'}),cache:'no-store'}),execution=await r.json();
       if(requestId!==accountRequestId.current||localStorage.getItem(SYNC_KEY)!==key)return;
       if(!r.ok)throw new Error(execution.error||'Opening checks unavailable.');
-      if(execution.decision?.decisionId!==view.decision.decisionId)return;
+      if(execution.decision?.decisionId!==view.decision.decisionId)throw new Error('The account changed during opening verification. Tap Reload to recheck the current account.');
       setAccountView({...execution,decision:view.decision});
     }catch(error){
       if(requestId===accountRequestId.current&&localStorage.getItem(SYNC_KEY)===key)setAccountView({...view,openingError:error.message});
@@ -323,10 +323,11 @@ export default function Home(){
     const holdingQuotes=t==="opportunities"&&pricePortfolio.length?fetchHoldingQuotes(pricePortfolio,verificationPass>0,results,{isCurrent:()=>requestId===screenRequestId.current}).then(quoteRows=>{
       if(requestId===screenRequestId.current)setResults(prior=>pricePortfolio.map(p=>holdingQuoteRow(p,quoteRows.get(sym(p)),prior.find(row=>sym(row)===sym(p)))));
     }):null;
+    let openingReview=null;
     try{
       const account=t==="opportunities"?await refreshC1Account():null;
       if(requestId!==screenRequestId.current)return;
-      if(account)void prepareC1Execution(account);
+      if(account)openingReview=prepareC1Execution(account);
       const screenSymbols=(account?.decision?.stockScreen?.candidates||[]).map(c=>c.symbol);
       const d=await fetchScreen(t,verificationPass,{screenSymbols});
       if(requestId!==screenRequestId.current)return;
@@ -334,7 +335,7 @@ export default function Home(){
       if(t==="opportunities"){setStocks(d.stocks||[]);setFeedHealth(health);setMarketScope(d.meta||null);setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{setThemeStocks(d.stocks||[]);setThemeFeedHealth(health);}
       const asOf=new Date(d.meta?.snapshotAsOf||Date.now());setLastUpdated(Number.isFinite(asOf.getTime())?asOf:new Date());
     }catch(e){if(requestId!==screenRequestId.current)return;setErr(e.message);if(t==="opportunities"){setStocks(pausePriorRows);setFeedHealth(h=>({...h,status:"unavailable"}));}else{setThemeStocks(pausePriorRows);setThemeFeedHealth(h=>({...h,status:"unavailable"}));}}
-    finally{await holdingQuotes;const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));if(requestId===screenRequestId.current){setReloading(false);setApplicationRefreshAt(new Date());}}
+    finally{await Promise.allSettled([holdingQuotes,openingReview]);const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));if(requestId===screenRequestId.current){setReloading(false);setApplicationRefreshAt(new Date());}}
   }
   async function fetchStock(s,forceRefresh=false){const r=await fetch(`/api?symbol=${encodeURIComponent(s)}${forceRefresh?"&refresh=1":""}`,{cache:"no-store"}),d=await r.json();if(!r.ok)throw new Error(d.detail||d.error);const x=extract(d);if(!x)throw new Error(`No usable data for ${s}`);return x;}
   async function fetchHoldingQuotes(holdings,forceRefresh=false,previousRows=results,{isCurrent=()=>true}={}){

@@ -79,6 +79,10 @@ function client(fetcher){
  await prepared.box.prepareC1Execution(analysis);
  assert.deepEqual(prepared.state.view.decision,analysis.decision,'Opening overlays cannot rewrite completed holding guidance');
  assert.deepEqual(prepared.state.view.executionDecision,execution.executionDecision);
+ const changedDuringOpening=client(async()=>({ok:true,json:async()=>({...execution,decision:{...execution.decision,decisionId:'new-source:5'}})}));
+ await changedDuringOpening.box.prepareC1Execution(analysis);
+ assert.deepEqual(changedDuringOpening.state.view.decision,analysis.decision);
+ assert.match(changedDuringOpening.state.view.openingError,/account changed during opening verification/,'A mismatched review must be visibly rejected, not silently discarded');
  const unavailable=client(async()=>{throw new Error('The next observed market opening is required');});
  await unavailable.box.prepareC1Execution(analysis);
  assert.deepEqual(unavailable.state.view.decision,analysis.decision);
