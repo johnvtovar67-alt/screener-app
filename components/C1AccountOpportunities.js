@@ -41,14 +41,15 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
   position:decision.positions?.find(position=>position.symbol===symbol),symbol,
   stock:positionRows.find(row=>(row.symbol||row.ticker)===symbol)||screenRows.find(row=>(row.symbol||row.ticker)===symbol),
   executionDecision,openingPlan,manualRecommendations,checkedAddOrders:rawBuys,now:new Date()}):null;
- // A historical Buy rating is not an authorized purchase. Only verified,
- // currently executable orders belong in the green opportunity cards.
- const actionableTiles=presentation.tiles.filter(tile=>{
+ // Display independently verified ratings even when the account cannot buy.
+ // The separately checked order list remains the sole source of quantities.
+ const ratedTiles=evidence.verified?presentation.tiles:[];
+ const actionableTiles=ratedTiles.filter(tile=>{
   const held=holdingPresentation(tile.symbol);
   return ready&&Boolean(tile.order)&&(!held||held.canAdd);
  });
  const actionableBuys=buys.filter(order=>actionableTiles.some(tile=>tile.symbol===order.symbol));
- const blockedTiles=presentation.tiles.filter(tile=>!actionableTiles.includes(tile)).map(tile=>({
+ const blockedTiles=presentation.tiles.filter(tile=>!ratedTiles.includes(tile)).map(tile=>({
   ...tile,
   screenReview:{why:tile.detail||'No purchase currently authorized.',next:tile.next}
  }));
@@ -91,12 +92,12 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
    {verifyActions.length>0&&<><h3>Urgent verification — not authorized trades</h3><ul>{verifyActions.map(row=><li key={'verify:'+row.symbol} data-action="VERIFY"><span className="pill orange">VERIFY — {row.symbol}</span> {plainReason(row.symbol,row.holding.label,row.holding.reason,row.holding)}</li>)}</ul></>}
   </div>}
   {ready&&actionableBuys.length>0&&(exits.length>0||orders.some(order=>order.side==='sell'&&!order.condition))&&<p className="actionHelp">{portfolioOnly?'Complete the listed sales before buying replacements.':'Complete C1 sales listed in My Portfolio before buying replacements.'}</p>}
-  {!portfolioOnly&&actionableTiles.length>0?<div className="grid buyGrid">{actionableTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className="idea green" key={tile.symbol}>
-   <div className="top"><h3>{tile.symbol}</h3><b className={`pill ${actionTone(held,canPurchase)}`} style={c1HoldPillStyle(held?.label||(canPurchase?tile.rating:'NO PURCHASE'))} >{c1HoldPillLabel(held?.label||(canPurchase?tile.rating:'NO PURCHASE'))}</b></div>
+  {!portfolioOnly&&ratedTiles.length>0?<div className="grid buyGrid">{ratedTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className="idea green" key={tile.symbol}>
+   <div className="top"><h3>{tile.symbol}</h3><b className={`pill ${actionTone(held,canPurchase)}`} style={c1HoldPillStyle(tile.rating)} >{c1HoldPillLabel(tile.rating)}</b></div>
    <p className="sub">{tile.entryEvidence?.sector||'Sector unavailable'} · {tile.rating} rating as of {decision.sourceSessionDate}</p>
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Signal closing price</small></div>
    <p className="why">Momentum score: {Number.isFinite(tile.entryEvidence?.momentumScore)?tile.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable'}</p>
-   <div className="plan"><small>Your next action</small><b>{canPurchase?<>{actionableBuys.filter(order=>order.symbol===tile.symbol).map(order=><span key={order.id}>{held?'Add':'Buy'} {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. </span>)}</>:held?.label||'NO PURCHASE'}</b><p>{plainReason(tile.symbol,held?.label||(canPurchase?tile.accountAction:'NO PURCHASE'),held?.reason||tile.detail,held)}</p>{canPurchase&&<p>Confirm current broker price and cash before placing an order.</p>}</div>
+   <div className="plan"><small>Account purchase status — separate from C1 rating</small><b>{canPurchase?<>{actionableBuys.filter(order=>order.symbol===tile.symbol).map(order=><span key={order.id}>{held?'Add':'Buy'} {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. </span>)}</>:held?.label||'NO PURCHASE'}</b><p>{plainReason(tile.symbol,held?.label||(canPurchase?tile.accountAction:'NO PURCHASE'),held?.reason||tile.detail,held)}</p>{canPurchase&&<p>Confirm current broker price and cash before placing an order.</p>}</div>
   </article>;})}</div>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No purchases currently authorized.':'C1 ratings awaiting update.'}</b>{!ready&&<span> {waitingReason}</span>}</div>}
 
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Refresh after {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} to update the recommendation.</p>}
