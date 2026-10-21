@@ -58,7 +58,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
  const actionTone=(held,canPurchase)=>held?.action==='Sell'?'red':held?.urgent?'orange':held?'yellow':canPurchase?'green':'gray';
  const plainReason=(symbol,action,reason,presentation)=>c1PlainDecisionReason({action,reason,presentation,position:decision.positions?.find(position=>position.symbol===symbol),opportunity:ratedRows.find(row=>row.symbol===symbol),sourceCandidate:decision.stockScreen?.candidates?.find(row=>row.symbol===symbol),evidence:decision.positions?.find(row=>row.symbol===symbol)?.momentumEvidence});
- let nextWatchPriority=actionableTiles.length;
+ let nextWatchPriority=ratedTiles.length;
  const watchView={
   shared:null,
   rows:[
@@ -92,7 +92,8 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
    {verifyActions.length>0&&<><h3>Urgent verification — not authorized trades</h3><ul>{verifyActions.map(row=><li key={'verify:'+row.symbol} data-action="VERIFY"><span className="pill orange">VERIFY — {row.symbol}</span> {plainReason(row.symbol,row.holding.label,row.holding.reason,row.holding)}</li>)}</ul></>}
   </div>}
   {ready&&actionableBuys.length>0&&(exits.length>0||orders.some(order=>order.side==='sell'&&!order.condition))&&<p className="actionHelp">{portfolioOnly?'Complete the listed sales before buying replacements.':'Complete C1 sales listed in My Portfolio before buying replacements.'}</p>}
-  {!portfolioOnly&&ratedTiles.length>0?<div className="grid buyGrid">{ratedTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className="idea green" key={tile.symbol}>
+  {!portfolioOnly&&ratedTiles.length>0&&!ready?<p role="status">{waitingReason}</p>:null}
+ {!portfolioOnly&&ratedTiles.length>0?<div className="grid buyGrid">{ratedTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className="idea green" key={tile.symbol}>
    <div className="top"><h3>{tile.symbol}</h3><b className={`pill ${actionTone(held,canPurchase)}`} style={c1HoldPillStyle(held?.label||tile.rating)} >{c1HoldPillLabel(held?.label||tile.rating)}</b></div>
    <p className="sub">{tile.entryEvidence?.sector||'Sector unavailable'} · {tile.rating} rating as of {decision.sourceSessionDate}</p>
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Signal closing price</small></div>
