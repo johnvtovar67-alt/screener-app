@@ -70,7 +70,7 @@ try{
  assert.match(main,/<h3>CCC<\/h3>/,'Verified Buy remains visible without an authorized purchase');
  assert.equal((article(main,'MPC').match(/>HOLD</g)||[]).length,1,'The holding action is not duplicated inside its reason');
  assert.match(watch,/<th>Priority<\/th><th>Stock \/ Sector<\/th><th>Momentum score<\/th><th>Signal closing price<\/th><th>Entry check<\/th>/,'The original five-column Watch table is restored');
- assert.match(watch,/<td>1<\/td><td><b>DDD<\/b>/,'Watch priority starts after separating verified Buy ratings');
+ assert.match(watch,/<td>4<\/td><td><b>DDD<\/b>/,'Historical Watch priority remains after three verified Buy ratings');
  assert.doesNotMatch(watch,/<article|BUY \d+ shares/,'Watch remains a separate table without purchase instructions');
  assert.doesNotMatch(main+watch,/<details|Recent momentum<\/h4>|compactReason/,'The rejected rebuilt card/details layout is absent');
  const noOrders={...plan,orders:[]},noReview=buildC1ManualRecommendations({decision,openingPlan:noOrders});
