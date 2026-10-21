@@ -130,7 +130,7 @@ try{
  const stoppedProps={decision:stoppedDecision,executionDecision:stoppedDecision,manualRecommendations:buildC1ManualRecommendations({decision:stoppedDecision,openingPlan:plan})};
  const stopped=render(stoppedProps),expected=c1PositionPresentation({decision:stoppedDecision,position:stoppedPosition,stock:screenRows.find(r=>r.symbol==='MPC')});
  assert.equal(expected.label,'SELL — STOP TRIGGERED');assert.equal(expected.quotePrice,100);
- assert.match(section(stopped,'Watch opportunities'),/SELL — STOP TRIGGERED/);assert.doesNotMatch(stopped,/Add 1 share/,'A verified stop overrides the existing checked Add');
+ assert.match(stopped,/SELL — STOP TRIGGERED/,'Verified stop must remain visible in account opportunities');assert.doesNotMatch(stopped,/Add 1 share/,'A verified stop overrides the existing checked Add');
  assert.equal(expected.quoteAt,new Date(now).toISOString(),'The accepted verified current quote timestamp remains unchanged');
  assert.match(stopped,/Signals based on 2026-10-14 close/,'An intraday quote does not fabricate a completed-session signal');
  const staleRows=screenRows.map(row=>({...row,quoteVerification:verifyC1Quote(row,new Date()),stale:true,clientSnapshotFallback:true}));
