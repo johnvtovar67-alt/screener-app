@@ -174,7 +174,7 @@ try{
  const commonPlan={...plan,orders:[],entryReviews:[{symbol:'BBB',reason:'brokerage-cash-insufficient'}]};
  const commonHtml=render({decision:commonDecision,executionDecision:commonDecision,openingPlan:commonPlan,manualRecommendations:buildC1ManualRecommendations({decision:commonDecision,openingPlan:commonPlan})});
  assert.equal(summary(commonHtml),'');
- assert.match(section(commonHtml,'Watch opportunities'),/Update the current broker balance or record completed C1 sale proceeds/,'The restriction next step remains in Watch');
+ assert.match(section(commonHtml,'C1 account opportunities'),/Account purchase status — separate from C1 rating/,'A verified Buy rating retains its separate account purchase review');assert.doesNotMatch(commonHtml,/Buy 2 shares|Add 1 share/,'Cash restriction cannot create a checked order');
  assert.equal(summary(render({decision:commonDecision,executionDecision:commonDecision,openingPlan:commonPlan,manualRecommendations:buildC1ManualRecommendations({decision:commonDecision,openingPlan:commonPlan}),view:'portfolio'})),'','A blocked purchase alone never creates an orange box');
 
  const stopRow={...position,symbol:'DELL',action:'Exit candidate',stops:[{price:468.85}],exits:[{reason:'initial-stop'}],stopTriggerEvidence:{low:460,stop:468.85,date:decision.sourceSessionDate}};
