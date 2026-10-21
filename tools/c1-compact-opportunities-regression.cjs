@@ -169,7 +169,7 @@ try{
  assert.equal((html.match(/Add 1 share/g)||[]).length,1,'The Add quantity appears once; no second instruction is created');
  assert.match(summaryBase,/data-action="ADD"[\s\S]*?Add 1 share/);
  assert.doesNotMatch(summaryBase,/data-action="HOLD"|data-action="WAIT"|Some purchases remain blocked/,'Only trades and urgent verification belong in the orange box');
- assert.match(watch,/Next: Update the current broker balance or record completed C1 sale proceeds/,'Watch restores the existing entry-review next step');
+ assert.doesNotMatch(watch,/<b>CCC<\/b>/,'A verified Buy-rated CCC remains in the Buy grid even when its cash review blocks purchase');
  const commonDecision={...decision,stockScreen:{...decision.stockScreen,candidates:[decision.stockScreen.candidates[0]]}};
  const commonPlan={...plan,orders:[],entryReviews:[{symbol:'BBB',reason:'brokerage-cash-insufficient'}]};
  const commonHtml=render({decision:commonDecision,executionDecision:commonDecision,openingPlan:commonPlan,manualRecommendations:buildC1ManualRecommendations({decision:commonDecision,openingPlan:commonPlan})});
