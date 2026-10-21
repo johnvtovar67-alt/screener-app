@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     const latestAuditSafe = !latestAudit || (latestAudit.originalInputsPreserved === true &&
       latestAudit.identicalModelEconomics === true &&
       Array.isArray(latestAudit.economicAdjustments) && latestAudit.economicAdjustments.length === 0);
-    return res.status(200).json({
+    const report = {
       contract: 'c1-production-readonly-acceptance-v1',
       observedAt: now.toISOString(),
       sourceSessionDate: view.sourceSessionDate,
@@ -66,8 +66,12 @@ export default async function handler(req, res) {
       opportunitiesFreshness: 'NOT_VERIFIED',
       productionAcceptance: 'NOT_ESTABLISHED',
       executable: false
-    });
-  } catch {
+    };
+    // Only aggregate verification flags are logged; no account data, prices, or secrets.
+    console.info('[c1-acceptance]', JSON.stringify(report));
+    return res.status(200).json(report);
+  } catch (error) {
+    console.error('[c1-acceptance]', JSON.stringify({ status: 'failed', reason: error?.message || 'unknown' }));
     return res.status(503).json({ error: 'Accepted index evidence unavailable' });
   }
 }
