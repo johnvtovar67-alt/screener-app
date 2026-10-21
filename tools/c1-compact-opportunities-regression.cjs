@@ -136,11 +136,11 @@ try{
  const staleRows=screenRows.map(row=>({...row,quoteVerification:verifyC1Quote(row,new Date()),stale:true,clientSnapshotFallback:true}));
  const stale=render({...stoppedProps,positionRows:staleRows,screenRows:staleRows});
  assert.doesNotMatch(stale,/Buy 2 shares|Add 1 share/,'Stale prices and incomplete screen evidence fail closed for all fresh capital');
- assert.match(section(stale,'Watch opportunities'),/VERIFY STOP URGENTLY/,'An unverified apparent breach remains urgent in the historical UI');
+ assert.match(render({...stoppedProps,view:'portfolio',positionRows:staleRows,screenRows:staleRows}),/VERIFY STOP URGENTLY/,'Unverified stop breach must remain urgent in Portfolio actions');
  assert.doesNotMatch(stale,/SELL — STOP TRIGGERED/,'Stale quotes cannot manufacture a confirmed stop');
  const missingProofRows=screenRows.map(row=>({...row,_fmpQuoteObservation:undefined}));
  const missingProof=render({...stoppedProps,positionRows:missingProofRows,screenRows:missingProofRows});
- assert.match(section(missingProof,'Watch opportunities'),/VERIFY STOP URGENTLY/);assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|Add 1 share/,'Missing proof cannot authorize a new exit or addition');
+ assert.match(render({...stoppedProps,view:'portfolio',positionRows:missingProofRows,screenRows:missingProofRows}),/VERIFY STOP URGENTLY/);assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|Add 1 share/,'Missing proof cannot authorize a new exit or addition');
  assert.equal(c1PositionPresentation({decision:stoppedDecision,position:stoppedPosition,stock:missingProofRows.find(row=>row.symbol==='MPC')}).lastVerifiedQuoteAt,null,'Missing verification history cannot invent a verified timestamp');
  const coreDecision={...decision,positions:[position,{symbol:'DDD',role:'Swing',shares:2,exits:[]}]},coreRows=screenRows.map(row=>row.symbol==='DDD'?{...row,role:'Core'}:row);
  const coreInput={decision:coreDecision,executionDecision:coreDecision,positionRows:coreRows},coreBefore=JSON.stringify(coreInput);
