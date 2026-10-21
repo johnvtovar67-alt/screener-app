@@ -130,9 +130,9 @@ async function main(){
   const opportunities=renderToStaticMarkup(React.createElement(Opportunities,props));
   assert.doesNotMatch(opportunities,/C1 strategy cash|Available to deploy/);
   assert.match(opportunities,new RegExp('Schwab cash available to trade: \\$'+balance.toFixed(2).replace('.','\\.')));
-  assert.doesNotMatch(opportunities,/<article[^>]*class="[^"]*idea green/,'Cash-blocked stocks cannot have green opportunity cards');
-  assert.doesNotMatch(opportunities,/<h3[^>]*>BBB<\/h3>/,'Cash-blocked BBB is not an actionable opportunity');
-  assert.match(opportunities,/<td[^>]*><b[^>]*>BBB<\/b>/,'The Buy-rated but blocked BBB remains visible in Watch');
+  assert.match(opportunities,/<article[^>]*class="[^"]*idea green/,'A verified C1 rating remains visible even when cash blocks purchase');
+  assert.match(opportunities,/<h3[^>]*>BBB<\/h3>/,'Cash-blocked BBB retains its verified C1 Buy rating');
+  assert.doesNotMatch(opportunities,/<td[^>]*><b[^>]*>BBB<\/b>/,'The verified Buy-rated BBB is not mislabeled Watch');
   assert.match(opportunities,/available brokerage cash is insufficient for a new purchase\./);
   assert.match(opportunities,/aria-label="Watch opportunities"/);assert.match(opportunities,/<b[^>]*>CCC<\/b>/,'Existing Watch analysis remains visible');
   assert.doesNotMatch(opportunities,/currently ineligible|(?:buy|add) \d+ shares?/i);
@@ -142,7 +142,7 @@ async function main(){
  }
  const oldAccount={...decision,brokerageCash:null,executableCash:0,brokerageCashCurrent:false,brokerageCashReason:'Enter current brokerage cash.'};
  const oldHtml=renderToStaticMarkup(React.createElement(Opportunities,{decision:oldAccount,screenRows,screenCurrent:true}));
- assert.match(oldHtml,/Schwab cash available to trade: Not entered/);assert.doesNotMatch(oldHtml,/<h3[^>]*>BBB<\/h3>/);assert.match(oldHtml,/<td[^>]*><b[^>]*>BBB<\/b>/);assert.doesNotMatch(oldHtml,/(?:buy|add) \d+ shares?/i,'Missing brokerage cash cannot authorize a checked purchase quantity');assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Enter current brokerage cash\./);
+ assert.match(oldHtml,/Schwab cash available to trade: Not entered/);assert.match(oldHtml,/<h3[^>]*>BBB<\/h3>/);assert.doesNotMatch(oldHtml,/<td[^>]*><b[^>]*>BBB<\/b>/);assert.doesNotMatch(oldHtml,/(?:buy|add) \d+ shares?/i,'Missing brokerage cash cannot authorize a checked purchase quantity');assert.match(oldHtml,/Watch opportunities/);assert.match(oldHtml,/Enter current brokerage cash\./);
  await exerciseCashEditor(decision);
  console.log('PASS: compact cash summary reveals the unchanged editor, collapses only after successful save, preserves disabled/error/freshness status, and retains Buy/Watch analysis and checked exits without authorizing purchases.');
 }
