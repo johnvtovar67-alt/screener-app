@@ -110,9 +110,10 @@ async function main(){
  assert.equal(decision.positions[0].reason,'Momentum rank #4; original account holding explanation.','The original account explanation remains unchanged');
  assert.match(heldRow,/96\.0\/100/);assert.match(heldRow,/\$100\.00/,'The original score and signal price remain readable');
  assert.match(html,/<td>4<\/td><td><b>VLO<\/b>/);assert.match(html,/<td>5<\/td><td><b>ILMN<\/b>/,'Held identity does not consume an independent Watch priority');
- equal([...html.matchAll(/<h3>([^<]+)<\/h3>/g)].map(match=>match[1]),[],'Without checked orders no green opportunities are rendered');
+ equal([...html.matchAll(/<h3>([^<]+)<\/h3>/g)].map(match=>match[1]),['MRNA','HPE','MPC'],'Verified Buy ratings must render even without checked orders');
+ assert.doesNotMatch(html,/(?:Buy|Add) \d+ shares?/,'Ratings cannot manufacture executable quantities');
  const watchSymbols=markup=>[...markup.slice(markup.indexOf('aria-label="Watch opportunities"')).matchAll(/<tr><td>[^<]+<\/td><td><b>([^<]+)<\/b>/g)].map(match=>match[1]);
- equal(watchSymbols(html),['MRNA','HPE','MPC','DELL','VLO','ILMN','AAA','BBB','CCC'],'The original Watch table preserves accepted membership and order');
+ equal(watchSymbols(html),['DELL','VLO','ILMN','AAA','BBB','CCC'],'Watch excludes independently verified Buy ratings');
  const assertPaused=markup=>{
   equal([...markup.matchAll(/<h3>([^<]+)<\/h3>/g)].map(match=>match[1]),[],'Pending evidence renders no actionable opportunity tiles');
   for(const symbol of first.buySymbols)assert.doesNotMatch(markup,new RegExp('<h3>'+symbol+'<\\/h3>'),'Unverified stocks cannot have green cards');
