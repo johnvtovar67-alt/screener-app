@@ -18,6 +18,17 @@ for(const [file,labels,hash] of [
  let source=fs.readFileSync(file,'utf8').replace("<h2>{portfolioOnly?'Portfolio Action':'Opportunities'}</h2>","<h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>").replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
  if(file==='pages/index.js')for(const [before,after] of require('./c1-opening-refresh-ui-seams.cjs')){assert.equal(source.split(after).length,2);source=source.replace(after,before);}
  if(file==='components/C1AccountOpportunities.js'){
+  // Reverse only the independently authorized rating-presentation seam before
+  // asserting the original frozen deployed source hash.
+  source=source.replace(' const ratedTiles=evidence.verified?presentation.tiles:[];\n','');
+  source=source.replace('const actionableTiles=ratedTiles.filter','const actionableTiles=presentation.tiles.filter');
+  source=source.replace('!ratedTiles.includes(tile)','!actionableTiles.includes(tile)');
+  source=source.replace('let nextWatchPriority=ratedTiles.length;','let nextWatchPriority=actionableTiles.length;');
+  source=source.replace('ratedTiles.length>0','actionableTiles.length>0');
+  source=source.replace('ratedTiles.map(tile=>','actionableTiles.map(tile=>');
+  source=source.replace('  {!portfolioOnly&&ratedTiles.length>0&&!ready?<p role="status">{waitingReason}</p>:null}\n','');
+  source=source.replace('Account purchase status — separate from C1 rating','Your next action');
+  source=source.replace("held?.label||tile.rating","held?.label||(canPurchase?tile.rating:'NO PURCHASE')");
   const current="{!ready&&<span> {waitingReason}</span>}",prior="{!ready&&<span> {openingError?'Opening checks unavailable: '+openingError:c1PlainDecisionReason({action:'NO PURCHASE',reason:waitingReason})}</span>}";
   assert.equal(source.split(current).length,2);source=source.replace(current,prior);
  }
