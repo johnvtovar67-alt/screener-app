@@ -110,7 +110,7 @@ try{
  assert.match(staleReason.tiles[0].detail,/earlier Eastern date/,'Current freshness status takes priority over a prior quantity cash review');
  const mrna=render(mrnaProps);
  assert.match(mrna,/100\.0\/100/);assert.match(mrna,/Strong Buy rating/);
- assert.doesNotMatch(section(mrna,'C1 account opportunities'),/<article/,'MRNA score and rating cannot create an executable order');
+ assert.match(section(mrna,'C1 account opportunities'),/<h3>MRNA<\/h3>/,'Verified MRNA rating is visible without an executable order');assert.doesNotMatch(section(mrna,'C1 account opportunities'),/Buy \d+ shares|Add \d+ shares/,'MRNA rating cannot create an executable order');
  if(process.env.C1_PRESENTATION_RENDER_DIR){
   fs.mkdirSync(process.env.C1_PRESENTATION_RENDER_DIR,{recursive:true});
   fs.writeFileSync(path.join(process.env.C1_PRESENTATION_RENDER_DIR,'opportunities.html'),renderRaw(mrnaProps));
