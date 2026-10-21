@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     console.info('[c1-acceptance]', JSON.stringify(report));
     return res.status(200).json(report);
   } catch (error) {
-    console.error('[c1-acceptance]', JSON.stringify({ status: 'failed', reason: error?.message || 'unknown' }));
+    console.error('[c1-acceptance]', JSON.stringify({ status: 'failed', evidenceAvailable: false }));
     return res.status(503).json({ error: 'Accepted index evidence unavailable' });
   }
 }
