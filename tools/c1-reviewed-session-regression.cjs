@@ -88,6 +88,32 @@ const transition=reconcile(priorTwo,transitionInput,new Date(observedAt),digest,
 assert.equal(transition.audit.confirmationCount,1);assert.equal(transition.audit.correctedPrices.length,2);
 assert.equal(transition.audit.correctedPrices.find(row=>row.symbol==='BBB').close,50);
 
+// Stress-test a 504-symbol provider finalization without relaxing economic parity.
+// All records are derived fixtures; production archive contents are not assumed.
+const manyPrices=Array.from({length:504},(_,i)=>({symbol:'T'+String(i).padStart(3,'0'),date:'2026-09-20',open:100,high:102,low:98,close:100,volume:1000}));
+const manyContent={...priorContent,model:{...priorModel,sessions:[{date:'2026-09-20',prices:manyPrices}]}};
+const manyPrior={...manyContent,recordHash:digest(manyContent)};
+const manyRows=manyPrices.map((p,i)=>({symbol:p.symbol,date:p.date,adjOpen:p.open,adjHigh:p.high,adjLow:p.low,
+ adjClose:i<287?99.89:99.99,volume:p.volume+1}));
+const manyInput={...input,priorSessionPrices:{date:'2026-09-20',closes:Object.fromEntries(manyRows.map(r=>[r.symbol,r.adjClose]))},
+ priceEvidence:{...input.priceEvidence,rows:manyRows}};
+const manyObservation=(at,hash)=>({observedAt:at,observationHash:hash,payload:{...manyInput,observedAt:at}});
+const manyObservations=[manyObservation('2026-09-21T21:58:00.000Z','6'.repeat(64)),
+ manyObservation(observedAt,'7'.repeat(64))];
+const manyResult=reconcile(manyPrior,manyInput,new Date(observedAt),digest,advance,manyObservations);
+assert.equal(manyResult.audit.confirmationCount,504);
+assert.equal(manyResult.audit.mismatches.length,504);
+assert.equal(manyResult.audit.deferredRevisionCount,0);
+assert.equal(manyResult.audit.originalInputsPreserved,true);
+assert.equal(manyResult.audit.identicalModelEconomics,true);
+assert.equal(manyPrior.model.sessions[0].prices[0].close,100);
+assert.throws(()=>reconcile(manyPrior,manyInput,new Date(observedAt),digest,advance,manyObservations.slice(1)),
+ error=>error.providerRevisionDiagnostic?.stage==='confirmation'&&error.providerRevisionDiagnostic.unconfirmedCount===504);
+assert.throws(()=>reconcile(manyPrior,manyInput,new Date(observedAt),digest,model=>{
+ const result=advance(model);if(model.sessions[0].prices[0].close!==100)return {...result,ledger:{...result.ledger,fills:[{symbol:'T000'}]}};
+ return result;
+},manyObservations),/parity/);
+
 const automaticAudit=automatic.audit,automaticBook={reconciliations:[automaticAudit],captures:[{sessionDate:'2026-09-21',observedAt}],
  model:{sessions:[previous,{date:'2026-09-21',prices:[{symbol:'AAA',close:102}]}]}};
 const automaticAccount={adoption:{sourceSessionDate:'2026-09-19',seeds:{}},records:[],positionContext:{}};
