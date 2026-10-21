@@ -80,7 +80,10 @@ async function main(){
   assert.equal(resolveC1ScreenEvidence({decision,...input,previous:first,reviewCurrent:true}).pending,true,'Server review cannot bypass incomplete browser evidence');
  }
  const unverified=structuredClone(rows);unverified[0].expertDecision.metrics.quoteFreshnessPass=false;
- assert.equal(resolveC1ScreenEvidence({decision,rows:unverified,current:true,previous:first,reviewCurrent:true}).pending,true);
+ const independentlyReviewed=resolveC1ScreenEvidence({decision,rows:unverified,current:true,previous:first,reviewCurrent:true});
+ assert.equal(independentlyReviewed.pending,false,'A failed individual quote does not freeze the complete independently reviewed screen');
+ assert(!independentlyReviewed.buySymbols.includes('MRNA'),'Unverified candidate remains blocked');
+ assert(independentlyReviewed.buySymbols.length>0,'Independently verified candidates can be selected after server review');
  writeC1ScreenEvidence(storage,first);
  equal(resolveC1ScreenEvidence({decision:{...decision,decisionId:'accepted-hash:2'},rows,current:true,previous:first}).ratings,first.ratings,'Cash/account revisions do not replace source identity');
  const revised={...decision,decisionId:'new-accepted-hash:2',stockScreen:structuredClone(snapshot)};revised.stockScreen.candidates[0].sourcePrice=90;
