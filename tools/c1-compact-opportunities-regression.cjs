@@ -60,27 +60,27 @@ try{
  assert.match(article(rawMain,'MPC'),/class="[^"]*pill yellow[^"]*"[^>]*>HOLD</,'The current Hold status remains distinct from its checked Add proposal');
  for(const symbol of ['BBB','MPC']){
   const rawCard=article(rawMain,symbol),plan=rawCard.match(/class="[^"]*\bplan\b[^"]*">([\s\S]*?)<\/div>/)?.[1]||'';
-  assert.match(plan,/<small[^>]*>Your next action<\/small>/,'The original next-action label remains in its original slot');
+  assert.match(plan,/<small[^>]*>Account purchase status — separate from C1 rating<\/small>/,'The original next-action label remains in its original slot');
   if(symbol!=='CCC')assert.match(plan,/opening reference \$100\.00/,'Cards retain the exact checked execution reference');
   const sentence=plan.match(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/)?.[1]||'';
   assert.equal((sentence.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each decision reason is one sentence');
   assert.doesNotMatch(sentence,/MACD|histogram|confirmation|top[- ](?:six|nine)|rank #|1\/3\/5|bps|cooldown|\d+[- ]session/i,'Technical calculations and rules remain internal');
  }
- assert.match(watch,/<b>CCC<\/b>/,'Blocked Buy stays visible in Watch');
- assert.doesNotMatch(main,/<h3>CCC<\/h3>/,'Blocked Buy has no green card');
+ assert.doesNotMatch(watch,/<b>CCC<\/b>/,'Verified Buy with blocked purchase stays in Buy ratings, not Watch');
+ assert.match(main,/<h3>CCC<\/h3>/,'Verified Buy remains visible without an authorized purchase');
  assert.equal((article(main,'MPC').match(/>HOLD</g)||[]).length,1,'The holding action is not duplicated inside its reason');
  assert.match(watch,/<th>Priority<\/th><th>Stock \/ Sector<\/th><th>Momentum score<\/th><th>Signal closing price<\/th><th>Entry check<\/th>/,'The original five-column Watch table is restored');
- assert.match(watch,/<td>4<\/td><td><b>DDD<\/b>/,'The original independent Watch priority is retained');
+ assert.match(watch,/<td>1<\/td><td><b>DDD<\/b>/,'Watch priority starts after separating verified Buy ratings');
  assert.doesNotMatch(watch,/<article|BUY \d+ shares/,'Watch remains a separate table without purchase instructions');
  assert.doesNotMatch(main+watch,/<details|Recent momentum<\/h4>|compactReason/,'The rejected rebuilt card/details layout is absent');
  const noOrders={...plan,orders:[]},noReview=buildC1ManualRecommendations({decision,openingPlan:noOrders});
  const paused=render({openingPlan:noOrders,manualRecommendations:noReview});
  assert.doesNotMatch(paused,/Buy 2 shares|Add 1 share/,'A ranking alone cannot create an executable quantity');
  // Rating, authorization and cash explanations are independent presentation concerns.
- assert.match(paused,/No purchases currently authorized\./);
+ assert.match(paused,/Account purchase status — separate from C1 rating/);
  assert.doesNotMatch(paused,/No C1 Buy ratings|Candidates awaiting a C1 Buy rating/);
  assert.match(paused,/Includes blocked Buy-rated candidates/);
- assert.match(section(paused,'Watch opportunities'),/Strong Buy rating/,'Blocked candidates retain their investment rating');
+ assert.match(section(paused,'C1 account opportunities'),/Strong Buy rating/,'Verified candidates retain their investment rating');
  const {c1CashAvailability}=loader.load('lib/c1BrokerageCash.js');
  const {c1OpportunityPresentation}=loader.load('lib/c1EntryReview.js');
  for(const [name,balance,observedAt,strategyCash,reasons,expected] of [
