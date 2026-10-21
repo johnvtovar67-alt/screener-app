@@ -44,10 +44,10 @@ const opportunityCss=opportunities.match(/<style jsx>\{`([\s\S]*?)`}\s*<\/style>
 assert.ok(opportunityCss,'The historical account Opportunities stylesheet must exist');
 exact('Historical account Opportunities CSS',opportunityCss,'1040a44e51ecf2f74a26094a5a4f398cd6940b04cd562a15f161e61e8357ba46');
 // The owner-authorized eligibility repair changes Watch composition, not the pinned styles or portfolio layout.
-assert.ok(opportunities.includes('const actionableTiles=presentation.tiles.filter'),'Only authorized actions become green tiles');
-assert.ok(opportunities.includes('const watch=[...blockedTiles,...presentation.watch]'),'Blocked candidates remain in Watch');
+assert.ok(opportunities.includes('const ratedTiles=evidence.verified?presentation.tiles:[]'),'Only verified ratings become green tiles');
+assert.ok(opportunities.includes('const watch=[...blockedTiles,...presentation.watch]'),'Watch candidates retain their original table');
 exact('Current Home data and account handlers retained from 0a5ceab',between(page,'export default function Home(','  function momentumEvidenceFor(s){'),'15025cba43bbc0e8aeecc5f14260ca8986fad2feb70bdd129e8ebadf54484c94');
-assert.ok(opportunities.includes("actionableTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className=\"idea green\" key={tile.symbol}>"),'Every ranked Opportunities card retains the literal historical green frame while current purchase eligibility remains separately checked');
+assert.ok(opportunities.includes("ratedTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);return <article className=\"idea green\" key={tile.symbol}>"),'Every ranked Opportunities card retains the literal historical green frame while current purchase eligibility remains separately checked');
 assert.ok(opportunities.includes('<th>Priority</th><th>Stock / Sector</th><th>Momentum score</th><th>Signal closing price</th><th>Entry check</th>'),'The original independent five-column Watch table must exist');
 assert.doesNotMatch(page+opportunities,/C1PositionDetails|c1DisplayFormat|opportunityCard|compactReason/,'The superseded rebuilt display components cannot re-enter the historical layout');
 

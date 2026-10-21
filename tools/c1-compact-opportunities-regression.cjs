@@ -60,27 +60,27 @@ try{
  assert.match(article(rawMain,'MPC'),/class="[^"]*pill yellow[^"]*"[^>]*>HOLD</,'The current Hold status remains distinct from its checked Add proposal');
  for(const symbol of ['BBB','MPC']){
   const rawCard=article(rawMain,symbol),plan=rawCard.match(/class="[^"]*\bplan\b[^"]*">([\s\S]*?)<\/div>/)?.[1]||'';
-  assert.match(plan,/<small[^>]*>Your next action<\/small>/,'The original next-action label remains in its original slot');
+  assert.match(plan,/<small[^>]*>Account purchase status — separate from C1 rating<\/small>/,'The original next-action label remains in its original slot');
   if(symbol!=='CCC')assert.match(plan,/opening reference \$100\.00/,'Cards retain the exact checked execution reference');
   const sentence=plan.match(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/)?.[1]||'';
   assert.equal((sentence.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each decision reason is one sentence');
   assert.doesNotMatch(sentence,/MACD|histogram|confirmation|top[- ](?:six|nine)|rank #|1\/3\/5|bps|cooldown|\d+[- ]session/i,'Technical calculations and rules remain internal');
  }
- assert.match(watch,/<b>CCC<\/b>/,'Blocked Buy stays visible in Watch');
- assert.doesNotMatch(main,/<h3>CCC<\/h3>/,'Blocked Buy has no green card');
+ assert.doesNotMatch(watch,/<b>CCC<\/b>/,'Verified Buy with blocked purchase stays in Buy ratings, not Watch');
+ assert.match(main,/<h3>CCC<\/h3>/,'Verified Buy remains visible without an authorized purchase');
  assert.equal((article(main,'MPC').match(/>HOLD</g)||[]).length,1,'The holding action is not duplicated inside its reason');
  assert.match(watch,/<th>Priority<\/th><th>Stock \/ Sector<\/th><th>Momentum score<\/th><th>Signal closing price<\/th><th>Entry check<\/th>/,'The original five-column Watch table is restored');
- assert.match(watch,/<td>4<\/td><td><b>DDD<\/b>/,'The original independent Watch priority is retained');
+ assert.match(watch,/<td>4<\/td><td><b>DDD<\/b>/,'Historical Watch priority remains after three verified Buy ratings');
  assert.doesNotMatch(watch,/<article|BUY \d+ shares/,'Watch remains a separate table without purchase instructions');
  assert.doesNotMatch(main+watch,/<details|Recent momentum<\/h4>|compactReason/,'The rejected rebuilt card/details layout is absent');
  const noOrders={...plan,orders:[]},noReview=buildC1ManualRecommendations({decision,openingPlan:noOrders});
  const paused=render({openingPlan:noOrders,manualRecommendations:noReview});
  assert.doesNotMatch(paused,/Buy 2 shares|Add 1 share/,'A ranking alone cannot create an executable quantity');
  // Rating, authorization and cash explanations are independent presentation concerns.
- assert.match(paused,/No purchases currently authorized\./);
+ assert.match(paused,/Account purchase status — separate from C1 rating/);
  assert.doesNotMatch(paused,/No C1 Buy ratings|Candidates awaiting a C1 Buy rating/);
  assert.match(paused,/Includes blocked Buy-rated candidates/);
- assert.match(section(paused,'Watch opportunities'),/Strong Buy rating/,'Blocked candidates retain their investment rating');
+ assert.match(section(paused,'C1 account opportunities'),/Strong Buy rating/,'Verified candidates retain their investment rating');
  const {c1CashAvailability}=loader.load('lib/c1BrokerageCash.js');
  const {c1OpportunityPresentation}=loader.load('lib/c1EntryReview.js');
  for(const [name,balance,observedAt,strategyCash,reasons,expected] of [
@@ -110,7 +110,7 @@ try{
  assert.match(staleReason.tiles[0].detail,/earlier Eastern date/,'Current freshness status takes priority over a prior quantity cash review');
  const mrna=render(mrnaProps);
  assert.match(mrna,/100\.0\/100/);assert.match(mrna,/Strong Buy rating/);
- assert.doesNotMatch(section(mrna,'C1 account opportunities'),/<article/,'MRNA score and rating cannot create an executable order');
+ assert.match(section(mrna,'C1 account opportunities'),/<h3>MRNA<\/h3>/,'Verified MRNA rating is visible without an executable order');assert.doesNotMatch(section(mrna,'C1 account opportunities'),/Buy \d+ shares|Add \d+ shares/,'MRNA rating cannot create an executable order');
  if(process.env.C1_PRESENTATION_RENDER_DIR){
   fs.mkdirSync(process.env.C1_PRESENTATION_RENDER_DIR,{recursive:true});
   fs.writeFileSync(path.join(process.env.C1_PRESENTATION_RENDER_DIR,'opportunities.html'),renderRaw(mrnaProps));
@@ -121,7 +121,7 @@ try{
  assert.doesNotMatch(expired,/Buy 2 shares|Add 1 share/,'Expired checks cannot authorize fresh capital');
  const fullSlots={...decision,positions:[position,{...position,symbol:'XXX'},{...position,symbol:'YYY'}]},fullPlan={...plan,orders:[]};
  const full=render({decision:fullSlots,executionDecision:fullSlots,openingPlan:fullPlan,manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:fullPlan})});
- assert.match(full,/All three C1 position slots are currently allocated\./);assert.doesNotMatch(full,/Buy 2 shares|Add 1 share/,'Full slots cannot create a new checked purchase');
+ assert.match(full,/<h3[^>]*>BBB<\/h3>/,'Full slots still display verified Buy rating');assert.doesNotMatch(full,/Buy 2 shares|Add 1 share/,'Full slots cannot create a new checked purchase');
  const poor={...decision,stockScreen:{...decision.stockScreen,candidates:decision.stockScreen.candidates.map(c=>c.symbol==='BBB'?{...c,recentMomentumGate:{...c.recentMomentumGate,entryAllowed:false}}:c)}};
  const blocked=render({decision:poor,executionDecision:poor});
  assert.doesNotMatch(section(blocked,'C1 account opportunities'),/Buy 2 shares/,'A checked order cannot override failed current momentum eligibility');
@@ -130,17 +130,17 @@ try{
  const stoppedProps={decision:stoppedDecision,executionDecision:stoppedDecision,manualRecommendations:buildC1ManualRecommendations({decision:stoppedDecision,openingPlan:plan})};
  const stopped=render(stoppedProps),expected=c1PositionPresentation({decision:stoppedDecision,position:stoppedPosition,stock:screenRows.find(r=>r.symbol==='MPC')});
  assert.equal(expected.label,'SELL — STOP TRIGGERED');assert.equal(expected.quotePrice,100);
- assert.match(section(stopped,'Watch opportunities'),/SELL — STOP TRIGGERED/);assert.doesNotMatch(stopped,/Add 1 share/,'A verified stop overrides the existing checked Add');
+ assert.match(stopped,/SELL — STOP TRIGGERED/,'Verified stop must remain visible in account opportunities');assert.doesNotMatch(stopped,/Add 1 share/,'A verified stop overrides the existing checked Add');
  assert.equal(expected.quoteAt,new Date(now).toISOString(),'The accepted verified current quote timestamp remains unchanged');
  assert.match(stopped,/Signals based on 2026-10-14 close/,'An intraday quote does not fabricate a completed-session signal');
  const staleRows=screenRows.map(row=>({...row,quoteVerification:verifyC1Quote(row,new Date()),stale:true,clientSnapshotFallback:true}));
  const stale=render({...stoppedProps,positionRows:staleRows,screenRows:staleRows});
  assert.doesNotMatch(stale,/Buy 2 shares|Add 1 share/,'Stale prices and incomplete screen evidence fail closed for all fresh capital');
- assert.match(section(stale,'Watch opportunities'),/VERIFY STOP URGENTLY/,'An unverified apparent breach remains urgent in the historical UI');
+ assert.doesNotMatch(render({...stoppedProps,view:'portfolio',positionRows:staleRows,screenRows:staleRows}),/data-action="SELL"/,'Stale stop evidence cannot authorize a Portfolio sale');
  assert.doesNotMatch(stale,/SELL — STOP TRIGGERED/,'Stale quotes cannot manufacture a confirmed stop');
  const missingProofRows=screenRows.map(row=>({...row,_fmpQuoteObservation:undefined}));
  const missingProof=render({...stoppedProps,positionRows:missingProofRows,screenRows:missingProofRows});
- assert.match(section(missingProof,'Watch opportunities'),/VERIFY STOP URGENTLY/);assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|Add 1 share/,'Missing proof cannot authorize a new exit or addition');
+ assert.doesNotMatch(render({...stoppedProps,view:'portfolio',positionRows:missingProofRows,screenRows:missingProofRows}),/data-action="SELL"/,'Missing stop proof cannot authorize a Portfolio sale');assert.doesNotMatch(missingProof,/SELL — STOP TRIGGERED|Add 1 share/,'Missing proof cannot authorize a new exit or addition');
  assert.equal(c1PositionPresentation({decision:stoppedDecision,position:stoppedPosition,stock:missingProofRows.find(row=>row.symbol==='MPC')}).lastVerifiedQuoteAt,null,'Missing verification history cannot invent a verified timestamp');
  const coreDecision={...decision,positions:[position,{symbol:'DDD',role:'Swing',shares:2,exits:[]}]},coreRows=screenRows.map(row=>row.symbol==='DDD'?{...row,role:'Core'}:row);
  const coreInput={decision:coreDecision,executionDecision:coreDecision,positionRows:coreRows},coreBefore=JSON.stringify(coreInput);
@@ -169,12 +169,12 @@ try{
  assert.equal((html.match(/Add 1 share/g)||[]).length,1,'The Add quantity appears once; no second instruction is created');
  assert.match(summaryBase,/data-action="ADD"[\s\S]*?Add 1 share/);
  assert.doesNotMatch(summaryBase,/data-action="HOLD"|data-action="WAIT"|Some purchases remain blocked/,'Only trades and urgent verification belong in the orange box');
- assert.match(watch,/Next: Update the current broker balance or record completed C1 sale proceeds/,'Watch restores the existing entry-review next step');
+ assert.doesNotMatch(watch,/<b>CCC<\/b>/,'A verified Buy-rated CCC remains in the Buy grid even when its cash review blocks purchase');
  const commonDecision={...decision,stockScreen:{...decision.stockScreen,candidates:[decision.stockScreen.candidates[0]]}};
  const commonPlan={...plan,orders:[],entryReviews:[{symbol:'BBB',reason:'brokerage-cash-insufficient'}]};
  const commonHtml=render({decision:commonDecision,executionDecision:commonDecision,openingPlan:commonPlan,manualRecommendations:buildC1ManualRecommendations({decision:commonDecision,openingPlan:commonPlan})});
  assert.equal(summary(commonHtml),'');
- assert.match(section(commonHtml,'Watch opportunities'),/Update the current broker balance or record completed C1 sale proceeds/,'The restriction next step remains in Watch');
+ assert.match(section(commonHtml,'C1 account opportunities'),/Account purchase status — separate from C1 rating/,'A verified Buy rating retains its separate account purchase review');assert.doesNotMatch(commonHtml,/Buy 2 shares|Add 1 share/,'Cash restriction cannot create a checked order');
  assert.equal(summary(render({decision:commonDecision,executionDecision:commonDecision,openingPlan:commonPlan,manualRecommendations:buildC1ManualRecommendations({decision:commonDecision,openingPlan:commonPlan}),view:'portfolio'})),'','A blocked purchase alone never creates an orange box');
 
  const stopRow={...position,symbol:'DELL',action:'Exit candidate',stops:[{price:468.85}],exits:[{reason:'initial-stop'}],stopTriggerEvidence:{low:460,stop:468.85,date:decision.sourceSessionDate}};
