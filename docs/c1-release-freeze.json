@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "75ec268e24388d4ff98d58dffc0d75960a7464bd",
+    "components/C1AccountOpportunities.js": "3ca740abb277b2e713d853123847f12d9b3d2c3e",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -28,7 +28,7 @@
     "lib/c1BaselineRevisionReview.js": "df1c7ae8cc6a28a43ad7c80a5f88df0c3c180179",
     "lib/c1CapitalState.js": "cae7bb59a23cb3e998007e8b6a25235f44087a73",
     "lib/c1CombinedPortfolio.js": "62aefc81c2e547261a27f9afe963e1ba3b556708",
-    "lib/c1DatedBook.js": "e4aa996f80408d7bc2003ec8dda990ec4503c285",
+    "lib/c1DatedBook.js": "546fde62e98e5d3ba8efa256f46a00020fc2e9f4",
     "lib/c1DatedBookStore.js": "30657fde15ff952c8fb99e6737f555d7670c4cb9",
     "lib/c1DecisionSnapshot.js": "f3bb48d743b38f324f73aa77f7c2522f0853f5d8",
     "lib/c1ExecutionAdapter.js": "1642369d833dd91dc7985b8e3de3ab69e7b973ca",
@@ -43,7 +43,7 @@
     "lib/c1HoldingRisk.js": "e116607f97be43bcfa168e2c502f809350280513",
     "lib/c1HoldingsComparison.js": "57e4c921cf977a97ee81982da661b5678eb28582",
     "lib/c1IndexLifecycle.js": "4f065ee3b8f8a7b8a0cefcdb7d17dbd2af5931b1",
-    "lib/c1IndexObservationStore.js": "f09f7cde27fdf4c5e3858b36145a54fe30bc01a3",
+    "lib/c1IndexObservationStore.js": "f45790e3f10b2a1f5c3c9f0c640fc1dcc23eee7d",
     "lib/c1InputArchive.js": "704beba7016268c1d77d36c23198b7d4df175eee",
     "lib/c1LegacyCapitalAdoption.js": "43fad6d25fc6e0e869944eecb197d3927acf4eaf",
     "lib/c1LiveInput.js": "e0b3a53b692e4c3240b67948a37bc5c2da3887db",
@@ -185,7 +185,7 @@
     "lib/c1ExecutionCashAuthority.js": "5a6790cafdde9b857c4b544efea6c5b283c5ac22",
     "lib/top5Diagnostics.js": "8c9aff62a852ac7204ee8538eb2a4f323bdab51d",
     "lib/top5Response.js": "1be53ba835d5f1ca36f9b3fc569ef536b3cf57b9",
-    "lib/c1ScreenEvidence.js": "b3a0a04a1fc4e51d4807bf762e758c3bb767f7b3",
+    "lib/c1ScreenEvidence.js": "4658d7c51929264525c533cd9496b5327043857a",
     "lib/c1LegacyAccountSimulator.js": "a658e4b713ca7c6387259a43a0c752b83a278270",
     "lib/c1LegacyOrderIdentity.js": "f1c601ae0ed00fc1e0ced33178d3bfb9c17455ee",
     "lib/c1LegacyAccountSeed.js": "648bb54f208a4004fcc38d5d5d74e7105b0abf9d",
@@ -205,7 +205,8 @@
     "components/C1NonCashAdoption.js": "4decfe49c34145953205b153b10de16f210fd7c2",
     "lib/c1NonCashPortfolio.js": "39d9e323a0d53701510c39a46486002e2b6a6eca",
     "lib/c1NonCashAdoptionReview.js": "e18c4759dbe49308906f908c438866bbe55997b7",
-    "lib/c1HoldPill.js": "20b7b3ab98258be1b4cc5e776d4bc499d3e34d77"
+    "lib/c1HoldPill.js": "20b7b3ab98258be1b4cc5e776d4bc499d3e34d77",
+    "pages/api/ops/c1-acceptance.js": "40bf2b6c801c7e8ed71eaa296b10dbc880aff964"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
@@ -252,5 +253,6 @@
   "heldRankSectorDisplayAuthorization": "Owner explicitly authorized repair of PR #289 VEEV verified rank-counter and sector-display presentation on October 19, 2026, and subsequent isolated CI repairs. Only pages/index.js application hash is updated to match the reviewed read-only presentation change; trading rules, guard code, build hooks, account history and risk checks remain unchanged. PR #289 must not be merged or deployed without separate approval.",
   "opportunitiesRefreshRecoveryAuthorization": "Owner requests Opportunities to update on October 20, 2026 after a persistent entry-verification pause. Repair the reproduced browser-continuity deadlock only: allow a changed selection to be published when complete current screen evidence and the existing independent current account/opening review both pass. Keep missing/stale evidence blocked and require each visible Buy/Add to match an unchanged checked server order. Only lib/c1ScreenEvidence.js and components/C1AccountOpportunities.js application hashes change. Strategy, ranking/classifier, sizing, cash, ownership, fills, server authority, guard implementation and build hooks remain unchanged. See docs/operations/c1-opportunities-refresh-recovery-20261020.md.",
   "mobileEntryDiagnosticsAuthorization": "Owner reports persistent mobile entry-verification pause after PR 291 and requests completion of tracing and exposing the exact failing check. Add read-only diagnostic details for the existing screen checks and independent opening/manual-review reason without changing any gate or trading behavior. Only lib/c1ScreenEvidence.js and components/C1AccountOpportunities.js application hashes change. HOLD test reverses only the exact new diagnostic JSX while preserving its historical hash. Guard code/build hooks and all account/cash/strategy behavior remain unchanged. See docs/operations/c1-mobile-entry-verification-details-20261020.md.",
-  "openingRefreshCompletionAuthorization": "Owner requests completion of persistent mobile Opportunities refresh repair. Fix reproduced premature refresh completion by awaiting the existing parallel opening review before clearing Reload/stamping completion; retain immediate screen/holding publication. Display unabridged account-review waiting reason and explicitly reject changed-account opening response. No trading or account behavior changes. Only pages/index.js and components/C1AccountOpportunities.js application hashes change. Exact enumerated source reversals preserve original historical hashes; guard/build hooks unchanged. See docs/operations/c1-opening-refresh-completion-20261020.md."
+  "openingRefreshCompletionAuthorization": "Owner requests completion of persistent mobile Opportunities refresh repair. Fix reproduced premature refresh completion by awaiting the existing parallel opening review before clearing Reload/stamping completion; retain immediate screen/holding publication. Display unabridged account-review waiting reason and explicitly reject changed-account opening response. No trading or account behavior changes. Only pages/index.js and components/C1AccountOpportunities.js application hashes change. Exact enumerated source reversals preserve original historical hashes; guard/build hooks unchanged. See docs/operations/c1-opening-refresh-completion-20261020.md.",
+  "systemStabilityRepairAuthorization": "Owner explicitly authorized C1 system-stability repair on October 21, 2026, including safe FMP ingestion and append-only revision reconciliation, timestamped verified ratings during outages, independent fail-closed trading safeguards, full integration/mobile verification and deployment only after release gates. PR #296 documents the production incident and acceptance criteria. The only current application change is lib/c1IndexObservationStore.js (bounded pagination of immutable observation recovery beyond 100 records). lib/c1IndexLifecycle.js was restored byte-identical to main after brokerage-rule-parity CI correctly rejected even a comment-only change. No ranking, ownership, account history, or execution rule changes; release-freeze checker remains unchanged. CI and live acceptance remain required. Verified screen evidence cache now records sourceSessionDate when supplied; existing read eligibility and trading checks remain unchanged. Full dated fallback across changed decision snapshots is not yet implemented. Verified screen evidence now derives the cached sourceSessionDate from the accepted screen snapshot, not caller input. This does not yet provide cross-snapshot fallback or trading authority. Owner explicitly requested on October 21 a read-only acceptance endpoint for the real stored index record and reconciliation audit, with CI and authorized deployment verification. pages/api/ops/c1-acceptance.js adds CRON_SECRET-gated non-trading diagnostics; the freeze manifest includes only its exact Git blob SHA. No existing application hash, release guard, strategy, accounting or UI logic changed. Private-account parity and Opportunities freshness remain explicitly unverified until independently established."
 }

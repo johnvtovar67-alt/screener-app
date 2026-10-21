@@ -1,5 +1,5 @@
 import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';
-import {c1ScreenEvidenceKey,readC1ScreenEvidence,writeC1ScreenEvidence,resolveC1ScreenEvidence} from '../lib/c1ScreenEvidence';
+import {c1ScreenEvidenceKey,readC1ScreenEvidence,readC1HistoricalScreenEvidence,writeC1ScreenEvidence,resolveC1ScreenEvidence} from '../lib/c1ScreenEvidence';
 import {c1WatchPresentation,c1OpportunityPresentation} from '../lib/c1EntryReview';
 import {useEffect,useRef,useState} from 'react';
 import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
@@ -17,10 +17,12 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  const lastVerified=useRef(null);
  const sourceKey=c1ScreenEvidenceKey(decision);
  const [restored,setRestored]=useState({key:null,value:null});
+ const [historical,setHistorical]=useState(null);
  const cacheReady=typeof window==='undefined'||restored.key===sourceKey;
- useEffect(()=>{if(typeof window!=='undefined'){let value=null;try{value=readC1ScreenEvidence(window.localStorage,decision);}catch{}setRestored({key:sourceKey,value});}},[sourceKey]);
+ useEffect(()=>{if(typeof window!=='undefined'){let value=null;try{value=readC1ScreenEvidence(window.localStorage,decision);}catch{}setRestored({key:sourceKey,value});setHistorical(readC1HistoricalScreenEvidence(window.localStorage));}},[sourceKey]);
  const evidence=resolveC1ScreenEvidence({decision,rows:screenRows,current:screenCurrent&&cacheReady,previous:lastVerified.current?.key===sourceKey?lastVerified.current:restored.value,reviewCurrent:Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,executionDecision)});
  useEffect(()=>{if(evidence.verified){lastVerified.current=evidence;if(typeof window!=='undefined')try{writeC1ScreenEvidence(window.localStorage,evidence);}catch{}}},[evidence]);
+ const displayHistory=evidence.pending?(lastVerified.current?.sourceSessionDate?lastVerified.current:historical):null;
  const ready=!evidence.pending&&Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,executionDecision);
  const portfolioOnly=view==='portfolio';
  const ratedRows=evidence.ratings;
@@ -79,6 +81,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  if(portfolioOnly&&!sellActions.length&&!verifyActions.length&&!actionableBuys.length)return null;
  return <><section className={portfolioOnly?"card rotationBox":"card"} aria-label={portfolioOnly?"Portfolio actions":"C1 account opportunities"}>
   <h2>{portfolioOnly?'Portfolio Action':'Opportunities'}</h2>
+  {!portfolioOnly&&displayHistory&&<div role="status" aria-label="Last verified ratings — historical only"><p>Last verified ratings as of {displayHistory.sourceSessionDate} — STALE, display only. No purchases authorized from these ratings.</p><ul>{displayHistory.ratings.filter(r=>["Buy","Strong Buy"].includes(r.rating)).map(r=><li key={r.symbol}>{r.symbol}: {r.rating} (historical, not actionable)</li>)}</ul></div>}
   {!portfolioOnly&&evidence.pending&&<div role="status" aria-label="Entry verification details"><p>{c1PlainDecisionReason({action:'NO PURCHASE',reason:evidence.reason})}</p><ul>{evidence.issues.map(issue=><li key={issue}>{issue}</li>)}</ul>{!ready&&<p>Account/opening review: {openingError||manualRecommendations?.reason||'No checked opening review has returned. Tap Reload to request it.'}</p>}</div>}
   {!portfolioOnly&&<><p className="sub">Signals based on {decision.sourceSessionDate} close · Schwab cash available to trade: {Number.isFinite(decision.brokerageCash)?decision.brokerageCash.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Not entered'}</p>
   {presentation.cashReason&&<p role="status">{presentation.cashReason}</p>}</>}

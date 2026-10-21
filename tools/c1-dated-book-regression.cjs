@@ -36,6 +36,14 @@ assert.throws(()=>accept(first,changed,nextNow), error=>{
  return true;
 });
 assert.equal(JSON.stringify(first),beforeMismatch,'Rejecting all mismatches must preserve the full original record');
+const rounding=JSON.parse(JSON.stringify(next));
+rounding.priorSessionPrices.closes.AAA=100.05;
+rounding.priorSessionPrices.closes.BBB=99.95;
+assert.doesNotThrow(()=>accept(first,rounding,nextNow),'At most five cents of rounding must not stop ingestion');
+const material=JSON.parse(JSON.stringify(next));material.priorSessionPrices.closes.AAA=100.051;
+assert.throws(()=>accept(first,material,nextNow),/Corporate action/,'Larger corrections remain gated');
+const invalid=JSON.parse(JSON.stringify(next));invalid.priorSessionPrices.closes.AAA=0;
+assert.throws(()=>accept(first,invalid,nextNow),/Corporate action/,'Invalid adjusted prices must remain blocked');
 const second=accept(first,next,nextNow);
 assert.ok(second.model.ledger.fills.length>0,'Consecutive observed input must execute the unchanged frozen engine');
 assert.equal(first.model.ledger.fills.length,0,'Prior record must remain immutable');
