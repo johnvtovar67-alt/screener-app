@@ -36,3 +36,8 @@ Status: investigation / NOT RELEASE-READY. Do not merge or deploy on the strengt
 ## Guardrails
 
 Do not change ranking formulas, sleeve rotation rules, 30-session constraints, ownership/accounting history, or make trades as part of this repair. Do not bypass FMP checks. Do not declare this release ready based only on unit tests or a successful Vercel build.
+
+## CI verification log
+
+- CI run #905 (commit `091bbc7`) passed the release-freeze guard, then passed 109/110 regressions. The only failure was `c1-brokerage-rule-parity-regression.cjs`, which compares the exact SHA-256 of `lib/c1IndexLifecycle.js` to a protected production baseline. A comment-only change triggered the mismatch. The lifecycle file has since been restored byte-identical to main; the current manifest again references its original Git blob SHA. This restores parity without weakening the brokerage test or release-freeze check.
+- The only remaining application change is bounded pagination in `lib/c1IndexObservationStore.js`, retaining immutable hash and archive validation. A clean CI run is required; this note does not assert success or live-feed repair.
