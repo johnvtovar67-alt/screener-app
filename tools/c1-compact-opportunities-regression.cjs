@@ -121,7 +121,7 @@ try{
  assert.doesNotMatch(expired,/Buy 2 shares|Add 1 share/,'Expired checks cannot authorize fresh capital');
  const fullSlots={...decision,positions:[position,{...position,symbol:'XXX'},{...position,symbol:'YYY'}]},fullPlan={...plan,orders:[]};
  const full=render({decision:fullSlots,executionDecision:fullSlots,openingPlan:fullPlan,manualRecommendations:buildC1ManualRecommendations({decision:fullSlots,openingPlan:fullPlan})});
- assert.match(full,/All three C1 position slots are currently allocated\./);assert.doesNotMatch(full,/Buy 2 shares|Add 1 share/,'Full slots cannot create a new checked purchase');
+ assert.match(full,/<h3[^>]*>BBB<\/h3>/,'Full slots still display verified Buy rating');assert.doesNotMatch(full,/Buy 2 shares|Add 1 share/,'Full slots cannot create a new checked purchase');
  const poor={...decision,stockScreen:{...decision.stockScreen,candidates:decision.stockScreen.candidates.map(c=>c.symbol==='BBB'?{...c,recentMomentumGate:{...c.recentMomentumGate,entryAllowed:false}}:c)}};
  const blocked=render({decision:poor,executionDecision:poor});
  assert.doesNotMatch(section(blocked,'C1 account opportunities'),/Buy 2 shares/,'A checked order cannot override failed current momentum eligibility');
