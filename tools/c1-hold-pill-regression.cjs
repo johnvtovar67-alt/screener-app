@@ -47,7 +47,7 @@ for(const [file,labels,hash] of [
  if(file==='pages/index.js')for(const [a,b] of require('./c1-holding-timing-ui-seams.cjs')){assert.equal(source.split(b).length,2);source=source.replace(b,a);}
  if(file==='pages/index.js')for(const [before,after] of require('./c1-non-cash-ui-seams.cjs')){assert.equal(source.split(after).length,2);source=source.replace(after,before);}
  if(file==='pages/index.js')assert.equal(require('node:crypto').createHash('sha256').update(source).digest('hex'),hash,'Exact deployed source after reversing HOLD bindings: '+file);
- else {assert.ok(source.includes("c1HoldPillLabel" )===false,'All presentation pill wrappers reverse cleanly');assert.ok(source.includes("const actionableTiles=presentation.tiles.filter"),'Original account action filtering remains reversible');}
+ else {assert.ok(source.includes("const actionableTiles=presentation.tiles.filter"),'Original account action filtering remains reversible');assert.equal((source.match(/style=\{c1HoldPillStyle\(/g)||[]).length,0,'No unreversed HOLD pill style bindings');}
 }
 console.log('PASS: all five HOLD pill paths share geometry and capitalization; colors and non-HOLD labels unchanged.');
 
