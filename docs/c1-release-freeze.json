@@ -8,7 +8,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "75ec268e24388d4ff98d58dffc0d75960a7464bd",
+    "components/C1AccountOpportunities.js": "3ca740abb277b2e713d853123847f12d9b3d2c3e",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -185,7 +185,7 @@
     "lib/c1ExecutionCashAuthority.js": "5a6790cafdde9b857c4b544efea6c5b283c5ac22",
     "lib/top5Diagnostics.js": "8c9aff62a852ac7204ee8538eb2a4f323bdab51d",
     "lib/top5Response.js": "1be53ba835d5f1ca36f9b3fc569ef536b3cf57b9",
-    "lib/c1ScreenEvidence.js": "98ba925a6e0329607803534079e425fad99b6917",
+    "lib/c1ScreenEvidence.js": "62717b15ca8226d4accc0e4b9695b7b628ffaa94",
     "lib/c1LegacyAccountSimulator.js": "a658e4b713ca7c6387259a43a0c752b83a278270",
     "lib/c1LegacyOrderIdentity.js": "f1c601ae0ed00fc1e0ced33178d3bfb9c17455ee",
     "lib/c1LegacyAccountSeed.js": "648bb54f208a4004fcc38d5d5d74e7105b0abf9d",
