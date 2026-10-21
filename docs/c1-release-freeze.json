@@ -28,7 +28,7 @@
     "lib/c1BaselineRevisionReview.js": "df1c7ae8cc6a28a43ad7c80a5f88df0c3c180179",
     "lib/c1CapitalState.js": "cae7bb59a23cb3e998007e8b6a25235f44087a73",
     "lib/c1CombinedPortfolio.js": "62aefc81c2e547261a27f9afe963e1ba3b556708",
-    "lib/c1DatedBook.js": "e4aa996f80408d7bc2003ec8dda990ec4503c285",
+    "lib/c1DatedBook.js": "546fde62e98e5d3ba8efa256f46a00020fc2e9f4",
     "lib/c1DatedBookStore.js": "30657fde15ff952c8fb99e6737f555d7670c4cb9",
     "lib/c1DecisionSnapshot.js": "f3bb48d743b38f324f73aa77f7c2522f0853f5d8",
     "lib/c1ExecutionAdapter.js": "1642369d833dd91dc7985b8e3de3ab69e7b973ca",
