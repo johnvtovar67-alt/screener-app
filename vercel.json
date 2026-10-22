@@ -18,7 +18,8 @@
       "feat/c1-mrna-in-kind-adoption-20261017": false,
       "diag/c1-mrna-crwd-request-evidence-20261022": false,
       "fix/c1-purchase-block-reasons-20261022": false,
-      "fix/c1-fmp-event-shapes-20261022": false
+      "fix/c1-fmp-event-shapes-20261022": false,
+      "fix/c1-fmp-provider-symbols-20261022": false
     }
   }
 }

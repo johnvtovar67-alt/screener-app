@@ -67,6 +67,20 @@ async function run(){
  assert.equal(concurrent.calls.filter(row=>row.kind!=='MACRO').length,3,'Concurrent reviews share endpoint requests');
  const generic=harness();verification(await generic.risk('AMD'),'VERIFIED_CLEAR',generic);
  const numericForeign=harness({EARNINGS:[earning('2026-10-24',{symbol:'0005.HK'})]});verification(await numericForeign.risk(),'VERIFIED_CLEAR',numericForeign);
+ const observedSymbols=observedShapes.providerSymbolShapes;
+ assert.equal(observedSymbols.observedAt,'2026-10-22T19:40:31Z');
+ assert.deepEqual(observedSymbols.earnings.map(row=>row.symbol),['M&MFIN.BO','M&MFIN.NS','J&KBANK.NS','PE&OLES.MX']);
+ const ampersandCalendar=harness({EARNINGS:observedSymbols.earnings});verification(await ampersandCalendar.risk(),'VERIFIED_CLEAR',ampersandCalendar);
+ const ampersandRange=[...observedSymbols.earnings,...Array.from({length:3996},(_,index)=>({symbol:'SYNTHETICAMP'+index,date:'2026-10-22'}))];
+ const ampersandDaily=harness({EARNINGS:({query})=>query.from!==query.to?ampersandRange:observedSymbols.earnings.filter(row=>row.date===query.from)});
+ verification(await ampersandDaily.risk(),'VERIFIED_CLEAR',ampersandDaily);
+ const ampersandQueries=ampersandDaily.calls.filter(row=>row.kind==='EARNINGS');assert.equal(ampersandQueries.length,11);
+ assert.equal(new Set(ampersandQueries.filter(call=>call.query.from===call.query.to).map(call=>call.query.from)).size,10,'All ten original policy-window dates require validated coverage');
+ for(const call of ampersandQueries)assert.equal(Object.hasOwn(call.query,'includeReportTimes'),false);
+ for(const invalid of ['M_MFIN.NS','BAD SYMBOL','BAD\nSYMBOL','BAD\tSYMBOL','BAD\u0000SYMBOL','&INVALID','INVALID$','A'.repeat(33)]){
+  const h=harness({EARNINGS:[earning('2026-10-22',{symbol:invalid})]}),risk=verification(await h.risk(),'UNVERIFIED',h);
+  assert(risk.eventVerification.reasons.includes('EARNINGS_MALFORMED_RESPONSE'),'Literal ampersands do not admit unrelated invalid symbol forms');
+ }
  const known=harness();verification(await known.risk('IRDM'),'VERIFIED_BLOCKED',known);
  const perSymbol=harness({NEWS:[news({text:'Company cuts full-year guidance.'})]}),combined=await perSymbol.map(['CRWD','AMD']);
  verification(combined.get('CRWD'),'VERIFIED_BLOCKED',perSymbol);verification(combined.get('AMD'),'VERIFIED_CLEAR',perSymbol);
@@ -133,6 +147,16 @@ async function run(){
  assert(!unresolved.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'The observed complete QCRH row has a valid nullable provider schema');
  const targetWithNullableNames=harness({MERGERS:[merger({targetedSymbol:'CRWD',targetedCompanyName:null,targetedCik:null})]});
  verification(await targetWithNullableNames.risk(),'VERIFIED_BLOCKED',targetWithNullableNames);
+ assert.deepEqual(observedSymbols.mergers.map(row=>row.symbol),['EACPU','EAC','EACPW']);
+ for(const row of observedSymbols.mergers){
+  assert.equal(row.targetedSymbol,'_');const h=harness({MERGERS:[row]}),risk=verification(await h.risk(),'UNVERIFIED',h);
+  assert(risk.eventVerification.reasons.includes('MERGERS_TARGET_IDENTITY_UNAVAILABLE'),'The exact provider missing-identity sentinel is unresolved evidence, never verified clear');
+  assert(!risk.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'));
+ }
+ for(const invalid of ['CR_WD','__','CRWD_','_CRWD',' _','_\t','BAD SYMBOL','BAD\nSYMBOL','BAD\u0000SYMBOL']){
+  const h=harness({MERGERS:[merger({targetedSymbol:invalid})]}),risk=verification(await h.risk(),'UNVERIFIED',h);
+  assert(risk.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'Only the exact underscore sentinel receives unresolved-identity classification');
+ }
  for(const badTarget of [undefined,37,false,{},[], '', 'BAD SYMBOL']){
   const row=merger({targetedSymbol:badTarget});if(badTarget===undefined)delete row.targetedSymbol;
   const malformed=harness({MERGERS:[row]}),risk=verification(await malformed.risk(),'UNVERIFIED',malformed);
