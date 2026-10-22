@@ -104,7 +104,7 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
    }
    if(operation==='prepare-execution'||operation==='record-intraday'){
     account=await verifyAccountHoldingPrices({account,book,now,collectHoldings});
-    const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{})});
+    const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})});
     if(operation==='record-intraday')await saveC1AccountUpdate({store,path,saved,account:prepared.account,operation,book,now});
     const {account:preparedAccount,...view}=prepared;
     return res.status(200).json({...view,holdingReviewError});
