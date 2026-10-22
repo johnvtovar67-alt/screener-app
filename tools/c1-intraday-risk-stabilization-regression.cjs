@@ -4,6 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const {createRequire}=require('node:module');
+const {currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
 const fixtureFile=path.resolve('tools/c1-recent-momentum-production-regression.cjs');
 const source=fs.readFileSync(fixtureFile,'utf8'),boundary=source.indexOf('// A high historical rank');
 if(boundary<0)throw new Error('Production fixture boundary unavailable');
@@ -22,6 +23,7 @@ const cash=books=>Object.values(books).reduce((n,book)=>n+book.cash,0);
 const now=new Date('2026-10-15T15:00:00.000Z');
 function observed(c,price,{stamp=now.toISOString(),completedAt=now.toISOString()}={}){
  const row=clone(c.book.model.sessions[221]);
+ row.currentEventEvidence=currentEventEvidenceFor(row.prices.map(p=>p.symbol),new Date(completedAt));
  row.receipt={provider:'FMP',observedAt:completedAt,membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true};
  row.prices=row.prices.map(p=>({...p,observedAt:stamp,observedPrice:p.symbol===c.symbol?price:p.open}));
  return row;

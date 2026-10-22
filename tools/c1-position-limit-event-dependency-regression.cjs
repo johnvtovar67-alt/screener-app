@@ -3,7 +3,7 @@
 // fixture purchase does not establish eligibility for any production account.
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
-const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
+const {createWorkflowFixture,currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
 const clone=value=>JSON.parse(JSON.stringify(value));
 const originalFetch=global.fetch;
 let liveFetchCalls=0,collectionCalls=0;
@@ -30,9 +30,13 @@ function fixture(){
  return f;
 }
 function event(f,risk){for(const row of targetRows(f))row.eventRisk=clone(risk);}
-function opening(f){
+function opening(f,currentRisk=targetRows(f)[0].eventRisk){
  const result=f.opening();
- return {...result,prices:result.prices.map(row=>row.symbol==='MRNA'?{...row,symbol:'CRWD'}:row)};
+ const prices=result.prices.map(row=>row.symbol==='MRNA'?{...row,symbol:'CRWD'}:row);
+ // Explicitly supply an independent synthetic provider conclusion. Historical
+ // source fields alone are not current proof, even when they say Clear.
+ const state=currentRisk.checkComplete!==true?'UNVERIFIED':currentRisk.blockNewCapital?'VERIFIED_BLOCKED':'VERIFIED_CLEAR';
+ return {...result,prices,currentEventEvidence:currentEventEvidenceFor(prices.map(row=>row.symbol),f.now,{CRWD:{...clone(currentRisk),state}})};
 }
 function validator(f){
  // Run the real opening validator, without importing the research/Blob graph.
@@ -46,14 +50,14 @@ function validator(f){
  vm.runInContext(source.slice(start,end).replace('export function ','function ')+';globalThis.validate=validateC1OpeningObservations;',context);
  return context.validate;
 }
-function collector(f,{missing=false,stale=false}={}){
+function collector(f,{missing=false,stale=false,currentRisk}={}){
  const validate=validator(f);
  return async({baseline,symbols,now})=>{
   collectionCalls++;
   assert(symbols.includes('CRWD'),'The native-eligible target must genuinely be requested');
   const source=new Map([...baseline.positionSignals,...baseline.signals].map(row=>[row.symbol,row]));
   const members=baseline.universeSymbols.map(symbol=>({symbol,sector:source.get(symbol)?.sector||'Synthetic sector'}));
-  const prices=new Map(opening(f).prices.map(row=>[row.symbol,row]));
+  const currentOpening=opening(f,currentRisk),prices=new Map(currentOpening.prices.map(row=>[row.symbol,row]));
   const observations={};
   for(const symbol of symbols){
    const row=prices.get(symbol);assert(row,'Only existing fixture quotes may be requested');
@@ -61,7 +65,8 @@ function collector(f,{missing=false,stale=false}={}){
     quote:missing&&symbol==='CRWD'?undefined:{symbol,open:row.open,price:row.observedPrice,
      timestamp:now.getTime()/1000-(stale&&symbol==='CRWD'?121:0)}};
   }
-  return validate({baseline,symbols,membersBefore:members,membersAfter:members,observations,now});
+  return {...validate({baseline,symbols,membersBefore:members,membersAfter:members,observations,now}),
+   currentEventEvidence:currentOpening.currentEventEvidence.filter(row=>symbols.includes(row.symbol))};
  };
 }
 const buys=view=>(view.openingPlan?.orders||[]).filter(order=>order.side==='buy'&&order.symbol==='CRWD');
@@ -85,13 +90,14 @@ async function main(){
  assert.equal(blocked.manualRecommendations.status,'ready','A completed account review can return no target purchase');
  assert.equal(buys(blocked).length,0);
  assert(!blocked.openingPlan.additionalSwingCapacity.symbols.includes('CRWD'));
- assert.match(blocked.openingPlan.additionalSwingCapacity.reviews.find(row=>row.symbol==='CRWD').reason,/material-event block/);
+ assert.match(blocked.openingPlan.additionalSwingCapacity.reviews.find(row=>row.symbol==='CRWD').reason,/event verification.*incomplete/);
  assert(reviews(blocked).some(row=>row.reason==='position-limit'),'Missing event evidence must deny capacity and expose the existing position rejection');
 
- // Change only synthetic event evidence. Ownership, cash, counts, prices,
- // momentum and volatility remain identical; no actual activity is recorded.
- event(f,clear);
- const qualified=await prepare(f);
+ // Change only the independent synthetic current event evidence. Keep the
+ // historical Manual source intact, as well as ownership/cash/counts/prices/
+ // momentum/volatility; no actual activity is recorded.
+ const historicalBefore=JSON.stringify(f.book);
+ const qualified=await prepare(f,{currentRisk:clear});
  assert.equal(qualified.manualRecommendations.status,'ready');
  assert(qualified.openingPlan.additionalSwingCapacity.symbols.includes('CRWD'));
  assert(buys(qualified).length>0,'The unchanged existing capacity exception can qualify this synthetic case');
@@ -99,6 +105,8 @@ async function main(){
  assert(!reviews(qualified).some(row=>row.reason==='position-limit'),'The earlier POSITION_LIMIT is not counterfactually independent of event qualification');
  assert.deepEqual(clone(qualified.openingPlan.openingBooks),clone(blocked.openingPlan.openingBooks),'Both reviews start with exactly the same per-sleeve books');
  assert.deepEqual(clone(qualified.decision.positions),clone(blocked.decision.positions),'No hypothetical purchase becomes recorded ownership');
+ assert.equal(JSON.stringify(f.book),historicalBefore,'Current clear proof must not rewrite historical Manual evidence');
+ assert(targetRows(f).every(row=>row.eventRisk.status==='Manual'));
  assert.equal(JSON.stringify(f.account),accountBefore);
 
  // With the existing exception disabled, the same clear evidence cannot waive

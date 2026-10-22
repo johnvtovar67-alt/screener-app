@@ -1,4 +1,5 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const {currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
 // Reuse the independent account fixture rather than recreate strategy rules.
 const setup=fs.readFileSync('tools/c1-account-seed-regression.cjs','utf8').split('const initialView=')[0];
 const fixture=new Function('require',setup+';return {loader,baseline,baselineBook,privateAccount,opening,plan,portfolio,sessions};')(require);
@@ -41,7 +42,7 @@ const prior=service.evaluateC1Account({account:privateAccount,book:baselineBook,
 const view=intraday.c1IntradayDecision({decision:prior,activity:saved.intradayActivity,revision:saved.revision,now});
 assert(!view.positions.some(p=>p.symbol==='T4'));
 assert(Math.abs(view.actualCash-(prior.actualCash+3*ticket.price-.03))<1e-7);
-const observed={...opening,prices:opening.prices.map(p=>({...p,observedPrice:p.open,observedAt:now.toISOString()})),receipt:{observedAt:now.toISOString(),membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true}};
+const observed={...opening,currentEventEvidence:currentEventEvidenceFor(opening.prices.map(p=>p.symbol),now),prices:opening.prices.map(p=>({...p,observedPrice:p.open,observedAt:now.toISOString()})),receipt:{observedAt:now.toISOString(),membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true}};
 const noReplacementPlan={...plan,providerVerified:true,sourceReceipt:observed.receipt,quoteValidUntil:new Date(now.getTime()+120000).toISOString(),orders:plan.orders.filter(o=>o.side!=='buy'&&!(o.symbol==='T4'&&o.side==='sell'))};
 const noReplacementSale=intraday.recordC1IntradayActivity({account:privateAccount,plan:noReplacementPlan,ticket:{...ticket,id:'owner-sale-without-opening-replacement',recordingReason:'owner-discretionary-exit'},expectedRevision:0,now});
 const regenerated=execution.replanC1IntradayAccountOpening({adoption:privateAccount.adoption,sessions:[baseline],records:[],opening:observed,observedAt:observed.receipt.observedAt,completionPolicy:execution.c1CompletionPolicy(privateAccount.positionContext),activity:noReplacementSale.intradayActivity,authorityPlan:noReplacementPlan});

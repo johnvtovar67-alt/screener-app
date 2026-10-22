@@ -31,6 +31,13 @@ try{
   assert.equal(copy({...args(symbol),purchaseDiagnostics:undefined}),legacy[symbol]);
  }
  const target=(a,symbol=a.symbol)=>a.purchaseDiagnostics.tickers.find(row=>row.symbol===symbol);
+ const currentManual=clone(args('CRWD'));
+ target(currentManual).opening.currentEvent={state:'UNVERIFIED',status:'MANUAL',blockNewCapital:true,checkComplete:false,eventRiskVerified:false};
+ assert.equal(copy(currentManual),expected.CRWD,'Current missing verification must be described accurately');
+ const currentBlocked=clone(currentManual);
+ target(currentBlocked).opening.currentEvent={state:'VERIFIED_BLOCKED',status:'BLOCKED',blockNewCapital:true,checkComplete:true,eventRiskVerified:true};
+ assert.equal(copy(currentBlocked),legacy.CRWD,'Historical Manual cannot conceal a verified current adverse event');
+ assert.equal(copy({...args('CRWD'),reason:expected.CRWD}),expected.CRWD,'The actual incomplete-current-verification reason remains explicit');
  const fallbacks=[
   ['missing report',a=>{a.purchaseDiagnostics=null;}],['unknown contract',a=>{a.purchaseDiagnostics.contract='foreign';}],
   ['unavailable report',a=>{a.purchaseDiagnostics.status='UNAVAILABLE';}],['executable report',a=>{a.purchaseDiagnostics.executable=true;}],

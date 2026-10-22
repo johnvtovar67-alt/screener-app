@@ -2,7 +2,7 @@
 // synthetic; live Blob/FMP access is forbidden and no file persistence occurs.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
-const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
+const {createWorkflowFixture,currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
 const NativeDate=Date,originalFetch=global.fetch,fixedAt='2026-10-15T17:00:00.000Z',commit='a'.repeat(40);
 class FixedDate extends NativeDate{constructor(...args){super(...(args.length?args:[fixedAt]));}static now(){return NativeDate.parse(fixedAt);}}
 global.Date=FixedDate;global.fetch=async()=>{throw Error('Live provider access forbidden in request diagnostics regression');};
@@ -18,11 +18,11 @@ function loadCollector(loader){
  assert(helpers.includes('const number =')&&normalizer.includes('function normalizeHistoricalBars('));
  const normalizeHistoricalBars=new Function(helpers+normalizer+';return normalizeHistoricalBars;')();
  const source=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
- const box={...loader.load('lib/marketSession.js'),...loader.load('lib/c1LiveInput.js'),normalizeHistoricalBars,Date:FixedDate,console,process:{env:{}},URLSearchParams,AbortSignal,fetch:never};
+ const box={...loader.load('lib/marketSession.js'),...loader.load('lib/c1LiveInput.js'),normalizeHistoricalBars,Map,Date:FixedDate,console,process:{env:{}},URLSearchParams,AbortSignal,fetch:never};
  vm.createContext(box);vm.runInContext(source+';globalThis.collect=collectC1AccountOpening;',box);return box.collect;
 }
 
-function makeHarness({disabled=false,highVol=false,missing=false,stale=false,outsideHours=false,planError=false,diagnosticError=false}={}){
+function makeHarness({disabled=false,highVol=false,missing=false,stale=false,outsideHours=false,planError=false,diagnosticError=false,eventState='VERIFIED_CLEAR',eventFailure=false,eventExpired=false}={}){
  const f=createWorkflowFixture('buy',{portfolio});f.setCash(5000);
  if(outsideHours)f.now='2026-10-15T21:00:00.000Z';
  for(const session of f.sessions){
@@ -33,7 +33,7 @@ function makeHarness({disabled=false,highVol=false,missing=false,stale=false,out
  }
  const baseline=f.sessions[220];
  for(const row of [...baseline.signals,...baseline.positionSignals]){
-  if(row.symbol==='MRNA'&&highVol)row.researchFactors.volatility60Pct=120;
+  if(row.symbol==='MRNA'&&highVol)row.researchFactors.volatility60Pct=373.2866;
   if(row.symbol==='CRWD')row.eventRisk={status:'Manual',label:'Historical event verification unavailable',blockNewCapital:true,manualCheckRequired:true,checkComplete:false};
  }
  const signals=new Map(baseline.signals.map(row=>[row.symbol,row]));
@@ -44,7 +44,14 @@ function makeHarness({disabled=false,highVol=false,missing=false,stale=false,out
  const collector=loadCollector(f.loader);
  async function collectOpening(args){
   const request={symbols:[...args.symbols],batchSymbols:null};state.collections.push(request);
-  return collector({...args,apiKey:'offline-request-diagnostics-fixture',fetcher:async raw=>{
+  return collector({...args,apiKey:'offline-request-diagnostics-fixture',collectEvents:async symbols=>{
+   assert.equal(request.eventSymbols,undefined,'Each real opening collector invokes current event collection once');request.eventSymbols=[...symbols];
+   assert.deepEqual([...symbols],[...args.symbols].filter(symbol=>!['SPY','QQQ'].includes(symbol)),'Event verification cannot broaden the quote-collection universe');
+   if(eventFailure)throw Error(hostile+' current event provider unavailable');
+   const risks=currentEventEvidenceFor(symbols,f.now,{CRWD:{state:eventState,status:eventState==='UNVERIFIED'?'Manual':eventState==='VERIFIED_BLOCKED'?'Blocked':'Clear'}});
+   if(eventExpired)for(const risk of risks)if(risk.symbol==='CRWD')risk.eventVerification.expiresAt='2026-10-15T16:59:59.000Z';
+   return new Map(risks.map(risk=>[risk.symbol,risk]));
+  },fetcher:async raw=>{
    const url=new URL(raw),endpoint=url.pathname.split('/stable/')[1];
    assert.equal(url.searchParams.get('apikey'),'offline-request-diagnostics-fixture');
    if(endpoint==='sp500-constituent')return new Response(JSON.stringify(members));
@@ -113,7 +120,14 @@ function assertSchema(report){
   exactKeys(row.source,['signalSource','signalPresent','price','momentumPercentile','volatility60Pct','volatilityLimits','event'],row.symbol+' source');
   for(const limit of row.source.volatilityLimits)exactKeys(limit,['maxVolatility60Pct','componentPredicatePass'],'volatility component');
   exactKeys(row.source.event,['status','blockNewCapital','manualCheckRequired','checkComplete','earningsCheckComplete','mergerCheckComplete','newsCheckComplete','eventRiskVerified','coverageAsOfPresent','coverageAsOf','eventRiskAvailableAtPresent','eventRiskAvailableAt','independentCurrentEvidence'],'event');
-  exactKeys(row.opening,['requested','observed','status','open','observedPrice','providerObservedAt','ageSeconds','ageMaximumSeconds','ageScope','ageWithinLimitPass'],'opening');
+  exactKeys(row.opening,['currentEvent','requested','observed','status','open','observedPrice','providerObservedAt','ageSeconds','ageMaximumSeconds','ageScope','ageWithinLimitPass'],'opening');
+  exactKeys(row.opening.currentEvent,['state','status','blockNewCapital','checkComplete','eventRiskVerified','observedAt','expiresAt','provider','sources'],'current event');
+  assert(['VERIFIED_CLEAR','VERIFIED_BLOCKED','UNVERIFIED'].includes(row.opening.currentEvent.state));
+  assert.deepEqual(row.opening.currentEvent.sources.map(source=>source.kind),['EARNINGS','MERGERS','NEWS']);
+  for(const source of row.opening.currentEvent.sources){
+   exactKeys(source,['kind','complete','fetchedAt','expiresAt','endpoint'],'current event source');
+   assert(['EARNINGS-CALENDAR','MERGERS-ACQUISITIONS-LATEST','NEWS/STOCK','UNAVAILABLE'].includes(source.endpoint));
+  }
   assert.equal(row.opening.ageScope,'PROVIDER_TIMESTAMP_AGE_ONLY');assert(row.opening.ageMaximumSeconds>0&&row.opening.ageMaximumSeconds<=120);
   exactKeys(row.capacityReview,['status','rating','reasonCode','quoteVerdict','eventVerdict','verdictBasis'],'capacity review');
   exactKeys(row.reconciliation,['appliedMismatchPresent','appliedCorrectionPresent','previousClose','revisedClose','correctedClose','latestRelevantSessionDate','aggregateDeferredRevisionCount','perTickerDeferredState'],'reconciliation');
@@ -125,12 +139,13 @@ function assertSchema(report){
 }
 async function compareScenario(options={}){
  const enabled=makeHarness(options),disabled=makeHarness({...options,disabled:true});
- const before=enabled.state.bytes,a=await enabled.request(),b=await disabled.request();
+ const before=enabled.state.bytes,bookBefore=JSON.stringify(enabled.f.book),a=await enabled.request(),b=await disabled.request();
  assert.equal(a.statusCode,200,JSON.stringify(a.body));assert.equal(b.statusCode,200,JSON.stringify(b.body));
  assert.deepEqual(withoutDiagnostics(a.body),clone(b.body),'Removing only diagnostics must restore the identical existing response');
  assert.deepEqual(enabled.state.collections,disabled.state.collections,'Diagnostics must not add or broaden provider collection');
  assert.deepEqual(withoutBuilder(enabled.state.imports),withoutBuilder(disabled.state.imports),'Diagnostics must not add account analysis, replay or plan calls');
  assert.equal(enabled.state.writes,0);assert.equal(disabled.state.writes,0);assert.equal(enabled.state.bytes,before,'Prepare cannot persist diagnostic or account changes');
+ assert.equal(JSON.stringify(enabled.f.book),bookBefore,'Current event verification/diagnostics cannot mutate accepted historical records');
  assert.equal(enabled.state.reads,disabled.state.reads);assert.equal(enabled.state.bookReads,disabled.state.bookReads);
  assert.equal(enabled.state.prepareArgs[0].includePurchaseDiagnostics,true,'Only the authenticated prepare route explicitly enables diagnostics');
  assert.equal(enabled.state.prepareArgs[0].diagnosticCommit,commit);
@@ -149,13 +164,26 @@ async function main(){
  assert.equal(normal.diagnostics.collection.status,'RETURNED');
  const crwd=normal.diagnostics.tickers.find(row=>row.symbol==='CRWD');
  assert.equal(crwd.source.event.status,'MANUAL');assert.equal(crwd.source.event.blockNewCapital,true);assert.equal(crwd.source.event.checkComplete,false);
- assert.equal(crwd.capacityReview.reasonCode,'MATERIAL_EVENT_BLOCK');assert.equal(crwd.capacityReview.eventVerdict,'BLOCKED');
+ assert.equal(crwd.opening.currentEvent.state,'VERIFIED_CLEAR');assert.equal(crwd.opening.currentEvent.status,'CLEAR');
+ assert.equal(crwd.opening.currentEvent.blockNewCapital,false);assert.equal(crwd.opening.currentEvent.checkComplete,true);assert.equal(crwd.opening.currentEvent.eventRiskVerified,true);
+ assert.equal(crwd.opening.currentEvent.observedAt,fixedAt);assert.equal(crwd.opening.currentEvent.provider,'FMP');
+ assert.notEqual(crwd.capacityReview.reasonCode,'MATERIAL_EVENT_BLOCK','Current verified clear evidence supersedes the historical Manual field without rewriting it');
+ assert.equal(crwd.capacityReview.eventVerdict,'PASS_FROM_REASON_PRIORITY');
  assert.equal(crwd.capacityReview.quoteVerdict,'PASS_FROM_REASON_PRIORITY');assert.equal(crwd.capacityReview.verdictBasis,'ACTUAL_CAPACITY_REASON_PRIORITY');
  const high=await compareScenario({highVol:true});
  const mrna=high.diagnostics.tickers.find(row=>row.symbol==='MRNA');
- assert.equal(mrna.source.volatility60Pct,120);assert(mrna.source.volatilityLimits.every(row=>row.maxVolatility60Pct===100&&row.componentPredicatePass===false));
+ assert.equal(mrna.source.volatility60Pct,373.2866);assert(mrna.source.volatilityLimits.every(row=>row.maxVolatility60Pct===100&&row.componentPredicatePass===false));
  assert.equal(mrna.nativeQueueIncluded,false);assert.equal(mrna.opening.requested,false);assert.equal(mrna.opening.observed,false);assert.equal(mrna.opening.status,'NOT_REQUESTED');
  assert.equal(mrna.capacityReview.reasonCode,'QUOTE_VERIFICATION_INCOMPLETE');assert.equal(mrna.capacityReview.eventVerdict,'UNAVAILABLE');
+ assert.equal(mrna.opening.currentEvent.state,'UNVERIFIED','An omitted MRNA event request cannot imply verified current evidence');
+ for(const options of [{eventState:'VERIFIED_BLOCKED'},{eventState:'UNVERIFIED'},{eventFailure:true},{eventExpired:true}]){
+  const scenario=await compareScenario(options),row=scenario.diagnostics.tickers.find(row=>row.symbol==='CRWD');
+  const blocked=options.eventState==='VERIFIED_BLOCKED';
+  assert.equal(row.opening.currentEvent.state,blocked?'VERIFIED_BLOCKED':'UNVERIFIED');
+  assert.equal(row.capacityReview.reasonCode,blocked?'MATERIAL_EVENT_BLOCK':'EVENT_VERIFICATION_UNAVAILABLE');
+  assert.equal(row.capacityReview.eventVerdict,'BLOCKED');assert.equal(row.capacityReview.quoteVerdict,'PASS_FROM_REASON_PRIORITY');
+  assert(!scenario.response.openingPlan.orders.some(order=>order.symbol==='CRWD'&&order.side==='buy'),'Adverse, failed, missing or expired current evidence cannot permit purchases');
+ }
  const missing=await compareScenario({missing:true});
  const stale=await compareScenario({stale:true});
  for(const failed of [missing,stale]){
@@ -203,19 +231,21 @@ async function main(){
  }
  const safe=builder({baseline:rawBaseline,sourceBasis:hostile,sourceCapture:{sessionDate:rawBaseline.date,observedAt:hostile,private:hostile},
   decision:{opportunities:[{symbol:'MRNA',reason:hostile}],positions:[{symbol:'UNRELATED_PRIVATE',shares:11223344,cash:87654321}],private:hostile},requestedSymbols:['MRNA','UNRELATED_PRIVATE'],collectionStatus:'RETURNED',
-  collectedOpening:{prices:[{symbol:'MRNA',open:100,observedPrice:100,observedAt:fixedAt,private:hostile},{symbol:'UNRELATED_PRIVATE',open:87654321,observedPrice:11223344,raw:hostile}],receipt:{observedAt:fixedAt,private:hostile}},
+  collectedOpening:{prices:[{symbol:'MRNA',open:100,observedPrice:100,observedAt:fixedAt,private:hostile},{symbol:'UNRELATED_PRIVATE',open:87654321,observedPrice:11223344,raw:hostile}],receipt:{observedAt:fixedAt,private:hostile},
+   currentEventEvidence:[{symbol:'MRNA',status:hostile,label:hostile,detail:hostile,eventVerification:{provider:hostile,state:hostile,observedAt:hostile,expiresAt:hostile,sources:[{kind:'NEWS',endpoint:hostile,complete:'true',fetchedAt:hostile,expiresAt:hostile,private:hostile}]}},{symbol:'UNRELATED_PRIVATE',private:hostile}]},
   plan:{additionalSwingCapacity:{reviews:[{symbol:'MRNA',rating:hostile,reason:hostile}]},entryReviews:[{symbol:'MRNA',reason:hostile,shares:99887766}],entryRecheck:{blocks:[{symbol:'CRWD',reason:hostile}]},cash:87654321},
   openingError:hostile,manualRecommendations:{status:hostile,reason:hostile},requestObservedAt:hostile,observedAt:fixedAt,commit:hostile,reconciliations:[{private:hostile,deferredRevisionCount:3}]});
  assertSchema(safe);assert.equal(safe.deployedCommit,'UNAVAILABLE');assert.equal(safe.requestObservedAt,null);assert.equal(safe.source.basis,'UNAVAILABLE');
  assert.equal(safe.review.openingFailureCode,'UNAVAILABLE');assert.equal(safe.tickers[0].capacityReview.reasonCode,'UNAVAILABLE');
  assert.equal(safe.tickers[0].source.event.status,'UNAVAILABLE');assert.equal(safe.tickers[0].source.event.checkComplete,null);
+ assert.equal(safe.tickers[0].opening.currentEvent.state,'UNVERIFIED');assert.equal(safe.tickers[0].opening.currentEvent.status,'UNAVAILABLE');assert.equal(safe.tickers[0].opening.currentEvent.provider,'UNAVAILABLE');
  assert.equal(safe.tickers[0].reconciliation.aggregateDeferredRevisionCount,3);assert.equal(safe.tickers[0].reconciliation.perTickerDeferredState,'UNAVAILABLE');
- const unknown=builder();assertSchema(unknown);assert(unknown.tickers.every(row=>row.source.signalPresent===null&&row.opening.observed===null));
+ const unknown=builder();assertSchema(unknown);assert(unknown.tickers.every(row=>row.source.signalPresent===null&&row.opening.observed===null&&row.opening.currentEvent.state==='UNVERIFIED'&&row.opening.currentEvent.blockNewCapital===null));
  const duplicate=builder({baseline:{date:'2026-10-14',signals:[],positionSignals:[]},requestedSymbols:['MRNA'],collectionStatus:'RETURNED',observedAt:fixedAt,
   collectedOpening:{prices:[{symbol:'MRNA',open:100,observedPrice:100,observedAt:fixedAt},{symbol:'MRNA',open:101,observedPrice:101,observedAt:fixedAt}],receipt:{quoteMaximumAgeSeconds:999}}});
  assertSchema(duplicate);assert.equal(duplicate.tickers[0].opening.status,'AMBIGUOUS');assert.equal(duplicate.tickers[0].opening.observedPrice,null);assert.equal(duplicate.tickers[0].opening.ageWithinLimitPass,null);assert.equal(duplicate.tickers[0].opening.ageMaximumSeconds,120);
  const future=builder({collectionStatus:'RETURNED',observedAt:fixedAt,collectedOpening:{prices:[{symbol:'MRNA',open:100,observedPrice:100,observedAt:'2026-10-15T17:00:01.000Z'}]}});
  assert.equal(future.tickers[0].opening.ageWithinLimitPass,false,'Age-only evidence must reject a future timestamp without implying full quote authority');
- console.log('PASS: authenticated prepare-only request diagnostics preserve exact response/account/collector/replay parity; unknown versus returned quote coverage, historical events, failure fallback, fixed allowlists, hostile-payload redaction and recording exclusion verified offline.');
+ console.log('PASS: authenticated prepare-only diagnostics preserve exact response/account/history/collector/replay parity; current clear supersedes historical Manual while adverse/unavailable/expired evidence remains blocked; quote failures, immutable MRNA volatility, fixed allowlists, hostile redaction and recording exclusion verified offline.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{global.Date=NativeDate;global.fetch=originalFetch;});

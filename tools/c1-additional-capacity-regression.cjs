@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
+const {createWorkflowFixture,currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
 const {createWorkflowApi}=require('./fixtures/c1-trading-workflow-api.cjs');
 const clone=x=>JSON.parse(JSON.stringify(x)),near=(a,b)=>assert(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 const portfolio=[...['BBB','CCC','LLL'].map(symbol=>({symbol,role:'Swing',shares:40,avgCost:100,openedAt:'2026-10-14'})),{symbol:'CASH',role:'Swing',shares:8000,avgCost:1}];
@@ -32,7 +32,12 @@ function input(f){return {adoption:f.account.adoption,sessions:[f.sessions[220]]
   ['stale-cash',g=>{g.account={...g.account,brokerageCash:{...g.account.brokerageCash,observedAt:'2026-10-14T17:00:00Z'}};},/cash/],
   ['breaker',g=>{g.account=clone(g.account);for(const seed of Object.values(g.account.adoption.seeds))seed.highWater=200000;},/cooldown|entry|verification/]
  ]){
-  const g=fixture();g.setCash(5000);edit(g);g.advance();const v=await g.prepare();assert(!v.openingPlan||!buys(v.openingPlan).some(o=>o.symbol==='MRNA'),name);
+  const g=fixture();g.setCash(5000);edit(g);g.advance();
+  // This control represents a genuinely adverse current observation, rather
+  // than asking historical source flags to override fresh clear provider proof.
+  const v=name==='event'?await g.loader.load('lib/c1AccountExecutionView.js').prepareC1AccountExecution({account:g.account,book:g.book,now:g.now,
+   collectOpening:async args=>({...await g.collectOpening(args),currentEventEvidence:currentEventEvidenceFor(args.symbols,g.now,{MRNA:{state:'VERIFIED_BLOCKED'}})})}):await g.prepare();
+  assert(!v.openingPlan||!buys(v.openingPlan).some(o=>o.symbol==='MRNA'),name);
   if(name==='liquidity'){assert(!v.decision.stockScreen.candidates.some(c=>c.symbol==='MRNA'));evidence.cases.push({case:'blocked-source-liquidity',sourceEligibility:'excluded',status:'PASS'});continue;}
   const reasons=JSON.stringify({openingError:v.openingError,review:v.openingPlan?.additionalSwingCapacity?.reviews,entries:v.openingPlan?.entryReviews,cash:v.openingPlan?.cashBlockedOrders});assert.match(reasons,expected,name);
   evidence.cases.push({case:'blocked-'+name,status:'PASS'});

@@ -3,6 +3,19 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {createResearchModuleLoader}=require('../research-module-loader.cjs');
 const root=path.resolve(__dirname,'../..'),clone=x=>JSON.parse(JSON.stringify(x));
+// Explicit offline provider evidence for operational fixtures. Historical
+// source signals alone never establish a current event conclusion.
+function currentEventEvidenceFor(symbols,now,overrides={}){
+ const at=new Date(now),observedAt=at.toISOString();
+ return [...new Set(symbols)].map(symbol=>{
+  const override=overrides[symbol]||{},state=override.state||'VERIFIED_CLEAR',complete=state!=='UNVERIFIED',blocked=state!=='VERIFIED_CLEAR';
+  const {state:ignored,...fields}=override;
+  return {symbol,status:blocked?'Blocked':'Clear',blockNewCapital:blocked,manualCheckRequired:!complete,
+   checkComplete:complete,earningsCheckComplete:complete,mergerCheckComplete:complete,newsCheckComplete:complete,eventRiskVerified:complete,
+   eventVerification:{contract:'c1-current-event-evidence-v1',provider:'FMP',state,observedAt,expiresAt:new Date(at.getTime()+5*60000).toISOString(),
+    sources:[['EARNINGS','earnings-calendar',15],['MERGERS','mergers-acquisitions-latest',60],['NEWS','news/stock',5]].map(([kind,endpoint,minutes])=>({kind,endpoint,complete,reason:complete?'OK':'UNAVAILABLE',fetchedAt:observedAt,expiresAt:new Date(at.getTime()+minutes*60000).toISOString()}))},...fields};
+ });
+}
 function createWorkflowFixture(kind='buy',options={}){
  const loader=createResearchModuleLoader(root),service=loader.load('lib/c1AccountService.js');
  const market=loader.load('lib/marketSession.js'),{analyzeEntryTiming}=loader.load('lib/entryTiming.js');
@@ -28,7 +41,7 @@ function createWorkflowFixture(kind='buy',options={}){
  const signature=loader.load('lib/portfolioGovernor.js').portfolioCompositionSignature(portfolio);
  let account=service.adoptC1Account({portfolio,capitalRecord:{version:2,highWater:equity,portfolioSignature:signature,reconciliationRequired:false},book,now:new Date(baselineDate+'T22:00:00Z')});
  let now=new Date('2026-10-15T17:00:00Z'),openingFailure=kind==='missing',writes=0;const quotes={};
- const opening=()=>({date:now.toISOString().slice(0,10),decisionAt:now.toISOString(),universeSymbols:symbols,corporateActions:[],
+ const opening=()=>({currentEventEvidence:currentEventEvidenceFor(symbols,now),date:now.toISOString().slice(0,10),decisionAt:now.toISOString(),universeSymbols:symbols,corporateActions:[],
   prices:sessions[221].prices.map(p=>({...p,open:p.symbol==='DELL'?500:100,observedPrice:quotes[p.symbol]??(p.symbol==='DELL'?460:100),observedAt:now.toISOString()})),
   receipt:{observedAt:now.toISOString(),membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true}});
  const collectOpening=async()=>{if(openingFailure)throw Error('MRNA entry verification incomplete: current opening quote unavailable');return opening();};
@@ -43,4 +56,4 @@ function createWorkflowFixture(kind='buy',options={}){
   setCash(balance){account=service.updateC1BrokerageCash({account,brokerageCash:balance,expectedRevision:account.revision,now});},
   advance(){now=new Date(now.getTime()+60000);},clone};
 }
-module.exports={createWorkflowFixture};
+module.exports={createWorkflowFixture,currentEventEvidenceFor};
