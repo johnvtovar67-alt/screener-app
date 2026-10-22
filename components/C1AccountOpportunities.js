@@ -6,7 +6,7 @@ import {c1OrderDisplayGroups} from '../lib/c1OrderDisplay';
 import {c1ManualReviewCurrent,c1ManualOrdersForView} from '../lib/c1ManualRecommendations';
 import {c1PositionPresentation,c1RecordedSellInstruction} from '../lib/c1PositionPresentation';
 import {c1PlainDecisionReason} from '../lib/c1DecisionCopy';
-export default function C1AccountOpportunities({decision,executionDecision=decision,openingPlan,openingError,manualRecommendations,screenRows=[],positionRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
+export default function C1AccountOpportunities({decision,executionDecision=decision,openingPlan,openingError,manualRecommendations,purchaseDiagnostics,screenRows=[],positionRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
  const [,expire]=useState(0);
  useEffect(()=>{
   const remaining=Date.parse(manualRecommendations?.validUntil)-Date.now();
@@ -57,7 +57,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  const currentWatch=watch;
  const currentWatchView=c1WatchPresentation({rows:currentWatch,plan:openingPlan,ready,waitingReason});
  const actionTone=(held,canPurchase)=>held?.action==='Sell'?'red':held?.urgent?'orange':held?'yellow':canPurchase?'green':'gray';
- const plainReason=(symbol,action,reason,presentation)=>c1PlainDecisionReason({action,reason,presentation,position:decision.positions?.find(position=>position.symbol===symbol),opportunity:ratedRows.find(row=>row.symbol===symbol),sourceCandidate:decision.stockScreen?.candidates?.find(row=>row.symbol===symbol),evidence:decision.positions?.find(row=>row.symbol===symbol)?.momentumEvidence});
+ const plainReason=(symbol,action,reason,presentation)=>c1PlainDecisionReason({action,reason,presentation,symbol,purchaseDiagnostics:ready?purchaseDiagnostics:null,openingPlan,decision,position:decision.positions?.find(position=>position.symbol===symbol),opportunity:ratedRows.find(row=>row.symbol===symbol),sourceCandidate:decision.stockScreen?.candidates?.find(row=>row.symbol===symbol),evidence:decision.positions?.find(row=>row.symbol===symbol)?.momentumEvidence});
  let nextWatchPriority=ratedTiles.length;
  const watchView={
   shared:null,

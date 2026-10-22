@@ -5,6 +5,9 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const crypto=require('node:crypto');
 let page=fs.readFileSync('pages/index.js','utf8').replace(/ style=\{c1HoldPillStyle\((a|displayAction)\)\} /g,'').replace(/\{c1HoldPillLabel\((a|displayAction)\)\}/g,'{$1}').replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
+const purchaseDiagnosticProp=' purchaseDiagnostics={accountView.purchaseDiagnostics}';
+assert.equal(page.split(purchaseDiagnosticProp).length,2,'Only the authorized diagnostic presentation prop may be reversed');
+page=page.replace(purchaseDiagnosticProp,'');
 for(const [before,after] of require('./c1-opening-refresh-ui-seams.cjs')){assert.equal(page.split(after).length,2);page=page.replace(after,before);}
 for(const [a,b] of require('./c1-combined-evidence-ui-seams.cjs')){assert.equal(page.split(b).length,2);page=page.replace(b,a);}for(const [a,b] of require('./c1-holding-timing-ui-seams.cjs')){assert.equal(page.split(b).length,2);page=page.replace(b,a);}
 for(const [before,after] of require('./c1-non-cash-ui-seams.cjs')){assert.equal(page.split(after).length,2,'Only the declared adoption UI seam');page=page.replace(after,before);}

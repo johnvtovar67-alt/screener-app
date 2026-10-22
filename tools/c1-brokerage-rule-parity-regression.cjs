@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const zlib = require('node:zlib');
 const { spawnSync } = require('node:child_process');
 const { createResearchModuleLoader } = require('./research-module-loader.cjs');
+const { currentEventEvidenceFor } = require('./fixtures/c1-trading-workflow.cjs');
 
 // This is a synthetic software parity check, not a historical alpha experiment.
 // The compact source fixture also runs in shallow CI/Vercel build checkouts.
@@ -38,6 +39,31 @@ const repairedAccountSha256 = '63b1909359361e35ae7d0c2e833fecbb043013f7b337f9f2c
 // Owner-authorized October 19 opening membership exception: addition-only,
 // double-checked provider membership; all prior-close universe and trading gates remain.
 const additiveOpeningSha256 = '2a741e99b45eada02ebb0891f148b90595d9750ea90cebb0d9403ecc0515ed42';
+// October 22 owner-authorized current-event verification: reverse only these
+// exact collection seams before checking the unchanged opening-source pin.
+// Quote, adjusted-anchor, membership and session verification stay byte-exact;
+// the dedicated current-event suites verify the new fail-closed event path.
+function withoutCurrentEventCollection(source) {
+  const replaceOnce = (before, after, label) => {
+    assert.equal(source.split(before).length - 1, 1,
+      'The authorized current-event ' + label + ' seam must occur exactly once');
+    source = source.replace(before, after);
+  };
+  replaceOnce("import {fetchEventRiskMap} from './eventRisk';\n", '', 'import');
+  replaceOnce('apiKey=process.env.FMP_API_KEY||process.env.FMP_KEY,collectEvents=fetchEventRiskMap}={}){',
+    'apiKey=process.env.FMP_API_KEY||process.env.FMP_KEY}={}){', 'collector injection');
+  replaceOnce(` const opening=validateC1OpeningObservations({baseline,symbols:required,membersBefore,membersAfter,observations,allowPriceRevisionReview,now:new Date()});
+ // Current event evidence is request-local. It never changes accepted prices,
+ // the native queue, recorded fills or the opening observation's quote list.
+ try{
+  const risks=await collectEvents(required.filter(symbol=>!['SPY','QQQ'].includes(symbol)),{apiKey,fetcher,deadlineMs:Date.now()+30000});
+  opening.currentEventEvidence=risks instanceof Map?[...risks.values()]:[];
+ }catch{opening.currentEventEvidence=[];}
+ return {...validateC1OpeningObservations({baseline,symbols:required,membersBefore,membersAfter,observations,allowPriceRevisionReview,now:new Date()}),currentEventEvidence:opening.currentEventEvidence};`,
+    ' return validateC1OpeningObservations({baseline,symbols:required,membersBefore,membersAfter,observations,allowPriceRevisionReview,now:new Date()});',
+    'dated evidence collection and final quote revalidation');
+  return source;
+}
 // Owner-authorized historical compatibility seams are pinned exactly. The
 // original fixture and all other source pins remain immutable; focused tests
 // verify legacy identities, old-date economics and strict new-activity gates.
@@ -57,7 +83,9 @@ const compatibilitySourceSha256 = {
   "lib/c1ActualFillReplay.js": "597aa46f3d9a50aec7cdde4bc58e4fc6fcfc6d234ec10180f37534587b51e5d8"
 };
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
-  assert.equal(hash(fs.readFileSync(path.join(root, file))),
+  const source = fs.readFileSync(path.join(root, file));
+  assert.equal(hash(file === 'lib/c1AccountOpeningProvider.js' ?
+    withoutCurrentEventCollection(source.toString('utf8')) : source),
     file === 'lib/marketSession.js' ? repairedCalendarSha256 :
       file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 :
       file === 'lib/c1AccountOpeningProvider.js' ? additiveOpeningSha256 : compatibilitySourceSha256[file] || expected,
@@ -264,6 +292,7 @@ baseline.load('lib/c1AccountExecution.js').planC1ContinuedAccountOpening({
 // Exercise the complete prepare boundary, using synthetic server-verified
 // observations rather than a real quote provider or signed-in account.
 const observedOpening = { ...nextSession, corporateActions: [],
+  currentEventEvidence: currentEventEvidenceFor(symbols, now),
   prices: nextSession.prices.map(price => ({ ...price, observedPrice: price.open,
     observedAt: now.toISOString() })),
   receipt: { observedAt: now.toISOString(), membershipCheckedTwice: true,
@@ -291,13 +320,17 @@ const observedOpening = { ...nextSession, corporateActions: [],
         'Ample cash preserves the production prepare plan, exact quantities and verification');
       same(withoutCashOverlay(prepared.executionDecision), oldPrepared.executionDecision,
         'Ample cash preserves the production execution action overlay');
-      same(prepared.manualRecommendations, oldPrepared.manualRecommendations,
-        'Ample cash preserves production manual recommendation authority and freshness');
+      const eventExpiry = Math.min(...observedOpening.currentEventEvidence.map(risk =>
+        Date.parse(risk.eventVerification.expiresAt)));
+      const expectedManual = { ...oldPrepared.manualRecommendations,
+        validUntil: new Date(Math.min(Date.parse(oldPrepared.manualRecommendations.validUntil), eventExpiry)).toISOString() };
+      same(prepared.manualRecommendations, expectedManual,
+        'Ample cash preserves every production manual recommendation field with only the authorized current-event expiration bound');
     }
   }
   console.log('PASS: production 5a1a682 parity — ' +
     Object.keys(fixture.unchangedRuleSha256).length + ' pinned rule/planner files; all three synthetic sleeves; ' +
-    'complete ledger/raw-plan/holding/rank equivalence; ample-cash prepare authority unchanged; ' +
+    'complete ledger/raw-plan/holding/rank equivalence; ample-cash prepare parity with dated event-expiry bound; ' +
     '$3037.90 strategy / $363.36 brokerage and zero-cash caps affect execution only; ' +
     'recorded-fill replay preserved; Git archive verified=' + gitArchiveVerified + '.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

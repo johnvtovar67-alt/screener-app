@@ -14,7 +14,7 @@ assert.equal(build({decision,openingPlan:extendedPlan,now:new Date('2026-09-14T1
 for(const patch of [{pendingSession:{}},{openingError:'missing quote'},{decision:{...decision,current:false}},{now:new Date('2026-09-14T14:02:00Z')},{now:new Date('2026-09-14T21:00:00Z')},{openingPlan:{...openingPlan,quoteValidUntil:now.toISOString()}},{openingPlan:{...openingPlan,providerVerified:false}},{openingPlan:{...openingPlan,sourceSessionDate:'2026-09-10'}},{openingPlan:{...openingPlan,sourceReceipt:{...openingPlan.sourceReceipt,previousAdjustedClosesUnchanged:false}}},{openingPlan:{...openingPlan,orders:[{...openingPlan.orders[0],symbol:'SCHW'}]}},{openingPlan:{...openingPlan,orders:[{...openingPlan.orders[0],symbol:'MSTR'}]}},{openingPlan:{...openingPlan,orders:[...openingPlan.orders,...openingPlan.orders]}}])assert.equal(build({...args,...patch}).status,'waiting');
 assert.equal(current(review,{...decision,revision:8},now),false);assert.equal(current(review,{...decision,current:false},now),false);assert.equal(current(review,decision,new Date('2026-09-14T14:02:00Z')),false);
 const fs=require('node:fs');const page=fs.readFileSync('pages/index.js','utf8');assert(page.includes('["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities'));assert(page.includes('openingPlan={accountMatches?accountView.openingPlan:null}'));assert(!page.includes('alpha is not certified.'));
-const execution=fs.readFileSync('lib/c1AccountExecutionView.js','utf8');assert(execution.includes('buildC1ManualRecommendations({decision:executionDecision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,now})'));assert(page.includes('executionDecision={accountView.executionDecision}'),'Checked quantities must bind the downstream execution decision');
+const execution=fs.readFileSync('lib/c1AccountExecutionView.js','utf8');assert(execution.includes('buildC1ManualRecommendations({decision:executionDecision,pendingSession:decision.current?null:pendingSession,openingPlan,openingError,eventValidUntil,now})'));assert(page.includes('executionDecision={accountView.executionDecision}'),'Checked quantities must bind the downstream execution decision');
 console.log('PASS: manual authorization retains source/revision, market hours, freshness, provider verification, restricted purchases, and both-page account matching; no automatic brokerage authority or alpha certification.');
 
 const {c1ManualOrdersForView:ordersForView}=createResearchModuleLoader(process.cwd()).load('lib/c1ManualRecommendations.js');
@@ -45,3 +45,22 @@ assert.equal(earlyReview.status,'ready');assert.equal(earlyReview.validUntil,'20
 assert.equal(current(earlyReview,decision,new Date('2026-11-27T18:00:00Z')),false);
 assert.equal(build({decision,openingPlan:earlyPlan,now:new Date('2026-11-27T18:00:00Z')}).status,'waiting');
 console.log('PASS: checked quantities expire at the actual early close');
+
+// The existing ten-minute manual policy remains intact when used standalone.
+// An already-verified current event receipt can only shorten that review; it
+// cannot extend the opening quote, market session or original policy window.
+const eventUntil='2026-09-14T14:03:00.000Z',eventNow=new Date('2026-09-14T14:01:00Z');
+const eventArgs={decision,openingPlan:extendedPlan,eventValidUntil:eventUntil,now:eventNow},eventBefore=JSON.stringify(eventArgs);
+const eventReview=build(eventArgs);
+assert.equal(eventReview.status,'ready');assert.equal(eventReview.validUntil,eventUntil);
+assert.equal(JSON.stringify(eventReview.orders),JSON.stringify(extendedPlan.orders),'Event expiry cannot alter checked quantities');
+assert.equal(current(eventReview,decision,new Date('2026-09-14T14:02:59.999Z')),true);
+assert.equal(current(eventReview,decision,new Date(eventUntil)),false,'A current-event review expires exactly at its evidence deadline');
+assert.equal(ordersForView({review:eventReview,decision,openingPlan:extendedPlan,now:new Date(eventUntil),view:'opportunities'}).length,0,'Expired event evidence cannot retain a displayed executable quantity');
+for(const until of ['invalid',null,'','2026-09-14T14:00:00Z','2026-09-14T14:01:00Z']){
+ const result=build({...eventArgs,eventValidUntil:until});assert.equal(result.status,'waiting');assert.equal(result.orders.length,0);assert.match(result.reason,/Current event verification is incomplete/);
+}
+assert.equal(build({...eventArgs,now:new Date(eventUntil)}).status,'waiting');
+assert.equal(build({...eventArgs,eventValidUntil:'2026-09-14T14:20:00Z'}).validUntil,'2026-09-14T14:10:00.000Z','Event provenance cannot lengthen the original ten-minute review');
+assert.equal(JSON.stringify(eventArgs),eventBefore,'Adding evidence expiry cannot mutate the source account or plan');
+console.log('PASS: current-event proof shortens only the existing manual review; expiration is fail-closed and the standalone ten-minute policy, checked orders and source objects remain unchanged.');

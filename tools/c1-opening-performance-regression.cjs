@@ -2,11 +2,13 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
-const market=createResearchModuleLoader(process.cwd()).load('lib/marketSession.js');
+const {currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
+const loader=createResearchModuleLoader(process.cwd()),market=loader.load('lib/marketSession.js');
+const {readC1CurrentEventEvidence}=loader.load('lib/c1CurrentEventEvidence.js');
 const fixedNow='2026-09-30T15:00:00Z',NativeDate=Date;
 class FixedDate extends NativeDate{constructor(value){super(value===undefined?fixedNow:value)}static now(){return NativeDate.parse(fixedNow)}}
 const source=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
-const context={...market,Date:FixedDate,console,process,URL,URLSearchParams,AbortSignal,Response,setTimeout,clearTimeout,
+const context={...market,Date:FixedDate,Map,console,process,URL,URLSearchParams,AbortSignal,Response,setTimeout,clearTimeout,
  C1_LIVE_UNIVERSES:{sp500:{endpoint:'sp500-constituent'}},
  c1LiveMembers:(universe,rows)=>rows.map(row=>({symbol:row.symbol,name:row.name,sector:row.sector})).sort((a,b)=>a.symbol.localeCompare(b.symbol)),
  normalizeHistoricalBars:rows=>rows.map(row=>({...row,adjusted:true}))};
@@ -38,12 +40,22 @@ async function fetcher(raw){
 }
 
 (async()=>{
- const opening=await collectC1AccountOpening({baseline,symbols:required,now,fetcher,apiKey:'fixture'});
+ const eventCalls=[],eventEvidence=currentEventEvidenceFor(required,now);
+ const collectEvents=async(symbols,options)=>{eventCalls.push({symbols:[...symbols],options});return new Map(eventEvidence.map(risk=>[risk.symbol,risk]));};
+ const opening=await collectC1AccountOpening({baseline,symbols:required,now,fetcher,apiKey:'fixture',collectEvents});
  assert.equal(opening.prices.length,required.length);
+ assert(opening.prices.every(price=>price.open===100&&price.observedPrice===101),'Current event collection preserves the supplied quote values');
  assert.equal(calls.filter(x=>x==='batch-quote').length,1);
  assert.equal(calls.filter(x=>x==='quote').length,0);
  assert.equal(calls.filter(x=>x==='historical-price-eod/dividend-adjusted').length,required.length);
  assert.equal(calls.filter(x=>x==='sp500-constituent').length,2);
  assert(maxActiveAnchors>3&&maxActiveAnchors<=8,'Adjusted anchors use bounded parallelism above the old three-worker bottleneck');
- console.log('PASS: C1 opening uses one FMP batch quote, bounded eight-way adjusted anchors, and two membership observations.');
+ assert.equal(eventCalls.length,1,'The opening collects current event evidence once, independently of quotes and anchors');
+ assert.deepEqual(eventCalls[0].symbols,required,'Only the requested symbols receive current event collection');
+ assert.equal(eventCalls[0].options.fetcher,fetcher,'Event collection uses the controlled request fetcher');
+ assert.equal(eventCalls[0].options.apiKey,'fixture');
+ assert.equal(eventCalls[0].options.deadlineMs,now.getTime()+30000,'Current event collection has a finite request deadline');
+ assert.deepEqual(JSON.parse(JSON.stringify(opening.currentEventEvidence)),eventEvidence,'The opening retains the supplied current event receipts');
+ for(const risk of opening.currentEventEvidence)assert.equal(readC1CurrentEventEvidence(risk,now),'VERIFIED_CLEAR','Offline event receipts satisfy the real current-evidence contract');
+ console.log('PASS: C1 opening uses one FMP batch quote, bounded eight-way adjusted anchors, two membership observations, and one current event collection.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

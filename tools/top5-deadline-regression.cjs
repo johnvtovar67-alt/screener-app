@@ -151,13 +151,18 @@ function createPerformanceHarness({ firstGet, firstPut } = {}) {
 }
 
 async function moduleDeadlineCases(budget) {
-  const events = createHarness();
+  const events = createHarness(), lateEventBodies = [];
   events.setFetch(async (url, options) => {
     events.calls.push({ url, options, startedAt: events.clock.now() });
-    return { ok: true, json: () => new Promise(resolve => events.clock.setTimeout(() => resolve([]), budget + 1000)) };
+    return { ok: true, json: () => {
+      const body = new Promise(resolve => events.clock.setTimeout(() => resolve([]), budget + 1000));
+      lateEventBodies.push(body);
+      return body;
+    } };
   });
   const eventModule = events.loadModule('lib/eventRisk.js', {
     './marketSession': { easternMarketClock: date => ({ key: date.toISOString().slice(0, 10) }) },
+    './c1CurrentEventEvidence': events.loadModule('lib/c1CurrentEventEvidence.js'),
   });
   let eventWork;
   const eventRequest = events.helper.profileTop5Request(() => events.helper.top5WithinBudget(() => {
@@ -166,10 +171,17 @@ async function moduleDeadlineCases(budget) {
   }));
   await assert.rejects(events.clock.settle(eventRequest), error => events.helper.isTop5Deadline(error));
   assert.equal(events.clock.now(), budget, 'The outer event request must stop at its deadline while JSON remains pending');
-  assert.equal(events.calls.length, 1);
+  assert.equal(events.calls.length, 3);
+  assert.deepEqual(events.calls.map(call => new URL(call.url).pathname).sort(), [
+    '/stable/earnings-calendar', '/stable/mergers-acquisitions-latest', '/stable/news/stock',
+  ], 'Only the three required event feeds may start concurrently');
   await assert.rejects(events.clock.settle(eventWork), error => events.helper.isTop5Deadline(error));
+  // The parent rejects on the first failed parallel feed. Drain all already
+  // dispatched mock JSON bodies before asserting their common cleanup state.
+  await events.clock.settle(Promise.allSettled(lateEventBodies));
+  await events.clock.flush();
   assert.equal(events.clock.now(), budget + 1000);
-  assert.equal(events.calls.length, 1, 'Late response JSON must not dispatch the next event endpoint');
+  assert.equal(events.calls.length, 3, 'Late response JSON must not dispatch another event endpoint');
   assert.equal(events.globalValue('__screenerEventRiskCacheV2').size, 0, 'Late response JSON must not publish fresh event data');
   assert.equal(events.globalValue('__screenerEventRiskCooldownV2').size, 0, 'A request deadline must not become a provider cooldown');
   assert.equal(events.globalValue('__screenerEventRiskInflightV2').size, 0);

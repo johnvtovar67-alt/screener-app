@@ -16,6 +16,11 @@ for(const [file,labels,hash] of [
  ['components/C1AccountOpportunities.js',["held?.label||(canPurchase?tile.rating:'NO PURCHASE')","row.holding?.label||'WATCH'"],'37d8898ef55fa9db4e5de509ab91449a571a264295dfec5f9f2465b3e94391d5']
 ]){
  let source=fs.readFileSync(file,'utf8').replace("<h2>{portfolioOnly?'Portfolio Action':'Opportunities'}</h2>","<h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>").replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
+ if(file==='pages/index.js'){
+  const diagnosticProp=' purchaseDiagnostics={accountView.purchaseDiagnostics}';
+  assert.equal(source.split(diagnosticProp).length,2,'Only the reviewed request-diagnostic presentation prop may be reversed');
+  source=source.replace(diagnosticProp,'');
+ }
  if(file==='pages/index.js')for(const [before,after] of require('./c1-opening-refresh-ui-seams.cjs')){assert.equal(source.split(after).length,2);source=source.replace(after,before);}
  if(file==='components/C1AccountOpportunities.js'){
   // Reverse only the independently authorized rating-presentation seam before
