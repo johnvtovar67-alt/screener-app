@@ -1,0 +1,68 @@
+{
+  "description": "Sanitized public FMP observations. The earnings entries normalize only four observed changed rows and aggregate response counts; they are not a complete raw 247-row response. Regression filler rows are explicitly synthetic.",
+  "observedAt": "2026-10-22T19:20:48Z",
+  "mergerWithUnresolvedTarget": {
+    "symbol": "QCRH",
+    "companyName": "QCR HOLDINGS INC",
+    "cik": "0000906465",
+    "targetedCompanyName": null,
+    "targetedCik": null,
+    "targetedSymbol": null,
+    "transactionDate": "2022-10-28",
+    "acceptedDate": "2022-10-28 14:38:59",
+    "link": "https://www.sec.gov/Archives/edgar/data/906465/000110465922112380/tm2228811-1_s4.htm"
+  },
+  "earnings": {
+    "queriedDate": "2026-10-20",
+    "baseResponseCount": 247,
+    "enrichedResponseCount": 247,
+    "changedDateCount": 4,
+    "economicFieldsUnchanged": true,
+    "changedRows": [
+      {
+        "symbol": "296A.T",
+        "baseDate": "2026-10-20",
+        "enrichedDate": "2026-10-21",
+        "epsActual": 9.4,
+        "epsEstimated": null,
+        "revenueActual": 1430000000,
+        "revenueEstimated": null,
+        "lastUpdated": "2026-10-22",
+        "optionalEnrichment": {"time": "bmo", "periodEnding": "2026-09-30", "fiscalYear": 2026, "fiscalPeriod": "Q2", "confirmed": false}
+      },
+      {
+        "symbol": "ACCENTMIC.NS",
+        "baseDate": "2026-10-20",
+        "enrichedDate": "2026-10-21",
+        "epsActual": 12.97,
+        "epsEstimated": null,
+        "revenueActual": 1750000000,
+        "revenueEstimated": null,
+        "lastUpdated": "2026-10-22",
+        "optionalEnrichment": {"time": null, "periodEnding": "2026-09-30", "fiscalYear": 2026, "fiscalPeriod": "Q2", "confirmed": false}
+      },
+      {
+        "symbol": "FAL.AX",
+        "baseDate": "2026-10-20",
+        "enrichedDate": "2026-10-21",
+        "epsActual": -0.0443,
+        "epsEstimated": null,
+        "revenueActual": null,
+        "revenueEstimated": null,
+        "lastUpdated": "2026-10-22",
+        "optionalEnrichment": {"time": null, "periodEnding": "2026-06-30", "fiscalYear": 2026, "fiscalPeriod": "Q4", "confirmed": false}
+      },
+      {
+        "symbol": "FALFF",
+        "baseDate": "2026-10-20",
+        "enrichedDate": "2026-10-21",
+        "epsActual": -0.03075,
+        "epsEstimated": null,
+        "revenueActual": null,
+        "revenueEstimated": null,
+        "lastUpdated": "2026-10-22",
+        "optionalEnrichment": {"time": null, "periodEnding": "2026-06-30", "fiscalYear": 2026, "fiscalPeriod": "Q4", "confirmed": false}
+      }
+    ]
+  }
+}

@@ -2,6 +2,7 @@
 // No live network, storage, account, trade or historical-record access is used.
 const assert=require('node:assert/strict');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const observedShapes=require('./fixtures/c1-fmp-event-response-shapes-20261022.json');
 const NativeDate=Date,originalFetch=global.fetch,originalKey=process.env.FMP_API_KEY;
 const epoch=NativeDate.parse('2026-10-22T15:00:00.000Z'),fixtureKey='offline-current-event-provider-fixture',sentinel='PRIVATE_PROVIDER_ERROR_SENTINEL';
 process.env.FMP_API_KEY=fixtureKey;
@@ -125,7 +126,52 @@ async function run(){
  verification(await conflictingNews.risk(),'UNVERIFIED',conflictingNews);
  const namedOnlyTarget=harness({MERGERS:[merger({targetedSymbol:null,targetedCompanyName:'CrowdStrike Holdings Inc.'})]});
  const namedOnlyRisk=verification(await namedOnlyTarget.risk(),'UNVERIFIED',namedOnlyTarget);
- assert(namedOnlyRisk.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'An unresolved target identity cannot be discarded as verified negative evidence');
+ assert(namedOnlyRisk.eventVerification.reasons.includes('MERGERS_TARGET_IDENTITY_UNAVAILABLE'),'A valid nullable target identity remains unresolved; it is not malformed or verified negative evidence');
+ const observedMerger=harness({MERGERS:[observedShapes.mergerWithUnresolvedTarget]});
+ const unresolved=verification(await observedMerger.risk(),'UNVERIFIED',observedMerger);
+ assert(unresolved.eventVerification.reasons.includes('MERGERS_TARGET_IDENTITY_UNAVAILABLE'));
+ assert(!unresolved.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'The observed complete QCRH row has a valid nullable provider schema');
+ const targetWithNullableNames=harness({MERGERS:[merger({targetedSymbol:'CRWD',targetedCompanyName:null,targetedCik:null})]});
+ verification(await targetWithNullableNames.risk(),'VERIFIED_BLOCKED',targetWithNullableNames);
+ for(const badTarget of [undefined,37,false,{},[], '', 'BAD SYMBOL']){
+  const row=merger({targetedSymbol:badTarget});if(badTarget===undefined)delete row.targetedSymbol;
+  const malformed=harness({MERGERS:[row]}),risk=verification(await malformed.risk(),'UNVERIFIED',malformed);
+  assert(risk.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'Missing or wrongly typed target identity remains genuinely malformed');
+ }
+
+ // Optional report-time enrichment changed four observed dates while leaving
+ // the same 247-symbol/economic set intact. Only the four listed public rows
+ // are observed; the remaining 243 entries below are synthetic fixture filler.
+ const shape=observedShapes.earnings,changedSymbols=new Set(shape.changedRows.map(row=>row.symbol));
+ assert.equal(shape.baseResponseCount,247);assert.equal(shape.enrichedResponseCount,247);assert.equal(shape.changedDateCount,4);
+ const economicRow=row=>({symbol:row.symbol,epsActual:row.epsActual,epsEstimated:row.epsEstimated,revenueActual:row.revenueActual,revenueEstimated:row.revenueEstimated,lastUpdated:row.lastUpdated});
+ const baseRows=shape.changedRows.map(row=>({...economicRow(row),date:row.baseDate}));
+ const enrichedRows=shape.changedRows.map(row=>({...economicRow(row),date:row.enrichedDate,...row.optionalEnrichment}));
+ for(let index=0;index<243;index++){
+  const row={symbol:'SYNTHETIC'+index,date:shape.queriedDate,epsActual:1,epsEstimated:null,revenueActual:1000,revenueEstimated:null,lastUpdated:'2026-10-22'};
+  baseRows.push({...row});enrichedRows.push({...row});
+ }
+ assert.equal(baseRows.length,247);assert.equal(enrichedRows.length,247);
+ assert.deepEqual(baseRows.map(economicRow),enrichedRows.map(economicRow),'Optional enrichment does not change the observed economic set');
+ assert.equal(baseRows.filter((row,index)=>row.date!==enrichedRows[index].date).length,4);
+ assert.deepEqual(baseRows.filter((row,index)=>row.date!==enrichedRows[index].date).map(row=>row.symbol),[...changedSymbols]);
+ for(const row of baseRows)for(const field of ['time','periodEnding','fiscalYear','fiscalPeriod','confirmed'])assert.equal(Object.hasOwn(row,field),false,'The base calendar shape contains no optional enrichment');
+ for(const row of enrichedRows.filter(row=>changedSymbols.has(row.symbol))){assert.equal(row.fiscalYear,2026);assert.equal(row.epsEstimated,null);assert.equal(row.revenueEstimated,null);assert.equal(Object.hasOwn(row,'periodEnding'),true);assert.equal(Object.hasOwn(row,'periodEnd'),false);}
+ const cappedRange=Array.from({length:4000},(_,index)=>({symbol:'SYNTHETICCAP'+index,date:'2026-10-22'}));
+ const shapeFeed=forceEnriched=>({query})=>query.from!==query.to?cappedRange:query.from===shape.queriedDate?
+  forceEnriched||query.includeReportTimes==='true'?enrichedRows:baseRows:[];
+ const baseCalendar=harness({EARNINGS:shapeFeed(false)});
+ verification(await baseCalendar.risk(),'VERIFIED_CLEAR',baseCalendar);
+ const requiredQueries=baseCalendar.calls.filter(row=>row.kind==='EARNINGS');assert.equal(requiredQueries.length,11);
+ for(const call of requiredQueries)assert.equal(Object.hasOwn(call.query,'includeReportTimes'),false,'Required earnings coverage must use the base dated provider response');
+ assert.deepEqual(requiredQueries[0].query,{from:'2026-10-20',to:'2026-10-29'},'The existing calendar window is unchanged');
+ assert.equal(new Set(requiredQueries.filter(call=>call.query.from===call.query.to).map(call=>call.query.from)).size,10);
+ const enrichedCalendar=harness({EARNINGS:shapeFeed(true)}),ambiguous=verification(await enrichedCalendar.risk(),'UNVERIFIED',enrichedCalendar);
+ assert(ambiguous.eventVerification.reasons.includes('EARNINGS_DAILY_OUT_OF_RANGE'),'The observed enriched-date response remains rejected when it contradicts an exact daily query');
+ for(const [date,state,caution]of [['2026-10-20','VERIFIED_CLEAR',true],['2026-10-21','VERIFIED_BLOCKED',false],['2026-10-24','VERIFIED_BLOCKED',false],['2026-10-25','VERIFIED_CLEAR',true]]){
+  const boundary=harness({EARNINGS:[earning(date)]}),risk=verification(await boundary.risk(),state,boundary);
+  assert.equal(risk.reduceConviction,caution,'The existing -1/+2-day hard-block boundaries remain unchanged');
+ }
 
  const pageRows={NEWS:Array.from({length:500},(_,index)=>news({title:'Synthetic routine update '+index,url:'https://fixture.invalid/news/'+index})),
   MERGERS:Array.from({length:1000},(_,index)=>merger({symbol:'A'+index,targetedSymbol:'T'+index,targetedCompanyName:'Synthetic target '+index}))};
