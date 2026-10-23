@@ -64,6 +64,12 @@ function withoutCurrentEventCollection(source) {
     'dated evidence collection and final quote revalidation');
   return source;
 }
+function withoutFourPositionCeiling(source) {
+  const current="  const heldSymbols=[...new Set(Object.values(books||{}).flatMap(book=>Object.keys(book?.positions||{})))];\n  const capacity=additionalSwingCapacity?c1AdditionalSwingCapacity({baseline,historySessions:historySessions||sessions,opening,observedAt,heldSymbols}):null;";
+  const original="  const capacity=additionalSwingCapacity?c1AdditionalSwingCapacity({baseline,historySessions:historySessions||sessions,opening,observedAt}):null;";
+  assert.equal(source.split(current).length-1,1,'The authorized four-position projection seam must occur exactly once');
+  return source.replace(current,original);
+}
 // Owner-authorized historical compatibility seams are pinned exactly. The
 // original fixture and all other source pins remain immutable; focused tests
 // verify legacy identities, old-date economics and strict new-activity gates.
@@ -85,7 +91,8 @@ const compatibilitySourceSha256 = {
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   const source = fs.readFileSync(path.join(root, file));
   assert.equal(hash(file === 'lib/c1AccountOpeningProvider.js' ?
-    withoutCurrentEventCollection(source.toString('utf8')) : source),
+    withoutCurrentEventCollection(source.toString('utf8')) :
+    file === 'lib/c1AccountProjection.js' ? withoutFourPositionCeiling(source.toString('utf8')) : source),
     file === 'lib/marketSession.js' ? repairedCalendarSha256 :
       file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 :
       file === 'lib/c1AccountOpeningProvider.js' ? additiveOpeningSha256 : compatibilitySourceSha256[file] || expected,

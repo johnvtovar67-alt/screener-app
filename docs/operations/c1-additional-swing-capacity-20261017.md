@@ -2,6 +2,11 @@
 
 Owner authorization, October 17, 2026: permit an additional **new, qualified** C1 Swing purchase beyond the existing three-position capacity, funded by verified manually entered Schwab cash. Keep all other trading rules, the three independent sleeves and historical records unchanged. Draft PR only; no merge or deployment authorized. Research PR #277 is untouched.
 
+Owner clarification, October 23, 2026: the exception creates a hard ceiling of
+four distinct Swing holdings. When several unheld Buy/Strong Buy names qualify
+simultaneously, only the highest-ranked unheld name may use the fourth-position
+exception. Cash never creates authority for a fifth or sixth holding.
+
 Production baseline: `bb31b12e11c103f9e66a5068ca6fd12f4f78b7ab`, tree `597129d6b35d2f1f15e798af69293973d05cf659`, deployed as `dpl_7oEwYsJRUbhm82CcJCgRVBxGu4yT`. The isolated implementation checkout was verified against all 582 production blobs before editing. `AGENTS.md` was read first.
 
 ## Behavior
