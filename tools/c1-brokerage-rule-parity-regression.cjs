@@ -84,6 +84,25 @@ function withoutEventPresentationHardening(source) {
     '    reason = "A current material-event block prevents fresh capital.";', 'reason');
   return source;
 }
+function withoutFourPositionCeiling(source) {
+  const reserved="  const conservedBuySymbols=new Set(ids.flatMap(id=>(projectionFills[id]||[]).filter(fill=>fill?.side==='buy').map(fill=>fill.symbol)));\n  for(const symbol of conservedBuySymbols)if(!heldSymbols.includes(symbol))heldSymbols.push(symbol);\n";
+  assert.equal(source.split(reserved).length-1,1,'The authorized conserved position reservation seam must occur exactly once');
+  source=source.replace(reserved,'');
+  const followup="  const accountHeldSymbols=new Set(heldSymbols),permittedNewSymbols=new Set(capacity?.symbols||[]);\n";
+  assert.equal(source.split(followup).length-1,1,'The authorized aggregate ceiling setup seam must occur exactly once');
+  source=source.replace(followup,'');
+  const blocks="    const capacityBlocks=capacity?[...new Set(prior.pendingDecisions.filter(order=>order.side==='buy'&&!accountHeldSymbols.has(order.symbol)&&!conservedBuySymbols.has(order.symbol)&&!permittedNewSymbols.has(order.symbol)).map(order=>order.symbol))].map(symbol=>({sleeve:id,symbol,reason:'position-limit'})):[];\n    const projectedSession=capacityBlocks.length?{...session,accountEntryBlocks:[...(session.accountEntryBlocks||[]),...capacityBlocks]}:session;\n";
+  assert.equal(source.split(blocks).length-1,1,'The authorized aggregate ceiling block seam must occur exactly once');
+  source=source.replace(blocks,'');
+  const projected="    const run=simulate({sessions:[...sessions,projectedSession],recentMomentumHistorySessions:historySessions||sessions},{...config,endDate:opening.date,";
+  const originalRun="    const run=simulate({sessions:[...sessions,session],recentMomentumHistorySessions:historySessions||sessions},{...config,endDate:opening.date,";
+  assert.equal(source.split(projected).length-1,1,'The authorized aggregate ceiling session seam must occur exactly once');
+  source=source.replace(projected,originalRun);
+  const current="  const heldSymbols=[...new Set(Object.values(books||{}).flatMap(book=>Object.keys(book?.positions||{})))];\n  const capacity=additionalSwingCapacity?c1AdditionalSwingCapacity({baseline,historySessions:historySessions||sessions,opening,observedAt,heldSymbols}):null;";
+  const original="  const capacity=additionalSwingCapacity?c1AdditionalSwingCapacity({baseline,historySessions:historySessions||sessions,opening,observedAt}):null;";
+  assert.equal(source.split(current).length-1,1,'The authorized four-position projection seam must occur exactly once');
+  return source.replace(current,original);
+}
 // Owner-authorized historical compatibility seams are pinned exactly. The
 // original fixture and all other source pins remain immutable; focused tests
 // verify legacy identities, old-date economics and strict new-activity gates.
@@ -107,7 +126,8 @@ for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   const comparable = file === 'lib/c1AccountOpeningProvider.js' ?
     withoutCurrentEventCollection(source.toString('utf8')) :
     file === 'lib/c1StockClassification.js' ?
-      withoutEventPresentationHardening(source.toString('utf8')) : source;
+      withoutEventPresentationHardening(source.toString('utf8')) :
+      file === 'lib/c1AccountProjection.js' ? withoutFourPositionCeiling(source.toString('utf8')) : source;
   assert.equal(hash(comparable),
     file === 'lib/marketSession.js' ? repairedCalendarSha256 :
       file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 :

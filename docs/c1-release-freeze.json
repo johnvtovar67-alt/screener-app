@@ -179,7 +179,7 @@
     "lib/c1ReviewedSessionRevision.js": "cf30a50763541405f30ecd3ea1a8c367fe94c319",
     "lib/c1SessionRevisionReview.js": "81b20c650c7daac35ffd2e18850bfd42923d1520",
     "lib/c1AccountLedger.js": "eeaac2fa02730cb0f33d318ef58dbf5f2ad6702d",
-    "lib/c1AccountProjection.js": "24018b81056701b7fa5e3b8971d2b3b5ae1deab8",
+    "lib/c1AccountProjection.js": "6c0d325b0ff1ccf1e0c839244db0d8a6bd275d15",
     "lib/c1AccountExecutionView.js": "7c304640ea8130e8e33e9168a9f9636e671c96e9",
     "components/C1BrokerageCash.js": "ab6ab418b1d46551caa36747e8db7d2ac4046289",
     "lib/c1BrokerageCash.js": "e7f3f131c5773e34bf4075d4aec58199bd070a7d",
@@ -201,7 +201,7 @@
     "lib/c1PositionPresentation.js": "50a03cfec5ba29ad7f6f2388a7c2e85aabee96c0",
     "lib/c1QuoteVerification.js": "0459f5ab5d4c17cfcf01b1870f055a0665b5b92e",
     "lib/c1DecisionCopy.js": "fdcc390254e4ec0766c748a24e86730617cca5ac",
-    "lib/c1AdditionalSwingCapacity.js": "a13dd57a5782b685a0835999978e3df96b2c035d",
+    "lib/c1AdditionalSwingCapacity.js": "3177172708f220a0f05a7012ea5efa448d25c7dc",
     "lib/c1NonCashAdoption.js": "3510dec11cafb19778c9fabbb02b277438f69110",
     "components/C1NonCashAdoption.js": "4decfe49c34145953205b153b10de16f210fd7c2",
     "lib/c1NonCashPortfolio.js": "39d9e323a0d53701510c39a46486002e2b6a6eca",
@@ -267,4 +267,6 @@
   "latePageMergerAttributionAuthorization": "Owner October 23 directs continued production repair after PR 305 live verification exposed a masked later-page M&A MALFORMED_RESPONSE. Treat merger-shaped rows with missing, invalid or wrongly typed target identity as unattributed diagnostics, never as evidence against every issuer. Preserve positive target-symbol blocks even with malformed optional dates or names. Non-array/error bodies, stale or unavailable responses, and incomplete, repeated or overlapping pagination remain fail-closed. Only lib/eventRisk.js application hash changes; no account, cash, history, ranking, sizing, volatility, execution or UI rule changes. Focused/full verification and production deployment are authorized. See docs/operations/c1-fmp-event-response-handling-20261022.md.",
   "eventVerificationHardeningAuthorization": "Owner October 23 requests an independent full-infrastructure cleanup after repeated daily failures. First behavior-preserving hardening slice: keep incomplete current event evidence fail-closed, but distinguish verification unavailable from a verified issuer material-event block in both screen policy paths; evict malformed, stale or contradictory HTTP-200 event bodies so a later verified refresh can recover without a process restart. No purchase authority, event definition, ranking, sizing, account, cash, history, execution or provider window changes. Only lib/eventRisk.js, lib/c1CurrentEventEvidence.js, lib/c1StockClassification.js and lib/v11ProductionPolicy.js application hashes change; focused/full verification is required before release.",
   "priceBarExtractionAuthorization": "Owner October 23 requests a thorough infrastructure review and behavior-preserving cleanup. Extract the shared FMP historical-bar normalizer from the 20,000-line research monolith into a pure production module, preserve its exact public contract through a compatibility export, and repoint only existing production consumers and source-level regression harnesses. No ranking, eligibility, sizing, entry, exit, event, account, cash, history, provider, or execution behavior changes."
+  ,
+  "fourSwingPositionCeilingAuthorization": "Owner October 23 explicitly directs a hard maximum of four distinct C1 Swing holdings. When three positions are already held and several unheld Buy/Strong Buy names qualify simultaneously, only the highest-ranked unheld name may use the existing additional-position exception. Independent release review found the first implementation still allowed ordinary per-sleeve buys to bypass the aggregate ceiling when small holdings were unevenly allocated. Reject non-selected new names before projection while preserving aggregate-held Adds, unexecuted-sale ordering, conserved fills, historical reconstruction, all qualifications, ordering, quantities, cash limits, sleeves, exits, stops, accounting and records. A conserved current-session Buy reserves its aggregate symbol before current selection, so changed qualification cannot authorize a fifth name while the immutable fill remains accepted. Add permanent uneven-allocation and conserved-fill regressions; update only the projection application hash."
 }
