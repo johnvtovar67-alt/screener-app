@@ -139,18 +139,21 @@ async function run(){
  const conflictingNews=harness({NEWS:[news({text:'Original routine update.'}),news({text:'Contradictory replacement text.'})]});
  verification(await conflictingNews.risk(),'UNVERIFIED',conflictingNews);
  const namedOnlyTarget=harness({MERGERS:[merger({targetedSymbol:null,targetedCompanyName:'CrowdStrike Holdings Inc.'})]});
- const namedOnlyRisk=verification(await namedOnlyTarget.risk(),'UNVERIFIED',namedOnlyTarget);
- assert(namedOnlyRisk.eventVerification.reasons.includes('MERGERS_TARGET_IDENTITY_UNAVAILABLE'),'A valid nullable target identity remains unresolved; it is not malformed or verified negative evidence');
+ const namedOnlyRisk=verification(await namedOnlyTarget.risk(),'VERIFIED_CLEAR',namedOnlyTarget);
+ assert.equal(namedOnlyRisk.eventVerification.sources.find(row=>row.kind==='MERGERS').unattributedTargetCount,1,'A nullable target remains auditable without being falsely attributed to every requested issuer');
  const observedMerger=harness({MERGERS:[observedShapes.mergerWithUnresolvedTarget]});
- const unresolved=verification(await observedMerger.risk(),'UNVERIFIED',observedMerger);
- assert(unresolved.eventVerification.reasons.includes('MERGERS_TARGET_IDENTITY_UNAVAILABLE'));
+ const unresolved=verification(await observedMerger.risk(),'VERIFIED_CLEAR',observedMerger);
+ assert.equal(unresolved.eventVerification.sources.find(row=>row.kind==='MERGERS').unattributedTargetCount,1);
  assert(!unresolved.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'The observed complete QCRH row has a valid nullable provider schema');
  const targetWithNullableNames=harness({MERGERS:[merger({targetedSymbol:'CRWD',targetedCompanyName:null,targetedCik:null})]});
  verification(await targetWithNullableNames.risk(),'VERIFIED_BLOCKED',targetWithNullableNames);
+ const mixedTargets=harness({MERGERS:[merger({targetedSymbol:null,targetedCompanyName:'Unattributed target'}),merger({targetedSymbol:'CRWD'})]}),mixedMap=await mixedTargets.map(['CRWD','AMD']);
+ verification(mixedMap.get('CRWD'),'VERIFIED_BLOCKED',mixedTargets);verification(mixedMap.get('AMD'),'VERIFIED_CLEAR',mixedTargets);
+ assert.equal(mixedMap.get('AMD').eventVerification.sources.find(row=>row.kind==='MERGERS').unattributedTargetCount,1,'An unattributed row cannot spill a known target block onto an unrelated symbol');
  assert.deepEqual(observedSymbols.mergers.map(row=>row.symbol),['EACPU','EAC','EACPW']);
  for(const row of observedSymbols.mergers){
-  assert.equal(row.targetedSymbol,'_');const h=harness({MERGERS:[row]}),risk=verification(await h.risk(),'UNVERIFIED',h);
-  assert(risk.eventVerification.reasons.includes('MERGERS_TARGET_IDENTITY_UNAVAILABLE'),'The exact provider missing-identity sentinel is unresolved evidence, never verified clear');
+  assert.equal(row.targetedSymbol,'_');const h=harness({MERGERS:[row]}),risk=verification(await h.risk(),'VERIFIED_CLEAR',h);
+  assert.equal(risk.eventVerification.sources.find(source=>source.kind==='MERGERS').unattributedTargetCount,1,'The exact provider missing-identity sentinel remains auditable without becoming a market-wide block');
   assert(!risk.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'));
  }
  for(const invalid of ['CR_WD','__','CRWD_','_CRWD',' _','_\t','BAD SYMBOL','BAD\nSYMBOL','BAD\u0000SYMBOL']){
