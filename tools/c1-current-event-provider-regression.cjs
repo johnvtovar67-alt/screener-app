@@ -105,8 +105,7 @@ async function run(){
   ['EARNINGS',{error:sentinel}],['MERGERS',{message:sentinel}],['NEWS',{Error:sentinel}],
   ['EARNINGS',null],['MERGERS',null],['NEWS',null],['EARNINGS',[{}]],['MERGERS',[{}]],['NEWS',[{}]],
   ['EARNINGS',[earning('2026-02-30')]],['EARNINGS',[earning('2026-10-30')]],['EARNINGS',[earning('2026-10-19')]],
-  ['EARNINGS',[earning('2026-10-22',{symbol:''})]],['MERGERS',[merger({transactionDate:'2026-02-30'})]],
-  ['MERGERS',[merger({targetedSymbol:'',targetedCompanyName:''})]],['NEWS',[news({symbol:'MRNA'})]],['NEWS',[news({publishedDate:'2026-10-23T13:00:00Z'})]],
+  ['EARNINGS',[earning('2026-10-22',{symbol:''})]],['NEWS',[news({symbol:'MRNA'})]],['NEWS',[news({publishedDate:'2026-10-23T13:00:00Z'})]],
   ['NEWS',[news({publishedDate:'2026-10-19T13:00:00Z'})]],['NEWS',[news({publishedDate:'2026-02-30T13:00:00Z'})]],['NEWS',[news({title:'',text:''})]],
  ];
  for(const [kind,value]of malformedCases){const h=harness({[kind]:value});verification(await h.risk(),'UNVERIFIED',h);}
@@ -147,6 +146,8 @@ async function run(){
  assert(!unresolved.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'The observed complete QCRH row has a valid nullable provider schema');
  const targetWithNullableNames=harness({MERGERS:[merger({targetedSymbol:'CRWD',targetedCompanyName:null,targetedCik:null})]});
  verification(await targetWithNullableNames.risk(),'VERIFIED_BLOCKED',targetWithNullableNames);
+ const datedTarget=harness({MERGERS:[merger({targetedSymbol:'CRWD',transactionDate:'2026-02-30'})]}),datedRisk=verification(await datedTarget.risk(),'VERIFIED_BLOCKED',datedTarget);
+ assert.equal(datedRisk.eventVerification.sources.find(row=>row.kind==='MERGERS').invalidTransactionDateCount,1,'A bad optional transaction date remains auditable and cannot erase an identified target block');
  const mixedTargets=harness({MERGERS:[merger({targetedSymbol:null,targetedCompanyName:'Unattributed target'}),merger({targetedSymbol:'CRWD'})]}),mixedMap=await mixedTargets.map(['CRWD','AMD']);
  verification(mixedMap.get('CRWD'),'VERIFIED_BLOCKED',mixedTargets);verification(mixedMap.get('AMD'),'VERIFIED_CLEAR',mixedTargets);
  assert.equal(mixedMap.get('AMD').eventVerification.sources.find(row=>row.kind==='MERGERS').unattributedTargetCount,1,'An unattributed row cannot spill a known target block onto an unrelated symbol');
@@ -157,13 +158,13 @@ async function run(){
   assert(!risk.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'));
  }
  for(const invalid of ['CR_WD','__','CRWD_','_CRWD',' _','_\t','BAD SYMBOL','BAD\nSYMBOL','BAD\u0000SYMBOL']){
-  const h=harness({MERGERS:[merger({targetedSymbol:invalid})]}),risk=verification(await h.risk(),'UNVERIFIED',h);
-  assert(risk.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'Only the exact underscore sentinel receives unresolved-identity classification');
+  const h=harness({MERGERS:[merger({targetedSymbol:invalid})]}),risk=verification(await h.risk(),'VERIFIED_CLEAR',h),source=risk.eventVerification.sources.find(row=>row.kind==='MERGERS');
+  assert.equal(source.unattributedTargetCount,1);assert.equal(source.invalidTargetCount,1,'An unusable target remains auditable without becoming a market-wide block');
  }
  for(const badTarget of [undefined,37,false,{},[], '', 'BAD SYMBOL']){
   const row=merger({targetedSymbol:badTarget});if(badTarget===undefined)delete row.targetedSymbol;
-  const malformed=harness({MERGERS:[row]}),risk=verification(await malformed.risk(),'UNVERIFIED',malformed);
-  assert(risk.eventVerification.reasons.includes('MERGERS_MALFORMED_RESPONSE'),'Missing or wrongly typed target identity remains genuinely malformed');
+  const h=harness({MERGERS:[row]}),risk=verification(await h.risk(),'VERIFIED_CLEAR',h),source=risk.eventVerification.sources.find(current=>current.kind==='MERGERS');
+  assert.equal(source.unattributedTargetCount,1);assert.equal(source[badTarget===undefined?'missingTargetCount':'invalidTargetCount'],1,'Missing or wrongly typed target identity remains auditable and unattributed');
  }
 
  // Optional report-time enrichment changed four observed dates while leaving
