@@ -451,6 +451,9 @@ const box = {
   setTimeout,
   clearTimeout,
   createHash: require("crypto").createHash,
+  normalizeFmpHistoricalBars: createResearchModuleLoader(process.cwd()).load(
+    "lib/fmpPriceBars.js",
+  ).normalizeHistoricalBars,
   isUsMarketSessionDay: createResearchModuleLoader(process.cwd()).load(
     "lib/marketSession.js",
   ).isUsMarketSessionDay,

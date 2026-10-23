@@ -12,11 +12,7 @@ const portfolio=[...['BBB','CCC','LLL'].map(symbol=>({symbol,role:'Swing',shares
 const hostile='PRIVATE_RAW_SENTINEL_8b7a';
 
 function loadCollector(loader){
- const research=fs.readFileSync('lib/fmpResearchBacktest.js','utf8');
- const helpers=research.slice(research.indexOf('const asArray ='),research.indexOf('const usableAdjustedOhlcBar ='));
- const normalizer=research.slice(research.indexOf('export function normalizeHistoricalBars('),research.indexOf('export async function resolvePriceHistoryContract(')).replace('export function ','function ');
- assert(helpers.includes('const number =')&&normalizer.includes('function normalizeHistoricalBars('));
- const normalizeHistoricalBars=new Function(helpers+normalizer+';return normalizeHistoricalBars;')();
+ const normalizeHistoricalBars=loader.load('lib/fmpPriceBars.js').normalizeHistoricalBars;
  const source=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
  const box={...loader.load('lib/marketSession.js'),...loader.load('lib/c1LiveInput.js'),normalizeHistoricalBars,Map,Date:FixedDate,console,process:{env:{}},URLSearchParams,AbortSignal,fetch:never};
  vm.createContext(box);vm.runInContext(source+';globalThis.collect=collectC1AccountOpening;',box);return box.collect;

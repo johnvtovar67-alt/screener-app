@@ -50,6 +50,12 @@ function withoutCurrentEventCollection(source) {
     source = source.replace(before, after);
   };
   replaceOnce("import {fetchEventRiskMap} from './eventRisk';\n", '', 'import');
+  // The production normalizer now lives in a small pure module. Reverse only
+  // that import seam before comparing the frozen opening rules; the dedicated
+  // price-bar regression proves the extracted implementation is identical.
+  replaceOnce("import {normalizeHistoricalBars} from './fmpPriceBars';\n",
+    "import {normalizeHistoricalBars} from './fmpResearchBacktest';\n",
+    'price-bar normalizer import');
   replaceOnce('apiKey=process.env.FMP_API_KEY||process.env.FMP_KEY,collectEvents=fetchEventRiskMap}={}){',
     'apiKey=process.env.FMP_API_KEY||process.env.FMP_KEY}={}){', 'collector injection');
   replaceOnce(` const opening=validateC1OpeningObservations({baseline,symbols:required,membersBefore,membersAfter,observations,allowPriceRevisionReview,now:new Date()});
