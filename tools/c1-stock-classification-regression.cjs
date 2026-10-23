@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const {currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
 const loader=createResearchModuleLoader(process.cwd());
 const original=loader.load('tools/fixtures/c1-original-screen-policy.js');
 const {buildC1StockScreenSnapshot:build,classifyC1StockScreen:classify}=loader.load('lib/c1StockClassification.js');
@@ -22,6 +23,11 @@ for(const mutate of [r=>r.price=104,r=>r.recommendation.expertDecision.metrics.q
 for(const field of ['sector','issuer']){const snap=structuredClone(snapshot),old=structuredClone(oldSnapshot);snap.candidates[1][field]=snap.candidates[0][field];old.candidates[1][field]=old.candidates[0][field];const result=compare(live,snap,old);assert.equal(result[1].rating,'Watch');assert.equal(result[3].rating,'Buy');}
 assert.ok(classify({snapshot,rows:live,current:false}).every(x=>x.rating==='Watch'));
 assert.ok(classify({snapshot,rows:[],current:true}).every(x=>x.rating==='Watch'),'No quote evidence means no invented Buy');
+const eventNow=new Date(),eventRows=structuredClone(live);
+eventRows[0].eventRisk=currentEventEvidenceFor(['S0'],eventNow,{S0:{state:'UNVERIFIED'}})[0];
+assert.equal(classify({snapshot,rows:eventRows,current:true}).find(row=>row.symbol==='S0').screenReview.why,'Current event verification is incomplete; purchases remain paused.');
+eventRows[0].eventRisk=currentEventEvidenceFor(['S0'],eventNow,{S0:{state:'VERIFIED_BLOCKED'}})[0];
+assert.equal(classify({snapshot,rows:eventRows,current:true}).find(row=>row.symbol==='S0').screenReview.why,'A current material-event block prevents fresh capital.');
 const decision={current:true,positions:[{symbol:'S0',entryContext:{stage:'full'}},{symbol:'S1',entryContext:{stage:'half'}}],opportunities:classified};
 const orders=[{symbol:'S1',shares:50,estimatedPrice:100}],plan={entryReviews:[{symbol:'S2',reason:'position-limit'}]};
 const view=present({decision,buys:orders,plan,ready:true});

@@ -64,6 +64,20 @@ function withoutCurrentEventCollection(source) {
     'dated evidence collection and final quote revalidation');
   return source;
 }
+// October 23 event-state copy hardening does not change classification or
+// purchase authority. Reverse its exact import/copy seam before comparing the
+// older brokerage-rule source pin; focused tests retain both typed messages.
+function withoutEventPresentationHardening(source) {
+  const replaceOnce = (before, after, label) => {
+    assert.equal(source.split(before).length - 1, 1,
+      'The authorized event-presentation ' + label + ' seam must occur exactly once');
+    source = source.replace(before, after);
+  };
+  replaceOnce("import {c1CurrentEventBlockReason} from './c1CurrentEventEvidence';\n", '', 'import');
+  replaceOnce('    reason = c1CurrentEventBlockReason(event);',
+    '    reason = "A current material-event block prevents fresh capital.";', 'reason');
+  return source;
+}
 // Owner-authorized historical compatibility seams are pinned exactly. The
 // original fixture and all other source pins remain immutable; focused tests
 // verify legacy identities, old-date economics and strict new-activity gates.
@@ -84,8 +98,11 @@ const compatibilitySourceSha256 = {
 };
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   const source = fs.readFileSync(path.join(root, file));
-  assert.equal(hash(file === 'lib/c1AccountOpeningProvider.js' ?
-    withoutCurrentEventCollection(source.toString('utf8')) : source),
+  const comparable = file === 'lib/c1AccountOpeningProvider.js' ?
+    withoutCurrentEventCollection(source.toString('utf8')) :
+    file === 'lib/c1StockClassification.js' ?
+      withoutEventPresentationHardening(source.toString('utf8')) : source;
+  assert.equal(hash(comparable),
     file === 'lib/marketSession.js' ? repairedCalendarSha256 :
       file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 :
       file === 'lib/c1AccountOpeningProvider.js' ? additiveOpeningSha256 : compatibilitySourceSha256[file] || expected,
