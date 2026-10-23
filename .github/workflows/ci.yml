@@ -10,6 +10,9 @@ concurrency:
   group: screener-ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build-and-regression:
     runs-on: ubuntu-latest
@@ -21,6 +24,8 @@ jobs:
           node-version: '24'
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+      - name: Reject critical production dependency advisories
+        run: npm audit --omit=dev --audit-level=critical
       - name: Build and run regression suite
         run: npm run build
 
