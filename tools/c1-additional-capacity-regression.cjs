@@ -12,6 +12,24 @@ function input(f){return {adoption:f.account.adoption,sessions:[f.sessions[220]]
  assert.equal(view.manualRecommendations.status,'ready');assert.equal(view.decision.positions.length,3);assert.deepEqual(clone(plan.additionalSwingCapacity.symbols),['MRNA']);
  assert(buys(plan).every(o=>o.symbol==='MRNA'&&o.additionalCapacity===true));
  const quantity=buys(plan).reduce((n,o)=>n+o.shares,0);assert.equal(quantity,49);near(buys(plan).reduce((n,o)=>n+o.shares*o.estimatedPrice,0),4905.88);
+ // A captured fourth-position fill itself consumes the remaining aggregate
+ // slot even when current qualification has moved to another unheld name.
+ const fillReplay=f.loader.load('lib/c1ActualFillReplay.js'),projectionFills=Object.fromEntries(ids.map(id=>[id,[]]));
+ const signals=new Map([...(f.sessions[220].positionSignals||[]),...(f.sessions[220].signals||[])].map(signal=>[signal.symbol,signal]));
+ for(const order of buys(plan)){
+  const scale=f.account.adoption.seeds[order.sleeve].actualDollarsPerModelDollar;
+  const fill={id:'conserved:'+order.sleeve,orderId:order.id,executedAt:f.now.toISOString(),symbol:order.symbol,side:'buy',reason:order.reason,shares:order.shares/scale,price:order.estimatedPrice,fee:0,targetShares:order.targetShares/scale};
+  fillReplay.markC1BrokerageFundedPurchase(fill,plan.date);fillReplay.markC1AdditionalCapacityPurchase(fill,plan.date);
+  projectionFills[order.sleeve].push(fillReplay.markC1ReconciledProjectionFill(fill,plan.date,signals.get(fill.symbol)));
+ }
+ f.setQuote('MRNA',110);
+ const conserved=f.loader.load('lib/c1AccountProjection.js').projectC1AccountSession({adoption:f.account.adoption,baseline:f.sessions[220],opening:f.opening(),observedAt:f.now.toISOString(),books:clone(plan.openingBooks),sessions:[f.sessions[220]],historySessions:f.sessions.slice(0,221),projectionFills,purchaseFundingIndependent:true,additionalSwingCapacity:true});
+ assert.deepEqual(clone(conserved.additionalSwingCapacity.symbols),[],'A conserved fourth-position fill must reserve the aggregate slot before current selection');
+ assert(!conserved.orders.some(order=>order.side==='buy'&&order.symbol==='MRNA'),'The already executed fourth-position fill must not be emitted as a new order');
+ assert(!conserved.orders.some(order=>order.side==='buy'&&order.symbol==='DDD'),'A changed current selection cannot create a fifth holding after the conserved fill');
+ const reservedSymbols=new Set([...ids.flatMap(id=>Object.keys(plan.openingBooks[id].positions)),...ids.flatMap(id=>projectionFills[id].filter(fill=>fill.side==='buy').map(fill=>fill.symbol))]);assert.equal(reservedSymbols.size,4);
+ f.setQuote('MRNA',100);
+ evidence.cases.push({case:'conserved-fourth-fill-reserves-current-capacity',conserved:'MRNA',newlyQualified:'DDD',authorizedNewNames:[],projectedDistinctSwingPositions:4,status:'PASS'});
  const old=f.loader.load('lib/c1AccountExecution.js').planC1ContinuedAccountOpening(input(f));assert.equal(buys(old).length,0,'Production control must reproduce the three-position block');
  const saved=await f.prepare({id:'fourth-position',symbol:'MRNA',side:'buy',shares:quantity,price:100.12,fee:0,executedAt:f.now.toISOString()});f.account=saved.account;
  assert.equal(saved.decision.positions.length,4);assert.equal(saved.decision.positions.find(p=>p.symbol==='MRNA').shares,49);near(saved.decision.brokerageCash,94.12);
@@ -25,13 +43,17 @@ function input(f){return {adoption:f.account.adoption,sessions:[f.sessions[220]]
  evidence.cases.push({case:'three-held-5000-cash-fourth-purchase',shares:quantity,price:100.12,cashAfter:94.12,heldPositions:4,sleeves:ids.map(id=>({id,shares:continued.books[id].positions.MRNA.shares,stop:continued.sleeves[id].openPositions.find(p=>p.symbol==='MRNA').stopPrice})),completedReplay:'PASS',equity});
  // Multiple simultaneously unheld Buy-rated names can never turn the
  // one-position exception into a fifth or sixth distinct Swing holding.
- const ceilingPortfolio=[...['DDD','EEE','FFF'].map(symbol=>({symbol,role:'Swing',shares:40,avgCost:100,openedAt:'2026-10-14'})),{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}];
+ const ceilingPortfolio=[...['DDD','EEE','FFF'].map(symbol=>({symbol,role:'Swing',shares:1,avgCost:100,openedAt:'2026-10-14'})),{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}];
  const ceiling=createWorkflowFixture('buy',{portfolio:ceilingPortfolio});ceiling.setCash(100000);ceiling.advance();const ceilingView=await ceiling.prepare(),ceilingBuys=buys(ceilingView.openingPlan);
  assert.deepEqual(clone(ceilingView.openingPlan.additionalSwingCapacity.symbols),['MRNA']);
- assert.deepEqual([...new Set(ceilingBuys.map(order=>order.symbol))],['MRNA'],'Only the highest-ranked unheld qualified name may use the fourth-position exception');
+ const originalCeilingSymbols=new Set(['DDD','EEE','FFF']),newCeilingSymbols=[...new Set(ceilingBuys.filter(order=>!originalCeilingSymbols.has(order.symbol)).map(order=>order.symbol))];
+ assert.deepEqual(newCeilingSymbols,['MRNA'],'Only the highest-ranked unheld qualified name may use the fourth-position exception');
+ assert(ceilingBuys.some(order=>originalCeilingSymbols.has(order.symbol)),'The account-wide ceiling must preserve ordinary Adds to existing aggregate holdings');
  const projectedSymbols=new Set(ceilingView.decision.positions.map(position=>position.symbol));for(const order of ceilingBuys)projectedSymbols.add(order.symbol);
  assert.equal(projectedSymbols.size,4,'The opening plan must never project more than four distinct Swing holdings');
- evidence.cases.push({case:'three-unheld-qualified-names-hard-ceiling',qualified:['MRNA','BBB','CCC'],authorized:['MRNA'],projectedDistinctSwingPositions:projectedSymbols.size,status:'PASS'});
+ assert(ids.every(id=>!['BBB','CCC'].some(symbol=>ceilingView.openingPlan.projectedBooks[id].positions[symbol])),'Rejected names must not remain as phantom projected holdings');
+ assert(!ceilingView.openingPlan.orders.some(order=>['BBB','CCC'].includes(order.symbol)),'Rejected names must not receive purchases or standing stops');
+ evidence.cases.push({case:'uneven-one-share-holdings-hard-ceiling',qualified:['MRNA','BBB','CCC'],authorized:['MRNA'],projectedDistinctSwingPositions:projectedSymbols.size,phantomHoldings:false,status:'PASS'});
  // Honest blockers, with no fallback to slot capacity when another gate fails.
  for(const [name,edit,expected] of [
   ['event',g=>{for(const s of [...g.sessions[220].signals,...g.sessions[220].positionSignals])if(s.symbol==='MRNA')s.eventRisk={status:'Blocked',blockNewCapital:true,checkComplete:true};},/material-event|entry|verification|event/],
