@@ -13,18 +13,23 @@ assert(Math.abs(observation.totalReturnPct-20)<1e-9);assert(Math.abs(observation
 const dates=[];for(let date=new Date('2025-01-02T00:00:00Z');dates.length<123;date.setUTCDate(date.getUTCDate()+1)){
  const key=date.toISOString().slice(0,10);if(loader.load('lib/marketSession.js').isUsMarketSessionDay(key))dates.push(key);
 }
-const symbols=['AAA','BBB'];
+const symbols=['AAA','BBB','CCC'];
 const sessions=dates.map((date,index)=>{
- const prices=symbols.map(symbol=>{const formation=index===50?(symbol==='AAA'?150:125):100+Math.min(index,100)*.2,currentHigh=index===120?999:formation;return {symbol,date,open:formation,high:currentHigh,low:formation,close:index===100?120:formation,volume:1000000,adjusted:true};});
- const signals=symbols.map(symbol=>({symbol,sector:symbol,price:prices.find(row=>row.symbol===symbol).close,action:'Strong Buy',entryTiming:{},researchFactors:{return120Ex20:20,momentumPercentile:50}}));
- return {date,decisionAt:date+'T21:00:00.000Z',prices,signals,positionSignals:JSON.parse(JSON.stringify(signals)),universeSymbols:symbols,corporateActions:[]};
+ const prices=symbols.map(symbol=>{const formation=index===50?(symbol==='AAA'?150:symbol==='BBB'?125:110):100+Math.min(index,100)*.2,currentHigh=index===120?999:formation;return {symbol,date,open:formation,high:currentHigh,low:formation,close:index===100?120:formation,volume:1000000,adjusted:true};});
+ const row=symbol=>({symbol,sector:symbol,price:prices.find(price=>price.symbol===symbol).close,action:'Strong Buy',entryTiming:{},researchFactors:{return120Ex20:20,momentumPercentile:symbol==='CCC'?7:50}});
+ return {date,decisionAt:date+'T21:00:00.000Z',prices,signals:['AAA','BBB'].map(row),positionSignals:[row('CCC')],universeSymbols:symbols,corporateActions:[]};
 });
 const dataset={metadata:{benchmarkSymbol:'SPY'},sessions},transformed=htp.buildC1HighToPriceDataset(dataset),target=transformed.sessions[120];
 const aaa=target.signals.find(row=>row.symbol==='AAA').researchFactors,bbb=target.signals.find(row=>row.symbol==='BBB').researchFactors;
-assert(aaa.highToPricePrePeakReturnPct>bbb.highToPricePrePeakReturnPct);assert.equal(aaa.momentumPercentile,100);assert.equal(bbb.momentumPercentile,0);
+const ccc=target.positionSignals.find(row=>row.symbol==='CCC').researchFactors;
+assert(aaa.highToPricePrePeakReturnPct>bbb.highToPricePrePeakReturnPct);assert.equal(aaa.momentumPercentile,100);assert.equal(bbb.momentumPercentile,50);
+assert.equal(ccc.momentumPercentile,0);assert.equal(ccc.highToPriceContract,htp.C1_HIGH_TO_PRICE_CONTRACT,'Holding-only signals must not retain the Champion rank');
 assert.equal(aaa.highToPriceFormationHigh,150,'The current-session high cannot leak into the lagged formation window');
 assert.equal(dataset.sessions[120].signals[0].researchFactors.highToPriceContract,undefined,'The accepted input dataset remains immutable');
-assert.equal(target.positionSignals.find(row=>row.symbol==='AAA').researchFactors.momentumPercentile,100,'Held-signal evidence uses the same dated challenger rank');
+const comparisonArgs={startDate:dates[120],endDate:dates.at(-1)};
+const ordinary=htp.runC1HighToPriceComparison({dataset,...comparisonArgs});
+const memoryBound=htp.runC1HighToPriceComparisonMemoryBound({dataset:JSON.parse(JSON.stringify(dataset)),...comparisonArgs});
+assert.deepEqual(memoryBound,ordinary,'The memory-bounded preview must exactly match the immutable comparison');
 
 const previewRunner='pages/api/research/c1-high-to-price-historical.js';
 const appSources=['pages','components'].flatMap(dir=>fs.readdirSync(dir,{recursive:true}).filter(file=>/\.(js|jsx|ts|tsx)$/.test(file)).map(file=>dir+'/'+file));
@@ -34,4 +39,4 @@ assert(runnerSource.includes("process.env.VERCEL_ENV==='production'"),'The one-t
 assert(!runnerSource.includes('put(')&&!runnerSource.includes('FMP_API_KEY'),'The one-time historical runner must not write or acquire provider data');
 const source=fs.readFileSync('lib/c1HighToPriceChallenger.js','utf8');
 assert(!/fetch\s*\(|@vercel\/blob|process\.env|pages\/api/.test(source),'The challenger must not acquire data or depend on runtime infrastructure');
-console.log('PASS: fixed 120-to-20 high-to-price decomposition, exact log identity, causal cross-sectional rank, immutable inputs and one read-only preview runner that refuses production.');
+console.log('PASS: fixed 120-to-20 high-to-price decomposition, exact log identity, causal cross-sectional rank, immutable inputs, equivalent memory-bounded execution and one read-only preview runner that refuses production.');

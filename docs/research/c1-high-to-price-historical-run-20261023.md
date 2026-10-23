@@ -10,9 +10,17 @@ and compressed chunks, verifies their ordering and dates, and runs the frozen
 Champion and single Challenger through the same simulator for 2023-01-04
 through 2026-09-01.
 
+Before execution, the transformation was hardened so fresh-entry and
+holding-only signal rows receive one consistent dated Challenger rank. This
+prevents a held stock from retaining a Champion rank while candidates use the
+Challenger definition.
+
 The endpoint:
 
 - returns 404 in production;
+- runs the paired simulation in a memory-bounded sequence (Champion first,
+  then Challenger on the same disposable private restore) rather than making
+  six full copies of the accepted replay;
 - performs no provider acquisition and no storage write;
 - exposes no holdings, account records, orders, credentials, or raw dataset;
 - returns only aggregate offline research metrics;

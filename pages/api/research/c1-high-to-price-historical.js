@@ -1,8 +1,7 @@
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {get,list} from '@vercel/blob';
-import {compactReplaySession} from '../../../lib/replayDatasetCompaction';
-import {runC1HighToPriceComparison} from '../../../lib/c1HighToPriceChallenger';
+import {runC1HighToPriceComparisonMemoryBound} from '../../../lib/c1HighToPriceChallenger';
 
 export const config={maxDuration:800};
 
@@ -24,9 +23,10 @@ async function json(pathname){
  return JSON.parse(await new Response(response.stream).text());
 }
 
-async function gzipJson(pathname){
+async function gzipJson(pathname,compressedBytes){
  const response=await exactBlob(pathname);
  const compressed=Buffer.from(await new Response(response.stream).arrayBuffer());
+ if(compressed.length!==compressedBytes)throw new Error('Accepted point-in-time chunk byte count is invalid');
  return JSON.parse(gunzipSync(compressed).toString('utf8'));
 }
 
@@ -38,8 +38,8 @@ async function acceptedDataset(){
  let expectedStart=0;
  for(const chunk of manifest.chunks){
   if(chunk.start!==expectedStart||chunk.end<=chunk.start)throw new Error('Accepted point-in-time chunk sequence is invalid');
-  const payload=await gzipJson(chunk.pathname);
-  const restored=(payload?.sessions||[]).map(compactReplaySession);
+  const payload=await gzipJson(chunk.pathname,chunk.compressedBytes);
+  const restored=payload?.sessions||[];
   if(restored.length!==chunk.end-chunk.start||restored[0]?.date!==chunk.firstDate||restored.at(-1)?.date!==chunk.lastDate)
    throw new Error('Accepted point-in-time chunk failed its manifest contract');
   sessions.push(...restored);expectedStart=chunk.end;
@@ -75,7 +75,7 @@ export default async function handler(req,res){
  if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
  try{
   const restored=await acceptedDataset();
-  const comparison=runC1HighToPriceComparison({dataset:restored.dataset,startDate:START_DATE,endDate:END_DATE});
+  const comparison=runC1HighToPriceComparisonMemoryBound({dataset:restored.dataset,startDate:START_DATE,endDate:END_DATE});
   return res.status(200).json({contract:comparison.contract,scope:comparison.scope,executable:false,productionChanged:false,
    dataset:{fingerprint:restored.fingerprint,chunkCount:restored.chunkCount,sessionCount:restored.dataset.sessions.length,
     firstSession:restored.dataset.sessions[0]?.date,lastSession:restored.dataset.sessions.at(-1)?.date},
