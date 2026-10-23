@@ -10,7 +10,7 @@ assert.equal(observation.startPrice,100);assert.equal(observation.formationHigh,
 assert(Math.abs(observation.prePeakReturnPct-50)<1e-9);assert(Math.abs(observation.postPeakReturnPct+20)<1e-9);
 assert(Math.abs(observation.totalReturnPct-20)<1e-9);assert(Math.abs(observation.logIdentityError)<1e-12);
 
-const dates=[];for(let date=new Date('2025-01-02T00:00:00Z');dates.length<123;date.setUTCDate(date.getUTCDate()+1)){
+const dates=[];for(let date=new Date('2025-01-02T00:00:00Z');dates.length<260;date.setUTCDate(date.getUTCDate()+1)){
  const key=date.toISOString().slice(0,10);if(loader.load('lib/marketSession.js').isUsMarketSessionDay(key))dates.push(key);
 }
 const symbols=['AAA','BBB','CCC'];
@@ -26,11 +26,19 @@ assert(aaa.highToPricePrePeakReturnPct>bbb.highToPricePrePeakReturnPct);assert.e
 assert.equal(ccc.momentumPercentile,0);assert.equal(ccc.highToPriceContract,htp.C1_HIGH_TO_PRICE_CONTRACT,'Holding-only signals must not retain the Champion rank');
 assert.equal(aaa.highToPriceFormationHigh,150,'The current-session high cannot leak into the lagged formation window');
 assert.equal(dataset.sessions[120].signals[0].researchFactors.highToPriceContract,undefined,'The accepted input dataset remains immutable');
-const comparisonArgs={startDate:dates[120],endDate:dates.at(-1)};
+const evaluationStartIndex=252,retainedStartIndex=evaluationStartIndex-htp.C1_HIGH_TO_PRICE_REQUIRED_PRE_EVALUATION_SESSIONS;
+assert.equal(htp.C1_HIGH_TO_PRICE_SIMULATOR_WARMUP_SESSIONS,2);
+assert.equal(htp.C1_HIGH_TO_PRICE_REQUIRED_PRE_EVALUATION_SESSIONS,122);
+assert.equal(retainedStartIndex,130);
+assert.equal(htp.c1HighToPriceRetainedStartIndex(dates,dates[evaluationStartIndex]),retainedStartIndex);
+const comparisonArgs={startDate:dates[evaluationStartIndex],endDate:dates.at(-1)};
 const ordinary=htp.runC1HighToPriceComparison({dataset,...comparisonArgs});
 const progress=[];
 const memoryBound=htp.runC1HighToPriceComparisonMemoryBound({dataset:JSON.parse(JSON.stringify(dataset)),...comparisonArgs,onProgress:event=>progress.push(event)});
 assert.deepEqual(memoryBound,ordinary,'The memory-bounded preview must exactly match the immutable comparison');
+const trimmedDataset={metadata:JSON.parse(JSON.stringify(dataset.metadata)),sessions:JSON.parse(JSON.stringify(dataset.sessions.slice(retainedStartIndex)))};
+const trimmed=htp.runC1HighToPriceComparisonMemoryBound({dataset:trimmedDataset,...comparisonArgs});
+assert.deepEqual(trimmed,memoryBound,'The exact 120-session formation plus two-session simulator warmup must reproduce the full-history comparison');
 assert.deepEqual(progress.map(event=>`${event.phase}:${event.sleeve||''}`),[
  'champion-sleeve-start:base','champion-sleeve-end:base','champion-sleeve-start:cooldown15','champion-sleeve-end:cooldown15',
  'champion-sleeve-start:sector40','champion-sleeve-end:sector40','challenger-transform-start:','challenger-transform-end:',
@@ -43,7 +51,9 @@ const appSources=['pages','components'].flatMap(dir=>fs.readdirSync(dir,{recursi
 for(const file of appSources)if(file!==previewRunner)assert(!fs.readFileSync(file,'utf8').includes('c1HighToPriceChallenger'),file+' must not import the offline challenger');
 const runnerSource=fs.readFileSync(previewRunner,'utf8');
 assert(runnerSource.includes("process.env.VERCEL_ENV==='production'"),'The one-time historical runner must refuse production');
-assert(runnerSource.includes("phase:'restore-batch-end'")&&runnerSource.includes("phase:'response-ready'"),'The one-time runner must emit bounded phase timings');
+assert(runnerSource.includes("phase:'restore-chunk-end'")&&runnerSource.includes("phase:'response-ready'"),'The one-time runner must emit bounded phase timings');
+assert(runnerSource.includes('ACCEPTED_RETAINED_START_INDEX=130')&&runnerSource.includes("ACCEPTED_RETAINED_FIRST_SESSION='2022-07-12'"),'The accepted preview must retain the exact registered causal window');
+assert(!runnerSource.includes('Promise.all(batch.map'),'The accepted preview must restore one chunk at a time');
 assert(!runnerSource.includes('put(')&&!runnerSource.includes('FMP_API_KEY'),'The one-time historical runner must not write or acquire provider data');
 const source=fs.readFileSync('lib/c1HighToPriceChallenger.js','utf8');
 assert(!/fetch\s*\(|@vercel\/blob|process\.env|pages\/api/.test(source),'The challenger must not acquire data or depend on runtime infrastructure');

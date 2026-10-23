@@ -1,13 +1,15 @@
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {get,list} from '@vercel/blob';
-import {runC1HighToPriceComparisonMemoryBound} from '../../../lib/c1HighToPriceChallenger';
+import {c1HighToPriceRetainedStartIndex,runC1HighToPriceComparisonMemoryBound} from '../../../lib/c1HighToPriceChallenger';
 
 export const config={maxDuration:800};
 
 const MANIFEST='research/pit-sp500-compiled-checkpoint-v1.json';
 const START_DATE='2023-01-04';
 const END_DATE='2026-09-01';
+const ACCEPTED_RETAINED_START_INDEX=130;
+const ACCEPTED_RETAINED_FIRST_SESSION='2022-07-12';
 
 async function exactBlob(pathname){
  const {blobs}=await list({prefix:pathname,limit:10});
@@ -34,31 +36,37 @@ async function acceptedDataset(onProgress=()=>{}){
  const manifest=await json(MANIFEST);
  if(manifest?.complete!==true||!Array.isArray(manifest.sessionDates)||!Array.isArray(manifest.chunks)||!manifest.chunks.length)
   throw new Error('Accepted point-in-time dataset is incomplete');
- const sessions=[];
  let expectedStart=0;
- for(let index=0;index<manifest.chunks.length;index+=4){
-  const batch=manifest.chunks.slice(index,index+4);
-  onProgress({phase:'restore-batch-start',firstChunk:index,lastChunk:index+batch.length-1});
-  for(const chunk of batch){
-   if(chunk.start!==expectedStart||chunk.end<=chunk.start)throw new Error('Accepted point-in-time chunk sequence is invalid');
-   expectedStart=chunk.end;
-  }
-  const restoredBatch=await Promise.all(batch.map(async chunk=>{
-   const payload=await gzipJson(chunk.pathname,chunk.compressedBytes);
-   const restored=payload?.sessions||[];
-   if(restored.length!==chunk.end-chunk.start||restored[0]?.date!==chunk.firstDate||restored.at(-1)?.date!==chunk.lastDate)
-    throw new Error('Accepted point-in-time chunk failed its manifest contract');
-   return restored;
-  }));
-  for(const restored of restoredBatch)sessions.push(...restored);
-  onProgress({phase:'restore-batch-end',completedChunks:index+batch.length,completedSessions:sessions.length});
+ for(const chunk of manifest.chunks){
+  if(chunk.start!==expectedStart||chunk.end<=chunk.start)throw new Error('Accepted point-in-time chunk sequence is invalid');
+  expectedStart=chunk.end;
  }
- if(expectedStart!==manifest.sessionDates.length||sessions.length!==manifest.sessionDates.length||
-    sessions.some((session,index)=>session.date!==manifest.sessionDates[index]))
+ if(expectedStart!==manifest.sessionDates.length)throw new Error('Accepted point-in-time manifest sequence is incomplete');
+ const retainedStartIndex=c1HighToPriceRetainedStartIndex(manifest.sessionDates,START_DATE);
+ if(retainedStartIndex!==ACCEPTED_RETAINED_START_INDEX||manifest.sessionDates[retainedStartIndex]!==ACCEPTED_RETAINED_FIRST_SESSION)
+  throw new Error('Accepted point-in-time retained window changed');
+ const restoreChunks=manifest.chunks.map((chunk,index)=>({chunk,index})).filter(({chunk})=>chunk.end>retainedStartIndex);
+ const sessions=[];
+ onProgress({phase:'restore-plan',acceptedSessionCount:manifest.sessionDates.length,retainedSessionCount:manifest.sessionDates.length-retainedStartIndex,
+  retainedStartIndex,firstRetainedSession:manifest.sessionDates[retainedStartIndex],restoreChunkCount:restoreChunks.length});
+ for(let ordinal=0;ordinal<restoreChunks.length;ordinal++){
+  const {chunk,index}=restoreChunks[ordinal];
+  onProgress({phase:'restore-chunk-start',chunkIndex:index,restoreOrdinal:ordinal+1,totalRestoreChunks:restoreChunks.length});
+  const payload=await gzipJson(chunk.pathname,chunk.compressedBytes);
+  const restored=payload?.sessions||[];
+  if(restored.length!==chunk.end-chunk.start||restored[0]?.date!==chunk.firstDate||restored.at(-1)?.date!==chunk.lastDate)
+   throw new Error('Accepted point-in-time chunk failed its manifest contract');
+  sessions.push(...restored.slice(Math.max(0,retainedStartIndex-chunk.start)));
+  onProgress({phase:'restore-chunk-end',chunkIndex:index,completedRestoreChunks:ordinal+1,totalRestoreChunks:restoreChunks.length,
+   completedSessions:sessions.length});
+ }
+ const retainedDates=manifest.sessionDates.slice(retainedStartIndex);
+ if(sessions.length!==retainedDates.length||sessions.some((session,index)=>session.date!==retainedDates[index]))
   throw new Error('Accepted point-in-time dataset restore is incomplete');
  const fingerprint=createHash('sha256').update(JSON.stringify({signature:manifest.signature,
   sessionDates:manifest.sessionDates,chunks:manifest.chunks})).digest('hex');
- return {dataset:{metadata:manifest.datasetMetadata,sessions},fingerprint,chunkCount:manifest.chunks.length};
+ return {dataset:{metadata:manifest.datasetMetadata,sessions},fingerprint,chunkCount:manifest.chunks.length,
+  acceptedSessionCount:manifest.sessionDates.length,acceptedFirstSession:manifest.sessionDates[0],retainedStartIndex};
 }
 
 function sleeveSummary(result={}){
@@ -87,12 +95,15 @@ export default async function handler(req,res){
   const onProgress=event=>console.info('[c1-high-to-price-historical-progress]',JSON.stringify({...event,elapsedMs:Date.now()-startedAt}));
   onProgress({phase:'request-start'});
   const restored=await acceptedDataset(onProgress);
-  onProgress({phase:'restore-complete',chunkCount:restored.chunkCount,sessionCount:restored.dataset.sessions.length});
+  onProgress({phase:'restore-complete',chunkCount:restored.chunkCount,acceptedSessionCount:restored.acceptedSessionCount,
+   retainedSessionCount:restored.dataset.sessions.length,retainedStartIndex:restored.retainedStartIndex});
   const comparison=runC1HighToPriceComparisonMemoryBound({dataset:restored.dataset,startDate:START_DATE,endDate:END_DATE,onProgress});
   onProgress({phase:'response-ready'});
   return res.status(200).json({contract:comparison.contract,scope:comparison.scope,executable:false,productionChanged:false,
-   dataset:{fingerprint:restored.fingerprint,chunkCount:restored.chunkCount,sessionCount:restored.dataset.sessions.length,
-    firstSession:restored.dataset.sessions[0]?.date,lastSession:restored.dataset.sessions.at(-1)?.date},
+   dataset:{fingerprint:restored.fingerprint,chunkCount:restored.chunkCount,acceptedSessionCount:restored.acceptedSessionCount,
+    acceptedFirstSession:restored.acceptedFirstSession,retainedSessionCount:restored.dataset.sessions.length,
+    retainedStartIndex:restored.retainedStartIndex,retainedFirstSession:restored.dataset.sessions[0]?.date,
+    lastSession:restored.dataset.sessions.at(-1)?.date},
    evaluation:{startDate:START_DATE,endDate:END_DATE,parameterGrid:false},
    champion:summary(comparison.champion),challenger:summary(comparison.challenger),comparison:comparison.comparison,
    limitations:comparison.limitations});
