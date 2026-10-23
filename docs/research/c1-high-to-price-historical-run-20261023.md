@@ -26,6 +26,9 @@ The endpoint:
 - runs the paired simulation in a memory-bounded sequence (Champion first,
   then Challenger on the same disposable private restore) rather than making
   six full copies of the accepted replay;
+- restores the 24 manifest chunks in bounded four-chunk batches, preserving
+  manifest order and all byte-count/date checks while avoiding a serial
+  network bottleneck;
 - performs no provider acquisition and no storage write;
 - exposes no holdings, account records, orders, credentials, or raw dataset;
 - returns only aggregate offline research metrics;

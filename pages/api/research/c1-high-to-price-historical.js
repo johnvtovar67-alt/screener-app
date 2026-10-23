@@ -36,13 +36,20 @@ async function acceptedDataset(){
   throw new Error('Accepted point-in-time dataset is incomplete');
  const sessions=[];
  let expectedStart=0;
- for(const chunk of manifest.chunks){
-  if(chunk.start!==expectedStart||chunk.end<=chunk.start)throw new Error('Accepted point-in-time chunk sequence is invalid');
-  const payload=await gzipJson(chunk.pathname,chunk.compressedBytes);
-  const restored=payload?.sessions||[];
-  if(restored.length!==chunk.end-chunk.start||restored[0]?.date!==chunk.firstDate||restored.at(-1)?.date!==chunk.lastDate)
-   throw new Error('Accepted point-in-time chunk failed its manifest contract');
-  sessions.push(...restored);expectedStart=chunk.end;
+ for(let index=0;index<manifest.chunks.length;index+=4){
+  const batch=manifest.chunks.slice(index,index+4);
+  for(const chunk of batch){
+   if(chunk.start!==expectedStart||chunk.end<=chunk.start)throw new Error('Accepted point-in-time chunk sequence is invalid');
+   expectedStart=chunk.end;
+  }
+  const restoredBatch=await Promise.all(batch.map(async chunk=>{
+   const payload=await gzipJson(chunk.pathname,chunk.compressedBytes);
+   const restored=payload?.sessions||[];
+   if(restored.length!==chunk.end-chunk.start||restored[0]?.date!==chunk.firstDate||restored.at(-1)?.date!==chunk.lastDate)
+    throw new Error('Accepted point-in-time chunk failed its manifest contract');
+   return restored;
+  }));
+  for(const restored of restoredBatch)sessions.push(...restored);
  }
  if(expectedStart!==manifest.sessionDates.length||sessions.length!==manifest.sessionDates.length||
     sessions.some((session,index)=>session.date!==manifest.sessionDates[index]))

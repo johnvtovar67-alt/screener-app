@@ -116,7 +116,7 @@
     "pages/api/research/alpha-regime-map.js": "2f16f7ea5484186d27492a318c7230ad8602c6cb",
     "pages/api/research/backtest-status.js": "ce9a01391f9722be6a5ecae4bd65dbfdcaeed377",
     "pages/api/research/c1-forward-accounting.js": "34a8eeaec80869c674b933d02a192a68ee214884",
-    "pages/api/research/c1-high-to-price-historical.js": "e21a1db7b9b3de67ce922320715a6b7cd4972634",
+    "pages/api/research/c1-high-to-price-historical.js": "28507f96c178260cbeb809ecbe824b4e1257058e",
     "pages/api/research/c1-holdings-comparison.js": "bb7eeeef69031a2eef6f62e11f68a2a3cd92c9bd",
     "pages/api/research/c1-live-decision.js": "6af994b4f911da2fea602902f8822c9ccce58e7d",
     "pages/api/research/c1-live-input.js": "8bb26ebbb235fb8d251ffbc81921c163baaab21c",
