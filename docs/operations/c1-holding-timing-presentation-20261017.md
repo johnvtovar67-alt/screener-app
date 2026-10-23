@@ -14,7 +14,7 @@ Read-only `c1HoldingTiming` in the existing presentation-copy module consumes:
 | Holding period / remaining | `position.reviewRules[].heldSessions` and `minimumHold` |
 | Stop triggered | Existing position presenter result or recorded `initial-stop` exit |
 | Stop not triggered | Verified current presenter result, otherwise explicitly scoped to the last C1 close with available recorded stops/close |
-| Profit active/inactive | Existing per-sleeve `profitProtectionArmed` flags |
+| Profit armed/inactive | Existing per-sleeve `profitProtectionArmed` flags |
 | Rank / profit-rank confirmations | Existing `earlyStreak` / `earlyConfirmations` and `profitStreak` / `profitConfirmations` |
 | Momentum confirmations | Available existing `recentMomentumReviews[].state.streak` and `metrics.confirmations` |
 | Giveback confirmations | Available existing `state.profitGivebackStreak` and the existing gate's `profitProtectionConfirmations` constant |
@@ -31,3 +31,11 @@ Mandatory CI runs the repository's normal build/hooks/regressions once for the f
 Application changes are limited to `lib/c1HoldPill.js`, `lib/c1DecisionCopy.js`, and `pages/index.js`. Only those three release-manifest entries plus this owner authorization are updated; guard/build-hook implementations and historical reference hashes are unchanged. Test-source comparison adapters reverse only the explicitly listed timing JSX/import changes. No trading, accounting, ranking, stop, threshold or historical-record module changes. Research PR #277 remains untouched.
 
 CI initially found two legacy source-string assertions requiring the removed generic momentum sentence (108/110 checks passed). Those two presentation checks now require the exact saved-timing formatter binding in the original slot; all badge, column, decision and no-technical-narrative assertions remain. Both affected checks passed locally. No application change was made for this test compatibility update.
+
+October 23 production wording follow-up: a VEEV row displayed **Profit
+protection: active** beside **Profit rank: 0/2 · 2 remaining**. The underlying
+state is correct: `profitProtectionArmed` records that the verified peak-gain
+activation was reached, while the zero counter means no qualifying weak-rank
+close and therefore no sell trigger. Presentation now says **armed, not
+triggered** in the same two existing copy locations. No counter, threshold,
+exit, account, or execution behavior changes.

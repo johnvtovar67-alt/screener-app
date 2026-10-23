@@ -135,7 +135,7 @@ const timingPosition={stops:[{price:86}],reviewRules:[{sleeve:'base',heldSession
 const timingEvidence={status:'available',label:'Momentum Weakening',tone:'weakening',sourceSessionDate:'2026-09-11'};
 for(const mobile of [false,true]){
  const original=JSON.stringify(timingPosition),result=render({mobile,positionData:timingPosition,evidence:timingEvidence});
- for(const text of ['Holding period: 12/30 sessions · 18 remaining','Stop: not triggered at last C1 close','Profit protection: active','Rank momentum: 2/3 · 1 remaining','Profit rank: 1/2 · 1 remaining','Momentum: 1/2 · 1 remaining','Profit giveback: 1/2 · 1 remaining'])assert(result.html.includes(text),text);
+ for(const text of ['Holding period: 12/30 sessions · 18 remaining','Stop: not triggered at last C1 close','Profit protection: armed, not triggered','Rank momentum: 2/3 · 1 remaining','Profit rank: 1/2 · 1 remaining','Momentum: 1/2 · 1 remaining','Profit giveback: 1/2 · 1 remaining'])assert(result.html.includes(text),text);
  assert.equal(JSON.stringify(timingPosition),original);assert.equal(result.accountView.decision.positions[0].action,'Hold');
  const core=render({mobile,row:{...holding,symbol:'MSTR',role:'Core'},positionData:timingPosition,evidence:timingEvidence,source:'legacy-core'});assert.doesNotMatch(core.html,/Holding period:|Rank momentum:|Profit rank:/);
  const stale=render({mobile,positionData:timingPosition,evidence:{...timingEvidence,status:'stale'}});assert.doesNotMatch(stale.html,/12\/30|2\/3/);

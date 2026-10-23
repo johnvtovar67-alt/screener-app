@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
-const {c1HoldingTiming:copy}=createResearchModuleLoader(process.cwd()).load('lib/c1DecisionCopy.js');
+const {c1HoldingTiming:copy,c1PlainDecisionReason}=createResearchModuleLoader(process.cwd()).load('lib/c1DecisionCopy.js');
 const evidence={status:'available'},rule={sleeve:'base',heldSessions:7,minimumHold:30,close:100,profitProtectionArmed:false,earlyStreak:0,earlyConfirmations:3,profitStreak:0,profitConfirmations:2,rankVerified:true};
 const position={reviewRules:[rule],stops:[{price:86}],exits:[],recentMomentumReviews:[]};
 const original=JSON.stringify(position),lines=copy({position,current:true,evidence});
@@ -11,5 +11,8 @@ const unknown=copy({position:{reviewRules:[{sleeve:'base'}]},current:true,eviden
 const different=copy({position:{...position,reviewRules:[rule,{...rule,sleeve:'sector40',heldSessions:10}]},current:true,evidence});assert(different.includes('Holding period: 7/30 sessions · 23 remaining (base)'));assert(different.includes('Holding period: 10/30 sessions · 20 remaining (sector40)'));
 const missing=copy({position:{...position,reviewRules:[{...rule,earlyStreak:1,earlyConfirmations:undefined}],recentMomentumReviews:[{available:true,state:{streak:1},metrics:{}}]},current:true,evidence});assert(missing.includes('Rank momentum: confirmation pending'));assert(missing.includes('Momentum: confirmation pending'));
 const unverified=copy({position:{...position,reviewRules:[{...rule,earlyStreak:2,rankVerified:false}],recentMomentumReviews:[{available:false,state:{streak:2},metrics:{confirmations:3}}]},current:true,evidence});assert(!unverified.some(x=>/2\/3/.test(x)));assert(unverified.includes('Momentum: review unavailable'));
+const armedPosition={...position,reviewRules:[{...rule,profitProtectionArmed:true,peakGainPct:15,profitStreak:0}]},armed=copy({position:armedPosition,current:true,evidence});
+assert(armed.includes('Profit protection: armed, not triggered'));assert(armed.includes('Profit rank: 0/2 · 2 remaining'));
+assert.equal(c1PlainDecisionReason({action:'HOLD',position:armedPosition}),'Profit protection is armed, not triggered; no sale is confirmed.');
 assert(!copy({position,current:false,evidence}).some(x=>/7\/30/.test(x)));
 console.log('PASS: timing copy consumes original counters/thresholds only; missing/stale data does not create counters; differing sleeves remain explicit; inputs unchanged.');
