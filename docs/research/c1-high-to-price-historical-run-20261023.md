@@ -10,6 +10,11 @@ and compressed chunks, verifies their ordering and dates, and runs the frozen
 Champion and single Challenger through the same simulator for 2023-01-04
 through 2026-09-01.
 
+The historical comparison starts each sleeve from the simulator's standard
+normalized $100,000 cash book. It does not synthesize a current-account
+adoption record; those records require separate dated opening evidence and are
+not needed for a paired strategy replay.
+
 Before execution, the transformation was hardened so fresh-entry and
 holding-only signal rows receive one consistent dated Challenger rank. This
 prevents a held stock from retaining a Champion rank while candidates use the

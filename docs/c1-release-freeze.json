@@ -39,7 +39,7 @@
     "lib/c1FrozenSimulator.js": "f225cac77bcc23da195350f481144fbe85d9b60c",
     "lib/c1HeldRankProvider.js": "099db73a7b16a89788b11dbc43d61e637909835f",
     "lib/c1HeldRankReview.js": "19a2b6a0bac62d28a081130a3855a1afe7d1653c",
-    "lib/c1HighToPriceChallenger.js": "6a9de38cb16b339107fa0f50a8873a59e242bd86",
+    "lib/c1HighToPriceChallenger.js": "58a58c38bcea192bf13f693c61f144faa253862a",
     "lib/c1HoldingCoverage.js": "85081bf58f0787df1a16c808ef108b0e9c0bde79",
     "lib/c1HoldingRisk.js": "e116607f97be43bcfa168e2c502f809350280513",
     "lib/c1HoldingsComparison.js": "57e4c921cf977a97ee81982da661b5678eb28582",
