@@ -30,7 +30,7 @@ async function gzipJson(pathname,compressedBytes){
  return JSON.parse(gunzipSync(compressed).toString('utf8'));
 }
 
-async function acceptedDataset(){
+async function acceptedDataset(onProgress=()=>{}){
  const manifest=await json(MANIFEST);
  if(manifest?.complete!==true||!Array.isArray(manifest.sessionDates)||!Array.isArray(manifest.chunks)||!manifest.chunks.length)
   throw new Error('Accepted point-in-time dataset is incomplete');
@@ -38,6 +38,7 @@ async function acceptedDataset(){
  let expectedStart=0;
  for(let index=0;index<manifest.chunks.length;index+=4){
   const batch=manifest.chunks.slice(index,index+4);
+  onProgress({phase:'restore-batch-start',firstChunk:index,lastChunk:index+batch.length-1});
   for(const chunk of batch){
    if(chunk.start!==expectedStart||chunk.end<=chunk.start)throw new Error('Accepted point-in-time chunk sequence is invalid');
    expectedStart=chunk.end;
@@ -50,6 +51,7 @@ async function acceptedDataset(){
    return restored;
   }));
   for(const restored of restoredBatch)sessions.push(...restored);
+  onProgress({phase:'restore-batch-end',completedChunks:index+batch.length,completedSessions:sessions.length});
  }
  if(expectedStart!==manifest.sessionDates.length||sessions.length!==manifest.sessionDates.length||
     sessions.some((session,index)=>session.date!==manifest.sessionDates[index]))
@@ -81,8 +83,13 @@ export default async function handler(req,res){
  if(process.env.VERCEL_ENV==='production')return res.status(404).json({error:'Not found'});
  if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
  try{
-  const restored=await acceptedDataset();
-  const comparison=runC1HighToPriceComparisonMemoryBound({dataset:restored.dataset,startDate:START_DATE,endDate:END_DATE});
+  const startedAt=Date.now();
+  const onProgress=event=>console.info('[c1-high-to-price-historical-progress]',JSON.stringify({...event,elapsedMs:Date.now()-startedAt}));
+  onProgress({phase:'request-start'});
+  const restored=await acceptedDataset(onProgress);
+  onProgress({phase:'restore-complete',chunkCount:restored.chunkCount,sessionCount:restored.dataset.sessions.length});
+  const comparison=runC1HighToPriceComparisonMemoryBound({dataset:restored.dataset,startDate:START_DATE,endDate:END_DATE,onProgress});
+  onProgress({phase:'response-ready'});
   return res.status(200).json({contract:comparison.contract,scope:comparison.scope,executable:false,productionChanged:false,
    dataset:{fingerprint:restored.fingerprint,chunkCount:restored.chunkCount,sessionCount:restored.dataset.sessions.length,
     firstSession:restored.dataset.sessions[0]?.date,lastSession:restored.dataset.sessions.at(-1)?.date},

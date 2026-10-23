@@ -29,6 +29,9 @@ The endpoint:
 - restores the 24 manifest chunks in bounded four-chunk batches, preserving
   manifest order and all byte-count/date checks while avoiding a serial
   network bottleneck;
+- logs only elapsed restore-batch, transform, and sleeve phase boundaries so a
+  bounded preview failure can be attributed without exposing dataset rows,
+  holdings, trades, credentials, or account state;
 - performs no provider acquisition and no storage write;
 - exposes no holdings, account records, orders, credentials, or raw dataset;
 - returns only aggregate offline research metrics;
