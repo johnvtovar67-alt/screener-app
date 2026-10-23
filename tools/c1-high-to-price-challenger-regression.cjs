@@ -31,12 +31,37 @@ assert.equal(htp.C1_HIGH_TO_PRICE_SIMULATOR_WARMUP_SESSIONS,2);
 assert.equal(htp.C1_HIGH_TO_PRICE_REQUIRED_PRE_EVALUATION_SESSIONS,122);
 assert.equal(retainedStartIndex,130);
 assert.equal(htp.c1HighToPriceRetainedStartIndex(dates,dates[evaluationStartIndex]),retainedStartIndex);
+// MBC-shaped late entrant: the accepted compiler includes a security after 50
+// observations but correctly leaves its 120-ex-20 factor absent until 121.
+// The Challenger must preserve that eligibility state, exclude it from the
+// dated peer denominator, and never manufacture a shorter history.
+const lateEntrantDataset=JSON.parse(JSON.stringify(dataset));
+for(let index=200;index<lateEntrantDataset.sessions.length;index++){
+ const session=lateEntrantDataset.sessions[index],close=80+(index-200)*.1;
+ session.prices.push({symbol:'LATE',date:session.date,open:close,high:close*1.01,low:close*.99,close,volume:5000000,adjusted:true});
+}
+const lateRow={symbol:'LATE',sector:'Industrials',price:85.2,avgVolume:5000000,action:'Strong Buy',entryTiming:{},researchFactors:{return120Ex20:null,momentumPercentile:null}};
+lateEntrantDataset.sessions[evaluationStartIndex].signals.push(JSON.parse(JSON.stringify(lateRow)));
+lateEntrantDataset.sessions[evaluationStartIndex].positionSignals.push(JSON.parse(JSON.stringify(lateRow)));
+const lateTransformed=htp.buildC1HighToPriceDataset(lateEntrantDataset),lateSession=lateTransformed.sessions[evaluationStartIndex];
+for(const field of ['signals','positionSignals']){
+ const factors=lateSession[field].find(row=>row.symbol==='LATE').researchFactors;
+ assert.equal(factors.return120Ex20,null);assert.equal(factors.momentumPercentile,null);
+ assert.equal(factors.highToPricePrePeakReturnPct,null);assert.equal(factors.highToPriceFormationHigh,null);
+ assert.equal(factors.highToPriceContract,htp.C1_HIGH_TO_PRICE_CONTRACT);
+}
+const baselineAtLateDate=htp.buildC1HighToPriceDataset(dataset).sessions[evaluationStartIndex];
+for(const field of ['signals','positionSignals'])for(const signal of baselineAtLateDate[field])
+ assert.equal(lateSession[field].find(row=>row.symbol===signal.symbol).researchFactors.momentumPercentile,signal.researchFactors.momentumPercentile,'An ineligible late entrant must not change observed peer ranks');
+const contradictory=JSON.parse(JSON.stringify(lateEntrantDataset));
+for(const field of ['signals','positionSignals'])contradictory.sessions[evaluationStartIndex][field].find(row=>row.symbol==='LATE').researchFactors.return120Ex20=12;
+assert.throws(()=>htp.buildC1HighToPriceDataset(contradictory),/Champion formation factor is observed but high-to-price history is incomplete for LATE/,'Observed Champion formation evidence must still fail closed if its accepted price history is contradictory');
 const comparisonArgs={startDate:dates[evaluationStartIndex],endDate:dates.at(-1)};
-const ordinary=htp.runC1HighToPriceComparison({dataset,...comparisonArgs});
+const ordinary=htp.runC1HighToPriceComparison({dataset:lateEntrantDataset,...comparisonArgs});
 const progress=[];
-const memoryBound=htp.runC1HighToPriceComparisonMemoryBound({dataset:JSON.parse(JSON.stringify(dataset)),...comparisonArgs,onProgress:event=>progress.push(event)});
+const memoryBound=htp.runC1HighToPriceComparisonMemoryBound({dataset:JSON.parse(JSON.stringify(lateEntrantDataset)),...comparisonArgs,onProgress:event=>progress.push(event)});
 assert.deepEqual(memoryBound,ordinary,'The memory-bounded preview must exactly match the immutable comparison');
-const trimmedDataset={metadata:JSON.parse(JSON.stringify(dataset.metadata)),sessions:JSON.parse(JSON.stringify(dataset.sessions.slice(retainedStartIndex)))};
+const trimmedDataset={metadata:JSON.parse(JSON.stringify(lateEntrantDataset.metadata)),sessions:JSON.parse(JSON.stringify(lateEntrantDataset.sessions.slice(retainedStartIndex)))};
 const trimmed=htp.runC1HighToPriceComparisonMemoryBound({dataset:trimmedDataset,...comparisonArgs});
 assert.deepEqual(trimmed,memoryBound,'The exact 120-session formation plus two-session simulator warmup must reproduce the full-history comparison');
 assert.deepEqual(progress.map(event=>`${event.phase}:${event.sleeve||''}`),[
@@ -57,4 +82,4 @@ assert(!runnerSource.includes('Promise.all(batch.map'),'The accepted preview mus
 assert(!runnerSource.includes('put(')&&!runnerSource.includes('FMP_API_KEY'),'The one-time historical runner must not write or acquire provider data');
 const source=fs.readFileSync('lib/c1HighToPriceChallenger.js','utf8');
 assert(!/fetch\s*\(|@vercel\/blob|process\.env|pages\/api/.test(source),'The challenger must not acquire data or depend on runtime infrastructure');
-console.log('PASS: fixed 120-to-20 high-to-price decomposition, exact log identity, causal cross-sectional rank, immutable inputs, equivalent memory-bounded execution and one read-only preview runner that refuses production.');
+console.log('PASS: fixed 120-to-20 high-to-price decomposition, exact log identity, causal observed-only cross-sectional rank, Champion-parity late-entrant eligibility, immutable inputs, equivalent memory-bounded execution and one read-only preview runner that refuses production.');
