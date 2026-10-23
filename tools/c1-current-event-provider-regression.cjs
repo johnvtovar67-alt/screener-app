@@ -109,6 +109,10 @@ async function run(){
   ['NEWS',[news({publishedDate:'2026-10-19T13:00:00Z'})]],['NEWS',[news({publishedDate:'2026-02-30T13:00:00Z'})]],['NEWS',[news({title:'',text:''})]],
  ];
  for(const [kind,value]of malformedCases){const h=harness({[kind]:value});verification(await h.risk(),'UNVERIFIED',h);}
+ const recovered=harness({EARNINGS:{error:sentinel}});verification(await recovered.risk(),'UNVERIFIED',recovered);
+ const failedEarningsCalls=recovered.calls.filter(row=>row.kind==='EARNINGS').length;
+ recovered.set('EARNINGS',[]);verification(await recovered.risk(),'VERIFIED_CLEAR',recovered);
+ assert(recovered.calls.filter(row=>row.kind==='EARNINGS').length>failedEarningsCalls,'A malformed HTTP-200 body is evicted so the next verified refresh can recover without a process restart');
  for(const kind of ['EARNINGS','MERGERS','NEWS']){
   const h=harness({[kind]:new Error(sentinel)});verification(await h.risk(),'UNVERIFIED',h);
   const unavailable=harness({[kind]:{httpStatus:503,body:{private:sentinel}}});verification(await unavailable.risk(),'UNVERIFIED',unavailable);

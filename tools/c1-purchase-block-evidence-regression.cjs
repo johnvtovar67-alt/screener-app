@@ -34,13 +34,9 @@ function purchaseStatus(f,view,symbol){
 }
 
 function loadOpeningCollector(loader){
- // Load the real normalizer without importing the research module's Blob
- // storage graph. These exact source slices are pure and perform no I/O.
- const research=fs.readFileSync('lib/fmpResearchBacktest.js','utf8');
- const helpers=research.slice(research.indexOf('const asArray ='),research.indexOf('const usableAdjustedOhlcBar ='));
- const normalizer=research.slice(research.indexOf('export function normalizeHistoricalBars('),research.indexOf('export async function resolvePriceHistoryContract(')).replace('export function ','function ');
- assert(helpers.includes('const number =')&&normalizer.includes('function normalizeHistoricalBars('));
- const normalizeHistoricalBars=new Function(helpers+normalizer+';return normalizeHistoricalBars;')();
+ // Load the production price-boundary module without importing the research
+ // runner's Blob/storage graph. The module is pure and performs no I/O.
+ const normalizeHistoricalBars=loader.load('lib/fmpPriceBars.js').normalizeHistoricalBars;
  const source=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,async)=>(async||'')+'function ');
  const context={...loader.load('lib/marketSession.js'),...loader.load('lib/c1LiveInput.js'),normalizeHistoricalBars,Map,Date:FixedDate,console,process:{env:{}},URLSearchParams,AbortSignal,fetch:global.fetch};
  vm.createContext(context);vm.runInContext(source+';globalThis.collect=collectC1AccountOpening;',context);

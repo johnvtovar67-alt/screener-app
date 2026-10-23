@@ -332,12 +332,10 @@ assert.throws(()=>evaluateService({account:updatedAccount,book:{...updatedBook,c
 console.log('PASS: shared account decisions bind original inputs, accepted activity and revision; stale ownership cannot reuse candidates, and forbidden purchases remain excluded.');
 const vm=require('node:vm'),fs=require('node:fs');
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
-const fmpSource=fs.readFileSync('lib/fmpResearchBacktest.js','utf8');
-const barHelpers=fmpSource.slice(fmpSource.indexOf('const asArray ='),fmpSource.indexOf('const usableAdjustedOhlcBar ='));
-const barNormalizer=fmpSource.slice(fmpSource.indexOf('export function normalizeHistoricalBars('),fmpSource.indexOf('export async function resolvePriceHistoryContract(')).replace('export function','function');
+const normalizeHistoricalBars=loader.load('lib/fmpPriceBars.js').normalizeHistoricalBars;
 const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
-const holdingBox={...loader.load('lib/marketSession.js'),Date,URLSearchParams,AbortSignal,process:{env:{}}};
-vm.createContext(holdingBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
+const holdingBox={...loader.load('lib/marketSession.js'),normalizeHistoricalBars,Date,URLSearchParams,AbortSignal,process:{env:{}}};
+vm.createContext(holdingBox);vm.runInContext(holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
 const context={...loader.load('lib/c1OpeningPriceReview.js'),...loader.load('lib/c1IntradayActivity.js'),...loader.load('lib/c1AccountExecution.js'),...loader.load('lib/c1AccountLedger.js'),...loader.load('lib/marketSession.js'),...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1HeldRankReview.js'),collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountExecutionView.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
@@ -524,7 +522,7 @@ vm.createContext(context);vm.runInContext(route,context);
  console.log('PASS: concurrent account refresh/import succeeds in either order; ETag guards and newer ownership, dates, fills and context are retained.');
  const providerSource=fs.readFileSync('lib/c1HeldRankProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export async function /g,'async function ');
  const providerBox={...holdingBox,createHash:require('node:crypto').createHash,compileC1HeldRankReview,Date,URLSearchParams,AbortSignal,process:{env:{}}};
- vm.createContext(providerBox);vm.runInContext(barHelpers+'\n'+barNormalizer+'\n'+providerSource+'\nthis.collect=collectC1HeldRankReviews;',providerBox);
+ vm.createContext(providerBox);vm.runInContext(providerSource+'\nthis.collect=collectC1HeldRankReviews;',providerBox);
  let providerCalls=0;
  const collected=await providerBox.collect({baseline:rankBaseline,sourceHash,symbols:['OUT'],now:new Date(baseline.date+'T21:00:00Z'),apiKey:'synthetic-secret',fetcher:async(url)=>{providerCalls++;assert.ok(url.includes('historical-price-eod/dividend-adjusted'));return {ok:true,json:async()=>history.map(b=>({...b,symbol:'OUT',adjOpen:b.open,adjHigh:b.high,adjLow:b.low,adjClose:b.close}))};}});
  assert.equal(collected.rows.length,1,JSON.stringify(collected));assert.equal(providerCalls,1);assert.equal(collected.rows[0].historyHash.length,64);assert.ok(!JSON.stringify(collected).includes('synthetic-secret'));

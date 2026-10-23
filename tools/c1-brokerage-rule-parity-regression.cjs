@@ -50,6 +50,12 @@ function withoutCurrentEventCollection(source) {
     source = source.replace(before, after);
   };
   replaceOnce("import {fetchEventRiskMap} from './eventRisk';\n", '', 'import');
+  // The production normalizer now lives in a small pure module. Reverse only
+  // that import seam before comparing the frozen opening rules; the dedicated
+  // price-bar regression proves the extracted implementation is identical.
+  replaceOnce("import {normalizeHistoricalBars} from './fmpPriceBars';\n",
+    "import {normalizeHistoricalBars} from './fmpResearchBacktest';\n",
+    'price-bar normalizer import');
   replaceOnce('apiKey=process.env.FMP_API_KEY||process.env.FMP_KEY,collectEvents=fetchEventRiskMap}={}){',
     'apiKey=process.env.FMP_API_KEY||process.env.FMP_KEY}={}){', 'collector injection');
   replaceOnce(` const opening=validateC1OpeningObservations({baseline,symbols:required,membersBefore,membersAfter,observations,allowPriceRevisionReview,now:new Date()});
@@ -63,6 +69,26 @@ function withoutCurrentEventCollection(source) {
     ' return validateC1OpeningObservations({baseline,symbols:required,membersBefore,membersAfter,observations,allowPriceRevisionReview,now:new Date()});',
     'dated evidence collection and final quote revalidation');
   return source;
+}
+// October 23 event-state copy hardening does not change classification or
+// purchase authority. Reverse its exact import/copy seam before comparing the
+// older brokerage-rule source pin; focused tests retain both typed messages.
+function withoutEventPresentationHardening(source) {
+  const replaceOnce = (before, after, label) => {
+    assert.equal(source.split(before).length - 1, 1,
+      'The authorized event-presentation ' + label + ' seam must occur exactly once');
+    source = source.replace(before, after);
+  };
+  replaceOnce("import {c1CurrentEventBlockReason} from './c1CurrentEventEvidence';\n", '', 'import');
+  replaceOnce('    reason = c1CurrentEventBlockReason(event);',
+    '    reason = "A current material-event block prevents fresh capital.";', 'reason');
+  return source;
+}
+function withoutFourPositionCeiling(source) {
+  const current="  const heldSymbols=[...new Set(Object.values(books||{}).flatMap(book=>Object.keys(book?.positions||{})))];\n  const capacity=additionalSwingCapacity?c1AdditionalSwingCapacity({baseline,historySessions:historySessions||sessions,opening,observedAt,heldSymbols}):null;";
+  const original="  const capacity=additionalSwingCapacity?c1AdditionalSwingCapacity({baseline,historySessions:historySessions||sessions,opening,observedAt}):null;";
+  assert.equal(source.split(current).length-1,1,'The authorized four-position projection seam must occur exactly once');
+  return source.replace(current,original);
 }
 // Owner-authorized historical compatibility seams are pinned exactly. The
 // original fixture and all other source pins remain immutable; focused tests
@@ -84,8 +110,12 @@ const compatibilitySourceSha256 = {
 };
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   const source = fs.readFileSync(path.join(root, file));
-  assert.equal(hash(file === 'lib/c1AccountOpeningProvider.js' ?
-    withoutCurrentEventCollection(source.toString('utf8')) : source),
+  const comparable = file === 'lib/c1AccountOpeningProvider.js' ?
+    withoutCurrentEventCollection(source.toString('utf8')) :
+    file === 'lib/c1StockClassification.js' ?
+      withoutEventPresentationHardening(source.toString('utf8')) :
+      file === 'lib/c1AccountProjection.js' ? withoutFourPositionCeiling(source.toString('utf8')) : source;
+  assert.equal(hash(comparable),
     file === 'lib/marketSession.js' ? repairedCalendarSha256 :
       file === 'lib/c1AccountSimulator.js' ? repairedAccountSha256 :
       file === 'lib/c1AccountOpeningProvider.js' ? additiveOpeningSha256 : compatibilitySourceSha256[file] || expected,

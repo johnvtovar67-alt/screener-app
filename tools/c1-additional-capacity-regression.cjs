@@ -9,7 +9,7 @@ function completedBook(f,n=222){return {...f.book,model:{sessions:f.sessions.sli
 function input(f){return {adoption:f.account.adoption,sessions:[f.sessions[220]],historySessions:f.sessions.slice(0,221),records:[],opening:f.opening(),observedAt:f.now.toISOString(),purchaseFundingIndependent:true};}
 (async()=>{
  const f=fixture();f.setCash(5000);f.advance();const before=clone(f.account),view=await f.prepare(),plan=view.openingPlan;
- assert.equal(view.manualRecommendations.status,'ready');assert.equal(view.decision.positions.length,3);assert.deepEqual(clone(plan.additionalSwingCapacity.symbols),['MRNA','BBB','CCC']);
+ assert.equal(view.manualRecommendations.status,'ready');assert.equal(view.decision.positions.length,3);assert.deepEqual(clone(plan.additionalSwingCapacity.symbols),['MRNA']);
  assert(buys(plan).every(o=>o.symbol==='MRNA'&&o.additionalCapacity===true));
  const quantity=buys(plan).reduce((n,o)=>n+o.shares,0);assert.equal(quantity,49);near(buys(plan).reduce((n,o)=>n+o.shares*o.estimatedPrice,0),4905.88);
  const old=f.loader.load('lib/c1AccountExecution.js').planC1ContinuedAccountOpening(input(f));assert.equal(buys(old).length,0,'Production control must reproduce the three-position block');
@@ -23,6 +23,15 @@ function input(f){return {adoption:f.account.adoption,sessions:[f.sessions[220]]
  const mark=100.025,equity=ids.reduce((n,id)=>n+continued.books[id].cash+Object.values(continued.books[id].positions).reduce((s,p)=>s+p.shares*mark,0),0);near(equity,20000+120*.025+49*(100.025-100.12));
  const repeated=await f.prepare({id:'fourth-position',symbol:'MRNA',side:'buy',shares:quantity,price:100.12,fee:0,executedAt:f.now.toISOString()});assert.equal(repeated.account.intradayActivity.tickets.length,1);near(repeated.decision.brokerageCash,94.12);
  evidence.cases.push({case:'three-held-5000-cash-fourth-purchase',shares:quantity,price:100.12,cashAfter:94.12,heldPositions:4,sleeves:ids.map(id=>({id,shares:continued.books[id].positions.MRNA.shares,stop:continued.sleeves[id].openPositions.find(p=>p.symbol==='MRNA').stopPrice})),completedReplay:'PASS',equity});
+ // Multiple simultaneously unheld Buy-rated names can never turn the
+ // one-position exception into a fifth or sixth distinct Swing holding.
+ const ceilingPortfolio=[...['DDD','EEE','FFF'].map(symbol=>({symbol,role:'Swing',shares:40,avgCost:100,openedAt:'2026-10-14'})),{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}];
+ const ceiling=createWorkflowFixture('buy',{portfolio:ceilingPortfolio});ceiling.setCash(100000);ceiling.advance();const ceilingView=await ceiling.prepare(),ceilingBuys=buys(ceilingView.openingPlan);
+ assert.deepEqual(clone(ceilingView.openingPlan.additionalSwingCapacity.symbols),['MRNA']);
+ assert.deepEqual([...new Set(ceilingBuys.map(order=>order.symbol))],['MRNA'],'Only the highest-ranked unheld qualified name may use the fourth-position exception');
+ const projectedSymbols=new Set(ceilingView.decision.positions.map(position=>position.symbol));for(const order of ceilingBuys)projectedSymbols.add(order.symbol);
+ assert.equal(projectedSymbols.size,4,'The opening plan must never project more than four distinct Swing holdings');
+ evidence.cases.push({case:'three-unheld-qualified-names-hard-ceiling',qualified:['MRNA','BBB','CCC'],authorized:['MRNA'],projectedDistinctSwingPositions:projectedSymbols.size,status:'PASS'});
  // Honest blockers, with no fallback to slot capacity when another gate fails.
  for(const [name,edit,expected] of [
   ['event',g=>{for(const s of [...g.sessions[220].signals,...g.sessions[220].positionSignals])if(s.symbol==='MRNA')s.eventRisk={status:'Blocked',blockNewCapital:true,checkComplete:true};},/material-event|entry|verification|event/],
