@@ -10,8 +10,104 @@ assert.equal(observation.startPrice,100);assert.equal(observation.formationHigh,
 assert(Math.abs(observation.prePeakReturnPct-50)<1e-9);assert(Math.abs(observation.postPeakReturnPct+20)<1e-9);
 assert(Math.abs(observation.totalReturnPct-20)<1e-9);assert(Math.abs(observation.logIdentityError)<1e-12);
 
+// Keep the superseded full-history transform here as a test-only reference.
+// It proves that the bounded rolling implementation changes allocation, not
+// semantics, across broad peer sets, missing bars, late entrants and churn.
+function legacyReferenceTransform(source,{decisionOnly=false}={}){
+ const dataset=JSON.parse(JSON.stringify(source)),history=new Map();
+ dataset.metadata=dataset.metadata&&typeof dataset.metadata==='object'&&!Array.isArray(dataset.metadata)?dataset.metadata:{};
+ dataset.metadata.c1HighToPriceChallenger={contract:htp.C1_HIGH_TO_PRICE_CONTRACT,
+  formationStartSessions:htp.C1_HIGH_TO_PRICE_FORMATION_SESSIONS,
+  skipRecentSessions:htp.C1_HIGH_TO_PRICE_SKIP_RECENT_SESSIONS,
+  substitutedFields:['researchFactors.return120Ex20','researchFactors.momentumPercentile'],perSignalDiagnostics:!decisionOnly};
+ for(const session of dataset.sessions)for(const row of session.prices||[]){
+  if(!history.has(row.symbol))history.set(row.symbol,new Map());
+  if(history.get(row.symbol).has(session.date))throw new Error('Duplicate high-to-price observation for '+row.symbol+' on '+session.date);
+  history.get(row.symbol).set(session.date,row);
+ }
+ const observed=value=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
+ for(let sessionIndex=htp.C1_HIGH_TO_PRICE_FORMATION_SESSIONS;sessionIndex<dataset.sessions.length;sessionIndex++){
+  const session=dataset.sessions[sessionIndex],rankedFields=['signals','positionSignals'];
+  const outputFields=[...rankedFields,'accountHoldingSignals'],unavailable=new Set(),observations=[];
+  const formationDates=dataset.sessions.slice(sessionIndex-htp.C1_HIGH_TO_PRICE_FORMATION_SESSIONS,
+   sessionIndex-htp.C1_HIGH_TO_PRICE_SKIP_RECENT_SESSIONS+1).map(row=>row.date);
+  const symbols=[...new Set(rankedFields.flatMap(field=>(session[field]||[]).map(signal=>signal.symbol).filter(Boolean)))];
+  for(const symbol of symbols){
+   const acceptedRows=rankedFields.flatMap(field=>(session[field]||[]).filter(signal=>signal.symbol===symbol));
+   const states=new Set(acceptedRows.map(signal=>observed(signal?.researchFactors?.return120Ex20)));
+   if(states.size!==1)throw new Error('Champion formation eligibility is inconsistent for '+symbol+' on '+session.date);
+   if(!states.has(true)){unavailable.add(symbol);continue;}
+   const formationRows=formationDates.map(date=>history.get(symbol)?.get(date));
+   if(formationRows.some(row=>!row))throw new Error('Champion formation factor is observed but high-to-price history is incomplete for '+symbol+' on '+session.date);
+   observations.push({symbol,...htp.c1HighToPriceObservation(formationRows)});
+  }
+  const ordered=observations.sort((left,right)=>left.prePeakReturnPct-right.prePeakReturnPct||left.symbol.localeCompare(right.symbol));
+  const bySymbol=new Map(ordered.map((row,index)=>[row.symbol,{...row,percentile:ordered.length<2?50:index/(ordered.length-1)*100}]));
+  for(const field of outputFields)for(const signal of session[field]||[]){
+   if(unavailable.has(signal.symbol)){
+    signal.researchFactors={...(signal.researchFactors||{}),return120Ex20:null,momentumPercentile:null,
+     ...(!decisionOnly?{highToPricePrePeakReturnPct:null,highToPricePostPeakReturnPct:null,
+      highToPriceFormationHigh:null,highToPriceContract:htp.C1_HIGH_TO_PRICE_CONTRACT}:{})};
+    continue;
+   }
+   const row=bySymbol.get(signal.symbol);
+   if(!row)throw new Error('High-to-price peer evidence is unavailable for '+signal.symbol+' on '+session.date);
+   signal.researchFactors={...(signal.researchFactors||{}),return120Ex20:row.prePeakReturnPct,momentumPercentile:row.percentile,
+    ...(!decisionOnly?{highToPricePrePeakReturnPct:row.prePeakReturnPct,highToPricePostPeakReturnPct:row.postPeakReturnPct,
+     highToPriceFormationHigh:row.formationHigh,highToPriceContract:htp.C1_HIGH_TO_PRICE_CONTRACT}:{})};
+  }
+ }
+ return dataset;
+}
+
+const marketSession=loader.load('lib/marketSession.js'),broadDates=[];
+for(let date=new Date('2024-01-02T00:00:00Z');broadDates.length<320;date.setUTCDate(date.getUTCDate()+1)){
+ const key=date.toISOString().slice(0,10);if(marketSession.isUsMarketSessionDay(key))broadDates.push(key);
+}
+const broadStable=Array.from({length:32},(_,index)=>'B'+String(index).padStart(2,'0'));
+const broadPriceExists=(symbol,index)=>symbol==='LATE'?index>=170:symbol==='GAP'?index!==75:symbol==='CHURN'?index>=20&&index<=230:true;
+const broadFactorObserved=(symbol,index)=>index>=htp.C1_HIGH_TO_PRICE_FORMATION_SESSIONS&&
+ Array.from({length:htp.C1_HIGH_TO_PRICE_FORMATION_OBSERVATIONS},(_,offset)=>index-htp.C1_HIGH_TO_PRICE_FORMATION_SESSIONS+offset)
+  .every(priceIndex=>broadPriceExists(symbol,priceIndex));
+const broadSessions=broadDates.map((date,index)=>{
+ const availableSymbols=[...broadStable,'GAP','LATE','CHURN'].filter(symbol=>broadPriceExists(symbol,index));
+ const prices=availableSymbols.map((symbol,ordinal)=>{const close=40+ordinal*3+index*.07+(index%17)*.03;
+  return {symbol,date,open:close*.999,high:close*(1.01+(ordinal%5)*.002),low:close*.99,close,volume:2000000+ordinal*10000,adjusted:true};});
+ const row=symbol=>{const price=prices.find(candidate=>candidate.symbol===symbol)?.close??50,eligible=broadFactorObserved(symbol,index);
+  return {symbol,sector:'Sector '+symbol.at(-1),price,action:'Strong Buy',entryTiming:{},
+   researchFactors:{return120Ex20:eligible?10:null,momentumPercentile:eligible?60:null,volatility60Pct:20}};};
+ const peers=index<120?[]:[...broadStable,'GAP',...(index>=225?['LATE']:[]),...(index>=140&&index<=220?['CHURN']:[])];
+ const signals=peers.filter((_,ordinal)=>(ordinal+index)%3!==0).map(row);
+ const positionSignals=peers.filter((_,ordinal)=>(ordinal+index)%3===0).map(row);
+ const holdingSymbol=peers[0];
+ return {date,decisionAt:date+'T21:00:00.000Z',prices,signals,positionSignals,
+  accountHoldingSignals:holdingSymbol?[row(holdingSymbol)]:[],universeSymbols:availableSymbols,corporateActions:[]};
+});
+const broadDataset={metadata:{benchmarkSymbol:'SPY'},sessions:broadSessions},broadSnapshot=JSON.stringify(broadDataset);
+const broadReference=legacyReferenceTransform(broadDataset),broadRolling=htp.buildC1HighToPriceDataset(broadDataset);
+assert.equal(JSON.stringify(broadDataset),broadSnapshot,'The rolling immutable helper must not alter its broad accepted input');
+const broadRollingJson=JSON.stringify(broadRolling),broadReferenceJson=JSON.stringify(broadReference);
+if(broadRollingJson!==broadReferenceJson){
+ const mismatch=[...broadRollingJson].findIndex((character,index)=>character!==broadReferenceJson[index]);
+ throw new Error('Rolling/reference mismatch near '+mismatch+' rolling='+broadRollingJson.slice(Math.max(0,mismatch-120),mismatch+240)+
+  ' reference='+broadReferenceJson.slice(Math.max(0,mismatch-120),mismatch+240));
+}
+assert.equal(broadRolling.sessions[150].signals.concat(broadRolling.sessions[150].positionSignals).find(row=>row.symbol==='GAP').researchFactors.return120Ex20,null,'A missing formation bar retains accepted unavailability');
+assert(Number.isFinite(broadRolling.sessions[196].signals.concat(broadRolling.sessions[196].positionSignals).find(row=>row.symbol==='GAP').researchFactors.return120Ex20),'A symbol becomes eligible only after the missing bar exits the exact formation window');
+const decisionOnlyInput=JSON.parse(JSON.stringify(broadDataset)),preservedFactors=decisionOnlyInput.sessions[120].signals[0].researchFactors;
+const decisionOnly=htp.applyC1HighToPriceDecisionDatasetInPlace(decisionOnlyInput);
+assert.strictEqual(decisionOnly.sessions[120].signals[0].researchFactors,preservedFactors,'The disposable transform assigns into existing factor objects instead of replacing them');
+assert.equal(decisionOnly.metadata.c1HighToPriceChallenger.perSignalDiagnostics,false);
+for(let index=120;index<decisionOnly.sessions.length;index++)for(const field of ['signals','positionSignals','accountHoldingSignals'])
+ for(let rowIndex=0;rowIndex<(decisionOnly.sessions[index][field]||[]).length;rowIndex++){
+  const actual=decisionOnly.sessions[index][field][rowIndex].researchFactors,expected=broadReference.sessions[index][field][rowIndex].researchFactors;
+  assert.deepEqual([actual.return120Ex20,actual.momentumPercentile],[expected.return120Ex20,expected.momentumPercentile],
+   'Decision-only rolling output must equal the two legacy fields consumed by the simulator');
+  assert.equal(Object.hasOwn(actual,'highToPriceContract'),false,'The memory-bound path must not grow every signal with diagnostic properties');
+ }
+
 const dates=[];for(let date=new Date('2025-01-02T00:00:00Z');dates.length<260;date.setUTCDate(date.getUTCDate()+1)){
- const key=date.toISOString().slice(0,10);if(loader.load('lib/marketSession.js').isUsMarketSessionDay(key))dates.push(key);
+ const key=date.toISOString().slice(0,10);if(marketSession.isUsMarketSessionDay(key))dates.push(key);
 }
 const symbols=['AAA','BBB','CCC'];
 const sessions=dates.map((date,index)=>{
@@ -76,7 +172,8 @@ const appSources=['pages','components'].flatMap(dir=>fs.readdirSync(dir,{recursi
 for(const file of appSources)if(file!==previewRunner)assert(!fs.readFileSync(file,'utf8').includes('c1HighToPriceChallenger'),file+' must not import the offline challenger');
 const runnerSource=fs.readFileSync(previewRunner,'utf8');
 assert(runnerSource.includes("process.env.VERCEL_ENV==='production'"),'The one-time historical runner must refuse production');
-assert(runnerSource.includes("phase:'restore-chunk-end'")&&runnerSource.includes("phase:'response-ready'"),'The one-time runner must emit bounded phase timings');
+assert(runnerSource.includes("phase:'restore-chunk-end'")&&runnerSource.includes("phase:'result-summary'")&&
+ runnerSource.includes("phase:'response-ready'"),'The one-time runner must emit bounded phase timings and a recoverable aggregate result');
 assert(runnerSource.includes('ACCEPTED_RETAINED_START_INDEX=130')&&runnerSource.includes("ACCEPTED_RETAINED_FIRST_SESSION='2022-07-12'"),'The accepted preview must retain the exact registered causal window');
 assert(!runnerSource.includes('Promise.all(batch.map'),'The accepted preview must restore one chunk at a time');
 assert(!runnerSource.includes('put(')&&!runnerSource.includes('FMP_API_KEY'),'The one-time historical runner must not write or acquire provider data');

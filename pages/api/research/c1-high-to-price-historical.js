@@ -98,6 +98,11 @@ export default async function handler(req,res){
   onProgress({phase:'restore-complete',chunkCount:restored.chunkCount,acceptedSessionCount:restored.acceptedSessionCount,
    retainedSessionCount:restored.dataset.sessions.length,retainedStartIndex:restored.retainedStartIndex});
   const comparison=runC1HighToPriceComparisonMemoryBound({dataset:restored.dataset,startDate:START_DATE,endDate:END_DATE,onProgress});
+  const champion=summary(comparison.champion),challenger=summary(comparison.challenger);
+  // Keep the completed aggregate result recoverable from bounded runtime logs
+  // if the protected preview client times out before it receives the response.
+  // No price rows, signals, holdings or account data are logged.
+  onProgress({phase:'result-summary',champion,challenger,comparison:comparison.comparison});
   onProgress({phase:'response-ready'});
   return res.status(200).json({contract:comparison.contract,scope:comparison.scope,executable:false,productionChanged:false,
    dataset:{fingerprint:restored.fingerprint,chunkCount:restored.chunkCount,acceptedSessionCount:restored.acceptedSessionCount,
@@ -105,7 +110,7 @@ export default async function handler(req,res){
     retainedStartIndex:restored.retainedStartIndex,retainedFirstSession:restored.dataset.sessions[0]?.date,
     lastSession:restored.dataset.sessions.at(-1)?.date},
    evaluation:{startDate:START_DATE,endDate:END_DATE,parameterGrid:false},
-   champion:summary(comparison.champion),challenger:summary(comparison.challenger),comparison:comparison.comparison,
+   champion,challenger,comparison:comparison.comparison,
    limitations:comparison.limitations});
  }catch(error){
   console.error('[c1-high-to-price-historical]',String(error?.message||error).slice(0,240));
