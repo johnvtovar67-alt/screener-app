@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {get,list} from '@vercel/blob';
-import {c1ReportedThesisRetainedStartIndex,runC1ReportedThesisTournamentMemoryBound} from '../../../lib/c1ReportedThesisTournament';
+import {C1_REPORTED_THESIS_ARMS,c1ReportedThesisRetainedStartIndex,runC1ReportedThesisArmMemoryBound} from '../../../lib/c1ReportedThesisTournament';
 
 export const config={maxDuration:800};
 
@@ -72,6 +72,8 @@ export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store');
  if(process.env.VERCEL_ENV==='production')return res.status(404).json({error:'Not found'});
  if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
+ const arm=typeof req.query?.arm==='string'?req.query.arm:'';
+ if(!C1_REPORTED_THESIS_ARMS.includes(arm))return res.status(400).json({error:'arm must be one fixed pre-registered value'});
  try{
   const startedAt=Date.now();
   const onProgress=event=>console.info('[c1-reported-thesis-tournament-progress]',JSON.stringify({...event,elapsedMs:Date.now()-startedAt}));
@@ -79,10 +81,10 @@ export default async function handler(req,res){
   const restored=await acceptedDataset(onProgress);
   onProgress({phase:'restore-complete',chunkCount:restored.chunkCount,acceptedSessionCount:restored.acceptedSessionCount,
    retainedSessionCount:restored.dataset.sessions.length,retainedStartIndex:restored.retainedStartIndex});
-  const result=runC1ReportedThesisTournamentMemoryBound({dataset:restored.dataset,startDate:START_DATE,endDate:END_DATE,onProgress});
+  const result=runC1ReportedThesisArmMemoryBound({dataset:restored.dataset,arm,startDate:START_DATE,endDate:END_DATE,onProgress});
   // Bounded aggregate logging preserves the completed result if the protected
   // preview client times out. It contains no prices, symbols, holdings or trades.
-  onProgress({phase:'result-summary',champion:result.champion,challengers:result.challengers,comparisons:result.comparisons});
+  onProgress({phase:'arm-summary',arm,result:result.summary});
   onProgress({phase:'response-ready'});
   return res.status(200).json({...result,dataset:{fingerprint:restored.fingerprint,chunkCount:restored.chunkCount,
    acceptedSessionCount:restored.acceptedSessionCount,acceptedFirstSession:restored.acceptedFirstSession,
