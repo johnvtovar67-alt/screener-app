@@ -38,9 +38,15 @@ sorting its entries; neither removed module occurs in any of 72 new server
 NFT traces. Webpack chunk IDs differ across build contexts, so emitted binary
 identity is not claimed. No unused module was replaced with a fallback.
 
-GitHub CI, matching preview and production verification are pending at this
-source checkpoint. Do not call this live or claim private-account parity from
-these checks. The PR release record will carry the subsequent exact evidence.
+Released through PR #318. GitHub CI #968 (40135026856) SUCCESS on exact head
+`625e7eaba96f6a6c432de0b5c0065bfba2c14240`; preview
+`dpl_92ngT6pVQDo6aZUWeHEpaYW2cV8g` READY, version/health HTTP200.
+Production `1c423dc1de23a141e804169d78927a032f5e7d32`, deployment
+`dpl_cYqswxJSDJboeNQ5h4fhneW9vMEe` READY with canonical alias; canonical
+version and health HTTP200 identify that commit, all checks pass and scheduler
+is configured. Initial scoped error/fatal scan was clear. Source tree
+`958f5c9355a4b3358da5114592a944bab9d51a6e` matches reviewed/merged source.
+Private-account parity is not established; no runtime speedup is claimed.
 
 Next work remains semantic read-only operational canaries, provider boundaries,
 research route isolation and immutable screen reads under characterization.
