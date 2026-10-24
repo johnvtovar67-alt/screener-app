@@ -45,7 +45,7 @@ import { updatePerformanceLedger } from "../../lib/performanceStore";
 import { applyV11ProductionPolicy } from "../../lib/v11ProductionPolicy";
 import { getV11ProductionSnapshot } from "../../lib/v11ProductionSnapshot";
 
-import { profileTop5Request, top5Phase, top5Fetch, top5Count, top5WithinBudget, assertTop5Active, isTop5Deadline } from "../../lib/top5Diagnostics";
+import { profileTop5Request, top5Phase, top5Fetch, top5Count, top5WithinBudget, assertTop5Active, isTop5Deadline, top5ObserveScreenResponse, top5ObserveScreenFailure } from "../../lib/top5Diagnostics";
 
 export const config = { maxDuration: 60 };
 
@@ -1174,7 +1174,7 @@ export default async function handler(req, res) {
       ).size;
     return top5Phase("serialize-response", () => res
       .status(200)
-      .json({
+      .json(top5ObserveScreenResponse({
         stocks: clientRows.map(serializeStockForClient),
         themeLeadership,
         selectedTheme: {
@@ -1337,9 +1337,9 @@ export default async function handler(req, res) {
             ),
           ),
         },
-      }));
+      })));
   } catch (err) {
-    console.error("api/top5 error:", err);
+    try { top5ObserveScreenFailure(err); } catch {}
     return res
       .status(503)
       .json({

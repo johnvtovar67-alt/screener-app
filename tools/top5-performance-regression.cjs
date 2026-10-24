@@ -75,7 +75,13 @@ function createHarness(route = CURRENT, options = {}) {
     static now() { return EPOCH; }
   }
   const sandbox = {
-    console: { log: (...args) => logs.push(args), info: (...args) => logs.push(args), warn: (...args) => logs.push(args), error: (...args) => logs.push(args) },
+    console: { log: (...args) => logs.push(args), info: (...args) => {
+      if(options.observerFailure&&args[0]==='C1_SCREEN_OPERATIONAL')throw Error('PRIVATE_OBSERVER_FAILURE');
+      logs.push(args);
+    }, warn: (...args) => {
+      if(options.observerFailure&&args[0]==='C1_SCREEN_OPERATIONAL')throw Error('PRIVATE_OBSERVER_FAILURE');
+      logs.push(args);
+    }, error: (...args) => logs.push(args) },
     process: { env: { FMP_API_KEY: 'offline-fixture-key', VERCEL_ENV: 'production', NODE_ENV: 'test' } },
     Date: options.freezeMarketClock ? FrozenMarketDate : clock.Date, Intl, Math, Number, String, Object, Array, Set, Map, WeakMap, Boolean, RegExp, Error, TypeError,
     JSON, URL, URLSearchParams, AbortController, AbortSignal, Response, Buffer,
@@ -240,6 +246,16 @@ async function main() {
   const oldFull = await baseline.clock.settle(baseline.request());
   const newFull = await current.clock.settle(current.request());
   assertHealthy(oldFull); assertHealthy(newFull); decisionParity(newFull, oldFull);
+  const diagnostics=current.logs.filter(row=>row[0]==='C1_SCREEN_OPERATIONAL');
+  assert.equal(diagnostics.length,1);const diagnostic=JSON.parse(diagnostics[0][1]);
+  assert.equal(diagnostic.code,'SCREEN_FEEDS_HEALTHY');assert.equal(diagnostic.accountOpening,'NOT_VERIFIED');
+  const timing=current.logs.find(row=>row[0]==='TOP5_TIMING'&&JSON.parse(row[1]).event==='request');
+  assert.equal(diagnostic.request,JSON.parse(timing[1]).request,'Operational status shares existing request timing identity');
+  assert(!/offline-fixture-key|X000|price|symbols/.test(diagnostics[0][1]));
+  const brokenObserver=createHarness(CURRENT,{observerFailure:true});
+  const observedDespiteFailure=await brokenObserver.clock.settle(brokenObserver.request());
+  assertHealthy(observedDespiteFailure);decisionParity(observedDespiteFailure,oldFull);
+  assert.deepEqual(brokenObserver.calls.map(row=>row.phase),baseline.calls.map(row=>row.phase),'Observer failures add no provider or storage calls');
   assert.equal(newFull.body.stocks.length, oldFull.body.meta.universeSize, 'The full universe is preserved');
   const classifications = current.classify(newFull.body.stocks);
   assert.deepEqual(classifications, baseline.classify(oldFull.body.stocks), 'Account-independent original C1 stock classifications stay identical');
@@ -313,6 +329,9 @@ async function main() {
     const failure = await stalled.clock.settle(stalled.request({ compact: '1', screenSymbols }));
     assert.equal(failure.code, 503, 'An unfinished build returns a clean API failure');
     assert.equal(failure.body.retryable, true); assert.equal(failure.body.code, 'TOP5_TIMEOUT');
+    const failureDiagnostic=stalled.logs.filter(row=>row[0]==='C1_SCREEN_OPERATIONAL');
+    assert.equal(failureDiagnostic.length,1);assert.equal(JSON.parse(failureDiagnostic[0][1]).code,'SCREEN_REQUEST_TIMEOUT');
+    assert(!stalled.logs.some(row=>row[0]==='api/top5 error:'),'The handler no longer logs raw exception objects');
     assert.ok(failure.elapsedMs < 60000, 'Clean failure precedes the platform cutoff');
     assert.equal(stalled.cache()?.rows, null);
     await stalled.clock.settle(stalled.clock.wait(75000));
