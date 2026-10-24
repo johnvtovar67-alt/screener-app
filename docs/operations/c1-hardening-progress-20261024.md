@@ -69,7 +69,7 @@ scoped error/fatal scan was clear. CI #970 (40136356595) SUCCESS; exact preview
 119/119 local tasks and build passed. Captured-response tooling only; no live
 private-account/browser acceptance was established.
 
-## Active slice: passive account/opening diagnostics
+## Production verified: passive account/opening diagnostics
 
 Branch `harden/c1-live-account-diagnostics-20261024`, based on production `3b6341c`.
 Observe already-computed successful analysis and opening-review responses;
@@ -77,15 +77,31 @@ emit one bounded, redacted `C1_ACCOUNT_OPERATIONAL` record. No new requests,
 storage writes, payload changes, UI or trading decisions. Only account-boundary
 state is assessed; screen composition and private-account parity remain
 NOT_VERIFIED. Source/local and remote release evidence:
-`docs/operations/c1-passive-account-diagnostics-20261024.md`. This run owns this
-branch until its PR records a verified handoff; do not edit concurrently.
+`docs/operations/c1-passive-account-diagnostics-20261024.md`. PR #320 released as
+`cb2d2dfdb0ad6f97053417c70bbeb03ed8fc7c53`, deployment
+`dpl_DbukF8ZrRJXarMAKVyrMFCQGcPpQ` READY with canonical alias/version/health,
+all configuration checks true and scheduler configured. Initial scoped error
+scan was clear. CI #972 (40140265361) SUCCESS and exact preview
+`dpl_H6oVe1r6Hs1g4x8cfjoTE6oWAyA7` READY with matching version/health200.
+120/120 local tasks/build passed. Initial account-operational log query found
+no records; actual authenticated request emission and account/browser parity
+remain unverified. Missing logs do not prove an account failure.
+
+## Active slice: passive screen-response diagnostics
+
+Branch `harden/c1-screen-diagnostics-20261024`, based on production `cb2d2df`.
+Extend the existing request-diagnostics module, not a new framework. Summarize
+already-computed screen feed statuses/counts and replace the raw exception log
+with redacted failure codes. Preserve response identity and all I/O/decision
+behavior. Evidence/checkpoint: `docs/operations/c1-passive-screen-diagnostics-20261024.md`.
+This run owns the branch until its PR records a verified handoff.
 
 ## Remaining audit work
 
 | Work | State |
 |---|---|
 | API error types and accurate retry behavior | Production verified through PR #317; private-account parity not established |
-| Read-only end-to-end operational acceptance canary | Captured-response tooling released; passive account diagnostics in verification; screen/browser join and proactive acceptance pending |
+| Read-only end-to-end operational acceptance canary | Captured-response tooling and account instrumentation released; screen instrumentation in verification; browser/cross-boundary acceptance pending |
 | Common provider/error adapters and canonical symbol boundary | Pending |
 | Proven-unused research runtime isolation/retirement | Pending |
 | Single producer and immutable screen reads | Pending; characterization first |

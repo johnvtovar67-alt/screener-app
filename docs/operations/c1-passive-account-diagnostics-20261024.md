@@ -70,10 +70,17 @@ GET return exactly recovers approved handler blob
 `717c7ec9332de1928b1ad6a6036bb77a67b8bb7c`; no business-processing drift was
 found. The helper shares existing pure dependencies already used by the handler.
 
-Full suite/build, exact-head CI/preview and production gates are pending at
-this source checkpoint. The PR records later verification/handoff. Actual
-private-account emission must be reported separately if no normal authenticated
-request occurs during release verification; a public health GET cannot prove it.
+Released through PR #320: full local120/120, freeze/canonical and optimized
+build PASS; CI #972 (40140265361) SUCCESS on reviewed head
+`40e0e14fca8368fbb55b9255e44db4201dd4cb87`; exact preview
+`dpl_H6oVe1r6Hs1g4x8cfjoTE6oWAyA7` READY with version/health200.
+Production `cb2d2dfdb0ad6f97053417c70bbeb03ed8fc7c53`, deployment
+`dpl_DbukF8ZrRJXarMAKVyrMFCQGcPpQ` READY with canonical alias/version/health,
+all configuration checks true and scheduler configured. Initial scoped
+error/fatal scan was clear. Reviewed/merged tree:
+`29ec8eb59341b1ff80932d7f40d5ee1d8c26ceed`. Initial operational-tag query
+found no records; actual private-account emission and browser/account parity
+remain NOT_VERIFIED. A public health GET does not prove those paths.
 
 Remaining work: screen-side provider diagnostics, cross-boundary/browser
 acceptance, provider/error/symbol consolidation, research-runtime isolation,
