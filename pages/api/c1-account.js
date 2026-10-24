@@ -1,9 +1,10 @@
 import {appendC1NonCashAdoption} from '../../lib/c1NonCashAdoption';
 import {reviewC1NonCashAdoption,verifyC1NonCashReceipts} from '../../lib/c1NonCashAdoptionReview';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
+import {c1AccountApiFailure,c1AccountDependency} from '../../lib/c1ApiErrors';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
-import {saveC1AccountUpdate,isC1AccountSaveConflict} from '../../lib/c1AccountSave';
+import {saveC1AccountUpdate} from '../../lib/c1AccountSave';
 import {collectC1HeldRankReviews} from '../../lib/c1HeldRankProvider';
 import {c1AccountReviewBook} from '../../lib/c1HeldRankReview';
 import {buildC1ManualRecommendations} from '../../lib/c1ManualRecommendations';
@@ -84,6 +85,9 @@ async function reviewAccountHoldings({account,book,now,collectRanks}){
 }
 
 export function createC1AccountHandler({store=storage,readPortfolio=readAdoptionPortfolio,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,collectHoldings=collectC1HoldingCoverage,collectRanks=collectC1HeldRankReviews,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local'}={}){
+ const checkedStore={read:(...args)=>c1AccountDependency(()=>store.read(...args),'storage'),
+  write:(...args)=>c1AccountDependency(()=>store.write(...args),'storage')};
+ const checkedHoldings=(...args)=>c1AccountDependency(()=>collectHoldings(...args),'holdings');
  return async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'Method not allowed'});}
@@ -91,21 +95,27 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
   if(!/^[A-Za-z0-9_-]{32,128}$/.test(key))return res.status(401).json({error:'Your portfolio sync key is required.'});
   const scope=environment==='production'?'production':`preview-${commit}`;
   const path=`c1-accounts-v1/${scope}/${createHash('sha256').update(key).digest('hex')}.json`;
+  const requestId=randomUUID(),body=req.body||{},operation=req.method==='GET'?'refresh-analysis':body.operation;
+  let stage='account-read',sourceSessionDate=null;
+  res.setHeader('X-C1-Request-Id',requestId);
   try{
-   const now=clock(),saved=await store.read(path),body=req.body||{},operation=req.method==='GET'?'refresh-analysis':body.operation;
+   const now=clock(),saved=await checkedStore.read(path);
    if(operation!=='adopt'&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
    // The stored daily dataset is authoritative; this cannot initialize it.
-   const {record:book}=await readBook('sp500',{now});
+   stage='accepted-input-read';
+   const {record:book}=await c1AccountDependency(()=>readBook('sp500',{now}),'input');
+   sourceSessionDate=book?.model?.sessions?.at(-1)?.date||null;
+   stage='account-analysis';
    let account=saved?.record,holdingReviewError=null;
    if(account?.adoption?.nonCashHoldings?.length)verifyC1NonCashReceipts(account);
    if(operation==='refresh-analysis'){
-    account=await verifyAccountHoldingPrices({account,book,now,collectHoldings});
+    account=await verifyAccountHoldingPrices({account,book,now,collectHoldings:checkedHoldings});
     return res.status(200).json(completedAnalysisView({account,book,now}));
    }
    if(operation==='prepare-execution'||operation==='record-intraday'){
-    account=await verifyAccountHoldingPrices({account,book,now,collectHoldings});
+    account=await verifyAccountHoldingPrices({account,book,now,collectHoldings:checkedHoldings});
     const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})});
-    if(operation==='record-intraday')await saveC1AccountUpdate({store,path,saved,account:prepared.account,operation,book,now});
+    if(operation==='record-intraday'){stage='account-save';await saveC1AccountUpdate({store:checkedStore,path,saved,account:prepared.account,operation,book,now});}
     const {account:preparedAccount,...view}=prepared;
     return res.status(200).json({...view,holdingReviewError});
    }
@@ -114,14 +124,15 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
     const input=c1AccountBook(book,account.holdingCoverages||account.holdingCoverage);
     const completed=deriveC1CompletedAccount({account,book:input,now});
     const before=evaluateC1Account({account:completed,book:input,now});
-    const review=reviewC1NonCashAdoption({account:completed,decision:before,book:input,portfolioRecord:await readPortfolio(key),accountEtag:saved.etag,accountIdentity:createHash('sha256').update(path).digest('hex'),
+    const review=reviewC1NonCashAdoption({account:completed,decision:before,book:input,portfolioRecord:await c1AccountDependency(()=>readPortfolio(key),'portfolio'),accountEtag:saved.etag,accountIdentity:createHash('sha256').update(path).digest('hex'),
       completedActivity:account.intradayActivity&&!completed.intradayActivity?account.intradayActivity:null,
       finalizedSessions:completed.records.slice(account.records.length).map(r=>r.date),expectedRevision:body.expectedRevision,now});
     if(operation==='review-mrna-adoption')return res.status(200).json({adoptionReview:review});
     const next=appendC1NonCashAdoption({account:completed,review,reviewId:body.reviewId,confirmed:body.confirmed===true,now});
     const after=evaluateC1Account({account:next,book:input,now}),held=after.positions.find(p=>p.symbol==='MRNA');
     if(!held||held.shares!==Number(review.original.shares)||Math.abs(held.avgCost-Number(review.original.avgCost))>1e-7||!Number.isFinite(held.totalCost)||Math.abs(held.totalCost-Number(review.original.shares)*Number(review.original.avgCost))>1e-6||held.openedAt!==String(review.original.openedAt).slice(0,10)||after.actualCash!==before.actualCash||JSON.stringify(next.brokerageCash)!==JSON.stringify(account.brokerageCash))throw new Error('Non-cash adoption failed ownership, basis, date or cash conservation');
-    account=await saveC1AccountUpdate({store,path,saved,account:next,operation,book:input,now});
+    stage='account-save';
+    account=await saveC1AccountUpdate({store:checkedStore,path,saved,account:next,operation,book:input,now});
     return res.status(200).json(completedAnalysisView({account,book:input,now}));
    }
    switch(operation){
@@ -130,15 +141,15 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
      const baseline=book.model.sessions.at(-1);
      let holdingCoverage;
      if(missingC1HoldingPrices(body.portfolio,baseline).length){
-      holdingCoverage=await collectHoldings({portfolio:body.portfolio,baseline,now});
+      holdingCoverage=await checkedHoldings({portfolio:body.portfolio,baseline,now});
       const unavailable=holdingCoverage.rows.filter(r=>r.status!=='verified').map(r=>r.symbol);
-      if(unavailable.length)return res.status(409).json({holdingCoverage,executable:false,error:'Dated adjusted holding prices or classifications unavailable: '+unavailable.join(', ')});
+      if(unavailable.length)return res.status(503).json({holdingCoverage,executable:false,code:'HOLDING_VERIFICATION_UNAVAILABLE',retryable:true,requestId,error:'Dated adjusted holding prices or classifications unavailable: '+unavailable.join(', ')});
      }
      account=adoptC1Account({portfolio:body.portfolio,capitalRecord:body.capitalRecord,book,holdingCoverage,now,prospectiveLegacyAdoptionConfirmed:body.prospectiveLegacyAdoptionConfirmed===true});
      ({account,holdingReviewError}=await reviewAccountHoldings({account,book,now,collectRanks}));
      break;
     }
-    case 'refresh-account-inputs':({account,holdingReviewError}=await refreshAccountInputs({account,book,now,collectHoldings,collectRanks}));break;
+    case 'refresh-account-inputs':({account,holdingReviewError}=await refreshAccountInputs({account,book,now,collectHoldings:checkedHoldings,collectRanks}));break;
     case 'record-position-context':account=importC1PositionContext({account,context:body.context,expectedRevision:body.expectedRevision,book,now});break;
     case 'correct-opening-date':account=correctC1AccountOpenedAt({account,symbol:body.symbol,openedAt:body.openedAt,expectedRevision:body.expectedRevision,book,now});break;
     case 'correct-intraday-details':account=correctC1IntradayTradeDetails({account,ticketId:body.ticketId,price:body.price,fee:body.fee,executedAt:body.executedAt,expectedRevision:body.expectedRevision,now});break;
@@ -161,11 +172,18 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
     }
     default:return res.status(400).json({error:'Valid account operation required.'});
    }
-   account=await saveC1AccountUpdate({store,path,saved,account,operation,context:body.context,book,now});
+   stage='account-save';
+   account=await saveC1AccountUpdate({store:checkedStore,path,saved,account,operation,context:body.context,book,now});
+   stage='saved-account-analysis';
    return res.status(200).json(completedAnalysisView({account,book,now,holdingReviewError}));
   }catch(error){
-   const conflict=isC1AccountSaveConflict(error);
-   return res.status(409).json({...(conflict?{code:'ACCOUNT_SAVE_CONFLICT'}:{}),error:conflict?'Another account update finished first. Reload the saved account and retry this change.':String(error?.message||'Account analysis unavailable').slice(0,240),executable:false});
+   const {status,...failure}=c1AccountApiFailure(error);
+   // Bounded structured fields only: no key, request body, holdings, prices,
+   // account path, raw provider error or stack enters an operational log.
+   console.warn('C1_ACCOUNT_API_FAILURE',JSON.stringify({requestId,code:failure.code,status,stage,
+    method:req.method,sourceSessionDate:/^\d{4}-\d{2}-\d{2}$/.test(sourceSessionDate||'')?sourceSessionDate:null,
+    commit:/^[a-f0-9]{7,40}$/.test(commit)?commit:'local'}));
+   return res.status(status).json({...failure,requestId,executable:false});
   }
  };
 }

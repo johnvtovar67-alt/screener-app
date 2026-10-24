@@ -164,6 +164,7 @@ assert.throws(()=>provider.validateC1OpeningObservations({...tiny,allowPriceRevi
 const context={...loader.load('lib/c1AccountExecutionView.js'),...loader.load('lib/c1OpeningPriceReview.js'),...service,...execution,...intraday,...loader.load('lib/marketSession.js'),...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountDecision.js'),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1HeldRankReview.js'),
  collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),missingC1HoldingPrices:()=>[],collectC1HoldingCoverage:async()=>{throw Error('Unexpected holding collection');},collectC1AccountOpening:async()=>null,readStoredC1DatedBook:async()=>null,createHash:require('node:crypto').createHash,process:{env:{}},get(){},put(){},Date,console};
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
+Object.assign(context,loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false,openingUnavailable=false,priceRevision=false,moved=false;
@@ -172,7 +173,7 @@ vm.createContext(context);vm.runInContext(route,context);
  openingUnavailable=true;let unavailable=await request();assert.equal(unavailable.code,200);assert.equal(unavailable.body.intradaySession.sellOnly,true);assert.equal(unavailable.body.manualRecommendations.status,'waiting');assert.equal(unavailable.body.openingError,'Fresh opening quote missing for T4');openingUnavailable=false;
  let r=await request();assert.equal(r.code,200);assert(r.body.intradaySession,'Entry form is available during the open session');
  priceRevision=true;r=await request();assert.equal(r.code,200);assert.equal(r.body.manualRecommendations.status,'ready',JSON.stringify(r.body));assert.equal(r.body.openingPlan.sourceReceipt.priceBasisReview.identicalOpeningPlan,true);assert.equal(writes,0);priceRevision=false;
- fail=true;r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,409);assert.equal(writes,0);fail=false;
+ fail=true;r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,503);assert.equal(writes,0);fail=false;
  r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.intradaySession.tickets.length,1);assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));assert.equal(r.body.manualRecommendations.status,'ready');
  assert(r.body.manualRecommendations.orders.some(o=>o.side==='buy'&&!o.condition));
  const cashBeforeTimeCorrection=r.body.decision.actualCash,apiCorrectedAt=opening.date+'T15:15:00.000Z';
@@ -197,7 +198,7 @@ vm.createContext(context);vm.runInContext(route,context);
  const reload=await request();assert.equal(reload.code,200);assert.equal(reload.body.intradaySession.tickets.length,2);
  // An unrelated candidate anchor failure must not block a known completed exit.
  stored={record:JSON.parse(original),etag:'fallback0'};openingUnavailable=true;
- r=await request({operation:'record-intraday',ticket:{...ticket,side:'buy'},expectedRevision:0});assert.equal(r.code,409);assert.equal(stored.record.revision,0);
+ r=await request({operation:'record-intraday',ticket:{...ticket,side:'buy'},expectedRevision:0});assert.equal(r.code,503);assert.equal(stored.record.revision,0);
  r=await request({operation:'record-intraday',ticket,expectedRevision:0});assert.equal(r.code,200,JSON.stringify(r.body));assert.equal(r.body.manualRecommendations.status,'waiting');assert(!r.body.decision.positions.some(p=>p.symbol==='T4'));assert.equal(r.body.intradaySession.sellOnly,true);
  const fallbackCash=r.body.decision.actualCash;
  const closedFallback=service.deriveC1CompletedAccount({account:stored.record,book:closeBook,now:new Date(opening.date+'T21:00:00Z')});
@@ -247,11 +248,11 @@ vm.createContext(context);vm.runInContext(route,context);
  const afterCloseBuy={id:'after-close-broker-purchase',symbol:afterCloseOrder.symbol,side:'buy',shares:1,price:afterCloseOrder.estimatedPrice,fee:0,executedAt:opening.date+'T19:30:00Z'};
  afterClose=await afterCloseRequest({operation:'record-intraday',ticket:afterCloseBuy,expectedRevision:stored.record.revision});
  assert.equal(afterClose.code,200,JSON.stringify(afterClose.body));assert.equal(afterClose.body.intradaySession.tickets.length,2);assert(stored.record.intradayActivity.tickets.some(t=>t.id===afterCloseBuy.id));
- r=await request({operation:'record-session',record:{date:opening.date,entryRecheck:{}},expectedRevision:stored.record.revision});assert.equal(r.code,409);assert.match(r.body.error,/server only/);
+ r=await request({operation:'record-session',record:{date:opening.date,entryRecheck:{}},expectedRevision:stored.record.revision});assert.equal(r.code,422);assert.match(r.body.error,/server only/);
  const beforeEvidenceInjection=JSON.stringify(stored);
  for(const field of ['executionEvidence','recordingEvidence','entryPlanEvidence']){
   r=await request({operation:'record-session',record:{date:opening.date,[field]:plan},expectedRevision:stored.record.revision});
-  assert.equal(r.code,409);assert.match(r.body.error,/server only/);assert.equal(JSON.stringify(stored),beforeEvidenceInjection,'A client cannot inject server execution evidence');
+  assert.equal(r.code,422);assert.match(r.body.error,/server only/);assert.equal(JSON.stringify(stored),beforeEvidenceInjection,'A client cannot inject server execution evidence');
  }
 
  // Production failure: compact carry fell back to pending opening planning

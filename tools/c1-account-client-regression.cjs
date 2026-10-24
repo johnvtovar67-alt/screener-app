@@ -69,6 +69,16 @@ function client(fetcher){
  const recovery=client(async(url,options)=>{methods.push(options.method);return options.method==='GET'?{ok:true,json:async()=>latest}:{ok:false,status:409,json:async()=>({code:'ACCOUNT_SAVE_CONFLICT',error:'Conflict'})};});
  await assert.rejects(recovery.box.refresh({operation:'record-position-context'}),/saved account was reloaded/);
  assert.deepEqual(methods,['POST','GET']);assert.deepEqual(recovery.state.view,latest);assert.equal(recovery.state.writes,0);
+ // Service outages and invalid inputs must not enter the conflict-recovery
+ // GET path or erase the retained account. Never repeat a rejected mutation.
+ for(const status of [422,503,500])for(const operation of ['record-position-context','update-brokerage-cash']){
+  const calls=[],message='Verified synthetic failure '+status;
+  const failed=client(async(url,options)=>{calls.push(options.method);return {ok:false,status,json:async()=>({error:message,executable:false})};});
+  const retained=JSON.stringify(failed.state.view);
+  await assert.rejects(failed.box.refresh({operation}),error=>error.message===message);
+  assert.deepEqual(calls,['POST'],'Only actual conflicts can trigger the recovery GET');
+  assert.equal(JSON.stringify(failed.state.view),retained);assert.equal(failed.state.writes,0);
+ }
  const readOnly=client(async(url,options)=>{assert.equal(url,'/api/c1-account');assert.equal(options.method,'GET');assert.equal(options.body,undefined);return {ok:true,json:async()=>latest};});
  await readOnly.box.refresh(null,{readOnly:true});assert.deepEqual(readOnly.state.view,latest);
  // Completed account display is authoritative before a separate opening request.

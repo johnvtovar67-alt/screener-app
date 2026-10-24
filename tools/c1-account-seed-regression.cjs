@@ -337,6 +337,7 @@ const holdingSource=fs.readFileSync('lib/c1HoldingCoverage.js','utf8').replace(/
 const holdingBox={...loader.load('lib/marketSession.js'),normalizeHistoricalBars,Date,URLSearchParams,AbortSignal,process:{env:{}}};
 vm.createContext(holdingBox);vm.runInContext(holdingSource+'\nglobalThis.holdingExports={collectC1HoldingCoverage,missingC1HoldingPrices};',holdingBox);
 const context={...loader.load('lib/c1OpeningPriceReview.js'),...loader.load('lib/c1IntradayActivity.js'),...loader.load('lib/c1AccountExecution.js'),...loader.load('lib/c1AccountLedger.js'),...loader.load('lib/marketSession.js'),...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1HeldRankReview.js'),collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1AccountService.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountExecutionView.js'),...holdingBox.holdingExports,applyC1OpeningPlan:loader.load('lib/c1AccountDecision.js').applyC1OpeningPlan,createHash:require('node:crypto').createHash,adoptC1Account:adoptService,evaluateC1Account:evaluateService,appendC1AccountSession:appendService,pendingC1AccountSession:pendingService,planC1ContinuedAccountOpening:planContinued,collectC1AccountOpening:async()=>null,process:{env:{}},get(){throw new Error('Unexpected provider call');},put(){throw new Error('Unexpected provider write');},Date};
+Object.assign(context,loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored=null,writes=0,reads=0,fail=false,book=baselineBook;
@@ -348,7 +349,7 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.equal((await request('POST',{},false)).code,401);assert.equal(reads,0);
  assert.equal((await request('GET')).code,404);assert.equal(reads,0,'An empty account read cannot start provider initialization');
  const body={operation:'adopt',portfolio,capitalRecord};
- fail=true;assert.equal((await request('POST',body)).code,409);assert.equal(stored,null);
+ fail=true;assert.equal((await request('POST',body)).code,503);assert.equal(stored,null);
  fail=false;assert.equal((await request('POST',body)).code,200);assert.equal(writes,1);
  assert.equal((await request('POST',body)).code,409);assert.equal(writes,1,'Existing account cannot reset');
  const response=await request('GET');assert.equal(response.code,200);assert.equal(response.body.decision.decisionId,initialView.decisionId);assert.equal(response.body.manualRecommendations.enabled,true);assert.equal(response.body.manualRecommendations.status,'waiting');assert.equal(response.body.manualRecommendations.brokerageExecutionAuthorized,false);
