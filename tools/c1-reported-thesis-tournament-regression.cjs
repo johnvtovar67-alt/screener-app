@@ -76,6 +76,9 @@ assert(!runner.includes('Promise.all(batch.map')&&!runner.includes('put(')&&!run
 const source=fs.readFileSync('lib/c1ReportedThesisTournament.js','utf8');
 assert(!/fetch\s*\(|@vercel\/blob|process\.env|pages\/api/.test(source));
 assert(!source.includes('absolute-trend'),'Unreviewed absolute-trend policy gate must not enter the tournament');
+assert(source.includes('prices.set(symbol,row.close)'),'Rolling window must retain scalar closes rather than accepted price-row objects');
+assert(!source.includes('const sleeves={}'),'An arm must not retain all three full simulator results concurrently');
+assert(source.includes('simulation=null'),'Each full sleeve result must be released before the next sleeve');
 assert.equal(JSON.stringify(tournament.C1_REPORTED_THESIS_CANDIDATES.map(row=>row.id)),
  JSON.stringify(['ols-residual-120-ex-20','downside-resilience-120-ex-20']));
 console.log('PASS: two pre-registered, fixed 120-to-20 reported-thesis adaptations use rolling accepted prices, deterministic peer ranks, immutable public inputs, one memory-bounded preview runner and no production authority.');
