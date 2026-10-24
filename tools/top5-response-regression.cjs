@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
-const {parseTop5Response,readTop5Response}=createResearchModuleLoader(process.cwd()).load('lib/top5Response.js');
+const {parseTop5Response,readTop5Response,buildTop5UnavailableResponse}=createResearchModuleLoader(process.cwd()).load('lib/top5Response.js');
 const app=fs.readFileSync('pages/_app.js','utf8'),page=fs.readFileSync('pages/index.js','utf8');
 const appBoundary=app.slice(app.indexOf('const CANONICAL_HOST='),app.indexOf('export default function App('));
 const screenBoundary=page.slice(page.indexOf('  function screenHealth('),page.indexOf('  async function fetchStock('));
@@ -8,6 +8,17 @@ const actionBoundary=page.slice(page.indexOf('const act=s=>'),page.indexOf('\nfu
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
 const snapshot={stocks:[{symbol:'AAA',price:100,finalDecision:{action:'Buy'},recommendation:{label:'Buy'}}],meta:{quoteFeedStatus:'live',snapshotAsOf:'2026-10-08T20:00:00Z'},themeLeadership:[]};
 const request='/api/top5?theme=opportunities&compact=1&verificationPass=';
+const controlledFailure=buildTop5UnavailableResponse();
+assert.equal(controlledFailure.error,'Trade screen temporarily unavailable.');
+assert.equal(controlledFailure.retryable,true);assert.equal(controlledFailure.code,undefined);
+assert.match(controlledFailure.detail,/Broad screen update is temporarily unavailable/);
+for(const input of [undefined,null,false,0,'true',Error('PRIVATE_PROVIDER_URL_APIKEY'),{get message(){throw Error('PRIVATE_GETTER');}}]){
+ assert.deepEqual(buildTop5UnavailableResponse(input),controlledFailure,'Only literal true selects the controlled timeout response; no raw exception is inspected');
+}
+const controlledTimeout=buildTop5UnavailableResponse(true);
+assert.equal(controlledTimeout.code,'TOP5_TIMEOUT');
+assert.equal(controlledTimeout.detail,'Broad screen update timed out. Existing portfolio analysis remains available; new capital is paused until refresh succeeds.');
+assert(!JSON.stringify([controlledFailure,controlledTimeout]).includes('PRIVATE_'));
 function fetchBoundary(responses,initialCache=[]){
  const storage=new Map(initialCache),writes=[],notices=[],requests=[];
  const window={location:{href:'https://screener-app-cq5t.vercel.app/',origin:'https://screener-app-cq5t.vercel.app'},

@@ -87,22 +87,39 @@ scan was clear. CI #972 (40140265361) SUCCESS and exact preview
 no records; actual authenticated request emission and account/browser parity
 remain unverified. Missing logs do not prove an account failure.
 
-## Active slice: passive screen-response diagnostics
+## Production verified: passive screen-response diagnostics
 
 Branch `harden/c1-screen-diagnostics-20261024`, based on production `cb2d2df`.
 Extend the existing request-diagnostics module, not a new framework. Summarize
 already-computed screen feed statuses/counts and replace the raw exception log
 with redacted failure codes. Preserve response identity and all I/O/decision
 behavior. Evidence/checkpoint: `docs/operations/c1-passive-screen-diagnostics-20261024.md`.
-This run owns the branch until its PR records a verified handoff.
+PR #321 released as production `32500001899d59b78107c071fc21f4bd3b1162e0`,
+deployment `dpl_46c6nn8g7xfcoiinDFfyvr8btTxQ` READY with canonical
+alias/version/health200, all configuration checks true and scheduler configured.
+Initial scoped error/fatal scan was clear. Local121/121/build passed; CI #974
+(40143080374) SUCCESS; exact preview `dpl_8XKf9gVjacr1upxnyvtpYetMLJsQ`
+READY with version/health200. Two normal production GET records emitted the
+new screen diagnostic at 23:39:36–37 UTC. This verifies the observer, not C1
+private-account selection, account opening or browser parity.
+
+## Active slice: public screen-error detail redaction
+
+Branch `harden/c1-screen-error-details-20261024`, based on production `3250000`.
+The real catch-response seam copied an arbitrary synthetic provider marker into
+HTTP503 detail with zero network or writes. Reuse the existing response module
+and its controlled fallback wording; accept only a timeout boolean, never a raw
+error. Preserve success responses, status/retryability/timeouts and all economic
+behavior. Evidence: `docs/operations/c1-screen-public-error-redaction-20261024.md`.
+This run owns the branch until a verified PR handoff; do not edit concurrently.
 
 ## Remaining audit work
 
 | Work | State |
 |---|---|
 | API error types and accurate retry behavior | Production verified through PR #317; private-account parity not established |
-| Read-only end-to-end operational acceptance canary | Captured-response tooling and account instrumentation released; screen instrumentation in verification; browser/cross-boundary acceptance pending |
-| Common provider/error adapters and canonical symbol boundary | Pending |
+| Read-only end-to-end operational acceptance canary | Screen/account instrumentation released; screen emission observed; private-account/browser/cross-boundary acceptance pending |
+| Common provider/error adapters and canonical symbol boundary | Safe public screen-error response in verification; broader adapters/symbol consolidation pending |
 | Proven-unused research runtime isolation/retirement | Pending |
 | Single producer and immutable screen reads | Pending; characterization first |
 | Broader duplicate/dead-code cleanup | Two unused modules retired in production via PR #318; broader cleanup pending |

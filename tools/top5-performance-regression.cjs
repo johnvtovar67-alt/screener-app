@@ -206,7 +206,9 @@ function createHarness(route = CURRENT, options = {}) {
     const response = { headers: {}, setHeader(name, value) { this.headers[name] = value; },
       status(code) { this.code = code; return this; }, json(body) { this.body = body; return this; } };
     const started = clock.now();
-    return Promise.resolve(handler({ method: 'GET', query: { theme: 'opportunities', ...query }, headers: {} }, response))
+    const requestQuery={ theme: 'opportunities', ...query };
+    if(options.queryError)Object.defineProperty(requestQuery,'theme',{get(){throw Error(options.queryError);}});
+    return Promise.resolve(handler({ method: 'GET', query: requestQuery, headers: {} }, response))
       .then(() => ({ code: response.code, body: clone(response.body), headers: response.headers, elapsedMs: clock.now() - started }));
   }
   return { request, clock, calls, logs, snapshot, screenSnapshot, latencies,
@@ -256,6 +258,14 @@ async function main() {
   const observedDespiteFailure=await brokenObserver.clock.settle(brokenObserver.request());
   assertHealthy(observedDespiteFailure);decisionParity(observedDespiteFailure,oldFull);
   assert.deepEqual(brokenObserver.calls.map(row=>row.phase),baseline.calls.map(row=>row.phase),'Observer failures add no provider or storage calls');
+  const privateMarker='PRIVATE_UPSTREAM_URL_APIKEY_DO_NOT_EXPOSE';
+  const failedRequest=createHarness(CURRENT,{queryError:'https://provider.invalid?apikey='+privateMarker});
+  const publicFailure=await failedRequest.clock.settle(failedRequest.request());
+  assert.equal(publicFailure.code,503);assert.equal(publicFailure.body.retryable,true);
+  assert.equal(publicFailure.body.error,'Trade screen temporarily unavailable.');
+  assert.match(publicFailure.body.detail,/Broad screen update is temporarily unavailable/);
+  assert(!JSON.stringify(publicFailure.body).includes(privateMarker));assert(!JSON.stringify(failedRequest.logs).includes(privateMarker));
+  assert.equal(failedRequest.calls.length,0,'Error redaction reproduction performs no provider or storage I/O');
   assert.equal(newFull.body.stocks.length, oldFull.body.meta.universeSize, 'The full universe is preserved');
   const classifications = current.classify(newFull.body.stocks);
   assert.deepEqual(classifications, baseline.classify(oldFull.body.stocks), 'Account-independent original C1 stock classifications stay identical');

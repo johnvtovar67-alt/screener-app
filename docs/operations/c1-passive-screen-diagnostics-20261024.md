@@ -61,10 +61,20 @@ separate pending boundary repair; do not call error hardening complete.
   canonical guards, CI, build hooks, trading rules, UI, crons and account facts
   remain unchanged. No completed thesis experiment is restarted.
 
-Full suite/build and matching CI/preview/production gates are pending at this
-source checkpoint. The PR will record release/handoff evidence. Do not invoke
-the side-effecting screen endpoint just to manufacture a live diagnostic event.
-Record actual normal-request emission separately if it occurs.
+Released through PR #321: local121/121, freeze/canonical and build PASS; CI #974
+(40143080374) SUCCESS on exact reviewed head
+`6c200dc89abae01b57b0d19a32463c24f98fa93a`; preview
+`dpl_8XKf9gVjacr1upxnyvtpYetMLJsQ` READY with version/health200. Production
+`32500001899d59b78107c071fc21f4bd3b1162e0`, deployment
+`dpl_46c6nn8g7xfcoiinDFfyvr8btTxQ` READY with canonical alias/version/health,
+all configuration checks true and scheduler configured. Initial scoped error
+scan was clear. Exact reviewed/merged tree:
+`a3f455bd50ec4647dd05cdabbaa40e053f2d6b1b`.
+
+Actual emission observed: two normal production GET records at 23:39:36–37 UTC
+reported SCREEN_FEEDS_HEALTHY on the exact deployment. No explicit screen
+request was initiated as a diagnostic canary. This verifies runtime observation,
+not private C1 selection, account opening, browser or brokerage acceptance.
 
 Next: provider/error/symbol boundary consolidation and obsolete research-runtime
 isolation. Cross-boundary/browser acceptance and immutable screen reads under
