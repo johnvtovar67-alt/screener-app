@@ -40,24 +40,39 @@ commit, environment and scheduler configuration. Initial scoped error scan was
 clear. Private-account parity remains NOT_VERIFIED; a preview authorization
 wall was not bypassed. Public health does not prove live account acceptance.
 
-## Active slice: proven-unused module retirement
+## Production verified: proven-unused module retirement
 
 Branch `harden/c1-unused-modules-20261024`, based on production `cbd7e7a`.
 Remove only two unused April prototype modules (308 lines total), with all
 surviving application files unchanged. Evidence and release checkpoint:
-`docs/operations/c1-unused-modules-20261024.md`. This run owns this branch until
-its PR records a safe handoff or production milestone; do not edit concurrently.
+`docs/operations/c1-unused-modules-20261024.md`. PR #318 merged and production
+verified at `1c423dc1de23a141e804169d78927a032f5e7d32`, deployment
+`dpl_cYqswxJSDJboeNQ5h4fhneW9vMEe` READY, canonical version/health HTTP200,
+all configuration checks true and scheduler configured. CI #968
+(40135026856) passed and exact preview `dpl_92ngT6pVQDo6aZUWeHEpaYW2cV8g`
+was READY. Initial scoped error/fatal scan was clear. No runtime speedup or
+private-account parity is claimed.
+
+## Active slice: read-only captured-response canary
+
+Branch `harden/c1-readonly-canary-20261024`, starting from production `1c423dc`.
+Add offline tooling and a synthetic composition regression, not a live route,
+provider call, account mutation, UI or trading-policy change. It checks captured
+screen/account/portfolio responses through the real C1 helpers and reports only
+aggregate counts/reason codes. Exact limits and release status:
+`docs/operations/c1-readonly-canary-20261024.md`. This run owns the branch until
+a verified PR handoff; do not edit concurrently.
 
 ## Remaining audit work
 
 | Work | State |
 |---|---|
 | API error types and accurate retry behavior | Production verified through PR #317; private-account parity not established |
-| Read-only end-to-end operational acceptance canary | Pending |
+| Read-only end-to-end operational acceptance canary | Captured-response diagnostic in verification; live integration and browser parity pending |
 | Common provider/error adapters and canonical symbol boundary | Pending |
 | Proven-unused research runtime isolation/retirement | Pending |
 | Single producer and immutable screen reads | Pending; characterization first |
-| Broader duplicate/dead-code cleanup | Two proven-unused modules in isolated release; broader cleanup pending |
+| Broader duplicate/dead-code cleanup | Two unused modules retired in production via PR #318; broader cleanup pending |
 | Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
 
 ## Release gate
