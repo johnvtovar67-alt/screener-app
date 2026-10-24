@@ -89,4 +89,9 @@ assert(source.includes('Float64Array')&&!source.includes('rowsFromWindow'),'Tran
 assert.equal(JSON.stringify(tournament.C1_REPORTED_THESIS_CANDIDATES.map(row=>row.id)),
  JSON.stringify(['ols-residual-120-ex-20','downside-resilience-120-ex-20']));
 assert.equal(JSON.stringify(tournament.C1_REPORTED_THESIS_ARMS),JSON.stringify(['champion','ols-residual-120-ex-20','downside-resilience-120-ex-20']));
+const completedReview=fs.readFileSync('docs/research/c1-reported-thesis-tournament-20261024.md','utf8');
+for(const evidence of ['381.23411000000004','104.9617075','74.1361025','dpl_3fd8P4uLPdyg3n6a1HG6TxNJbd9z','dpl_6rAeZmgMjcggCfSb8BY34xWvhyfu'])
+ assert(completedReview.includes(evidence),'Completed review must retain exact evidence '+evidence);
+assert(completedReview.includes('reject both challengers')&&completedReview.includes('fresh, single-purpose preview deployment'),
+ 'Completed review must preserve the rejection and heavy-arm preflight rule');
 console.log('PASS: two pre-registered, fixed 120-to-20 reported-thesis adaptations use rolling accepted prices, deterministic peer ranks, immutable public inputs, one memory-bounded preview runner and no production authority.');
