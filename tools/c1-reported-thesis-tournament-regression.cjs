@@ -44,10 +44,14 @@ const residualDataset=tournament.buildC1ReportedThesisCandidate(dataset,'ols-res
 assert.equal(JSON.stringify(dataset),snapshot,'Immutable helper must preserve the accepted input');
 const residualRanks=residualDataset.sessions[120].signals.map(row=>row.researchFactors.momentumPercentile);
 assert(residualRanks.every(Number.isFinite)&&new Set(residualRanks).size===3,'Residual candidate must assign deterministic cross-sectional percentiles');
+assert(Math.abs(residualDataset.sessions[120].signals[0].researchFactors.return120Ex20-residualA.score)<1e-12,
+ 'Allocation-light residual transform must preserve the pre-registered formula exactly');
 const downsideDataset=tournament.buildC1ReportedThesisCandidate(dataset,'downside-resilience-120-ex-20');
 const downRows=downsideDataset.sessions[120].signals;
 assert(downRows.find(row=>row.symbol==='CCC').researchFactors.momentumPercentile>
  downRows.find(row=>row.symbol==='BBB').researchFactors.momentumPercentile,'Fixed downside blend must reward negative-market resilience');
+assert(Math.abs(downRows.find(row=>row.symbol==='AAA').researchFactors.return120Ex20-downA.totalReturnPct)<1e-12,
+ 'Allocation-light downside transform must preserve the pre-registered formation return exactly');
 const mutable=JSON.parse(snapshot),factors=mutable.sessions[120].signals[0].researchFactors;
 tournament.applyC1ReportedThesisCandidateInPlace(mutable,'ols-residual-120-ex-20');
 assert.strictEqual(mutable.sessions[120].signals[0].researchFactors,factors,'Memory-bounded transform must assign into existing factor objects');
@@ -70,7 +74,9 @@ const appSources=['pages','components'].flatMap(dir=>fs.readdirSync(dir,{recursi
 for(const file of appSources)if(file!==route)assert(!fs.readFileSync(file,'utf8').includes('c1ReportedThesisTournament'),file+' must not import the offline tournament');
 const runner=fs.readFileSync(route,'utf8');
 assert(runner.includes("process.env.VERCEL_ENV==='production'"),'Preview runner must refuse production');
-assert(runner.includes("phase:'result-summary'")&&runner.includes("phase:'response-ready'"),'Runner must preserve a bounded aggregate result');
+assert(runner.includes("phase:'arm-summary'")&&runner.includes("phase:'response-ready'"),'Runner must preserve one bounded arm result');
+assert(runner.includes("typeof req.query?.arm==='string'")&&runner.includes('C1_REPORTED_THESIS_ARMS.includes(arm)'),'Runner must reject missing, repeated and unknown arm values');
+assert(runner.includes('runC1ReportedThesisArmMemoryBound')&&!runner.includes('runC1ReportedThesisTournamentMemoryBound'),'Each request must run exactly one isolated arm');
 assert(runner.includes('ACCEPTED_RETAINED_START_INDEX=130')&&runner.includes("ACCEPTED_RETAINED_FIRST_SESSION='2022-07-12'"));
 assert(!runner.includes('Promise.all(batch.map')&&!runner.includes('put(')&&!runner.includes('FMP_API_KEY'));
 const source=fs.readFileSync('lib/c1ReportedThesisTournament.js','utf8');
@@ -79,6 +85,8 @@ assert(!source.includes('absolute-trend'),'Unreviewed absolute-trend policy gate
 assert(source.includes('prices.set(symbol,row.close)'),'Rolling window must retain scalar closes rather than accepted price-row objects');
 assert(!source.includes('const sleeves={}'),'An arm must not retain all three full simulator results concurrently');
 assert(source.includes('simulation=null'),'Each full sleeve result must be released before the next sleeve');
+assert(source.includes('Float64Array')&&!source.includes('rowsFromWindow'),'Transform must avoid per-symbol formation-row arrays');
 assert.equal(JSON.stringify(tournament.C1_REPORTED_THESIS_CANDIDATES.map(row=>row.id)),
  JSON.stringify(['ols-residual-120-ex-20','downside-resilience-120-ex-20']));
+assert.equal(JSON.stringify(tournament.C1_REPORTED_THESIS_ARMS),JSON.stringify(['champion','ols-residual-120-ex-20','downside-resilience-120-ex-20']));
 console.log('PASS: two pre-registered, fixed 120-to-20 reported-thesis adaptations use rolling accepted prices, deterministic peer ranks, immutable public inputs, one memory-bounded preview runner and no production authority.');
