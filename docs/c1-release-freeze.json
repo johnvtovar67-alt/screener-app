@@ -53,7 +53,7 @@
     "lib/c1PaperEvents.js": "a53fcd6a08d49e3e28356b427e29cbfc4252da0a",
     "lib/c1PositionContext.js": "2bde82ff0343a8fd480b49027245ad04c6a01c6b",
     "lib/c1Presentation.js": "f0752591258e37780ea7c21fafee838455dd362e",
-    "lib/c1ReportedThesisTournament.js": "808b3a9c7adea9b1da4e17e89cdbad3d8a9a78e7",
+    "lib/c1ReportedThesisTournament.js": "b26b4ae03ff33402d9790dca48a5121548b70ac2",
     "lib/c1SleeveAccounting.js": "ef95d81dab897aaf2a8e870f8d942530ec900428",
     "lib/capitalSimulation.js": "c5650412ccfb483896219cb157176b784663407a",
     "lib/entryTiming.js": "561ff778208aa017770bac69efe56892ed3c667f",
@@ -118,7 +118,7 @@
     "pages/api/research/backtest-status.js": "ce9a01391f9722be6a5ecae4bd65dbfdcaeed377",
     "pages/api/research/c1-forward-accounting.js": "34a8eeaec80869c674b933d02a192a68ee214884",
     "pages/api/research/c1-holdings-comparison.js": "bb7eeeef69031a2eef6f62e11f68a2a3cd92c9bd",
-    "pages/api/research/c1-reported-thesis-tournament.js": "89c6c7ac02a1194df2b8ec5ba23691248fe3056b",
+    "pages/api/research/c1-reported-thesis-tournament.js": "db24f75c422a5273974911cdc2f75d09210c9a38",
     "pages/api/research/c1-live-decision.js": "6af994b4f911da2fea602902f8822c9ccce58e7d",
     "pages/api/research/c1-live-input.js": "8bb26ebbb235fb8d251ffbc81921c163baaab21c",
     "pages/api/research/data-capabilities.js": "a77bcbf2b9660097b3296b52596c383f60cf88fd",
@@ -271,5 +271,5 @@
   "priceBarExtractionAuthorization": "Owner October 23 requests a thorough infrastructure review and behavior-preserving cleanup. Extract the shared FMP historical-bar normalizer from the 20,000-line research monolith into a pure production module, preserve its exact public contract through a compatibility export, and repoint only existing production consumers and source-level regression harnesses. No ranking, eligibility, sizing, entry, exit, event, account, cash, history, provider, or execution behavior changes."
   ,
   "fourSwingPositionCeilingAuthorization": "Owner October 23 explicitly directs a hard maximum of four distinct C1 Swing holdings. When three positions are already held and several unheld Buy/Strong Buy names qualify simultaneously, only the highest-ranked unheld name may use the existing additional-position exception. Independent release review found the first implementation still allowed ordinary per-sleeve buys to bypass the aggregate ceiling when small holdings were unevenly allocated. Reject non-selected new names before projection while preserving aggregate-held Adds, unexecuted-sale ordering, conserved fills, historical reconstruction, all qualifications, ordering, quantities, cash limits, sleeves, exits, stops, accounting and records. A conserved current-session Buy reserves its aggregate symbol before current selection, so changed qualification cannot authorize a fifth name while the immutable fill remains accepted. Add permanent uneven-allocation and conserved-fill regressions; update only the projection application hash.",
-  "reportedThesisTournamentAuthorization": "Owner October 23 requests simultaneous research and testing of multiple other reported C1 improvement theses after rejecting high-to-price, without a large infrastructure build. Pre-register only two genuinely distinct 120-to-20 daily-price adaptations: SPY/QQQ OLS-residual momentum and a fixed 70/30 formation/down-market-resilience blend. Reuse the exact accepted dataset and frozen three-sleeve simulator sequentially in one preview-only, production-refusing, read-only route. No grid, provider, storage, account, recommendation, execution, merge or production deployment is authorized. See docs/research/c1-reported-thesis-tournament-20261024.md."
+  "reportedThesisTournamentAuthorization": "Owner October 23 requests simultaneous research and testing of multiple other reported C1 improvement theses after rejecting high-to-price, without a large infrastructure build. Pre-register only two genuinely distinct 120-to-20 daily-price adaptations: SPY/QQQ OLS-residual momentum and a fixed 70/30 formation/down-market-resilience blend. Reuse the exact accepted dataset and frozen three-sleeve simulator through three fixed, isolated arm requests in one preview-only, production-refusing, read-only route. No arbitrary parameter, grid, provider, storage, account, recommendation, execution, merge or production deployment is authorized. See docs/research/c1-reported-thesis-tournament-20261024.md."
 }
