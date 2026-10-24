@@ -88,8 +88,15 @@ Local full suite/build passed: 119/119 tasks, freeze/canonical guards, optimized
 compilation, static generation and traces. Final capture-shape hardening and
 its expanded focused regression also pass. All runtime application files,
 freeze entries, CI, crons and dependencies are byte-for-byte unchanged.
-Remote CI, matching preview and production identity checks remain pending at
-this source checkpoint. The PR release record will bind subsequent verification.
+Released through PR #319: CI #970 (40136356595) SUCCESS on reviewed head
+`ce53feaffc4526aa220fd4d2cc424dcf1b5060bf`; preview
+`dpl_8YA1ufGPWnkyF4YKahBxiF7aKkQs` READY with version/health HTTP200.
+Production `3b6341c2bef960d72616053284b08d7fc6588a47`, deployment
+`dpl_HYT9T2gGjmEKGXzqyHFW35qrtmgY` READY with canonical alias/version/health,
+all configuration checks pass and scheduler configured. Initial scoped
+error/fatal scan was clear. Exact reviewed/merged tree:
+`f800d9d22ae485e4567a774742e058227ddb1a37`. This establishes tooling release,
+not live account/browser acceptance or completed semantic monitoring.
 
 Next: integrate observability at an existing authorized read-only boundary,
 without invoking side-effecting refreshes or saving private captures. Real live

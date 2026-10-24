@@ -2,6 +2,7 @@ import {appendC1NonCashAdoption} from '../../lib/c1NonCashAdoption';
 import {reviewC1NonCashAdoption,verifyC1NonCashReceipts} from '../../lib/c1NonCashAdoptionReview';
 import {createHash,randomUUID} from 'node:crypto';
 import {c1AccountApiFailure,c1AccountDependency} from '../../lib/c1ApiErrors';
+import {logC1AccountOperationalStatus} from '../../lib/c1AccountOperationalStatus';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
 import {saveC1AccountUpdate} from '../../lib/c1AccountSave';
@@ -110,13 +111,16 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
    if(account?.adoption?.nonCashHoldings?.length)verifyC1NonCashReceipts(account);
    if(operation==='refresh-analysis'){
     account=await verifyAccountHoldingPrices({account,book,now,collectHoldings:checkedHoldings});
-    return res.status(200).json(completedAnalysisView({account,book,now}));
+    const view=completedAnalysisView({account,book,now});
+    try{logC1AccountOperationalStatus(view,{operation,now,requestId,commit});}catch{}
+    return res.status(200).json(view);
    }
    if(operation==='prepare-execution'||operation==='record-intraday'){
     account=await verifyAccountHoldingPrices({account,book,now,collectHoldings:checkedHoldings});
     const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})});
     if(operation==='record-intraday'){stage='account-save';await saveC1AccountUpdate({store:checkedStore,path,saved,account:prepared.account,operation,book,now});}
     const {account:preparedAccount,...view}=prepared;
+    if(operation==='prepare-execution')try{logC1AccountOperationalStatus({...view,holdingReviewError},{operation,now,requestId,commit});}catch{}
     return res.status(200).json({...view,holdingReviewError});
    }
    if(operation==='review-mrna-adoption'||operation==='confirm-mrna-adoption'){
