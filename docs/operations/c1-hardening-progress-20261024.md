@@ -14,7 +14,7 @@ Production deployment `dpl_8SCvFCPmLJpKVh7cB9Vtn2YdHeoP` is READY.
 Event-cache recovery/truthful copy, security dependency updates/CI gate,
 shared price-bar normalization, four-Swing cap and armed-profit copy are live.
 
-## Active slice: account API error classification
+## Production verified: account API error classification
 
 Branch: `harden/c1-api-errors-20261024`.
 
@@ -31,23 +31,33 @@ write retry is added. Failed writes are unconfirmed: the user must reload
 before repeating a mutation, since a transport failure cannot prove whether a
 remote write committed.
 
-Status: source implementation, focused API/browser/ledger/recording tests,
-118/118 full regression tasks, release-freeze/integrity checks and optimized
-Next.js build pass locally. GitHub CI, preview and production gates are pending. This live
-session owns the branch until a commit here states a handoff or verified
-production milestone. Scheduled continuation must not edit an active head or
-start a duplicate release.
+Released through PR #317. Local 118/118 regressions, freeze/integrity and build
+passed. Reviewed head `80f9df0ead7b244e74facaf717037107da8f076b` passed CI #966
+(run 40132150462) and preview `dpl_vjcLJAxoU3jzgupV6guAJ1MACEEt` was READY.
+Production commit `cbd7e7a1b536acebf75ef465d7d86d2bbeed76f3` deployed READY
+as `dpl_3Lm8DboH7hKa4ZQjkEcjD5fG33CZ`. Canonical version/health verified
+commit, environment and scheduler configuration. Initial scoped error scan was
+clear. Private-account parity remains NOT_VERIFIED; a preview authorization
+wall was not bypassed. Public health does not prove live account acceptance.
+
+## Active slice: proven-unused module retirement
+
+Branch `harden/c1-unused-modules-20261024`, based on production `cbd7e7a`.
+Remove only two unused April prototype modules (308 lines total), with all
+surviving application files unchanged. Evidence and release checkpoint:
+`docs/operations/c1-unused-modules-20261024.md`. This run owns this branch until
+its PR records a safe handoff or production milestone; do not edit concurrently.
 
 ## Remaining audit work
 
 | Work | State |
 |---|---|
-| API error types and accurate retry behavior | Locally verified; remote release pending |
+| API error types and accurate retry behavior | Production verified through PR #317; private-account parity not established |
 | Read-only end-to-end operational acceptance canary | Pending |
 | Common provider/error adapters and canonical symbol boundary | Pending |
 | Proven-unused research runtime isolation/retirement | Pending |
 | Single producer and immutable screen reads | Pending; characterization first |
-| Broader duplicate/dead-code cleanup | Pending; prove unused before removal |
+| Broader duplicate/dead-code cleanup | Two proven-unused modules in isolated release; broader cleanup pending |
 | Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
 
 ## Release gate
