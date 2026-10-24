@@ -22,6 +22,7 @@ const context={...service,...loader.load('lib/c1AccountSave.js'),...loader.load(
  collectC1HoldingCoverage(){throw Error('Cash update cannot refresh holdings');},
  collectC1HeldRankReviews(){throw Error('Cash update cannot refresh ranks');},
  reconcileC1BrokerCash(){throw Error('Cash update cannot reconcile strategy cash');}};
+Object.assign(context,loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored={record:original,etag:'"original-strong-etag"'},writes=0,conflict=false;
@@ -47,7 +48,7 @@ vm.createContext(context);vm.runInContext(route,context);
  assert.equal(stored.record.cashReconciliations,undefined);
  assert.equal((await request(payload)).code,409);assert.equal(writes,1,'Stale revision cannot change metadata');
  for(const invalid of [-1,1.001,'363.36',null,Infinity,NaN]){
-  assert.equal((await request({...payload,brokerageCash:invalid,expectedRevision:1})).code,409);assert.equal(writes,1);
+  assert.equal((await request({...payload,brokerageCash:invalid,expectedRevision:1})).code,422);assert.equal(writes,1);
  }
  conflict=true;const failed=await request({...payload,expectedRevision:1});
  assert.equal(failed.code,409);assert.equal(failed.body.code,'ACCOUNT_SAVE_CONFLICT');assert.equal(writes,1);
