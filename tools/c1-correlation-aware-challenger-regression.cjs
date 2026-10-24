@@ -75,4 +75,11 @@ const appSources=['pages','components'].flatMap(dir=>fs.readdirSync(dir,{recursi
 for(const file of appSources)if(file!==route)assert(!fs.readFileSync(file,'utf8').includes('c1CorrelationAwareChallenger'),
  file+' must not import the offline challenger');
 assert(!/fetch\s*\(|@vercel\/blob|process\.env|pages\/api/.test(fs.readFileSync('lib/c1CorrelationAwareChallenger.js','utf8')));
+const completedReview=fs.readFileSync('docs/research/c1-correlation-aware-challenger-20261024.md','utf8');
+for(const evidence of ['381.23411000000004','159.280335','-17.919767253433694',
+ 'dpl_F7is9b8tnhug9zt2H9AsUWoB3n6J','dpl_H1QRHUsL32xQkh9aTwiff6HEBfiy'])
+ assert(completedReview.includes(evidence),'Completed correlation review must retain exact evidence '+evidence);
+assert(completedReview.includes('reject the correlation-aware challenger and retain C1 unchanged')&&
+ /closes the authorized low-infrastructure\s+enhancement review/.test(completedReview),
+ 'Completed review must preserve the rejection and stop decision');
 console.log('PASS: correlation-aware entry ordering preserves C1 eligibility/exits, has deterministic 60-return mechanics and exact no-hook simulator parity, and remains preview-only.');

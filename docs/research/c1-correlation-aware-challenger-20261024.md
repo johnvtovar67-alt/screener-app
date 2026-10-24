@@ -43,5 +43,38 @@ itself authorize a production change.
   after each sleeve.
 - Run only one heavy arm on a fresh preview worker; reject partial output.
 
-Status: pre-registered; results pending. **DO NOT MERGE OR DEPLOY TO
-PRODUCTION.**
+## Completed historical results
+
+Both fixed arms completed on separate fresh preview workers over the same
+accepted dataset fingerprint
+`2c923363c6ae3eb21b914cdac61cf7b1cf42292488ef86fe5db85d7795c427c1`.
+
+| Arm | Deployment | Request | Ending equity | Return % | Max drawdown % | Sharpe | Transactions |
+|---|---|---|---:|---:|---:|---:|---:|
+| C1 Champion | `dpl_F7is9b8tnhug9zt2H9AsUWoB3n6J` | `77h9f-1792854664887-ff84a2ffea2c` | 481234.11 | 381.23411000000004 | -20.701051498725377 | 1.5854968702366408 | 499 |
+| Correlation-aware entry | `dpl_H1QRHUsL32xQkh9aTwiff6HEBfiy` | `hjv9m-1792854796937-b41366eae75f` | 259280.335 | 159.280335 | -17.919767253433694 | 1.1625078817772838 | 529 |
+
+| Arm | Sleeve | Return % | Sharpe | Max drawdown % | Closed trades | Win rate % | Annualized turnover % |
+|---|---|---:|---:|---:|---:|---:|---:|
+| C1 Champion | base | 272.37 | 1.287 | -29.18 | 85 | 47.06 | 1407.75 |
+| C1 Champion | cooldown15 | 517.5 | 1.681 | -21.16 | 74 | 52.7 | 1115.41 |
+| C1 Champion | sector40 | 217.57 | 1.136 | -25.57 | 86 | 48.84 | 1319.04 |
+| Correlation-aware entry | base | 122.33 | 0.906 | -23.53 | 88 | 47.73 | 1449.4 |
+| Correlation-aware entry | cooldown15 | 194.72 | 1.172 | -24.51 | 84 | 46.43 | 1344.24 |
+| Correlation-aware entry | sector40 | 125.35 | 0.933 | -23.1 | 88 | 47.73 | 1390.64 |
+
+The challenger reduced combined maximum drawdown by 2.78 percentage points,
+but lost 221.95 percentage points of return, reduced Sharpe from 1.5855 to
+1.1625, increased transactions, and underperformed C1 in every sleeve. It
+therefore fails the pre-registered acceptance rule.
+
+The protected fetch client timed out before reading the challenger response,
+but the same server request completed all three sleeves and emitted both its
+bounded `arm-summary` and `response-ready` records at 120.714 seconds. No retry
+was used as a substitute result.
+
+Decision: **reject the correlation-aware challenger and retain C1 unchanged.**
+Together with the rejected high-to-price, residual-momentum and
+downside-resilience challengers, this closes the authorized low-infrastructure
+enhancement review. No tested challenger is eligible for prospective promotion.
+Do not merge or deploy any challenger to production.
