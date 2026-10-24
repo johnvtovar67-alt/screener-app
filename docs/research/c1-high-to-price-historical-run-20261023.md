@@ -97,3 +97,32 @@ unchanged ranks for observed peers, contradiction rejection, and full-history
 versus 122-session-window deep parity.
 
 No rerun was initiated while this semantic correction was being reviewed.
+
+## Completed comparison — 2026-10-24
+
+The final single invocation ran on preview deployment
+`dpl_9VoQt4gSg3rHfNxoeSeiC7CwzxvS`, Git commit
+`99625745b89bf0e0280998b4dcb86a9e72487bee`, request
+`22stz-1792800694361-09d57791d4cc`. The fixed rolling transform retained only
+the exact 101 dated formation observations at a time. Its permanent regression
+matches the superseded full-history transform and the full test suite passed
+117/117 before the run. The preview restored all 1,040 required sessions,
+completed all six sleeves, emitted the aggregate result, and reached
+`response-ready` in 150.953 seconds.
+
+Aggregate combined result from 2023-01-04 through 2026-09-01:
+
+| Arm | Total return | Ending equity | Max drawdown | Transactions |
+| --- | ---: | ---: | ---: | ---: |
+| Frozen Champion | 381.23% | $481,234.11 | -20.70% | 499 |
+| High-to-price Challenger | 155.85% | $255,853.04 | -21.63% | 507 |
+
+The Challenger trailed by 225.38 percentage points of total return, ended
+$225,381.07 below the Champion, and had a 0.93-point worse maximum drawdown.
+It also underperformed in every sleeve: base 111.91% versus 272.37%, cooldown15
+193.53% versus 517.50%, and sector40 124.45% versus 217.57%. Sharpe was lower
+in every sleeve as well.
+
+Decision: **reject this high-to-price replacement.** It does not qualify for
+prospective promotion and must not be merged or deployed to production. The
+frozen Champion remains unchanged.
