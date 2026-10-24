@@ -6,12 +6,14 @@ large infrastructure build and without changing production.
 
 ## Scope
 
-This is one preview-only, non-executable tournament. Research proceeds in
-parallel, but the historical simulations execute sequentially in one bounded
-restore so concurrent copies cannot recreate the prior memory failures. The
-frozen Champion runs once. Each candidate then runs through the identical
-three sleeves, dates, universe, costs, sizing, entries, exits, stops and
-holding rules. The route returns 404 in production, reads only the existing
+This is one preview-only, non-executable tournament. Its three fixed arms run
+as separate requests (`champion`, `ols-residual-120-ex-20`, and
+`downside-resilience-120-ex-20`) so a completed arm's replay cannot consume the
+next arm's memory. Every request independently restores the same accepted data
+and runs only its selected arm through the identical three sleeves, dates,
+universe, costs, sizing, entries, exits, stops and holding rules. The route
+rejects missing, repeated, or unknown arm values; it offers no arbitrary
+parameter or grid. It returns 404 in production, reads only the existing
 accepted private manifest/chunks, performs no provider request or storage
 write, and cannot authorize a recommendation or trade.
 
