@@ -44,6 +44,7 @@ import { getFullMarketDiscovery } from "../../lib/fullMarketDiscovery";
 import { updatePerformanceLedger } from "../../lib/performanceStore";
 import { applyV11ProductionPolicy } from "../../lib/v11ProductionPolicy";
 import { getV11ProductionSnapshot } from "../../lib/v11ProductionSnapshot";
+import { buildTop5UnavailableResponse } from "../../lib/top5Response";
 
 import { profileTop5Request, top5Phase, top5Fetch, top5Count, top5WithinBudget, assertTop5Active, isTop5Deadline, top5ObserveScreenResponse, top5ObserveScreenFailure } from "../../lib/top5Diagnostics";
 
@@ -1342,12 +1343,7 @@ export default async function handler(req, res) {
     try { top5ObserveScreenFailure(err); } catch {}
     return res
       .status(503)
-      .json({
-        error: "Trade screen temporarily unavailable.",
-        detail: err.message || "Unknown error.",
-        retryable: true,
-        ...(isTop5Deadline(err) ? { code: "TOP5_TIMEOUT" } : {}),
-      });
+      .json(buildTop5UnavailableResponse(isTop5Deadline(err)));
   }
   }, { compact: String(req.query.compact || "") === "1", verificationPass: Number(req.query.verificationPass) || 0 });
 }
