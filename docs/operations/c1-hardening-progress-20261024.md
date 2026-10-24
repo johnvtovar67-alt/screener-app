@@ -53,22 +53,39 @@ all configuration checks true and scheduler configured. CI #968
 was READY. Initial scoped error/fatal scan was clear. No runtime speedup or
 private-account parity is claimed.
 
-## Active slice: read-only captured-response canary
+## Production verified: read-only captured-response canary
 
 Branch `harden/c1-readonly-canary-20261024`, starting from production `1c423dc`.
 Add offline tooling and a synthetic composition regression, not a live route,
 provider call, account mutation, UI or trading-policy change. It checks captured
 screen/account/portfolio responses through the real C1 helpers and reports only
 aggregate counts/reason codes. Exact limits and release status:
-`docs/operations/c1-readonly-canary-20261024.md`. This run owns the branch until
-a verified PR handoff; do not edit concurrently.
+`docs/operations/c1-readonly-canary-20261024.md`. PR #319 merged at production
+`3b6341c2bef960d72616053284b08d7fc6588a47`, deployment
+`dpl_HYT9T2gGjmEKGXzqyHFW35qrtmgY` READY with canonical alias/version/health
+HTTP200, all configuration checks true and scheduler configured. Initial
+scoped error/fatal scan was clear. CI #970 (40136356595) SUCCESS; exact preview
+`dpl_8YA1ufGPWnkyF4YKahBxiF7aKkQs` READY and version/health HTTP200.
+119/119 local tasks and build passed. Captured-response tooling only; no live
+private-account/browser acceptance was established.
+
+## Active slice: passive account/opening diagnostics
+
+Branch `harden/c1-live-account-diagnostics-20261024`, based on production `3b6341c`.
+Observe already-computed successful analysis and opening-review responses;
+emit one bounded, redacted `C1_ACCOUNT_OPERATIONAL` record. No new requests,
+storage writes, payload changes, UI or trading decisions. Only account-boundary
+state is assessed; screen composition and private-account parity remain
+NOT_VERIFIED. Source/local and remote release evidence:
+`docs/operations/c1-passive-account-diagnostics-20261024.md`. This run owns this
+branch until its PR records a verified handoff; do not edit concurrently.
 
 ## Remaining audit work
 
 | Work | State |
 |---|---|
 | API error types and accurate retry behavior | Production verified through PR #317; private-account parity not established |
-| Read-only end-to-end operational acceptance canary | Captured-response diagnostic in verification; live integration and browser parity pending |
+| Read-only end-to-end operational acceptance canary | Captured-response tooling released; passive account diagnostics in verification; screen/browser join and proactive acceptance pending |
 | Common provider/error adapters and canonical symbol boundary | Pending |
 | Proven-unused research runtime isolation/retirement | Pending |
 | Single producer and immutable screen reads | Pending; characterization first |

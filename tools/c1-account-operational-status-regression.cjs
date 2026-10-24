@@ -1,0 +1,38 @@
+const assert=require('node:assert/strict');
+const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
+const loader=createResearchModuleLoader(process.cwd());
+const {c1AccountOperationalStatus:status,logC1AccountOperationalStatus:log}=loader.load('lib/c1AccountOperationalStatus.js');
+const clone=x=>JSON.parse(JSON.stringify(x));
+async function main(){
+ const f=createWorkflowFixture('buy');f.setCash(20000);
+ const before=JSON.stringify({account:f.account,book:f.book,portfolio:f.portfolio}),prepared=await f.prepare();
+ const {account:ignored,...view}=prepared;
+ const context={operation:'prepare-execution',now:f.now,requestId:'12345678-1234-1234-1234-123456789abc',commit:'a'.repeat(40)};
+ const first=JSON.stringify(view),ready=status(view,context);assert.equal(ready.code,'CHECKED_BUY_ORDERS_PRESENT');assert(ready.buyOrderCount>0);
+ const check=(change,code,ctx=context)=>{const v=clone(view);change(v);const prior=JSON.stringify(v),r=status(v,ctx);assert.equal(r.code,code,JSON.stringify(r));assert.equal(JSON.stringify(v),prior);return r;};
+ check(v=>v.decision.current=false,'ACCOUNT_SESSION_NOT_CURRENT');
+ check(v=>v.holdingReviewError='PRIVATE_PROVIDER_SECRET','HOLDING_VERIFICATION_INCOMPLETE');
+ check(v=>v.pendingSession={date:'2026-10-15'},'ACCOUNT_ACTIVITY_PENDING');
+ check(v=>v.openingError='PRIVATE_PROVIDER_SECRET','OPENING_VERIFICATION_INCOMPLETE');
+ check(v=>v.manualRecommendations.status='waiting','OPENING_REVIEW_NOT_CURRENT');
+ check(v=>v.manualRecommendations.validUntil=f.now.toISOString(),'OPENING_REVIEW_NOT_CURRENT');
+ check(v=>v.manualRecommendations.orders=[],'OPENING_REVIEW_NOT_CURRENT');
+ check(v=>v.openingPlan.providerVerified=false,'OPENING_REVIEW_NOT_CURRENT');
+ check(v=>v.openingPlan.sourceReceipt.membershipCheckedTwice=false,'OPENING_REVIEW_NOT_CURRENT');
+ check(v=>v.openingPlan.quoteValidUntil=f.now.toISOString(),'OPENING_REVIEW_NOT_CURRENT');
+ check(v=>v.executionDecision={...v.decision,revision:999},'OPENING_REVIEW_NOT_CURRENT');
+ const zero=check(v=>{v.openingPlan.orders=[];v.manualRecommendations.orders=[];},'CHECKED_ZERO_UNCONDITIONAL_BUY_ORDERS');assert.equal(zero.buyOrderCount,0);
+ check(v=>{v.openingPlan.orders.forEach(o=>{o.condition='synthetic pending sale';});v.manualRecommendations.orders=clone(v.openingPlan.orders);},'CHECKED_ZERO_UNCONDITIONAL_BUY_ORDERS');
+ assert.equal(status({...view,openingPlan:null},{...context,operation:'refresh-analysis'}).code,'ACCOUNT_ANALYSIS_ONLY');
+ const closed=new Date('2026-10-15T13:00:00Z');assert.equal(status(view,{...context,now:closed}).code,'MARKET_CLOSED');
+ const raw=clone(view);raw.openingError='PRIVATE_PROVIDER_SECRET';raw.decision.privateSyncKey='PRIVATE_SYNC_KEY';
+ const safe=JSON.stringify(status(raw,{...context,commit:'PRIVATE_COMMIT',requestId:'PRIVATE_REQUEST'}));
+ assert(!/PRIVATE_|MRNA|LLL|estimatedPrice|shares|actualCash|decisionId|revision/.test(safe));assert(safe.length<1200);
+ assert.equal(status(null,context).code,'ACCOUNT_RESPONSE_INCOMPLETE');
+ assert.doesNotThrow(()=>log(view,context,()=>{throw Error('PRIVATE_LOGGER_SECRET');}));
+ let lines=0;log(view,context,(name,line)=>{assert.equal(name,'C1_ACCOUNT_OPERATIONAL');assert.equal(JSON.parse(line).code,ready.code);lines++;});assert.equal(lines,1);
+ assert.equal(JSON.stringify(view),first);assert.equal(JSON.stringify({account:f.account,book:f.book,portfolio:f.portfolio}),before);assert.equal(f.writes,0);
+ console.log('PASS: passive account diagnostics classify ready/zero/pending/unavailable/analysis/closed states, redact private facts and cannot mutate data or propagate logger failures.');
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

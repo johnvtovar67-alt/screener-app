@@ -3,6 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const loader=createResearchModuleLoader(process.cwd()),errors=loader.load('lib/c1ApiErrors.js');
 const service=loader.load('lib/c1AccountService.js'),saver=loader.load('lib/c1AccountSave.js');
+const operational=loader.load('lib/c1AccountOperationalStatus.js');
 const secret='PRIVATE_PROVIDER_URL_apikey_7289',key='synthetic_api_error_boundary_key_0001';
 const now=new Date('2026-10-23T22:00:00Z'),date='2026-10-23';
 
@@ -14,7 +15,11 @@ function fixture(){
  const never=()=>{throw Error('Unexpected external access');};
  const source=fs.readFileSync(file,'utf8').replace(/import\s*{([^}]+)}\s*from\s*['"]([^'"]+)['"];?/g,(_,names,request)=>{
   const values=request.startsWith('node:')?require(request):request.endsWith('c1ApiErrors')?errors:
-   request.endsWith('c1AccountSave')?saver:{};
+   request.endsWith('c1AccountSave')?saver:request.endsWith('c1AccountOperationalStatus')?{...operational,
+    logC1AccountOperationalStatus:(view,context)=>{
+     if(state.observerFailure)throw Error(secret);
+     operational.logC1AccountOperationalStatus(view,context,(...args)=>{if(state.logFailure)throw Error(secret);state.logs.push(args.join(' '));});
+    }}:{};
   for(const name of names.split(',').map(part=>part.trim()))imports[name]=values[name]||never;
   return '';
  }).replace(/export const /g,'const ').replace(/export function /g,'function ')
@@ -26,12 +31,13 @@ function fixture(){
    return {decision:{current:false,revision:account.revision,sourceSessionDate:date,positions:[]}};
   },buildC1ManualRecommendations:()=>({status:'waiting',orders:[]}),
   easternMarketClock:()=>({key:date,minutes:1020}),marketSessionCloseMinutes:()=>960,
+  prepareC1AccountExecution:async()=>{if(!state.prepared)throw Error('Unexpected execution request');return state.prepared;},
  });
  const box={...imports,Date,Response,process:{env:{}},console:{
   warn:(...args)=>state.logs.push(args.join(' ')),info:(...args)=>state.logs.push(args.join(' ')),error:(...args)=>state.logs.push(args.join(' ')),
  }};
  vm.createContext(box);vm.runInContext(source,box,{filename:file});
- const handler=box.factory({environment:'test',commit:'a'.repeat(40),clock:()=>now,
+ const handler=box.factory({environment:'test',commit:'a'.repeat(40),clock:()=>state.now||now,
   readBook:async()=>{state.bookReads++;if(state.bookFailure)throw Error(secret);return {record:{model:{sessions:[{date}]}}};},
   store:{read:async()=>{state.reads++;if(state.readFailure)throw Error(secret);return {record:state.account,etag:'"fixture-etag"'};},
    write:async(_path,account,etag)=>{
@@ -81,5 +87,21 @@ function fixture(){
  response=await f.request('POST',payload);assert.equal(response.statusCode,409);assert.equal(response.body.code,'ACCOUNT_REVISION_CONFLICT');assert.equal(f.state.writes,3);
  const logs=f.state.logs.join('\n');assert(!logs.includes(secret));assert(!logs.includes(key));assert(!logs.includes('PRIVATE_ACCOUNT_FACTS_913'));assert(!logs.includes('c1-accounts-v1/'));
  assert(logs.includes('C1_ACCOUNT_API_FAILURE')&&logs.includes('account-read')&&logs.includes('accepted-input-read')&&logs.includes('account-save'));
+ const workflow=require('./fixtures/c1-trading-workflow.cjs').createWorkflowFixture('buy');workflow.setCash(20000);
+ const prepared=await workflow.prepare(),{account:ignored,...preparedView}=prepared;
+ f.state.prepared=prepared;f.state.now=workflow.now;
+ const writes=f.state.writes,priorAccount=JSON.stringify(f.state.account),priorPrepared=JSON.stringify(prepared),priorLogs=f.state.logs.length;
+ response=await f.request('POST',{operation:'prepare-execution'});
+ assert.equal(response.statusCode,200);assert.deepEqual(JSON.parse(JSON.stringify(response.body)),{...JSON.parse(JSON.stringify(preparedView)),holdingReviewError:null});
+ const observed=f.state.logs.slice(priorLogs);assert.equal(observed.length,1);assert(observed[0].startsWith('C1_ACCOUNT_OPERATIONAL '));
+ const summary=JSON.parse(observed[0].slice('C1_ACCOUNT_OPERATIONAL '.length));
+ assert.equal(summary.code,'CHECKED_BUY_ORDERS_PRESENT');assert.equal(summary.requestId,response.headers['X-C1-Request-Id']);
+ assert.equal(summary.screenComposition,'NOT_VERIFIED');assert.equal(summary.executable,false);
+ for(const field of ['logFailure','observerFailure']){
+  f.state[field]=true;const retry=await f.request('POST',{operation:'prepare-execution'});f.state[field]=false;
+  assert.equal(retry.statusCode,200);assert.deepEqual(retry.body,response.body,'Diagnostic failures cannot alter successful payloads');
+ }
+ assert.equal(f.state.writes,writes);assert.equal(JSON.stringify(f.state.account),priorAccount);assert.equal(JSON.stringify(prepared),priorPrepared);
+ assert(!f.state.logs.join('\n').includes(secret));assert(!f.state.logs.join('\n').includes(key));
  console.log('PASS: real account API distinguishes 409 conflicts, 422 input, 503 dependencies and 500 internal failures, preserves canonical writes, avoids automatic mutation retries and redacts private diagnostics.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
