@@ -30,7 +30,7 @@
     "lib/c1BaselineRevisionReview.js": "df1c7ae8cc6a28a43ad7c80a5f88df0c3c180179",
     "lib/c1CapitalState.js": "cae7bb59a23cb3e998007e8b6a25235f44087a73",
     "lib/c1CombinedPortfolio.js": "62aefc81c2e547261a27f9afe963e1ba3b556708",
-    "lib/c1CorrelationAwareChallenger.js": "5fecf992f5ecfba6074eb424c31742cd40acdaf4",
+    "lib/c1CorrelationAwareChallenger.js": "7a2efc902ae6bc64e8f3de712eef56b6b1bff056",
     "lib/c1CorrelationAwareSimulator.js": "cbcbfbdefa76adc55b6c9f15a277af87a1006d34",
     "lib/c1DatedBook.js": "e4aa996f80408d7bc2003ec8dda990ec4503c285",
     "lib/c1DatedBookStore.js": "30657fde15ff952c8fb99e6737f555d7670c4cb9",

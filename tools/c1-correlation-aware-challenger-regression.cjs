@@ -43,11 +43,18 @@ ordered=incompleteSelector.order({signals:['AAA','DDD','BBB','CCC'].map(symbol=>
  sessionDate:dates[65],rankedEntryQueueCount:4}).map(row=>row.symbol);
 assert.equal(ordered[1],'DDD','Incomplete correlation evidence must retain the candidate original C1 queue slot');
 
-const options={...JSON.parse(JSON.stringify(frozen.C1_FROZEN_OPTIONS.base)),startDate:dates[61],endDate:dates.at(-1),liquidateAtEnd:false};
+const options={...JSON.parse(JSON.stringify(frozen.C1_FROZEN_OPTIONS.base)),startDate:dates[60],endDate:dates.at(-1),liquidateAtEnd:false};
 const champion=canonical.simulatePointInTimePortfolio(dataset,options,null);
 const noHook=isolated.simulatePointInTimePortfolio(dataset,options,null);
 assert.equal(JSON.stringify(noHook),JSON.stringify(champion),
  'The generated research simulator must exactly reproduce C1 when the entry-order hook is absent');
+const wrappedChampion=challenger.runC1CorrelationArm({dataset,arm:'champion',startDate:dates[60],endDate:dates.at(-1)});
+const wrappedChallenger=challenger.runC1CorrelationArm({dataset,arm:'correlation-aware-entry-60',startDate:dates[60],endDate:dates.at(-1)});
+assert(Number.isFinite(wrappedChampion.summary.metrics.totalReturnPct)&&Number.isFinite(wrappedChallenger.summary.metrics.totalReturnPct),
+ 'Both isolated route-level arms must complete from exactly 60 retained pre-evaluation sessions');
+assert.equal(wrappedChampion.productionChanged,false);assert.equal(wrappedChallenger.productionChanged,false);
+assert(Object.keys(wrappedChallenger.constructionDiagnostics).length===3,
+ 'Every challenger sleeve must emit bounded construction diagnostics');
 
 assert.equal(challenger.c1CorrelationRetainedStartIndex(dates,dates[60]),0);
 assert.equal(JSON.stringify(challenger.C1_CORRELATION_ARMS),JSON.stringify(['champion','correlation-aware-entry-60']));
