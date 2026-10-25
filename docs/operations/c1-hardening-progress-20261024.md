@@ -119,7 +119,7 @@ matched. Local121/121/build passed; CI #976 (40144012838) SUCCESS; exact preview
 `dpl_8XxWMvQvHCNRu4tGumAumdaydBqf` READY with matching version/health200.
 No live failing-provider request or private-account/browser parity is claimed.
 
-## Active slice: shared provider-symbol spelling
+## Production verified: shared provider-symbol spelling
 
 Branch `harden/c1-symbol-boundary-20261025`, based on production `cddfe3e`.
 Two independently maintained identical provider spelling expressions are moved
@@ -128,7 +128,27 @@ alias and other normalization contracts remain untouched. Differential input,
 exact source reversal and actual offline request/cache characterization retain
 legacy first-replacement/coercion/rejection behavior. No economic/I/O change.
 Evidence: `docs/operations/c1-fmp-symbol-boundary-20261024.md`.
-This run owns the branch until verified release/handoff; do not edit concurrently.
+PR #323 verified October24 at7:48 PM CDT: main/production
+`e0aef6f16c2be4a2ef062cff614527aab148e4fd`, deployment
+`dpl_BBD2qTmMyKbqLkAnaMW2fsMGumog` READY with canonical version/health200,
+all configuration checks true and scheduler configured. Initial scoped error
+scan clear. Local121/121/build passed; exact final head `177a7671b942dd696ca724956326269052dca6ca`
+passed CI #979 (40147590281); matching preview
+`dpl_9k1oSid7MxKpdETdmG72iRK74o8c` READY/version/health200. Reviewed/merged
+tree `53a9cc6a75a2cb0178c025141dbfc8340934276d` identical. Initial explicit-import
+deadline fixture failure was repaired by loading the real helper, not weakening
+any assertion. This removes duplication, not a demonstrated runtime speedup.
+
+## Active slice: isolate production-disabled research engine loading
+
+Branch `harden/c1-research-runtime-isolation-20261025`, based on `e0aef6f`.
+The preview-alpha-lab route's production404 guard cannot prevent a static engine
+import from loading/failing first. Defer only that import after the existing
+guard. Keep the route, preview response/finalizer contracts, research cron/oracles,
+all normal crons and economic/account behavior. Source parity and synthetic
+failure checks pass; full release verification pending.
+Evidence: `docs/operations/c1-preview-research-isolation-20261024.md`.
+This run owns the branch until exact release/handoff; no concurrent edits.
 
 ## Remaining audit work
 
@@ -136,8 +156,8 @@ This run owns the branch until verified release/handoff; do not edit concurrentl
 |---|---|
 | API error types and accurate retry behavior | Production verified through PR #317; private-account parity not established |
 | Read-only end-to-end operational acceptance canary | Screen/account instrumentation released; screen emission observed; private-account/browser/cross-boundary acceptance pending |
-| Common provider/error adapters and canonical symbol boundary | Safe public screen-error response released PR322; first shared provider-spelling extraction under verification; broader adapters pending |
-| Proven-unused research runtime isolation/retirement | Pending |
+| Common provider/error adapters and canonical symbol boundary | Safe screen errors PR322 and shared provider spelling PR323 production verified; broader adapters pending |
+| Proven-unused research runtime isolation/retirement | One already-production-disabled engine import under verification; broader retirement pending, no endpoint assumed unused |
 | Single producer and immutable screen reads | Pending; characterization first |
 | Broader duplicate/dead-code cleanup | Two unused modules retired in production via PR #318; broader cleanup pending |
 | Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
