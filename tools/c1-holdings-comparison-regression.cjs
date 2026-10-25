@@ -28,7 +28,9 @@ console.log('C1 holdings comparison: no inferred orders, no invented fill histor
 const fs=require('node:fs'),vm=require('node:vm');
 const code=fs.readFileSync('pages/api/research/c1-holdings-comparison.js','utf8').replace(/^import .*;\n/gm,'').replace('export const config','const config').replace('export default async function handler','async function handler');
 let calls=0;
-const box={compareC1Holdings:compare,getV11ProductionSnapshot:async()=>{calls++;return {forwardAccounting:model};}};
+const authCode=fs.readFileSync('lib/researchMutationAuth.js','utf8').replace(/^import .*;\n/gm,'').replace(/export function /g,'function ');
+const {rejectPublicProductionResearch}=new Function('process','Buffer','timingSafeEqual',authCode+';return {rejectPublicProductionResearch};')({env:{VERCEL_ENV:'preview'}},Buffer,require('node:crypto').timingSafeEqual);
+const box={rejectPublicProductionResearch,compareC1Holdings:compare,getV11ProductionSnapshot:async()=>{calls++;return {forwardAccounting:model};}};
 vm.createContext(box);vm.runInContext(code+'\nglobalThis.handle=handler;',box);
 (async()=>{
  const res=()=>({headers:{},setHeader(k,v){this.headers[k]=v;},status(n){this.code=n;return this;},json(v){this.body=v;return this;}});

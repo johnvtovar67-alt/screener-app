@@ -1,6 +1,8 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import { getV11ProductionSnapshot } from '../../../lib/v11ProductionSnapshot';
 export const config={maxDuration:60};
 export default async function handler(req,res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   res.setHeader('Cache-Control','no-store');
   if(req.method!=='GET'){res.setHeader('Allow','GET');return res.status(405).json({error:'Method not allowed'});}
   try {

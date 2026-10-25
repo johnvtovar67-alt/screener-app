@@ -101,6 +101,7 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
   res.setHeader('X-C1-Request-Id',requestId);
   try{
    const now=clock(),saved=await checkedStore.read(path);
+   if(environment==='production'&&operation==='adopt'&&!saved)return res.status(403).json({error:'New production accounts are disabled. Connect the existing saved account.'});
    if(operation!=='adopt'&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
    // The stored daily dataset is authoritative; this cannot initialize it.
    stage='accepted-input-read';

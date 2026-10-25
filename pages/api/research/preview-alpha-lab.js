@@ -1,5 +1,7 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 export const config={maxDuration:800};
 export default async function handler(req,res){
+  if (rejectPublicProductionResearch(req, res)) return;
  if(process.env.VERCEL_ENV==="production")return res.status(404).json({error:"Not found"});
  const {finalizePointInTimeNasdaqDistinctAlphaDevelopment}=await import("../../../lib/fmpResearchBacktest");
  res.setHeader("Cache-Control","no-store");

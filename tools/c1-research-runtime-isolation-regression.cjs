@@ -26,6 +26,11 @@ function load(source,environment,options={}){
   counts.finalizations++;if(options.callError!==undefined)throw options.callError;return report;
  }};
  const requireLocal=name=>{
+  if(name==='../../../lib/researchMutationAuth'){
+   const auth=fs.readFileSync('lib/researchMutationAuth.js','utf8').replace(/^import .*;\n/gm,'').replace(/export function /g,'function ');
+   return new Function('process','Buffer','timingSafeEqual',auth+';return {rejectPublicProductionResearch};')(
+    {env:environment===undefined?{}:{VERCEL_ENV:environment}},Buffer,require('node:crypto').timingSafeEqual);
+  }
   if(name==='../../../lib/fmpResearchBacktest'){
    counts.imports++;
    if(options.initError)throw options.initError;

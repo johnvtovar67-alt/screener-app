@@ -1,3 +1,4 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import {
   getPointInTimeNasdaqUniverseStatus,
   runPointInTimeNasdaqUniverse,
@@ -7,6 +8,7 @@ import { rejectUnauthorizedResearchMutation } from "../../../lib/researchMutatio
 export const config = { maxDuration: 120 };
 
 export default async function handler(req, res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   if (!["GET", "POST"].includes(req.method)) {
     res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ error: "Method not allowed" });

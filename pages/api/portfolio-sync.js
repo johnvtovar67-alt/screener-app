@@ -40,6 +40,7 @@ async function readPortfolio(key){
 }
 async function writePortfolio(key,portfolio,c1ControlState,expectedEtag){
   const saved=await readPortfolio(key);
+  if(process.env.VERCEL_ENV==='production'&&!saved)throw Object.assign(new Error('New production accounts are disabled. Connect the existing saved account.'),{code:'PRODUCTION_ACCOUNT_CREATION_DISABLED'});
   if((saved?.etag||null)!==(expectedEtag||null))throw Object.assign(new Error('Portfolio changed on another device. Reload before applying this edit.'),{status:409});
   const payload={version:2,updatedAt:new Date().toISOString(),portfolio:cleanPortfolio(portfolio),c1ControlState:cleanC1ControlState(c1ControlState)};
   const result=await put(pathname(key),JSON.stringify(payload),{access:'private',allowOverwrite:Boolean(saved),...(saved?{ifMatch:saved.etag}:{}),addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:0});
@@ -71,6 +72,7 @@ export default async function handler(req,res){
     }
     return res.status(405).json({error:'Method not allowed'});
   }catch(e){
+    if(e.code==='PRODUCTION_ACCOUNT_CREATION_DISABLED')return res.status(403).json({error:'New production accounts are disabled. Connect the existing saved account.'});
     if(/precondition failed.*etag mismatch/i.test(String(e.message||''))||e.status===409||e.status===412||['BlobPreconditionFailedError','BlobAlreadyExistsError'].includes(e.name))return res.status(409).json({error:'Portfolio changed on another device. Your local edit is retained. Reload the saved portfolio before retrying.'});
     console.error('portfolio sync:',e.message);
     return res.status(500).json({error:'Portfolio sync failed.',detail:e.message});

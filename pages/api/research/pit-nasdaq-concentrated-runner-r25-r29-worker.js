@@ -1,9 +1,11 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import { runPointInTimeNasdaqConcentratedRunnerWorker } from "../../../lib/fmpResearchBacktest";
 import { rejectUnauthorizedResearchMutation } from "../../../lib/researchMutationAuth";
 
 export const config = { maxDuration: 800 };
 
 export default async function handler(req, res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });

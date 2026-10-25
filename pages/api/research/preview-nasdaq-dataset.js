@@ -1,3 +1,4 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import { get, list } from "@vercel/blob";
 
 export const config = { maxDuration: 60 };
@@ -6,6 +7,7 @@ const MANIFEST = "research/pit-nasdaq-index-compiled-checkpoint-v1.json";
 const CHUNK_PREFIX = "research/pit-nasdaq-index-compiled-v1/";
 
 export default async function handler(req, res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   if (process.env.VERCEL_ENV === "production") {
     return res.status(404).json({ error: "Not found" });
   }
