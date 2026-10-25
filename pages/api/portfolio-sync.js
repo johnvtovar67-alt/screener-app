@@ -1,6 +1,7 @@
 import {put,list,get} from '@vercel/blob';
-import {createHash} from 'crypto';
+import {createHash,randomUUID} from 'crypto';
 import {cleanC1ControlState} from '../../lib/c1CapitalState';
+import {isBlobPreconditionFailed} from '../../lib/blobErrors';
 
 // Redeployed after the project Blob store was connected so production picks up storage credentials.
 export const config={api:{bodyParser:{sizeLimit:'1mb'}}};
@@ -51,12 +52,18 @@ async function storageHealth(){
     await list({prefix:'portfolio-sync-health/',limit:1});
     await get('portfolio-sync-health/nonexistent.json',{access:'private',useCache:false});
     return{ok:true};
-  }catch(e){return{ok:false,error:e.message||'Blob storage unavailable'};}
+  }catch{return{ok:false,error:'Blob storage unavailable'};}
+}
+function reportPortfolioFailure(res,stage,status){
+  const requestId=randomUUID();res.setHeader('X-C1-Request-Id',requestId);
+  // No SDK error, key, account path, holdings or request body enters this log.
+  try{console.warn('PORTFOLIO_SYNC_FAILURE',JSON.stringify({requestId,code:'PORTFOLIO_STORAGE_UNAVAILABLE',status,stage}));}catch{}
+  return requestId;
 }
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store, max-age=0');
   if(req.method==='GET'&&String(req.query.health||'')==='1'){
-    const health=await storageHealth();
+    const health=await storageHealth();if(!health.ok)reportPortfolioFailure(res,'storage-health',503);
     return res.status(health.ok?200:503).json({storageReady:health.ok,error:health.ok?null:health.error});
   }
   const key=keyFrom(req);if(!validKey(key))return res.status(401).json({error:'A valid portfolio sync key is required.'});
@@ -73,8 +80,8 @@ export default async function handler(req,res){
     return res.status(405).json({error:'Method not allowed'});
   }catch(e){
     if(e.code==='PRODUCTION_ACCOUNT_CREATION_DISABLED')return res.status(403).json({error:'New production accounts are disabled. Connect the existing saved account.'});
-    if(/precondition failed.*etag mismatch/i.test(String(e.message||''))||e.status===409||e.status===412||['BlobPreconditionFailedError','BlobAlreadyExistsError'].includes(e.name))return res.status(409).json({error:'Portfolio changed on another device. Your local edit is retained. Reload the saved portfolio before retrying.'});
-    console.error('portfolio sync:',e.message);
-    return res.status(500).json({error:'Portfolio sync failed.',detail:e.message});
+    if(isBlobPreconditionFailed(e)||e.status===409||e.name==='BlobAlreadyExistsError')return res.status(409).json({error:'Portfolio changed on another device. Your local edit is retained. Reload the saved portfolio before retrying.'});
+    const requestId=reportPortfolioFailure(res,req.method==='PUT'?'portfolio-save':'portfolio-read',500);
+    return res.status(500).json({error:'Portfolio sync failed.',detail:'Saved portfolio verification is unavailable. Reload before retrying.',requestId});
   }
 }

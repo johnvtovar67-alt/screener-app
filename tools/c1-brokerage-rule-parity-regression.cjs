@@ -123,7 +123,9 @@ const compatibilitySourceSha256 = {
 };
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   const source = fs.readFileSync(path.join(root, file));
-  const comparable = file === 'lib/c1AccountOpeningProvider.js' ?
+  const comparable = file === 'lib/c1AccountSimulator.js' ?
+    require('./c1-simulator-accounting-extraction.cjs').restoreSimulatorAccounting(source.toString('utf8')) :
+    file === 'lib/c1AccountOpeningProvider.js' ?
     withoutCurrentEventCollection(source.toString('utf8')) :
     file === 'lib/c1StockClassification.js' ?
       withoutEventPresentationHardening(source.toString('utf8')) :

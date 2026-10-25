@@ -38,12 +38,12 @@ async function main(){
  const allowed=response();assert.equal(trusted.rejectPublicProductionResearch({headers:{authorization:'Bearer synthetic-worker-secret'}},allowed),false);assert.equal(allowed.statusCode,undefined);
  // Complete real portfolio handler with memory storage, no provider or Blob I/O.
  const portfolioFile='pages/api/portfolio-sync.js',portfolioSource=fs.readFileSync(portfolioFile,'utf8');
- const oldPortfolio=portfolioSource.replace(/^  if\(process.env.VERCEL_ENV==='production'&&!saved\).*\n/m,'').replace(/^    if\(e.code==='PRODUCTION_ACCOUNT_CREATION_DISABLED'\).*\n/m,'');
+ const oldPortfolio=fs.readFileSync('tools/fixtures/portfolio-sync-production-d386ae5.js','utf8').replace(/^  if\(process.env.VERCEL_ENV==='production'&&!saved\).*\n/m,'').replace(/^    if\(e.code==='PRODUCTION_ACCOUNT_CREATION_DISABLED'\).*\n/m,'');
  assert.equal(hash(oldPortfolio),hashes[portfolioFile]);
  function portfolio(source,environment,saved){
   const state={saved:saved?structuredClone(saved):null,puts:0,reads:0};
   const code=source.replace(/^import .*;\n/gm,'').replace('export const config=','const config=').replace('export default async function handler','async function handler');
-  const box={process:{env:{VERCEL_ENV:environment}},createHash:crypto.createHash,Response,console,cleanC1ControlState:loader.load('lib/c1CapitalState.js').cleanC1ControlState,
+  const box={process:{env:{VERCEL_ENV:environment}},createHash:crypto.createHash,randomUUID:crypto.randomUUID,isBlobPreconditionFailed:loader.load('lib/blobErrors.js').isBlobPreconditionFailed,Response,console,cleanC1ControlState:loader.load('lib/c1CapitalState.js').cleanC1ControlState,
    get:async()=>{state.reads++;if(state.failure)throw state.failure;return state.saved?{statusCode:200,blob:{etag:state.saved.etag},stream:new Response(JSON.stringify(state.saved.record)).body}:null;},
    put:async(path,body,options)=>{state.puts++;state.options=options;state.saved={etag:'v2',record:JSON.parse(body)};return{etag:'v2'};},list:()=>{throw Error('Unexpected health scan');}};
   vm.createContext(box);vm.runInContext(code+';this.handler=handler;',box);return{state,handler:box.handler};

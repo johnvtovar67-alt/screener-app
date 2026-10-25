@@ -4,12 +4,13 @@ const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
 const babel=require('next/dist/compiled/babel/core');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const modules=createResearchModuleLoader(process.cwd());
-function component(relative,react=React){
+function componentModule(relative,react=React){
  const file=path.resolve(relative),record={exports:{}};
  const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
- new Function('require','module','exports',code)(name=>name==='react'?react:name.startsWith('../lib/')?modules.load(name,file):name.startsWith('.')?{__esModule:true,default:component(path.resolve(path.dirname(file),name.endsWith('.js')?name:name+'.js'),react)}:require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
- return record.exports.default;
+ new Function('require','module','exports',code)(name=>name==='react'?react:name.startsWith('../lib/')?modules.load(name,file):name.startsWith('.')?componentModule(path.resolve(path.dirname(file),name.endsWith('.js')?name:name+'.js'),react):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
+ return record.exports;
 }
+const component=(relative,react=React)=>componentModule(relative,react).default;
 // Exercise the real component handlers and hook state without adding a DOM
 // dependency to the regression runner. Server rendering below checks its HTML.
 function cashHarness(initialProps){

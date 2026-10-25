@@ -41,7 +41,7 @@ assert.throws(()=>guard(malformedAccountAudit,account,'2026-09-14'),/reviewed ac
 const manual=loader.load('lib/c1ManualRecommendations.js');
 const waiting=manual.buildC1ManualRecommendations({decision:{current:false,updateReason:'Market-data update pending for 2026-09-14.'},now});
 assert.match(waiting.reason,/Market-data update pending/);assert.equal(waiting.orders.length,0);assert.doesNotMatch(waiting.reason,/Record outstanding/);
-assert.match(fs.readFileSync('components/C1AccountOpportunities.js','utf8'),/C1 ratings awaiting update/);
+assert.match([fs.readFileSync('components/C1AccountOpportunities.js','utf8'),fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8')].join('\n'),/C1 ratings awaiting update/);
 console.log('PASS: Monday rollover with five unexposed revisions; exact economic parity, immutable model/account history, retry, evidence validation and honest stale status');
 // General correction path: a new held name/date/book, independent of DELL review.
 const heldInput=clone(input);

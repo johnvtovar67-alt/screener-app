@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 const canonical = 'lib/c1AccountSimulator.js';
 const target = 'lib/c1RecentMomentumChallengerSimulator.js';
-let source = fs.readFileSync(canonical, 'utf8');
+// Preserve the immutable generated Challenger and canonical source pin.
+let source = require('./c1-simulator-accounting-extraction.cjs').restoreSimulatorAccounting(fs.readFileSync(canonical, 'utf8'));
 assert.equal(createHash('sha256').update(source).digest('hex'),
   '63b1909359361e35ae7d0c2e833fecbb043013f7b337f9f2c96dc0a3adb2f31e',
   'Re-review Challenger seams after any canonical account-engine change');

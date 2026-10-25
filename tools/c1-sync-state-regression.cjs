@@ -8,7 +8,7 @@ let stored=null,version=0,beforeWrite=null,clientEtag=null;
 const source=fs.readFileSync('pages/api/portfolio-sync.js','utf8')
  .replace(/^import .*;\n/gm,'').replace('export const config=','const config=')
  .replace('export default async function handler','async function handler');
-const sandbox={cleanC1ControlState,createHash,console,Response,process:{env:{VERCEL_ENV:'test'}},
+const sandbox={cleanC1ControlState,createHash,randomUUID:require('node:crypto').randomUUID,isBlobPreconditionFailed:loader.load('lib/blobErrors.js').isBlobPreconditionFailed,console,Response,process:{env:{VERCEL_ENV:'test'}},
  list:async()=>({blobs:stored?[{pathname:stored.path}]:[]}),
  get:async(path,options)=>{assert.equal(options.headers?.['accept-encoding'],'identity','Conditional writes require the strong uncompressed response ETag');return stored?{statusCode:200,blob:{etag:stored.etag},stream:new Response(stored.body).body}:null;},
  put:async(path,body,options)=>{if(beforeWrite){const hook=beforeWrite;beforeWrite=null;hook();}if(stored?options.ifMatch!==stored.etag:options.allowOverwrite)throw Object.assign(new Error('Version changed'),{name:'Error',message:'Vercel Blob: Precondition failed: ETag mismatch.'});stored={path,body,etag:'v'+(++version)};return {etag:stored.etag};}};

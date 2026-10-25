@@ -1,6 +1,9 @@
 // Actual event provider pipeline with mutable clocks and offline FMP responses.
 // No live network, storage, account, trade or historical-record access is used.
-const assert=require('node:assert/strict');
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{createHash}=require('node:crypto');
+const originalEventSource=fs.readFileSync('tools/fixtures/event-risk-production-d386ae5.js','utf8');
+const blobHash=source=>createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
+assert.equal(blobHash(originalEventSource),'89a6a60c46444cb4cd5f3b16f0c1a759e8626fca');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const observedShapes=require('./fixtures/c1-fmp-event-response-shapes-20261022.json');
 const NativeDate=Date,originalFetch=global.fetch,originalKey=process.env.FMP_API_KEY;
@@ -9,7 +12,7 @@ process.env.FMP_API_KEY=fixtureKey;
 const plain=value=>JSON.parse(JSON.stringify(value));
 const endpointKind=endpoint=>endpoint==='earnings-calendar'?'EARNINGS':endpoint==='mergers-acquisitions-latest'?'MERGERS':endpoint==='news/stock'?'NEWS':endpoint==='economic-calendar'?'MACRO':'UNKNOWN';
 let cases=0;
-function harness(initial={}){
+function harness(initial={},baseline=false){
  let milliseconds=epoch;const calls=[],feeds={...initial};
  class ClockDate extends NativeDate{constructor(...args){super(...(args.length?args:[milliseconds]));}static now(){return milliseconds;}}
  const fetcher=async raw=>{
@@ -25,8 +28,9 @@ function harness(initial={}){
  };
  global.Date=ClockDate;global.fetch=fetcher;
  let provider,read;
- try{const loader=createResearchModuleLoader(process.cwd());provider=loader.load('lib/eventRisk.js');read=loader.load('lib/c1CurrentEventEvidence.js').readC1CurrentEventEvidence;}
- finally{global.Date=NativeDate;global.fetch=originalFetch;}
+ const readFileSync=fs.readFileSync;
+ try{if(baseline)fs.readFileSync=(file,...args)=>String(file)===path.resolve('lib/eventRisk.js')?originalEventSource:readFileSync(file,...args);const loader=createResearchModuleLoader(process.cwd());provider=loader.load('lib/eventRisk.js');read=loader.load('lib/c1CurrentEventEvidence.js').readC1CurrentEventEvidence;}
+ finally{fs.readFileSync=readFileSync;global.Date=NativeDate;global.fetch=originalFetch;}
  return {calls,set(kind,value){feeds[kind]=value;},advance(ms){milliseconds+=ms;},now:()=>new ClockDate(),read,
   async risk(symbol='CRWD'){const map=await provider.fetchEventRiskMap([symbol]);assert.equal(map.size,1);return map.get(symbol);},
   async map(symbols){return provider.fetchEventRiskMap(symbols);}};
@@ -81,6 +85,93 @@ async function run(){
   const h=harness({EARNINGS:[earning('2026-10-22',{symbol:invalid})]}),risk=verification(await h.risk(),'UNVERIFIED',h);
   assert(risk.eventVerification.reasons.includes('EARNINGS_MALFORMED_RESPONSE'),'Literal ampersands do not admit unrelated invalid symbol forms');
  }
+
+ // Preserve independent production-source outputs and provider/cache call budgets
+ // for complete successful feeds and unaffected availability/coverage failures.
+ const parityScenarios=[{},
+  {EARNINGS:[earning()]},{EARNINGS:[earning('2026-10-29')]},
+  {EARNINGS:observedSymbols.earnings},
+  {MERGERS:[merger({targetedSymbol:'AMD'})]},
+  {NEWS:[news({symbol:'AMD',text:'Company cuts full-year guidance.'})]},
+  {NEWS:[news({text:'Synthetic company lawsuit.'})]},
+  {NEWS:{httpStatus:503}},{NEWS:{httpStatus:429}},{NEWS:new Error(sentinel)},
+  {EARNINGS:[earning('not-a-day')]}, {NEWS:[news({symbol:'UNKNOWN'})]},
+  {NEWS:({query})=>Number(query.page||0)===0?Array.from({length:500},(_,index)=>news({url:'https://fixture.invalid/parity/'+index})):[]},
+ ];
+ for(const scenario of parityScenarios){
+  const before=harness(scenario,true),after=harness(scenario);
+  for(const elapsed of [0,0,300001]){
+   before.advance(elapsed);after.advance(elapsed);
+   assert.deepEqual(plain([...await after.map(['CRWD','AMD'])]),plain([...await before.map(['CRWD','AMD'])]),'Complete source/output equality against frozen production event module');
+   assert.deepEqual(after.calls,before.calls,'Provider queries, call order, warm reuse and failure cooldown remain identical');
+  }
+ }
+ const emptyNews=news({title:'',text:''});
+ const oldMalformed=harness({NEWS:[emptyNews]},true),oldMap=await oldMalformed.map(['CRWD','AMD']);
+ verification(oldMap.get('CRWD'),'UNVERIFIED',oldMalformed);verification(oldMap.get('AMD'),'UNVERIFIED',oldMalformed);
+ for(const ordering of [[emptyNews,news({symbol:'AMD'})],[news({symbol:'AMD'}),emptyNews]]){
+  const h=harness({NEWS:ordering}),map=await h.map(['CRWD','AMD']);
+  const bad=verification(map.get('CRWD'),'UNVERIFIED',h),good=verification(map.get('AMD'),'VERIFIED_CLEAR',h);
+  assert.deepEqual(plain(bad.eventVerification.reasons),['NEWS_MALFORMED_RESPONSE']);
+  assert.equal(bad.materialNews.length,0,'Malformed content never becomes an issuer fact');
+  assert.equal(good.eventVerification.sources.find(row=>row.kind==='NEWS').quarantinedRowCount,1);
+  h.set('NEWS',[]);const recovered=await h.map(['AMD','CRWD']);
+  verification(recovered.get('CRWD'),'VERIFIED_CLEAR',h);verification(recovered.get('AMD'),'VERIFIED_CLEAR',h);
+  assert.equal(h.calls.filter(row=>row.kind==='NEWS').length,2,'Issuer-malformed HTTP200 is evicted for immediate verified recovery');
+ }
+ const adverseLocal=harness({NEWS:[emptyNews,news({symbol:'AMD',text:'Company cuts full-year guidance.'})]}),adverseLocalMap=await adverseLocal.map(['CRWD','AMD']);
+ verification(adverseLocalMap.get('CRWD'),'UNVERIFIED',adverseLocal);verification(adverseLocalMap.get('AMD'),'VERIFIED_BLOCKED',adverseLocal);
+ // Identity must exactly match the requested canonical identifier. Neither an
+ // alias guess, an unrequested issuer nor an unknown date narrows failure scope.
+ for(const malformed of [news({symbol:'crwd',title:'',text:''}),news({symbol:'BRK-B',title:'',text:''}),news({symbol:'UNKNOWN',title:'',text:''}),news({symbol:null,title:'',text:''}),
+  news({title:'',text:'',publishedDate:'not-a-day'}),news({title:'',text:'',publishedDate:'2026-10-19'}),news({title:'',text:'',publishedDate:'2026-10-23'}),null]){
+  const h=harness({NEWS:[malformed]}),map=await h.map(['CRWD','AMD','BRK.B']);
+  for(const symbol of map.keys())verification(map.get(symbol),'UNVERIFIED',h);
+ }
+ // Even one quarantined row still counts toward the provider's raw page cap.
+ const fullLocalPage=[emptyNews,...Array.from({length:499},(_,index)=>news({symbol:'AMD',url:'https://fixture.invalid/local/'+index}))];
+ for(const mode of ['terminal','repeated','overlap','unavailable','limit']){
+  const h=harness({NEWS:({query})=>{
+   const page=Number(query.page||0);if(!page)return fullLocalPage;
+   if(mode==='terminal')return[];if(mode==='repeated')return fullLocalPage;
+   if(mode==='overlap')return[emptyNews];if(mode==='unavailable')throw new Error(sentinel);
+   return Array.from({length:500},(_,index)=>news({symbol:'AMD',url:'https://fixture.invalid/local-page/'+page+'/'+index}));
+  }}),map=await h.map(['CRWD','AMD']);
+  verification(map.get('CRWD'),'UNVERIFIED',h);verification(map.get('AMD'),mode==='terminal'?'VERIFIED_CLEAR':'UNVERIFIED',h);
+  assert.equal(h.calls.filter(row=>row.kind==='NEWS').length,mode==='limit'?10:2,'Raw cap still requires complete bounded pagination');
+ }
+
+
+ const deadlineAlongsideLocal=harness();deadlineAlongsideLocal.set('NEWS',({query})=>{
+  if(Number(query.page||0)===0){deadlineAlongsideLocal.advance(30001);return fullLocalPage;}
+  assert.fail('Expired acquisition must not start another provider page');
+ });
+ const deadlineMap=await deadlineAlongsideLocal.map(['CRWD','AMD']);
+ for(const symbol of deadlineMap.keys()){
+  const risk=verification(deadlineMap.get(symbol),'UNVERIFIED',deadlineAlongsideLocal);
+  assert(risk.eventVerification.reasons.includes('NEWS_DEADLINE_EXCEEDED'),'A localized malformed row cannot hide an incomplete deadline-bounded tail');
+ }
+ assert.equal(deadlineAlongsideLocal.calls.filter(row=>row.kind==='NEWS').length,1);
+ const overCapLocal=harness({NEWS:({query})=>Number(query.page||0)===0?[emptyNews,news({title:'',text:'',url:'https://fixture.invalid/local/second-malformed'}),...fullLocalPage.slice(1)]:[]});
+ const overCapMap=await overCapLocal.map(['CRWD','AMD']);verification(overCapMap.get('CRWD'),'UNVERIFIED',overCapLocal);verification(overCapMap.get('AMD'),'VERIFIED_CLEAR',overCapLocal);
+ assert.equal(overCapLocal.calls.filter(row=>row.kind==='NEWS').length,2,'Even a raw response above the cap cannot stop after filtering malformed content');
+ assert.equal(overCapMap.get('AMD').eventVerification.sources.find(row=>row.kind==='NEWS').quarantinedRowCount,2);
+ const staleAlongsideLocal=harness();await staleAlongsideLocal.map(['CRWD','AMD']);staleAlongsideLocal.advance(3600001);staleAlongsideLocal.set('NEWS',[emptyNews]);staleAlongsideLocal.set('MERGERS',new Error(sentinel));
+ const staleMap=await staleAlongsideLocal.map(['CRWD','AMD']);for(const symbol of staleMap.keys())verification(staleMap.get(symbol),'UNVERIFIED',staleAlongsideLocal);
+ const expiryDuringLocal=harness({NEWS:[emptyNews]});expiryDuringLocal.set('MACRO',()=>{expiryDuringLocal.advance(300001);return[];});
+ const expiryMap=await expiryDuringLocal.map(['CRWD','AMD']);for(const symbol of expiryMap.keys())verification(expiryMap.get(symbol),'UNVERIFIED',expiryDuringLocal);
+ // A contradictory article cannot be repaired by moving its empty version
+ // earlier/later in the feed or by changing requested-symbol order.
+ for(const ordered of [[emptyNews,news()],[news(),emptyNews]]){
+  const h=harness({NEWS:ordered}),map=await h.map(['AMD','CRWD']);
+  for(const symbol of map.keys()){
+   const risk=verification(map.get(symbol),'UNVERIFIED',h);
+   assert(risk.eventVerification.reasons.includes('NEWS_CONTRADICTORY_RESPONSE'));
+  }
+ }
+ const retainedLocal=harness();const retainedBefore=await retainedLocal.map(['CRWD','AMD']);retainedLocal.advance(300001);retainedLocal.set('NEWS',[emptyNews]);
+ const retainedAfter=await retainedLocal.map(['CRWD','AMD']);verification(retainedAfter.get('CRWD'),'UNVERIFIED',retainedLocal);verification(retainedAfter.get('AMD'),'VERIFIED_CLEAR',retainedLocal);
+ assert.deepEqual(plain(retainedAfter.get('CRWD').eventVerification.lastVerified),plain(retainedBefore.get('CRWD').eventVerification),'Affected issuer retains its previous verified provenance without restoring authority');
  const known=harness();verification(await known.risk('IRDM'),'VERIFIED_BLOCKED',known);
  const perSymbol=harness({NEWS:[news({text:'Company cuts full-year guidance.'})]}),combined=await perSymbol.map(['CRWD','AMD']);
  verification(combined.get('CRWD'),'VERIFIED_BLOCKED',perSymbol);verification(combined.get('AMD'),'VERIFIED_CLEAR',perSymbol);
