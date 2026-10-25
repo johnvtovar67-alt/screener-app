@@ -1,3 +1,4 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import { collectC1LiveInput } from '../../../lib/c1LiveInputProvider';
 import { connectStoredC1DatedInput } from '../../../lib/c1DatedBookStore';
 import { compareC1Holdings } from '../../../lib/c1HoldingsComparison';
@@ -7,6 +8,7 @@ import { refreshC1Index } from '../../../lib/c1IndexLifecycle';
 export const config = { maxDuration: 300, api: { bodyParser: { sizeLimit: '128kb' } } };
 const cache = new Map(), inflight = new Map();
 export default async function handler(req, res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   res.setHeader('Cache-Control', 'no-store');
   if (!['GET', 'POST'].includes(req.method)) { res.setHeader('Allow', 'GET, POST'); return res.status(405).json({ error: 'Method not allowed' }); }
   if (process.env.VERCEL_ENV === 'production') return res.status(409).json({ status: 'preview-only', executable: false,

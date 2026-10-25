@@ -1,3 +1,4 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import {
   finalizePointInTimeNasdaqR11,
   freezePointInTimeNasdaqR11Audit,
@@ -17,6 +18,7 @@ const workerPhases = new Set([
 ]);
 
 export default async function handler(req, res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   if (!["GET", "POST"].includes(req.method)) {
     res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ error: "Method not allowed" });

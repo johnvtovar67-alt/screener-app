@@ -1,3 +1,4 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import {
   getPointInTimeNasdaqPriceIntegrity,
   runPointInTimeNasdaqPriceIntegrity,
@@ -9,6 +10,7 @@ const RESPONSE_VERSION = 2;
 const RESPONSE_CONTRACT = "observed-history-exact-253-row-requirements-v3";
 
 export default async function handler(req, res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   if (!["GET", "POST"].includes(req.method)) {
     res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ error: "Method not allowed" });

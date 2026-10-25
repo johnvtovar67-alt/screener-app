@@ -1,9 +1,11 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import { collectC1LiveInput } from '../../../lib/c1LiveInputProvider';
 import { latestCompletedMarketSessionDay } from '../../../lib/marketSession';
 
 export const config = { maxDuration: 120 };
 const cache = new Map(), inflight = new Map();
 export default async function handler(req, res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return res.status(405).json({ error: 'Method not allowed' }); }
   if (process.env.VERCEL_ENV === 'production') return res.status(409).json({ status: 'preview-only',

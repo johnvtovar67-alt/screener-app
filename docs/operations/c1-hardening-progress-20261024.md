@@ -244,7 +244,7 @@ OIDC/Blob advisory chain is NOT fixed; no audit-force downgrade/override or guar
 exclusion. Research schema-only runtime isolation remains next cleanup candidate
 after this security release, not another concurrent implementation.
 
-## Active slice: isolate live compiler schema from research simulator
+## Production verified: isolate live compiler schema from research simulator
 
 Based on verified production840a144. Actual compiled route import initializes
 the49850-byte simulator factory solely for a primitive schema constant.
@@ -257,7 +257,31 @@ finishes without handler invocation. Full126/126/freeze/canonical/optimized
 build and independent focused review PASS. Exact CI/preview/production release
 gates PENDING at this source checkpoint; final exact PR handoff supersedes it.
 Evidence: `docs/operations/c1-runtime-schema-isolation-20261025.md`.
-Root owns this branch until exact verified handoff; no concurrent editor/release.
+PR329 production verified October25 at1:13AM CDT: main7d19bfb263d4db815db09d18ee664e4bc51fc05c,
+deploymentdpl_o3PraDdpfTMQRBbuEPfd3H6y2nKh READY/canonical version-health200,
+all checks true and scheduler configured; initial scoped error scan clear.
+CI991/run40167816601 SUCCESS exact head6490e10a0ae57c0e69d705e4448d90740e3c3bca;
+previewdpl_4imQ5NfNbAt1bDSqmwRDhdhzrLAp READY/version-health200.
+Exact reviewed/merged tree87504cd60b081de74e20a7108a4db8b90b69950e matched.
+These facts supersede source-time pending status above. Owner phone screenshots
+later verified visible two-card portfolio rendering; this does not establish
+brokerage/economic parity or explain the earlier transient Load failed message.
+
+## Active owner-approved production access restriction
+
+Owner explicitly approved closing public production research access and new
+account creation on October25. Branchharden/c1-production-access-20261025 starts
+from7d19bfb. Shared production gate on53 research handlers uses existing server
+authorization, preserves authorized worker/downstream guards and preview/offline
+contracts. Absent production portfolio/C1 account creation is denied without
+writes; existing account keys and reads/updates are unchanged. No namespace
+enumeration, secret extraction, login platform, trading/UI/cron/account changes.
+Focused all-route rejection/source-reversal and real-handler memory parity PASS.
+Final127/127/freeze/canonical/optimized build PASS. Exact CI/preview/production
+PENDING at this source checkpoint; not yet live.
+This is a creation freeze, not proof every preexisting namespace belongs to owner.
+Evidence: docs/operations/c1-production-access-20261025.md.
+Root owns this access branch; no overlapping editor or duplicate release.
 
 ## Remaining audit work
 
@@ -266,10 +290,10 @@ Root owns this branch until exact verified handoff; no concurrent editor/release
 | API error types and accurate retry behavior | PR317 and unexpected account-screen propagation PR325 production verified; private-account parity not established |
 | Read-only end-to-end operational acceptance canary | Screen/account instrumentation released; screen emission observed; private-account/browser/cross-boundary acceptance pending |
 | Common provider/error adapters and canonical symbol boundary | Bounded error/symbol/retry repairs PR317/322/323/325/327 verified; broader transport redesign explicitly DEFERRED, not another automatic helper-release loop |
-| Proven-unused research runtime isolation/retirement | PR324 verified; schema-only simulator dependency is next concrete isolation candidate. HTTP endpoint retirement requires operational evidence/specific owner decision |
+| Proven-unused research runtime isolation/retirement | PR324/329 production verified. Owner now approved blocking public production research HTTP access; current access implementation/focused tests passed, full release pending. Authorized workers/offline research retained |
 | Single producer and immutable screen reads | PR326 production verified; proposed daily-only observation fails actual-function golden parity. Preserve intraday sequence or obtain explicit timing-policy decision; live CAS acceptance remains unverified |
 | Broader duplicate/dead-code cleanup | PR318 verified; remaining126 lib modules have actual runtime/test/CLI consumers. Bounded additional whole-module deletion review closed: no safe candidate found |
-| Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
+| Account allowlisting/rate limits | Owner-approved new production account creation freeze implemented/focused tested, release pending. Stricter single-identity enrollment and rate-limit configuration are not claimed or silently implemented |
 | Dependency advisories | Undici PR328 production verified; bundled Zod chain requires genuine compatible upstream remediation, not scanner-only override or Blob downgrade |
 
 Finite disposition and read-only parallel-review evidence:

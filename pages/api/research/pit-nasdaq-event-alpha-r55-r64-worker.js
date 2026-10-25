@@ -1,7 +1,9 @@
+import {rejectPublicProductionResearch} from "../../../lib/researchMutationAuth";
 import { runPointInTimeNasdaqEventAlphaWorker } from "../../../lib/fmpResearchBacktest";
 import { rejectUnauthorizedResearchMutation } from "../../../lib/researchMutationAuth";
 export const config = { maxDuration: 800 };
 export default async function handler(req, res) {
+  if (rejectPublicProductionResearch(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   if (rejectUnauthorizedResearchMutation(req, res)) return;
   try { const report = await runPointInTimeNasdaqEventAlphaWorker({ candidateId: String(req.query.candidateId || "") }); return res.status(200).json(report); }
