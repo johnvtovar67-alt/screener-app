@@ -13,7 +13,13 @@ function render(file,props,fixture){
  const native=Date;global.Date=class extends native{constructor(...a){super(...(a.length?a:[fixture.now]));}static now(){return fixture.now.getTime();}};
  try{
   const filename=path.resolve(file),code=babel.transformSync(fs.readFileSync(filename,'utf8'),{filename,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
-  new Function('require','module','exports',code)(n=>n.startsWith('../lib/')?fixture.loader.load(n,filename):require(n.startsWith('@babel/runtime/')?'next/dist/compiled/'+n:n),record,record.exports);
+  function loadComponent(componentFile){
+   const componentPath=path.resolve(componentFile),componentRecord={exports:{}};
+   const componentCode=babel.transformSync(fs.readFileSync(componentPath,'utf8'),{filename:componentPath,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
+   new Function('require','module','exports',componentCode)(n=>n.startsWith('../lib/')?fixture.loader.load(n,componentPath):n.startsWith('.')?loadComponent(path.resolve(path.dirname(componentPath),n.endsWith('.js')?n:n+'.js')):require(n.startsWith('@babel/runtime/')?'next/dist/compiled/'+n:n),componentRecord,componentRecord.exports);
+   return componentRecord.exports;
+  }
+  new Function('require','module','exports',code)(n=>n.startsWith('../lib/')?fixture.loader.load(n,filename):n.startsWith('.')?loadComponent(path.resolve(path.dirname(filename),n.endsWith('.js')?n:n+'.js')):require(n.startsWith('@babel/runtime/')?'next/dist/compiled/'+n:n),record,record.exports);
   return renderToStaticMarkup(React.createElement(record.exports.default,props));
  }finally{global.Date=native;}
 }
@@ -81,7 +87,7 @@ async function main(){
  sell.advance();sell.setCash(9199.75);sell.setOpeningFailure(false);near((await sell.prepare()).decision.brokerageCash,9199.75);
  evidence.cases.push({case:'DELL-triggered-stop-with-zero-cash',recordedShares:20,stop:468.85,verifiedPrice:460,saleInstructionShares:20,actualFillShares:20,fee:.25,brokerageCashAfter:9199.75,retryAndResnapshot:'PASS',noAssumedBrokerOrder:true});
  // Invert only the declared funding seams and require exact production source.
- let source=fs.readFileSync('lib/c1AccountSimulator.js','utf8');for(const [a,b] of require('./c1-non-cash-adoption-seams.cjs')){assert.equal(source.split(b).length,2);source=source.replace(b,a);}for(const [old,next] of require('./c1-additional-capacity-seams.cjs')){assert.equal(source.split(next).length,2);source=source.replace(next,old);}for(const [old,next] of require('./c1-operational-funding-seams.cjs')){assert.equal(source.split(next).length,2);source=source.replace(next,old);}
+ let source=require('./c1-simulator-accounting-extraction.cjs').restoreSimulatorAccounting(fs.readFileSync('lib/c1AccountSimulator.js','utf8'));for(const [a,b] of require('./c1-non-cash-adoption-seams.cjs')){assert.equal(source.split(b).length,2);source=source.replace(b,a);}for(const [old,next] of require('./c1-additional-capacity-seams.cjs')){assert.equal(source.split(next).length,2);source=source.replace(next,old);}for(const [old,next] of require('./c1-operational-funding-seams.cjs')){assert.equal(source.split(next).length,2);source=source.replace(next,old);}
  assert.equal(crypto.createHash('sha256').update(source).digest('hex'),'02e1edad62c96360a0380142e46e72eacf0a486cc8bb60f43979b7d7e21ce5fb');
  // JSON/client flags cannot authorize a negative historical sleeve debit.
  const replayModule=f.loader.load('lib/c1ActualFillReplay.js'),replayDate='2026-10-15';

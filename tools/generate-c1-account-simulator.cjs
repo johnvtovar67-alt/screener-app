@@ -224,6 +224,8 @@ for(const [before,after] of require('./c1-operational-funding-seams.cjs'))replac
 for(const [before,after] of require('./c1-additional-capacity-seams.cjs'))replace(before,after);
 // Owner-authorized append-only non-cash balance admission.
 for(const [before,after] of require('./c1-non-cash-adoption-seams.cjs'))replace(before,after);
+// Owner-authorized pure accounting extraction; all earlier historical pins stay unchanged.
+source=require('./c1-simulator-accounting-extraction.cjs').extractSimulatorAccounting(source);
 if(process.argv.includes('--check')){
   assert.equal(fs.readFileSync(path,'utf8'),source,'Generated account simulator changed outside declared seams');
   assert.equal(fs.readFileSync(legacyPath,'utf8'),legacySource,'Legacy account identity source changed from the immutable pre-SCHW runtime');

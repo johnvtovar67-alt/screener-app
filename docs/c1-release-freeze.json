@@ -19,7 +19,7 @@
   "files": {
     "components/C1AccountActivity.js": "08c8a772b54be192ed021762698654854cb2f2d5",
     "components/C1AccountDifferences.js": "5d4337bca8b45f7e55cda4f94b8db7b5a4c68f64",
-    "components/C1AccountOpportunities.js": "99686d4e2fb2827301da0a4072f3dcb8237237c2",
+    "components/C1AccountOpportunities.js": "894695659ce35e0f5bb0ef3d2edeb149efdb2b6b",
     "components/C1PositionContextImport.js": "5de954a5ef55cd516bad152244d57651526af36a",
     "components/C1ReconciliationDetails.js": "e7d3dc78c77f574fa213198a26d43da45dbf9b94",
     "lib/brokerageReconciliation.js": "f007e02f1314a4130656a696b0a3d6cffc8041be",
@@ -30,10 +30,10 @@
     "lib/c1AccountOpeningProvider.js": "9d3a9ce2b42d0d88b188dfd1883c429a480ac9e5",
     "lib/c1AccountPortfolio.js": "fc4a5ea9c3ae3b3a6d86c038384fc12e1f8c2a68",
     "lib/c1AccountReconciliation.js": "fc05613dbe81f860396a35672aa92b47d1d46b84",
-    "lib/c1AccountSave.js": "44e91ede57936935aae3a3408c141baac93153bc",
+    "lib/c1AccountSave.js": "889d54d4f538d0b5071bb3d99fc7fac9e74cd909",
     "lib/c1AccountSeed.js": "78759065c9bd940ffee27d0e508223550c089c41",
     "lib/c1AccountService.js": "fc414c25c27cafeedad017cfb8e2d5606217dcee",
-    "lib/c1AccountSimulator.js": "a26ab291a8a483ef2d00b19bfd772dc7a8ff3221",
+    "lib/c1AccountSimulator.js": "3e00087fd525d9e7b5cd98194698f4c9dfdecddf",
     "lib/c1ActualFillReplay.js": "216b2aea2a2d94ffdd1545d3c2ce367fc618ed82",
     "lib/c1BaselineReconciliation.js": "a638d81c4eecd081fa9c7da911edd1f4f5340822",
     "lib/c1BaselineRevisionReview.js": "df1c7ae8cc6a28a43ad7c80a5f88df0c3c180179",
@@ -67,7 +67,7 @@
     "lib/c1SleeveAccounting.js": "ef95d81dab897aaf2a8e870f8d942530ec900428",
     "lib/capitalSimulation.js": "c5650412ccfb483896219cb157176b784663407a",
     "lib/entryTiming.js": "561ff778208aa017770bac69efe56892ed3c667f",
-    "lib/eventRisk.js": "89a6a60c46444cb4cd5f3b16f0c1a759e8626fca",
+    "lib/eventRisk.js": "b6a606289a8d5e52dcbfa0dcd1d9cd0ad9cfa948",
     "lib/expertDecision.js": "f75bccfdb4f5ae5fdb20b43deb7a71f1c1bebbeb",
     "lib/fmpFundamentals.js": "3999de8e1b6fa4225aa46858c9669f174c47f92a",
     "lib/fmpPriceBars.js": "53a0f68063aa8ea5319223dc03d33db8bc4ee2b2",
@@ -123,7 +123,7 @@
     "pages/api/lookup.js": "c1c3becf3035071e51d9a833f911d05ba2baee60",
     "pages/api/options.js": "14a76becb8717b3bb058b0141c6eb37f6c149ab9",
     "pages/api/performance.js": "47f3b8f120c574ef62e7784ab64d850d7d17d404",
-    "pages/api/portfolio-sync.js": "75b21442e9c14c06b04fbaaab6c3f1fb46d7143d",
+    "pages/api/portfolio-sync.js": "1e795fed9c6e244092895889b5b797be705b6907",
     "pages/api/research/alpha-creator.js": "7fe08cdcbbdd8825313d23b51bc11aed95eb2f17",
     "pages/api/research/alpha-prospective-challenger.js": "5ae5dfeabe373567d51e98eb4b9677af86cfd821",
     "pages/api/research/alpha-regime-map.js": "4566f785e0920e2364c319c5f3d077cebde49bea",
@@ -222,7 +222,10 @@
     "lib/c1HoldPill.js": "20b7b3ab98258be1b4cc5e776d4bc499d3e34d77",
     "pages/api/ops/c1-acceptance.js": "06e21292aedc60ef584ed09bdc1901b2a17955a7",
     "lib/c1PurchaseDiagnostics.js": "5bfb089b71ae673a93c28eb0c1219fb6f0b13423",
-    "lib/c1CurrentEventEvidence.js": "6e237dca006813ce4d5068046d88b71503f25a86"
+    "lib/c1CurrentEventEvidence.js": "6e237dca006813ce4d5068046d88b71503f25a86",
+    "components/C1AccountOpportunitiesView.js": "d5f5e76a1649b1d6aba44b81ba12c49eec5ec97b",
+    "lib/blobErrors.js": "7fdd02966515b29acf8a1b36fd2150d2ad5252a9",
+    "lib/c1SimulatorAccounting.js": "dacc9188b7e387fa6bd781396b1063f98983c002"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
@@ -280,7 +283,7 @@
   "latePageMergerAttributionAuthorization": "Owner October 23 directs continued production repair after PR 305 live verification exposed a masked later-page M&A MALFORMED_RESPONSE. Treat merger-shaped rows with missing, invalid or wrongly typed target identity as unattributed diagnostics, never as evidence against every issuer. Preserve positive target-symbol blocks even with malformed optional dates or names. Non-array/error bodies, stale or unavailable responses, and incomplete, repeated or overlapping pagination remain fail-closed. Only lib/eventRisk.js application hash changes; no account, cash, history, ranking, sizing, volatility, execution or UI rule changes. Focused/full verification and production deployment are authorized. See docs/operations/c1-fmp-event-response-handling-20261022.md.",
   "eventVerificationHardeningAuthorization": "Owner October 23 requests an independent full-infrastructure cleanup after repeated daily failures. First behavior-preserving hardening slice: keep incomplete current event evidence fail-closed, but distinguish verification unavailable from a verified issuer material-event block in both screen policy paths; evict malformed, stale or contradictory HTTP-200 event bodies so a later verified refresh can recover without a process restart. No purchase authority, event definition, ranking, sizing, account, cash, history, execution or provider window changes. Only lib/eventRisk.js, lib/c1CurrentEventEvidence.js, lib/c1StockClassification.js and lib/v11ProductionPolicy.js application hashes change; focused/full verification is required before release.",
   "priceBarExtractionAuthorization": "Owner October 23 requests a thorough infrastructure review and behavior-preserving cleanup. Extract the shared FMP historical-bar normalizer from the 20,000-line research monolith into a pure production module, preserve its exact public contract through a compatibility export, and repoint only existing production consumers and source-level regression harnesses. No ranking, eligibility, sizing, entry, exit, event, account, cash, history, provider, or execution behavior changes.",
-  "accountApiFailureHardeningAuthorization": "Owner October 24 reiterates that authorized C1 infrastructure hardening must continue. Repair the reproducible all-errors-as-409 defect: only genuine save/revision conflicts use 409; recognized invalid input uses 422, unavailable dependencies/evidence 503, and unknown/integrity failures 500. Add bounded redacted request/stage/reason logs and preserve strong ETags, canonical rebase behavior, all original guard predicates, success payloads, account data, UI, trading rules and crons. No automatic mutation retry. Only pages/api/c1-account.js and new lib/c1ApiErrors.js application hashes change; freeze/canonical/CI/build hook implementations are unchanged. Focused/full tests, matching preview/CI and exact production verification are required. See docs/operations/c1-hardening-progress-20261024.md."
-  ,
-  "fourSwingPositionCeilingAuthorization": "Owner October 23 explicitly directs a hard maximum of four distinct C1 Swing holdings. When three positions are already held and several unheld Buy/Strong Buy names qualify simultaneously, only the highest-ranked unheld name may use the existing additional-position exception. Independent release review found the first implementation still allowed ordinary per-sleeve buys to bypass the aggregate ceiling when small holdings were unevenly allocated. Reject non-selected new names before projection while preserving aggregate-held Adds, unexecuted-sale ordering, conserved fills, historical reconstruction, all qualifications, ordering, quantities, cash limits, sleeves, exits, stops, accounting and records. A conserved current-session Buy reserves its aggregate symbol before current selection, so changed qualification cannot authorize a fifth name while the immutable fill remains accepted. Add permanent uneven-allocation and conserved-fill regressions; update only the projection application hash."
+  "accountApiFailureHardeningAuthorization": "Owner October 24 reiterates that authorized C1 infrastructure hardening must continue. Repair the reproducible all-errors-as-409 defect: only genuine save/revision conflicts use 409; recognized invalid input uses 422, unavailable dependencies/evidence 503, and unknown/integrity failures 500. Add bounded redacted request/stage/reason logs and preserve strong ETags, canonical rebase behavior, all original guard predicates, success payloads, account data, UI, trading rules and crons. No automatic mutation retry. Only pages/api/c1-account.js and new lib/c1ApiErrors.js application hashes change; freeze/canonical/CI/build hook implementations are unchanged. Focused/full tests, matching preview/CI and exact production verification are required. See docs/operations/c1-hardening-progress-20261024.md.",
+  "fourSwingPositionCeilingAuthorization": "Owner October 23 explicitly directs a hard maximum of four distinct C1 Swing holdings. When three positions are already held and several unheld Buy/Strong Buy names qualify simultaneously, only the highest-ranked unheld name may use the existing additional-position exception. Independent release review found the first implementation still allowed ordinary per-sleeve buys to bypass the aggregate ceiling when small holdings were unevenly allocated. Reject non-selected new names before projection while preserving aggregate-held Adds, unexecuted-sale ordering, conserved fills, historical reconstruction, all qualifications, ordering, quantities, cash limits, sleeves, exits, stops, accounting and records. A conserved current-session Buy reserves its aggregate symbol before current selection, so changed qualification cannot authorize a fifth name while the immutable fill remains accepted. Add permanent uneven-allocation and conserved-fill regressions; update only the projection application hash.",
+  "remainingC1HardeningAuthorization": "Owner October25,2026 finite remaining C1 infrastructure request explicitly authorizes behavior-preserving provider/error consolidation, safe issuer-local malformed-event scope, UI component and simulator phase extraction, regression tests, normal PRs/merges/production release. Only eight enumerated application hashes change: exact shared Blob conflict predicate and sanitized portfolio storage failures; exact-identity valid-date malformed NEWS-content quarantine with all raw coverage/fail-closed guards; synchronous literal Opportunities renderer extraction; verbatim active-simulator result-accounting phase. Complete source reversal and golden parity preserve successful contracts, cache/deadline/retry/ETag behavior, C1 policy/UI/economics/frozen comparison oracles. Guard, canonical checker, CI/build hooks, dependencies, auth policy and normal crons unchanged. See docs/operations/c1-remaining-checklist-20261025.md and final release PR evidence; blocked producer/server-join/security/access/private-acceptance items remain unfinished."
 }

@@ -40,7 +40,7 @@ assert.equal(view.tiles.find(x=>x.symbol==='S2').accountAction,'No purchase');
 assert.ok(present({decision,buys:orders,plan,ready:false}).tiles.every(x=>!x.order));
 assert.equal(present({decision:{...decision,current:false},buys:orders,plan,ready:true}).tiles.length,0);
 assert.ok(view.watch.every(x=>x.screenReview.why.includes('below the three selected')));
-const component=fs.readFileSync('components/C1AccountOpportunities.js','utf8');
+const component=[fs.readFileSync('components/C1AccountOpportunities.js','utf8'),fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8')].join('\n');
 assert.ok(component.includes('resolveC1ScreenEvidence({decision,rows:screenRows'));
 assert.ok(component.includes('!portfolioOnly&&ratedTiles.length>0'),'Only verified stock ratings appear in Opportunities');
 assert.ok(!component.includes('buys.map(o=>'),'Portfolio orders cannot become duplicate stock rating cards');
