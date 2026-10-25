@@ -219,7 +219,7 @@ Evidence: `docs/operations/c1-fmp-client-error-retry-20261024.md`.
 No active edits on merged branch; safe handoff complete. Synthetic proof only;
 private-account/browser/CAS acceptance remains unverified.
 
-## Active slice: compatible Undici security patch
+## Production verified: compatible Undici security patch
 
 Fresh audit identifies0critical/5high package nodes. Patch only Undici6.28.1 to
 6.29.1 within existing Blob2.8.0 range; preserve all other versions and auth/config
@@ -230,10 +230,34 @@ Final local125/125/freeze/canonical/optimized build PASS; independent review PAS
 Fresh audit0critical/4high, Undici finding removed; exact CI/preview/production
 verification PENDING. No claim all vulnerabilities are fixed.
 Evidence: `docs/operations/c1-undici-security-20261024.md`.
-Root owns security branch until verified handoff. Residual bundled Zod/CLI-config/
+PR328 verified October24 at11:57PM CDT: main/production
+`840a14470544945146c8b2b6a15531966b803a44`, deployment
+`dpl_12MaVPo9Sq58zTbxvg5VLFt3f9c2` READY, canonical version/health200,
+all checks true and scheduler configured; initial scoped error scan clear.
+Exact head `955c319ae3a6ccc9046d5e3ecd588a13b5a8519f` passed CI989
+(40163136702); preview `dpl_6z8DErB3mFWPjNJrwbeuEXP2rtA6` READY/version/health200.
+Exact local/reviewed/merged tree `8edeca8a34409fbbc33e98592a1f75845d806ce2`
+matched. These release facts supersede source-time pending states above;
+no active edits on that merged branch, safe handoff complete.
+Residual bundled Zod/CLI-config/
 OIDC/Blob advisory chain is NOT fixed; no audit-force downgrade/override or guard
 exclusion. Research schema-only runtime isolation remains next cleanup candidate
 after this security release, not another concurrent implementation.
+
+## Active slice: isolate live compiler schema from research simulator
+
+Based on verified production840a144. Actual compiled route import initializes
+the49850-byte simulator factory solely for a primitive schema constant.
+One import moves to a new pure runtime schema module; original research engine,
+frozen simulators/generators, trading/UI/account/dependency/auth/config stay
+unchanged. Complete synthetic compiler-object golden parity and independent
+review PASS. Native baseline initialization1/zero observed network reproduced;
+changed-build initialization0/zero observed network PASS; actual route import
+finishes without handler invocation. Full126/126/freeze/canonical/optimized
+build and independent focused review PASS. Exact CI/preview/production release
+gates PENDING at this source checkpoint; final exact PR handoff supersedes it.
+Evidence: `docs/operations/c1-runtime-schema-isolation-20261025.md`.
+Root owns this branch until exact verified handoff; no concurrent editor/release.
 
 ## Remaining audit work
 
@@ -241,16 +265,18 @@ after this security release, not another concurrent implementation.
 |---|---|
 | API error types and accurate retry behavior | PR317 and unexpected account-screen propagation PR325 production verified; private-account parity not established |
 | Read-only end-to-end operational acceptance canary | Screen/account instrumentation released; screen emission observed; private-account/browser/cross-boundary acceptance pending |
-| Common provider/error adapters and canonical symbol boundary | Safe screen errors PR322 and shared provider spelling PR323 production verified; broader adapters pending |
+| Common provider/error adapters and canonical symbol boundary | Bounded error/symbol/retry repairs PR317/322/323/325/327 verified; broader transport redesign explicitly DEFERRED, not another automatic helper-release loop |
 | Proven-unused research runtime isolation/retirement | PR324 verified; schema-only simulator dependency is next concrete isolation candidate. HTTP endpoint retirement requires operational evidence/specific owner decision |
 | Single producer and immutable screen reads | PR326 production verified; proposed daily-only observation fails actual-function golden parity. Preserve intraday sequence or obtain explicit timing-policy decision; live CAS acceptance remains unverified |
 | Broader duplicate/dead-code cleanup | PR318 verified; remaining126 lib modules have actual runtime/test/CLI consumers. Bounded additional whole-module deletion review closed: no safe candidate found |
 | Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
-| Dependency advisories | Undici compatible patch in verification; bundled Zod chain requires genuine compatible upstream remediation, not scanner-only override or Blob downgrade |
+| Dependency advisories | Undici PR328 production verified; bundled Zod chain requires genuine compatible upstream remediation, not scanner-only override or Blob downgrade |
 
 Finite disposition and read-only parallel-review evidence:
 `docs/operations/c1-remaining-disposition-20261024.md`. No endless blanket
 cleanup obligation or completed private acceptance is inferred from these rows.
+Full original-audit obligation map, retained/deferred/blocked boundaries and the
+finite stop rule: `docs/operations/c1-hardening-closeout-20261025.md`.
 
 ## Release gate
 
