@@ -45,8 +45,14 @@ change. Freeze/canonical guards, CI and build hooks are not modified.
   response-parser tests continue to accept legitimate detailed API responses;
   only this server endpoint's arbitrary exception reflection is removed.
 
-Full suite/build, exact-head CI/preview and production checks are pending at
-this source checkpoint. The PR will record exact release verification/handoff.
+PR #322 release verified October 24 at 23:53 UTC: main/production
+`cddfe3e70a3276f81b4bf1c2b4245f5c8105df59`, deployment
+`dpl_J2wTt8pXQNnHbn9n8x1H7ie2Mm4S` READY with canonical version/health200,
+all configuration checks true, scheduler configured and initial scoped error
+scan clear. Local121/121/build/freeze/canonical passed. Exact head
+`af84e9fb313e224d54cd561694f13c381d4e5644` passed CI #976 (40144012838);
+matching preview `dpl_8XxWMvQvHCNRu4tGumAumdaydBqf` READY/version/health200.
+Local/reviewed/merged tree `13544b0d639d35cabec23d3e90edebf4511acab8` matched.
 No live failing-provider request is needed or authorized just to test this.
 
 Remaining work is broader provider/error/symbol consolidation, research-runtime

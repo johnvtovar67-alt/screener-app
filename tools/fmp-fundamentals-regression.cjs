@@ -1,13 +1,40 @@
 const fs=require('fs');
 const vm=require('vm');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
+const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const {toFmpSymbol}=createResearchModuleLoader(process.cwd()).load('lib/fmpSymbols.js');
+// Frozen expressions from production cddfe3e. This is a mechanical extraction,
+// not permission to improve/validate the legacy spelling contract.
+const priorFundamental=s=>String(s||"").replace(".", "-").toUpperCase().trim();
+const priorQuote=value=>String(value||'').replace('.', '-').toUpperCase().trim();
+const inputs=[undefined,null,false,true,0,-0,NaN,Infinity,-1,1n,Symbol('bf.b'),'',
+ ' brk.b ','BF.B','brk-b','a.b.c','a-b-c',' .a.b ',' é.i ',[],['bf.b'],{},
+ {toString:()=> ' brk.b '}];
+for(const left of ['a','B','.','-',' ','0','ß'])for(const right of ['b','C','.','-',' ','1','ı'])inputs.push(left+'.'+right+'.z');
+for(const input of inputs){
+ assert(toFmpSymbol(input)===priorFundamental(input),'Shared spelling preserves fundamental normalization');
+ assert(toFmpSymbol(input)===priorQuote(input),'Shared spelling preserves quote normalization');
+}
+assert(toFmpSymbol('a.b.c')==='A-B.C','Only the first dot is replaced; do not broaden aliases');
+assert(toFmpSymbol('toString')==='TOSTRING','No prototype/dictionary alias lookup is introduced');
+let conversions=0;assert(toFmpSymbol({toString(){conversions++;return 'bf.b';}})==='BF-B'&&conversions===1,'Coercion occurs exactly once');
+const coercionFailure=new Error('synthetic coercion');
+try{toFmpSymbol({toString(){throw coercionFailure;}});throw new Error('Expected coercion failure');}catch(error){assert(error===coercionFailure,'Existing coercion failure identity is preserved');}
+const {createHash}=require('node:crypto');
+const blobHash=source=>createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
+const quoteSource=fs.readFileSync('lib/fmpQuotes.js','utf8');
+assert(blobHash(quoteSource.replace("import {toFmpSymbol as norm} from './fmpSymbols';\n",'').replace('const stores=',"const norm=value=>String(value||'').replace('.', '-').toUpperCase().trim();\nconst stores="))==='00e6b3170856577085573b203adfd07e61827fd3','Quote extraction reversal exactly recovers reviewed production source');
+const fundamentalSource=fs.readFileSync('lib/fmpFundamentals.js','utf8');
+const priorDeclaration='const toFmpSymbol=s=>String(s||"").replace(".", "-").toUpperCase().trim();\n';
+assert(blobHash(fundamentalSource.replace("import {toFmpSymbol} from './fmpSymbols';\n",'').replace('const asArray=',priorDeclaration+'const asArray='))==='5dacd7e90008fdcb48b32f1bb57814476f750851','Fundamental extraction reversal exactly recovers reviewed production source');
 let src=fs.readFileSync('lib/fmpFundamentals.js','utf8')
   .replace(/import\s+\{put,list,get\}\s+from\s+'@vercel\/blob';/,'')
   .replace(/^import .*top5Diagnostics.*$/gm,'')
+  .replace(/^import .*fmpSymbols.*$/gm,'')
   .replace(/export async function /g,'async function ')
   .replace(/export function /g,'function ');
 src+='\nmodule.exports={statementRatioFields,statementGrowthFields,fillMissing};';
-const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,setTimeout,clearTimeout,AbortController,fetch:async()=>({ok:true,json:async()=>[]}),top5Phase:(_name,task)=>task(),top5Network:(_url,task)=>task(),top5Fetch:(url,options)=>sandbox.fetch(url,options),assertTop5Active(){},isTop5Deadline:()=>false,top5Count(){}};
+const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,setTimeout,clearTimeout,AbortController,toFmpSymbol,fetch:async()=>({ok:true,json:async()=>[]}),top5Phase:(_name,task)=>task(),top5Network:(_url,task)=>task(),top5Fetch:(url,options)=>sandbox.fetch(url,options),assertTop5Active(){},isTop5Deadline:()=>false,top5Count(){}};
 vm.createContext(sandbox);vm.runInContext(src,sandbox);
 const {statementRatioFields,statementGrowthFields,fillMissing}=sandbox.module.exports;
 const ratios=statementRatioFields(
