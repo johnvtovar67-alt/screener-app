@@ -63,8 +63,14 @@ Expanded existing `tools/c1-api-errors-regression.cjs`, no new scaffold/module:
 
 Focused API/client checks and freeze/canonical guards are required, followed by
 the normal122-task/build, exact-head CI/preview and production release gates.
-Release evidence is pending at this source checkpoint; record in the PR and
-update during next legitimate implementation, not a docs-only deployment loop.
+PR #325 verified October24 at9:37 PM CDT: main/production
+`21d5380ad14c5520ed8df1cc7db12b92e79788e8`, deployment
+`dpl_DKjftHGG5nDVxH6bmn2nri3iwwzZ` READY/version/health200, all configuration
+checks true and scheduler configured; initial scoped error scan clear.
+Local122/122/build PASS. Exact head `54b9f18787e73d1a8de532e0f177e968d4b09a83`
+passed CI #983 (40154600072); preview `dpl_6xBzXuiMxfwDHWzAxrxHZRiePwVd`
+READY/version/health200. Exact reviewed/merged tree
+`87ea34af65358fee9dd967524552854caf6d5878` matched. Ownership handoff complete.
 Build/public health does not establish private-account/browser parity.
 
 Branch `harden/c1-account-screen-failure-20261025` is owned by this run until

@@ -131,7 +131,7 @@ function createPerformanceHarness({ firstGet, firstPut } = {}) {
     get: async () => {
       blobCalls.push({ operation: 'get', at: harness.clock.now() });
       if (++getCount === 1 && firstGet) return firstGet.promise;
-      return { stream: JSON.stringify({ records: [] }) };
+      return { statusCode:200,blob:{etag:'"fixture-ledger-version"'},stream: JSON.stringify({ records: [] }) };
     },
     put: async () => {
       blobCalls.push({ operation: 'put', at: harness.clock.now() });
@@ -140,7 +140,7 @@ function createPerformanceHarness({ firstGet, firstPut } = {}) {
     },
   };
   const ledger = harness.loadModule('lib/performanceStore.js', {
-    '@vercel/blob': blob,
+    '@vercel/blob': {...blob,BlobPreconditionFailedError:class extends Error{}},
     './performanceLedger': {
       applyPerformanceObservation(records) { pureCalls.push('observe'); return [...records]; },
       mergeLedgerRecords(left, right) { pureCalls.push('merge'); return [...left, ...right]; },
