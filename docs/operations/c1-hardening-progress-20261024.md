@@ -199,7 +199,7 @@ Live conditional-write/account/browser acceptance remains NOT_VERIFIED.
 Evidence: `docs/operations/c1-performance-conditional-writes-20261024.md`.
 No active edits remain on the merged branch; safe handoff complete.
 
-## Active slice: honor provider non-retryable responses
+## Production verified: honor provider non-retryable responses
 
 Branch `harden/c1-fmp-client-errors-20261025`, based on `8b7b1c5`.
 Actual offline provider transport reproduces duplicate permanent-client-error
@@ -207,9 +207,33 @@ requests. A local flag stops only400/401/404/405/410/422;408/425/other client
 responses and unfollowed3xx keep legacy retry behavior after independent review.
 Success/fallback/cache outputs, other retry/cooldown/deadline and bulk behavior
 retain exact fixture parity. No trading/UI/account/auth/config changes.
-Focused checks pass; full124-task/build and remote release gates pending.
+PR327 verified October24 at11:36PM CDT: main/production
+`62d5c0ce90583efa2f1ab7f60ed20b40c43eec2f`, deployment
+`dpl_6isWtbLcUAja9XA3m8nt8opU8gBz` READY, canonical version/health200,
+all checks true and scheduler configured; initial scoped error scan clear.
+Local124/124/build PASS; exact head `1a9ddd60ae4846377ba550a4d163a4652a06bb1c`
+passed CI987 (40161843248); preview `dpl_DD6kixeC5bpsMq96oNYRd9P1rGPG`
+READY/version/health200. Exact reviewed/merged tree
+`94da1f506f1daa4a5e78b206bb83d5f15203f321` matched.
 Evidence: `docs/operations/c1-fmp-client-error-retry-20261024.md`.
-Root owns this branch until verified handoff; other reviewers remain read-only.
+No active edits on merged branch; safe handoff complete. Synthetic proof only;
+private-account/browser/CAS acceptance remains unverified.
+
+## Active slice: compatible Undici security patch
+
+Fresh audit identifies0critical/5high package nodes. Patch only Undici6.28.1 to
+6.29.1 within existing Blob2.8.0 range; preserve all other versions and auth/config
+policy. Real installed SDK/MockAgent verifies identity GET/ETag, conditional PUT,
+stale precondition error and non-overwriting creation without live network or
+credentials. Focused PASS; full125-task/build and remote release gates pending.
+Final local125/125/freeze/canonical/optimized build PASS; independent review PASS.
+Fresh audit0critical/4high, Undici finding removed; exact CI/preview/production
+verification PENDING. No claim all vulnerabilities are fixed.
+Evidence: `docs/operations/c1-undici-security-20261024.md`.
+Root owns security branch until verified handoff. Residual bundled Zod/CLI-config/
+OIDC/Blob advisory chain is NOT fixed; no audit-force downgrade/override or guard
+exclusion. Research schema-only runtime isolation remains next cleanup candidate
+after this security release, not another concurrent implementation.
 
 ## Remaining audit work
 
@@ -222,6 +246,7 @@ Root owns this branch until verified handoff; other reviewers remain read-only.
 | Single producer and immutable screen reads | PR326 production verified; proposed daily-only observation fails actual-function golden parity. Preserve intraday sequence or obtain explicit timing-policy decision; live CAS acceptance remains unverified |
 | Broader duplicate/dead-code cleanup | PR318 verified; remaining126 lib modules have actual runtime/test/CLI consumers. Bounded additional whole-module deletion review closed: no safe candidate found |
 | Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
+| Dependency advisories | Undici compatible patch in verification; bundled Zod chain requires genuine compatible upstream remediation, not scanner-only override or Blob downgrade |
 
 Finite disposition and read-only parallel-review evidence:
 `docs/operations/c1-remaining-disposition-20261024.md`. No endless blanket
