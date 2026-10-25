@@ -60,3 +60,16 @@ those gates pass. Public health does not prove live account/browser acceptance.
 The remaining audit includes provider consolidation, safely justified research
 retirement, immutable screen/read separation and full private account/browser
 acceptance; configuration/auth choices still need explicit owner decisions.
+
+## Verified release and handoff
+
+PR327 verified October24 at11:36PM CDT. Main/production
+`62d5c0ce90583efa2f1ab7f60ed20b40c43eec2f`, deployment
+`dpl_6isWtbLcUAja9XA3m8nt8opU8gBz` READY with canonical version/health200,
+all configuration checks true and scheduler configured. Initial scoped error
+scan clear. Local124/124/build PASS; exact head
+`1a9ddd60ae4846377ba550a4d163a4652a06bb1c` passed CI987 (40161843248);
+preview `dpl_DD6kixeC5bpsMq96oNYRd9P1rGPG` READY/version/health200. Exact
+reviewed/merged tree `94da1f506f1daa4a5e78b206bb83d5f15203f321` matched;
+clean worktree and no active edits. These facts supersede source-time pending
+states above; private account/browser acceptance remains NOT_VERIFIED.
