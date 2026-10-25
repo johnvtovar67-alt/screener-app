@@ -159,7 +159,7 @@ merged tree `49396928d6d0b7a723e031333bf6f01b8452576a` matched. Native compiled
 route loads zero research chunks versus476,413 bytes before; engine remains
 packaged for preview, all53 research routes remain, no general speedup claimed.
 
-## Active slice: preserve expected emptiness, propagate unexpected screen failures
+## Production verified: preserve expected emptiness, propagate unexpected screen failures
 
 Branch `harden/c1-account-screen-failure-20261025`, based on `daff5c0`.
 Actual service fault injection proves every builder error became an empty screen.
@@ -169,17 +169,37 @@ Only service catch changes, no classifier/trading/UI/account/guard changes.
 Source reversal, old/current full/empty account parity, real-service/API memory
 fault/recovery, post-save failure/no-retry and existing client checks pass.
 Evidence: `docs/operations/c1-account-screen-failure-20261024.md`.
-This run owns the branch until exact release/handoff; no concurrent edits.
+PR #325 verified October24 at9:37 PM CDT: main/production
+`21d5380ad14c5520ed8df1cc7db12b92e79788e8`, deployment
+`dpl_DKjftHGG5nDVxH6bmn2nri3iwwzZ` READY with canonical version/health200,
+all configuration checks true and scheduler configured; initial scoped error
+scan clear. Local122/122/build PASS; exact head
+`54b9f18787e73d1a8de532e0f177e968d4b09a83` passed CI #983 (40154600072);
+preview `dpl_6xBzXuiMxfwDHWzAxrxHZRiePwVd` READY/version/health200. Exact local/
+reviewed/merged tree `87ea34af65358fee9dd967524552854caf6d5878` matched.
+Synthetic failure-path proof, not a verified live incident/account acceptance.
+
+## Active slice: conditional performance-ledger writes across instances
+
+Branch `harden/c1-performance-cas-20261025`, based on `21d5380`.
+Two actual store instances with synthetic storage reproduce two successful
+responses while one acknowledged observation is lost. Bind both writes to
+origin body-read ETags; creation never overwrites. Keep existing deadline/local
+lock, merge/retention/signal/account rules. Stale/uncertain writes fail without
+automatic retry. Focused race, legacy uncontended parity, metadata, recovery
+and deadline checks pass; full release verification pending.
+Evidence: `docs/operations/c1-performance-conditional-writes-20261024.md`.
+This run owns the branch until exact verified release/handoff; no concurrent edits.
 
 ## Remaining audit work
 
 | Work | State |
 |---|---|
-| API error types and accurate retry behavior | PR317 production verified; unexpected account-screen failure propagation in verification; private-account parity not established |
+| API error types and accurate retry behavior | PR317 and unexpected account-screen propagation PR325 production verified; private-account parity not established |
 | Read-only end-to-end operational acceptance canary | Screen/account instrumentation released; screen emission observed; private-account/browser/cross-boundary acceptance pending |
 | Common provider/error adapters and canonical symbol boundary | Safe screen errors PR322 and shared provider spelling PR323 production verified; broader adapters pending |
 | Proven-unused research runtime isolation/retirement | Production-disabled engine import isolation PR324 verified; broader retirement pending, no endpoint assumed unused |
-| Single producer and immutable screen reads | Pending; characterization first |
+| Single producer and immutable screen reads | Multi-instance performance-write loss reproduced; bounded conditional-write repair in verification; producer/read separation remains pending |
 | Broader duplicate/dead-code cleanup | Two unused modules retired in production via PR #318; broader cleanup pending |
 | Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
 
