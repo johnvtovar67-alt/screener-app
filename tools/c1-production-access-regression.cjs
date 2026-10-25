@@ -43,7 +43,7 @@ async function main(){
  function portfolio(source,environment,saved){
   const state={saved:saved?structuredClone(saved):null,puts:0,reads:0};
   const code=source.replace(/^import .*;\n/gm,'').replace('export const config=','const config=').replace('export default async function handler','async function handler');
-  const box={process:{env:{VERCEL_ENV:environment}},createHash:crypto.createHash,randomUUID:crypto.randomUUID,isBlobPreconditionFailed:loader.load('lib/blobErrors.js').isBlobPreconditionFailed,Response,console,cleanC1ControlState:loader.load('lib/c1CapitalState.js').cleanC1ControlState,
+  const box={...require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),process:{env:{VERCEL_ENV:environment}},createHash:crypto.createHash,randomUUID:crypto.randomUUID,isBlobPreconditionFailed:loader.load('lib/blobErrors.js').isBlobPreconditionFailed,Response,console,cleanC1ControlState:loader.load('lib/c1CapitalState.js').cleanC1ControlState,
    get:async()=>{state.reads++;if(state.failure)throw state.failure;return state.saved?{statusCode:200,blob:{etag:state.saved.etag},stream:new Response(JSON.stringify(state.saved.record)).body}:null;},
    put:async(path,body,options)=>{state.puts++;state.options=options;state.saved={etag:'v2',record:JSON.parse(body)};return{etag:'v2'};},list:()=>{throw Error('Unexpected health scan');}};
   vm.createContext(box);vm.runInContext(code+';this.handler=handler;',box);return{state,handler:box.handler};
@@ -64,9 +64,9 @@ async function main(){
  }
  // Real account handler: production adoption cannot read market inputs or write.
  const accountFile='pages/api/c1-account.js',accountSource=fs.readFileSync(accountFile,'utf8');
- assert.equal(hash(accountSource.replace(/^   if\(environment==='production'&&operation==='adopt'&&!saved\).*\n/m,'')),hashes[accountFile]);
+ assert.equal(hash(require('./c1-owner-access-extraction.cjs').originalAccountSource(accountSource).replace(/^   if\(environment==='production'&&operation==='adopt'&&!saved\).*\n/m,'')),hashes[accountFile]);
  const accountCode=accountSource.replace(/^import .*;\n/gm,'').replace('export const config=','const config=').replace('export function createC1AccountHandler','function createC1AccountHandler').replace('export default createC1AccountHandler();','this.factory=createC1AccountHandler;');
- const dependencies={createHash:crypto.createHash,randomUUID:crypto.randomUUID,...loader.load('lib/c1ApiErrors.js'),Response,console,process:{env:{}},readStoredC1DatedBook:()=>{},collectC1AccountOpening:()=>{},collectC1HoldingCoverage:()=>{},collectC1HeldRankReviews:()=>{}};
+ const dependencies={...require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),createHash:crypto.createHash,randomUUID:crypto.randomUUID,...loader.load('lib/c1ApiErrors.js'),Response,console,process:{env:{}},readStoredC1DatedBook:()=>{},collectC1AccountOpening:()=>{},collectC1HoldingCoverage:()=>{},collectC1HeldRankReviews:()=>{}};
  vm.createContext(dependencies);vm.runInContext(accountCode,dependencies);
  let writes=0,bookReads=0;
  const handler=dependencies.factory({environment:'production',store:{read:async()=>null,write:async()=>{writes++;}},readBook:async()=>{bookReads++;throw Error('Inputs must not be read');}});

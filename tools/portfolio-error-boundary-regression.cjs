@@ -5,7 +5,7 @@ const loader=createResearchModuleLoader(process.cwd()),{isBlobPreconditionFailed
 const original=fs.readFileSync('tools/fixtures/portfolio-sync-production-d386ae5.js','utf8'),current=fs.readFileSync('pages/api/portfolio-sync.js','utf8');
 const hash=source=>crypto.createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
 assert.equal(hash(original),'75b21442e9c14c06b04fbaaab6c3f1fb46d7143d');
-const reversed=current.replace("import {createHash,randomUUID} from 'crypto';","import {createHash} from 'crypto';")
+const reversed=require('./c1-owner-access-extraction.cjs').originalPortfolioSource(current).replace("import {createHash,randomUUID} from 'crypto';","import {createHash} from 'crypto';")
  .replace("import {isBlobPreconditionFailed} from '../../lib/blobErrors';\n",'')
  .replace("  }catch{return{ok:false,error:'Blob storage unavailable'};}","  }catch(e){return{ok:false,error:e.message||'Blob storage unavailable'};}")
  .replace(/function reportPortfolioFailure\(res,stage,status\)\{[\s\S]*?\n\}\n/,'')
@@ -32,7 +32,7 @@ const json=value=>JSON.parse(JSON.stringify(value));
 function harness(source=current,{saved=true,environment='production'}={}){
  const state={saved:saved?{body:JSON.stringify(sample),etag:'v1'}:null,reads:[],puts:[],lists:[],logs:[]};
  const code=source.replace(/^import .*;\n/gm,'').replace('export const config=','const config=').replace('export default async function handler','async function handler');
- const box={Date:Clock,Response,process:{env:{VERCEL_ENV:environment}},createHash:crypto.createHash,randomUUID:()=>requestId,isBlobPreconditionFailed,
+ const box={...require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),Date:Clock,Response,process:{env:{VERCEL_ENV:environment}},createHash:crypto.createHash,randomUUID:()=>requestId,isBlobPreconditionFailed,
   cleanC1ControlState:loader.load('lib/c1CapitalState.js').cleanC1ControlState,
   console:{warn:(...args)=>{if(state.logFailure)throw Error(sentinel);state.logs.push(args.join(' '));},error:(...args)=>state.logs.push(args.join(' '))},
   list:async options=>{state.lists.push(json(options));if(state.listError)throw state.listError;return{blobs:[]};},
