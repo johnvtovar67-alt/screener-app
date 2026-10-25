@@ -179,7 +179,7 @@ preview `dpl_6xBzXuiMxfwDHWzAxrxHZRiePwVd` READY/version/health200. Exact local/
 reviewed/merged tree `87ea34af65358fee9dd967524552854caf6d5878` matched.
 Synthetic failure-path proof, not a verified live incident/account acceptance.
 
-## Active slice: conditional performance-ledger writes across instances
+## Production verified: conditional performance-ledger writes across instances
 
 Branch `harden/c1-performance-cas-20261025`, based on `21d5380`.
 Two actual store instances with synthetic storage reproduce two successful
@@ -187,9 +187,29 @@ responses while one acknowledged observation is lost. Bind both writes to
 origin body-read ETags; creation never overwrites. Keep existing deadline/local
 lock, merge/retention/signal/account rules. Stale/uncertain writes fail without
 automatic retry. Focused race, legacy uncontended parity, metadata, recovery
-and deadline checks pass; full release verification pending.
+and deadline checks pass. PR326 verified October24 at10:30PM CDT:
+main/production `8b7b1c54e3cc3ce5ef195422bd287445c65e4f5e`, deployment
+`dpl_BdkGjWh2hcMk3YLoyLat34e1ukwr` READY, canonical version/health200,
+all configuration checks true and scheduler configured. Initial scoped error
+scan clear. Local123/123/build PASS; exact head
+`9f362b43edcf846e81e5824ae84fe7a18d88d7ba` passed CI985 (40157858911);
+preview `dpl_2fNNAuRrf5cYi6i5MASG7AbaqFdQ` READY/version/health200.
+Exact reviewed/merged tree `e2382dd257e951c54f62ff26fcd2193b86614c6f` matched.
+Live conditional-write/account/browser acceptance remains NOT_VERIFIED.
 Evidence: `docs/operations/c1-performance-conditional-writes-20261024.md`.
-This run owns the branch until exact verified release/handoff; no concurrent edits.
+No active edits remain on the merged branch; safe handoff complete.
+
+## Active slice: honor provider non-retryable responses
+
+Branch `harden/c1-fmp-client-errors-20261025`, based on `8b7b1c5`.
+Actual offline provider transport reproduces duplicate permanent-client-error
+requests. A local flag stops only400/401/404/405/410/422;408/425/other client
+responses and unfollowed3xx keep legacy retry behavior after independent review.
+Success/fallback/cache outputs, other retry/cooldown/deadline and bulk behavior
+retain exact fixture parity. No trading/UI/account/auth/config changes.
+Focused checks pass; full124-task/build and remote release gates pending.
+Evidence: `docs/operations/c1-fmp-client-error-retry-20261024.md`.
+Root owns this branch until verified handoff; other reviewers remain read-only.
 
 ## Remaining audit work
 
@@ -198,10 +218,14 @@ This run owns the branch until exact verified release/handoff; no concurrent edi
 | API error types and accurate retry behavior | PR317 and unexpected account-screen propagation PR325 production verified; private-account parity not established |
 | Read-only end-to-end operational acceptance canary | Screen/account instrumentation released; screen emission observed; private-account/browser/cross-boundary acceptance pending |
 | Common provider/error adapters and canonical symbol boundary | Safe screen errors PR322 and shared provider spelling PR323 production verified; broader adapters pending |
-| Proven-unused research runtime isolation/retirement | Production-disabled engine import isolation PR324 verified; broader retirement pending, no endpoint assumed unused |
-| Single producer and immutable screen reads | Multi-instance performance-write loss reproduced; bounded conditional-write repair in verification; producer/read separation remains pending |
-| Broader duplicate/dead-code cleanup | Two unused modules retired in production via PR #318; broader cleanup pending |
+| Proven-unused research runtime isolation/retirement | PR324 verified; schema-only simulator dependency is next concrete isolation candidate. HTTP endpoint retirement requires operational evidence/specific owner decision |
+| Single producer and immutable screen reads | PR326 production verified; proposed daily-only observation fails actual-function golden parity. Preserve intraday sequence or obtain explicit timing-policy decision; live CAS acceptance remains unverified |
+| Broader duplicate/dead-code cleanup | PR318 verified; remaining126 lib modules have actual runtime/test/CLI consumers. Bounded additional whole-module deletion review closed: no safe candidate found |
 | Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
+
+Finite disposition and read-only parallel-review evidence:
+`docs/operations/c1-remaining-disposition-20261024.md`. No endless blanket
+cleanup obligation or completed private acceptance is inferred from these rows.
 
 ## Release gate
 

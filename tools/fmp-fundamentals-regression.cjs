@@ -26,7 +26,7 @@ const quoteSource=fs.readFileSync('lib/fmpQuotes.js','utf8');
 assert(blobHash(quoteSource.replace("import {toFmpSymbol as norm} from './fmpSymbols';\n",'').replace('const stores=',"const norm=value=>String(value||'').replace('.', '-').toUpperCase().trim();\nconst stores="))==='00e6b3170856577085573b203adfd07e61827fd3','Quote extraction reversal exactly recovers reviewed production source');
 const fundamentalSource=fs.readFileSync('lib/fmpFundamentals.js','utf8');
 const priorDeclaration='const toFmpSymbol=s=>String(s||"").replace(".", "-").toUpperCase().trim();\n';
-assert(blobHash(fundamentalSource.replace("import {toFmpSymbol} from './fmpSymbols';\n",'').replace('const asArray=',priorDeclaration+'const asArray='))==='5dacd7e90008fdcb48b32f1bb57814476f750851','Fundamental extraction reversal exactly recovers reviewed production source');
+assert(blobHash(fundamentalSource.replace('    let nonRetryableResponse=false;\n','').replace('if(r.status<500){nonRetryableResponse=[400,401,404,405,410,422].includes(r.status);throw e;}','if(r.status<500)throw e;').replace('if(nonRetryableResponse||hardFeedError(e?.status))throw e;','if(hardFeedError(e?.status))throw e;').replace("import {toFmpSymbol} from './fmpSymbols';\n",'').replace('const asArray=',priorDeclaration+'const asArray='))==='5dacd7e90008fdcb48b32f1bb57814476f750851','Fundamental retry repair and symbol extraction reversal exactly recover reviewed production source');
 let src=fs.readFileSync('lib/fmpFundamentals.js','utf8')
   .replace(/import\s+\{put,list,get\}\s+from\s+'@vercel\/blob';/,'')
   .replace(/^import .*top5Diagnostics.*$/gm,'')
