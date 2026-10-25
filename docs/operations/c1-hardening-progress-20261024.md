@@ -139,7 +139,7 @@ tree `53a9cc6a75a2cb0178c025141dbfc8340934276d` identical. Initial explicit-impo
 deadline fixture failure was repaired by loading the real helper, not weakening
 any assertion. This removes duplication, not a demonstrated runtime speedup.
 
-## Active slice: isolate production-disabled research engine loading
+## Production verified: isolate production-disabled research engine loading
 
 Branch `harden/c1-research-runtime-isolation-20261025`, based on `e0aef6f`.
 The preview-alpha-lab route's production404 guard cannot prevent a static engine
@@ -148,16 +148,37 @@ guard. Keep the route, preview response/finalizer contracts, research cron/oracl
 all normal crons and economic/account behavior. Source parity and synthetic
 failure checks pass; full release verification pending.
 Evidence: `docs/operations/c1-preview-research-isolation-20261024.md`.
+PR #324 verified October24 at8:43 PM CDT: main/production
+`daff5c07c58230a1167d5e55cb25a05f0c95a8d1`, deployment
+`dpl_6djG56NqpG7517mkAqWKzvSpZf4z` READY with canonical version/health200,
+all configuration checks true and scheduler configured; production route still
+returns exact404. Initial scoped error scan clear. Local122/122/build PASS;
+exact head `cb37527eb547a56ce6b4d0454e7f0fd2dcad3d9f` passed CI #981 (40151172463);
+preview `dpl_t7NnkevsugVJm32dULcvzYK18gmL` READY/version/health200. Exact reviewed/
+merged tree `49396928d6d0b7a723e031333bf6f01b8452576a` matched. Native compiled
+route loads zero research chunks versus476,413 bytes before; engine remains
+packaged for preview, all53 research routes remain, no general speedup claimed.
+
+## Active slice: preserve expected emptiness, propagate unexpected screen failures
+
+Branch `harden/c1-account-screen-failure-20261025`, based on `daff5c0`.
+Actual service fault injection proves every builder error became an empty screen.
+Preserve exact fallback for the frozen0/1/2-of3 insufficient-candidate cases;
+unexpected errors reach the existing sanitized API500/retained-client boundary.
+Only service catch changes, no classifier/trading/UI/account/guard changes.
+Source reversal, old/current full/empty account parity, real-service/API memory
+fault/recovery, post-save failure/no-retry and existing client checks pass.
+Evidence: `docs/operations/c1-account-screen-failure-20261024.md`.
 This run owns the branch until exact release/handoff; no concurrent edits.
 
 ## Remaining audit work
 
 | Work | State |
 |---|---|
-| API error types and accurate retry behavior | Production verified through PR #317; private-account parity not established |
+| API error types and accurate retry behavior | PR317 production verified; unexpected account-screen failure propagation in verification; private-account parity not established |
 | Read-only end-to-end operational acceptance canary | Screen/account instrumentation released; screen emission observed; private-account/browser/cross-boundary acceptance pending |
 | Common provider/error adapters and canonical symbol boundary | Safe screen errors PR322 and shared provider spelling PR323 production verified; broader adapters pending |
-| Proven-unused research runtime isolation/retirement | One already-production-disabled engine import under verification; broader retirement pending, no endpoint assumed unused |
+| Proven-unused research runtime isolation/retirement | Production-disabled engine import isolation PR324 verified; broader retirement pending, no endpoint assumed unused |
 | Single producer and immutable screen reads | Pending; characterization first |
 | Broader duplicate/dead-code cleanup | Two unused modules retired in production via PR #318; broader cleanup pending |
 | Account allowlisting/rate limits | Requires a controlled identity/configuration decision; do not silently tighten policy |
