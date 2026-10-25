@@ -83,5 +83,16 @@ nor full single-producer immutable screen reads. `/api/top5` still has acquisiti
 and performance-write side effects: do not invoke it as a read-only canary.
 Private-account/browser/cross-boundary acceptance is still NOT_VERIFIED.
 
-This run owns `harden/c1-performance-cas-20261025` until exact verified handoff.
+## Verified release and handoff
+
+PR326 verified October24 at10:30PM CDT. Main/production
+`8b7b1c54e3cc3ce5ef195422bd287445c65e4f5e`; deployment
+`dpl_BdkGjWh2hcMk3YLoyLat34e1ukwr` READY with canonical version/health200,
+all checks true and scheduler configured. Initial scoped error scan clear.
+Local123/123/build PASS; exact head `9f362b43edcf846e81e5824ae84fe7a18d88d7ba`
+passed CI985 (40157858911); preview `dpl_2fNNAuRrf5cYi6i5MASG7AbaqFdQ`
+READY/version/health200. Reviewed/merged tree
+`e2382dd257e951c54f62ff26fcd2193b86614c6f` matched. No active edits; safe
+handoff complete. These facts supersede the earlier source-time pending status.
+Live conditional-write persistence/account/browser acceptance NOT_VERIFIED.
 No live data mutation or private account parity claim is authorized by a build.
