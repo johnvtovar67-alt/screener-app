@@ -41,8 +41,15 @@ accepted bars, C1 decisions/UI, crons and account facts are unchanged.
 - Existing fundamentals fallback/fanout/cache assertions pass with the actual
   shared helper injected at the existing external-I/O test boundary. Existing
   full/compact screen and deadline regressions load the real local import graph.
-- Focused tests, freeze and canonical guards PASS. Full suite/build and exact
-  head CI/preview/production gates are pending at this source checkpoint.
+- Focused tests, freeze/canonical, full121/121 and optimized build PASS.
+  PR #323 production verified on `e0aef6f16c2be4a2ef062cff614527aab148e4fd`,
+  deployment `dpl_BBD2qTmMyKbqLkAnaMW2fsMGumog` READY, canonical version/health200,
+  all configuration checks true and scheduler configured; initial scoped error
+  scan clear. Exact head `177a7671b942dd696ca724956326269052dca6ca` passed CI #979
+  (40147590281); preview `dpl_9k1oSid7MxKpdETdmG72iRK74o8c` READY/version/health200.
+  Exact local/reviewed/merged tree `53a9cc6a75a2cb0178c025141dbfc8340934276d`
+  matched. Initial deadline harness needed a one-line real-helper import; no
+  deadline assertion or production behavior was weakened.
 
 No live `/api/top5`, failing provider, account mutation or credential/private
 capture was used. Private-account/browser parity remains NOT_VERIFIED.
@@ -50,7 +57,5 @@ Broader adapters, research-runtime isolation and immutable reads remain pending.
 
 ## Ownership
 
-This run owns `harden/c1-symbol-boundary-20261025` until exact release/handoff
-is recorded in its PR. Do not edit concurrently. Release facts supersede these
-source-time pending states; update during the next legitimate implementation,
-not a documentation-only release.
+PR #323 verified release and ownership handoff are complete. No active edits
+remain on its merged branch. Private-account/browser parity is still unverified.
