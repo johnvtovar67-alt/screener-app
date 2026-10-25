@@ -278,7 +278,7 @@ async function main(){try{
     sym:row=>row.symbol,price:row=>Number(row.price),CASH:['CASH'],signalPersistence:()=>({}),
     readTop5Response:modules.load('lib/top5Response.js').readTop5Response,performanceHistory:async()=>({records:[],available:true}),
     refreshC1Account:async(...args)=>{state.accountCalls.push(args);return {decision:account};},prepareC1Execution:()=>{},
-    setReloading:()=>{},setErr:value=>{state.error=value;},setResults:value=>{state.rows=typeof value==='function'?value(state.rows):value;},
+    setLoading:()=>{},setReloading:()=>{},setErr:value=>{state.error=value;},setResults:value=>{state.rows=typeof value==='function'?value(state.rows):value;},
     setStocks:value=>{state.stocks=typeof value==='function'?value(state.stocks):value;},setFeedHealth:value=>{state.health=typeof value==='function'?value(state.health):value;},
     setMarketScope:()=>{},setMarketRadar:()=>{},setLastUpdated:()=>{},setThemeStocks:()=>{},setThemeFeedHealth:()=>{},setApplicationRefreshAt:()=>{state.refreshes++;},
     setQuoteRefreshStatus:value=>{state.status=value;},setTimeout:fn=>{fn();return 0;},

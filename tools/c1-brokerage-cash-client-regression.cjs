@@ -52,7 +52,7 @@ async function exercise(result){
  // Exercise the real fetch wrapper as well: the dedicated operation must
  // never recover a revision conflict by making a second implicit API request.
  const refreshSource=page.slice(page.indexOf('  async function refreshC1Account('),page.indexOf('  async function prepareC1Execution('));
- const requests=[],storageWrites=[],box={accountRequestId:{current:0},SYNC_KEY:'key',
+ const requests=[],storageWrites=[],box={...loader.load('lib/c1RefreshResponse.js'),setAccountResponseVerified(){},accountRequestId:{current:0},SYNC_KEY:'key',
   localStorage:{getItem:()=> 'synthetic-key',setItem:(...args)=>storageWrites.push(args)},
   setAccountView(){},setAccountAbsent(){},setAccountError(){},setAccountBusy(){},
   fetch:async(url,options)=>{requests.push({url,options});return {ok:false,status:409,json:async()=>({error:'Revision conflict'})};}};

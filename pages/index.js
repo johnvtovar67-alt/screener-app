@@ -4,6 +4,7 @@ import {resolveC1NonCashPortfolio} from '../lib/c1NonCashPortfolio';
 import C1IntradayActivity from '../components/C1IntradayActivity';
 import {portfolioDateDisplay} from '../lib/portfolioDateDisplay';
 import {readTop5Response} from '../lib/top5Response';
+import {readC1AccountResponse} from '../lib/c1RefreshResponse';
 import C1PositionContextImport from '../components/C1PositionContextImport';
 import C1AccountDifferences from '../components/C1AccountDifferences';
 import {c1AccountDifferences} from '../lib/c1AccountDifferences';
@@ -133,21 +134,23 @@ export default function Home(){
   const[portfolio,setPortfolio]=useState([]),[results,setResults]=useState([]);
   const[holdingsComparison,setHoldingsComparison]=useState(null);
   const[accountView,setAccountView]=useState(null),[accountAbsent,setAccountAbsent]=useState(false),[accountBusy,setAccountBusy]=useState(false),[accountError,setAccountError]=useState("");
+  const[accountResponseVerified,setAccountResponseVerified]=useState(false);
   const accountRequestId=useRef(0);
   const screenRequestId=useRef(0);
   const syncRevision=useRef({key:"",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);
   async function refreshC1Account(body=null,{readOnly=!body}={}){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
-    if(!key){setAccountView(null);setAccountAbsent(false);if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
+    if(!key){setAccountView(null);setAccountAbsent(false);setAccountResponseVerified(false);if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
+    setAccountResponseVerified(false);
     let recovered=false;
     try{
-      const r=await fetch('/api/c1-account',{method:readOnly?'GET':'POST',headers:{authorization:`Bearer ${key}`,...(readOnly?{}:{'content-type':'application/json'})},...(readOnly?{}:{body:JSON.stringify(body||{operation:'refresh-analysis'})}),cache:'no-store'}),d=await r.json();
+      const r=await fetch('/api/c1-account',{method:readOnly?'GET':'POST',headers:{authorization:`Bearer ${key}`,...(readOnly?{}:{'content-type':'application/json'})},...(readOnly?{}:{body:JSON.stringify(body||{operation:'refresh-analysis'})}),cache:'no-store'}),d=await readC1AccountResponse(r,{stage:readOnly?'account-read':'account-refresh'});
       if(requestId!==accountRequestId.current)return;
       if(!r.ok){
         if(r.status===409&&!readOnly&&body?.operation!=='update-brokerage-cash'){
-          const latest=await fetch('/api/c1-account',{method:'GET',headers:{authorization:`Bearer ${key}`},cache:'no-store'}),view=await latest.json();
+          const latest=await fetch('/api/c1-account',{method:'GET',headers:{authorization:`Bearer ${key}`},cache:'no-store'}),view=await readC1AccountResponse(latest,{stage:'conflict-recovery'});
           if(requestId!==accountRequestId.current)return;
-          if(latest.ok){setAccountView(view);setAccountAbsent(false);recovered=true;}
+          if(latest.ok){setAccountView(view);setAccountAbsent(false);setAccountResponseVerified(true);recovered=true;}
         }
         if(r.status===404&&!body){setAccountView(null);setAccountAbsent(true);return null;}
         if([401,403].includes(r.status)){setAccountView(null);setAccountAbsent(false);}
@@ -157,9 +160,10 @@ export default function Home(){
         const entered=JSON.parse(localStorage.getItem(KEY)||'[]'),resolved=resolveC1NonCashPortfolio(entered,d.decision);
         if(JSON.stringify(entered)!==JSON.stringify(resolved)){localStorage.setItem(KEY,JSON.stringify(resolved));setPortfolio(resolved);}
       }
-      setAccountView(d);setAccountAbsent(false);setAccountError("");return d;
+      setAccountView(d);setAccountAbsent(false);setAccountResponseVerified(true);setAccountError("");return d;
     }catch(error){
       if(requestId!==accountRequestId.current)return;
+      if(!recovered)setAccountResponseVerified(false);
       setAccountAbsent(false);throw error;
     }
   }
@@ -168,7 +172,7 @@ export default function Home(){
     const requestId=accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
     if(!key)return;
     try{
-      const r=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify({operation:'prepare-execution'}),cache:'no-store'}),execution=await r.json();
+      const r=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify({operation:'prepare-execution'}),cache:'no-store'}),execution=await readC1AccountResponse(r,{stage:'opening-review'});
       if(requestId!==accountRequestId.current||localStorage.getItem(SYNC_KEY)!==key)return;
       if(!r.ok)throw new Error(execution.error||'Opening checks unavailable.');
       if(execution.decision?.decisionId!==view.decision.decisionId)throw new Error('The account changed during opening verification. Tap Reload to recheck the current account.');
@@ -319,7 +323,7 @@ export default function Home(){
   }
 
   async function load(t,verificationPass=0,{pricePortfolio=portfolio}={}){
-    const started=Date.now(),requestId=++screenRequestId.current;setReloading(true);setErr("");
+    const started=Date.now(),requestId=++screenRequestId.current;setReloading(true);setLoading(false);setErr("");
     const holdingQuotes=t==="opportunities"&&pricePortfolio.length?fetchHoldingQuotes(pricePortfolio,verificationPass>0,results,{isCurrent:()=>requestId===screenRequestId.current}).then(quoteRows=>{
       if(requestId===screenRequestId.current)setResults(prior=>pricePortfolio.map(p=>holdingQuoteRow(p,quoteRows.get(sym(p)),prior.find(row=>sym(row)===sym(p)))));
     }):null;
@@ -468,20 +472,24 @@ export default function Home(){
   }
 
   async function analyze(inputPortfolio,{forceQuotes=false}={}){
+    const requestId=++screenRequestId.current;
+    let openingReview=null;
     let analysisPortfolio=Array.isArray(inputPortfolio)?inputPortfolio:portfolio;
-    const holdingQuoteRequest=fetchHoldingQuotes(analysisPortfolio,forceQuotes).then(quoteRows=>{
-      setResults(prior=>analysisPortfolio.map(p=>holdingQuoteRow(p,quoteRows.get(sym(p)),prior.find(row=>sym(row)===sym(p)))));
+    const holdingQuoteRequest=fetchHoldingQuotes(analysisPortfolio,forceQuotes,results,{isCurrent:()=>requestId===screenRequestId.current}).then(quoteRows=>{
+      if(requestId===screenRequestId.current)setResults(prior=>analysisPortfolio.map(p=>holdingQuoteRow(p,quoteRows.get(sym(p)),prior.find(row=>sym(row)===sym(p)))));
       return quoteRows;
     });
-    setLoading(true);setErr("");let freshAccount=null,accountRefreshFailed=false;try{freshAccount=await refreshC1Account({operation:'refresh-account-inputs'});accountRefreshFailed=freshAccount===undefined;if(freshAccount)void prepareC1Execution(freshAccount);}catch(e){accountRefreshFailed=true;setErr(e.message);}if(freshAccount?.decision?.nonCashAdoptions?.length)analysisPortfolio=resolveC1NonCashPortfolio(analysisPortfolio,freshAccount.decision);setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,currentProductionPolicy={};
+    setLoading(true);setReloading(false);setErr("");
     try{
-      try{const sd=await fetchScreen("opportunities",0,{screenSymbols:freshAccount?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[]});snapshot=sd.stocks||[];performance=sd.performance.records;currentProductionPolicy=sd.meta?.productionPolicy||{};screenLive=!sd.meta?.clientSnapshotFallback&&String(sd.meta?.quoteFeedStatus||"live")==="live";setFeedHealth(screenHealth(sd.meta,sd.performance));setMarketScope(sd.meta||null);setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}
-      catch(e){setErr(`Portfolio positions were analyzed, but fresh-capital allocation is paused because the broad screen failed: ${e.message}`);setFeedHealth(h=>({...h,status:"unavailable"}));}
+      let freshAccount=null,accountRefreshFailed=false;try{freshAccount=await refreshC1Account({operation:'refresh-account-inputs'});if(requestId!==screenRequestId.current)return;accountRefreshFailed=freshAccount===undefined;if(freshAccount)openingReview=prepareC1Execution(freshAccount);}catch(e){if(requestId!==screenRequestId.current)return;accountRefreshFailed=true;setErr(e.message);}if(freshAccount?.decision?.nonCashAdoptions?.length)analysisPortfolio=resolveC1NonCashPortfolio(analysisPortfolio,freshAccount.decision);setAnalysisCapitalReady(false);setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,screenLoaded=false,currentProductionPolicy={};
+      try{const sd=await fetchScreen("opportunities",0,{screenSymbols:freshAccount?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[]});if(requestId!==screenRequestId.current)return;screenLoaded=true;snapshot=sd.stocks||[];performance=sd.performance.records;currentProductionPolicy=sd.meta?.productionPolicy||{};screenLive=!sd.meta?.clientSnapshotFallback&&String(sd.meta?.quoteFeedStatus||"live")==="live";setFeedHealth(screenHealth(sd.meta,sd.performance));setMarketScope(sd.meta||null);setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}
+      catch(e){if(requestId!==screenRequestId.current)return;setErr(`Portfolio positions were analyzed, but fresh-capital allocation is paused because the broad screen failed: ${e.message}`);setFeedHealth(h=>({...h,status:"unavailable"}));}
       let heldTimingVerified=true;
-      try{const heldSymbols=analysisPortfolio.filter(p=>role(p.symbol,p.role)==="Swing").map(p=>sym(p)).filter(s=>s&&!CASH.includes(s));if(heldSymbols.length){const tr=await fetch(`/api/entry-timing?symbols=${encodeURIComponent(heldSymbols.join(','))}`,{cache:'no-store'}),td=await tr.json();if(!tr.ok||!td.timing||typeof td.timing!=="object")throw new Error(td.error||"holding timing verification failed");timingBySymbol=new Map(Object.entries(td.timing));heldTimingVerified=heldSymbols.every(symbol=>timingBySymbol.has(symbol));if(!heldTimingVerified)throw new Error("holding timing verification was incomplete");}}catch(e){heldTimingVerified=false;screenLive=false;setErr(`Portfolio positions remain visible, but all capital actions are paused because held-position verification failed: ${e.message}`);}
-      snapshot=snapshot.map(s=>({...s,...(timingBySymbol.has(sym(s))?{entryTiming:timingBySymbol.get(sym(s))}:{}),signalPersistence:s.signalPersistence||{...signalPersistence(performance,sym(s)),historyAvailable:performance.length>0}}));setStocks(snapshot);setAnalysisCapitalReady(screenLive);
+      try{const heldSymbols=analysisPortfolio.filter(p=>role(p.symbol,p.role)==="Swing").map(p=>sym(p)).filter(s=>s&&!CASH.includes(s));if(heldSymbols.length){const tr=await fetch(`/api/entry-timing?symbols=${encodeURIComponent(heldSymbols.join(','))}`,{cache:'no-store'}),td=await tr.json();if(requestId!==screenRequestId.current)return;if(!tr.ok||!td.timing||typeof td.timing!=="object")throw new Error(td.error||"holding timing verification failed");timingBySymbol=new Map(Object.entries(td.timing));heldTimingVerified=heldSymbols.every(symbol=>timingBySymbol.has(symbol));if(!heldTimingVerified)throw new Error("holding timing verification was incomplete");}}catch(e){if(requestId!==screenRequestId.current)return;heldTimingVerified=false;screenLive=false;setErr(`Portfolio positions remain visible, but all capital actions are paused because held-position verification failed: ${e.message}`);}
+      snapshot=snapshot.map(s=>({...s,...(timingBySymbol.has(sym(s))?{entryTiming:timingBySymbol.get(sym(s))}:{}),signalPersistence:s.signalPersistence||{...signalPersistence(performance,sym(s)),historyAvailable:performance.length>0}}));setStocks(screenLoaded?snapshot:pausePriorRows);setAnalysisCapitalReady(screenLive);
       const bySymbol=new Map(snapshot.map(s=>[sym(s),s]));
       const verifiedHoldingQuotes=await holdingQuoteRequest;
+      if(requestId!==screenRequestId.current)return;
       for(const p of analysisPortfolio){
         try{
           if(CASH.includes(p.symbol)){rows.push({...p,...calc(p,p.avgCost||1),role:role(p.symbol,p.role)});continue;}
@@ -509,7 +517,7 @@ export default function Home(){
       localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(nextControl.state));setC1Control(nextControl);if(syncKey)void pushCloudPortfolio(analysisPortfolio,syncKey,nextControl.state);
       }
       const analyzedAt=new Date();setPortfolioAnalyzedAt(analyzedAt);setLastUpdated(analyzedAt);
-    }finally{setLoading(false);setApplicationRefreshAt(new Date());}
+    }finally{await Promise.allSettled([holdingQuoteRequest,openingReview]);if(requestId===screenRequestId.current){setLoading(false);setApplicationRefreshAt(new Date());}}
   }
   async function check(e){
     e?.preventDefault?.();setErr("");const key=symbol.trim().toUpperCase();if(!key){setErr("Enter a ticker symbol first.");return;}const started=Date.now();setChecking(true);
@@ -518,7 +526,7 @@ export default function Home(){
     finally{const remaining=650-(Date.now()-started);if(remaining>0)await new Promise(resolve=>setTimeout(resolve,remaining));setChecking(false);}
   }
   async function openTab(nextTab){setTab(nextTab);setErr("");manualVerificationPass.current=0;if(openedTabs.current.has(nextTab))return;openedTabs.current.add(nextTab);if(nextTab==="portfolio")return portfolio.length>0?analyze():undefined;if(nextTab==="themes")return load(selectedTheme,0);}
-  async function handleReload(){const refreshedPortfolio=await refreshEnteredPortfolio();if(tab==="account-tools")return recoverC1Account();if(tab==="portfolio")return analyze(refreshedPortfolio||portfolio,{forceQuotes:true});if(tab==="single")return check();manualVerificationPass.current=Math.min(20,manualVerificationPass.current+1);return load(tab==="themes"?selectedTheme:"opportunities",manualVerificationPass.current,{pricePortfolio:refreshedPortfolio||portfolio});}
+  async function handleReload(){const requestId=++screenRequestId.current,refreshedPortfolio=await refreshEnteredPortfolio();if(requestId!==screenRequestId.current)return;if(tab==="account-tools"){setReloading(false);setLoading(false);return recoverC1Account();}if(tab==="portfolio")return analyze(refreshedPortfolio||portfolio,{forceQuotes:true});if(tab==="single"){setReloading(false);setLoading(false);return check();}manualVerificationPass.current=Math.min(20,manualVerificationPass.current+1);return load(tab==="themes"?selectedTheme:"opportunities",manualVerificationPass.current,{pricePortfolio:refreshedPortfolio||portfolio});}
 
   const portfolioValueForCards=useMemo(()=>results.length?results.reduce((a,r)=>a+(+r.value||0),0):portfolio.reduce((a,p)=>a+(+p.shares||0)*(+p.avgCost||0),0),[results,portfolio]);
   const resultForCards=useMemo(()=>new Map(results.map(r=>[sym(r),r])),[results]);
@@ -711,14 +719,14 @@ export default function Home(){
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&!accountMatches&&<p role="status">Account details need attention. <button onClick={()=>setTab("account-tools")}>Open Account settings</button></p>}
-    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} positionRows={results} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} executionDecision={accountView.executionDecision} manualRecommendations={accountView.manualRecommendations} purchaseDiagnostics={accountView.purchaseDiagnostics} openingPlan={accountMatches?accountView.openingPlan:null} openingError={accountView.openingError} decision={accountMatches?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the holding differences in Account settings to restore candidates and checked quantities."}}/>}
+    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} positionRows={results} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} executionDecision={accountView.executionDecision} manualRecommendations={accountView.manualRecommendations} purchaseDiagnostics={accountView.purchaseDiagnostics} openingPlan={accountMatches&&accountResponseVerified?accountView.openingPlan:null} openingError={accountView.openingError} decision={accountMatches?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the holding differences in Account settings to restore candidates and checked quantities."}}/>}
     {tab==="opportunities"&&!accountView&&<section className="card" aria-label="C1 account unavailable">
       <h2>Opportunities</h2>
       <div className="emptyState" role="status"><b>{reloading||accountBusy?'Loading C1 analysis…':syncKey?'C1 analysis is unavailable.':'Connect your recorded portfolio to load C1.'}</b>
         <span>{reloading||accountBusy?'Ratings and quantities will appear when the account review completes.':syncKey?'Reload to retry. If it remains unavailable, review Account settings.':'Open Account settings to connect the portfolio you use on your other device.'}</span>
       </div>
     </section>}
-    {tab==="portfolio"&&<><C1BrokerageCash decision={accountView?.decision} onSave={updateBrokerageCash} busy={accountBusy||reloading||loading}/><section className="card"><div className="section"><div><h2>💼 My Portfolio</h2><p className="sub">Your holdings and current trading actions.</p></div><button disabled={loading} onClick={async()=>analyze(await refreshEnteredPortfolio()||portfolio,{forceQuotes:true})}>{loading?"Analyzing...":"Analyze Portfolio"}</button></div><div className="inputs"><input value={ns} onChange={e=>setNs(e.target.value)} placeholder="Symbol"/><input value={nsh} onChange={e=>setNsh(e.target.value)} placeholder="Shares"/><input value={nc} onChange={e=>setNc(e.target.value)} placeholder="Avg cost"/><label className="openedInput" title="First purchase date — adding shares does not reset this date"><small>First purchase date</small><input aria-label="Position opened date" type="date" value={openedDate} onInput={e=>setOpenedDate(e.currentTarget.value)} onChange={e=>setOpenedDate(e.target.value)}/></label><select value={nr} onChange={e=>setNr(e.target.value)}>{ROLES.map(r=><option key={r}>{r}</option>)}</select><button disabled={accountBusy} onClick={add}>Add / Update</button></div><div className="chips">{visiblePortfolio.map(p=><span key={p.symbol}><b>{p.symbol}</b> {p.shares} @ {money(p.avgCost)} <select value={role(p.symbol,p.role)} onChange={e=>setRole(p.symbol,e.target.value)}>{ROLES.map(r=><option key={r}>{r}</option>)}</select><button onClick={()=>save(portfolio.filter(x=>x.symbol!==p.symbol))}>×</button></span>)}</div></section>
+    {tab==="portfolio"&&<><C1BrokerageCash decision={accountView?.decision} onSave={updateBrokerageCash} busy={accountBusy||reloading||loading}/><section className="card"><div className="section"><div><h2>💼 My Portfolio</h2><p className="sub">Your holdings and current trading actions.</p></div><button disabled={loading} onClick={handleReload}>{loading?"Analyzing...":"Analyze Portfolio"}</button></div><div className="inputs"><input value={ns} onChange={e=>setNs(e.target.value)} placeholder="Symbol"/><input value={nsh} onChange={e=>setNsh(e.target.value)} placeholder="Shares"/><input value={nc} onChange={e=>setNc(e.target.value)} placeholder="Avg cost"/><label className="openedInput" title="First purchase date — adding shares does not reset this date"><small>First purchase date</small><input aria-label="Position opened date" type="date" value={openedDate} onInput={e=>setOpenedDate(e.currentTarget.value)} onChange={e=>setOpenedDate(e.target.value)}/></label><select value={nr} onChange={e=>setNr(e.target.value)}>{ROLES.map(r=><option key={r}>{r}</option>)}</select><button disabled={accountBusy} onClick={add}>Add / Update</button></div><div className="chips">{visiblePortfolio.map(p=><span key={p.symbol}><b>{p.symbol}</b> {p.shares} @ {money(p.avgCost)} <select value={role(p.symbol,p.role)} onChange={e=>setRole(p.symbol,e.target.value)}>{ROLES.map(r=><option key={r}>{r}</option>)}</select><button onClick={()=>save(portfolio.filter(x=>x.symbol!==p.symbol))}>×</button></span>)}</div></section>
       {results.length>0&&<section className="card"><h2>Portfolio Intelligence</h2>{portfolioAnalyzedAt&&<p className="analysisTimestamp">Analysis updated {portfolioAnalyzedAt.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})} on this device</p>}<div className="portfolioSummary"><div><small>Total Value</small><b>{money(displayedPortfolioValue)}</b></div><div><small>Swing Capital</small><b>{money(displayedSwingCapital)}</b></div><div><small>Net Gain / Loss</small><b className={portfolioGainLoss>=0?"pos":"neg"}>{money(portfolioGainLoss)} / {pct(portfolioGainLossPct)}</b></div></div>{finalActionGroups.length>0&&<div className="rotationBox"><b>🔄 Recommended Capital Actions</b><p className="actionHelp">Complete the sells first, then place the buys in priority order. Values use the prices from this analysis.</p>{sellActions.length>0&&<div className="tradeStep"><div className="tradeStepHead"><span>1</span><div><b>Sell or reduce</b><small>Orders that create buying power</small></div></div><div className="tradeRows">{sellActions.map((x,i)=><div className="tradeRow" key={`sell-${x.symbol}-${i}`}><div><b>{x.symbol}</b><small>{x.label}</small></div><div><b>Sell {x.shares} {x.shares===1?"share":"shares"}</b><small>{money(x.amount)} estimated proceeds{x.remainingShares>0?` • Keep ${x.remainingShares} shares`:""}</small></div></div>)}</div></div>} {buyActions.length>0&&<div className="tradeStep"><div className="tradeStepHead"><span>{sellActions.length?2:1}</span><div><b>Buy in this order</b><small>Highest-ranked C1 opportunity first</small></div></div><div className="tradeRows">{buyActions.map(x=><div className="tradeRow buyTrade" key={`buy-${x.symbol}`}><div><b>{x.symbol}</b><small>Priority #{x.rank}</small></div><div><b>Buy {x.shares} {x.shares===1?"share":"shares"}</b><small>{money(x.amount)} estimated cost</small></div></div>)}</div></div>}<div className="cashAfter"><div><b>Cash remaining</b><small>After all listed sells and buys</small></div><b>{money(estimatedCashAfterActions)}</b></div></div>}<div className="desktopTable"><div className="scroll"><table><thead><tr><th>Position</th><th>Open Date</th><th>Decision</th><th>Why / Evidence</th><th>Price</th><th>Gain/Loss</th></tr></thead><tbody>{visibleResults.map(s=><PortfolioRow key={sym(s)} s={s}/>)}</tbody></table></div></div><div className="mobilePortfolio">{visibleResults.map(s=><PortfolioRow mobile key={sym(s)} s={s}/>)}</div></section>}
       {missingOpenDateSymbols.length>0&&<section className="card"><div className="universeStatus warning"><b>Opening date needed</b><span>Add the opening date for {missingOpenDateSymbols.join(", ")} to complete its position review.</span></div></section>}
     </>}

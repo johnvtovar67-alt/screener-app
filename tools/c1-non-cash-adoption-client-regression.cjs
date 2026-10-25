@@ -3,7 +3,7 @@ const {createWorkflowApi}=require('./fixtures/c1-trading-workflow-api.cjs');
 (async()=>{
  const api=createWorkflowApi('adoption'),f=api.fixture,page=fs.readFileSync('pages/index.js','utf8');
  const original=JSON.stringify(f.adoptionPortfolioRecord.portfolio),saved=new Map([['key','offline_workflow_fixture_key_000001'],['portfolio',original]]),calls=[],state={error:'',syncAttempts:0};
- const box={...f.loader.load('lib/c1NonCashPortfolio.js'),accountView:null,portfolio:JSON.parse(original),accountRequestId:{current:0},syncPullId:{current:0},syncRevision:{current:{key:'offline_workflow_fixture_key_000001',etag:'"core"'}},syncDirty:{current:false},syncQueue:{current:Promise.resolve()},syncStatus:'Synced',KEY:'portfolio',SYNC_KEY:'key',C1_DRAWDOWN_KEY:'risk',
+ const box={...f.loader.load('lib/c1NonCashPortfolio.js'),...f.loader.load('lib/c1RefreshResponse.js'),setAccountResponseVerified(){},accountView:null,portfolio:JSON.parse(original),accountRequestId:{current:0},syncPullId:{current:0},syncRevision:{current:{key:'offline_workflow_fixture_key_000001',etag:'"core"'}},syncDirty:{current:false},syncQueue:{current:Promise.resolve()},syncStatus:'Synced',KEY:'portfolio',SYNC_KEY:'key',C1_DRAWDOWN_KEY:'risk',
   localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},
   setAccountView:v=>box.accountView=v,setPortfolio:v=>box.portfolio=v,setAccountAbsent(){},setAccountBusy(){},setResults(){},setAccountError:v=>state.error=v,setSyncStatus(){},
   pushCloudPortfolio:async()=>{state.syncAttempts++;return false;},

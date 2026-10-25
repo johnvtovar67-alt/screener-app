@@ -46,7 +46,7 @@ import { applyV11ProductionPolicy } from "../../lib/v11ProductionPolicy";
 import { getV11ProductionSnapshot } from "../../lib/v11ProductionSnapshot";
 import { buildTop5UnavailableResponse } from "../../lib/top5Response";
 
-import { profileTop5Request, top5Phase, top5Fetch, top5Count, top5WithinBudget, assertTop5Active, isTop5Deadline, top5ObserveScreenResponse, top5ObserveScreenFailure } from "../../lib/top5Diagnostics";
+import { profileTop5Request, top5Phase, top5Fetch, top5Count, top5WithinBudget, assertTop5Active, isTop5Deadline, top5ObserveScreenResponse, top5ObserveScreenFailure, top5RequestId } from "../../lib/top5Diagnostics";
 
 export const config = { maxDuration: 60 };
 
@@ -441,7 +441,8 @@ async function fetchQuoteBatchResilient(symbols, key) {
       for (const row of rows) {
         const symbol = normalizeSymbol(row?.symbol);
         if (symbol) {
-          cache.set(symbol, { ts: Date.now(), data: row });
+          // A rejected price must not replace the last usable cache entry.
+          if (toPositiveNumber(row?.price)) cache.set(symbol, { ts: Date.now(), data: row });
           seen.add(symbol);
         }
       }
@@ -510,7 +511,7 @@ async function fetchFmpQuotes(symbols = []) {
       const symbol = normalizeSymbol(row?.symbol);
       if (symbol) {
         assertTop5Active();
-        cache.set(symbol, { ts: Date.now(), data: row });
+        if (toPositiveNumber(row?.price)) cache.set(symbol, { ts: Date.now(), data: row });
         bySymbol.set(symbol, row);
       }
     }
@@ -658,6 +659,7 @@ async function buildBroadSnapshot(verificationPass = 0) {
   if (
     verificationPass === 0 &&
     cached?.rows &&
+    cached.quoteCoverageAdequate === true &&
     !cached.promise &&
     cached?.requiredSessionDate === requiredSessionDate &&
     now - cached.ts < CACHE_MS
@@ -1121,6 +1123,7 @@ export default async function handler(req, res) {
   return profileTop5Request(async () => {
   try {
     res.setHeader("Cache-Control", "no-store, max-age=0");
+    res.setHeader("X-C1-Request-Id", top5RequestId());
     const themeKey = String(req.query.theme || "opportunities").toLowerCase(),
       config = getThemeConfig(themeKey),
       verificationPass = Math.min(

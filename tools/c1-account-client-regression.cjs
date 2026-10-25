@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const {readC1AccountResponse}=createResearchModuleLoader(process.cwd()).load('lib/c1RefreshResponse.js');
 const {mergeC1AccountPortfolio}=createResearchModuleLoader(process.cwd()).load('lib/c1AccountPortfolio.js');
 const page=fs.readFileSync('pages/index.js','utf8');
 const app=fs.readFileSync('pages/_app.js','utf8');
@@ -28,8 +29,8 @@ const refresh=extract('  async function refreshC1Account(','  async function sta
 const save=extract('  async function saveC1Activity(','  const[transactionCheck');
 const disconnect=extract('  function disconnectSync(','  async function copySyncKey(');
 function client(fetcher){
- const state={view:{decision:{id:'previous'}},error:'',key:'test-only-key',writes:0};
- const box={accountRequestId:{current:0},syncPullId:{current:0},syncWriteId:{current:0},syncRevision:{current:{}},syncDirty:{current:false},SYNC_KEY:'key',
+ const state={view:{decision:{id:'previous'}},verified:true,error:'',key:'test-only-key',writes:0};
+ const box={readC1AccountResponse,setAccountResponseVerified:v=>{state.verified=v;},accountRequestId:{current:0},syncPullId:{current:0},syncWriteId:{current:0},syncRevision:{current:{}},syncDirty:{current:false},SYNC_KEY:'key',
   localStorage:{getItem:()=>state.key,removeItem:()=>{state.key='';},setItem:()=>{state.writes++;}},
   fetch:fetcher,setAccountView:v=>{state.view=v;},setAccountAbsent:v=>{state.absent=v;},setAccountError:v=>{state.error=v;},
   setSyncKey(){},setSyncInput(){},setSyncStatus(){}};
@@ -53,7 +54,7 @@ function client(fetcher){
  await assert.rejects(missing.box.refresh({operation:'record-session'}));
  const absent=client(async()=>({ok:false,status:404,json:async()=>({})}));
  await absent.box.refresh();assert.equal(absent.state.view,null);assert.equal(absent.state.absent,true);
- const latest={decision:{id:'latest',executable:false}};
+ const latest={decision:{contract:'c1-account-decision-v1',decisionId:'latest:1',revision:1,positions:[],id:'latest',executable:false}};
  let rejectOld,resolveOld,count=0;
  const race=client(()=>++count===1?new Promise((_,reject)=>{rejectOld=reject;}):Promise.resolve({ok:true,json:async()=>latest}));
  const old=race.box.refresh();await race.box.refresh();rejectOld(new Error('Older failed request'));await old;
@@ -68,7 +69,7 @@ function client(fetcher){
  const methods=[];
  const recovery=client(async(url,options)=>{methods.push(options.method);return options.method==='GET'?{ok:true,json:async()=>latest}:{ok:false,status:409,json:async()=>({code:'ACCOUNT_SAVE_CONFLICT',error:'Conflict'})};});
  await assert.rejects(recovery.box.refresh({operation:'record-position-context'}),/saved account was reloaded/);
- assert.deepEqual(methods,['POST','GET']);assert.deepEqual(recovery.state.view,latest);assert.equal(recovery.state.writes,0);
+ assert.deepEqual(methods,['POST','GET']);assert.deepEqual(recovery.state.view,latest);assert.equal(recovery.state.verified,true,'Validated conflict recovery is current while the original mutation still fails');assert.equal(recovery.state.writes,0);
  // Service outages and invalid inputs must not enter the conflict-recovery
  // GET path or erase the retained account. Never repeat a rejected mutation.
  for(const status of [422,503,500])for(const operation of ['record-position-context','update-brokerage-cash']){
@@ -83,8 +84,8 @@ function client(fetcher){
  await readOnly.box.refresh(null,{readOnly:true});assert.deepEqual(readOnly.state.view,latest);
  // Completed account display is authoritative before a separate opening request.
  // Opening failures and delayed replies must not remove or replace that analysis.
- const analysis={decision:{decisionId:'completed:4',revision:4,current:true,positions:[{symbol:'TEST',action:'Hold'}]}};
- const execution={...analysis,decision:{...analysis.decision,positions:[{symbol:'TEST',action:'Add candidate'}]},executionDecision:{decisionId:'completed:4:opening',current:true},openingPlan:{id:'verified'}};
+ const analysis={decision:{contract:'c1-account-decision-v1',decisionId:'completed:4',revision:4,current:true,positions:[{symbol:'TEST',action:'Hold',stops:[],exits:[],reviewRules:[]}]}};
+ const execution={...analysis,decision:{...analysis.decision,positions:[{symbol:'TEST',action:'Add candidate',stops:[],exits:[],reviewRules:[]}]},executionDecision:{contract:'c1-account-decision-v1',decisionId:'completed:4:opening',revision:4,positions:[],current:true},openingPlan:{id:'verified'}};
  const prepared=client(async(url,options)=>{assert.equal(JSON.parse(options.body).operation,'prepare-execution');return {ok:true,json:async()=>execution};});
  await prepared.box.prepareC1Execution(analysis);
  assert.deepEqual(prepared.state.view.decision,analysis.decision,'Opening overlays cannot rewrite completed holding guidance');
@@ -117,7 +118,7 @@ function client(fetcher){
  const analyzeSource=extract('  async function analyze(','  async function check(');
  for(const result of ['fresh','failure','superseded']){
   let capitalWrites=0;
-  const noop=()=>{},analysisBox={portfolio:[],accountView:null,KEY:'portfolio',C1_DRAWDOWN_KEY:'risk',
+  const noop=()=>{},analysisBox={screenRequestId:{current:0},setReloading:noop,portfolio:[],accountView:null,KEY:'portfolio',C1_DRAWDOWN_KEY:'risk',
    refreshC1Account:async()=>{if(result==='failure')throw new Error('Account unavailable');return result==='fresh'?latest:undefined;},
    fetchScreen:async()=>({stocks:[],performance:{records:[]},meta:{}}),screenHealth:()=>({}),
    setLoading:noop,setErr:noop,setAnalysisCapitalReady:noop,setHoldingsComparison:noop,setFeedHealth:noop,setMarketScope:noop,setMarketRadar:noop,setStocks:noop,setResults:noop,setPortfolioAnalyzedAt:noop,setLastUpdated:noop,setApplicationRefreshAt:noop,

@@ -19,7 +19,7 @@ const checks=[
   ,['returning to an opened page does not fetch again',/async function openTab\(nextTab\)\{[^}]*if\(openedTabs\.current\.has\(nextTab\)\)return;/.test(s)]
   ,['portfolio changes do not auto analyze',!s.includes('if(tab==="portfolio"&&portfolio.length>0)void analyze()')]
   ,['single-symbol analyze has visible progress',s.includes('[checking,setChecking]=useState(false)')&&s.includes('disabled={checking}')&&s.includes('checking?"Analyzing...":"Analyze"')]
-  ,['single-symbol reload analyzes the entered ticker',s.includes('if(tab==="single")return check();')]
+  ,['single-symbol reload analyzes the entered ticker',s.includes('if(tab==="single"){setReloading(false);setLoading(false);return check();}')]
   ,['single-symbol analysis uses bounded authoritative payload',s.includes('fetchScreen("opportunities",0,{includeSymbol:key})')&&!s.includes('fetchScreen("opportunities",0,{full:true})')]
 ];
 const top5=fs.readFileSync('pages/api/top5.js','utf8');
