@@ -3,6 +3,15 @@
 const assert=require('node:assert/strict');
 const {assessC1Capture}=require('./c1-readonly-canary.cjs');
 const {createWorkflowFixture,currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const currentSource=fs.readFileSync(require.resolve('./c1-readonly-canary.cjs'),'utf8');
+const projectionStart=currentSource.indexOf(' // Assess the actual consumed presentation projection'),projectionEnd=currentSource.indexOf(' if(!evidence.buySymbols.length)',projectionStart);
+assert(projectionStart>=0&&projectionEnd>projectionStart);
+const legacySource=currentSource.slice(0,projectionStart)+currentSource.slice(projectionEnd);
+assert.equal(crypto.createHash('sha256').update(legacySource).digest('hex'),'410318bbe5b14dd4f2d8a614159f3cfb0c64887b0a66bba6f55ab89f199d51bd','Only the additive captured projection assessment changes the PR331 canary');
+const legacyModule={exports:{}};
+new Function('require','module','exports','__dirname',legacySource)(require,legacyModule,legacyModule.exports,path.resolve(__dirname));
+const assessLegacy=legacyModule.exports.assessC1Capture;
 const clone=value=>JSON.parse(JSON.stringify(value));
 const originalFetch=global.fetch;
 global.fetch=async()=>{throw Error('No network allowed in read-only canary');};
@@ -15,7 +24,12 @@ async function main(){
  rows.forEach(row=>{row.eventRisk=events.find(event=>event.symbol===row.symbol);});
  const base={contract:'c1-readonly-canary-capture-v1',observedAt:f.now.toISOString(),
   account:{status:200,body},screen:{status:200,body:{stocks:rows,meta:{quoteFeedStatus:'live',fundamentalFeedStatus:'healthy'}}},portfolio:clone(f.portfolio)};
- const check=input=>assessC1Capture(input,{now:f.now});
+ const check=input=>{
+  const result=assessC1Capture(input,{now:f.now}),previous=assessLegacy(input,{now:f.now});
+  const comparable=clone(result);delete comparable.presentationProjection;
+  assert.deepEqual(comparable,previous,'All existing canary classifications, counts and evidence limitations retain complete PR331 output parity');
+  return result;
+ };
  const retained=f.loader.load('lib/c1ScreenEvidence.js').resolveC1ScreenEvidence({decision:body.decision,rows,current:true,reviewCurrent:true});
  const good=check(base);assert.equal(good.status,'CHECKED_BUY_ORDERS_PRESENT',JSON.stringify(good));
  assert(good.counts.checkedBuyOrders>0);
@@ -75,6 +89,30 @@ async function main(){
  assert.equal(assessC1Capture(closed,{now:beforeOpen}).status,'MARKET_CLOSED');
  const sensitive=clone(base);sensitive.account.body.openingError='PRIVATE_PROVIDER_URL_SECRET';sensitive.account.body.decision.privateKey='PRIVATE_SYNC_KEY';
  const output=JSON.stringify(check(sensitive));assert(!/PRIVATE_|LLL|MRNA|20000|estimatedPrice|shares|decisionId/.test(output));
+ // A checked server order is not proof an Add renders. Use a synthetic
+ // captured held position requiring review, then clear only that review.
+ const add=clone(base),buy=add.account.body.manualRecommendations.orders.find(order=>order.side==='buy');
+ assert(buy);
+ const position={...clone(add.account.body.decision.positions[0]),symbol:buy.symbol,action:'Review',exits:[],entryContext:{stage:'half'},recentMomentumReviews:[],reason:'Synthetic held-position review.'};
+ add.account.body.decision.positions=[position];
+ add.account.body.executionDecision={...add.account.body.executionDecision,positions:[clone(position)]};
+ add.portfolio=[{symbol:position.symbol,role:'Swing',shares:position.shares,avgCost:position.avgCost,openedAt:position.openedAt}];
+ add.positionRows=clone(add.screen.body.stocks);
+ add.account.body.openingPlan.orders=add.account.body.openingPlan.orders.filter(order=>order.side==='buy'&&order.symbol===buy.symbol);
+ add.account.body.manualRecommendations.orders=clone(add.account.body.openingPlan.orders);
+ const beforeAdd=JSON.stringify(add),suppressed=check(add);
+ assert(suppressed.counts.checkedBuyOrders>0,'The independent server recommendation is still present');
+ assert.equal(suppressed.presentationProjection.actionableBuyGroups,0,'The shared actual UI projection suppresses an Add when held-position review does not clear');
+ assert.equal(suppressed.presentationProjection.evidenceScope,'CAPTURED_INPUTS');
+ assert.equal(JSON.stringify(add),beforeAdd,'Shared projection assessment cannot alter captured records or authority');
+ add.account.body.decision.positions[0].action='Hold';add.account.body.executionDecision.positions[0].action='Hold';
+ const allowed=check(add);assert(allowed.presentationProjection.actionableBuyGroups>0,'Clearing the existing review restores the same checked Add without generating a new order');
+ assert.equal(allowed.browserRendering,'NOT_VERIFIED');assert.equal(allowed.privateAccountParity,'NOT_VERIFIED');assert.equal(allowed.productionAcceptance,'NOT_ESTABLISHED');
+ const omittedPositions=clone(add);delete omittedPositions.positionRows;
+ assert.equal(check(omittedPositions).presentationProjection,undefined,'Absent independent position quotes cannot be silently certified by screen quotes');
+ const malformedPositions=clone(add);malformedPositions.positionRows=[null];
+ const invalidProjection=assessC1Capture(malformedPositions,{now:f.now});assert.equal(invalidProjection.status,'EVIDENCE_UNAVAILABLE');assert(invalidProjection.reasonCodes.includes('POSITION_QUOTE_CAPTURE_INVALID'));
+ assert(!/LLL|MRNA|estimatedPrice|shares|decisionId/.test(JSON.stringify(allowed.presentationProjection)),'Only aggregate projection evidence is emitted');
  const {spawnSync}=require('node:child_process');
  const invalid=spawnSync(process.execPath,[require.resolve('./c1-readonly-canary.cjs'),'/PRIVATE_SYNC_KEY_DO_NOT_LOG'],{encoding:'utf8'});
  assert.equal(invalid.status,2);assert(!/PRIVATE_SYNC_KEY/.test(invalid.stderr+invalid.stdout));

@@ -1,3 +1,4 @@
+import {sendPublicApiFailure} from '../../lib/publicApiFailure';
 // pages/api/index.js
 
 import {
@@ -58,5 +59,5 @@ export default async function handler(req,res){
     const result={...analyzed,quoteVerification:verifyC1Quote(analyzed)};
     if(!result?.symbol||result.price===null||result.price===undefined)throw new Error(`No usable quote data returned for ${symbol}.`);
     return res.status(200).json({stock:result,meta:{mode:"single_symbol_expert_model_v8_historical_timing_all_symbols",note:"Stock quality and entry timing are separate gates. Daily-history timing is attached to every analyzed symbol and fresh capital cannot override a failed timing gate.",spyChange:spyQuote?.dayChangePct??null,qqqChange:qqqQuote?.dayChangePct??null,fundamentalDataStatus:result.fundamentalDataStatus||"unknown",quoteVerification:result.quoteVerification}});
-  }catch(err){console.error("api/index error:",err);return res.status(500).json({error:"Failed to analyze symbol.",detail:err.message||"Unknown error."})}
+  }catch{return sendPublicApiFailure(res,{status:500,code:'SYMBOL_ANALYSIS_UNAVAILABLE',stage:'symbol-analysis',error:'Failed to analyze symbol.',detail:'Current symbol analysis is unavailable. Reload before using it for a capital decision.'});}
 }

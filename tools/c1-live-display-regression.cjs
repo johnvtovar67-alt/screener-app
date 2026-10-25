@@ -21,7 +21,7 @@ const saved=JSON.stringify(orders);assert.equal(group(orders).length,1);assert.e
 assert.equal(group([...orders,{...orders[0],id:'other-stop',estimatedPrice:85}]).length,2);
 assert.equal(group([...orders,{...orders[0],id:'immediate',condition:undefined,phase:1}]).length,2);
 assert.equal(JSON.stringify(orders),saved,'Aggregation must preserve original fill identities');
-const fs=require('node:fs'),component=[fs.readFileSync('components/C1AccountOpportunities.js','utf8'),fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8')].join('\n');
+const fs=require('node:fs'),component=[fs.readFileSync('components/C1AccountOpportunities.js','utf8'),fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8'),fs.readFileSync('lib/c1OpportunitiesProjection.js','utf8')].join('\n');
 assert.ok(component.includes('const positionOrders=c1OrderDisplayGroups'),'Checked sells remain available in both tabs');
 assert.ok(component.includes(".filter(order=>order.side==='sell'&&!order.condition)"));
 assert.ok(component.includes('if(portfolioOnly&&!sellActions.length&&!verifyActions.length&&!actionableBuys.length)return null;'),'The orange box hides when only routine HOLD/WAIT conditions remain');

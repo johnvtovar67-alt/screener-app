@@ -5,7 +5,8 @@ const React=require('react'),{renderToStaticMarkup}=require('react-dom/server'),
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
 const file=path.resolve('components/C1AccountOpportunities.js'),viewFile=path.resolve('components/C1AccountOpportunitiesView.js');
-const source=fs.readFileSync(file,'utf8'),viewSource=fs.readFileSync(viewFile,'utf8');
+const currentSource=fs.readFileSync(file,'utf8'),source=require('./c1-opportunities-projection-extraction.cjs').restoreOpportunitiesProjection(currentSource),viewSource=fs.readFileSync(viewFile,'utf8');
+assert.equal(crypto.createHash('sha256').update(source).digest('hex'),'794a87727bfb4dcfc17e98fbb6948690fd4fa64606a29febd3cd5e1691a335b2','Shared projection extraction reconstructs the exact PR331 component');
 const seam=source.indexOf(' return renderC1AccountOpportunitiesView('),bodyStart=viewSource.indexOf(' return <><section');
 assert(seam>=0&&bodyStart>=0);
 const original="import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n"+
@@ -89,7 +90,7 @@ async function main(){try{
  // The extracted renderer is called synchronously, rather than scheduled as
  // a React child. Advance time on every implicit Date/Date.now read around
  // expiry and compare the complete callback/clock trace as well as markup.
- assert.match(source,/return renderC1AccountOpportunitiesView\(\{/);
+ assert.match(currentSource,/return projection\?renderC1AccountOpportunitiesView\(projection\):null/);
  assert.doesNotMatch(viewSource,/\buse(?:State|Effect|Ref|Memo|Callback|Context)\s*\(/,'The synchronous renderer must stay hook-free');
  for(const instant of ['2026-10-15T17:01:00.000Z','2026-10-15T17:02:59.995Z','2026-10-15T17:03:00.000Z'])for(const view of ['opportunities','portfolio']){
   clock=instant;

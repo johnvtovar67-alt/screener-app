@@ -1038,7 +1038,9 @@ async function recordPerformance(rows, snapshotKey) {
   })();
   globalThis[PERFORMANCE_RECORD_KEY] = { key, at: Date.now(), promise, ok: false };
   const ok = await promise;
-  globalThis[PERFORMANCE_RECORD_KEY] = { key, at: Date.now(), promise: null, ok };
+  // An older snapshot must not replace the newer recording generation.
+  if (globalThis[PERFORMANCE_RECORD_KEY]?.promise === promise)
+    globalThis[PERFORMANCE_RECORD_KEY] = { key, at: Date.now(), promise: null, ok };
   return ok;
 }
 
