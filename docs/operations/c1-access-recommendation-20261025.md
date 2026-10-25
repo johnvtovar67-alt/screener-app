@@ -1,5 +1,12 @@
 # Remaining access controls: specific recommendation and approval boundaries
 
+**Follow-up approval:** the owner approved the performance POST restriction,
+owner observation and six logging-only firewall buckets after PR #332. The
+[approved rollout and private owner walkthrough](c1-approved-access-rollout-20261025.md)
+and its release PR supersede the approval blockers below. This document retains
+the original assessment and exact policy rationale. Owner/WAF enforcement and
+actual enrollment/device/source verification are not claimed complete.
+
 Source inspected: main7876a16d2a3fa4a0e024f83c715b5a4fedae19ea (PR331).
 This workstream makes no application/configuration changes, WAF drafts, actual
 account requests, account enumeration, key lookup, research/cron calls or live

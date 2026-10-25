@@ -164,7 +164,7 @@ assert.throws(()=>provider.validateC1OpeningObservations({...tiny,allowPriceRevi
 const context={...loader.load('lib/c1AccountExecutionView.js'),...loader.load('lib/c1OpeningPriceReview.js'),...service,...execution,...intraday,...loader.load('lib/marketSession.js'),...loader.load('lib/c1AccountSave.js'),...loader.load('lib/c1AccountInput.js'),...loader.load('lib/c1AccountDecision.js'),...loader.load('lib/c1ManualRecommendations.js'),...loader.load('lib/c1HeldRankReview.js'),
  collectC1HeldRankReviews:async()=>({rows:[],unavailable:[]}),missingC1HoldingPrices:()=>[],collectC1HoldingCoverage:async()=>{throw Error('Unexpected holding collection');},collectC1AccountOpening:async()=>null,readStoredC1DatedBook:async()=>null,createHash:require('node:crypto').createHash,process:{env:{}},get(){},put(){},Date,console};
 const route=fs.readFileSync('pages/api/c1-account.js','utf8').replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
-Object.assign(context,loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
+Object.assign(context,require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored={record:JSON.parse(original),etag:'v0'},writes=0,fail=false,openingUnavailable=false,priceRevision=false,moved=false;

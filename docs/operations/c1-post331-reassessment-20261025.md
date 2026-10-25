@@ -1,5 +1,13 @@
 # C1 reassessment after PR331 — source checkpoint
 
+**Approved follow-up:** the owner subsequently approved the documented POST
+authorization repair, owner observation and preparation of six logging-only
+firewall buckets. See the [current rollout](c1-approved-access-rollout-20261025.md)
+and its release PR for implementation and exact deployment evidence. The
+historical approval blockers below are superseded. Optional architectural
+centralization is outside that completion scope; upstream Zod, actual device
+acceptance and brokerage reconciliation remain unresolved where stated.
+
 Owner instruction: continue independently; classify necessity, establish concrete
 blockers, choose the smallest safe solution, and implement authorized work. Preserve
 C1 policy, timing, UI, account facts, safeguards and normal crons. The release PR

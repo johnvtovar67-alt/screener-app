@@ -2,6 +2,7 @@ import {put,list,get} from '@vercel/blob';
 import {createHash,randomUUID} from 'crypto';
 import {cleanC1ControlState} from '../../lib/c1CapitalState';
 import {isBlobPreconditionFailed} from '../../lib/blobErrors';
+import {rejectUnauthorizedC1Owner} from '../../lib/c1OwnerAccess';
 
 // Redeployed after the project Blob store was connected so production picks up storage credentials.
 export const config={api:{bodyParser:{sizeLimit:'1mb'}}};
@@ -67,6 +68,7 @@ export default async function handler(req,res){
     return res.status(health.ok?200:503).json({storageReady:health.ok,error:health.ok?null:health.error});
   }
   const key=keyFrom(req);if(!validKey(key))return res.status(401).json({error:'A valid portfolio sync key is required.'});
+  if(['GET','PUT'].includes(req.method)&&rejectUnauthorizedC1Owner(res,{key,environment:process.env.VERCEL_ENV,surface:'portfolio'}))return;
   try{
     if(req.method==='GET'){
       const payload=await readPortfolio(key);if(!payload)return res.status(404).json({error:'No synced portfolio exists for this key.'});

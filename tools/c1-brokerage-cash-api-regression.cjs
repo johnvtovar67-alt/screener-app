@@ -22,7 +22,7 @@ const context={...service,...loader.load('lib/c1AccountSave.js'),...loader.load(
  collectC1HoldingCoverage(){throw Error('Cash update cannot refresh holdings');},
  collectC1HeldRankReviews(){throw Error('Cash update cannot refresh ranks');},
  reconcileC1BrokerCash(){throw Error('Cash update cannot reconcile strategy cash');}};
-Object.assign(context,loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
+Object.assign(context,require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
 vm.createContext(context);vm.runInContext(route,context);
 (async()=>{
  let stored={record:original,etag:'"original-strong-etag"'},writes=0,conflict=false;

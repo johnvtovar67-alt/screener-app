@@ -47,7 +47,7 @@ const route=fs.readFileSync(path.join(root,'pages/api/c1-account.js'),'utf8')
   .replace(/^import .*;$/gm,'').replace(/export const /g,'const ').replace(/export function /g,'function ')
   .replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
 assert.ok(!/^import /m.test(route));
-Object.assign(context,loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
+Object.assign(context,require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),loader.load('lib/c1ApiErrors.js'),{randomUUID:require('node:crypto').randomUUID});
 vm.createContext(context);vm.runInContext(route,context);
 const key='fixture'.repeat(6),accountPath='c1-accounts-v1/preview-compatibility-api/'+createHash('sha256').update(key).digest('hex')+'.json';
 function harness(record,book,observedAt){

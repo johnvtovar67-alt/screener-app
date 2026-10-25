@@ -3,6 +3,7 @@ import {reviewC1NonCashAdoption,verifyC1NonCashReceipts} from '../../lib/c1NonCa
 import {createHash,randomUUID} from 'node:crypto';
 import {c1AccountApiFailure,c1AccountDependency} from '../../lib/c1ApiErrors';
 import {logC1AccountOperationalStatus} from '../../lib/c1AccountOperationalStatus';
+import {rejectUnauthorizedC1Owner} from '../../lib/c1OwnerAccess';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
 import {saveC1AccountUpdate} from '../../lib/c1AccountSave';
@@ -94,6 +95,7 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'Method not allowed'});}
   const auth=String(req.headers.authorization||''),key=auth.startsWith('Bearer ')?auth.slice(7):'';
   if(!/^[A-Za-z0-9_-]{32,128}$/.test(key))return res.status(401).json({error:'Your portfolio sync key is required.'});
+  if(rejectUnauthorizedC1Owner(res,{key,environment,surface:'account'}))return;
   const scope=environment==='production'?'production':`preview-${commit}`;
   const path=`c1-accounts-v1/${scope}/${createHash('sha256').update(key).digest('hex')}.json`;
   const requestId=randomUUID(),body=req.body||{},operation=req.method==='GET'?'refresh-analysis':body.operation;

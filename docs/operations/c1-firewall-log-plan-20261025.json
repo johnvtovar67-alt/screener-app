@@ -1,0 +1,269 @@
+{
+  "format": "c1-firewall-logging-plan-v1",
+  "teamId": "team_vBLhac1QJ54zPEiWFFK7XmGN",
+  "projectId": "prj_9MJJaMsEfOdtQKXj4VFI7TfJcBjQ",
+  "projectName": "screener-app-cq5t",
+  "phase": "all-match-log",
+  "status": "LOCAL_REVIEW_ARTIFACT_NOT_PLATFORM_STAGED",
+  "thresholdStatus": "PREPARED_ONLY_NOT_STAGED_OR_ACTIVE",
+  "windowSeconds": 60,
+  "algorithm": "fixed_window",
+  "keys": [
+    "ip"
+  ],
+  "rules": [
+    {
+      "name": "C1 broad acquisition",
+      "requestsPer60sPerIp": 120,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/top5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "C1 single-symbol acquisition",
+      "requestsPer60sPerIp": 12000,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/index"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/lookup"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "C1 account POST",
+      "requestsPer60sPerIp": 300,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/c1-account"
+            },
+            {
+              "type": "method",
+              "op": "eq",
+              "value": "POST"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "C1 portfolio PUT",
+      "requestsPer60sPerIp": 120,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/portfolio-sync"
+            },
+            {
+              "type": "method",
+              "op": "eq",
+              "value": "PUT"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "C1 saved-state reads",
+      "requestsPer60sPerIp": 600,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/c1-account"
+            },
+            {
+              "type": "method",
+              "op": "eq",
+              "value": "GET"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/portfolio-sync"
+            },
+            {
+              "type": "method",
+              "op": "eq",
+              "value": "GET"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/performance"
+            },
+            {
+              "type": "method",
+              "op": "eq",
+              "value": "GET"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "C1 auxiliary acquisition",
+      "requestsPer60sPerIp": 300,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/entry-timing"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/options"
+            },
+            {
+              "type": "method",
+              "op": "eq",
+              "value": "GET"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "environment",
+              "op": "eq",
+              "value": "production"
+            },
+            {
+              "type": "path",
+              "op": "eq",
+              "value": "/api/catalysts"
+            },
+            {
+              "type": "method",
+              "op": "eq",
+              "value": "POST"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
