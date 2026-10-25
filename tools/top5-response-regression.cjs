@@ -37,7 +37,7 @@ function screenUI(fetch,priorRows=snapshot.stocks){
   performanceHistory:async()=>{state.historyReads++;return {records:[],available:true};},
   signalPersistence:()=>({}),sym:row=>row.symbol,CASH:['CASH'],specialSituation:()=>null,fd:row=>row.finalDecision,
   refreshC1Account:async()=>null,prepareC1Execution:()=>{throw new Error('No account to prepare');},
-  setReloading:value=>set('reloading',value),setErr:value=>set('error',value),setStocks:value=>set('stocks',value),
+  setLoading(){},setReloading:value=>set('reloading',value),setErr:value=>set('error',value),setStocks:value=>set('stocks',value),
   setFeedHealth:value=>set('feedHealth',value),setThemeStocks:value=>set('themeStocks',value),setThemeFeedHealth:value=>set('themeFeedHealth',value),
   setMarketScope:value=>set('marketScope',value),setMarketRadar:value=>set('marketRadar',value),setLastUpdated:value=>set('lastUpdated',value),setApplicationRefreshAt:value=>set('applicationRefreshAt',value)};
  vm.createContext(box);vm.runInContext(screenBoundary+'\n'+actionBoundary+'\nthis.ui={load,fetchScreen,act};',box);
@@ -77,7 +77,7 @@ async function main(){
  assert.equal(liveUI.state.feedHealth.status,'healthy');assert.equal(liveUI.act(liveUI.state.stocks[0]),'Buy');
  assert.equal(liveUI.state.stocks[0].clientSnapshotFallback,false);assert.equal(live.writes.length,1);
 
- for(const failedResponse of [new Response('FUNCTION_INVOCATION_TIMEOUT',{status:504}),new Response('<html>Bad upstream response</html>',{status:200}),new Response('{"stocks":',{status:200}),json({}),json({stocks:[]}),json({meta:{}})]){
+ for(const failedResponse of [new Response('FUNCTION_INVOCATION_TIMEOUT',{status:504}),new Response('<html>Bad upstream response</html>',{status:200}),new Response('{"stocks":',{status:200}),json({}),json({stocks:[]}),json({meta:{}}),json({stocks:[null],meta:{}})]){
   const boundary=fetchBoundary([json(snapshot),failedResponse]);
   await boundary.fetch(request+'0');
   const priorCache=[...boundary.storage.values()][0],ui=screenUI(boundary.fetch);

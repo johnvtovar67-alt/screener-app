@@ -21,7 +21,7 @@ function client(){
   refreshC1Account:()=>new Promise(resolve=>{resolveAccount=resolve;}),prepareC1Execution:()=>{},
   performanceHistory:async()=>({records:[],available:true}),signalPersistence:()=>({}),sym:r=>r.symbol,
   fetch:async url=>{state.requests.push(url);const u=new URL(url,'https://offline.invalid');return new Response(JSON.stringify({stocks:compact(crowded,80,'',u.searchParams.get('screenSymbols')||''),meta:{quoteFeedStatus:'live',fundamentalFeedStatus:'healthy'}}));},
-  setReloading:value=>{state.reloading=value;},setErr:()=>{},setStocks:value=>{state.stocks=typeof value==='function'?value(state.stocks):value;},setFeedHealth:value=>{state.health=typeof value==='function'?value(state.health):value;},setMarketScope:()=>{},setMarketRadar:()=>{},setLastUpdated:()=>{},setApplicationRefreshAt:()=>{state.refreshed=true;},setThemeStocks:()=>{},setThemeFeedHealth:()=>{}};
+  setLoading(){},setReloading:value=>{state.reloading=value;},setErr:()=>{},setStocks:value=>{state.stocks=typeof value==='function'?value(state.stocks):value;},setFeedHealth:value=>{state.health=typeof value==='function'?value(state.health):value;},setMarketScope:()=>{},setMarketRadar:()=>{},setLastUpdated:()=>{},setApplicationRefreshAt:()=>{state.refreshed=true;},setThemeStocks:()=>{},setThemeFeedHealth:()=>{}};
  vm.createContext(box);vm.runInContext(boundary+';this.loadScreen=load;',box);
  return {state,box,load:box.loadScreen,get account(){return resolveAccount;}};
 }

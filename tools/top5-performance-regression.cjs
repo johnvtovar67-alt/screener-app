@@ -50,8 +50,8 @@ function virtualClock() {
   return { Date: ClockDate, setTimeout: setTimer, clearTimeout: clearTimer, wait, settle, now: () => now, advance: ms => { now += ms; } };
 }
 
-function compile(file) {
-  const source = fs.readFileSync(file, 'utf8');
+function compile(file, sourceOverride) {
+  const source = sourceOverride ?? fs.readFileSync(file, 'utf8');
   const key = file + ':' + source;
   if (!COMPILED.has(key)) COMPILED.set(key, babel.transformSync(source, {
     filename: file, babelrc: false, configFile: false,
@@ -152,7 +152,7 @@ function createHarness(route = CURRENT, options = {}) {
     file = path.resolve(file);
     if (moduleCache.has(file)) return moduleCache.get(file).exports;
     const record = { exports: {} }; moduleCache.set(file, record);
-    const execute = new vm.Script('(function(require,module,exports){' + compile(file) + '\n})', { filename: file }).runInContext(context);
+    const execute = new vm.Script('(function(require,module,exports){' + compile(file, file === path.resolve(ROOT, route) ? options.routeSource : undefined) + '\n})', { filename: file }).runInContext(context);
     execute(request => {
       if (request === '@vercel/blob') return { get: forbidden('Blob get'), list: forbidden('Blob list'), put: forbidden('Blob put'), del: forbidden('Blob del') };
       if (request.startsWith('node:')) return require(request);
@@ -443,4 +443,5 @@ async function main() {
   console.log('PASS: actual top5 route preserves full/compact ranked decisions, screen classifications, manual priority rotation, caching and fail-closed benchmark coverage with mocked I/O.');
 }
 
-main().catch(error => { console.error(error); process.exitCode = 1; });
+if (require.main === module) main().catch(error => { console.error(error); process.exitCode = 1; });
+module.exports = { createHarness, CURRENT };
