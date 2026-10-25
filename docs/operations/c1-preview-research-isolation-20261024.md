@@ -59,9 +59,16 @@ boundary synthetic. It proves:
 Existing fixtures/oracles are not edited. No live preview research request is
 needed or allowed for verification. A build alone is not private account/browser
 parity. Full122-task gate, compiled artifact comparison, exact CI/preview and
-production verification are pending at this source checkpoint; record release
-evidence and ownership handoff in the PR, then update during next legitimate
-implementation rather than a documentation-only release.
+production verification completed in PR #324. Main/production
+`daff5c07c58230a1167d5e55cb25a05f0c95a8d1`, deployment
+`dpl_6djG56NqpG7517mkAqWKzvSpZf4z` READY with canonical version/health200,
+all configuration checks true and scheduler configured; live rejection404 and
+initial scoped error scan clear. Local122/122/build PASS. Exact head
+`cb37527eb547a56ce6b4d0454e7f0fd2dcad3d9f` passed CI #981 (40151172463);
+preview `dpl_t7NnkevsugVJm32dULcvzYK18gmL` READY/version/health200. Exact local/
+reviewed/merged tree `49396928d6d0b7a723e031333bf6f01b8452576a` matched.
+Native compiled repaired route loads zero engine chunks with zero network and
+the same404; all53 research routes remain. Ownership handoff complete.
 
 ## Reproduce compiled production-load boundary after the standard build
 
