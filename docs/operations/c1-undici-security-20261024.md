@@ -74,3 +74,17 @@ override Zod just to suppress scanner output. Compatible upstream remediation
 and actual bundled-code/SDK compatibility review remain required. No live
 exploitability conclusion or clean-security-bill is made. Critical advisory CI
 gate stays unchanged and active; do not lower severity or add an exclusion.
+
+## Verified release and handoff
+
+PR328 verified October24 at11:57PM CDT. Main/production
+`840a14470544945146c8b2b6a15531966b803a44`, deployment
+`dpl_12MaVPo9Sq58zTbxvg5VLFt3f9c2` READY with canonical version/health200,
+all configuration checks true and scheduler configured; initial scoped error
+scan clear. Local125/125/build and independent review PASS. Exact head
+`955c319ae3a6ccc9046d5e3ecd588a13b5a8519f` passed CI989 (40163136702);
+preview `dpl_6z8DErB3mFWPjNJrwbeuEXP2rtA6` READY/version/health200. Exact
+local/reviewed/merged tree `8edeca8a34409fbbc33e98592a1f75845d806ce2` matched.
+Clean worktree, no active edits; safe handoff complete. Source-time pending
+states above are superseded; actual private account/browser/CAS acceptance
+remains NOT_VERIFIED and the bundled Zod chain remains unresolved.
