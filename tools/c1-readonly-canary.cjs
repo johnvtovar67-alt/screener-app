@@ -100,6 +100,23 @@ function assessCapturedResponses(capture,{now=new Date()}={}){
  if(account.openingError||account.holdingReviewError||account.pendingSession||!reviewed){
   add('ACCOUNT_OPENING_REVIEW_UNAVAILABLE');return finish('ACCOUNT_VERIFICATION_INCOMPLETE','ACCOUNT');
  }
+ // Assess the actual consumed presentation projection only when the separate
+ // position quotes were explicitly captured. Missing quotes cannot stand in
+ // for that independently timed input. This remains offline evidence, not
+ // signed-in browser, broker reconciliation or production acceptance.
+ if(Object.hasOwn(capture,'positionRows')){
+  if(!Array.isArray(capture.positionRows)||capture.positionRows.some(row=>!row||typeof row!=='object')){
+   add('POSITION_QUOTE_CAPTURE_INVALID');return finish('EVIDENCE_UNAVAILABLE','SYSTEM');
+  }
+  const projection=loader.load('lib/c1OpportunitiesProjection.js').projectC1Opportunities({
+   decision,executionDecision,openingPlan:account.openingPlan,openingError:account.openingError,
+   manualRecommendations:account.manualRecommendations,purchaseDiagnostics:account.purchaseDiagnostics,
+   screenRows:screen.stocks,positionRows:capture.positionRows,portfolio:capture.portfolio,evidence,view:'opportunities'
+  },{readTime:()=>new Date(at)});
+  report.presentationProjection={evidenceScope:'CAPTURED_INPUTS',
+   actionableBuyGroups:projection.actionableBuys.length,
+   sellActions:projection.sellActions.length,urgentHeldReviews:projection.verifyActions.length};
+ }
  if(!evidence.buySymbols.length)return finish(eventBlocks?'VERIFIED_SYMBOL_BLOCKS':'VALID_ZERO_QUALIFIED_RATINGS',eventBlocks?'SYMBOL':'POLICY');
  // This counts checked server orders, not rendered actionable quantities. Held
  // position presentation may suppress an Add; browser parity is not asserted.

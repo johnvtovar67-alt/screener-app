@@ -3,8 +3,9 @@ const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 // Reverse only the separately verified render extraction before applying the
 // original presentation-source assertions and their unchanged historical pins.
 function readSource(file){
- const source=fs.readFileSync(file,'utf8');
- if(file!=='components/C1AccountOpportunities.js')return source;
+ const current=fs.readFileSync(file,'utf8');
+ if(file!=='components/C1AccountOpportunities.js')return current;
+ const source=require('./c1-opportunities-projection-extraction.cjs').restoreOpportunitiesProjection(current);
  const view=fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8');
  const start=source.indexOf(' return renderC1AccountOpportunitiesView('),body=view.indexOf(' return <><section');
  assert(start>=0&&body>=0);
