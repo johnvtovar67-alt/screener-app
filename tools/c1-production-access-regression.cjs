@@ -71,7 +71,11 @@ async function main(){
  let writes=0,bookReads=0;
  const handler=dependencies.factory({environment:'production',store:{read:async()=>null,write:async()=>{writes++;}},readBook:async()=>{bookReads++;throw Error('Inputs must not be read');}});
  const rejection=response();await handler({method:'POST',headers:request('PUT').headers,body:{operation:'adopt'}},rejection);assert.equal(rejection.statusCode,403);assert.equal(writes,0);assert.equal(bookReads,0);
- assert.equal(hash(fs.readFileSync('vercel.json','utf8')),hashes['vercel.json'],'Cron settings unchanged');
+ const configText=fs.readFileSync('vercel.json','utf8'),config=JSON.parse(configText),configurationHash=text=>hash(JSON.stringify(JSON.parse(text)));
+ assert.equal(configurationHash(configText),hashes['vercel.json:canonical'],'Every deployment configuration value, including cron paths/schedules, remains unchanged');
+ assert.equal(configurationHash(JSON.stringify(config)+'\n'),hashes['vercel.json:canonical'],'Vercel compact formatting preserves the exact full configuration contract');
+ const changedConfig=structuredClone(config);changedConfig.crons[0].schedule='0 0 * * *';
+ assert.notEqual(configurationHash(JSON.stringify(changedConfig)),hashes['vercel.json:canonical'],'A real cron-policy change must still fail');
  for(const f of ['pages/api/cron/c1-index.js','pages/api/cron/full-market-discovery.js','pages/api/cron/fmp-research-backtest.js'])assert.equal(hash(fs.readFileSync(f,'utf8')),hashes[f],f+' byte-identical');
  console.log('PASS: all53 research routes deny public production requests before handler work; existing server authorization/nonproduction retained; new production portfolio/account creation zero-write denied; existing portfolio output/storage parity and cron hashes unchanged.');
 }

@@ -48,6 +48,14 @@ narrowed creation denial to its dedicated code, preserving unrelated storage403
 error behavior. Exact-head CI/preview/production remain PENDING at this source
 checkpoint; final PR release evidence supersedes source-time pending states.
 
+First published head0071ece passed CI993 but preview rejected the new raw-byte
+vercel.json assertion. Its observed hash e0b68a89a82f8dfa053b50cea32b4cc8af2a94ea
+exactly matches JSON.stringify(originalConfig)+newline: Vercel compacted the
+working copy, with every key/value unchanged. The test now hashes the complete
+parsed configuration, explicitly checks compact formatting and rejects a changed
+cron schedule. Original committed config/source hashes remain recorded; no
+configuration/application/guard/CI change. Final corrected-head gates pending.
+
 Runtime test credentials and storage are synthetic. Production version/health
 and public-research404 checks do not prove private account/brokerage parity.
 Owner screenshots already verified visible portfolio rendering on prior7d19bfb;
