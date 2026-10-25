@@ -195,6 +195,7 @@ async function moduleDeadlineCases(budget) {
     ]), budget + 1000)) };
   });
   const fundamentalModule = fundamentals.loadModule('lib/fmpFundamentals.js', {
+    './fmpSymbols': fundamentals.loadModule('lib/fmpSymbols.js'),
     '@vercel/blob': {
       list: async () => { fundamentalBlobCalls.push('list'); return { blobs: [] }; },
       get: async () => { throw new Error('The empty durable cache must not request a Blob body'); },
