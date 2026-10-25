@@ -103,7 +103,7 @@ READY with version/health200. Two normal production GET records emitted the
 new screen diagnostic at 23:39:36–37 UTC. This verifies the observer, not C1
 private-account selection, account opening or browser parity.
 
-## Active slice: public screen-error detail redaction
+## Production verified: public screen-error detail redaction
 
 Branch `harden/c1-screen-error-details-20261024`, based on production `3250000`.
 The real catch-response seam copied an arbitrary synthetic provider marker into
@@ -111,7 +111,24 @@ HTTP503 detail with zero network or writes. Reuse the existing response module
 and its controlled fallback wording; accept only a timeout boolean, never a raw
 error. Preserve success responses, status/retryability/timeouts and all economic
 behavior. Evidence: `docs/operations/c1-screen-public-error-redaction-20261024.md`.
-This run owns the branch until a verified PR handoff; do not edit concurrently.
+PR #322 released as `cddfe3e70a3276f81b4bf1c2b4245f5c8105df59`, deployment
+`dpl_J2wTt8pXQNnHbn9n8x1H7ie2Mm4S` READY, canonical version/health200,
+all configuration checks true and scheduler configured. Initial scoped error
+scan was clear. Exact reviewed/merged tree `13544b0d639d35cabec23d3e90edebf4511acab8`
+matched. Local121/121/build passed; CI #976 (40144012838) SUCCESS; exact preview
+`dpl_8XxWMvQvHCNRu4tGumAumdaydBqf` READY with matching version/health200.
+No live failing-provider request or private-account/browser parity is claimed.
+
+## Active slice: shared provider-symbol spelling
+
+Branch `harden/c1-symbol-boundary-20261025`, based on production `cddfe3e`.
+Two independently maintained identical provider spelling expressions are moved
+to a tiny pure shared helper. Only quotes/fundamentals migrate; distinct account
+alias and other normalization contracts remain untouched. Differential input,
+exact source reversal and actual offline request/cache characterization retain
+legacy first-replacement/coercion/rejection behavior. No economic/I/O change.
+Evidence: `docs/operations/c1-fmp-symbol-boundary-20261024.md`.
+This run owns the branch until verified release/handoff; do not edit concurrently.
 
 ## Remaining audit work
 
@@ -119,7 +136,7 @@ This run owns the branch until a verified PR handoff; do not edit concurrently.
 |---|---|
 | API error types and accurate retry behavior | Production verified through PR #317; private-account parity not established |
 | Read-only end-to-end operational acceptance canary | Screen/account instrumentation released; screen emission observed; private-account/browser/cross-boundary acceptance pending |
-| Common provider/error adapters and canonical symbol boundary | Safe public screen-error response in verification; broader adapters/symbol consolidation pending |
+| Common provider/error adapters and canonical symbol boundary | Safe public screen-error response released PR322; first shared provider-spelling extraction under verification; broader adapters pending |
 | Proven-unused research runtime isolation/retirement | Pending |
 | Single producer and immutable screen reads | Pending; characterization first |
 | Broader duplicate/dead-code cleanup | Two unused modules retired in production via PR #318; broader cleanup pending |

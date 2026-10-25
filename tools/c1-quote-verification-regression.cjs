@@ -4,6 +4,7 @@ const fs=require('node:fs');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const RealDate=Date,realFetch=global.fetch,previousTestKey=process.env.FMP_API_KEY;
 let milliseconds=RealDate.parse('2026-10-15T15:00:00.000Z'),calls=0,failing=false;
+const requestedSymbols=[];
 let response={symbol:'DELL',price:460,timestamp:milliseconds/1000,exchange:'NYSE'};
 class ClockDate extends RealDate{constructor(...args){super(...(args.length?args:[milliseconds]));}static now(){return milliseconds;}}
 let assertions=0;
@@ -16,7 +17,7 @@ const quote=(price=460,time=milliseconds)=>({symbol:'DELL',price,timestamp:time/
 async function main(){
  global.Date=ClockDate;
  process.env.FMP_API_KEY='offline-fixture-key';
- global.fetch=async url=>{assert.ok(new URL(url).searchParams.get('apikey')==='offline-fixture-key','Offline checks must use only the fixture credential');calls++;if(failing)throw new Error('Synthetic provider unavailable');return{ok:true,json:async()=>[{...response}]};};
+ global.fetch=async url=>{const params=new URL(url).searchParams;assert.ok(params.get('apikey')==='offline-fixture-key','Offline checks must use only the fixture credential');requestedSymbols.push(params.get('symbol'));calls++;if(failing)throw new Error('Synthetic provider unavailable');return{ok:true,json:async()=>[{...response}]};};
  const loader=createResearchModuleLoader(process.cwd());
  const {fetchFmpQuote}=loader.load('lib/fmpQuotes.js');
  const {verifyC1Quote:verify}=loader.load('lib/c1QuoteVerification.js');
@@ -91,6 +92,19 @@ async function main(){
  eq(verify(quote()).validUntil,'2026-10-15T20:00:00.000Z','Current-quote validity stops at regular-session close');
  ok(source.includes('String(req.query.refresh||"")==="1"'),'The public endpoint accepts an explicit user refresh');
  ok(source.includes('quoteVerification:verifyC1Quote(analyzed)'),'The public endpoint returns recomputed provider verification');
+ for(const [input,expected] of [[' brk.b ','BRK-B'],['bf.b','BF-B']]){
+  response={...response,symbol:expected,price:100,timestamp:milliseconds/1000};
+  const before=calls,first=await fetchFmpQuote(input);
+  eq(calls,before+1,'A distinct alias makes exactly one fixture request');
+  eq(requestedSymbols.at(-1),expected,'Actual provider query preserves the legacy spelling');
+  eq(first.symbol,expected,'The raw provider symbol remains unchanged');
+  const cached=await fetchFmpQuote(expected);
+  eq(calls,before+1,'Equivalent canonical/provider spelling shares the existing cache key');
+  eq(cached._fmpQuoteCache,'fresh-memory','Alias cache behavior is unchanged');
+ }
+ response={...response,symbol:'A-B.C'};
+ await assert.rejects(fetchFmpQuote('a.b.c'),/No matching usable stable quote/,'Multi-dot input retains the original non-idempotent rejection, not a newly broadened alias');
+ eq(requestedSymbols.at(-1),'A-B.C','Only the first dot is replaced in the actual request');
  console.log(`PASS: ${assertions} FMP provider/cache/normalization/current-quote verification assertions; no network or account changes.`);
 }
 main().finally(()=>{global.Date=RealDate;global.fetch=realFetch;if(previousTestKey===undefined)delete process.env.FMP_API_KEY;else process.env.FMP_API_KEY=previousTestKey;}).catch(error=>{console.error(error);process.exitCode=1;});
