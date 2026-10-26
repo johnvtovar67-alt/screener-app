@@ -1,5 +1,18 @@
 # C1 reliability cleanup — progress ledger
 
+## October26 opening-revision incident repair — source checkpoint
+
+Owner screenshot and explicit fix request reopen one bounded defect on PR335
+production24eca58. Real execution fixture reproduces a false revision rejection:
+the comparison dropped the actual plan's funding and capacity policies. Repair
+retains those exact server-produced policy contracts; legacy defaults and all
+price-driven/evidence rejection gates remain. Focused four-policy and actual
+execution fixture passes, no account writes. Full suite/CI/preview/production
+pending; see c1-opening-revision-policy-20261026.md and final release PR.
+PR335's final merged release record supersedes older source-time pending states;
+146 checks/27 synthetic browsers and24eca58 production verified. Larger design
+conflicts, private acceptance and bundled advisory remain unchanged, not closed.
+
 Owner instruction: continue the authorized infrastructure hardening and
 behavior-preserving cleanup without stopping at status updates. C1's investment
 thesis, trading rules, existing four-Swing cap, UI and accounting facts remain

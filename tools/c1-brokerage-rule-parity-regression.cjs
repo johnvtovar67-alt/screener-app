@@ -125,9 +125,21 @@ const compatibilitySourceSha256 = {
   "lib/c1AccountSeed.js": "1a8327eeafaa0352b867ca28e3053f0f727839347f0843c61cdb08e2247a81ab",
   "lib/c1ActualFillReplay.js": "597aa46f3d9a50aec7cdde4bc58e4fc6fcfc6d234ec10180f37534587b51e5d8"
 };
+// October26 owner-authorized false price-revision rejection repair. Reverse
+// only the declared policy propagation before checking the unchanged oracle.
+// Actual-path/four-policy regression separately proves the repaired behavior.
+function withoutOpeningRevisionPolicyRepair(source){
+ const once=(from,to)=>{assert.equal(source.split(from).length-1,1,'Exact opening revision repair seam');source=source.replace(from,to);};
+ once("import {C1_PURCHASE_FUNDING_POLICY} from './c1BrokerageCash';\n",'');
+ once("import {C1_ADDITIONAL_SWING_CAPACITY} from './c1AdditionalSwingCapacity';\n",'');
+ once(' // Compare the same plan contract on both price bases. Legacy plans retain\n // their defaults; current plans retain their server-produced funding/capacity\n // policies. Dropping those policies manufactures an unrelated order difference.\n','');
+ once(',\n  purchaseFundingIndependent:plan.purchaseFundingPolicy===C1_PURCHASE_FUNDING_POLICY,additionalSwingCapacity:plan.additionalSwingCapacity?.contract===C1_ADDITIONAL_SWING_CAPACITY','');
+ return source;
+}
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   const source = fs.readFileSync(path.join(root, file));
-  const comparable = file === 'lib/c1AccountSimulator.js' ?
+  const comparable = file === 'lib/c1OpeningPriceReview.js' ? withoutOpeningRevisionPolicyRepair(source.toString('utf8')) :
+    file === 'lib/c1AccountSimulator.js' ?
     require('./c1-simulator-accounting-extraction.cjs').restoreSimulatorAccounting(source.toString('utf8')) :
     file === 'lib/c1AccountOpeningProvider.js' ?
     withoutCurrentEventCollection(source.toString('utf8')) :
