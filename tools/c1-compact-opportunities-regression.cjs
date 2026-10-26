@@ -83,6 +83,22 @@ try{
  assert.match(section(paused,'C1 account opportunities'),/Strong Buy rating/,'Verified candidates retain their investment rating');
  const {c1CashAvailability}=loader.load('lib/c1BrokerageCash.js');
  const {c1OpportunityPresentation}=loader.load('lib/c1EntryReview.js');
+ // A closed-market review cannot prove that the four-position capacity is full.
+ // Exercise the actual manual-review, presentation and rendered-card boundaries.
+ const closedReview=buildC1ManualRecommendations({decision,now:new RealDate('2026-10-15T21:00:00Z')});
+ assert.equal(closedReview.status,'waiting');assert.ok(Array.isArray(closedReview.orders));assert.equal(closedReview.orders.length,0);
+ const closedDecision={...decision,positions:['VEEV','ILMN','CRWD'].map(symbol=>({...position,symbol}))};
+ const closedBefore=JSON.stringify(closedDecision);
+ const closedPresentation=c1OpportunityPresentation({decision:{...closedDecision,opportunities:[{symbol:'BBB',rating:'Buy'}]},ready:false,waitingReason:closedReview.reason});
+ assert.equal(closedPresentation.tiles[0].detail,closedReview.reason);
+ const closedMarkup=render({decision:closedDecision,executionDecision:closedDecision,openingPlan:null,manualRecommendations:closedReview});
+ assert.match(article(section(closedMarkup,'C1 account opportunities'),'BBB'),/Market closed—purchase eligibility will be checked during the next regular session\./);
+ assert.doesNotMatch(closedMarkup,/All C1 position slots are occupied|Buy \d+ shares|Add \d+ shares/);
+ assert.equal(JSON.stringify(closedDecision),closedBefore,'Closed-market copy cannot change holdings or authority');
+ const waitingPresentation=c1OpportunityPresentation({decision:{...closedDecision,opportunities:[{symbol:'BBB',rating:'Buy'}]},ready:false,waitingReason:'Opening review unavailable.'});
+ assert.equal(waitingPresentation.tiles[0].detail,'Opening review unavailable.','An incomplete review cannot infer full capacity either');
+ const verifiedLimit=c1OpportunityPresentation({decision:{...closedDecision,opportunities:[{symbol:'BBB',rating:'Buy'}]},plan:{entryReviews:[{symbol:'BBB',reason:'position-limit'}]},ready:true});
+ assert.match(verifiedLimit.tiles[0].detail,/All three C1 position slots/,'An existing checked legacy allocation block remains intact');
  for(const [name,balance,observedAt,strategyCash,reasons,expected] of [
   ['stale',363.36,'2026-10-14T17:00:00Z',1000,[],/earlier Eastern date/],
   ['strategy independent',363.36,now,0,[],null],
