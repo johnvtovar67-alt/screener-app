@@ -140,3 +140,37 @@ for(const mobile of [false,true]){
  const core=render({mobile,row:{...holding,symbol:'MSTR',role:'Core'},positionData:timingPosition,evidence:timingEvidence,source:'legacy-core'});assert.doesNotMatch(core.html,/Holding period:|Rank momentum:|Profit rank:/);
  const stale=render({mobile,positionData:timingPosition,evidence:{...timingEvidence,status:'stale'}});assert.doesNotMatch(stale.html,/12\/30|2\/3/);
 }
+
+// An actual newly recorded synthetic fill has no completed holding review.
+// Pending text cannot manufacture momentum, replace missing old evidence,
+// change current holding actions, or mutate any recorded/account bytes.
+async function newHoldingCopy(){
+ const f=require('./fixtures/c1-trading-workflow.cjs').createWorkflowFixture('buy');f.setCash(5000);
+ const view=await f.prepare(),symbol=view.openingPlan.orders.find(o=>o.side==='buy').symbol;
+ const shares=view.openingPlan.orders.filter(o=>o.side==='buy'&&o.symbol===symbol).reduce((n,o)=>n+o.shares,0);
+ const posted=await f.prepare({id:'synthetic-wording-fill',symbol,side:'buy',shares:Math.max(1,Math.floor(shares/2)),price:100,fee:0,executedAt:f.now.toISOString()});
+ const position=posted.decision.positions.find(p=>p.symbol===symbol);
+ assert(position);assert.equal(position.momentumEvidence,undefined);
+ const original=JSON.stringify(posted),decision=posted.decision;
+ const pending=resolver({position,decision,now:f.now});
+ assert.equal(pending.status,'pending');assert.equal(pending.classification,null);
+ assert.equal(pending.label,'New holding — review pending');
+ assert.equal(c1CompactMomentumEvidence(pending),'Awaiting first completed-session holding review.');
+ for(const mobile of [false,true]){
+  const rendered=render({mobile,row:{...holding,symbol,openedAt:position.openedAt},date:decision.sourceSessionDate,
+   positionData:{...position,momentumEvidence:undefined},resolver:args=>resolver({...args,now:f.now})});
+  assert.match(rendered.html,/New holding — review pending/);
+  assert.match(rendered.html,/Awaiting first completed-session holding review/);
+  assert.match(rendered.html,/>HOLD<\/b>/);assert.doesNotMatch(rendered.html,/Evidence unavailable|Momentum Intact/);
+  const armed=render({mobile,positionData:{...timingPosition,recentMomentumReviews:[]},evidence:{...timingEvidence,classification:'Momentum Intact',label:'Momentum Intact'}});
+  assert.equal((armed.html.match(/armed, not triggered/g)||[]).length,1);
+ }
+ for(const patch of [{shares:0},{openedAt:'2026-10-14'},{openedAt:'2026-10-16'},{exits:[{reason:'initial-stop'}]},
+  {reviewRules:[{sleeve:'base'}]},{recentMomentumReviews:[{available:false}]},{momentumEvidence:{} }]){
+  assert.notEqual(resolver({position:{...position,...patch},decision,now:f.now}).status,'pending');
+ }
+ assert.equal(resolver({position,decision:{...decision,current:false},now:f.now}).status,'stale');
+ assert.equal(JSON.stringify(posted),original);assert.equal(f.writes,0);
+ console.log('PASS: actual new-fill display, desktop/mobile pending review, no invented momentum, old/malformed/stale evidence retained, single armed status and zero writes');
+}
+newHoldingCopy().catch(error=>{console.error(error);process.exitCode=1;});

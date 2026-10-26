@@ -6,7 +6,7 @@ function readSource(file){
  const current=fs.readFileSync(file,'utf8');
  if(file!=='components/C1AccountOpportunities.js')return current;
  const source=require('./c1-opportunities-projection-extraction.cjs').restoreOpportunitiesProjection(current);
- const view=fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8');
+ const view=require('./c1-holding-wording-seams.cjs').restoreView(fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8'));
  const start=source.indexOf(' return renderC1AccountOpportunitiesView('),body=view.indexOf(' return <><section');
  assert(start>=0&&body>=0);
  return "import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n"+source.slice(0,start).replace("import {renderC1AccountOpportunitiesView} from './C1AccountOpportunitiesView';\n",'')+view.slice(body);

@@ -10,7 +10,7 @@ assert.equal(crypto.createHash('sha256').update(source).digest('hex'),'794a87727
 const seam=source.indexOf(' return renderC1AccountOpportunitiesView('),bodyStart=viewSource.indexOf(' return <><section');
 assert(seam>=0&&bodyStart>=0);
 const original="import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n"+
- source.slice(0,seam).replace("import {renderC1AccountOpportunitiesView} from './C1AccountOpportunitiesView';\n",'')+viewSource.slice(bodyStart);
+ source.slice(0,seam).replace("import {renderC1AccountOpportunitiesView} from './C1AccountOpportunitiesView';\n",'')+require('./c1-holding-wording-seams.cjs').restoreView(viewSource).slice(bodyStart);
 assert.equal(crypto.createHash('sha256').update(original).digest('hex'),'0b72fd1afff37128fce1f203753a1eebbf3afa6a73dee618a8c919a422d6c71c',
  'Reversing only the render extraction reproduces the complete deployed component, including all authority/effect code and literal markup');
 const NativeDate=Date,nativeFetch=global.fetch,nativeWindow=global.window,nativeSetTimeout=global.setTimeout,nativeClearTimeout=global.clearTimeout;
@@ -28,7 +28,9 @@ function harness(baseline,browser){
  const storage={getItem:key=>{operations.push(['get',key]);return memory.get(key)??null;},setItem:(key,value)=>{operations.push(['set',key,value]);memory.set(key,value);}};
  function load(componentFile){
   if(components.has(componentFile))return components.get(componentFile);
-  const text=baseline&&componentFile===file?original:fs.readFileSync(componentFile,'utf8'),record={exports:{}};
+  // The immutable original hash above stays unchanged. Allow only the owner-
+  // requested heading copy when comparing every other render/effect byte.
+  const text=baseline&&componentFile===file?original.replace(require('./c1-holding-wording-seams.cjs').oldLabel,require('./c1-holding-wording-seams.cjs').newLabel):fs.readFileSync(componentFile,'utf8'),record={exports:{}};
   const compiled=babel.transformSync(text,{filename:componentFile,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
   new Function('require','module','exports',compiled)(name=>name==='react'?hooks:name.startsWith('../lib/')?loader.load(name,componentFile):name.startsWith('.')?load(path.resolve(path.dirname(componentFile),name.endsWith('.js')?name:name+'.js')):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
   components.set(componentFile,record.exports);return record.exports;

@@ -13,6 +13,7 @@ const missing=copy({position:{...position,reviewRules:[{...rule,earlyStreak:1,ea
 const unverified=copy({position:{...position,reviewRules:[{...rule,earlyStreak:2,rankVerified:false}],recentMomentumReviews:[{available:false,state:{streak:2},metrics:{confirmations:3}}]},current:true,evidence});assert(!unverified.some(x=>/2\/3/.test(x)));assert(unverified.includes('Momentum: review unavailable'));
 const armedPosition={...position,reviewRules:[{...rule,profitProtectionArmed:true,peakGainPct:15,profitStreak:0}]},armed=copy({position:armedPosition,current:true,evidence});
 assert(armed.includes('Profit protection: armed, not triggered'));assert(armed.includes('Profit rank: 0/2 · 2 remaining'));
-assert.equal(c1PlainDecisionReason({action:'HOLD',position:armedPosition}),'Profit protection is armed, not triggered; no sale is confirmed.');
+assert.equal(c1PlainDecisionReason({action:'HOLD',position:armedPosition}),'No sell signal is confirmed.');
+assert.equal((c1PlainDecisionReason({action:'HOLD',position:armedPosition})+' '+armed.join(' · ')).match(/armed, not triggered/g).length,1,'Profit protection state appears only once across reason and timing');
 assert(!copy({position,current:false,evidence}).some(x=>/7\/30/.test(x)));
 console.log('PASS: timing copy consumes original counters/thresholds only; missing/stale data does not create counters; differing sleeves remain explicit; inputs unchanged.');
