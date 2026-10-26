@@ -60,7 +60,7 @@ try{
  assert.match(article(rawMain,'MPC'),/class="[^"]*pill yellow[^"]*"[^>]*>HOLD</,'The current Hold status remains distinct from its checked Add proposal');
  for(const symbol of ['BBB','MPC']){
   const rawCard=article(rawMain,symbol),plan=rawCard.match(/class="[^"]*\bplan\b[^"]*">([\s\S]*?)<\/div>/)?.[1]||'';
-  assert.match(plan,/<small[^>]*>Account purchase status — separate from C1 rating<\/small>/,'The original next-action label remains in its original slot');
+  assert.match(plan,new RegExp('<small[^>]*>'+(symbol==='MPC'?'Your position':'Purchase check')+'<\\/small>'),'The account label identifies held positions separately from new purchase checks');
   if(symbol!=='CCC')assert.match(plan,/opening reference \$100\.00/,'Cards retain the exact checked execution reference');
   const sentence=plan.match(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/)?.[1]||'';
   assert.equal((sentence.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each decision reason is one sentence');
@@ -77,7 +77,7 @@ try{
  const paused=render({openingPlan:noOrders,manualRecommendations:noReview});
  assert.doesNotMatch(paused,/Buy 2 shares|Add 1 share/,'A ranking alone cannot create an executable quantity');
  // Rating, authorization and cash explanations are independent presentation concerns.
- assert.match(paused,/Account purchase status — separate from C1 rating/);
+ assert.match(paused,/Purchase check/);
  assert.doesNotMatch(paused,/No C1 Buy ratings|Candidates awaiting a C1 Buy rating/);
  assert.match(paused,/Includes blocked Buy-rated candidates/);
  assert.match(section(paused,'C1 account opportunities'),/Strong Buy rating/,'Verified candidates retain their investment rating');
@@ -174,7 +174,7 @@ try{
  const commonPlan={...plan,orders:[],entryReviews:[{symbol:'BBB',reason:'brokerage-cash-insufficient'}]};
  const commonHtml=render({decision:commonDecision,executionDecision:commonDecision,openingPlan:commonPlan,manualRecommendations:buildC1ManualRecommendations({decision:commonDecision,openingPlan:commonPlan})});
  assert.equal(summary(commonHtml),'');
- assert.match(section(commonHtml,'C1 account opportunities'),/Account purchase status — separate from C1 rating/,'A verified Buy rating retains its separate account purchase review');assert.doesNotMatch(commonHtml,/Buy 2 shares|Add 1 share/,'Cash restriction cannot create a checked order');
+ assert.match(section(commonHtml,'C1 account opportunities'),/Purchase check/,'A verified Buy rating retains its separate account purchase review');assert.doesNotMatch(commonHtml,/Buy 2 shares|Add 1 share/,'Cash restriction cannot create a checked order');
  assert.equal(summary(render({decision:commonDecision,executionDecision:commonDecision,openingPlan:commonPlan,manualRecommendations:buildC1ManualRecommendations({decision:commonDecision,openingPlan:commonPlan}),view:'portfolio'})),'','A blocked purchase alone never creates an orange box');
 
  const stopRow={...position,symbol:'DELL',action:'Exit candidate',stops:[{price:468.85}],exits:[{reason:'initial-stop'}],stopTriggerEvidence:{low:460,stop:468.85,date:decision.sourceSessionDate}};

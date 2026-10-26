@@ -1,5 +1,18 @@
 # C1 reliability cleanup — progress ledger
 
+## October26 owner-approved holding copy — source checkpoint
+
+Three presentation-only changes after verified PR336/a483b02: Your position /
+Purchase check heading, narrowly supported new-holding pending-review copy, and
+single armed protection status. Focused actual-fill/desktop/mobile and negative
+evidence cases pass; no classification, authority, order or record change. Full
+suite/build/CI/preview/production pending; see c1-holding-wording-20261026.md.
+PR336's exact final release record supersedes its older pending source status:
+147/147/build/freeze/canonical, CI1006/run40333481534, exact preview and production
+dpl_DfzBcY6VEP8bcwU9JrRCSVSp73Fx/a483b02 verified at09:02AMCDT. Owner subsequently
+reported the fix worked and recorded two buys; this is owner-reported acceptance,
+not independent brokerage reconciliation. Original external/design limits remain.
+
 ## October26 opening-revision incident repair — source checkpoint
 
 Owner screenshot and explicit fix request reopen one bounded defect on PR335
