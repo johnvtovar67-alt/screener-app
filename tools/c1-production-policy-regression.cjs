@@ -216,7 +216,7 @@ assert(drawdown.activeCapitalPct === 0 && !drawdown.cooldown && drawdown.reconci
 drawdown = c1DrawdownControl({ swingEquity: 70_000, state: { highWater: 100_000, triggerDay: "2026-09-02" }, portfolioSignature: changedComposition, now: new Date("2026-09-02T20:00:00.000Z") });
 assert(drawdown.activeCapitalPct === 0 && !drawdown.cooldown && drawdown.reconciliationRequired && drawdown.state.triggerDay === "2026-09-02", "legacy history must remain unresolved rather than silently reset");
 
-const top5 = fs.readFileSync("pages/api/top5.js", "utf8");
+const top5 = require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 assert(top5.includes("independent_limited_pilot") && top5.includes("pilotRequiresTwoSessionPersistence") && top5.includes("$300 million"), "the live route must identify the bounded pilot and its liquidity contract");
 const manifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
 assert(manifest.includes('release:"2026-10-15-c1-verified-quotes-stabilization"'), "the release manifest must identify the authorized C1 recent-momentum release");

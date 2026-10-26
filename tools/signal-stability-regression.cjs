@@ -1,7 +1,7 @@
 const fs=require('fs');
 const assert=(cond,msg)=>{if(!cond)throw new Error(msg)};
 
-const top5=fs.readFileSync('pages/api/top5.js','utf8');
+const top5=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 const page=fs.readFileSync('pages/index.js','utf8');
 const helper=fs.readFileSync('lib/strongBuyPersistence.js','utf8');
 const decision=fs.readFileSync('lib/opportunityDecision.js','utf8');

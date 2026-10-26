@@ -44,6 +44,10 @@ const additiveOpeningSha256 = '2a741e99b45eada02ebb0891f148b90595d9750ea90cebb0d
 // Quote, adjusted-anchor, membership and session verification stay byte-exact;
 // the dedicated current-event suites verify the new fail-closed event path.
 function withoutCurrentEventCollection(source) {
+  // Reverse only the promise-preserving provider extraction before applying
+  // the original current-event seams and unchanged historical source pin.
+  source = require('./c1-provider-transport-seams.cjs')
+    .restoreProviderTransport('lib/c1AccountOpeningProvider.js', source);
   const replaceOnce = (before, after, label) => {
     assert.equal(source.split(before).length - 1, 1,
       'The authorized current-event ' + label + ' seam must occur exactly once');

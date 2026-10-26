@@ -22,7 +22,7 @@ const checks=[
   ,['single-symbol reload analyzes the entered ticker',s.includes('if(tab==="single"){setReloading(false);setLoading(false);return check();}')]
   ,['single-symbol analysis uses bounded authoritative payload',s.includes('fetchScreen("opportunities",0,{includeSymbol:key})')&&!s.includes('fetchScreen("opportunities",0,{full:true})')]
 ];
-const top5=fs.readFileSync('pages/api/top5.js','utf8');
+const top5=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 checks.push(['requested single symbol is retained in compact broad results',top5.includes('compactRowsForClient(rows = [], limit = 80, includeSymbol = "", screenSymbols = "")')&&top5.includes('normalizeSymbol(row?.symbol) === requestedSymbol')&&top5.includes('compactRowsForClient(rows, 80, req.query.symbol, req.query.screenSymbols)')]);
 const app=fs.readFileSync('pages/_app.js','utf8');
 checks.push(['theme reload preserves client state',app.includes('cacheParams.delete("verificationPass")')&&!app.includes('clearTop5Cache();')&&!app.includes('e.preventDefault();e.stopPropagation();forceLiveRefresh();')]);

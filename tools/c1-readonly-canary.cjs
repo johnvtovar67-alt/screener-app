@@ -86,8 +86,8 @@ function assessCapturedResponses(capture,{now=new Date()}={}){
   manual.c1ManualReviewCurrent(account.manualRecommendations,executionDecision,at);
  // Use the exact existing screen resolver; retained browser state is optional
  // diagnostic input and never an independent source of buy authority.
- const evidence=loader.load('lib/c1ScreenEvidence.js').resolveC1ScreenEvidence({decision,
-  rows,current:healthy,previous:capture.previousEvidence||null,reviewCurrent:reviewed});
+ const evidence=loader.load('lib/c1OpportunitiesContract.js').resolveC1OpportunitiesEvidence({decision,
+  screenRows:rows,screenCurrent:healthy,previousEvidence:capture.previousEvidence||null},{readTime:()=>new Date(at),reviewCurrent:reviewed});
  if(evidence.pending&&decision.current)add([...issues].some(code=>!accountCodes.has(code))?'SCREEN_COMPOSITION_PENDING':'SELECTION_REVIEW_PENDING');
  report.counts={sourceCandidates:candidates.length,requiredRows:rows.length,
   verifiedEventBlocks:eventBlocks,qualifiedRatings:evidence.buySymbols.length};
@@ -108,11 +108,11 @@ function assessCapturedResponses(capture,{now=new Date()}={}){
   if(!Array.isArray(capture.positionRows)||capture.positionRows.some(row=>!row||typeof row!=='object')){
    add('POSITION_QUOTE_CAPTURE_INVALID');return finish('EVIDENCE_UNAVAILABLE','SYSTEM');
   }
-  const projection=loader.load('lib/c1OpportunitiesProjection.js').projectC1Opportunities({
+  const {projection}=loader.load('lib/c1OpportunitiesContract.js').joinC1Opportunities({
    decision,executionDecision,openingPlan:account.openingPlan,openingError:account.openingError,
    manualRecommendations:account.manualRecommendations,purchaseDiagnostics:account.purchaseDiagnostics,
-   screenRows:screen.stocks,positionRows:capture.positionRows,portfolio:capture.portfolio,evidence,view:'opportunities'
-  },{readTime:()=>new Date(at)});
+   screenRows:screen.stocks,positionRows:capture.positionRows,portfolio:capture.portfolio,view:'opportunities'
+  },{readTime:()=>new Date(at),evidence});
   report.presentationProjection={evidenceScope:'CAPTURED_INPUTS',
    actionableBuyGroups:projection.actionableBuys.length,
    sellActions:projection.sellActions.length,urgentHeldReviews:projection.verifyActions.length};

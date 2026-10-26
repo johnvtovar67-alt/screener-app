@@ -1,11 +1,12 @@
 // Actual provider module, synthetic HTTP/storage only; no process credentials.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const {createHash}=require('node:crypto');
+const {restoreProviderTransport,installProviderTransport}=require('./c1-provider-transport-seams.cjs');
 const original=fs.readFileSync('tools/fixtures/fmp-fundamentals-production-8b7b1c5.js','utf8');
 const current=fs.readFileSync('lib/fmpFundamentals.js','utf8');
 const hash=s=>createHash('sha1').update('blob '+Buffer.byteLength(s)+'\0').update(s).digest('hex');
 assert.equal(hash(original),'4b2bd3e61c91204df675f13ad985cd335113311c');
-assert.equal(current.replace('    let nonRetryableResponse=false;\n','').replace('if(r.status<500){nonRetryableResponse=[400,401,404,405,410,422].includes(r.status);throw e;}','if(r.status<500)throw e;').replace('if(nonRetryableResponse||hardFeedError(e?.status))throw e;','if(hardFeedError(e?.status))throw e;'),original,'Exact reversal recovers complete original provider module');
+assert.equal(restoreProviderTransport('lib/fmpFundamentals.js',current).replace('    let nonRetryableResponse=false;\n','').replace('if(r.status<500){nonRetryableResponse=[400,401,404,405,410,422].includes(r.status);throw e;}','if(r.status<500)throw e;').replace('if(nonRetryableResponse||hardFeedError(e?.status))throw e;','if(hardFeedError(e?.status))throw e;'),original,'Exact reversal recovers complete original provider module');
 function load(source,responses){
  const calls=[],timers=[],writes=[],logs=[];let index=0;
  class Clock extends Date{constructor(...args){super(...(args.length?args:['2026-10-23T16:00:00Z']));}static now(){return Date.parse('2026-10-23T16:00:00Z');}}
@@ -19,6 +20,7 @@ function load(source,responses){
  };
  sandbox.Headers=Headers;
  const code=source.replace(/^import .*;\n/gm,'').replace(/export (async )?function /g,'$1function ')+'\nmodule.exports={fetchJson,fetchBulkJson,fetchFmpFundamentals,refreshAllFmpFundamentalsBulk};';
+ installProviderTransport(sandbox);
  vm.runInNewContext(code,sandbox,{filename:'actual-fmpFundamentals.js'});
  return {...sandbox.module.exports,calls,timers,writes,logs,sandbox};
 }

@@ -61,7 +61,7 @@ function compile(file, sourceOverride) {
 }
 
 function createHarness(route = CURRENT, options = {}) {
-  const clock = virtualClock(), calls = [], logs = [], moduleCache = new Map();
+  const clock = options.clock || virtualClock(), calls = [], logs = [], observations = [], moduleCache = new Map();
   const latencies = { discovery: 0, snapshot: 0, quote: 0, fundamentals: 0, continuity: 0, event: 0, timing: 0, ledger: 0, ...options.latencies };
   const call = (phase, details = {}) => { const row = { phase, at: clock.now() - EPOCH, ...details }; calls.push(row); return row; };
   const boundary = async (phase, value, details = {}) => {
@@ -74,6 +74,10 @@ function createHarness(route = CURRENT, options = {}) {
     constructor(...args) { super(...(args.length ? args : [EPOCH])); }
     static now() { return EPOCH; }
   }
+  class AdvancingMarketDate extends clock.Date {
+    constructor(...args) { super(...args); if (!args.length) clock.advance(options.marketClockTickMs); }
+    static now() { const value=clock.now(); clock.advance(options.marketClockTickMs); return value; }
+  }
   const sandbox = {
     console: { log: (...args) => logs.push(args), info: (...args) => {
       if(options.observerFailure&&args[0]==='C1_SCREEN_OPERATIONAL')throw Error('PRIVATE_OBSERVER_FAILURE');
@@ -83,7 +87,7 @@ function createHarness(route = CURRENT, options = {}) {
       logs.push(args);
     }, error: (...args) => logs.push(args) },
     process: { env: { FMP_API_KEY: 'offline-fixture-key', VERCEL_ENV: 'production', NODE_ENV: 'test' } },
-    Date: options.freezeMarketClock ? FrozenMarketDate : clock.Date, Intl, Math, Number, String, Object, Array, Set, Map, WeakMap, Boolean, RegExp, Error, TypeError,
+    Date: options.freezeMarketClock ? FrozenMarketDate : options.marketClockTickMs ? AdvancingMarketDate : clock.Date, Intl, Math, Number, String, Object, Array, Set, Map, WeakMap, Boolean, RegExp, Error, TypeError,
     JSON, URL, URLSearchParams, AbortController, AbortSignal, Response, Buffer,
     performance: { now: () => clock.now() - EPOCH },
     setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout,
@@ -154,6 +158,7 @@ function createHarness(route = CURRENT, options = {}) {
     const record = { exports: {} }; moduleCache.set(file, record);
     const execute = new vm.Script('(function(require,module,exports){' + compile(file, file === path.resolve(ROOT, route) ? options.routeSource : undefined) + '\n})', { filename: file }).runInContext(context);
     execute(request => {
+      if (request === '@vercel/blob' && options.memoryBlob) return options.memoryBlob;
       if (request === '@vercel/blob') return { get: forbidden('Blob get'), list: forbidden('Blob list'), put: forbidden('Blob put'), del: forbidden('Blob del') };
       if (request.startsWith('node:')) return require(request);
       if (request.startsWith('@babel/runtime/')) return require('next/dist/compiled/' + request);
@@ -170,15 +175,19 @@ function createHarness(route = CURRENT, options = {}) {
         },
       };
       if (dependency === path.join(ROOT, 'lib/v11ProductionSnapshot.js')) return { getV11ProductionSnapshot: async () => boundary('snapshot', snapshot) };
-      if (dependency === path.join(ROOT, 'lib/strongBuyPersistence.js')) return {
+      if (dependency === path.join(ROOT, 'lib/strongBuyPersistence.js') && !options.actualContinuity) return {
         seedDurableStrongBuyMemory: async () => {
           await boundary('continuity', null);
           context.__screenerStrongBuyMemoryV1 = new Map([['X499', { action: 'Strong Buy', earnedAt: EPOCH, interruptedAt: 0 }]]);
         },
       };
-      if (dependency === path.join(ROOT, 'lib/performanceStore.js')) return {
-        updatePerformanceLedger: async rows => boundary('ledger', { ok: true }, { symbols: rows.map(row => row.symbol) }),
-      };
+      if (dependency === path.join(ROOT, 'lib/performanceStore.js')) {
+        const store=options.actualPerformanceStore ? actual(dependency) : null;
+        return { ...(store || {}), updatePerformanceLedger: async (rows, at) => {
+          observations.push(clone({rows,at}));
+          return store ? store.updatePerformanceLedger(rows,at) : boundary('ledger', { ok: true }, { symbols: rows.map(row => row.symbol) });
+        }};
+      }
       const exports = actual(dependency);
       if (dependency === path.join(ROOT, 'lib/fmpFundamentals.js')) return { ...exports,
         fetchFmpFundamentals: async symbols => boundary('fundamentals', new Map(symbols.map(symbol => [symbol, fundamentals(symbol)])), { symbols: [...symbols] }) };
@@ -202,16 +211,20 @@ function createHarness(route = CURRENT, options = {}) {
   const classification = actual(path.join(ROOT, 'lib/c1StockClassification.js'));
   const screenSnapshot = classification.buildC1StockScreenSnapshot(session);
   const handler = actual(path.join(ROOT, route)).default;
+  let rawResponse, wireResponse;
   function request(query = {}) {
     const response = { headers: {}, setHeader(name, value) { this.headers[name] = value; },
-      status(code) { this.code = code; return this; }, json(body) { this.body = body; return this; } };
+      status(code) { this.code = code; return this; }, json(body) { rawResponse=body; if(options.serializeHttpBody)wireResponse=JSON.stringify(body); this.body = body; return this; } };
     const started = clock.now();
     const requestQuery={ theme: 'opportunities', ...query };
     if(options.queryError)Object.defineProperty(requestQuery,'theme',{get(){throw Error(options.queryError);}});
     return Promise.resolve(handler({ method: 'GET', query: requestQuery, headers: {} }, response))
       .then(() => ({ code: response.code, body: clone(response.body), headers: response.headers, elapsedMs: clock.now() - started }));
   }
-  return { request, clock, calls, logs, snapshot, screenSnapshot, latencies,
+  return { request, clock, calls, logs, observations, snapshot, screenSnapshot, latencies,
+    rawResponse: () => rawResponse, wireResponse: () => wireResponse,
+    screenReader: () => actual(path.join(ROOT, "lib/c1ScreenSnapshotView.js")),
+    hysteresis: () => context.__screenerStrongBuyMemoryV1,
     cache: () => context.__screenerBroadOpportunityCacheV9,
     quoteCache: () => context.__screenerFmpQuoteCacheV4,
     quoteCooldown: () => Number(context.__screenerFmpQuoteCooldownV4 || 0),

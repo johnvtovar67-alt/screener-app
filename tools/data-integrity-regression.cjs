@@ -1,7 +1,7 @@
 const fs=require('fs');
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 
-const top5=fs.readFileSync('pages/api/top5.js','utf8');
+const top5=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 const page=fs.readFileSync('pages/index.js','utf8');
 const app=fs.readFileSync('pages/_app.js','utf8');
 const ledger=fs.readFileSync('lib/performanceLedger.js','utf8');

@@ -1,3 +1,5 @@
+import {sendPublicApiFailure} from '../../lib/publicApiFailure';
+import {fetchFmpResponse,readFmpJsonResponse,fmpApiKey} from '../../lib/fmpTransport';
 // pages/api/lookup.js
 
 import {
@@ -27,7 +29,7 @@ function toFmpSymbol(symbol) {
 }
 
 async function fetchQuote(symbol) {
-  const apiKey = process.env.FMP_API_KEY;
+  const apiKey = fmpApiKey();
 
   if (!apiKey) {
     throw new Error(
@@ -42,7 +44,7 @@ async function fetchQuote(symbol) {
     `https://financialmodelingprep.com/stable/quote?symbol=${clean}&apikey=${apiKey}`;
 
   const response =
-    await fetch(url);
+    await fetchFmpResponse(url);
 
   if (!response.ok) {
     const text =
@@ -54,7 +56,7 @@ async function fetchQuote(symbol) {
   }
 
   const data =
-    await response.json();
+    await readFmpJsonResponse(response);
 
   const quote =
     Array.isArray(data)
@@ -206,16 +208,7 @@ export default async function handler(
     return res.status(200).json({
       stock: result,
     });
-  } catch (err) {
-    console.error(
-      "lookup error:",
-      err
-    );
-
-    return res.status(500).json({
-      error:
-        err.message ||
-        "Lookup failed.",
-    });
+  } catch {
+    return sendPublicApiFailure(res,{status:500,code:'LOOKUP_UNAVAILABLE',stage:'lookup',error:'Lookup failed.'});
   }
 }
