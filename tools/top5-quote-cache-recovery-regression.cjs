@@ -4,7 +4,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict'),crypto=require(
 const {createHarness,CURRENT}=require('./top5-performance-regression.cjs');
 const clone=value=>JSON.parse(JSON.stringify(value));
 const blob=source=>crypto.createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
-const source=fs.readFileSync(CURRENT,'utf8');
+const source=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 const header='    res.setHeader("X-C1-Request-Id", top5RequestId());\n';
 const verifiedCache='    cached.quoteCoverageAdequate === true &&\n';
 const comment='          // A rejected price must not replace the last usable cache entry.\n';

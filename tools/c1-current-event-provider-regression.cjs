@@ -121,13 +121,60 @@ async function run(){
  }
  const adverseLocal=harness({NEWS:[emptyNews,news({symbol:'AMD',text:'Company cuts full-year guidance.'})]}),adverseLocalMap=await adverseLocal.map(['CRWD','AMD']);
  verification(adverseLocalMap.get('CRWD'),'UNVERIFIED',adverseLocal);verification(adverseLocalMap.get('AMD'),'VERIFIED_BLOCKED',adverseLocal);
- // Identity must exactly match the requested canonical identifier. Neither an
- // alias guess, an unrequested issuer nor an unknown date narrows failure scope.
- for(const malformed of [news({symbol:'crwd',title:'',text:''}),news({symbol:'BRK-B',title:'',text:''}),news({symbol:'UNKNOWN',title:'',text:''}),news({symbol:null,title:'',text:''}),
+ // The original global-failure assertion for accepted spelling variants remains
+ // pinned; current localization uses exactly the canonicalizer already trusted
+ // for ordinary valid news rows, never an unrequested issuer or unknown date.
+ for(const [raw,canonical]of [['crwd','CRWD'],['BRK-B','BRK.B']]){
+  const malformed=news({symbol:raw,title:'',text:''}),before=harness({NEWS:[malformed]},true),oldMap=await before.map(['CRWD','AMD','BRK.B']);
+  for(const symbol of oldMap.keys())verification(oldMap.get(symbol),'UNVERIFIED',before);
+  for(const requested of [['CRWD','AMD','BRK.B'],['BRK.B','AMD','CRWD']]){
+   const h=harness({NEWS:[malformed]}),map=await h.map(requested);
+   for(const symbol of map.keys())verification(map.get(symbol),symbol===canonical?'UNVERIFIED':'VERIFIED_CLEAR',h);
+   assert.equal(map.get('AMD').eventVerification.sources.find(source=>source.kind==='NEWS').quarantinedRowCount,1);
+   assert.equal(map.get(canonical).materialNews.length,0,'Missing content never becomes a material issuer fact');
+   h.set('NEWS',[]);const recovered=await h.map(requested);
+   for(const risk of recovered.values())verification(risk,'VERIFIED_CLEAR',h);
+   assert.equal(h.calls.filter(call=>call.kind==='NEWS').length,2,'Canonical malformed body is evicted for immediate explicit recovery');
+  }
+ }
+ for(const malformed of [news({symbol:'UNKNOWN',title:'',text:''}),news({symbol:null,title:'',text:''}),
   news({title:'',text:'',publishedDate:'not-a-day'}),news({title:'',text:'',publishedDate:'2026-10-19'}),news({title:'',text:'',publishedDate:'2026-10-23'}),null]){
   const h=harness({NEWS:[malformed]}),map=await h.map(['CRWD','AMD','BRK.B']);
   for(const symbol of map.keys())verification(map.get(symbol),'UNVERIFIED',h);
  }
+ // Accepted raw spellings cannot split or manufacture issuer identities. The
+ // same canonicalizer already deduplicates the requested issuer set.
+ const duplicateIdentity=harness({NEWS:[news({symbol:'BRK-B',title:'',text:''})]}),deduplicated=await duplicateIdentity.map(['brk-b','BRK.B','AMD']);
+ assert.deepEqual([...deduplicated.keys()],['BRK.B','AMD']);
+ verification(deduplicated.get('BRK.B'),'UNVERIFIED',duplicateIdentity);verification(deduplicated.get('AMD'),'VERIFIED_CLEAR',duplicateIdentity);
+ for(const raw of ['BRK.B','BRK-B','brk.b','brk-b']){
+  const goodScenario={NEWS:[news({symbol:raw})]},before=harness(goodScenario,true),after=harness(goodScenario);
+  assert.deepEqual(plain([...await after.map(['BRK.B','AMD'])]),plain([...await before.map(['BRK.B','AMD'])]),'Accepted non-malformed issuer spellings retain complete old output');
+  assert.deepEqual(after.calls,before.calls);
+ }
+ const aliasedEmpty=news({symbol:'BRK-B',title:'',text:''}),aliasPage=[aliasedEmpty,...Array.from({length:499},(_,index)=>news({symbol:'AMD',url:'https://fixture.invalid/alias-page/'+index}))];
+ for(const mode of ['terminal','repeated','overlap','unavailable','limit']){
+  const h=harness({NEWS:({query})=>{
+   const page=Number(query.page||0);if(!page)return aliasPage;
+   if(mode==='terminal')return[];if(mode==='repeated')return aliasPage;if(mode==='overlap')return[aliasedEmpty];if(mode==='unavailable')throw new Error(sentinel);
+   return Array.from({length:500},(_,index)=>news({symbol:'AMD',url:'https://fixture.invalid/alias-tail/'+page+'/'+index}));
+  }}),map=await h.map(['BRK.B','AMD']);
+  verification(map.get('BRK.B'),'UNVERIFIED',h);verification(map.get('AMD'),mode==='terminal'?'VERIFIED_CLEAR':'UNVERIFIED',h);
+  assert.equal(h.calls.filter(row=>row.kind==='NEWS').length,mode==='limit'?10:2,'Alias quarantine never shortens complete raw pagination');
+ }
+ for(const bad of [news({symbol:'BRK--B',title:'',text:''}),news({symbol:'BRK_B',title:'',text:''}),
+  news({symbol:'BRK-B',title:'',text:'',publishedDate:'not-a-day'}),news({symbol:'BRK-B',title:'',text:'',publishedDate:'2026-10-19'})]){
+  const h=harness({NEWS:[bad]}),map=await h.map(['BRK.B','AMD']);for(const risk of map.values())verification(risk,'UNVERIFIED',h);
+ }
+ for(const ordered of [[aliasedEmpty,news({symbol:'BRK.B'})],[news({symbol:'BRK.B'}),aliasedEmpty]]){
+  const h=harness({NEWS:ordered}),map=await h.map(['AMD','BRK.B']);for(const risk of map.values()){
+   verification(risk,'UNVERIFIED',h);assert(risk.eventVerification.reasons.includes('NEWS_CONTRADICTORY_RESPONSE'),'Canonical issuer identity keeps contradictory content globally fail-closed');
+  }
+ }
+ const aliasStale=harness();await aliasStale.map(['BRK.B','AMD']);aliasStale.advance(3600001);aliasStale.set('NEWS',[aliasedEmpty]);aliasStale.set('MERGERS',new Error(sentinel));
+ for(const risk of (await aliasStale.map(['BRK.B','AMD'])).values())verification(risk,'UNVERIFIED',aliasStale);
+ const aliasExpires=harness({NEWS:[aliasedEmpty]});aliasExpires.set('MACRO',()=>{aliasExpires.advance(300001);return[];});
+ for(const risk of (await aliasExpires.map(['BRK.B','AMD'])).values())verification(risk,'UNVERIFIED',aliasExpires);
  // Even one quarantined row still counts toward the provider's raw page cap.
  const fullLocalPage=[emptyNews,...Array.from({length:499},(_,index)=>news({symbol:'AMD',url:'https://fixture.invalid/local/'+index}))];
  for(const mode of ['terminal','repeated','overlap','unavailable','limit']){

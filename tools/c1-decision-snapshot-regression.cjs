@@ -35,7 +35,7 @@ assert.equal(buildC1DecisionSnapshot({...request,model:{...record.summary,activa
 assert.ok(decision.issues.some(i=>i.code==='PRODUCTION_UNIVERSE'),'PIT historical results cannot certify the current broad cohort');
 const midnight=advanceC1ForwardModel(null,[session],new Date('2026-09-11T14:00:00Z'),{completedCloseQueue:true});
 assert.equal(midnight.simulationStartSession,undefined,'A missed opening cannot be backfilled by diagnostic initialization');
-const page=fs.readFileSync('pages/index.js','utf8'),api=fs.readFileSync('pages/api/top5.js','utf8');
+const page=fs.readFileSync('pages/index.js','utf8'),api=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 assert.ok(!page.includes('<C1ModelStatus'),'Setup/model status does not occupy the trading header');
 assert.ok(page.includes('["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab}'),'Both trading pages still use the same private-account view');
 assert.ok(api.includes('decisionSnapshot: broadSnapshot.productionPolicySnapshot?.decisionSnapshot'));

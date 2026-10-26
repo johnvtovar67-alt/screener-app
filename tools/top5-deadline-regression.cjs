@@ -100,6 +100,8 @@ function createHarness(latency = 1000) {
     const run = new vm.Script(`(function(require,module,exports){${compile(file)}\n})`, { filename: file }).runInContext(context);
     run(request => {
       if (Object.hasOwn(mocks, request)) return mocks[request];
+      if (request === './fmpTransport') return loadModule('lib/fmpTransport.js');
+      if (request === './fmpSymbols') return loadModule('lib/fmpSymbols.js');
       if (request === './top5Diagnostics' || request === './top5Diagnostics.js') return record.exports;
       if (request.startsWith('node:')) return require(request);
       if (request.startsWith('@babel/runtime/')) return require('next/dist/compiled/' + request);

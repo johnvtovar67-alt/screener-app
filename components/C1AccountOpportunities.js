@@ -1,8 +1,7 @@
-import {projectC1Opportunities} from '../lib/c1OpportunitiesProjection';
+import {joinC1Opportunities} from '../lib/c1OpportunitiesContract';
 import {renderC1AccountOpportunitiesView} from './C1AccountOpportunitiesView';
-import {c1ScreenEvidenceKey,readC1ScreenEvidence,writeC1ScreenEvidence,resolveC1ScreenEvidence} from '../lib/c1ScreenEvidence';
+import {c1ScreenEvidenceKey,readC1ScreenEvidence,writeC1ScreenEvidence} from '../lib/c1ScreenEvidence';
 import {useEffect,useRef,useState} from 'react';
-import {c1ManualReviewCurrent} from '../lib/c1ManualRecommendations';
 export default function C1AccountOpportunities({decision,executionDecision=decision,openingPlan,openingError,manualRecommendations,purchaseDiagnostics,screenRows=[],positionRows=[],screenCurrent=false,portfolio=[],view="opportunities"}){
  const [,expire]=useState(0);
  useEffect(()=>{
@@ -16,8 +15,7 @@ export default function C1AccountOpportunities({decision,executionDecision=decis
  const [restored,setRestored]=useState({key:null,value:null});
  const cacheReady=typeof window==='undefined'||restored.key===sourceKey;
  useEffect(()=>{if(typeof window!=='undefined'){let value=null;try{value=readC1ScreenEvidence(window.localStorage,decision);}catch{}setRestored({key:sourceKey,value});}},[sourceKey]);
- const evidence=resolveC1ScreenEvidence({decision,rows:screenRows,current:screenCurrent&&cacheReady,previous:lastVerified.current?.key===sourceKey?lastVerified.current:restored.value,reviewCurrent:Boolean(openingPlan)&&c1ManualReviewCurrent(manualRecommendations,executionDecision)});
+ const {evidence,projection}=joinC1Opportunities({decision,executionDecision,openingPlan,openingError,manualRecommendations,purchaseDiagnostics,screenRows,positionRows,portfolio,view,screenCurrent:screenCurrent&&cacheReady,previousEvidence:lastVerified.current?.key===sourceKey?lastVerified.current:restored.value});
  useEffect(()=>{if(evidence.verified){lastVerified.current=evidence;if(typeof window!=='undefined')try{writeC1ScreenEvidence(window.localStorage,evidence);}catch{}}},[evidence]);
- const projection=projectC1Opportunities({decision,executionDecision,openingPlan,openingError,manualRecommendations,purchaseDiagnostics,screenRows,positionRows,portfolio,view,evidence});
  return projection?renderC1AccountOpportunitiesView(projection):null;
 }

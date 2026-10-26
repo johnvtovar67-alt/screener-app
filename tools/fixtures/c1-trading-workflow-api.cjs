@@ -18,16 +18,17 @@ function createWorkflowApi(kind='buy',options={}){
   return '';
  }).replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
  const box={...imports,Date,console,process:{env:{}},Response};vm.createContext(box);vm.runInContext(source,box,{filename:file});
- let etag='"fixture-0"';
+ let etag='"fixture-0"';const requests=[];
  const handler=box.factory({environment:'test',commit:'workflow-only',readPortfolio:async()=>{if(!fixture.adoptionPortfolioRecord)throw Error('Synthetic adoption portfolio required');return JSON.parse(JSON.stringify(fixture.adoptionPortfolioRecord));},clock:()=>fixture.now,readBook:async()=>({record:fixture.book}),collectOpening:fixture.collectOpening,
   collectHoldings:never,collectRanks:never,store:{read:async()=>({record:fixture.account,etag}),write:async(_path,record,expected)=>{
    if(expected!==etag)throw Error('Fixture ETag conflict');fixture.persist(record);etag='"fixture-'+fixture.writes+'"';
   }}});
- return {fixture,async request(method,body,authorized=true){
-  fixture.advance();let status=200,value;
-  const res={setHeader(){},status(code){status=code;return this;},json(body){value=body;return this;}};
+ return {fixture,requests,async request(method,body,authorized=true){
+  requests.push({method,operation:body?.operation||null});
+  fixture.advance();let status=200,value;const headers={};
+  const res={setHeader(name,value){headers[name]=value;},status(code){status=code;return this;},json(body){value=body;return this;}};
   await handler({method,body,headers:authorized?{authorization:'Bearer offline_workflow_fixture_key_000001'}:{}},res);
-  return {status,body:{...value,testClock:fixture.now.toISOString(),testPortfolio:fixture.adoptionPortfolioRecord?.portfolio||fixture.portfolio,testScreenRows:fixture.screenRows()}};
+  return {status,headers,body:{...value,testClock:fixture.now.toISOString(),testPortfolio:fixture.adoptionPortfolioRecord?.portfolio||fixture.portfolio,testScreenRows:fixture.screenRows()}};
  }};
 }
 module.exports={createWorkflowApi};

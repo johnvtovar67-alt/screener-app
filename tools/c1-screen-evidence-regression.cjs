@@ -11,7 +11,7 @@ const snapshot=buildC1StockScreenSnapshot(session);
 const decision={contract:'c1-account-decision-v1',current:true,decisionId:'accepted-hash:1',sourceSessionDate:session.date,stockScreen:snapshot,positions:[{symbol:'DELL',exits:[],holdingRank:{base:{verified:true,eligible:true,rank:4,eligibleCount:500}},reason:'Momentum rank #4; original account holding explanation.',entryContext:{stage:'full'}}]};
 const rows=specs.map(([symbol,sector])=>({symbol,sector,price:100,entryTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000},expertDecision:{metrics:{quoteFreshnessPass:true}},eventRisk:{status:'Clear'},finalDecision:{action:'Watch',relativeCapitalScore:['DELL','ILMN'].includes(symbol)?200:0}}));
 const crowded=[...rows,...Array.from({length:110},(_,i)=>({symbol:'X'+i,finalDecision:{action:'Watch',relativeCapitalScore:100-i}}))];
-const api=fs.readFileSync('pages/api/top5.js','utf8'),start=api.indexOf('function compactRowsForClient('),end=api.indexOf('\n}',start)+2;
+const api=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source(),start=api.indexOf('function compactRowsForClient('),end=api.indexOf('\n}',start)+2;
 const compact=new Function('normalizeSymbol',api.slice(start,end)+';return compactRowsForClient;')(s=>String(s||'').toUpperCase());
 const page=fs.readFileSync('pages/index.js','utf8');
 const boundary=page.slice(page.indexOf('  function screenHealth('),page.indexOf('  async function fetchStock('));

@@ -4,7 +4,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('nod
 const {createHash}=require('node:crypto');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const ledger=createResearchModuleLoader(process.cwd()).load('lib/performanceLedger.js');
-const source=fs.readFileSync('pages/api/top5.js','utf8');
+const source=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 const start=source.indexOf('async function recordPerformance('),end=source.indexOf('\nfunction serializeStockForClient(',start);
 assert(start>0&&end>start,'Actual performance-record function boundaries required');
 const current=source.slice(start,end);

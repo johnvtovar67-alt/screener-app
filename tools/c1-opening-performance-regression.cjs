@@ -12,6 +12,7 @@ const context={...market,Date:FixedDate,Map,console,process,URL,URLSearchParams,
  C1_LIVE_UNIVERSES:{sp500:{endpoint:'sp500-constituent'}},
  c1LiveMembers:(universe,rows)=>rows.map(row=>({symbol:row.symbol,name:row.name,sector:row.sector})).sort((a,b)=>a.symbol.localeCompare(b.symbol)),
  normalizeHistoricalBars:rows=>rows.map(row=>({...row,adjusted:true}))};
+require('./c1-provider-transport-seams.cjs').installProviderTransport(context);
 vm.createContext(context);vm.runInContext(source+'\nglobalThis.collect=collectC1AccountOpening;',context);
 const collectC1AccountOpening=context.collect;
 

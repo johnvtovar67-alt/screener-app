@@ -15,6 +15,7 @@ function loadCollector(loader){
  const normalizeHistoricalBars=loader.load('lib/fmpPriceBars.js').normalizeHistoricalBars;
  const source=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
  const box={...loader.load('lib/marketSession.js'),...loader.load('lib/c1LiveInput.js'),normalizeHistoricalBars,Map,Date:FixedDate,console,process:{env:{}},URLSearchParams,AbortSignal,fetch:never};
+ require('./c1-provider-transport-seams.cjs').installProviderTransport(box);
  vm.createContext(box);vm.runInContext(source+';globalThis.collect=collectC1AccountOpening;',box);return box.collect;
 }
 

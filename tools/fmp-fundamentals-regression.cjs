@@ -1,8 +1,9 @@
 const fs=require('fs');
 const vm=require('vm');
+const {restoreProviderTransport,installProviderTransport}=require('./c1-provider-transport-seams.cjs');
 const assert=(c,m)=>{if(!c)throw new Error(m)};
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
-const {toFmpSymbol}=createResearchModuleLoader(process.cwd()).load('lib/fmpSymbols.js');
+const {toFmpSymbol,fromFmpSymbol}=createResearchModuleLoader(process.cwd()).load('lib/fmpSymbols.js');
 // Frozen expressions from production cddfe3e. This is a mechanical extraction,
 // not permission to improve/validate the legacy spelling contract.
 const priorFundamental=s=>String(s||"").replace(".", "-").toUpperCase().trim();
@@ -22,20 +23,21 @@ const coercionFailure=new Error('synthetic coercion');
 try{toFmpSymbol({toString(){throw coercionFailure;}});throw new Error('Expected coercion failure');}catch(error){assert(error===coercionFailure,'Existing coercion failure identity is preserved');}
 const {createHash}=require('node:crypto');
 const blobHash=source=>createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
-const quoteSource=fs.readFileSync('lib/fmpQuotes.js','utf8');
+const quoteSource=restoreProviderTransport('lib/fmpQuotes.js',fs.readFileSync('lib/fmpQuotes.js','utf8'));
 assert(blobHash(quoteSource.replace("import {toFmpSymbol as norm} from './fmpSymbols';\n",'').replace('const stores=',"const norm=value=>String(value||'').replace('.', '-').toUpperCase().trim();\nconst stores="))==='00e6b3170856577085573b203adfd07e61827fd3','Quote extraction reversal exactly recovers reviewed production source');
-const fundamentalSource=fs.readFileSync('lib/fmpFundamentals.js','utf8');
+const fundamentalSource=restoreProviderTransport('lib/fmpFundamentals.js',fs.readFileSync('lib/fmpFundamentals.js','utf8'));
 const priorDeclaration='const toFmpSymbol=s=>String(s||"").replace(".", "-").toUpperCase().trim();\n';
 assert(blobHash(fundamentalSource.replace('    let nonRetryableResponse=false;\n','').replace('if(r.status<500){nonRetryableResponse=[400,401,404,405,410,422].includes(r.status);throw e;}','if(r.status<500)throw e;').replace('if(nonRetryableResponse||hardFeedError(e?.status))throw e;','if(hardFeedError(e?.status))throw e;').replace("import {toFmpSymbol} from './fmpSymbols';\n",'').replace('const asArray=',priorDeclaration+'const asArray='))==='5dacd7e90008fdcb48b32f1bb57814476f750851','Fundamental retry repair and symbol extraction reversal exactly recover reviewed production source');
 let src=fs.readFileSync('lib/fmpFundamentals.js','utf8')
   .replace(/import\s+\{put,list,get\}\s+from\s+'@vercel\/blob';/,'')
   .replace(/^import .*top5Diagnostics.*$/gm,'')
   .replace(/^import .*fmpSymbols.*$/gm,'')
+  .replace(/^import .*fmpTransport.*$/gm,'')
   .replace(/export async function /g,'async function ')
   .replace(/export function /g,'function ');
 src+='\nmodule.exports={statementRatioFields,statementGrowthFields,fillMissing};';
 const sandbox={module:{exports:{}},exports:{},console,Math,Number,String,Object,Array,Boolean,Map,Set,Date,setTimeout,clearTimeout,AbortController,toFmpSymbol,fetch:async()=>({ok:true,json:async()=>[]}),top5Phase:(_name,task)=>task(),top5Network:(_url,task)=>task(),top5Fetch:(url,options)=>sandbox.fetch(url,options),assertTop5Active(){},isTop5Deadline:()=>false,top5Count(){}};
-vm.createContext(sandbox);vm.runInContext(src,sandbox);
+installProviderTransport(sandbox);vm.createContext(sandbox);vm.runInContext(src,sandbox);
 const {statementRatioFields,statementGrowthFields,fillMissing}=sandbox.module.exports;
 const ratios=statementRatioFields(
   {revenue:1000,grossProfit:400,operatingIncome:150,netIncome:100,marketCap:2000},
@@ -68,7 +70,7 @@ assert(src.includes('PERSISTENT_REHYDRATE_MS'),'Warm instances must periodically
 assert(src.includes('fmp-fundamentals-cache-v1.json')&&!src.includes('if(!hasBlobToken())'),'Durable fundamental cache must support Vercel OIDC instead of requiring only a legacy Blob token');
 assert(src.includes('fundamentalDataStatus:"deferred"'),'Unfetched breadth names must be marked deferred rather than misreported as provider failures');
 assert(src.includes('fundamentalRefreshDeferred:true'),'Previously verified fundamentals inside the stale-safety window must remain usable while bounded refresh is deferred');
-const top5=fs.readFileSync('pages/api/top5.js','utf8');
+const top5=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 assert(/fundamentalsComplete\s*===\s*0\s*&&\s*fundamentalsUnavailable\s*>\s*0\s*\?\s*"unavailable"/.test(top5),'Deferred breadth must not be misreported as a provider-wide fundamental outage');
 assert(top5.includes('rotatedFundamentalPriority')&&top5.includes('verificationPass'),'Automatic verification passes must rotate through the bounded priority queue');
 assert(top5.includes('MAX_AUTOMATIC_VERIFICATION_PASS = 20')&&top5.includes('Math.min(\n        MAX_AUTOMATIC_VERIFICATION_PASS'),'The API must not silently clamp the expanded-universe verification loop below the UI recovery budget');

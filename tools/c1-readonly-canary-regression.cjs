@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const {assessC1Capture}=require('./c1-readonly-canary.cjs');
 const {createWorkflowFixture,currentEventEvidenceFor}=require('./fixtures/c1-trading-workflow.cjs');
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const currentSource=fs.readFileSync(require.resolve('./c1-readonly-canary.cjs'),'utf8');
+const currentSource=require('./c1-opportunities-contract-extraction.cjs').restoreCanaryContract(fs.readFileSync(require.resolve('./c1-readonly-canary.cjs'),'utf8'));
 const projectionStart=currentSource.indexOf(' // Assess the actual consumed presentation projection'),projectionEnd=currentSource.indexOf(' if(!evidence.buySymbols.length)',projectionStart);
 assert(projectionStart>=0&&projectionEnd>projectionStart);
 const legacySource=currentSource.slice(0,projectionStart)+currentSource.slice(projectionEnd);

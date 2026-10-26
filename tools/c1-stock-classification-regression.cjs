@@ -40,13 +40,13 @@ assert.equal(view.tiles.find(x=>x.symbol==='S2').accountAction,'No purchase');
 assert.ok(present({decision,buys:orders,plan,ready:false}).tiles.every(x=>!x.order));
 assert.equal(present({decision:{...decision,current:false},buys:orders,plan,ready:true}).tiles.length,0);
 assert.ok(view.watch.every(x=>x.screenReview.why.includes('below the three selected')));
-const component=[fs.readFileSync('components/C1AccountOpportunities.js','utf8'),fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8'),fs.readFileSync('lib/c1OpportunitiesProjection.js','utf8')].join('\n');
+const component=[fs.readFileSync('components/C1AccountOpportunities.js','utf8'),fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8'),fs.readFileSync('lib/c1OpportunitiesProjection.js','utf8'),fs.readFileSync('lib/c1OpportunitiesContract.js','utf8')].join('\n');
 assert.ok(component.includes('resolveC1ScreenEvidence({decision,rows:screenRows'));
 assert.ok(component.includes('!portfolioOnly&&ratedTiles.length>0'),'Only verified stock ratings appear in Opportunities');
 assert.ok(!component.includes('buys.map(o=>'),'Portfolio orders cannot become duplicate stock rating cards');
 console.log('PASS: original-deployment oracle matches 3 Buy/6 Watch, quote/event/liquidity/gap gates, sector/issuer substitutions, expert Strong Buy; holdings affect only account actions, stale checks hide quantities, and account orders cannot promote Watch ratings.');
 
-const top5=fs.readFileSync('pages/api/top5.js','utf8');
+const top5=require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 const compactSource=top5.slice(top5.indexOf('function compactRowsForClient('),top5.indexOf('\n}',top5.indexOf('function compactRowsForClient('))+2);
 const compact=new Function('normalizeSymbol',compactSource+';return compactRowsForClient;')(s=>String(s||'').toUpperCase());
 const crowded=Array.from({length:100},(_,i)=>({symbol:'X'+i,finalDecision:{action:'Watch',relativeCapitalScore:100-i}}));

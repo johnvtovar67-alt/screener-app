@@ -31,9 +31,11 @@ function extractSimulatorAccounting(source){
  const body=inlineAccountingBody(source);
  source=ACCOUNTING_IMPORT+source;
  source=replaceOnce(source,'export function validatePointInTimeDataset(',ACCOUNTING_SETUP+'export function validatePointInTimeDataset(','helper binding');
- return replaceOnce(source,body,ACCOUNTING_MARKER,'body');
+ source=replaceOnce(source,body,ACCOUNTING_MARKER,'body');
+ return require('./c1-simulator-phase-extraction.cjs').extractSimulatorPhases(source);
 }
 function restoreSimulatorAccounting(source){
+ source=require('./c1-simulator-phase-extraction.cjs').restoreSimulatorPhases(source);
  source=replaceOnce(source,ACCOUNTING_IMPORT,'','import');
  source=replaceOnce(source,ACCOUNTING_SETUP,'','helper binding');
  return replaceOnce(source,ACCOUNTING_MARKER,extractedAccountingBody(),'body restoration');
