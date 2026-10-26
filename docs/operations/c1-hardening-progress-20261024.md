@@ -1,5 +1,17 @@
 # C1 reliability cleanup — progress ledger
 
+## October26 after-hours capacity copy — source checkpoint
+
+Owner explicitly requests repair of MPC's false full-slot message after close.
+Require a ready review before inferring legacy allocation occupancy; otherwise
+retain the existing closed-session explanation and render it plainly. Two display
+files only; no capacity/order/record change. Release gates pending; see
+c1-afterhours-capacity-copy-20261026.md. PR337's final verified release record
+supersedes its older pending status below:41d4062,147 checks/build/CI1008,
+matching preview and exact production/canonical health/scheduler verified.
+Normal October26 index update succeeded20:18:15UTC after repeat confirmation;
+no code change or safeguard bypass was needed for that recovery.
+
 ## October26 owner-approved holding copy — source checkpoint
 
 Three presentation-only changes after verified PR336/a483b02: Your position /
