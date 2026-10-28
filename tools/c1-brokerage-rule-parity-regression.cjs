@@ -136,9 +136,18 @@ function withoutOpeningRevisionPolicyRepair(source){
  once(',\n  purchaseFundingIndependent:plan.purchaseFundingPolicy===C1_PURCHASE_FUNDING_POLICY,additionalSwingCapacity:plan.additionalSwingCapacity?.contract===C1_ADDITIONAL_SWING_CAPACITY','');
  return source;
 }
+// October28 exact recorded-sale incident adapter; remove only the declared
+// additive seam before the unchanged historical source oracle. Current proof
+// and negative tests separately enforce the new reviewed audit contract.
+function withoutRecordedSaleFinalization(source){
+ const once=seam=>{assert.equal(source.split(seam).length-1,1,'Exact recorded-sale finalization seam');source=source.replace(seam,'');};
+ once("import {C1_RECORDED_SALE_FINALIZATION} from './c1RecordedSaleFinalization';\n");
+ once("  if(audit.contract==='c1-recorded-sale-finalization-v1'){\n   const review=C1_RECORDED_SALE_FINALIZATION,p=audit.recordedSaleProof;\n   if(audit.priorRecordHash!==review.priorRecordHash||audit.previousSessionDate!==review.previousSessionDate||\n    audit.currentSessionDate!==review.currentSessionDate||audit.originalInputsPreserved!==true||\n    audit.identicalModelEconomics!==false||audit.privateAccountTreatment!=='preserved-recorded-basis'||\n    audit.provider!=='FMP'||audit.endpoint!=='historical-price-eod/dividend-adjusted'||\n    !Array.isArray(audit.observations)||new Set(audit.observations).size<2||\n    !Array.isArray(audit.economicAdjustments)||audit.economicAdjustments.length||\n    audit.executable!==false||audit.eligibleForAlphaClaim!==false||\n    p?.contract!=='c1-recorded-sale-finalization-proof-v1'||p.reviewedPriorRecordHash!==review.priorRecordHash||\n    p.recordedFillCount!==3||p.recordedFillsPreserved!==true||p.recordedCashPreserved!==true||\n    p.positionsIdentical!==true||p.pendingDecisionsIdentical!==true||p.newModelFills!==0||\n    !Number.isFinite(p.counterfactualCashDelta)||\n    ![p.recordedLedgerHash,p.counterfactualLedgerHash,p.pendingDecisionsHash,audit.comparisonHash].every(h=>/^[a-f0-9]{64}$/.test(h||'')))\n    throw new Error('Saved holding price history requires reviewed account reconciliation');\n   continue;\n  }\n");
+ return source;
+}
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
   const source = fs.readFileSync(path.join(root, file));
-  const comparable = file === 'lib/c1OpeningPriceReview.js' ? withoutOpeningRevisionPolicyRepair(source.toString('utf8')) :
+  const comparable = file === 'lib/c1AccountInput.js' ? withoutRecordedSaleFinalization(source.toString('utf8')) : file === 'lib/c1OpeningPriceReview.js' ? withoutOpeningRevisionPolicyRepair(source.toString('utf8')) :
     file === 'lib/c1AccountSimulator.js' ?
     require('./c1-simulator-accounting-extraction.cjs').restoreSimulatorAccounting(source.toString('utf8')) :
     file === 'lib/c1AccountOpeningProvider.js' ?
