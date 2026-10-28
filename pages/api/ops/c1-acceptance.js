@@ -1,3 +1,4 @@
+import {C1_RECORDED_SALE_FINALIZATION} from '../../../lib/c1RecordedSaleFinalization';
 import { timingSafeEqual } from 'node:crypto';
 import { readStoredC1DatedBook } from '../../../lib/c1DatedBookStore';
 import { latestCompletedMarketSessionDay } from '../../../lib/marketSession';
@@ -33,8 +34,16 @@ export default async function handler(req, res) {
     const captureConsistent = Boolean(latestCapture && latest &&
       latestCapture.sessionDate === latest.date && view.sourceSessionDate === latest.date &&
       view.recordHash === record.recordHash);
+    const saleProof=latestAudit?.recordedSaleProof;
+    const recordedSaleSafe=latestAudit?.contract==='c1-recorded-sale-finalization-v1'&&
+      latestAudit.priorRecordHash===C1_RECORDED_SALE_FINALIZATION.priorRecordHash&&
+      latestAudit.previousSessionDate===C1_RECORDED_SALE_FINALIZATION.previousSessionDate&&
+      latestAudit.currentSessionDate===C1_RECORDED_SALE_FINALIZATION.currentSessionDate&&
+      latestAudit.identicalModelEconomics===false&&saleProof?.recordedFillsPreserved===true&&
+      saleProof.recordedCashPreserved===true&&saleProof.positionsIdentical===true&&
+      saleProof.pendingDecisionsIdentical===true&&saleProof.newModelFills===0;
     const latestAuditSafe = !latestAudit || (latestAudit.originalInputsPreserved === true &&
-      latestAudit.identicalModelEconomics === true &&
+      (latestAudit.identicalModelEconomics === true||recordedSaleSafe) &&
       Array.isArray(latestAudit.economicAdjustments) && latestAudit.economicAdjustments.length === 0);
     const report = {
       contract: 'c1-production-readonly-acceptance-v1',
@@ -57,6 +66,7 @@ export default async function handler(req, res) {
         deferredRevisionCount: latestAudit.deferredRevisionCount ?? null,
         originalInputsPreserved: latestAudit.originalInputsPreserved === true,
         identicalModelEconomics: latestAudit.identicalModelEconomics === true,
+        recordedSaleProof: recordedSaleSafe ? saleProof : null,
         economicAdjustmentCount: latestAudit.economicAdjustments?.length ?? null
       } : null,
       latestAuditSafe,
