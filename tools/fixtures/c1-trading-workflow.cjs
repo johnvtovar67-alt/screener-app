@@ -20,7 +20,9 @@ function createWorkflowFixture(kind='buy',options={}){
  const loader=createResearchModuleLoader(root),service=loader.load('lib/c1AccountService.js');
  const market=loader.load('lib/marketSession.js'),{analyzeEntryTiming}=loader.load('lib/entryTiming.js');
  const symbols=['MRNA','BBB','CCC','DDD','EEE','FFF','GGG','HHH','III','JJJ','KKK','LLL','DELL'];
- const baselineDate='2026-10-14',dates=[baselineDate];for(let i=0;i<220;i++)dates.unshift(market.previousMarketSessionDay(dates[0]));dates.push('2026-10-15','2026-10-16');
+ const baselineDate=options.baselineDate||'2026-10-14',dates=[baselineDate];for(let i=0;i<220;i++)dates.unshift(market.previousMarketSessionDay(dates[0]));
+ const nextSession=day=>{let at=new Date(day+'T12:00:00Z');do{at.setUTCDate(at.getUTCDate()+1);}while(!market.marketExecutionState(at).clock.isSessionDay);return at.toISOString().slice(0,10);};
+ dates.push(nextSession(baselineDate),nextSession(nextSession(baselineDate)));
  const series=Object.fromEntries([...symbols,'SPY','QQQ'].map(s=>[s,[]]));
  const sessions=dates.map((date,index)=>{
   const prices=[...symbols,'SPY','QQQ'].map((symbol,i)=>{
@@ -40,7 +42,7 @@ function createWorkflowFixture(kind='buy',options={}){
  const equity=portfolio.reduce((sum,p)=>sum+p.shares*(p.symbol==='DELL'?500:p.symbol==='CASH'?1:100),0);
  const signature=loader.load('lib/portfolioGovernor.js').portfolioCompositionSignature(portfolio);
  let account=service.adoptC1Account({portfolio,capitalRecord:{version:2,highWater:equity,portfolioSignature:signature,reconciliationRequired:false},book,now:new Date(baselineDate+'T22:00:00Z')});
- let now=new Date('2026-10-15T17:00:00Z'),openingFailure=kind==='missing',writes=0;const quotes={};
+ let now=new Date(options.now||dates[221]+'T17:00:00Z'),openingFailure=kind==='missing',writes=0;const quotes={};
  const opening=()=>({currentEventEvidence:currentEventEvidenceFor(symbols,now),date:now.toISOString().slice(0,10),decisionAt:now.toISOString(),universeSymbols:symbols,corporateActions:[],
   prices:sessions[221].prices.map(p=>({...p,open:p.symbol==='DELL'?500:100,observedPrice:quotes[p.symbol]??(p.symbol==='DELL'?460:100),observedAt:now.toISOString()})),
   receipt:{observedAt:now.toISOString(),membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true}});

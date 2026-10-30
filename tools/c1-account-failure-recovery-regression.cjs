@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {readC1AccountResponse}=require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1RefreshResponse.js');
 const page=fs.readFileSync('pages/index.js','utf8');
-const start=page.indexOf('  async function refreshC1Account('),end=page.indexOf('  async function prepareC1Execution(',start);
+const start=page.indexOf('  function publishC1AccountState('),end=page.indexOf('  async function prepareC1Execution(',start);
 assert(start>=0&&end>start);
 const source=page.slice(start,end),copy=v=>JSON.parse(JSON.stringify(v));
 const previous={decision:{contract:'c1-account-decision-v1',decisionId:'synthetic:7',revision:7,positions:[{symbol:'TEST',shares:3,avgCost:101,stops:[],exits:[],reviewRules:[]}],brokerageCash:900,actualCash:800},openingPlan:{id:'old-opening'},intradaySession:{tickets:[]}};
@@ -20,7 +20,9 @@ const recovered={decision:{...copy(previous.decision),decisionId:'synthetic:8',r
     assert.equal(options.method,'GET','Recovery is an explicit read, never a replayed mutation');
     return {ok:true,status:200,json:async()=>copy(recovered)};
    }};
-  vm.createContext(box);vm.runInContext(source+'\nthis.refresh=refreshC1Account;',box);
+  Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
+ if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
+ vm.createContext(box);vm.runInContext(source+'\nthis.refresh=refreshC1Account;',box);
   const before=JSON.stringify(state.view);
   await assert.rejects(box.refresh(operation?{operation,...(operation==='update-brokerage-cash'?{brokerageCash:850}:{})}:undefined),failureStage==='transport'?/Load failed/:/response could not be verified/);
   assert.equal(state.calls.length,1,'A failed request must not automatically retry');

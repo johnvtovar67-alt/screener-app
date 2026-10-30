@@ -125,4 +125,4 @@ module.exports=[
     "if(tab===\"single\"){setReloading(false);setLoading(false);return check();}"
   ]
 ];
-module.exports.restore=source=>{for(const [before,after] of [...module.exports].reverse()){require('node:assert/strict').equal(source.split(after).length,2,'One declared refresh reliability seam');source=source.replace(after,before);}return source;};
+module.exports.restore=source=>{if(source.includes("import {createC1RefreshFrame}"))source=require('./c1-reliability-source-seams.cjs').restore('pages/index.js',source);for(const [before,after] of [...module.exports].reverse()){require('node:assert/strict').equal(source.split(after).length,2,'One declared refresh reliability seam');source=source.replace(after,before);}return source;};

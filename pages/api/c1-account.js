@@ -3,6 +3,8 @@ import {reviewC1NonCashAdoption,verifyC1NonCashReceipts} from '../../lib/c1NonCa
 import {createHash,randomUUID} from 'node:crypto';
 import {c1AccountApiFailure,c1AccountDependency} from '../../lib/c1ApiErrors';
 import {logC1AccountOperationalStatus} from '../../lib/c1AccountOperationalStatus';
+import {c1AccountOperationalStatus} from '../../lib/c1AccountOperationalStatus';
+import {signC1JourneyObservation} from '../../lib/c1JourneyObservation';
 import {rejectUnauthorizedC1Owner} from '../../lib/c1OwnerAccess';
 import {get,put} from '@vercel/blob';
 import {readStoredC1DatedBook} from '../../lib/c1DatedBookStore';
@@ -115,7 +117,8 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
    if(operation==='refresh-analysis'){
     account=await verifyAccountHoldingPrices({account,book,now,collectHoldings:checkedHoldings});
     const view=completedAnalysisView({account,book,now});
-    try{logC1AccountOperationalStatus(view,{operation,now,requestId,commit});}catch{}
+    try{const completedAt=clock(),context={operation,now:completedAt,requestId,commit};logC1AccountOperationalStatus(view,context);
+     const receipt=signC1JourneyObservation(c1AccountOperationalStatus(view,context),{now:completedAt});if(receipt)res.setHeader('X-C1-Operational-Receipt',receipt);}catch{}
     return res.status(200).json(view);
    }
    if(operation==='prepare-execution'||operation==='record-intraday'){
@@ -123,7 +126,8 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
     const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})});
     if(operation==='record-intraday'){stage='account-save';await saveC1AccountUpdate({store:checkedStore,path,saved,account:prepared.account,operation,book,now});}
     const {account:preparedAccount,...view}=prepared;
-    if(operation==='prepare-execution')try{logC1AccountOperationalStatus({...view,holdingReviewError},{operation,now,requestId,commit});}catch{}
+    if(operation==='prepare-execution')try{const completedAt=clock(),context={operation,now:completedAt,requestId,commit},observed={...view,holdingReviewError};logC1AccountOperationalStatus(observed,context);
+     const receipt=signC1JourneyObservation(c1AccountOperationalStatus(observed,context),{now:completedAt});if(receipt)res.setHeader('X-C1-Operational-Receipt',receipt);}catch{}
     return res.status(200).json({...view,holdingReviewError});
    }
    if(operation==='review-mrna-adoption'||operation==='confirm-mrna-adoption'){

@@ -40,6 +40,8 @@ async function exercise(result){
  const box={setAccountBusy:value=>busy.push(value),setAccountError:value=>errors.push(value),
   refreshC1Account:async body=>{requests.push(plain(body));if(result==='failure')throw new Error('Revision conflict');return result==='interrupted'?undefined:{decision:{...decision,brokerageCash:363.36}};},
   localStorage:{setItem:(...args)=>economicWrites.push(args)},pushCloudPortfolio:()=>{throw new Error('Cash metadata must not sync holdings');},analyze:()=>{throw new Error('Cash metadata must not recalculate portfolio history');}};
+ Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
+ if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  vm.createContext(box);vm.runInContext(source+'\nthis.update=updateBrokerageCash;',box);
  if(result==='success')await box.update(363.36,9);else await assert.rejects(box.update(363.36,9),result==='failure'?/Revision conflict/:/not confirmed/);
  assert.deepEqual(requests,[{operation:'update-brokerage-cash',brokerageCash:363.36,expectedRevision:9}],'One dedicated account operation updates broker metadata');
@@ -51,11 +53,13 @@ async function exercise(result){
  await exercise('success');await exercise('failure');await exercise('interrupted');
  // Exercise the real fetch wrapper as well: the dedicated operation must
  // never recover a revision conflict by making a second implicit API request.
- const refreshSource=page.slice(page.indexOf('  async function refreshC1Account('),page.indexOf('  async function prepareC1Execution('));
+ const refreshSource=page.slice(page.indexOf('  function publishC1AccountState('),page.indexOf('  async function prepareC1Execution('));
  const requests=[],storageWrites=[],box={...loader.load('lib/c1RefreshResponse.js'),setAccountResponseVerified(){},accountRequestId:{current:0},SYNC_KEY:'key',
   localStorage:{getItem:()=> 'synthetic-key',setItem:(...args)=>storageWrites.push(args)},
   setAccountView(){},setAccountAbsent(){},setAccountError(){},setAccountBusy(){},
   fetch:async(url,options)=>{requests.push({url,options});return {ok:false,status:409,json:async()=>({error:'Revision conflict'})};}};
+ Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
+ if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  vm.createContext(box);vm.runInContext(refreshSource+source+'\nthis.update=updateBrokerageCash;',box);
  await assert.rejects(box.update(363.36,9),/Reload before updating brokerage cash/);
  assert.equal(requests.length,1,'A revision conflict remains one dedicated API operation');

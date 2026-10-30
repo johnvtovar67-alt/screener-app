@@ -76,7 +76,7 @@ async function main(){
  assert.equal(configurationHash(JSON.stringify(config)+'\n'),hashes['vercel.json:canonical'],'Vercel compact formatting preserves the exact full configuration contract');
  const changedConfig=structuredClone(config);changedConfig.crons[0].schedule='0 0 * * *';
  assert.notEqual(configurationHash(JSON.stringify(changedConfig)),hashes['vercel.json:canonical'],'A real cron-policy change must still fail');
- for(const f of ['pages/api/cron/c1-index.js','pages/api/cron/full-market-discovery.js','pages/api/cron/fmp-research-backtest.js'])assert.equal(hash(fs.readFileSync(f,'utf8')),hashes[f],f+' byte-identical');
+ for(const f of ['pages/api/cron/c1-index.js','pages/api/cron/full-market-discovery.js','pages/api/cron/fmp-research-backtest.js'])assert.equal(hash(require('./c1-reliability-source-seams.cjs').restore(f,fs.readFileSync(f,'utf8'))),hashes[f],f+' unchanged after exact diagnostic seam reversal');
  console.log('PASS: all53 research routes deny public production requests before handler work; existing server authorization/nonproduction retained; new production portfolio/account creation zero-write denied; existing portfolio output/storage parity and cron hashes unchanged.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

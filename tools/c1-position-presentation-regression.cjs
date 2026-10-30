@@ -274,7 +274,7 @@ async function main(){try{
   const before=copy({position,account});
   function harness({defer=false}={}){
    const state={rows:[],stocks:[],health:{status:'healthy'},requests:[],quotePending:[],status:'',error:'',accountCalls:[],refreshes:0};
-   const scope={accountView:{decision:account},portfolio:[position],results:[],screenRequestId:{current:0},
+   const scope={...modules.load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},accountView:{decision:account},portfolio:[position],results:[],screenRequestId:{current:0},
     sym:row=>row.symbol,price:row=>Number(row.price),CASH:['CASH'],signalPersistence:()=>({}),
     readTop5Response:modules.load('lib/top5Response.js').readTop5Response,performanceHistory:async()=>({records:[],available:true}),
     refreshC1Account:async(...args)=>{state.accountCalls.push(args);return {decision:account};},prepareC1Execution:()=>{},
@@ -303,7 +303,7 @@ async function main(){try{
   eq(present(args(holding('DELL',{stops:[{price:468.85}]}),failed.state.rows[0])).label,'SELL — STOP TRIGGERED','Broad-screen failure cannot hide a separately verified held-position stop');
   match(failed.state.status,/Provider checked; no new quote data received/,'The independently completed quote attempt publishes its actual outcome');
   eq(failed.state.refreshes,1,'The application refresh clock completes even when the broad screen fails');
-  ok(failed.state.accountCalls.every(args=>args.length===0),'Quote refresh does not request any account mutation');
+  ok(failed.state.accountCalls.every(args=>args[0]===null&&typeof args[1]?.publish==='function'&&typeof args[1]?.publishPortfolio==='function'&&args[1].readOnly!==false),'Staged quote refresh still requests only the existing account GET, never an account mutation');
   const race=harness({defer:true}),older=race.load('opportunities',1),newest=race.load('opportunities',2);
   eq(race.state.quotePending.length,2,'Both overlapping requests independently start a held quote attempt');
   const latest=quote('DELL',459,{timestamp:RealDate.parse('2026-10-15T14:59:45Z')/1000,_fmpQuoteRequest:{providerAttempted:true,newDataAccepted:true,refreshRequested:true,refreshStatus:'provider-updated'}});

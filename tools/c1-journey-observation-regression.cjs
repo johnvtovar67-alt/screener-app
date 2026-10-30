@@ -1,0 +1,32 @@
+const assert=require('node:assert/strict');
+const l=require('./fixtures/c1-operational-modules.cjs').createOperationalModuleLoader(process.cwd());
+const {signC1JourneyObservation:sign,verifyC1JourneyObservation:verify}=l.load('lib/c1JourneyObservation.js');
+const {createC1JourneyObservationHandler:create}=l.load('pages/api/c1-journey-observation.js');
+const {bindC1JourneyReceipt:bind,inheritC1JourneyReceipt:inherit,reportC1PublishedJourney:report}=l.load('lib/c1JourneyClient.js');
+const now=new Date('2026-11-02T15:00:00Z'),secret='offline-only-diagnostic-secret',commit='a'.repeat(40);
+const status={operation:'OPENING_REVIEW',code:'CHECKED_ZERO_UNCONDITIONAL_BUY_ORDERS',requestId:'12345678-1234-1234-1234-123456789abc',commit,sourceSessionDate:'2026-10-30',actualCash:9876,privateKey:'PRIVATE_ACCOUNT_SENTINEL'};
+async function main(){
+ const token=sign(status,{now,secret});assert(token);const row=verify(token,{now,secret,commit});assert.equal(row.code,status.code);
+ assert.doesNotMatch(Buffer.from(token.split('.')[1],'base64url').toString(),/actualCash|9876|PRIVATE_|shares|orders/);
+ for(const args of [{secret:'different'},{commit:'b'.repeat(40)},{now:new Date(now.getTime()+300000)},{now:new Date(now.getTime()-1)}])assert.equal(verify(token,{now,secret,commit,...args}),null);
+ assert.equal(verify(token.slice(0,-1)+'A',{now,secret,commit}),null);assert.equal(verify('invalid',{now,secret,commit}),null);
+ assert.equal(sign({...status,code:'PRIVATE_UNKNOWN'},{now,secret}),null);assert.equal(sign(status,{now,secret:''}),null);
+ const logs=[],handler=create({verify:t=>verify(t,{now,secret,commit}),clock:()=>now,emit:(...args)=>logs.push(args)});let code,body;
+ const res={setHeader(){},status(c){code=c;return this;},json(b){body=b;return b;}};
+ const req={method:'POST',headers:{origin:'https://screener-app-cq5t.vercel.app',host:'screener-app-cq5t.vercel.app'},body:{token,generation:4,outcome:'PUBLISHED'}};
+ handler(req,res);assert.equal(code,200);assert.equal(logs.length,1);assert.equal(JSON.parse(logs[0][1]).serverCode,status.code);assert.doesNotMatch(JSON.stringify(logs),/PRIVATE_|actualCash|9876|c1jo1/);
+ handler(req,res);assert.equal(logs.length,1,'A repeated diagnostic token is not emitted twice in one worker');
+ handler({...req,headers:{...req.headers,origin:'https://foreign.invalid'}},res);assert.equal(code,403);
+ handler({...req,body:{...req.body,outcome:'BUY'}},res);assert.equal(code,400);
+ handler({...req,method:'GET'},res);assert.equal(code,405);
+ const financial={decision:{orders:[{shares:1}],actualCash:100}},before=JSON.stringify(financial),calls=[];
+ assert.equal(bind(financial,{headers:new Headers({'x-c1-operational-receipt':token})}),financial);
+ report(financial,{generation:4,fetcher:(...args)=>{calls.push(args);return Promise.reject(Error('not delivered'));}});report(financial,{generation:4,fetcher:()=>{throw Error('must not retry');}});
+ assert.equal(calls.length,1);assert.equal(JSON.stringify(financial),before);assert.equal(JSON.parse(calls[0][1].body).token,token);assert.doesNotMatch(calls[0][1].body,/actualCash|shares|orders/);
+ const merged=inherit({...financial},financial);assert.equal(JSON.stringify(merged),before);
+ assert.doesNotThrow(()=>bind(financial,{headers:{get(){throw Error('header unavailable');}}}));
+ assert.equal(bind(financial,{headers:new Headers({'x-c1-operational-receipt':'malformed'})}),financial);
+ await new Promise(resolve=>setTimeout(resolve,1));
+ console.log('PASS: signed normal-response diagnostic receipts, completion timestamps, strict expiry/deployment/origin, legitimate zero classification, redaction, bounded deduplication, optional client reporting without financial mutation or retry.');
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

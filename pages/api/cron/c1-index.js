@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import { refreshC1Index } from '../../../lib/c1IndexLifecycle';
+import {observeC1ScheduledReadiness} from '../../../lib/c1ReadinessProbe';
 
 // Only application-owned messages enter logs. Never log arbitrary SDK errors,
 // request headers, provider URLs/bodies, credentials, or portfolio data.
@@ -108,6 +109,7 @@ export default async function handler(req, res) {
   const expected = Buffer.from('Bearer ' + secret);
   if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected))
     return res.status(401).json({ error: 'Unauthorized' });
+  const startedAt=Date.now();
   let stage = 'prepare';
   try {
     const result = await refreshC1Index({ onStage(next) {
@@ -120,11 +122,13 @@ export default async function handler(req, res) {
       recordHash: result.recordHash, decisionId: result.decisionSnapshot.decisionId,
       executable: false, activationAuthorized: false };
     console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate, observation: observationDiagnostic(result.observationReceipt) }));
+    if(Date.now()-startedAt<280000)await observeC1ScheduledReadiness({index:result,deadlineMs:Math.min(Date.now()+25000,startedAt+290000)});
     return res.status(200).json(body);
   } catch (error) {
     console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error),
       providerRevision: revisionDiagnostic(error), priceAnchors: anchorDiagnostic(error),
       observation: observationDiagnostic(error?.indexObservation) }));
+    if(Date.now()-startedAt<280000)await observeC1ScheduledReadiness({indexFailed:true,deadlineMs:Math.min(Date.now()+25000,startedAt+290000)});
     return res.status(503).json({ status: 'index-unavailable', executable: false,
       error: String(error?.message || 'Index collection failed').slice(0, 220) });
   }

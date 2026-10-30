@@ -17,7 +17,7 @@ const page=fs.readFileSync('pages/index.js','utf8');
 const boundary=page.slice(page.indexOf('  function screenHealth('),page.indexOf('  async function fetchStock('));
 function client(){
  const state={stocks:[],health:null,requests:[]};let resolveAccount;
- const box={accountView:null,portfolio:[],screenRequestId:{current:0},Date,setTimeout:fn=>{fn();},readTop5Response,
+ const box={...loader.load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},setResults(){},accountView:null,portfolio:[],screenRequestId:{current:0},Date,setTimeout:fn=>{fn();},readTop5Response,
   refreshC1Account:()=>new Promise(resolve=>{resolveAccount=resolve;}),prepareC1Execution:()=>{},
   performanceHistory:async()=>({records:[],available:true}),signalPersistence:()=>({}),sym:r=>r.symbol,
   fetch:async url=>{state.requests.push(url);const u=new URL(url,'https://offline.invalid');return new Response(JSON.stringify({stocks:compact(crowded,80,'',u.searchParams.get('screenSymbols')||''),meta:{quoteFeedStatus:'live',fundamentalFeedStatus:'healthy'}}));},
@@ -37,10 +37,10 @@ async function main(){
  delayedReview.box.prepareC1Execution=()=>new Promise(resolve=>{finishReview=resolve;});
  const refreshing=delayedReview.load('opportunities').then(()=>{refreshFinished=true;});
  delayedReview.account({decision});await new Promise(resolve=>setImmediate(resolve));
- assert.equal(delayedReview.state.stocks.length,80,'Current screen rows publish while opening verification runs');
+ assert.equal(delayedReview.state.stocks.length,0,'Current screen rows wait for the matching opening/account frame');
  assert.equal(refreshFinished,false,'Reload must not report completion before opening verification returns');
  assert.equal(delayedReview.state.reloading,true);assert.notEqual(delayedReview.state.refreshed,true);
- finishReview();await refreshing;assert.equal(delayedReview.state.reloading,false);assert.equal(delayedReview.state.refreshed,true);
+ finishReview();await refreshing;assert.equal(delayedReview.state.stocks.length,80,'The complete current screen publishes at opening settlement');assert.equal(delayedReview.state.reloading,false);assert.equal(delayedReview.state.refreshed,true);
  const first=resolveC1ScreenEvidence({decision,rows:c.state.stocks,current:true});
  assert.equal(first.pending,false);equal(first.ratings,classifyC1StockScreen({snapshot,rows:c.state.stocks,current:true}));
  equal(first.buySymbols,['MRNA','HPE','MPC']);

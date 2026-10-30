@@ -26,7 +26,7 @@ for(const [file,labels,hash] of [
  ['pages/index.js',['a','displayAction'],'3697e36a01ecd7c5105125dd6365456302e7021d82b84c343964e5532b890849'],
  ['components/C1AccountOpportunities.js',["held?.label||(canPurchase?tile.rating:'NO PURCHASE')","row.holding?.label||'WATCH'"],'37d8898ef55fa9db4e5de509ab91449a571a264295dfec5f9f2465b3e94391d5']
 ]){
- let source=readSource(file).replace("<h2>{portfolioOnly?'Portfolio Action':'Opportunities'}</h2>","<h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>").replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
+ let source=require('./c1-reliability-source-seams.cjs').restore(file,readSource(file)).replace("<h2>{portfolioOnly?'Portfolio Action':'Opportunities'}</h2>","<h2>{portfolioOnly?'Portfolio actions':'Opportunities'}</h2>").replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
  if(file==='pages/index.js')source=require('./c1-refresh-generation-ui-seams.cjs').restore(source);
  if(file==='pages/index.js'){
   const diagnosticProp=' purchaseDiagnostics={accountView.purchaseDiagnostics}';

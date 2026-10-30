@@ -49,7 +49,7 @@ const block=page.slice(blockStart,blockEnd);
 assert.ok(block.includes('compareC1Holdings'));
 let captured;
 const ui={portfolio:[{symbol:'TEST',shares:2,role:'Swing'},{symbol:'CASH',shares:100,role:'Swing'}],CASH:['CASH','SWVXX','VMFXX','SPAXX','FDRXX','MMF'],role:(s,r)=>r,compareC1Holdings:compare,screenLive:true,currentProductionPolicy:{forwardAccounting:model},setHoldingsComparison:r=>{captured=r;}};
-ui.analysisPortfolio=ui.portfolio;vm.createContext(ui);vm.runInContext(block,ui);
+ui.analysisPortfolio=ui.portfolio;ui.view={setHoldingsComparison:ui.setHoldingsComparison};vm.createContext(ui);vm.runInContext(block,ui);
 assert.equal(captured.positions.length,1);assert.equal(captured.executable,false);assert.equal(captured.portfolioSignature,JSON.stringify(ui.portfolio));
 assert.equal(captured.cash,100,'Portfolio Analyze must pass entered cash to C1, not filter it out');
 ui.portfolio.push({symbol:'SWVXX',shares:400,avgCost:1,role:'Swing'},

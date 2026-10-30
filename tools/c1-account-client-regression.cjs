@@ -25,7 +25,7 @@ assert.deepEqual(plain(mergeC1AccountPortfolio(core,decision).filter(p=>p.role==
 assert.equal(mergeC1AccountPortfolio(core,decision).filter(p=>p.role==='Swing'&&['CASH','VMFXX'].includes(p.symbol)).length,0,'Metadata must not invent a Swing cash holding');
 
 function extract(from,to){const a=page.indexOf(from),b=page.indexOf(to,a+from.length);assert.ok(a>=0&&b>a);return page.slice(a,b);}
-const refresh=extract('  async function refreshC1Account(','  async function startC1Account(');
+const refresh=extract('  function publishC1AccountState(','  async function startC1Account(');
 const save=extract('  async function saveC1Activity(','  const[transactionCheck');
 const disconnect=extract('  function disconnectSync(','  async function copySyncKey(');
 function client(fetcher){
@@ -34,6 +34,8 @@ function client(fetcher){
   localStorage:{getItem:()=>state.key,removeItem:()=>{state.key='';},setItem:()=>{state.writes++;}},
   fetch:fetcher,setAccountView:v=>{state.view=v;},setAccountAbsent:v=>{state.absent=v;},setAccountError:v=>{state.error=v;},
   setSyncKey(){},setSyncInput(){},setSyncStatus(){}};
+ Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
+ if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  vm.createContext(box);vm.runInContext(refresh+disconnect+'\nthis.refresh=refreshC1Account;this.disconnect=disconnectSync;',box);
  return {state,box};
 }
@@ -124,6 +126,7 @@ function client(fetcher){
    setLoading:noop,setErr:noop,setAnalysisCapitalReady:noop,setHoldingsComparison:noop,setFeedHealth:noop,setMarketScope:noop,setMarketRadar:noop,setStocks:noop,setResults:noop,setPortfolioAnalyzedAt:noop,setLastUpdated:noop,setApplicationRefreshAt:noop,
    fetchHoldingQuotes:async()=>new Map(),results:[],
    CASH:[],compareC1Holdings:()=>({}),rank:()=>0,localStorage:{getItem:()=>'{"highWater":12345}',setItem:()=>{capitalWrites++;}},Date};
+  Object.assign(analysisBox,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1RefreshFrame.js'),{accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},setC1Control(){}});
   vm.createContext(analysisBox);vm.runInContext(analyzeSource+'\nthis.analyze=analyze;',analysisBox);
   await analysisBox.analyze([]);assert.equal(capitalWrites,0,'Fresh, failed or superseded account analysis cannot rewrite legacy capital');
  }
@@ -138,6 +141,8 @@ function client(fetcher){
   refreshC1Account:async body=>({decision,intradaySession:{tickets:body?.ticket?[body.ticket]:[]}}),localStorage:{setItem:(k,v)=>writes.push({k,value:JSON.parse(v)}),getItem:()=>JSON.stringify(risk)},
   setAccountBusy(){},setErr:value=>clientErrors.push(value),setPortfolio(){},setResults(){},setAnalysisCapitalReady(){},
   pushCloudPortfolio:async p=>synced.push(plain(p)),analyze:async p=>analyzed.push(plain(p))};
+ Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
+ if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  vm.createContext(box);vm.runInContext(save+'\nthis.save=saveC1Activity;this.saveIntraday=saveC1Intraday;',box);
  await box.save({complete:true,fills:[]},0);
  for(const result of [writes[0].value,synced[0],analyzed[0]]){

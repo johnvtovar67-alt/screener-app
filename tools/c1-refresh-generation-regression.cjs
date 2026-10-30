@@ -1,6 +1,7 @@
 // Exact Home orchestration against deferred synthetic stage replies; no live I/O.
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const babel=require('next/dist/compiled/babel/core');
+const {createC1RefreshFrame}=require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1RefreshFrame.js');
 const current=fs.readFileSync('pages/index.js','utf8'),original=require('./c1-refresh-generation-ui-seams.cjs').restore(current);
 const blob=s=>crypto.createHash('sha1').update('blob '+Buffer.byteLength(s)+'\0').update(s).digest('hex');
 assert.equal(blob(original),'d5db3a39a67600a15b71c0fdea9e0a06afb1df26','Exact whole deployed PR333 Home restored before prior/current comparisons');
@@ -15,7 +16,7 @@ function harness(source,{services={},portfolio=[],tab='opportunities'}={}){
  const invoke=async(name,args,fallback)=>{const index=indices[name]||0;indices[name]=index+1;calls.push({name,index,args:clone(args)});const value=services[name]?.[index];if(value instanceof Error)throw value;return value===undefined?fallback:await (typeof value==='function'?value():value);};
  class Clock extends Date{constructor(...args){clock.push(['new',args]);super(...(args.length?args:[at]));}static now(){clock.push(['now']);return Date.parse(at);}}
  const setters={setReloading:'reloading',setLoading:'loading',setErr:'error',setResults:'results',setStocks:'stocks',setFeedHealth:'feedHealth',setMarketScope:'marketScope',setMarketRadar:'marketRadar',setLastUpdated:'lastUpdated',setApplicationRefreshAt:'applicationRefreshAt',setAnalysisCapitalReady:'analysisCapitalReady',setHoldingsComparison:'holdingsComparison',setPortfolioAnalyzedAt:'portfolioAnalyzedAt',setQuoteRefreshStatus:'quoteRefreshStatus'};
- const box={Date:Clock,Promise,Map,Set,console,portfolio,results:[],tab,selectedTheme:'ai_compute',syncKey:'',screenRequestId:{current:0},manualVerificationPass:{current:0},CASH:['CASH'],
+ const box={createC1RefreshFrame,accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},setC1Control(){},Date:Clock,Promise,Map,Set,console,portfolio,results:[],tab,selectedTheme:'ai_compute',syncKey:'',screenRequestId:{current:0},manualVerificationPass:{current:0},CASH:['CASH'],
   setTimeout:fn=>{timers.push('minimum-loading-delay');queueMicrotask(fn);},
   screenHealth:()=>({status:'healthy'}),pausePriorRows:rows=>rows.map(row=>({...row,clientSnapshotFallback:true,dataFeedSnapshotStale:true})),
   sym:r=>r.symbol,act:r=>r.action,rank:()=>0,capitalScore:()=>0,signalPersistence:()=>({}),rotationTargetEligible:()=>false,capitalSignalEligible:()=>({pass:false}),role:()=> 'Swing',compareC1Holdings:()=>({status:'fixture'}),

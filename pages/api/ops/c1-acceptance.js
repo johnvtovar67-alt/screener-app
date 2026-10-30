@@ -1,4 +1,5 @@
 import {C1_RECORDED_SALE_FINALIZATION} from '../../../lib/c1RecordedSaleFinalization';
+import {isC1RecordedSaleRevisionAudit} from '../../../lib/c1RecordedSaleRevision';
 import { timingSafeEqual } from 'node:crypto';
 import { readStoredC1DatedBook } from '../../../lib/c1DatedBookStore';
 import { latestCompletedMarketSessionDay } from '../../../lib/marketSession';
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
       latestCapture.sessionDate === latest.date && view.sourceSessionDate === latest.date &&
       view.recordHash === record.recordHash);
     const saleProof=latestAudit?.recordedSaleProof;
-    const recordedSaleSafe=latestAudit?.contract==='c1-recorded-sale-finalization-v1'&&
+    const recordedSaleSafe=isC1RecordedSaleRevisionAudit(latestAudit,record)||latestAudit?.contract==='c1-recorded-sale-finalization-v1'&&
       latestAudit.priorRecordHash===C1_RECORDED_SALE_FINALIZATION.priorRecordHash&&
       latestAudit.previousSessionDate===C1_RECORDED_SALE_FINALIZATION.previousSessionDate&&
       latestAudit.currentSessionDate===C1_RECORDED_SALE_FINALIZATION.currentSessionDate&&
@@ -45,6 +46,14 @@ export default async function handler(req, res) {
     const latestAuditSafe = !latestAudit || (latestAudit.originalInputsPreserved === true &&
       (latestAudit.identicalModelEconomics === true||recordedSaleSafe) &&
       Array.isArray(latestAudit.economicAdjustments) && latestAudit.economicAdjustments.length === 0);
+    // Detailed virtual fill changes stay in the private audit, never in logs.
+    // Whitelist scalar proof metadata for both historic and general contracts.
+    const saleProofReport=recordedSaleSafe?Object.fromEntries(Object.entries(saleProof).filter(([key,value])=>
+      ['contract','reviewedPriorRecordHash','priorRecordHash','previousSessionDate','currentSessionDate',
+       'recordedLedgerFillCount','recordedFillCount','recordedFillsPreserved','recordedCashPreserved',
+       'positionsIdentical','pendingDecisionsIdentical','newModelFills','counterfactualCashDelta',
+       'recordedLedgerHash','counterfactualLedgerHash','pendingDecisionsHash'].includes(key)&&
+      ['string','number','boolean'].includes(typeof value))):null;
     const report = {
       contract: 'c1-production-readonly-acceptance-v1',
       observedAt: now.toISOString(),
@@ -66,7 +75,7 @@ export default async function handler(req, res) {
         deferredRevisionCount: latestAudit.deferredRevisionCount ?? null,
         originalInputsPreserved: latestAudit.originalInputsPreserved === true,
         identicalModelEconomics: latestAudit.identicalModelEconomics === true,
-        recordedSaleProof: recordedSaleSafe ? saleProof : null,
+        recordedSaleProof: saleProofReport,
         economicAdjustmentCount: latestAudit.economicAdjustments?.length ?? null
       } : null,
       latestAuditSafe,
