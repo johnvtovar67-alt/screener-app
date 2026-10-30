@@ -25,6 +25,14 @@ async function main(){
  const observed=observe(Promise.resolve(response),state=>settlements.push(state),{setTimer:writing.setTimer,clearTimer:writing.clearTimer});assert.equal(await observed,response);assert.equal(settlements.length,0,'Headers cannot finish a save observation');
  controller.enqueue(new TextEncoder().encode('PRIVATE_BODY_SENTINEL'));controller.close();await new Promise(resolve=>setTimeout(resolve,15));assert.equal(settlements.length,1);assert.equal(settlements[0].unconfirmed,false);assert.equal(await response.text(),'PRIVATE_BODY_SENTINEL','The original response is unconsumed and unchanged');
  const timeout=fixture(),states=[];let retries=0;await observe(Promise.resolve(new Response(new ReadableStream({start(){}}))),s=>states.push(s),{setTimer:timeout.setTimer,clearTimer:timeout.clearTimer,timeoutMs:20});timeout.flush();assert.equal(states[0].unconfirmed,true);assert.equal(retries,0);
+ // Reproduce the mobile post-header stall against the actual helper. A
+ // deadline must settle without awaiting a permanently unresolved body.
+ let versionReads=0;
+ const stalled=fixture({fetcher:async url=>{assert.equal(url,'/api/version');versionReads++;return versionReads===1?{ok:true,json:()=>new Promise(()=>{})}:new Response(JSON.stringify(remote));}});
+ let settled=false;const pending=stalled.guard.check().then(value=>{settled=true;return value;});
+ await new Promise(resolve=>setImmediate(resolve));stalled.flush(10000);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(settled,true,'A version response body cannot hold release detection indefinitely');assert.equal(await pending,'UNVERIFIED');assert.equal(stalled.navigations,0);
+ assert.equal(await stalled.guard.check(),'UPDATE_REQUIRED','A later explicit check can recover after the old body expires');stalled.flush();assert.equal(versionReads,2);assert.equal(stalled.navigations,1);stalled.guard.destroy();
  const gone=fixture();gone.guard.destroy();assert.equal(await gone.guard.check(),'UNVERIFIED');assert.equal(gone.calls,0);
  const failed=fixture({fetcher:async()=>{throw Error('PRIVATE_FETCH_SENTINEL');}});assert.equal(await failed.guard.check(),'UNVERIFIED');failed.flush();assert.equal(failed.navigations,0);
  for(const f of [aligned,update,loop,busy,dirty,removed,writing,timeout,failed])f.guard.destroy();

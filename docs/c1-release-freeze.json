@@ -245,7 +245,7 @@
     "lib/c1ReadinessProbe.js": "5e2b2a7f7e477340eb0531aeb2f1d9454272ce16",
     "lib/c1RefreshFrame.js": "91668c0c49c508a0ba59f83e2015dc50255109ca",
     "lib/c1JourneyClient.js": "0a120a419a1d35981acf1027a4511674ab9062d7",
-    "lib/c1ClientRelease.js": "b211087135952bc1d565949beb79974fd53eb5f2",
+    "lib/c1ClientRelease.js": "b0fa3d636264432a4f6d9f2fa694c138e35ae685",
     "lib/c1ReadinessStore.js": "ec8abeb5517d5a470df097e02f97d3f59421efe5",
     "lib/c1JourneyObservation.js": "39fb6c43ec494da0ab336e291bfb5ca2f85b05a0",
     "lib/c1RecordedSaleRevision.js": "78bce35ef9138c19b819790e883405c834c91fb2",
@@ -373,5 +373,6 @@
     "configuration": "Add next.config.mjs for public immutable build SHA/environment only. Add a separate synthetic real Home/App browser job to the sole existing ci.yml workflow, with PR/main and weekday pre-open triggers. Preserve its existing complete build/regression/audit job, CI permissions, prebuild/build/canonical/freeze implementations and immutable prior source/economic oracle hashes. Dependency versions and Vercel cron paths/schedules remain unchanged. Include the new root config and the expanded existing CI file in the existing hash guard.",
     "protected": "No trading/sizing/cash/concentration/stop/rank/holding/volatility/event gate changes; no actual account, portfolio, history or fill reset/rewrite; no broker execution, key/secret retrieval, manual cron/research invocation, historical experiment rerun or automatic financial mutation retry. Unknown monitoring evidence stays unknown.",
     "evidence": "docs/operations/c1-reliability-program-20261030.md; focused current-source positive/adverse regressions and exact older-source inverse seams without changing baseline hashes; full normal release gates plus all new browser jobs required before main."
-  }
+  },
+  "clientVersionBodyBudgetRepairAuthorization20261030": "Owner October30 Get all this work done now authorizes completion of the existing safe-client-handoff program. Reproduced post-header /api/version body stall held the release checker in flight indefinitely. Only lib/c1ClientRelease.js application hash changes: a ten-second whole-response budget returns UNVERIFIED and clears the in-flight latch, permitting a later explicit check. Existing valid version behavior, draft/write barriers and reload-loop prevention remain; no automatic request or financial mutation retry. No account/history/fill/policy/provider/cron/config/dependency/guard/CI/build-hook change. Exact old-fails/current-passes synthetic body-stall/recovery test; all release gates retained. See docs/operations/c1-client-version-body-budget-20261030.md."
 }
