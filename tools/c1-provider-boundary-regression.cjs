@@ -44,7 +44,7 @@ function harness(baseline,{failure=null,hops=1,throwLogger=false}={}){
  function load(file){
   if(modules.has(file))return modules.get(file);
   const record={exports:{}},imported={};modules.set(file,record.exports);
-  let source=fs.readFileSync(file,'utf8');if(baseline&&owned.has(file))source=restoreProviderTransport(file,source);
+  let source=fs.readFileSync(file,'utf8');if(baseline&&owned.has(file))source=restoreProviderTransport(file,require('./c1-opening-quote-repair-seams.cjs').restore(file,source));
   source=source.replace(/import\s*{([\s\S]*?)}\s*from\s*["']([^"']+)["'];?/g,(_,names,request)=>{
    const dependency=request==='@vercel/blob'?blob:request.startsWith('node:')?require(request):load(path.posix.normalize(path.posix.join(path.posix.dirname(file),request+'.js')));
    for(const raw of names.split(',')){const [remote,local=remote]=raw.trim().split(/\s+as\s+/);if(remote)imported[local]=dependency[remote];}return'';
