@@ -53,6 +53,10 @@ async function main(){
  assert.equal((await probe({...options,fetcher:async()=>new Response('PRIVATE_PROVIDER_BODY',{status:503})})).code,'PROBE_UNAVAILABLE');
  assert.equal((await probe({...options,index:{sourceSessionDate:full.sourceSessionDate}})).code,'PROBE_SCOPE_INVALID');
  assert.equal((await probe({...options,index:{...index,decisionSnapshot:{...index.decisionSnapshot,status:'unavailable'}}})).code,'PROBE_SCOPE_INVALID','HTTP success and benchmark quotes cannot hide an unusable model decision');
+ const wide={...index,decisionSnapshot:{...index.decisionSnapshot,symbols:Array.from({length:27},(_,i)=>({symbol:'NAME'+i}))}};
+ const wideResult=await probe({...options,index:wide,fetcher:async()=>new Response(JSON.stringify([...wide.decisionSnapshot.symbols.map(r=>r.symbol),'SPY','QQQ'].map(symbol=>({symbol,price:100,timestamp:now.getTime()/1000}))))});
+ assert.equal(wideResult.code,'CHECK_PASSED');assert.equal(wideResult.expectedCount,29,'Diagnostic scope covers the real three-sleeve union, without a smaller invented limit');
+ let excessCalls=0;assert.equal((await probe({...options,index:{...index,decisionSnapshot:{...index.decisionSnapshot,symbols:Array.from({length:40},(_,i)=>({symbol:'NAME'+i}))}},fetcher:async()=>{excessCalls++;}})).code,'PROBE_SCOPE_INVALID');assert.equal(excessCalls,0,'Malformed excess scope never starts provider acquisition');
  assert.equal((await probe({...options,deadlineMs:Date.now()+5,fetcher:()=>new Promise(()=>{}),events:()=>new Promise(()=>{})})).code,'PROBE_UNAVAILABLE','An uncooperative body cannot exceed the diagnostic deadline');
  let writes=0;const logged=[];await observe(options,{probe:async()=>probeResult,publish:async()=>writes++,emit:(...args)=>logged.push(args)});assert.equal(writes,1);assert.equal(logged[0][0],'C1_READINESS_OPERATIONAL');
  await observe(options,{probe:async()=>{throw Error('PRIVATE_SENTINEL');},emit:(...args)=>logged.push(args)});assert.doesNotMatch(JSON.stringify(logged),/PRIVATE_/);

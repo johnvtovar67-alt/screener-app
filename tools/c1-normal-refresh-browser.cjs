@@ -94,19 +94,22 @@ async function main(){
   const cases=(process.env.C1_NORMAL_BROWSER_CASES||'account-transport,account-body,account-interrupted,account-shape,opening,opening-body,screen,screen-body,screen-shape,screen-row-shape,screen-provider-malformed').split(',').filter(mode=>mode!=='none');
   for(const mode of cases){
    trace.activeCase=mode;
-   const count=requests.length;
+   const count=requests.length,priorQuantities=await js('document.body.innerText.match(/Buy \\d+ shares/g)||[]');
    await control(mode,actualScreen?{resetScreen:true}:{});
    await settledReload();
    const text=await js('document.body.innerText'),during=requests.slice(count);
    assert(text.includes('Signals based on 2026-10-14 close'),'Prior account/source analysis retained');
-   assert(!/Buy \d+ shares/.test(text),'Failed independent verification suppresses purchase quantities');
+   // Performance history is explicitly optional display telemetry; it is not
+   // one of the current account/quote/event/opening authority checks.
+   if(mode==='performance-body')assert.deepEqual(text.match(/Buy \d+ shares/g)||[],priorQuantities,'Optional history failure cannot change fully checked C1 quantities');
+   else assert(!/Buy \d+ shares/.test(text),'Failed independent verification suppresses purchase quantities');
    assert(during.some(r=>r.path==='/api/c1-account'&&r.method==='GET'),'The normal read occurred; Chromium may retry a safe GET at transport level');
-   assert.equal(during.filter(r=>r.operation==='prepare-execution').length,mode.startsWith('opening')||mode.startsWith('screen')||mode.startsWith('provider')||mode==='quote-malformed'?1:0,'No automatic opening POST retry');
+   assert.equal(during.filter(r=>r.operation==='prepare-execution').length,mode.startsWith('opening')||mode.startsWith('screen')||mode.startsWith('provider')||mode==='quote-malformed'||mode==='performance-body'?1:0,'No automatic opening POST retry');
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Failed normal refresh cannot rewrite account holdings/cash/history');
    await control(null,actualScreen?{expireScreen:true}:{});
    await settledReload();await wait('/Buy \\d+ shares/.test(document.body.innerText)','normal independent recovery');
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Recovery cannot change account economic history');
-   trace.cases.push({failure:mode,retainedAnalysis:true,quantitiesSuppressed:true,normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
+   trace.cases.push({failure:mode,retainedAnalysis:true,...(mode==='performance-body'?{optionalTelemetryOnly:true,checkedQuantitiesUnchanged:true}:{quantitiesSuppressed:true}),normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
   }
   const advanced=(process.env.C1_NORMAL_BROWSER_ADVANCED||'opening-pending,portfolio-inputs-pending,portfolio-account-failure,overlap-tabs,overlap-cloud,body-timeout').split(',').filter(mode=>mode!=='none');
   async function requestSeen(cursor,predicate,description){for(let i=0;i<200;i++){if(requests.slice(cursor).some(predicate))return;await pause(25);}throw Error('HTTP fixture timeout: '+description);}
@@ -131,7 +134,7 @@ async function main(){
     const during=requests.slice(cursor);assert.equal(during.filter(r=>r.operation==='refresh-account-inputs').length,1,'Never retry potentially committed input POST');assert.equal(during.filter(r=>r.operation==='prepare-execution').length,0,'Failed input review cannot issue opening POST');
     assert.equal(during.filter(r=>r.path==='/api/c1-account'&&r.method==='GET').length,mode==='account-inputs-conflict'?1:0,'Conflict recovery reads once without retrying POST');
     assert.equal(JSON.stringify(api.fixture.account),baseline);await control(null);await click('Reload');await wait('/Buy \\d+ shares/.test(document.body.innerText)','Explicit Portfolio Reload recovers');await wait('document.querySelector("header button")?.textContent==="Reload"','Portfolio recovery settled');
-    trace.cases.push({failure:mode,retainedAnalysis:true,quantitiesSuppressed:true,normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
+    trace.cases.push({failure:mode,retainedAnalysis:true,...(mode==='performance-body'?{optionalTelemetryOnly:true,checkedQuantitiesUnchanged:true}:{quantitiesSuppressed:true}),normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
    }
   }
   if(advanced.includes('portfolio-inputs-pending')){

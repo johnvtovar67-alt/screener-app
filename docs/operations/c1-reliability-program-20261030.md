@@ -72,7 +72,7 @@ program, and no pending item may be called done.
 
 ## Working checkpoint
 
-No program code is released yet. Focused operational/readiness, signed observation, client-version, current Home refresh-frame, generic recorded-sale and Friday-to-Monday/DST API regressions pass. Existing immutable source/economic hashes remain unchanged through exact declared inverse seams; older isolated VMs bind newly imported real helpers. The first complete suite identified these fixture-binding updates, which are corrected; the full normal build is running. Source investigation established that in-app
+No program code is released yet. Focused operational/readiness, signed observation, client-version, current Home refresh-frame, generic recorded-sale and Friday-to-Monday/DST API regressions pass. Existing immutable source/economic hashes remain unchanged through exact declared inverse seams; older isolated VMs bind newly imported real helpers. The first complete suite identified these fixture-binding updates, which are corrected; the full normal build passed 158/158 regressions and the optimized Next build. The later diagnostic-union bound was focused-retested against all-sleeve scope and excess-input rejection. Source investigation established that in-app
 Reload only fetches data, account diagnostics use a request-start clock, the
 existing closing publisher already retries normally, and the production
 recorded-sale proof is pinned to one October 26/27 incident. The current market
@@ -108,3 +108,22 @@ account evidence continues to pause purchases; monitoring must identify it.
 A simulated journey or global readiness receipt cannot establish the owner's
 private brokerage reconciliation. Normal owner observations, when present, are
 redacted reported outcomes rather than certified account parity.
+
+## Pre-release remote rehearsal checkpoint
+
+PR345 first exposed a CI browser selection problem: Ubuntu's Chromium entry did
+not start. The workflow now selects the runner's actual Google Chrome and records
+binary/exit/signal diagnostics. On head78a5ed1, the real Chrome lifecycle/client
+job124346406899 passed both complete frame publication and the Friday-to-Monday/
+clock-change/signed-observation/draft/full-body/navigation-loop journey. Normal
+and actual-provider runs are separate gates. The actual-provider run correctly
+exposed a bad new performance-history test assumption: existing performance
+history is optional telemetry, so its malformed-body case now requires unchanged
+fully checked quantities; all authoritative quote/event/account/opening failure
+cases continue to require withheld quantities and explicit recovery. No trading
+gate was added or removed to satisfy that test. All exact final-head jobs remain
+required before merge; this checkpoint is not a release claim.
+
+The diagnostic scope is derived from every frozen sleeve's existing maximum
+holdings plus entry queue and two benchmarks. It never truncates a valid union
+or imposes a smaller arbitrary stock limit. This does not change account sizing.
