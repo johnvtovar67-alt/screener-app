@@ -35,6 +35,8 @@ jobs:
 
   browser-rehearsal:
     runs-on: ubuntu-latest
+    env:
+      C1_BROWSER_BIN: /usr/bin/google-chrome
     timeout-minutes: 15
     strategy:
       fail-fast: false
