@@ -191,7 +191,7 @@
     "lib/c1StockClassification.js": "2ded7f5c29974473afb70a1788df4588658d97a4",
     "lib/c1IntradayActivity.js": "0784a2fc0eafc096790a8a9df3f57841ffbb31c1",
     "components/C1IntradayActivity.js": "6b0f20fadb3ac5c157cdbe3d0daabb6d6c31e1ed",
-    "lib/c1OpeningPriceReview.js": "a1e7f1602d900367ccbf496ef9620ddd29ac4b69",
+    "lib/c1OpeningPriceReview.js": "fc3cfe184489d5e0bbeaf82fa610eda1df88799f",
     "lib/c1HeldCloseRevisionReview.js": "0baa882f99933328028dc6a32d4175f206970ec5",
     "lib/c1ReviewedSessionRevision.js": "27f27429badb42f38c5c6d5a73d06ecf56cc8fba",
     "lib/c1SessionRevisionReview.js": "81b20c650c7daac35ffd2e18850bfd42923d1520",
@@ -240,7 +240,8 @@
     "lib/c1SimulatorPhases.js": "83b2096e21452ada9dccc9d674f9e76c566892b8",
     "lib/c1SimulatorRanking.js": "d263fa9ef9d67ceffe894824a7d9e4bb2b14ba1f",
     "lib/fmpTransport.js": "e7e81978e5af2e170bebc6ac33011ab9c7c5a5aa",
-    "lib/c1RecordedSaleFinalization.js": "68ba69b92493f4be3a6a7ae632b748e5b8c2eec4"
+    "lib/c1RecordedSaleFinalization.js": "68ba69b92493f4be3a6a7ae632b748e5b8c2eec4",
+    "lib/c1OpeningPlanComparison.js": "310a85984ab6b942b8cecbae6818dd9ce7e31805"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
@@ -312,5 +313,14 @@
       "lib/c1OpeningPriceReview.js"
     ],
     "behavior": "Keep both exact plan comparisons and all rejections; explain first differing stock/field in existing authenticated error. Only fixed category/field codes in telemetry; no values, symbols, account IDs or orders logged. No provider/storage calls, changes to account or model data, or trading authority."
+  },
+  "openingTradingAuthorityRepairAuthorization20261030": {
+    "ownerInstruction": "I need you to be an expert developer and solve these ongoing issues once and for all (with refreshed entryReviews HUM MET symbol screenshot).",
+    "scope": [
+      "lib/c1OpeningPriceReview.js",
+      "lib/c1OpeningPlanComparison.js"
+    ],
+    "defect": "Current opening parity mistakes a changed rejection-only backup report for changed trade authority. Exact old-source synthetic HUM/MET reproduction changes no actual order, stop, balance or selected capacity stock.",
+    "behavior": "Compare complete plans excluding separately verified collector provenance and existing informational high-water marks. Only known negative review rows outside all holdings, orders, selected capacity names and intraday orders may differ. Protected review multisets, all orders/identities/sequence/quantities/prices, books, pause states, capacity selections/active evidence, and unknown future constraints remain exact. Require independent opening and current-price parity. Explicit v3 receipt acknowledges report differences; retain v1/v2 receipts. No historical/account writes, rule/tolerance changes, cron or UI-layout changes."
   }
 }

@@ -3,7 +3,7 @@ const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
 const {restore}=require('./c1-opening-revision-detail-seams.cjs');
 const clone=x=>JSON.parse(JSON.stringify(x));
 const f=createWorkflowFixture();f.setCash(5000);
-const logs=[],source=fs.readFileSync('lib/c1OpeningPriceReview.js','utf8');
+const logs=[],source=require('./c1-opening-authority-repair-seams.cjs').restore(fs.readFileSync('lib/c1OpeningPriceReview.js','utf8'));
 function load(text){
  const deps={};text=text.replace(/import\s*{([^}]+)}\s*from\s*['"]([^'"]+)['"];?/g,(_,names,file)=>{const m=f.loader.load(file,require('node:path').resolve('lib/c1OpeningPriceReview.js'));for(const name of names.split(',').map(n=>n.trim()))deps[name]=m[name];return '';}).replace(/export function /g,'function ');
  const box={...deps,console:{warn:(...args)=>logs.push(args)},Date};vm.createContext(box);vm.runInContext(text+';globalThis.exports={reviewC1OpeningPriceRevisions,verifiedC1OpeningPriceBasis,...(typeof c1OpeningRevisionFailure===\'function\'?{c1OpeningRevisionFailure}: {})};',box);return box.exports;

@@ -51,4 +51,4 @@ const seams={
     }
   ]
 };
-exports.restore=(file,source)=>{if(file==='lib/c1OpeningPriceReview.js')source=require('./c1-opening-revision-detail-seams.cjs').restore(source);for(const seam of [...(seams[file]||[])].reverse()){assert.equal(source.split(seam.from).length-1,1,'Exact opening quote repair seam: '+file);source=source.replace(seam.from,seam.to);}return source;};
+exports.restore=(file,source)=>{if(file==='lib/c1OpeningPriceReview.js')source=require('./c1-opening-authority-repair-seams.cjs').restore(source);if(file==='lib/c1OpeningPriceReview.js')source=require('./c1-opening-revision-detail-seams.cjs').restore(source);for(const seam of [...(seams[file]||[])].reverse()){assert.equal(source.split(seam.from).length-1,1,'Exact opening quote repair seam: '+file);source=source.replace(seam.from,seam.to);}return source;};
