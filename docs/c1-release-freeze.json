@@ -71,7 +71,7 @@
     "lib/c1SleeveAccounting.js": "ef95d81dab897aaf2a8e870f8d942530ec900428",
     "lib/capitalSimulation.js": "c5650412ccfb483896219cb157176b784663407a",
     "lib/entryTiming.js": "17ff92e98251714db1de3e6e5c1b8266f50a57f9",
-    "lib/eventRisk.js": "be9ebe5b80e84fc2ce95fe3ab06a7391bda1533f",
+    "lib/eventRisk.js": "56a4baf472c628b871d54776f43f83ad049efdc3",
     "lib/expertDecision.js": "f75bccfdb4f5ae5fdb20b43deb7a71f1c1bebbeb",
     "lib/fmpFundamentals.js": "74e5c679f2f578d6fe70f7257e3ccca3d4dfadfd",
     "lib/fmpPriceBars.js": "53a0f68063aa8ea5319223dc03d33db8bc4ee2b2",
@@ -322,5 +322,13 @@
     ],
     "defect": "Current opening parity mistakes a changed rejection-only backup report for changed trade authority. Exact old-source synthetic HUM/MET reproduction changes no actual order, stop, balance or selected capacity stock.",
     "behavior": "Compare complete plans excluding separately verified collector provenance and existing informational high-water marks. Only known negative review rows outside all holdings, orders, selected capacity names and intraday orders may differ. Protected review multisets, all orders/identities/sequence/quantities/prices, books, pause states, capacity selections/active evidence, and unknown future constraints remain exact. Require independent opening and current-price parity. Explicit v3 receipt acknowledges report differences; retain v1/v2 receipts. No historical/account writes, rule/tolerance changes, cron or UI-layout changes."
+  },
+  "mergerPaginationRecoveryAuthorization20261030": {
+    "ownerInstruction": "Solve it, after the current Watch screenshot and confirmed MERGERS_PAGINATION_OVERLAP incident.",
+    "scope": [
+      "lib/eventRisk.js"
+    ],
+    "defect": "Individually fresh but inconsistent merger pages are cached for one hour, preventing verified refresh recovery.",
+    "behavior": "Evict the failed pagination cache set and reacquire the entire merger feed at most once under the original deadline. Preserve every schema, freshness, pagination, adverse-target and capital gate. Log bounded count/time diagnostics only. Never grant authority from incomplete pagination or discard an observed acquisition target. No account, historical, policy, sizing, UI, cron, environment or guard/build changes."
   }
 }
