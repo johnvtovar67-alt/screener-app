@@ -21,3 +21,10 @@ docs/c1-release-freeze.json records the approved application file hashes. tools/
 Do not remove, skip or weaken this check, or regenerate hashes just to pass it. For an explicitly authorized behavior change or supported behavior-preserving repair, document the applicable owner instruction or defect in the PR, update only the affected manifest entries, and verify the change. Any guard/manifest/build-hook change must be explicitly described in the PR.
 
 This is an accidental-change guard, not an access-control boundary. Repository administrators can change it. Do not claim it is impossible to bypass.
+
+## Reliability release criteria — October 30, 2026
+- Preserve the full build/regression/audit job and all three real Home/App browser rehearsal jobs in the sole CI workflow. Before merging a repair, require every job to pass on the exact reviewed head; pending, canceled, skipped and failed jobs are not acceptance. Do not weaken earlier source/economic oracle hashes to make a repair pass.
+- A refresh publishes its account, screen, held-price and opening results together. Superseded screen/account owners cannot publish; financial POSTs and uncertain writes are never automatically replayed.
+- Loaded-client updates must preserve active drafts and complete write responses and prevent navigation loops. In-app data refresh alone does not establish which JavaScript is loaded.
+- Use `/api/c1-readiness` for aggregate read-only monitoring. Never use side-effecting `/api/top5`, private account, cron or research routes as a health canary. Readiness receipts and signed normal-journey logs never grant trading authority or certify private-account/brokerage parity; missing evidence stays unknown.
+- Keep normal Vercel crons unchanged. The weekday synthetic CI rehearsal and independent read-only watch complement their existing producer work; neither may fabricate a model session, fill or reconciliation.

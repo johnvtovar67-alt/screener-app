@@ -7,6 +7,8 @@ export default function handler(req,res){
     baselineCommit:RELEASE_MANIFEST.baselineCommit,
     project:RELEASE_MANIFEST.canonicalProject,
     commit:(process.env.VERCEL_GIT_COMMIT_SHA||"local").slice(0,7),
+    buildCommit:process.env.VERCEL_GIT_COMMIT_SHA||"local",
+    clientProtocol:1,
     branch:process.env.VERCEL_GIT_COMMIT_REF||"local",
     environment:process.env.VERCEL_ENV||process.env.NODE_ENV||"local",
     features:RELEASE_MANIFEST.features

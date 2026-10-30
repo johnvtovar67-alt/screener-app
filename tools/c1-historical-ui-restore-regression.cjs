@@ -4,7 +4,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const crypto=require('node:crypto');
-let page=fs.readFileSync('pages/index.js','utf8').replace(/ style=\{c1HoldPillStyle\((a|displayAction)\)\} /g,'').replace(/\{c1HoldPillLabel\((a|displayAction)\)\}/g,'{$1}').replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
+let page=require('./c1-reliability-source-seams.cjs').restore('pages/index.js',fs.readFileSync('pages/index.js','utf8')).replace(/ style=\{c1HoldPillStyle\((a|displayAction)\)\} /g,'').replace(/\{c1HoldPillLabel\((a|displayAction)\)\}/g,'{$1}').replace("import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n",'');
 page=require('./c1-refresh-generation-ui-seams.cjs').restore(page);
 const purchaseDiagnosticProp=' purchaseDiagnostics={accountView.purchaseDiagnostics}';
 assert.equal(page.split(purchaseDiagnosticProp).length,2,'Only the authorized diagnostic presentation prop may be reversed');

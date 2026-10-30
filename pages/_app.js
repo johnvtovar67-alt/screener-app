@@ -1,5 +1,6 @@
 import {useEffect,useState} from "react";
 import {parseTop5Response} from "../lib/top5Response";
+import {installC1ClientReleaseGuard,observeC1ClientMutation} from '../lib/c1ClientRelease';
 import "../styles/card-layout.css";
 
 const CANONICAL_HOST="screener-app-cq5t.vercel.app";
@@ -37,7 +38,11 @@ function installResilientApiFetch(){
   window.fetch=async function resilientFetch(input,init={}){
     let url;try{url=new URL(typeof input==="string"?input:input?.url,window.location.href);}catch{return nativeFetch(input,init);}
     const method=String(init?.method||(typeof input!=="string"&&input?.method)||"GET").toUpperCase(),sameOrigin=url.origin===window.location.origin,resilient=sameOrigin&&url.pathname.startsWith("/api/")&&method==="GET";
-    if(!resilient)return nativeFetch(input,init);
+    if(!resilient){
+      const financial=sameOrigin&&!['GET','HEAD'].includes(method)&&['/api/c1-account','/api/portfolio-sync','/api/performance'].includes(url.pathname);
+      const finish=financial?window.__c1ClientReleaseGuard?.beginMutation():null;
+      try{return observeC1ClientMutation(nativeFetch(input,init),finish);}catch(error){finish?.({unconfirmed:true});throw error;}
+    }
 
     const cacheParams=new URLSearchParams(url.search);cacheParams.delete("verificationPass");const isTop5=url.pathname==="/api/top5",cacheKey=isTop5?`${url.pathname}?${cacheParams.toString()}`:"",hit=isTop5?readTop5Cache(cacheKey):null,age=hit?Date.now()-Number(hit.ts||0):Infinity;
     if(isTop5&&inflight.has(cacheKey)){
@@ -71,18 +76,29 @@ function installResilientApiFetch(){
 
 if(typeof window!=="undefined")installResilientApiFetch();
 
+function clientBuildIdentity(){
+  try{return {commit:process.env.NEXT_PUBLIC_C1_CLIENT_COMMIT||'local',environment:process.env.NEXT_PUBLIC_C1_CLIENT_ENVIRONMENT||'local'};}
+  catch{return {commit:'local',environment:'local'};}
+}
+
 export default function App({ Component, pageProps }) {
-  const [version,setVersion]=useState(null),[feedNotice,setFeedNotice]=useState("");
+  const [version,setVersion]=useState(null),[feedNotice,setFeedNotice]=useState(""),[releaseNotice,setReleaseNotice]=useState("");
   useEffect(()=>{
     installResilientApiFetch();
     const onNotice=e=>setFeedNotice(String(e?.detail||""));window.addEventListener("screener-feed-notice",onNotice);
     const host=window.location.hostname;if(LEGACY_HOSTS.has(host)){window.location.replace(`https://${CANONICAL_HOST}${window.location.pathname}${window.location.search}${window.location.hash}`);return()=>window.removeEventListener("screener-feed-notice",onNotice);}
-    fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
+    const client=clientBuildIdentity();
+    const releaseGuard=installC1ClientReleaseGuard({window,document,fetcher:window.fetch.bind(window),
+      clientCommit:client.commit,environment:client.environment,
+      onNotice:setReleaseNotice,onVersion:setVersion});
+    if(/^[a-f0-9]{40}$/.test(client.commit))void releaseGuard?.check();
+    else fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
     const onHeaderReload=e=>{const b=e.target?.closest?.('header button');if(!b)return;const text=String(b.textContent||'').trim();if(text==='Reload'||text==='Reloading...')emitFeedNotice("");};
     document.addEventListener('click',onHeaderReload,true);
-    return()=>{window.removeEventListener("screener-feed-notice",onNotice);document.removeEventListener('click',onHeaderReload,true);};
+    return()=>{releaseGuard?.destroy();window.removeEventListener("screener-feed-notice",onNotice);document.removeEventListener('click',onHeaderReload,true);};
   },[]);
   return <>
+    {releaseNotice&&<div role="status" style={{padding:'9px 14px',background:'#eff6ff',color:'#1e40af',fontSize:13,fontWeight:700}}>{releaseNotice}</div>}
     {feedNotice&&<div style={{position:"sticky",top:0,zIndex:10000,padding:"9px 14px",background:"#fff7ed",borderBottom:"1px solid #fb923c",color:"#9a3412",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span>{feedNotice}</span><button type="button" onClick={forceLiveRefresh} style={{border:"1px solid #fb923c",background:"#fff",color:"#9a3412",borderRadius:8,padding:"5px 9px",fontWeight:900,cursor:"pointer",whiteSpace:"nowrap"}}>Force live refresh</button></div>}
     <Component {...pageProps} />
     <div data-version-stamp style={{position:"relative",width:"fit-content",maxWidth:"calc(100% - 20px)",margin:"14px auto 8px",fontSize:10,padding:"4px 7px",borderRadius:6,background:"rgba(15,23,42,.82)",color:"#e2e8f0",fontFamily:"ui-monospace,SFMono-Regular,Menlo,monospace",pointerEvents:"none",textAlign:"center",overflowWrap:"anywhere"}}>{version?`Production • ${version.commit} • ${version.project} • ${version.release}`:"Production • version loading…"}</div>

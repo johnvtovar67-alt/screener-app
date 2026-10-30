@@ -60,6 +60,7 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
 
   let calls=0; const logs=[];
   const route={Buffer,timingSafeEqual,console:{info:(...args)=>logs.push(args.join(' ')),error:(...args)=>logs.push(args.join(' '))},process:{env:{CRON_SECRET:'test-secret'}},refreshC1Index:async()=>{calls++;return {status:'advanced',decisionSnapshot:{decisionId:'same'}};}};
+  route.observeC1ScheduledReadiness=async()=>null;
   vm.createContext(route);vm.runInContext(source('pages/api/cron/c1-index.js')+'\nglobalThis.run=handler;',route);
   async function request(method,authorization) {
     const response={headers:{},setHeader(k,v){this.headers[k]=v;},status(n){this.code=n;return this;},json(v){this.body=v;return this;}};

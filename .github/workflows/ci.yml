@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+  schedule:
+    # Before the regular US opening in standard and daylight time.
+    - cron: '15 13 * * 1-5'
+
 concurrency:
   group: screener-ci-${{ github.ref }}
   cancel-in-progress: true
@@ -29,3 +33,42 @@ jobs:
       - name: Build and run regression suite
         run: npm run build
 
+  browser-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        journey: [normal, actual-screen, lifecycle-client]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - name: Rehearse normal account and opening recovery
+        if: matrix.journey == 'normal'
+        run: node tools/c1-normal-refresh-browser.cjs
+      - name: Rehearse actual screen provider and interrupted cash response
+        if: matrix.journey == 'actual-screen'
+        env:
+          C1_NORMAL_BROWSER_ACTUAL_SCREEN: '1'
+          C1_NORMAL_BROWSER_CASES: provider-outage,provider-invalid-json,quote-malformed,performance-body,screen-body-after-handler,screen-interrupted-after-handler
+          C1_NORMAL_BROWSER_ADVANCED: opening-pending,expired-opening-evidence,uncertain-cash-write
+        run: node tools/c1-normal-refresh-browser.cjs
+      - name: Rehearse Friday to Monday and client release
+        if: matrix.journey == 'lifecycle-client'
+        env:
+          C1_NORMAL_BROWSER_RELIABILITY: '1'
+          C1_NORMAL_BROWSER_CASES: none
+          C1_NORMAL_BROWSER_ADVANCED: frame-publication,lifecycle-client
+        run: node tools/c1-normal-refresh-browser.cjs
+      - name: Keep synthetic failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-synthetic-journey-${{ matrix.journey }}
+          path: |
+            work/normal-refresh-browser/normal-journey.json
+            work/normal-refresh-browser/chromium.log
+          retention-days: 7

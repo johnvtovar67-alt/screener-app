@@ -25,7 +25,7 @@ function fetchBoundary(responses,initialCache=[]){
   localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>{writes.push({key,value});storage.set(key,value);}},
   dispatchEvent:event=>notices.push(event.detail),
   fetch:async(input,options)=>{requests.push({input,options});assert.ok(responses.length,'Unexpected extra request');const response=responses.shift();if(response instanceof Error)throw response;return response;}};
- const box={window,URL,URLSearchParams,Response,AbortController,DOMException,Date,setTimeout,clearTimeout,parseTop5Response,
+ const box={...require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},setResults(){},window,URL,URLSearchParams,Response,AbortController,DOMException,Date,setTimeout,clearTimeout,parseTop5Response,
   CustomEvent:class{constructor(type,{detail}){this.type=type;this.detail=detail;}}};
  vm.createContext(box);vm.runInContext(appBoundary,box);
  return {fetch:window.fetch,storage,writes,notices,requests};
@@ -33,7 +33,7 @@ function fetchBoundary(responses,initialCache=[]){
 function screenUI(fetch,priorRows=snapshot.stocks){
  const state={stocks:priorRows,feedHealth:{status:'healthy'},error:'',reloading:false,historyReads:0};
  const set=(name,value)=>{state[name]=typeof value==='function'?value(state[name]):value;};
- const box={fetch,readTop5Response,accountView:null,portfolio:[],screenRequestId:{current:0},Date,setTimeout:callback=>{callback();return 0;},
+ const box={...require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},setResults(){},fetch,readTop5Response,accountView:null,portfolio:[],screenRequestId:{current:0},Date,setTimeout:callback=>{callback();return 0;},
   performanceHistory:async()=>{state.historyReads++;return {records:[],available:true};},
   signalPersistence:()=>({}),sym:row=>row.symbol,CASH:['CASH'],specialSituation:()=>null,fd:row=>row.finalDecision,
   refreshC1Account:async()=>null,prepareC1Execution:()=>{throw new Error('No account to prepare');},

@@ -1,4 +1,5 @@
 import {C1_RECORDED_SALE_FINALIZATION} from '../../../lib/c1RecordedSaleFinalization';
+import {isC1RecordedSaleRevisionAudit} from '../../../lib/c1RecordedSaleRevision';
 import { timingSafeEqual } from 'node:crypto';
 import { readStoredC1DatedBook } from '../../../lib/c1DatedBookStore';
 import { latestCompletedMarketSessionDay } from '../../../lib/marketSession';
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
       latestCapture.sessionDate === latest.date && view.sourceSessionDate === latest.date &&
       view.recordHash === record.recordHash);
     const saleProof=latestAudit?.recordedSaleProof;
-    const recordedSaleSafe=latestAudit?.contract==='c1-recorded-sale-finalization-v1'&&
+    const recordedSaleSafe=isC1RecordedSaleRevisionAudit(latestAudit,record)||latestAudit?.contract==='c1-recorded-sale-finalization-v1'&&
       latestAudit.priorRecordHash===C1_RECORDED_SALE_FINALIZATION.priorRecordHash&&
       latestAudit.previousSessionDate===C1_RECORDED_SALE_FINALIZATION.previousSessionDate&&
       latestAudit.currentSessionDate===C1_RECORDED_SALE_FINALIZATION.currentSessionDate&&
