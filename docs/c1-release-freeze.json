@@ -71,7 +71,7 @@
     "lib/c1SleeveAccounting.js": "ef95d81dab897aaf2a8e870f8d942530ec900428",
     "lib/capitalSimulation.js": "c5650412ccfb483896219cb157176b784663407a",
     "lib/entryTiming.js": "17ff92e98251714db1de3e6e5c1b8266f50a57f9",
-    "lib/eventRisk.js": "20fc74b4bbf94df68afed75f409f9b6f48b58ce2",
+    "lib/eventRisk.js": "541ecbffc29e59cf75679843130e2a6f894325c3",
     "lib/expertDecision.js": "f75bccfdb4f5ae5fdb20b43deb7a71f1c1bebbeb",
     "lib/fmpFundamentals.js": "74e5c679f2f578d6fe70f7257e3ccca3d4dfadfd",
     "lib/fmpPriceBars.js": "53a0f68063aa8ea5319223dc03d33db8bc4ee2b2",
@@ -329,7 +329,7 @@
       "lib/eventRisk.js"
     ],
     "defect": "Individually fresh but inconsistent merger pages are cached for one hour, preventing verified refresh recovery.",
-    "behavior": "Evict failed merger pages and retry once under the original deadline. Only a single exact last/first boundary duplicate may invoke two independently complete scans at1000 and997 rows/page. Each keeps schema/freshness/repeated-page/arbitrary-overlap/ten-page/terminal guards; normalize only that redundant boundary anchor and require identical full record multisets/counts. Mismatches remain UNVERIFIED; positive targets from all observations remain blockers. Auditable bounded proof, no symbol exemptions or policy/record/account/cron/auth/build changes.",
-    "liveEvidence": "Preview1773460 at19:14UTC freshly repeated exactly one page1/index0 duplicate of page0/index999; both raw pages contain1000 rows. Same result after cache eviction."
+    "behavior": "Evict failed merger pages and retry once under the original deadline. Only a single exact last/first boundary duplicate may invoke two independently complete1000/997 scans. Each retains schema/freshness/repeated-page/arbitrary-overlap/ten-page/terminal guards. Require exact full raw multiset/count/digest equality preserving all duplicate multiplicities, or exact full equality after normalizing only validated inclusive anchors. No set-only, truncated or missing-record acceptance. Explicit proof comparison mode; mismatches UNVERIFIED; all observed positive targets remain blockers. No symbol exemption or policy/record/account/cron/auth/build change.",
+    "liveEvidence": "Preview1773460 freshly reproduces one page1/index0 duplicate of page0/index999. Previewe6d1acb collects4879 raw rows in both complete1000/997 partitions, with boundary-normalized counts4878/4879; the second grid places the physical duplicate inside a page."
   }
 }

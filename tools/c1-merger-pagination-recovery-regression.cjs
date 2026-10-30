@@ -62,10 +62,20 @@ const overlap=({page})=>page===0?base:[base[999]];
  assert.equal(boundaryBefore.state(await boundaryBefore.run()),'UNVERIFIED');
  const boundary=harness({mergers:({page,limit})=>inclusive(dataset,page,limit)}),verifiedBoundary=await boundary.run();
  assert.equal(boundary.state(verifiedBoundary),'VERIFIED_CLEAR');
- const proof=source(verifiedBoundary).boundaryCoverage;assert.equal(proof.contract,'c1-merger-boundary-coverage-v1');assert.equal(proof.matched,true);assert.equal(proof.rowCount,2200);assert.match(proof.digest,/^[a-f0-9]{64}$/);
+ const proof=source(verifiedBoundary).boundaryCoverage;assert.equal(proof.contract,'c1-merger-boundary-coverage-v1');assert.equal(proof.matched,true);assert.equal(proof.comparison,'BOUNDARY_ANCHORS_ONLY');assert.equal(proof.rowCount,2200);assert.match(proof.digest,/^[a-f0-9]{64}$/);
  assert.deepEqual(proof.pageSizes,[1000,997]);assert.equal(proof.partitions.length,2);
  for(const partition of proof.partitions)assert.deepEqual({...partition,pageSize:0},{pageSize:0,pageCount:3,boundaryCount:2,rawRowCount:2202,rowCount:2200});
  assert.equal(mergerCalls(boundary).length,10,'Two strict attempts plus two complete, independently partitioned scans');
+ // Exact live count/shape: a physical duplicate at positions999/1000,
+ // split by the1000 grid and wholly inside the997 grid. No row is dropped
+ // from the raw comparison; complete record multiplicities must match.
+ const physical=Array.from({length:4878},(_,i)=>({symbol:'A'+i,targetedSymbol:'T'+i,transactionDate:'2026-10-29'}));physical.splice(1000,0,{...physical[999]});
+ for(const adverse of [false,true]){
+  const data=physical.map((row,i)=>adverse&&[999,1000].includes(i)?target:row),h=harness({mergers:({page,limit})=>data.slice(page*limit,page*limit+limit)}),risk=await h.run();
+  assert.equal(h.state(risk),adverse?'VERIFIED_BLOCKED':'VERIFIED_CLEAR');
+  const proof=source(risk).boundaryCoverage;assert.equal(proof.matched,true);assert.equal(proof.comparison,'EXACT_RAW_MULTISET');assert.equal(proof.rowCount,4879);
+  assert.deepEqual(proof.partitions,[{pageSize:1000,pageCount:5,boundaryCount:1,rawRowCount:4879,rowCount:4878},{pageSize:997,pageCount:5,boundaryCount:0,rawRowCount:4879,rowCount:4879}]);
+ }
  for(const index of [0,996,999,1000,1998,2199]){
   const adverseData=dataset.map((row,i)=>i===index?target:row),h=harness({mergers:({page,limit})=>inclusive(adverseData,page,limit)});
   const risk=await h.run();assert.equal(h.state(risk),'VERIFIED_BLOCKED','Every validated target survives either partition and every boundary');
