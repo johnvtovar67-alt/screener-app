@@ -16,7 +16,7 @@ version read to ten seconds, return UNVERIFIED on expiry and clear the in-flight
 latch. A later explicit check can acquire valid metadata and use the unchanged
 safe navigation, draft, full-write-response and loop-prevention barriers. No
 automatic request retry, financial mutation replay, new authority or data write.
-All existing checks pass plus old-fails/current-passes stalled-body recovery.
+All existing focused checks pass plus old-fails/current-passes stalled-body recovery. The existing lifecycle/client Chrome job also gains the real HTTP post-header version-body stall, app-usability/no-navigation/no-account-retry and later explicit recovery case; its earlier cases remain unchanged.
 Only this manifest file entry changes, with explicit repair authorization. All
 freeze/canonical/CI/build gates, strategy/account/records/history/fills and normal
 Vercel schedules remain unchanged. Full normal build and exact-head build/Chrome/
