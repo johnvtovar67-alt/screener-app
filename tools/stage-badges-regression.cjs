@@ -174,3 +174,47 @@ async function newHoldingCopy(){
  console.log('PASS: actual new-fill display, desktop/mobile pending review, no invented momentum, old/malformed/stale evidence retained, single armed status and zero writes');
 }
 newHoldingCopy().catch(error=>{console.error(error);process.exitCode=1;});
+
+// Reproduce the reported recovering HOLD with conflicting, fully present
+// momentum inputs through the real classifier, trust resolver and both rows.
+const {classifyC1MomentumEvidence:classify}=modules.load('lib/c1MomentumEvidence.js');
+const previousDate=modules.load('lib/marketSession.js').previousMarketSessionDay(date);
+const mixedPosition={symbol:'MPC',shares:10,avgCost:100,action:'Hold',exits:[],stops:[{sleeve:'base',shares:10,price:86}],
+ reviewRules:[{sleeve:'base',heldSessions:4,minimumHold:30,close:110,exitBuffer:6,verifiedRank:2,rankVerified:true,profitProtectionArmed:false,earlyStreak:0,earlyConfirmations:3}],
+ recentMomentumReviews:[{sleeve:'base',available:true,entryAllowed:true,metrics:{recovery:true},state:{streak:0,profitGivebackStreak:0}}]};
+const mixedInput={contract:'c1-momentum-evidence-input-v1',sourceSessionDate:date,limitations:[],observations:[previousDate,date].map(day=>({date:day,close:110,
+ ranks:{base:{rank:2,eligible:true,eligibleCount:100,source:'authoritative-opportunities',verified:true}},
+ timing:{available:true,asOf:day,ret5:-1,sma20Slope:0.7,macdImproving:true,relativeStrengthVerified:true,alpha20VsSpy:5,alpha60VsSpy:8}}))};
+const classified=input=>classify({position:mixedPosition,input,current:true,sourceSessionDate:date});
+const mixed=classified(mixedInput),originalMixed=JSON.stringify({position:mixedPosition,input:mixedInput});
+assert.equal(mixed.label,'Mixed momentum');assert.equal(mixed.classification,null);
+const absentRelative=JSON.parse(JSON.stringify(mixedInput));absentRelative.observations.at(-1).timing.relativeStrengthVerified=false;
+const missing=classified(absentRelative);assert.equal(missing.label,'Evidence unavailable');
+const partialInput=JSON.parse(JSON.stringify(mixedInput));partialInput.observations[0].ranks.base.eligibleCount=99;
+const partial=classified(partialInput);assert.equal(partial.label,'Mixed momentum');assert.equal(partial.status,'partial');
+for(const mobile of [false,true]){
+ for(const [evidence,text] of [[mixed,'Verified momentum signals are mixed.'],[missing,'Momentum evidence incomplete: relative strength.'],[partial,'Momentum signals are mixed; some supporting evidence is incomplete.']]){
+  const rendered=render({mobile,evidence,date,resolver,row:{...holding,symbol:'MPC'},positionData:mixedPosition});
+  assert.ok(rendered.html.includes(text),'The real desktop/mobile supporting field explains the exact unclassified state');
+  assert.ok(rendered.html.includes('>HOLD</b>'));assert.doesNotMatch(rendered.html,/>BUY<|>SELL/);
+  assert.ok(rendered.html.includes('Recent momentum is recovering; no sell signal confirmed.'));
+  assert.ok(rendered.html.includes('Holding period: 4/30 sessions · 26 remaining'));
+  assert.ok(rendered.html.includes(`As of ${date}`));
+  assert.equal(rendered.accountView.decision.positions[0].action,'Hold');
+ }
+ assert.doesNotMatch(render({mobile,evidence:mixed,date,resolver,row:{...holding,symbol:'MPC'},positionData:mixedPosition}).html,/Evidence unavailable/);
+ const stale=render({mobile,evidence:mixed,date,resolver,current:false,row:{...holding,symbol:'MPC'},positionData:mixedPosition});
+ assert.match(stale.html,/Evidence stale/);assert.doesNotMatch(stale.html,/Mixed momentum|signals are mixed/);
+ const changed=render({mobile,evidence:mixed,date,resolver,row:{...holding,symbol:'MPC'},positionData:{...mixedPosition,stops:[{sleeve:'base',shares:10,price:87}]}});
+ assert.match(changed.html,/Evidence unavailable/);assert.match(changed.html,/Momentum assessment awaits review of the updated position/);
+ assert.doesNotMatch(changed.html,/Mixed momentum|signals are mixed/);
+}
+assert.equal(JSON.stringify({position:mixedPosition,input:mixedInput}),originalMixed,'Display must preserve all position and source bytes');
+for(const [limitation,part] of [
+ ['Verified momentum rank is unavailable.','rank'],['Technical price trend evidence is unavailable.','price trend'],
+ ['Technical price evidence is stale or dated to a different session.','price trend'],['Accepted closing price is unavailable.','closing price'],
+ ['No recorded stop level is available.','stop level'],['Recent-momentum decision evidence is unavailable; missing data is not observed deterioration.','recent-momentum review']]){
+ assert.equal(c1CompactMomentumEvidence({...missing,limitations:[limitation]}),`Momentum evidence incomplete: ${part}.`);
+}
+assert.equal(c1CompactMomentumEvidence({...missing,limitations:['provider-secret-sentinel'],explanation:'untrusted-secret-sentinel'}),'Verified momentum evidence is unavailable.');
+console.log('PASS: mixed versus missing evidence through actual desktop/mobile rows; recovering HOLD, counters, freshness, risk signature and input bytes preserved; fixed concise limitation mapping only.');
