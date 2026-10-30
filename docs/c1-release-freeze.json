@@ -208,7 +208,7 @@
     "lib/c1LegacyOrderIdentity.js": "f1c601ae0ed00fc1e0ced33178d3bfb9c17455ee",
     "lib/c1LegacyAccountSeed.js": "648bb54f208a4004fcc38d5d5d74e7105b0abf9d",
     "lib/c1LegacyMarketSession.js": "d65af5fa2b80ae17c22a0d0cfbf6b28e5f8c4534",
-    "lib/c1MomentumEvidence.js": "01defa77d3a1d25b570db7591c1241658ce32f2f",
+    "lib/c1MomentumEvidence.js": "d8e38a6804d0fa65f6b004eac077b9db1540ec6c",
     "lib/c1MomentumEvidenceInput.js": "c6995109819ce8802b59b7b0260b7f65d2438c02",
     "lib/c1RecentMomentumGate.js": "317c5576ecadcd1b0ec8d33f4abc959b2efe0e0a",
     "lib/c1RecentMomentumChallengerSimulator.js": "055056862863f9f72c26d21fbb9f0becb5a45090",
@@ -217,7 +217,7 @@
     "lib/c1RecentMomentumLivePolicy.js": "cf53be149a811182e84cdd5e6e36f5c00099e96e",
     "lib/c1PositionPresentation.js": "50a03cfec5ba29ad7f6f2388a7c2e85aabee96c0",
     "lib/c1QuoteVerification.js": "0459f5ab5d4c17cfcf01b1870f055a0665b5b92e",
-    "lib/c1DecisionCopy.js": "7fbbec9911221f3592ae60b05ba486399cbebf57",
+    "lib/c1DecisionCopy.js": "bd07e2066ce0ee5bf71425e5ae9eec7a6f93e10f",
     "lib/c1AdditionalSwingCapacity.js": "3177172708f220a0f05a7012ea5efa448d25c7dc",
     "lib/c1NonCashAdoption.js": "3510dec11cafb19778c9fabbb02b277438f69110",
     "components/C1NonCashAdoption.js": "4decfe49c34145953205b153b10de16f210fd7c2",
@@ -331,5 +331,6 @@
     "defect": "Individually fresh but inconsistent merger pages are cached for one hour, preventing verified refresh recovery.",
     "behavior": "Evict failed merger pages and retry once under original deadline. A repeat-confirmed exact last/first collision may acquire two fresh complete997/991 grids instead. Each retains every schema/freshness/overlap/repeated-page/ten-page/terminal guard; no overlap tolerated and no row removed. Require exact complete record multiset/count/canonical SHA-256 equality retaining duplicate occurrences and every field/value; object key order is immaterial. No voting or partial/set-only acceptance. Positive targets from failed and replacement observations remain blockers. No symbol exemption or policy/account/records/cron/auth/guard/build change.",
     "liveEvidence": "Fresh1000-row page1/index0 duplicates page0/index999. Full1000/997 collections each contain4879 raw records but disagree even with duplicate multiplicities retained; do not accept/normalize the inconsistent1000 grid."
-  }
+  },
+  "momentumBadgeRepairAuthorization20261030": "Owner October30 explicitly requests Solve it after current MPC holding shows Evidence unavailable while its HOLD explanation reports recovery. Reproduced on production c0d3bc5: fully present current rank, adjusted close, price trend and relative strength can reach the unclassified fallback and be mislabeled missing. Only lib/c1MomentumEvidence.js and lib/c1DecisionCopy.js change display evidence/copy: retain null directional classification and neutral tone; label verified conflicting current signals Mixed momentum with available/partial status; preserve actual missing/stale/risk-signature restrictions and disclose known missing inputs in the existing supporting field on desktop/mobile. No action, order, quantity, eligibility, stop, rank, counter, account, cash, history, fill, provider, cron, authentication, config, dependency, guard, CI or build-hook changes. Only these two application hashes change. See docs/operations/c1-momentum-badge-20261030.md."
 }

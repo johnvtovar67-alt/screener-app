@@ -97,6 +97,27 @@ for (const field of ['alpha20VsSpy', 'alpha60VsSpy']) {
 const pullback = input([observation('2026-10-08', 3), observation(sourceSessionDate, 3, { timing: { ret5: -1 } })]);
 assert.notEqual(run({ evidence: pullback }).classification, 'Momentum Weakening',
   'A negative five-session return with rising slope and positive relative strength alone is insufficient damage');
+const mixed = run({ evidence: pullback });
+assert.equal(mixed.classification, null, 'Mixed signals do not create a new directional classification');
+assert.equal(mixed.label, 'Mixed momentum', 'Present but conflicting evidence must not be described as missing');
+assert.equal(mixed.status, 'available');
+assert.equal(mixed.tone, 'unknown', 'Mixed signals retain the neutral badge');
+assert.deepEqual(JSON.parse(JSON.stringify(mixed.limitations)), []);
+for (const field of ['ret5', 'sma20Slope']) {
+  const missing = clone(pullback);missing.observations.at(-1).timing[field] = null;
+  const result = run({ evidence: missing });
+  assert.equal(result.label, 'Evidence unavailable', `Missing ${field} must not be called mixed`);
+  assert.equal(result.status, 'unavailable');
+}
+for (const patch of [{close:null}, {ranks:{}}, {timing:{relativeStrengthVerified:false}}, {timing:{staleFallback:true}}]) {
+  const missing=clone(pullback),last=missing.observations.at(-1);
+  Object.assign(last,{...patch,...(patch.timing?{timing:{...last.timing,...patch.timing}}:{})});
+  const result=run({evidence:missing});
+  assert.equal(result.label,'Evidence unavailable','A missing or stale required current input cannot be relabeled mixed');
+}
+const mixedHistory = clone(pullback);mixedHistory.observations[0].ranks.base.eligibleCount = 99;
+assert.equal(run({evidence:mixedHistory}).label,'Mixed momentum');
+assert.equal(run({evidence:mixedHistory}).status,'partial','Current mixed signals disclose incomplete historical comparisons');
 
 // Age alone cannot move a healthy holding between evidence classes.
 for (const heldSessions of [1, 4, 5, 14, 29, 30, 45, 90]) {
