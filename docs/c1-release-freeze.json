@@ -224,7 +224,7 @@
     "lib/c1NonCashPortfolio.js": "39d9e323a0d53701510c39a46486002e2b6a6eca",
     "lib/c1NonCashAdoptionReview.js": "e18c4759dbe49308906f908c438866bbe55997b7",
     "lib/c1HoldPill.js": "20b7b3ab98258be1b4cc5e776d4bc499d3e34d77",
-    "pages/api/ops/c1-acceptance.js": "bb990a82732a31a4fb7d79582d9b0eaf5ee6cfc6",
+    "pages/api/ops/c1-acceptance.js": "f65137d297a6d2dd0a4940ce35daec4f4bf9d1c1",
     "lib/c1PurchaseDiagnostics.js": "5bfb089b71ae673a93c28eb0c1219fb6f0b13423",
     "lib/c1CurrentEventEvidence.js": "6e237dca006813ce4d5068046d88b71503f25a86",
     "components/C1AccountOpportunitiesView.js": "c776843f624ca5cb0ceedcb5c0ef46406e8640b4",

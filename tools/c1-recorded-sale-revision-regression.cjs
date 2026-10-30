@@ -29,7 +29,7 @@ function audit(f,p){return {contract:'c1-recorded-sale-revision-v1',provider:'FM
  previousSessionDate:f.prior.model.sessions.at(-1).date,currentSessionDate:f.input.sourceSessionDate,observations:['a'.repeat(64),'b'.repeat(64)],
  originalInputsPreserved:true,identicalModelEconomics:false,privateAccountTreatment:'preserved-recorded-basis',economicAdjustments:[],executable:false,eligibleForAlphaClaim:false,
  comparisonHash:digest(f.original),correctedPrices:f.prices,recordedSaleProof:p};}
-function main(){
+async function main(){
  for(const [prev,next] of [['2026-10-30','2026-11-02'],['2026-11-02','2026-11-03'],['2026-11-05','2026-11-06']]){
   const f=fixture(prev,next),before=canonical(f),p=prove(f.prior,f.input,f.original,f.corrected,f.prices,digest);assert(p,'Generic proof does not depend on a fixed prior record/date');assert.equal(p.recordedFillCount,3);assert.equal(p.newModelFills,0);assert.equal(canonical(f),before);
   const a=audit(f,p),book={model:f.original,reconciliations:[a]};assert(valid(a,book));
@@ -56,6 +56,24 @@ function main(){
   const result=reconcile(f.prior,payload,new Date(observed),digest,advance,observations);assert.equal(result.audit.contract,'c1-recorded-sale-revision-v1');assert.equal(canonical(result.model),canonical(f.original));
   assert.throws(()=>reconcile(f.prior,payload,new Date(observed),digest,advance,observations.slice(1)),/evidence or economic/);
  }
+ // The actual authenticated read-only operations route reports only scalar
+ // proof metadata. Detailed virtual fills and future debug fields stay private.
+ const fs=require('node:fs'),vm=require('node:vm'),f=fixture(),proof=prove(f.prior,f.input,f.original,f.corrected,f.prices,digest);
+ proof.debug={symbol:'PRIVATE_SENTINEL',shares:999,price:777};
+ const a=audit(f,proof),book={model:f.original,reconciliations:[a],captures:[{sessionDate:f.input.sourceSessionDate}],recordHash:'c'.repeat(64)};
+ assert(valid(a,book));const bytes=canonical(book),logs=[];
+ const route=fs.readFileSync('pages/api/ops/c1-acceptance.js','utf8').replace(/^import .*;\n/gm,'').replace('export default async function handler','async function handler');
+ const context={Date,Buffer,timingSafeEqual:crypto.timingSafeEqual,process:{env:{CRON_SECRET:'offline-ops-only'}},
+  C1_RECORDED_SALE_FINALIZATION:l.load('lib/c1RecordedSaleFinalization.js').C1_RECORDED_SALE_FINALIZATION,
+  isC1RecordedSaleRevisionAudit:valid,latestCompletedMarketSessionDay:l.load('lib/marketSession.js').latestCompletedMarketSessionDay,
+  readStoredC1DatedBook:async()=>({record:book,view:{sourceSessionDate:f.input.sourceSessionDate,recordHash:book.recordHash}}),
+  console:{info:(...args)=>logs.push(args),error(){throw Error('Unexpected operations error');}}};
+ vm.createContext(context);vm.runInContext(route+';this.handler=handler;',context);let status,report;
+ await context.handler({method:'GET',headers:{authorization:'Bearer offline-ops-only'}},{setHeader(){},status(s){status=s;return this;},json(b){report=b;return this;}});
+ assert.equal(status,200);assert.equal(report.latestAuditSafe,true);assert.equal(report.latestReconciliation.recordedSaleProof.recordedFillCount,3);
+ assert(!Object.hasOwn(report.latestReconciliation.recordedSaleProof,'changes'));assert(!Object.hasOwn(report.latestReconciliation.recordedSaleProof,'debug'));
+ assert.doesNotMatch(JSON.stringify([report,logs]),/PRIVATE_SENTINEL|recordedPrice|observedPrice|shares|"symbol"/);
+ assert.equal(canonical(book),bytes,'Operations reporting cannot alter the original model/audit');
  console.log('PASS: general repeat-confirmed close-sale finalization across independent dates/books, canonical fill pricing, full counterfactual model reconstruction, original model/account basis preserved; altered cash/fills/positions/queues/unknown fields/range/basis/receipts rejected.');
 }
-main();
+main().catch(error=>{console.error(error);process.exitCode=1;});

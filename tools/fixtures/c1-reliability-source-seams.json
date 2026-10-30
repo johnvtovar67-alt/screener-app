@@ -103,7 +103,7 @@
   },
   "pages/api/ops/c1-acceptance.js": {
     "baselineBlob": "af018699b271e48c2ea2aa35aca6231c2ac8009e",
-    "authorizedBlob": "bb990a82732a31a4fb7d79582d9b0eaf5ee6cfc6",
+    "authorizedBlob": "f65137d297a6d2dd0a4940ce35daec4f4bf9d1c1",
     "chunks": [
       {
         "before": "import {C1_RECORDED_SALE_FINALIZATION} from '../../../lib/c1RecordedSaleFinalization';\nimport { timingSafeEqual } from 'node:crypto';\nimport { readStoredC1DatedBook } from '../../../lib/c1DatedBookStore';\nimport { latestCompletedMarketSessionDay } from '../../../lib/marketSession';\n",
@@ -112,6 +112,14 @@
       {
         "before": "      latestCapture.sessionDate === latest.date && view.sourceSessionDate === latest.date &&\n      view.recordHash === record.recordHash);\n    const saleProof=latestAudit?.recordedSaleProof;\n    const recordedSaleSafe=latestAudit?.contract==='c1-recorded-sale-finalization-v1'&&\n      latestAudit.priorRecordHash===C1_RECORDED_SALE_FINALIZATION.priorRecordHash&&\n      latestAudit.previousSessionDate===C1_RECORDED_SALE_FINALIZATION.previousSessionDate&&\n      latestAudit.currentSessionDate===C1_RECORDED_SALE_FINALIZATION.currentSessionDate&&\n",
         "after": "      latestCapture.sessionDate === latest.date && view.sourceSessionDate === latest.date &&\n      view.recordHash === record.recordHash);\n    const saleProof=latestAudit?.recordedSaleProof;\n    const recordedSaleSafe=isC1RecordedSaleRevisionAudit(latestAudit,record)||latestAudit?.contract==='c1-recorded-sale-finalization-v1'&&\n      latestAudit.priorRecordHash===C1_RECORDED_SALE_FINALIZATION.priorRecordHash&&\n      latestAudit.previousSessionDate===C1_RECORDED_SALE_FINALIZATION.previousSessionDate&&\n      latestAudit.currentSessionDate===C1_RECORDED_SALE_FINALIZATION.currentSessionDate&&\n"
+      },
+      {
+        "before": "    const latestAuditSafe = !latestAudit || (latestAudit.originalInputsPreserved === true &&\n      (latestAudit.identicalModelEconomics === true||recordedSaleSafe) &&\n      Array.isArray(latestAudit.economicAdjustments) && latestAudit.economicAdjustments.length === 0);\n    const report = {\n      contract: 'c1-production-readonly-acceptance-v1',\n      observedAt: now.toISOString(),\n",
+        "after": "    const latestAuditSafe = !latestAudit || (latestAudit.originalInputsPreserved === true &&\n      (latestAudit.identicalModelEconomics === true||recordedSaleSafe) &&\n      Array.isArray(latestAudit.economicAdjustments) && latestAudit.economicAdjustments.length === 0);\n    // Detailed virtual fill changes stay in the private audit, never in logs.\n    // Whitelist scalar proof metadata for both historic and general contracts.\n    const saleProofReport=recordedSaleSafe?Object.fromEntries(Object.entries(saleProof).filter(([key,value])=>\n      ['contract','reviewedPriorRecordHash','priorRecordHash','previousSessionDate','currentSessionDate',\n       'recordedLedgerFillCount','recordedFillCount','recordedFillsPreserved','recordedCashPreserved',\n       'positionsIdentical','pendingDecisionsIdentical','newModelFills','counterfactualCashDelta',\n       'recordedLedgerHash','counterfactualLedgerHash','pendingDecisionsHash'].includes(key)&&\n      ['string','number','boolean'].includes(typeof value))):null;\n    const report = {\n      contract: 'c1-production-readonly-acceptance-v1',\n      observedAt: now.toISOString(),\n"
+      },
+      {
+        "before": "        deferredRevisionCount: latestAudit.deferredRevisionCount ?? null,\n        originalInputsPreserved: latestAudit.originalInputsPreserved === true,\n        identicalModelEconomics: latestAudit.identicalModelEconomics === true,\n        recordedSaleProof: recordedSaleSafe ? saleProof : null,\n        economicAdjustmentCount: latestAudit.economicAdjustments?.length ?? null\n      } : null,\n      latestAuditSafe,\n",
+        "after": "        deferredRevisionCount: latestAudit.deferredRevisionCount ?? null,\n        originalInputsPreserved: latestAudit.originalInputsPreserved === true,\n        identicalModelEconomics: latestAudit.identicalModelEconomics === true,\n        recordedSaleProof: saleProofReport,\n        economicAdjustmentCount: latestAudit.economicAdjustments?.length ?? null\n      } : null,\n      latestAuditSafe,\n"
       }
     ]
   },
