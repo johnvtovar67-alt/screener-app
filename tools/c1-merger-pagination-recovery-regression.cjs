@@ -1,0 +1,100 @@
+// Real production event module, virtual provider/clock. No network or account I/O.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const inverse=require('./c1-merger-recovery-seams.cjs').restore;
+const NativeDate=Date,epoch=Date.parse('2026-10-30T18:56:00.000Z'),plain=x=>JSON.parse(JSON.stringify(x));
+const base=Array.from({length:1000},(_,i)=>({symbol:'A'+i,targetedSymbol:'T'+i,transactionDate:'2026-10-29'}));
+const target={symbol:'ACQ',targetedSymbol:'CRWD',transactionDate:'2026-10-29'};
+const secret='OFFLINE_PROVIDER_SECRET',bodySecret='OFFLINE_PRIVATE_BODY';
+function harness({before=false,mergers=({page})=>page===0?base:[],news=[],deadline=30000}={}){
+ let ms=epoch,handler=mergers;const calls=[],logs=[];
+ class Clock extends NativeDate{constructor(...args){super(...(args.length?args:[ms]));}static now(){return ms;}}
+ const fetcher=async raw=>{
+  const url=new URL(raw),endpoint=url.pathname.split('/stable/')[1],page=Number(url.searchParams.get('page')||0),limit=Number(url.searchParams.get('limit')||1000);
+  assert.equal(url.searchParams.get('apikey'),secret);calls.push({endpoint,page,limit});
+  const value=endpoint==='mergers-acquisitions-latest'?await handler({page,limit,calls:calls.filter(x=>x.endpoint===endpoint),advance:delta=>{ms+=delta;}}):endpoint==='news/stock'?news:[];
+  if(value instanceof Error)throw value;
+  return new Response(JSON.stringify(value));
+ };
+ const oldRead=fs.readFileSync,oldDate=global.Date,oldConsole=global.console;
+ let provider,reader;
+ try{
+  if(before)fs.readFileSync=(file,...args)=>String(file)===path.resolve('lib/eventRisk.js')?inverse(oldRead(file,...args)):oldRead(file,...args);
+  global.Date=Clock;global.console={...console,info:(...args)=>logs.push(args)};
+  const loader=createResearchModuleLoader(process.cwd());provider=loader.load('lib/eventRisk.js');reader=loader.load('lib/c1CurrentEventEvidence.js').readC1CurrentEventEvidence;
+ }finally{fs.readFileSync=oldRead;global.Date=oldDate;global.console=oldConsole;}
+ return {calls,logs,set(fn){handler=fn;},advance(delta){ms+=delta;},now:()=>new Clock(),async run(){return plain((await provider.fetchEventRiskMap(['CRWD','AMD'],{apiKey:secret,fetcher,deadlineMs:ms+deadline})).get('CRWD'));},state:risk=>reader(risk,new Clock())};
+}
+const source=risk=>risk.eventVerification.sources.find(x=>x.kind==='MERGERS'),mergerCalls=h=>h.calls.filter(x=>x.endpoint==='mergers-acquisitions-latest');
+const overlap=({page})=>page===0?base:[base[999]];
+(async()=>{
+ const old=harness({before:true,mergers:overlap});assert.equal(old.state(await old.run()),'UNVERIFIED');old.set(({page})=>page===0?base:[]);
+ assert.equal(old.state(await old.run()),'UNVERIFIED');assert.equal(mergerCalls(old).length,2,'Pre-repair cache pins the failed feed for one hour');
+ const repaired=harness({mergers:overlap});assert.equal(repaired.state(await repaired.run()),'UNVERIFIED');assert.equal(mergerCalls(repaired).length,5);
+ repaired.set(({page})=>page===0?base:[]);const recovered=await repaired.run();assert.equal(repaired.state(recovered),'VERIFIED_CLEAR');assert.equal(mergerCalls(repaired).length,7,'Verified next refresh reacquires both pages instead of borrowing the failed cache');
+ for(const endpoint of ['earnings-calendar','news/stock'])assert.equal(repaired.calls.filter(x=>x.endpoint===endpoint).length,1,'Unrelated successful feeds keep their exact cache reuse');
+ const onePass=harness({mergers:({page,calls})=>page===0?base:calls.length===2?[base[999]]:[]});
+ const retryResult=await onePass.run();assert.equal(onePass.state(retryResult),'VERIFIED_CLEAR');assert.deepEqual(source(retryResult).paginationRecovery,{method:'fresh-full-pagination',initialReason:'PAGINATION_OVERLAP',recovered:true});assert.equal(mergerCalls(onePass).length,4);
+ const permanentRepeat=harness({mergers:()=>base});assert.equal(permanentRepeat.state(await permanentRepeat.run()),'UNVERIFIED');assert.equal(mergerCalls(permanentRepeat).length,4,'Exactly one full retry; repeated pages never establish clearance');
+ const timeout=harness({mergers:({page,advance})=>{if(!page)return base;advance(30001);return[base[999]];}});
+ assert.equal(timeout.state(await timeout.run()),'UNVERIFIED');assert.equal(mergerCalls(timeout).length,2,'Expired acquisition cannot retry');
+ const duringRetry=harness({mergers:({page,calls,advance})=>{if(calls.length===3)advance(30001);return !page?base:[base[999]];}});
+ assert.equal(duringRetry.state(await duringRetry.run()),'UNVERIFIED');assert.equal(mergerCalls(duringRetry).length,3,'Retry retains original deadline, not a new budget');
+ const adverse=harness({mergers:({page,calls})=>!page?(calls.length===1?[target,...base.slice(1)]:base):calls.length===2?[base[999]]:[]});
+ const adverseResult=await adverse.run();assert.equal(adverse.state(adverseResult),'VERIFIED_BLOCKED');assert.equal(adverseResult.mergerEvent.target,'CRWD','A target observed before snapshot replacement cannot disappear from the risk review');
+ const failedRetry=harness({mergers:({page,calls})=>calls.length===3?new Error(bodySecret):!page?base:[base[999]]});
+ assert.equal(failedRetry.state(await failedRetry.run()),'UNVERIFIED');assert.equal(mergerCalls(failedRetry).length,3);
+ for(const h of [repaired,onePass,permanentRepeat,timeout,duringRetry,adverse,failedRetry]){
+  assert.doesNotMatch(JSON.stringify(h.logs),new RegExp(secret+'|'+bodySecret+'|CRWD|ACQ|financialmodelingprep|T999'));
+  for(const row of h.logs){assert(['C1_EVENT_PAGINATION','C1_EVENT_PARTITION_PROOF'].includes(row[0]));const parsed=JSON.parse(row[1]);if(row[0]==='C1_EVENT_PAGINATION'){assert.equal(parsed.kind,'MERGERS');assert(['REPEATED_PAGE','PAGINATION_OVERLAP'].includes(parsed.reason));}}
+ }
+ for(const mergers of [()=>[],({page})=>!page?base:[],()=>[target],()=>new Error(bodySecret)]){
+  const before=harness({before:true,mergers}),after=harness({mergers});assert.deepEqual(await after.run(),await before.run(),'Healthy and unrelated failed responses retain full serialized parity');assert.deepEqual(after.calls,before.calls);assert.deepEqual(after.logs,before.logs);
+ }
+ const newsPage=Array.from({length:500},(_,i)=>({symbol:'CRWD',publishedDate:'2026-10-30',title:'Routine update',url:'https://fixture.invalid/'+i}));
+ const unchangedNews=harness({news:newsPage}),newsResult=await unchangedNews.run();assert.equal(unchangedNews.state(newsResult),'UNVERIFIED');assert(newsResult.eventVerification.reasons.includes('NEWS_REPEATED_PAGE'));assert.equal(unchangedNews.calls.filter(x=>x.endpoint==='news/stock').length,2,'No unrelated retry or pagination relaxation');
+ // The live1000 grid has a last/first collision and disagrees with a
+ // complete smaller partition. Never accept or normalize that rejected grid.
+ const dataset=Array.from({length:4879},(_,i)=>({symbol:'A'+i,targetedSymbol:'T'+i,transactionDate:'2026-10-29'}));
+ const brokenGrid=(data,page,limit)=>limit===1000&&page===1?[data[999],...data.slice(1001,2000)]:data.slice(page*limit,page*limit+limit);
+ const oldGrid=harness({before:true,mergers:({page,limit})=>brokenGrid(dataset,page,limit)});assert.equal(oldGrid.state(await oldGrid.run()),'UNVERIFIED');
+ const freshGrid=harness({mergers:({page,limit})=>brokenGrid(dataset,page,limit)}),freshRisk=await freshGrid.run();assert.equal(freshGrid.state(freshRisk),'VERIFIED_CLEAR');
+ const proof=source(freshRisk).partitionCoverage;assert.equal(proof.contract,'c1-merger-partition-coverage-v1');assert.equal(proof.matched,true);assert.equal(proof.rowCount,4879);assert.match(proof.digest,/^[a-f0-9]{64}$/);
+ assert.deepEqual(proof.pageSizes,[997,991]);assert.deepEqual(proof.partitions,[{pageSize:997,pageCount:5,rowCount:4879},{pageSize:991,pageCount:5,rowCount:4879}]);assert.equal(mergerCalls(freshGrid).length,14);
+ for(const index of [0,990,996,999,1000,4878]){
+  const data=dataset.map((row,i)=>i===index?target:row),h=harness({mergers:({page,limit})=>brokenGrid(data,page,limit)}),risk=await h.run();
+  assert.equal(h.state(risk),'VERIFIED_BLOCKED','Target at'+index+' survives complete replacement, including the record missing from the rejected1000 grid');
+ }
+ // Physical duplicate occurrences inside a page are retained, never removed
+ // by a set-only comparison. JSON object key order is immaterial to equality.
+ const physical=dataset.slice(0,-1);physical.splice(1000,0,{...physical[999]});
+ for(const data of [physical,dataset]){
+  const h=harness({mergers:({page,limit})=>brokenGrid(data,page,limit).map(row=>limit===991?Object.fromEntries(Object.entries(row).reverse()):row)}),risk=await h.run();
+  assert.equal(h.state(risk),'VERIFIED_CLEAR');assert.equal(source(risk).partitionCoverage.rowCount,4879);
+ }
+ const mismatchCases=[data=>data.slice(1),data=>data.slice(0,-1),data=>[...data,{symbol:'NEW',targetedSymbol:'NEW',transactionDate:'2026-10-29'}],data=>data.map((row,i)=>i===1200?{...row,targetedSymbol:'CHANGED'}:row)];
+ for(const change of mismatchCases){
+  const h=harness({mergers:({page,limit})=>brokenGrid(limit===991?change(dataset):dataset,page,limit)}),risk=await h.run();
+  assert.equal(h.state(risk),'UNVERIFIED');assert.equal(source(risk).partitionCoverage.matched,false,'Both independent complete replacements must agree; no voting or discarded conflicting partition');
+ }
+ for(const mode of ['overlap','repeated','over-cap','unavailable','malformed','deadline','stale','no-terminal']){
+  const endless=Array.from({length:11000},(_,i)=>({symbol:'Q'+i,targetedSymbol:'R'+i,transactionDate:'2026-10-29'}));
+  const h=harness({mergers:({page,limit,advance})=>{
+   if(limit!==997)return brokenGrid(dataset,page,limit);
+   if(mode==='no-terminal')return endless.slice(page*limit,page*limit+limit);
+   if(mode==='over-cap')return dataset.slice(0,1000);
+   if(mode==='deadline')advance(30001);
+   if(mode==='stale'&&page===1)advance(3600001);
+   if(page===1){
+    if(mode==='overlap')return [dataset[limit-1],...dataset.slice(limit+1,2*limit)];
+    if(mode==='repeated')return dataset.slice(0,limit);
+    if(mode==='unavailable')return new Error(bodySecret);
+    if(mode==='malformed')return {error:bodySecret};
+   }
+   return dataset.slice(page*limit,page*limit+limit);
+  }}),risk=await h.run();assert.equal(h.state(risk),'UNVERIFIED',mode+' never establishes replacement coverage');assert(mergerCalls(h).length<=24);assert.doesNotMatch(JSON.stringify(h.logs),new RegExp(secret+'|'+bodySecret+'|financialmodelingprep'));
+ }
+ const inclusive=harness({mergers:({page,limit})=>dataset.slice(page*(limit-1),page*(limit-1)+limit)});assert.equal(inclusive.state(await inclusive.run()),'UNVERIFIED','Even a single boundary overlap in a replacement remains rejected');
+ const secondAttempt=harness({mergers:({page,limit,calls})=>brokenGrid(calls.length===3?[target,...dataset.slice(1)]:dataset,page,limit)}),secondRisk=await secondAttempt.run();assert.equal(secondAttempt.state(secondRisk),'VERIFIED_BLOCKED','Target first observed on retry cannot disappear after replacement');
+ console.log('PASS: original poisoned-cache and live-shaped inconsistent-grid failures; complete disjoint997/991 replacement equality; six target positions including omitted source record; raw multiplicity/key-order equality; four complete-set mismatches and eight coverage failures; unchanged deadlines/caps/healthy parity and private-safe diagnostics.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

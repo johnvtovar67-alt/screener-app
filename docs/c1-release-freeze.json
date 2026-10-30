@@ -71,7 +71,7 @@
     "lib/c1SleeveAccounting.js": "ef95d81dab897aaf2a8e870f8d942530ec900428",
     "lib/capitalSimulation.js": "c5650412ccfb483896219cb157176b784663407a",
     "lib/entryTiming.js": "17ff92e98251714db1de3e6e5c1b8266f50a57f9",
-    "lib/eventRisk.js": "be9ebe5b80e84fc2ce95fe3ab06a7391bda1533f",
+    "lib/eventRisk.js": "bd4b1d962b2575c2f4c0f1ffece47edaa926260f",
     "lib/expertDecision.js": "f75bccfdb4f5ae5fdb20b43deb7a71f1c1bebbeb",
     "lib/fmpFundamentals.js": "74e5c679f2f578d6fe70f7257e3ccca3d4dfadfd",
     "lib/fmpPriceBars.js": "53a0f68063aa8ea5319223dc03d33db8bc4ee2b2",
@@ -322,5 +322,14 @@
     ],
     "defect": "Current opening parity mistakes a changed rejection-only backup report for changed trade authority. Exact old-source synthetic HUM/MET reproduction changes no actual order, stop, balance or selected capacity stock.",
     "behavior": "Compare complete plans excluding separately verified collector provenance and existing informational high-water marks. Only known negative review rows outside all holdings, orders, selected capacity names and intraday orders may differ. Protected review multisets, all orders/identities/sequence/quantities/prices, books, pause states, capacity selections/active evidence, and unknown future constraints remain exact. Require independent opening and current-price parity. Explicit v3 receipt acknowledges report differences; retain v1/v2 receipts. No historical/account writes, rule/tolerance changes, cron or UI-layout changes."
+  },
+  "mergerPaginationRecoveryAuthorization20261030": {
+    "ownerInstruction": "Solve it, after the current Watch screenshot and confirmed MERGERS_PAGINATION_OVERLAP incident.",
+    "scope": [
+      "lib/eventRisk.js"
+    ],
+    "defect": "Individually fresh but inconsistent merger pages are cached for one hour, preventing verified refresh recovery.",
+    "behavior": "Evict failed merger pages and retry once under original deadline. A repeat-confirmed exact last/first collision may acquire two fresh complete997/991 grids instead. Each retains every schema/freshness/overlap/repeated-page/ten-page/terminal guard; no overlap tolerated and no row removed. Require exact complete record multiset/count/canonical SHA-256 equality retaining duplicate occurrences and every field/value; object key order is immaterial. No voting or partial/set-only acceptance. Positive targets from failed and replacement observations remain blockers. No symbol exemption or policy/account/records/cron/auth/guard/build change.",
+    "liveEvidence": "Fresh1000-row page1/index0 duplicates page0/index999. Full1000/997 collections each contain4879 raw records but disagree even with duplicate multiplicities retained; do not accept/normalize the inconsistent1000 grid."
   }
 }

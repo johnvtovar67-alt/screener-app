@@ -218,6 +218,7 @@ const changes={
   }
 };
 function restoreProviderTransport(file,source){
+ if(file==='lib/eventRisk.js')source=require('./c1-merger-recovery-seams.cjs').restore(source);
  const change=changes[file];assert(change,'Known provider source');
  for(const [after,before]of change.parts){assert.equal(source.split(after).length,2,'Unique complete transport inversion: '+file);source=source.replace(after,before);}
  const hash=createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
