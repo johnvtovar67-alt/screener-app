@@ -1,0 +1,21 @@
+# October30 opening quote requirements
+
+Owner explicitly requests “Fix this” after Missing opening quote: TGT pauses purchase review with current October29 daily analysis. Main/production baseline b4e3bd808693d6b3b59eabe9f93d9c158099084b, READY dpl_6MKRwXYmHzCg3VVRZHZGohGaQ6m4. Normal owner request at17:02:50UTC collected14 symbols; the17:02:59 opening review warning and screenshot establish the planner's missing-TGT result. No private account payload, credential or actual eligibility has been inferred.
+
+## Reproduction and bounded repair
+
+The actual old collector and opening review reproduce Missing opening quote: JJJ using synthetic account data: a prior reference100 is repeat-corrected to99.9, which makes the comparison require another queued symbol outside the original quote batch. Supplying that quote allows the unchanged parity gate to identify a genuine changed-plan rejection. This is a synthetic demonstration of the same missing-symbol failure class; the owner's private comparison payload was not inspected.
+
+Extract the exact price-free prior runs used by the planner and the exact immutable correction overlay used by the revision reviewer. The server-side opening request supplies a pure requirements resolver for both original and corrected sources using the same adoption normalization, continued replay, current completion policy and historical inputs as planning. The collector keeps its original batch and independently adjusted anchors, then acquires only newly required names. Each symbol is collected once; at most two quote/anchor expansions are allowed under the existing30second price deadline. A requirement set still changing on the third check fails closed. There is one final independent membership recheck, full quote/anchor validation, and one current event collection for the complete symbol set. Successful request diagnostics use the actually validated returned quote symbols.
+
+No last-price substitution, hardcoded TGT exception, changed-price tolerance, eligibility override, new endpoint, account/provider test write or scheduled job invocation. A genuine corrected plan difference remains blocked by the original opening/current-price parity predicates. Missing/stale extra quotes, incomplete events and changing requirements retain no purchase authority. Original as-observed prices, recorded fills/cash/history, strategy/sizing/rank/stop/capacity rules, authentication/configuration/crons/dependencies and guard/build/CI implementations are unchanged.
+
+Exactly four application files and their explicitly authorized manifest hashes change. Existing immutable source pins are preserved: static exact inverse seams restore only this declared extraction/collector/view repair before the unchanged historical hashes; every seam is required exactly once. Original economic/account/planner comparisons stay intact.
+
+## Verification
+
+Focused actual collector → review → planner regression PASS: failure-before; supplemental quote/anchor/event acquisition; correct changed-plan rejection; complete successful plan and provider-call parity for unchanged/equivalent corrections; missing/stale additional quote rejection; bounded unstable coverage rejection; unchanged account/input bytes and zero writes.
+
+Original30-rule brokerage/account/planner parity and opening privacy/source oracle PASS. Current-event, price-revision policy, provider diagnostics, position-limit/event-dependency and purchase-block evidence regressions PASS. Final149-task standard build, exact CI/preview, merged tree and production identity/health gates pending. Private owner/browser/account purchase acceptance remains unverified. This repair does not promise that a candidate passes genuine price/event/account checks.
+
+The full run exposed one additional historical source-adapter dependency: provider-boundary's old transport inversion expected the pre-extraction collector text. Compose the exact declared quote-repair inverse before the existing transport inverse. All67 original/current provider scenarios now pass with every complete-output, advancing-clock, promise/interleaving, deadline/cache/request/write assertion retained. No application change or oracle relaxation was needed for this compatibility adapter. CI and preview rerun on the updated test commit before merge.
