@@ -71,7 +71,7 @@
     "lib/c1SleeveAccounting.js": "ef95d81dab897aaf2a8e870f8d942530ec900428",
     "lib/capitalSimulation.js": "c5650412ccfb483896219cb157176b784663407a",
     "lib/entryTiming.js": "17ff92e98251714db1de3e6e5c1b8266f50a57f9",
-    "lib/eventRisk.js": "bd4b1d962b2575c2f4c0f1ffece47edaa926260f",
+    "lib/eventRisk.js": "a9e578cabf729ed1aa0b27f6f41ffc5602794cbb",
     "lib/expertDecision.js": "f75bccfdb4f5ae5fdb20b43deb7a71f1c1bebbeb",
     "lib/fmpFundamentals.js": "74e5c679f2f578d6fe70f7257e3ccca3d4dfadfd",
     "lib/fmpPriceBars.js": "53a0f68063aa8ea5319223dc03d33db8bc4ee2b2",
@@ -242,7 +242,7 @@
     "lib/fmpTransport.js": "e7e81978e5af2e170bebc6ac33011ab9c7c5a5aa",
     "lib/c1RecordedSaleFinalization.js": "68ba69b92493f4be3a6a7ae632b748e5b8c2eec4",
     "lib/c1OpeningPlanComparison.js": "310a85984ab6b942b8cecbae6818dd9ce7e31805",
-    "lib/c1ReadinessProbe.js": "5e2b2a7f7e477340eb0531aeb2f1d9454272ce16",
+    "lib/c1ReadinessProbe.js": "0c9d481fbbb3821df1e146819cd39fb9db7182b5",
     "lib/c1RefreshFrame.js": "91668c0c49c508a0ba59f83e2015dc50255109ca",
     "lib/c1JourneyClient.js": "0a120a419a1d35981acf1027a4511674ab9062d7",
     "lib/c1ClientRelease.js": "b0fa3d636264432a4f6d9f2fa694c138e35ae685",
@@ -253,7 +253,7 @@
     "pages/api/c1-journey-observation.js": "9f086cb1ad28fcb1cce7d6008cd6b00bc6b17b34",
     "pages/api/c1-readiness.js": "86d7d3c65ace1aa3accd6a36ece4be5c6ab45e94",
     "next.config.mjs": "8246835b23004fbeb516714d49f9329893525c67",
-    ".github/workflows/ci.yml": "d36925ba37d6591f0c72c577663b0b3bb6bd6ce5"
+    ".github/workflows/ci.yml": "9962da53317060f08e6c8022ed956ca5a5b476f2"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",
@@ -374,5 +374,6 @@
     "protected": "No trading/sizing/cash/concentration/stop/rank/holding/volatility/event gate changes; no actual account, portfolio, history or fill reset/rewrite; no broker execution, key/secret retrieval, manual cron/research invocation, historical experiment rerun or automatic financial mutation retry. Unknown monitoring evidence stays unknown.",
     "evidence": "docs/operations/c1-reliability-program-20261030.md; focused current-source positive/adverse regressions and exact older-source inverse seams without changing baseline hashes; full normal release gates plus all new browser jobs required before main."
   },
-  "clientVersionBodyBudgetRepairAuthorization20261030": "Owner October30 Get all this work done now authorizes completion of the existing safe-client-handoff program. Reproduced post-header /api/version body stall held the release checker in flight indefinitely. Only lib/c1ClientRelease.js application hash changes: a ten-second whole-response budget returns UNVERIFIED and clears the in-flight latch, permitting a later explicit check. Existing valid version behavior, draft/write barriers and reload-loop prevention remain; no automatic request or financial mutation retry. No account/history/fill/policy/provider/cron/config/dependency/guard/CI/build-hook change. Exact old-fails/current-passes synthetic body-stall/recovery test; all release gates retained. See docs/operations/c1-client-version-body-budget-20261030.md."
+  "clientVersionBodyBudgetRepairAuthorization20261030": "Owner October30 Get all this work done now authorizes completion of the existing safe-client-handoff program. Reproduced post-header /api/version body stall held the release checker in flight indefinitely. Only lib/c1ClientRelease.js application hash changes: a ten-second whole-response budget returns UNVERIFIED and clears the in-flight latch, permitting a later explicit check. Existing valid version behavior, draft/write barriers and reload-loop prevention remain; no automatic request or financial mutation retry. No account/history/fill/policy/provider/cron/config/dependency/guard/CI/build-hook change. Exact old-fails/current-passes synthetic body-stall/recovery test; all release gates retained. See docs/operations/c1-client-version-body-budget-20261030.md.",
+  "eventExpiryAndScheduleRepairAuthorization20261102": "Owner November2 Fix this now explicitly authorizes repairing reproduced warm required-feed expiration during acquisition, adding fixed-code redacted operational event-feed failure diagnostics, and repairing the missing pre-open CI trigger. Only lib/eventRisk.js, lib/c1ReadinessProbe.js and .github/workflows/ci.yml approved hashes change. Required feed cache reuse must cover the existing acquisition deadline; no receipt retimestamping, TTL extension, policy change, new retry, financial mutation or Vercel cron change. The single read-only CI workflow retains complete build and all three browser jobs, with two normal weekday pre-open delivery opportunities at12:37/13:07UTC. Exact inverses preserve historical source hashes and economic assertions. Full exact-head gates and deployment verification required; future scheduled delivery remains separately unverified until observed. See docs/operations/c1-event-expiry-schedule-20261102.md."
 }

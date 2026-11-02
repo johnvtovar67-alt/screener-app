@@ -50,6 +50,21 @@ async function main(){
  const probeResult=await probe(options);assert.equal(probeResult.code,'CHECK_PASSED');assert.equal(probeResult.eventBlockedCount,1);assert.equal(calls.length,1);
  assert.doesNotMatch(JSON.stringify(probeResult),/AAA|BBB|PRIVATE_|price|shares|orders|cash/);
  assert.equal((await probe({...options,events:async symbols=>new Map(symbols.map(symbol=>[symbol,risk(symbol,now,{complete:symbol!=='AAA'})]))})).code,'EVENT_VERIFICATION_INCOMPLETE');
+ const diagnosticLogs=[],originalInfo=console.info;
+ try{
+  console.info=(...args)=>diagnosticLogs.push(args);
+  const badEvents=async symbols=>new Map(symbols.map(symbol=>{const row=risk(symbol,now,{complete:false});row.eventVerification.sources[2].reason='PRIVATE_PROVIDER_BODY';row.eventVerification.sources[2].url='https://PRIVATE.invalid';return[symbol,row];}));
+  assert.equal((await probe({...options,events:badEvents})).code,'EVENT_VERIFICATION_INCOMPLETE');
+  const diagnostic=JSON.parse(diagnosticLogs.find(row=>row[0]==='C1_EVENT_VERIFICATION')[1]);
+  assert.deepEqual(Object.keys(diagnostic).sort(),['code','sources','unverifiedCount']);
+  assert.equal(diagnostic.unverifiedCount,4);assert.equal(diagnostic.sources.length,3);
+  for(const row of diagnostic.sources)assert.deepEqual(Object.keys(row).sort(),['kind','reasons','unverifiedCount']);
+  assert.deepEqual(diagnostic.sources.find(row=>row.kind==='NEWS').reasons,['UNCLASSIFIED_FAILURE']);
+  assert.doesNotMatch(JSON.stringify(diagnosticLogs),/PRIVATE|AAA|BBB|https?:|apikey|price|shares|orders|cash/);
+  console.info=()=>{throw Error('PRIVATE_LOG_FAILURE');};
+  assert.equal((await probe({...options,events:badEvents})).code,'EVENT_VERIFICATION_INCOMPLETE','Logging cannot change operational readiness');
+ }finally{console.info=originalInfo;}
+
  assert.equal((await probe({...options,fetcher:async()=>new Response('PRIVATE_PROVIDER_BODY',{status:503})})).code,'PROBE_UNAVAILABLE');
  assert.equal((await probe({...options,index:{sourceSessionDate:full.sourceSessionDate}})).code,'PROBE_SCOPE_INVALID');
  assert.equal((await probe({...options,index:{...index,decisionSnapshot:{...index.decisionSnapshot,status:'unavailable'}}})).code,'PROBE_SCOPE_INVALID','HTTP success and benchmark quotes cannot hide an unusable model decision');

@@ -32,7 +32,7 @@ function harness(initial={},baseline=false){
  try{if(baseline)fs.readFileSync=(file,...args)=>String(file)===path.resolve('lib/eventRisk.js')?originalEventSource:readFileSync(file,...args);const loader=createResearchModuleLoader(process.cwd());provider=loader.load('lib/eventRisk.js');read=loader.load('lib/c1CurrentEventEvidence.js').readC1CurrentEventEvidence;}
  finally{fs.readFileSync=readFileSync;global.Date=NativeDate;global.fetch=originalFetch;}
  return {calls,set(kind,value){feeds[kind]=value;},advance(ms){milliseconds+=ms;},now:()=>new ClockDate(),read,
-  async risk(symbol='CRWD'){const map=await provider.fetchEventRiskMap([symbol]);assert.equal(map.size,1);return map.get(symbol);},
+  async risk(symbol='CRWD',options={}){const map=await provider.fetchEventRiskMap([symbol],options);assert.equal(map.size,1);return map.get(symbol);},
   async map(symbols){return provider.fetchEventRiskMap(symbols);}};
 }
 function verification(risk,state,h){
@@ -64,6 +64,27 @@ async function run(){
   risk=>{risk.eventVerification.sources[0].complete=false;},risk=>{risk.eventVerification.sources[1]=plain(risk.eventVerification.sources[0]);},
   risk=>{risk.eventVerification.sources[0].expiresAt='2027-01-01T00:00:00.000Z';}]){
   const changed=plain(first);edit(changed);assert.equal(clear.read(changed,clear.now()),'UNVERIFIED','An inconsistent flag or receipt cannot borrow current verified authority');
+ }
+
+ // Reproduce a warm feed expiring while the other required work finishes.
+ // The immutable pre-repair provider must fail; current acquisition must fetch
+ // a new receipt, without extending any TTL or borrowing stale authority.
+ for(const [kind,ttl]of [['NEWS',300000],['EARNINGS',900000],['MERGERS',3600000]]){
+  for(const baseline of [true,false]){
+   const h=harness({MACRO:new Error('optional macro unavailable')},baseline);
+   verification(await h.risk(),'VERIFIED_CLEAR',h);
+   const before=h.calls.filter(c=>c.kind===kind).length;
+   h.advance(ttl-500);h.set('MACRO',()=>{h.advance(1500);return[];});
+   const reviewed=verification(await h.risk(),baseline?'UNVERIFIED':'VERIFIED_CLEAR',h);
+   if(baseline)assert(reviewed.eventVerification.reasons.includes(kind+'_EXPIRED_DURING_VERIFICATION'));
+   else{
+    assert.equal(h.calls.filter(c=>c.kind===kind).length,before+1,'Near-expiry cached '+kind+' is reacquired once');
+    assert.equal(h.read(reviewed,new NativeDate(reviewed.eventVerification.expiresAt)),'UNVERIFIED','Original TTL still expires exactly');
+   }
+  }
+  const unavailable=harness();await unavailable.risk();unavailable.advance(ttl-500);
+  unavailable.set(kind,new Error(sentinel));
+  verification(await unavailable.risk(),'UNVERIFIED',unavailable);
  }
 
  const concurrent=harness();const concurrentResults=await Promise.all([concurrent.risk(),concurrent.risk(),concurrent.risk()]);
