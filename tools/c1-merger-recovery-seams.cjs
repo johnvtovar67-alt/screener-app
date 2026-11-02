@@ -31,4 +31,4 @@ const seams=[
     "to": ""
   }
 ];
-exports.restore=source=>{for(const seam of [...seams].reverse()){assert.equal(source.split(seam.from).length-1,1,'Exact merger recovery seam');source=source.replace(seam.from,seam.to);}assert.equal(createHash('sha256').update(source).digest('hex'),'75153a55fdb5532583ec61ab72a62b9ac873dbf62b5dd211b5599634710ef48d','Complete pre-repair event module');return source;};
+exports.restore=source=>{source=require('./c1-event-expiry-seams.cjs').restore(source);for(const seam of [...seams].reverse()){assert.equal(source.split(seam.from).length-1,1,'Exact merger recovery seam');source=source.replace(seam.from,seam.to);}assert.equal(createHash('sha256').update(source).digest('hex'),'75153a55fdb5532583ec61ab72a62b9ac873dbf62b5dd211b5599634710ef48d','Complete pre-repair event module');return source;};

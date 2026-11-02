@@ -7,8 +7,10 @@ on:
     branches: [main]
 
   schedule:
-    # Before the regular US opening in standard and daylight time.
-    - cron: '15 13 * * 1-5'
+    # Two independent delivery opportunities before the regular US opening
+    # in standard and daylight time; avoid the top-of-hour scheduling peak.
+    - cron: '37 12 * * 1-5'
+    - cron: '7 13 * * 1-5'
 
 concurrency:
   group: screener-ci-${{ github.ref }}
