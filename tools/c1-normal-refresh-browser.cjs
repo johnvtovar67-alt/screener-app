@@ -15,14 +15,14 @@ async function main(){
  const observation= require('./fixtures/c1-operational-modules.cjs').createOperationalModuleLoader(process.cwd()).load('pages/api/c1-journey-observation.js');
  const verify=require('./fixtures/c1-operational-modules.cjs').createOperationalModuleLoader(process.cwd()).load('lib/c1JourneyObservation.js').verifyC1JourneyObservation;
  const observationHandler=observation.createC1JourneyObservationHandler({clock:()=>api.fixture.now,verify:token=>verify(token,{now:api.fixture.now,secret:observationSecret,commit:clientCommit}),emit:(...args)=>observations.push(args)});
- const requests=[],state={fail:null,portfolioPuts:0,held:[],versionCommit:clientCommit,documentLoads:0};trace.requests=requests;
+ const requests=[],state={fail:null,shadowOwnership:false,portfolioPuts:0,held:[],versionCommit:clientCommit,documentLoads:0};trace.requests=requests;
  const screenPayload=()=>({stocks:api.fixture.screenRows(),meta:{snapshotAsOf:api.fixture.now.toISOString(),quoteFeedStatus:'live',fundamentalFeedStatus:'healthy',coveragePct:100,fundamentalCoveragePct:100},themeLeadership:[]});
  const versionPayload=()=>reliability?{commit:state.versionCommit.slice(0,7),buildCommit:state.versionCommit,clientProtocol:1,environment:'production',project:'screener-app-cq5t',release:'fixture'}:{commit:'synthetic-only',project:'localhost',release:'fixture'};
  const readScreen=async query=>actualScreen?actualScreen.request(query):{status:200,body:screenPayload(),headers:{}};
  const server=http.createServer(async(req,res)=>{try{
   let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):null,url=new URL(req.url,'http://127.0.0.1');
   const json=(data,status=200)=>{res.writeHead(status,{'content-type':'application/json','x-fixture-clock':api.fixture.now.toISOString()});res.end(JSON.stringify(data));};
-  if(url.pathname==='/__control'){state.fail=body.fail;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
+  if(url.pathname==='/__control'){state.fail=body.fail;if(Object.hasOwn(body,'shadowOwnership'))state.shadowOwnership=body.shadowOwnership;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
   if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
   const target=state.fail&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:state.fail==='version-body-hold'?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
   if(target){
@@ -49,7 +49,7 @@ async function main(){
    else return json({error:'Synthetic verification unavailable',detail:'Synthetic verification unavailable'},mode==='account-inputs-conflict'?409:503);
   }
   if(url.pathname==='/api/c1-journey-observation'){let status=200,value;await observationHandler({method:req.method,headers:req.headers,body},{setHeader(){},status(code){status=code;return this;},json(data){value=data;return this;}});return json(value,status);}
-  if(url.pathname==='/api/c1-account'){const result=await api.request(req.method,body,req.headers.authorization==='Bearer offline_workflow_fixture_key_000001');for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
+  if(url.pathname==='/api/c1-account'){const result=await api.request(req.method,body,req.headers.authorization==='Bearer offline_workflow_fixture_key_000001');if(state.shadowOwnership&&req.method==='GET'&&result.status===200)result.body={...result.body,decision:{...result.body.decision,revision:result.body.decision.revision+1,positions:result.body.decision.positions.map(position=>position.symbol==='LLL'?{...position,shares:5,stops:position.stops.map(stop=>({...stop,shares:5}))}:position)}};for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
   if(url.pathname==='/api/top5'){const result=await readScreen(Object.fromEntries(url.searchParams));for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
   if(url.pathname==='/api/performance')return json({records:actualScreen?.ledger()?.records||[],persistentStorage:true});
   if(url.pathname==='/api/entry-timing')return json({timing:Object.fromEntries(api.fixture.screenRows().map(row=>[row.symbol,row.entryTiming]))});
@@ -113,8 +113,39 @@ async function main(){
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Recovery cannot change account economic history');
    trace.cases.push({failure:mode,retainedAnalysis:true,...(mode==='performance-body'?{optionalTelemetryOnly:true,checkedQuantitiesUnchanged:true}:{quantitiesSuppressed:true}),normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
   }
-  const advanced=(process.env.C1_NORMAL_BROWSER_ADVANCED||'opening-pending,portfolio-inputs-pending,portfolio-account-failure,overlap-tabs,overlap-cloud,body-timeout').split(',').filter(mode=>mode!=='none');
+  const advanced=(process.env.C1_NORMAL_BROWSER_ADVANCED||'stop-verification-screen-pending,opening-pending,portfolio-inputs-pending,portfolio-account-failure,overlap-tabs,overlap-cloud,body-timeout').split(',').filter(mode=>mode!=='none');
   async function requestSeen(cursor,predicate,description){for(let i=0;i<200;i++){if(requests.slice(cursor).some(predicate))return;await pause(25);}throw Error('HTTP fixture timeout: '+description);}
+  if(advanced.includes('stop-verification-screen-pending')){
+   trace.activeCase='stop-verification-screen-pending';await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Ready before stop-only verification');
+   await control('screen-hold');const cursor=requests.length;await click('Reload');
+   for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Unrelated purchase screen reached delayed HTTP gate');
+   await requestSeen(cursor,r=>r.operation==='prepare-execution'&&r.finished,'Account and opening ownership verification completed while screen waits');
+   await control('screen-hold',{prices:{LLL:85},advanceMs:1000});const verifyCursor=requests.length;
+   await js(`document.querySelector('[aria-label="Verify stop now for LLL"]').click()`);
+   await wait(`/SELL.*STOP TRIGGERED/.test(document.querySelector('[aria-label="C1 stop verification"]')?.textContent)`,'Explicit held quote promptly shows Sell while purchase screen remains pending');
+   const riskText=await js(`document.querySelector('[aria-label="C1 stop verification"]').textContent`);
+   assert(riskText.includes('Sell 800 shares'),'Action includes the recorded affected sleeve quantity');
+   assert(riskText.includes('does not place or maintain a Schwab stop order'),'Manual brokerage execution remains explicit');
+   assert.equal(await js('document.querySelector("header button")?.textContent'),'Reloading...','Stop instruction bypasses an unresolved unrelated screen');
+   const direct=requests.slice(verifyCursor);assert.equal(direct.filter(r=>r.path==='/api').length,1,'Direct action uses the existing held-quote path once');
+   assert.equal(direct.filter(r=>r.path==='/api/c1-account'||r.path==='/api/top5').length,0,'Stop-only verification performs no account or purchase-screen call');
+   assert.equal(JSON.stringify(api.fixture.account),baseline,'Verification cannot alter saved stops, accepted exits, cash, holdings or history');
+   await shot('stop-verification-screen-pending');
+   await control(null,{release:true,prices:{LLL:100},advanceMs:1000});await wait('document.querySelector("header button")?.textContent==="Reload"','Delayed atomic refresh completes');
+   await js(`document.querySelector('[aria-label="Verify stop now for LLL"]').click()`);await wait(`!/SELL.*STOP TRIGGERED/.test(document.querySelector('[aria-label="C1 stop verification"]')?.textContent)`,'A newer verified recovery preserves existing nonlatched behavior');
+   await control(null,{prices:{LLL:85},advanceMs:1000});await settledReload();await wait(`/SELL.*STOP TRIGGERED/.test(document.querySelector('[aria-label="C1 stop verification"]')?.textContent)`,'Fresh base-frame stop is actionable before ownership changes');
+   await control('screen-hold',{shadowOwnership:true});const ownershipCursor=requests.length;await click('Reload');
+   for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Ownership-changing response is followed by a held screen');
+   await requestSeen(ownershipCursor,r=>r.path==='/api/c1-account'&&r.method==='GET'&&r.finished,'A newer synthetic ownership revision was observed');
+   await wait(`document.querySelector('[aria-label="C1 stop verification"]')?.textContent.includes('Reconciled holding and stop evidence are unavailable')`,'Observed new ownership invalidates old quantities without clicking Verify or completing the screen');
+   const invalidated=await js(`document.querySelector('[aria-label="C1 stop verification"]').textContent`);assert(!invalidated.includes('Sell 800 shares'),'No old quantity remains actionable after a newer account is observed');
+   assert(await js(`document.querySelector('[aria-label="Verify stop now for LLL"]').disabled`),'Verification is unavailable until matching ownership publishes');
+   assert.equal(await js('document.querySelector("header button")?.textContent'),'Reloading...','Ownership metadata invalidation does not publish the incomplete account/screen frame');
+   assert.equal(JSON.stringify(api.fixture.account),baseline,'Shadow response does not mutate even synthetic account records');
+   await control(null,{shadowOwnership:false,prices:{LLL:100},release:true});await wait('document.querySelector("header button")?.textContent==="Reload"','Held shadow frame settled');
+   await settledReload();await wait('/Buy \\d+ shares/.test(document.body.innerText)','Normal purchase flow remains available after explicit recovery');
+   trace.cases.push({failure:'stop-verification-screen-pending',actualHomeAction:true,verifiedSellBeforePurchaseScreen:true,affectedShares:800,manualExecution:true,newerRecoveryClearsTransientSignal:true,stopOnlyAccountWrites:0,newOwnershipImmediatelyWithdrawsOldQuantity:true,accountRecordIdentical:true});
+  }
   if(advanced.includes('opening-pending')){
    trace.activeCase='portfolio-opening-pending';await control('opening-hold');const cursor=requests.length;await click('My Portfolio');
    for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Portfolio opening request reached held HTTP response');

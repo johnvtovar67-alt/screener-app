@@ -28,7 +28,7 @@ function render({evidence=unavailable,action='Hold',source='c1-actual-account',m
  const calls=[],resolved=[],position={symbol:row.symbol,momentumEvidence:evidence,action,reason:why,
   exits:['Exit candidate','Sell'].includes(action)?[{reason:'rank-deterioration'}]:[],...positionData},accountView={decision:{contract:'c1-account-decision-v1',positions:[position],current,sourceSessionDate:date}},record={exports:{}};
  const bindings={...modules.load('lib/c1HoldPill.js'),accountView,accountMatches,accountHoldingMismatch,CASH:['CASH'],displayedPortfolioValue:10000,
-  c1PositionPresentation,c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming,stocks:[row],portfolio:[row],
+  stopOwnershipCurrent:accountMatches&&!accountHoldingMismatch,stopQuoteRow:s=>s,c1PositionPresentation,c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming,stocks:[row],portfolio:[row],
   c1PortfolioMomentumEvidence:args=>{calls.push(args);const result=resolver?resolver(args):args.position?.momentumEvidence||unavailable;resolved.push(result);return result;},
   pd:()=>({action,source,reason:why,openedAt:row.openedAt}),swingTimeReview:()=>({held:500,stage:'Long Swing Review'}),holdingReason:(s,d)=>d.reason,
   sym:s=>s.symbol,price:s=>s.price,cls:a=>a==='Hold'?'yellow':'red',factorFor:()=> 'Technology',portfolioDateDisplay:()=> 'Sep 11, 2026',
@@ -39,7 +39,7 @@ function render({evidence=unavailable,action='Hold',source='c1-actual-account',m
 }
 for(const [classification,tone] of classifications){
  const evidence={classification,status:'available',label:classification,tone,explanation:'Rank improved from 5 to 2; completed closes gained 3.1%.',sourceSessionDate:'2026-09-11',limitations:[]};
- for(const mobile of [false,true])for(const [action,displayAction] of [['Hold','HOLD'],['Add candidate','HOLD'],['Exit candidate','SELL — MOMENTUM EXIT'],['Buy','HOLD'],['Sell','SELL — MOMENTUM EXIT']]){
+ for(const mobile of [false,true])for(const [action,displayAction] of [['Hold','STOP STATUS UNVERIFIED'],['Add candidate','STOP STATUS UNVERIFIED'],['Exit candidate','SELL — MOMENTUM EXIT'],['Buy','STOP STATUS UNVERIFIED'],['Sell','SELL — MOMENTUM EXIT']]){
   const {html,calls,accountView}=render({evidence,action,mobile});
   assert.match(html,new RegExp(`class="momentumBadge ${tone}"[^>]*>${classification}<`),'The original badge renders the validated classification');
   assert.ok(html.includes(c1CompactMomentumEvidence(evidence)),'The original evidence field carries a concise supported explanation');
@@ -65,7 +65,8 @@ for(const mobile of [false,true]){
   assert.doesNotMatch(html,/Momentum Intact/,'Unavailable evidence cannot retain the prior classification');
   assert.equal(calls[0].position,undefined,'Unmatched Swing rows cannot inherit C1 evidence');
   assert.equal(calls[0].decision,null);
-  assert.match(html,/Current momentum evidence is unavailable; additions are paused\./,'Unavailable account evidence retains the current no-add restriction');
+  assert.match(html,/Reconciled holding and stop evidence are unavailable/,'Unavailable account evidence explicitly discloses unverified stop status');
+  assert.match(html,/>STOP STATUS UNVERIFIED</,'Unmatched account evidence cannot imply Hold');
   assert.equal(render({...patch,evidence,mobile}).accountView.decision.positions[0].reason,why,'Unavailable evidence cannot replace the source action reason');
  }
  const stale={...unavailable,status:'stale',label:'Evidence stale',explanation:'Accepted momentum evidence is from an earlier completed session.',sourceSessionDate:'2026-09-10'};
@@ -121,7 +122,7 @@ for(const mobile of [false,true]){
  assert.equal(changedRender.resolved[0].label,'Evidence unavailable','Changed position risk cannot retain the prior momentum classification');
  assert.match(changedRender.resolved[0].explanation,/Position risk evidence changed/,'The evidence signature restriction remains intact internally');
  assert.doesNotMatch(changed,/Momentum Intact/);
- assert.ok(changed.includes('>HOLD</b>'),'Invalid evidence signature cannot change the holding status');
+ assert.ok(changed.includes('>STOP STATUS UNVERIFIED</b>'),'Invalid momentum evidence cannot manufacture stop verification or an exit');
  assert.equal(render({evidence:{...evidence,riskBasis:'prior-position-risk'},mobile,resolver,date}).accountView.decision.positions[0].reason,why,'Invalid evidence signature cannot remove the original source explanation');
  const missing=render({evidence:{},mobile,resolver,date});
  assert.equal(missing.resolved[0].label,'Evidence unavailable','An older server without serialized evidence cannot manufacture a classification');
@@ -135,7 +136,7 @@ const timingPosition={stops:[{price:86}],reviewRules:[{sleeve:'base',heldSession
 const timingEvidence={status:'available',label:'Momentum Weakening',tone:'weakening',sourceSessionDate:'2026-09-11'};
 for(const mobile of [false,true]){
  const original=JSON.stringify(timingPosition),result=render({mobile,positionData:timingPosition,evidence:timingEvidence});
- for(const text of ['Holding period: 12/30 sessions · 18 remaining','Stop: not triggered at last C1 close','Profit protection: armed, not triggered','Rank momentum: 2/3 · 1 remaining','Profit rank: 1/2 · 1 remaining','Momentum: 1/2 · 1 remaining','Profit giveback: 1/2 · 1 remaining'])assert(result.html.includes(text),text);
+ for(const text of ['Holding period: 12/30 sessions · 18 remaining','Stop: STOP STATUS UNVERIFIED','Last C1 close: no accepted stop exit recorded; current verification is still required.','Profit protection: armed, not triggered','Rank momentum: 2/3 · 1 remaining','Profit rank: 1/2 · 1 remaining','Momentum: 1/2 · 1 remaining','Profit giveback: 1/2 · 1 remaining'])assert(result.html.includes(text),text);
  assert.equal(JSON.stringify(timingPosition),original);assert.equal(result.accountView.decision.positions[0].action,'Hold');
  const core=render({mobile,row:{...holding,symbol:'MSTR',role:'Core'},positionData:timingPosition,evidence:timingEvidence,source:'legacy-core'});assert.doesNotMatch(core.html,/Holding period:|Rank momentum:|Profit rank:/);
  const stale=render({mobile,positionData:timingPosition,evidence:{...timingEvidence,status:'stale'}});assert.doesNotMatch(stale.html,/12\/30|2\/3/);
@@ -161,7 +162,7 @@ async function newHoldingCopy(){
    positionData:{...position,momentumEvidence:undefined},resolver:args=>resolver({...args,now:f.now})});
   assert.match(rendered.html,/New holding — review pending/);
   assert.match(rendered.html,/Awaiting first completed-session holding review/);
-  assert.match(rendered.html,/>HOLD<\/b>/);assert.doesNotMatch(rendered.html,/Evidence unavailable|Momentum Intact/);
+  assert.match(rendered.html,/>STOP STATUS UNVERIFIED<\/b>/);assert.doesNotMatch(rendered.html,/Evidence unavailable|Momentum Intact/);
   const armed=render({mobile,positionData:{...timingPosition,recentMomentumReviews:[]},evidence:{...timingEvidence,classification:'Momentum Intact',label:'Momentum Intact'}});
   assert.equal((armed.html.match(/armed, not triggered/g)||[]).length,1);
  }
@@ -196,8 +197,9 @@ for(const mobile of [false,true]){
  for(const [evidence,text] of [[mixed,'Verified momentum signals are mixed.'],[missing,'Momentum evidence incomplete: relative strength.'],[partial,'Momentum signals are mixed; some supporting evidence is incomplete.']]){
   const rendered=render({mobile,evidence,date,resolver,row:{...holding,symbol:'MPC'},positionData:mixedPosition});
   assert.ok(rendered.html.includes(text),'The real desktop/mobile supporting field explains the exact unclassified state');
-  assert.ok(rendered.html.includes('>HOLD</b>'));assert.doesNotMatch(rendered.html,/>BUY<|>SELL/);
-  assert.ok(rendered.html.includes('Recent momentum is recovering; no sell signal confirmed.'));
+  assert.ok(rendered.html.includes('>STOP STATUS UNVERIFIED</b>'));assert.doesNotMatch(rendered.html,/>BUY<|>SELL/);
+  assert.ok(rendered.html.includes('provider quote timestamp is missing or invalid'),'Unverified current stop proof takes presentation priority over the retained momentum recovery');
+  assert.equal(rendered.accountView.decision.positions[0].recentMomentumReviews[0].metrics.recovery,true);
   assert.ok(rendered.html.includes('Holding period: 4/30 sessions · 26 remaining'));
   assert.ok(rendered.html.includes(`As of ${date}`));
   assert.equal(rendered.accountView.decision.positions[0].action,'Hold');
@@ -217,4 +219,4 @@ for(const [limitation,part] of [
  assert.equal(c1CompactMomentumEvidence({...missing,limitations:[limitation]}),`Momentum evidence incomplete: ${part}.`);
 }
 assert.equal(c1CompactMomentumEvidence({...missing,limitations:['provider-secret-sentinel'],explanation:'untrusted-secret-sentinel'}),'Verified momentum evidence is unavailable.');
-console.log('PASS: mixed versus missing evidence through actual desktop/mobile rows; recovering HOLD, counters, freshness, risk signature and input bytes preserved; fixed concise limitation mapping only.');
+console.log('PASS: mixed versus missing evidence through actual desktop/mobile rows; underlying recovery, counters, freshness, risk signature and input bytes preserved; unverified stops explicit; fixed concise limitation mapping only.');

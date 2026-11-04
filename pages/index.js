@@ -17,7 +17,8 @@ import C1AccountActivity from "../components/C1AccountActivity";
 import C1ReconciliationDetails from "../components/C1ReconciliationDetails";
 import {c1AccountPositionDecision} from "../lib/c1AccountDecision";
 import {c1PortfolioMomentumEvidence} from "../lib/c1MomentumEvidence";
-import {c1PositionPresentation} from "../lib/c1PositionPresentation";
+import {c1PositionPresentation,c1RecordedSellInstruction} from "../lib/c1PositionPresentation";
+import {c1StopDecisionIdentity,c1StopVerificationBinding,c1StopVerificationCurrent,createC1StopVerification} from '../lib/c1StopVerification';
 import {c1PlainDecisionReason,c1DecisionTrigger,c1CompactMomentumEvidence,c1HoldingTiming} from "../lib/c1DecisionCopy";
 import {c1Presentation,c1DisplayDecision} from "../lib/c1Presentation";
 import {useEffect,useMemo,useRef,useState} from "react";
@@ -139,6 +140,19 @@ export default function Home(){
   const[accountResponseVerified,setAccountResponseVerified]=useState(false);
   const accountRequestId=useRef(0);
   const screenRequestId=useRef(0);
+  const[stopVerification,setStopVerification]=useState(null),[stopVerifying,setStopVerifying]=useState(false);
+  const stopVerificationContext=useRef(null),stopAccountObserved=useRef(null),stopVerifier=useRef(null);
+  const[,invalidateStopOwnership]=useState(0);
+  function observeStopOwnership(decision){
+    const identity=c1StopDecisionIdentity(decision);
+    if(stopAccountObserved.current!==identity){stopAccountObserved.current=identity;invalidateStopOwnership(n=>n+1);}
+  }
+  function readStopBinding(){
+    return c1StopVerificationCurrent(stopVerificationContext.current,{accountOwner:accountRequestId.current,
+      portfolioOwner:syncPullId.current,observedDecision:stopAccountObserved.current,enteredPortfolio:localStorage.getItem(KEY)||'[]'});
+  }
+  if(!stopVerifier.current)stopVerifier.current=createC1StopVerification(readStopBinding);
+  useEffect(()=>()=>stopVerifier.current.cancel(),[]);
   const syncRevision=useRef({key:"",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);
   function publishC1AccountState(state){
     if(Object.prototype.hasOwnProperty.call(state,'view'))setAccountView(state.view);
@@ -148,7 +162,7 @@ export default function Home(){
   }
   async function refreshC1Account(body=null,{readOnly=!body,publish=publishC1AccountState,publishPortfolio=setPortfolio}={}){
     const requestId=++accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
-    if(!key){publish({view:null,absent:false,verified:false});if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
+    if(!key){observeStopOwnership(null);publish({view:null,absent:false,verified:false});if(body)throw new Error("Connect your existing portfolio sync key first.");return null;}
     setAccountResponseVerified(false);
     let recovered=false;
     try{
@@ -158,12 +172,13 @@ export default function Home(){
         if(r.status===409&&!readOnly&&body?.operation!=='update-brokerage-cash'){
           const latest=await fetch('/api/c1-account',{method:'GET',headers:{authorization:`Bearer ${key}`},cache:'no-store'}),view=await readC1AccountResponse(latest,{stage:'conflict-recovery'});
           if(requestId!==accountRequestId.current)return;
-          if(latest.ok){bindC1JourneyReceipt(view,latest);publish({view,absent:false,verified:true});recovered=true;}
+          if(latest.ok){observeStopOwnership(view.decision);bindC1JourneyReceipt(view,latest);publish({view,absent:false,verified:true});recovered=true;}
         }
-        if(r.status===404&&!body){publish({view:null,absent:true,verified:false});return null;}
-        if([401,403].includes(r.status)){publish({view:null,absent:false,verified:false});}
+        if(r.status===404&&!body){observeStopOwnership(null);publish({view:null,absent:true,verified:false});return null;}
+        if([401,403].includes(r.status)){observeStopOwnership(null);publish({view:null,absent:false,verified:false});}
         throw new Error(recovered?'Your saved account was reloaded. Please retry the change.':r.status===409&&body?.operation==='update-brokerage-cash'?'The saved account changed. Reload before updating brokerage cash.':d.error||"C1 account refresh failed.");
       }
+      observeStopOwnership(d.decision);
       if(d.decision?.nonCashAdoptions?.length){
         const entered=JSON.parse(localStorage.getItem(KEY)||'[]'),resolved=resolveC1NonCashPortfolio(entered,d.decision);
         if(JSON.stringify(entered)!==JSON.stringify(resolved)){localStorage.setItem(KEY,JSON.stringify(resolved));publishPortfolio(resolved);}
@@ -173,6 +188,7 @@ export default function Home(){
       publish({view:d,absent:false,verified:true,error:""});return d;
     }catch(error){
       if(requestId!==accountRequestId.current)return;
+      if(!recovered)observeStopOwnership(null);
       publish({...(recovered?{}:{verified:false}),absent:false});throw error;
     }
   }
@@ -320,6 +336,16 @@ export default function Home(){
     const timer=setTimeout(()=>setMarketState(marketExecutionState(new Date())),Math.min(...deadlines)-now.getTime()+1);
     return()=>clearTimeout(timer);
   },[accountView,results,stocks,marketState]);
+  useEffect(()=>{
+    if(!stopVerification||stopVerification.binding!==readStopBinding())return;
+    const position=accountView?.decision?.positions?.find(row=>row.symbol===stopVerification.symbol);
+    const presentation=c1PositionPresentation({decision:accountView?.decision,position,stock:stopVerification.stock,
+      executionDecision:accountView?.executionDecision,now:new Date()});
+    const remaining=Date.parse(presentation?.quoteValidUntil)-Date.now();
+    if(!Number.isFinite(remaining)||remaining<0)return;
+    const timer=setTimeout(()=>setMarketState(marketExecutionState(new Date())),remaining+1);
+    return()=>clearTimeout(timer);
+  },[accountView,stopVerification,marketState]);
   useEffect(()=>{const live=()=>{void handleReload();};window.addEventListener("screener-request-live-refresh",live);return()=>window.removeEventListener("screener-request-live-refresh",live);},[tab,selectedTheme,portfolio]);
   useEffect(()=>{try{window.dispatchEvent(new CustomEvent('c1-refresh-busy',{detail:Boolean(loading||reloading||accountBusy||checking)}));}catch{}},[loading,reloading,accountBusy,checking]);
   useEffect(()=>{if(!loading&&!reloading&&!accountBusy&&accountResponseVerified&&accountView)
@@ -595,6 +621,28 @@ export default function Home(){
   const accountDifferences=accountView?c1AccountDifferences(accountView.decision,portfolio):[];
   const accountHoldingMismatch=accountDifferences.length>0;
   const accountMatches=accountDifferences.length===0;
+  const stopOwnershipCurrent=accountMatches&&stopAccountObserved.current===c1StopDecisionIdentity(accountView?.decision);
+  const stopBinding=c1StopVerificationBinding({decision:accountView?.decision,portfolio,
+    reconciled:Boolean(accountView)&&stopOwnershipCurrent&&!accountBusy,
+    accountOwner:accountRequestId.current,portfolioOwner:syncPullId.current});
+  stopVerificationContext.current={binding:stopBinding,accountOwner:accountRequestId.current,portfolioOwner:syncPullId.current,
+    decisionIdentity:c1StopDecisionIdentity(accountView?.decision),portfolioSignature:JSON.stringify(portfolio)};
+  function stopQuoteRow(stock){
+    return stopVerification?.binding===stopBinding&&stopVerification.symbol===sym(stock)?holdingQuoteRow(stock,stopVerification.stock,stock):stock;
+  }
+  async function verifyStopNow(symbol){
+    if(!readStopBinding()||stopVerifying)return;
+    setStopVerifying(true);
+    try{
+      await stopVerifier.current.verify({symbol,collect:async wanted=>{
+        const position=portfolio.find(row=>sym(row)===wanted&&row.role==='Swing');
+        const quotes=await fetchHoldingQuotes([position],true,results,{isCurrent:()=>readStopBinding()===stopBinding});
+        return quotes.get(wanted);
+      },publish:setStopVerification});
+    }catch(error){if(readStopBinding()===stopBinding)setQuoteRefreshStatus('Stop verification failed; no current stop instruction was created.');}
+    finally{setStopVerifying(false);}
+  }
+  const stopPositionRows=results.map(stopQuoteRow);
 
   function rawPd(s){
     if(CASH.includes(sym(s)))return{action:"Cash",reason:"Dry powder."};
@@ -692,9 +740,9 @@ export default function Home(){
   }
   function PortfolioRow({s,mobile=false}){
     const decision=pd(s);
-    const accountDecision=s.role==="Swing"&&!CASH.includes(sym(s))&&accountMatches&&!accountHoldingMismatch?accountView?.decision:null;
+    const accountDecision=s.role==="Swing"&&!CASH.includes(sym(s))&&stopOwnershipCurrent&&!accountHoldingMismatch?accountView?.decision:null;
     const position=accountDecision?.positions?.find(row=>row.symbol===sym(s));
-    const presentation=s.role==="Swing"&&!CASH.includes(sym(s))?c1PositionPresentation({decision:accountDecision,position,symbol:sym(s),stock:s,executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations:accountView?.manualRecommendations,now:new Date()}):null;
+    const presentation=s.role==="Swing"&&!CASH.includes(sym(s))?c1PositionPresentation({decision:accountDecision,position,symbol:sym(s),stock:stopQuoteRow(s),executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations:accountView?.manualRecommendations,now:new Date()}):null;
     // Sector evidence is separate from thematic risk factors and never changes exposure controls.
     const sectorEvidence=accountDecision?.stockScreen?.sourceSessionDate===accountDecision?.sourceSessionDate?
       accountDecision?.stockScreen?.candidates?.find(row=>row.symbol===sym(s))?.sector:null;
@@ -719,6 +767,17 @@ export default function Home(){
     <header><div><h1>🧠 Investment Operating System</h1><p>Expert analysis underneath. Portfolio-level risk governance on top.</p>{lastUpdated&&<small className="updated">Screen data as of {lastUpdated.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}</small>}</div><button disabled={busy} onClick={handleReload}>{busy?"Reloading...":"Reload"}</button></header>
     {["opportunities","portfolio"].includes(tab)&&<div className="refreshEvidence" aria-label="Market data freshness"><p>Latest completed signal session: {accountView?.decision?.sourceSessionDate||"unavailable"} · Last application refresh: {applicationRefreshAt?applicationRefreshAt.toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit",second:"2-digit"}):"pending"}</p>{quoteRefreshStatus&&<p role="status">{quoteRefreshStatus}</p>}</div>}
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
+    {["opportunities","portfolio"].includes(tab)&&portfolio.some(row=>row.role==='Swing'&&!CASH.includes(sym(row)))&&<section className="card" aria-label="C1 stop verification">
+      <h2>Stop verification</h2><p className="sub">C1 gives manual sell instructions. It does not place or maintain a Schwab stop order.</p>
+      <ul>{portfolio.filter(row=>row.role==='Swing'&&!CASH.includes(sym(row))).map(held=>{
+        const decision=stopOwnershipCurrent?accountView?.decision:null,position=decision?.positions?.find(row=>row.symbol===sym(held));
+        const stock=stopQuoteRow(results.find(row=>sym(row)===sym(held))||stocks.find(row=>sym(row)===sym(held))||held);
+        const presentation=c1PositionPresentation({decision,position,symbol:sym(held),stock,executionDecision:accountView?.executionDecision,now:new Date()});
+        const instruction=c1RecordedSellInstruction(position,presentation);
+        return <li key={sym(held)}><b>{sym(held)}: {presentation.label}</b> <span>{presentation.reason}</span> <small>Quote observed: {presentation.quoteAt||presentation.quoteStatus?.quoteAt||'unavailable'}.</small> {position?.stops?.length>0&&<small>Recorded stops: {position.stops.map(stop=>`${money(stop.price)} (${stop.shares} shares)`).join(" · ")}.</small>} {presentation.quoteVerified&&<span>Verified price: {money(presentation.quotePrice)}.</span>} {instruction&&<span>{instruction.next} {instruction.status}</span>} <button type="button" aria-label={'Verify stop now for '+sym(held)} disabled={!stopBinding||stopVerifying} onClick={()=>verifyStopNow(sym(held))}>{stopVerifying?'Verifying stop…':'Verify stop now'}</button></li>;
+      })}</ul>
+      {!stopBinding&&<p role="status">STOP STATUS UNVERIFIED — reconcile the recorded holdings before using a sell quantity.</p>}
+    </section>}
     {marketRadar.length>0&&<div className="marketRadarBar"><b>MARKET LEADERSHIP</b><div className="marketRadarItems">{marketRadar.map((r,i)=>{const nm=r.name||r.theme||"Theme",st=r.state||r.status||"",sc=Number(r.score);return <span key={`${nm}-${i}`}><strong>{nm}</strong>{st&&<em>{st}</em>}{Number.isFinite(sc)&&<small>{Math.round(sc)}</small>}</span>;})}</div></div>}
     {accountError&&<p className="error" role="alert"><b>C1 account:</b> {accountError}</p>}
     {err&&!accountError&&<p className="error">{err}</p>}
@@ -743,7 +802,7 @@ export default function Home(){
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&!accountMatches&&<p role="status">Account details need attention. <button onClick={()=>setTab("account-tools")}>Open Account settings</button></p>}
-    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} positionRows={results} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} executionDecision={accountView.executionDecision} manualRecommendations={accountView.manualRecommendations} purchaseDiagnostics={accountView.purchaseDiagnostics} openingPlan={accountMatches&&accountResponseVerified?accountView.openingPlan:null} openingError={accountView.openingError} decision={accountMatches?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the holding differences in Account settings to restore candidates and checked quantities."}}/>}
+    {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} positionRows={stopPositionRows} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} executionDecision={accountView.executionDecision} manualRecommendations={accountView.manualRecommendations} purchaseDiagnostics={accountView.purchaseDiagnostics} openingPlan={accountMatches&&accountResponseVerified?accountView.openingPlan:null} openingError={accountView.openingError} decision={stopOwnershipCurrent?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the holding differences in Account settings to restore candidates and checked quantities."}}/>}
     {tab==="opportunities"&&!accountView&&<section className="card" aria-label="C1 account unavailable">
       <h2>Opportunities</h2>
       <div className="emptyState" role="status"><b>{reloading||accountBusy?'Loading C1 analysis…':syncKey?'C1 analysis is unavailable.':'Connect your recorded portfolio to load C1.'}</b>

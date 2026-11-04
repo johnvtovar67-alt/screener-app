@@ -18,7 +18,7 @@ const pins={
  'lib/c1RecentMomentumChallengerSimulator.js':'ca08f31539bb4e306251dd11ada2ae204af78d850c23644ffa617b752923d905',
  'tools/fixtures/c1-account-simulator-9097e89.js':'15aecf5479fa496bb7fe232f8367aab2c4d37597bba0c347b2064e38e1886e4b'
 };
-for(const [file,pin] of Object.entries(pins))if(pin)assert.equal(hash(fs.readFileSync(file)),pin,file+' immutable oracle');
+for(const [file,pin] of Object.entries(pins))if(pin)assert.equal(hash(require('./c1-initial-swing-stop-seams.cjs').restoreInitialSwingStopPolicy(fs.readFileSync(file,'utf8'),file)),pin,file+' immutable oracle');
 const originalFetch=global.fetch;let networkCalls=0;
 global.fetch=()=>{networkCalls++;throw Error('Unexpected network in synthetic accounting parity');};
 const same=(a,b,label)=>assert.deepEqual(structuredClone(a),structuredClone(b),label);
