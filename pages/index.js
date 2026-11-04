@@ -634,7 +634,8 @@ export default function Home(){
     reconciled:Boolean(accountView)&&stopOwnershipCurrent&&!accountBusy,
     accountOwner:accountRequestId.current,portfolioOwner:syncPullId.current});
   stopVerificationContext.current={binding:stopBinding,accountOwner:accountRequestId.current,portfolioOwner:syncPullId.current,
-    decisionIdentity:c1StopDecisionIdentity(accountView?.decision),portfolioSignature:JSON.stringify(portfolio)};
+    decisionIdentity:c1StopDecisionIdentity(accountView?.decision),portfolioSignature:JSON.stringify(portfolio),
+    auto:{portfolio,results,stocks,accountView,stopVerification}};
   function stopQuoteRow(stock){
     const observation=stopVerification[sym(stock)];
     return observation?.binding===stopBinding?holdingQuoteRow(stock,observation.stock,stock):stock;
@@ -668,6 +669,41 @@ export default function Home(){
     }
   }
   const stopPositionRows=results.map(stopQuoteRow);
+
+  // Read-only stop quotes refresh in the background while this page is open.
+  // Never reuse a superseded account/portfolio binding or grant purchase authority.
+  useEffect(()=>{
+    if(!stopBinding||!marketState?.isOpen||!['opportunities','portfolio'].includes(tab))return;
+    let active=true;
+    const attempts=new Map();
+    const check=()=>{
+      if(!active||document.visibilityState==='hidden'||readStopBinding()!==stopBinding)return;
+      const snapshot=stopVerificationContext.current?.auto;
+      if(!snapshot?.accountView?.decision)return;
+      const now=new Date();
+      for(const held of snapshot.portfolio){
+        const symbol=sym(held);
+        if(held.role!=='Swing'||CASH.includes(symbol)||stopRequests.current.has(symbol))continue;
+        const position=snapshot.accountView.decision.positions?.find(row=>row.symbol===symbol);
+        if(!position)continue;
+        const current=snapshot.results.find(row=>sym(row)===symbol)||
+          snapshot.stocks.find(row=>sym(row)===symbol)||held;
+        const accepted=snapshot.stopVerification[symbol];
+        const stock=accepted?.binding===stopBinding?holdingQuoteRow(current,accepted.stock,current):current;
+        const presentation=c1PositionPresentation({decision:snapshot.accountView.decision,position,stock,
+          executionDecision:snapshot.accountView.executionDecision,now});
+        if(presentation?.quoteVerified&&Date.parse(presentation.quoteValidUntil)-now.getTime()>60000)continue;
+        if(now.getTime()-(attempts.get(symbol)||0)<45000)continue;
+        attempts.set(symbol,now.getTime());
+        void verifyStopNow(symbol);
+      }
+    };
+    const first=setTimeout(check,800);
+    const tick=setInterval(check,15000);
+    const wake=()=>{if(document.visibilityState==='visible')check();};
+    document.addEventListener('visibilitychange',wake);
+    return()=>{active=false;clearTimeout(first);clearInterval(tick);document.removeEventListener('visibilitychange',wake);};
+  },[stopBinding,tab,marketState?.isOpen]);
 
   function rawPd(s){
     if(CASH.includes(sym(s)))return{action:"Cash",reason:"Dry powder."};
@@ -792,7 +828,7 @@ export default function Home(){
     <header><div><h1>🧠 Investment Operating System</h1><p>Expert analysis underneath. Portfolio-level risk governance on top.</p>{lastUpdated&&<small className="updated">Screen data as of {lastUpdated.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}</small>}</div><button disabled={busy} onClick={handleReload}>{busy?"Reloading...":"Reload"}</button></header>
     {["opportunities","portfolio"].includes(tab)&&<div className="refreshEvidence" aria-label="Market data freshness"><p>Latest completed signal session: {accountView?.decision?.sourceSessionDate||"unavailable"} · Last application refresh: {applicationRefreshAt?applicationRefreshAt.toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit",second:"2-digit"}):"pending"}</p>{quoteRefreshStatus&&<p role="status">{quoteRefreshStatus}</p>}</div>}
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
-    {["opportunities","portfolio"].includes(tab)&&portfolio.some(row=>row.role==='Swing'&&!CASH.includes(sym(row)))&&<section className="card" aria-label="C1 stop verification">
+    {["opportunities","portfolio"].includes(tab)&&portfolio.some(row=>row.role==='Swing'&&!CASH.includes(sym(row)))&&<section className="card" aria-label="C1 stop verification" hidden>
       <h2>Stop verification</h2><p className="sub">C1 gives manual sell instructions. It does not place or maintain a Schwab stop order.</p>
       <ul>{portfolio.filter(row=>row.role==='Swing'&&!CASH.includes(sym(row))).map(held=>{
         const decision=stopOwnershipCurrent?accountView?.decision:null,position=decision?.positions?.find(row=>row.symbol===sym(held));

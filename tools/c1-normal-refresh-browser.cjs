@@ -132,6 +132,7 @@ async function main(){
   async function requestSeen(cursor,predicate,description){for(let i=0;i<200;i++){if(requests.slice(cursor).some(predicate))return;await pause(25);}throw Error('HTTP fixture timeout: '+description);}
   if(advanced.includes('stop-verification-screen-pending')){
    trace.activeCase='stop-verification-screen-pending';await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Ready before stop-only verification');
+   assert(await js('document.querySelector(\'[aria-label="C1 stop verification"]\')?.hidden===true'),'Manual stop-verification panel must be hidden from the user interface');
    await control('screen-hold');const cursor=requests.length;await click('Reload');
    for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Unrelated purchase screen reached delayed HTTP gate');
    await requestSeen(cursor,r=>r.operation==='prepare-execution'&&r.finished,'Account and opening ownership verification completed while screen waits');
