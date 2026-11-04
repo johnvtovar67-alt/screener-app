@@ -200,7 +200,10 @@ export default function Home(){
       const r=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify({operation:'prepare-execution'}),cache:'no-store'}),execution=await readC1AccountResponse(r,{stage:'opening-review'});
       if(requestId!==accountRequestId.current||localStorage.getItem(SYNC_KEY)!==key)return;
       if(!r.ok)throw new Error(execution.error||'Opening checks unavailable.');
-      if(execution.decision?.decisionId!==view.decision.decisionId)throw new Error('The account changed during opening verification. Tap Reload to recheck the current account.');
+      if(execution.decision?.decisionId!==view.decision.decisionId||execution.decision?.revision!==view.decision.revision){
+        observeStopOwnership(null);
+        throw new Error('The account changed during opening verification. Tap Reload to recheck the current account.');
+      }
       bindC1JourneyReceipt(execution,r);
       const completed=inheritC1JourneyReceipt({...execution,decision:view.decision},execution);
       publish({view:completed});return completed;
