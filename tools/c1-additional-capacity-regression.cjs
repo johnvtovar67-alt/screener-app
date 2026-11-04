@@ -19,7 +19,7 @@ function input(f){return {adoption:f.account.adoption,sessions:[f.sessions[220]]
  for(const order of buys(plan)){
   const scale=f.account.adoption.seeds[order.sleeve].actualDollarsPerModelDollar;
   const fill={id:'conserved:'+order.sleeve,orderId:order.id,executedAt:f.now.toISOString(),symbol:order.symbol,side:'buy',reason:order.reason,shares:order.shares/scale,price:order.estimatedPrice,fee:0,targetShares:order.targetShares/scale};
-  fillReplay.markC1BrokerageFundedPurchase(fill,plan.date);fillReplay.markC1AdditionalCapacityPurchase(fill,plan.date);
+  fillReplay.markC1BrokerageFundedPurchase(fill,plan.date);fillReplay.markC1AdditionalCapacityPurchase(fill,plan.date);fillReplay.markC1InitialSwingStopPurchase(fill,plan.date,order);
   projectionFills[order.sleeve].push(fillReplay.markC1ReconciledProjectionFill(fill,plan.date,signals.get(fill.symbol)));
  }
  f.setQuote('MRNA',110);
@@ -34,7 +34,11 @@ function input(f){return {adoption:f.account.adoption,sessions:[f.sessions[220]]
  const saved=await f.prepare({id:'fourth-position',symbol:'MRNA',side:'buy',shares:quantity,price:100.12,fee:0,executedAt:f.now.toISOString()});f.account=saved.account;
  assert.equal(saved.decision.positions.length,4);assert.equal(saved.decision.positions.find(p=>p.symbol==='MRNA').shares,49);near(saved.decision.brokerageCash,94.12);
  assert.equal(JSON.stringify(f.account.adoption),JSON.stringify(before.adoption));assert(!f.account.cashReconciliations);
- const fourth=saved.decision.positions.find(p=>p.symbol==='MRNA');assert.equal(fourth.stops.length,3);for(const s of fourth.stops)near(s.price,100.12*.86);
+ // This API creates a new ownership period under the owner-authorized 10%
+ // policy. Historical14 controls and every original source pin remain separate.
+ assert(buys(saved.account.intradayActivity.plan).every(order=>order.initialSwingStopPolicy==='c1-new-swing-initial-stop-10-v1'&&order.initialSwingStopPct===10));
+ const fourth=saved.decision.positions.find(p=>p.symbol==='MRNA');assert.equal(fourth.stops.length,3);for(const s of fourth.stops)near(s.price,100.12*.90);
+ for(const position of saved.decision.positions.filter(p=>p.symbol!=='MRNA'))for(const stop of position.stops)near(stop.price,100*.86);
  const book=completedBook(f),closed=f.service.deriveC1CompletedAccount({account:f.account,book,now:new Date('2026-10-15T22:00:00Z')});
  const continued=f.loader.load('lib/c1AccountLedger.js').continueC1ActualAccount({adoption:closed.adoption,sessions:f.sessions.slice(220,222),historySessions:f.sessions.slice(0,222),records:closed.records,observedAt:'2026-10-15T22:00:00Z'});
  assert(ids.every(id=>continued.books[id].positions.MRNA&&Object.keys(continued.books[id].positions).length===4));
