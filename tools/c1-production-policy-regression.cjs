@@ -219,6 +219,6 @@ assert(drawdown.activeCapitalPct === 0 && !drawdown.cooldown && drawdown.reconci
 const top5 = require('./c1-screen-production-extraction.cjs').readLegacyTop5Source();
 assert(top5.includes("independent_limited_pilot") && top5.includes("pilotRequiresTwoSessionPersistence") && top5.includes("$300 million"), "the live route must identify the bounded pilot and its liquidity contract");
 const manifest = fs.readFileSync("lib/releaseManifest.js", "utf8");
-assert(manifest.includes('release:"2026-11-04-c1-stop-refresh-feedback"'), "the release manifest must identify the authorized prospective-stop and verification release");
+assert(manifest.includes('release:"2026-11-04-c1-automatic-held-stops"'), "the release manifest must identify the authorized prospective-stop and verification release");
 
 console.log("C1 PRODUCTION POLICY PASS: unvalidated rank has no full-size authority; three-name, 1%, two-session pilot, liquidity floor, lifecycle, drawdown control, and fail-closed behavior verified");
