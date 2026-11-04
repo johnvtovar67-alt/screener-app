@@ -31,7 +31,7 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-11-03-c1-stop-verification-ten-percent"',
+  'release:"2026-11-04-c1-bounded-stop-quote"',
   '"explicit-held-stop-verification"',
   '"prospective-ten-percent-swing-stop"',
   'canonicalProject:"screener-app-cq5t"',

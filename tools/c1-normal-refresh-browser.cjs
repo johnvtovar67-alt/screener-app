@@ -15,6 +15,7 @@ async function main(){
  const observation= require('./fixtures/c1-operational-modules.cjs').createOperationalModuleLoader(process.cwd()).load('pages/api/c1-journey-observation.js');
  const verify=require('./fixtures/c1-operational-modules.cjs').createOperationalModuleLoader(process.cwd()).load('lib/c1JourneyObservation.js').verifyC1JourneyObservation;
  const observationHandler=observation.createC1JourneyObservationHandler({clock:()=>api.fixture.now,verify:token=>verify(token,{now:api.fixture.now,secret:observationSecret,commit:clientCommit}),emit:(...args)=>observations.push(args)});
+ const stopQuoteHandler=require('./fixtures/c1-operational-modules.cjs').createOperationalModuleLoader(root,{'../../lib/fmpQuotes':{fetchFmpQuote:()=>{throw Error('Real provider forbidden');}}}).load('pages/api/c1-stop-quote.js').createC1StopQuoteHandler({clock:()=>api.fixture.now,fetchQuote:async symbol=>api.fixture.screenRows().find(row=>row.symbol===symbol)});
  const requests=[],state={fail:null,shadowOwnership:false,portfolioPuts:0,held:[],versionCommit:clientCommit,documentLoads:0};trace.requests=requests;
  const screenPayload=()=>({stocks:api.fixture.screenRows(),meta:{snapshotAsOf:api.fixture.now.toISOString(),quoteFeedStatus:'live',fundamentalFeedStatus:'healthy',coveragePct:100,fundamentalCoveragePct:100},themeLeadership:[]});
  const versionPayload=()=>reliability?{commit:state.versionCommit.slice(0,7),buildCommit:state.versionCommit,clientProtocol:1,environment:'production',project:'screener-app-cq5t',release:'fixture'}:{commit:'synthetic-only',project:'localhost',release:'fixture'};
@@ -23,8 +24,8 @@ async function main(){
   let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):null,url=new URL(req.url,'http://127.0.0.1');
   const json=(data,status=200)=>{res.writeHead(status,{'content-type':'application/json','x-fixture-clock':api.fixture.now.toISOString()});res.end(JSON.stringify(data));};
   if(url.pathname==='/__control'){state.fail=body.fail;if(Object.hasOwn(body,'shadowOwnership'))state.shadowOwnership=body.shadowOwnership;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
-  if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
-  const target=state.fail&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:state.fail==='version-body-hold'?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
+  if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,symbol:url.searchParams.get('symbol'),finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
+  const target=state.fail&&state.fail!=='stop-quote-body-hold'&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:state.fail==='version-body-hold'?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
   if(target){
    const mode=state.fail;
    if(mode==='version-body-hold'){const serialized=JSON.stringify(versionPayload());res.writeHead(200,{'content-type':'application/json','content-length':Buffer.byteLength(serialized)});res.write(serialized.slice(0,12));await new Promise(resolve=>state.held.push(resolve));res.end(serialized.slice(12));return;}
@@ -54,6 +55,15 @@ async function main(){
   if(url.pathname==='/api/performance')return json({records:actualScreen?.ledger()?.records||[],persistentStorage:true});
   if(url.pathname==='/api/entry-timing')return json({timing:Object.fromEntries(api.fixture.screenRows().map(row=>[row.symbol,row.entryTiming]))});
   if(url.pathname==='/api/portfolio-sync'){assert.equal(req.method,'GET','Normal Reload must not write portfolio');return json({portfolio:api.fixture.portfolio,etag:'"fixture-portfolio-1"'});}
+  if(url.pathname==='/api/c1-stop-quote'){
+   if(state.fail==='stop-quote-body-hold'&&url.searchParams.get('symbol')==='LLL'){
+    res.writeHead(200,{'content-type':'application/json','content-length':100000});res.write('{"contract":"c1-stop-quote-v1",');
+    await new Promise(resolve=>state.held.push(resolve));res.end();return;
+   }
+   let status=200,value;const headers={};
+   await stopQuoteHandler({method:req.method,query:Object.fromEntries(url.searchParams)},{setHeader(k,v){headers[k]=v;},status(code){status=code;return this;},json(data){value=data;return this;}});
+   for(const [name,value]of Object.entries(headers))res.setHeader(name,value);return json(value,status);
+  }
   if(url.pathname==='/api')return json({stock:{...api.fixture.screenRows().find(row=>row.symbol===url.searchParams.get('symbol')),quoteVerification:{verifiedRegularSession:true,providerAttempted:true,newDataAccepted:true}}});
   if(url.pathname==='/api/version')return json(versionPayload());
   if(url.pathname==='/client.js'){res.setHeader('content-type','text/javascript');res.end(fs.readFileSync(path.join(out,'client.js')));return;}
@@ -127,7 +137,7 @@ async function main(){
    assert(riskText.includes('Sell 800 shares'),'Action includes the recorded affected sleeve quantity');
    assert(riskText.includes('does not place or maintain a Schwab stop order'),'Manual brokerage execution remains explicit');
    assert.equal(await js('document.querySelector("header button")?.textContent'),'Reloading...','Stop instruction bypasses an unresolved unrelated screen');
-   const direct=requests.slice(verifyCursor);assert.equal(direct.filter(r=>r.path==='/api').length,1,'Direct action uses the existing held-quote path once');
+   const direct=requests.slice(verifyCursor);assert.equal(direct.filter(r=>r.path==='/api/c1-stop-quote').length,1,'Direct action uses the quote-only path once');
    assert.equal(direct.filter(r=>r.path==='/api/c1-account'||r.path==='/api/top5').length,0,'Stop-only verification performs no account or purchase-screen call');
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Verification cannot alter saved stops, accepted exits, cash, holdings or history');
    await shot('stop-verification-screen-pending');
@@ -144,6 +154,18 @@ async function main(){
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Shadow response does not mutate even synthetic account records');
    await control(null,{shadowOwnership:false,prices:{LLL:100},release:true});await wait('document.querySelector("header button")?.textContent==="Reload"','Held shadow frame settled');
    await settledReload();await wait('/Buy \\d+ shares/.test(document.body.innerText)','Normal purchase flow remains available after explicit recovery');
+   await control('stop-quote-body-hold');const heldCursor=requests.length;
+   await js(`document.querySelector('[aria-label="Verify stop now for LLL"]').click()`);
+   await requestSeen(heldCursor,r=>r.path==='/api/c1-stop-quote','Stop-only request reached stalled-body fixture');
+   await wait(`document.querySelector('[aria-label="Verify stop now for LLL"]').textContent.includes('Verifying')`,'Selected holding shows verification progress');
+   assert(await js(`[...document.querySelectorAll('[aria-label^="Verify stop now for "]')].filter(b=>b.getAttribute('aria-label')!=='Verify stop now for LLL').every(b=>!b.textContent.includes('Verifying'))`),'Other holdings do not falsely show Verifying');
+   await wait(`document.querySelector('[aria-label="C1 stop verification"]').textContent.includes('Quote verification timed out')`,'Stalled body produces a visible holding error',16000);
+   assert.equal(await js(`document.querySelector('[aria-label="Verify stop now for LLL"]').disabled`),false,'Timed-out verification releases its button');
+   assert.equal(JSON.stringify(api.fixture.account),baseline,'Timeout never changes actual account records');
+   await control(null,{release:true,prices:{LLL:100},advanceMs:1000});
+   await js(`document.querySelector('[aria-label="Verify stop now for LLL"]').click()`);
+   await wait(`document.querySelector('[aria-label="Verify stop now for LLL"]').closest('li').textContent.includes('Quote verified at that check.')`,'Explicit retry recovers after stalled body');
+   assert.equal(requests.slice(heldCursor).filter(r=>r.path==='/api/c1-account'||r.path==='/api/top5').length,0,'Timeout and retry never invoke financial or screen routes');
    trace.cases.push({failure:'stop-verification-screen-pending',actualHomeAction:true,verifiedSellBeforePurchaseScreen:true,affectedShares:800,manualExecution:true,newerRecoveryClearsTransientSignal:true,stopOnlyAccountWrites:0,newOwnershipImmediatelyWithdrawsOldQuantity:true,accountRecordIdentical:true});
   }
   if(advanced.includes('opening-pending')){
