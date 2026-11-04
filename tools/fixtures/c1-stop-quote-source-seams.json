@@ -1,7 +1,7 @@
 {
   "pages/index.js": {
     "baselineBlob": "69bc94b026ecee966088071c9f46483833d374a3",
-    "authorizedBlob": "b2d8010cae4750fb83dc871cd30df215ef155461",
+    "authorizedBlob": "65d8137f95c2a71e28ba2e667e2148d434c29586",
     "chunks": [
       {
         "before": "import {c1AccountPositionDecision} from \"../lib/c1AccountDecision\";\nimport {c1PortfolioMomentumEvidence} from \"../lib/c1MomentumEvidence\";\nimport {c1PositionPresentation,c1RecordedSellInstruction} from \"../lib/c1PositionPresentation\";\nimport {c1StopDecisionIdentity,c1StopVerificationBinding,c1StopVerificationCurrent,createC1StopVerification} from '../lib/c1StopVerification';\nimport {c1PlainDecisionReason,c1DecisionTrigger,c1CompactMomentumEvidence,c1HoldingTiming} from \"../lib/c1DecisionCopy\";\nimport {c1Presentation,c1DisplayDecision} from \"../lib/c1Presentation\";\nimport {useEffect,useMemo,useRef,useState} from \"react\";\n",
@@ -38,6 +38,10 @@
       {
         "before": "&&<section className=\"card\" aria-label=\"C1 stop verification\">",
         "after": "&&<section className=\"card\" aria-label=\"C1 stop verification\" hidden>"
+      },
+      {
+        "before": "aria-label=\"C1 stop verification\" hidden>",
+        "after": "aria-label=\"C1 stop verification\" hidden style={{display:\"none\"}}>"
       }
     ]
   }
