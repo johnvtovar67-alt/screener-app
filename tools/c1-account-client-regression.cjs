@@ -36,6 +36,7 @@ function client(fetcher){
   setSyncKey(){},setSyncInput(){},setSyncStatus(){}};
  Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
  if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
+ require('./fixtures/c1-stop-observer-bindings.cjs').bindC1StopOwnershipObserver(box,page);
  vm.createContext(box);vm.runInContext(refresh+disconnect+'\nthis.refresh=refreshC1Account;this.disconnect=disconnectSync;',box);
  return {state,box};
 }
@@ -92,14 +93,24 @@ function client(fetcher){
  await prepared.box.prepareC1Execution(analysis);
  assert.deepEqual(prepared.state.view.decision,analysis.decision,'Opening overlays cannot rewrite completed holding guidance');
  assert.deepEqual(prepared.state.view.executionDecision,execution.executionDecision);
- const changedDuringOpening=client(async()=>({ok:true,json:async()=>({...execution,decision:{...execution.decision,decisionId:'new-source:5'}})}));
- await changedDuringOpening.box.prepareC1Execution(analysis);
- assert.deepEqual(changedDuringOpening.state.view.decision,analysis.decision);
- assert.match(changedDuringOpening.state.view.openingError,/account changed during opening verification/,'A mismatched review must be visibly rejected, not silently discarded');
+ for(const mismatch of [{decisionId:'new-source:5'},{revision:5}]){
+  const changedDuringOpening=client(async()=>({ok:true,json:async()=>({...execution,decision:{...execution.decision,...mismatch}})}));
+  changedDuringOpening.box.observeStopOwnership(analysis.decision);
+  const invalidations=changedDuringOpening.box.stopOwnershipInvalidations.count;
+  await changedDuringOpening.box.prepareC1Execution(analysis);
+  assert.deepEqual(changedDuringOpening.state.view.decision,analysis.decision,'An opening mismatch retains completed analysis without publishing the changed account');
+  assert.match(changedDuringOpening.state.view.openingError,/account changed during opening verification/,'A mismatched review must be visibly rejected, not silently discarded');
+  assert.equal(changedDuringOpening.box.stopAccountObserved.current,null,'A changed opening decision/revision immediately invalidates old stop quantities');
+  assert.equal(changedDuringOpening.box.stopOwnershipInvalidations.count,invalidations+1,'Ownership invalidation rerenders risk presentation independently of the account frame');
+ }
  const unavailable=client(async()=>{throw new Error('The next observed market opening is required');});
+ unavailable.box.observeStopOwnership(analysis.decision);
+ const retainedOwnership=unavailable.box.stopAccountObserved.current,priorInvalidations=unavailable.box.stopOwnershipInvalidations.count;
  await unavailable.box.prepareC1Execution(analysis);
  assert.deepEqual(unavailable.state.view.decision,analysis.decision);
  assert.match(unavailable.state.view.openingError,/next observed market opening/);
+ assert.equal(unavailable.box.stopAccountObserved.current,retainedOwnership,'An opening transport failure cannot invalidate otherwise reconciled held-risk ownership');
+ assert.equal(unavailable.box.stopOwnershipInvalidations.count,priorInvalidations);
  let finishOpening;
  const delayed=client(async()=>new Promise(resolve=>{finishOpening=resolve;}));
  const pendingOpening=delayed.box.prepareC1Execution(analysis);

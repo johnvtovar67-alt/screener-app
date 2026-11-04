@@ -36,6 +36,7 @@ function harness({opening,accountReply,screenFailure=false}={}){
    else body=account('CURRENT');
    return body instanceof Response?body:new Response(JSON.stringify(body));
   }};
+ require('./fixtures/c1-stop-observer-bindings.cjs').bindC1StopOwnershipObserver(box,page);
  vm.createContext(box);vm.runInContext(code+';this.api={load,analyze};',box);return {box,state,calls,...box.api};
 }
 (async()=>{

@@ -105,7 +105,7 @@ async function main(){
  assert.match(accountWaiting,/Synthetic account opening verification is still pending\./,'Complete screen evidence must show the actual independent account-review reason');
  assert.doesNotMatch(accountWaiting,/aria-label="Entry verification details"/,'A complete screen is not mislabeled as a screen-evidence failure');
  assert.ok(heldRow,'The existing holding remains in the original separate Watch table');
- assert.match(heldRow,/<b(?: style="[^"]*")?>HOLD<\/b>/,'A held stock without a confirmed exit retains the current Hold action');
+ assert.match(heldRow,/<b(?: style="[^"]*")?>STOP STATUS UNVERIFIED<\/b>/,'A held stock missing recorded stop/current quote evidence cannot imply a verified Hold');
  assert.equal(decision.positions[0].holdingRank.base.rank,4,'The supplied verified holding rank remains unchanged by presentation');
  assert.equal(decision.positions[0].reason,'Momentum rank #4; original account holding explanation.','The original account explanation remains unchanged');
  assert.match(heldRow,/96\.0\/100/);assert.match(heldRow,/\$100\.00/,'The original score and signal price remain readable');
@@ -130,11 +130,16 @@ async function main(){
  const RealDate=Date;
  global.Date=class extends RealDate{constructor(...args){super(...(args.length?args:['2026-10-12T14:00:00Z']));}static now(){return RealDate.parse('2026-10-12T14:00:00Z');}};
  try{
-  const fixed=createResearchModuleLoader(process.cwd()),entryDecision={...decision,contract:'c1-account-decision-v1',revision:1,decisionId:'quantity-source:1',positions:[{symbol:'DELL',exits:[],entryContext:{stage:'full'}},{symbol:'HPE',exits:[],entryContext:{stage:'half'}}]};
+  const fixed=createResearchModuleLoader(process.cwd()),entryDecision={...decision,contract:'c1-account-decision-v1',revision:1,decisionId:'quantity-source:1',positions:[{symbol:'DELL',shares:4,stops:[{sleeve:'base',shares:4,price:86}],exits:[],entryContext:{stage:'full'}},{symbol:'HPE',shares:10,stops:[{sleeve:'base',shares:10,price:86}],exits:[],entryContext:{stage:'half'}}]};
   const plan={contract:'c1-actual-account-opening-plan-v1',providerVerified:true,sourceSessionDate:session.date,date:'2026-10-12',observedAt:'2026-10-12T14:00:00Z',quoteValidUntil:'2026-10-12T14:02:00Z',sourceReceipt:{observedAt:'2026-10-12T14:00:00Z',membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true},orders:[{id:'new',symbol:'MRNA',side:'buy',shares:2,estimatedPrice:100,phase:3},{id:'add',symbol:'HPE',side:'buy',shares:3,estimatedPrice:100,phase:3},{id:'exit',symbol:'DELL',side:'sell',shares:4,estimatedPrice:100,phase:1}]};
   const manual=fixed.load('lib/c1ManualRecommendations.js'),review=manual.buildC1ManualRecommendations({decision:entryDecision,openingPlan:plan});assert.equal(review.status,'ready');
+  // Checked Adds require independently verified held-stop evidence as well as
+  // the original complete entry screen. Missing stop proof is tested above.
+  const positionRows=['DELL','HPE'].map(symbol=>({symbol,role:'Swing',price:100,timestamp:RealDate.parse('2026-10-12T14:00:00Z')/1000,
+   _fmpQuoteCache:'live',_fmpQuoteProvider:'FMP',_fmpQuoteEndpoint:'quote',_fmpQuoteFetchedAt:'2026-10-12T14:00:00Z',
+   _fmpQuoteObservation:{provider:'FMP',endpoint:'stable/quote',symbol,price:100,timestamp:RealDate.parse('2026-10-12T14:00:00Z')/1000,fetchedAt:'2026-10-12T14:00:00Z'}}));
   const serverEvidence=JSON.stringify({plan,review}),Entry=component(file,fixed).default;
-  function actions(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Entry({decision:entryDecision,executionDecision:entryDecision,manualRecommendations:review,openingPlan:plan,screenRows,screenCurrent:true,view:'portfolio'});const html=renderToStaticMarkup(node);effects.at(-1)();return html;}
+  function actions(screenRows){refIndex=0;stateIndex=0;effects.length=0;const node=Entry({decision:entryDecision,executionDecision:entryDecision,manualRecommendations:review,openingPlan:plan,screenRows,positionRows,screenCurrent:true,view:'portfolio'});const html=renderToStaticMarkup(node);effects.at(-1)();return html;}
   const checked=actions(rows);assert.match(checked,/Buy 2 shares/);assert.match(checked,/Add 3 shares/);assert.match(checked,/sell 4 shares/);
   const rechecked=actions(changedRows);
   assert.doesNotMatch(rechecked,/Buy 2 shares/,'A current server order cannot override a newly blocked screen candidate');

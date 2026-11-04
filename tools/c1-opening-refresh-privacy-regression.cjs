@@ -6,7 +6,7 @@ const before="    console.warn('C1_OPENING_UNAVAILABLE',JSON.stringify({reason:o
 const after="    try{console.warn('C1_OPENING_UNAVAILABLE',JSON.stringify({code:'OPENING_REVIEW_UNAVAILABLE',stage:'opening-review'}));}catch{}";
 assert.equal(current.split(after).length,2);
 const original=require('./c1-opening-quote-repair-seams.cjs').restore('lib/c1AccountExecutionView.js',current).replace(after,before),hash=source=>crypto.createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
-assert.equal(hash(original),'7c304640ea8130e8e33e9168a9f9636e671c96e9','Only the diagnostic line changes; exact PR333 opening implementation retained');
+assert.equal(hash(require('./c1-initial-swing-stop-seams.cjs').restoreInitialSwingStopPolicy(original,'lib/c1AccountExecutionView.js')),'7c304640ea8130e8e33e9168a9f9636e671c96e9','Only the diagnostic line changes; exact PR333 opening implementation retained');
 function prepare(source,fixture,log){
  const imported={};source=source.replace(/import\s*{([^}]+)}\s*from\s*['"]([^'"]+)['"];?/g,(_,names,request)=>{
   const values=fixture.loader.load(request,file);for(const name of names.split(',').map(name=>name.trim())){assert.notEqual(values[name],undefined);imported[name]=values[name];}return '';

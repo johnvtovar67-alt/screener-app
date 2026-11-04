@@ -60,6 +60,7 @@ async function exercise(result){
   fetch:async(url,options)=>{requests.push({url,options});return {ok:false,status:409,json:async()=>({error:'Revision conflict'})};}};
  Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
  if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
+ require('./fixtures/c1-stop-observer-bindings.cjs').bindC1StopOwnershipObserver(box,page);
  vm.createContext(box);vm.runInContext(refreshSource+source+'\nthis.update=updateBrokerageCash;',box);
  await assert.rejects(box.update(363.36,9),/Reload before updating brokerage cash/);
  assert.equal(requests.length,1,'A revision conflict remains one dedicated API operation');

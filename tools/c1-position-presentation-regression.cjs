@@ -131,7 +131,7 @@ async function main(){try{
   eq(present({...input,executionDecision:{...executionDecision,revision:2}}).label,'VERIFY STOP URGENTLY','Another execution revision cannot supply current quote authority');
   const newerStock=quote('DELL',90,{timestamp:RealDate.parse('2026-10-15T14:59:30Z')/1000});
   eq(present({...input,stock:newerStock}).label,'HOLD','A newer verified recovery quote supersedes an older intraday stop advisory');
-  eq(present({...input,stock:quote('DELL',90)}).label,'HOLD','Conflicting same-time prices do not become a Sell when the displayed price is above the stop');
+  eq(present({...input,stock:quote('DELL',90)}).label,'STOP STATUS UNVERIFIED','Conflicting same-time prices leave stop status unverified when the displayed price is above the stop');
   eq(present({...input,stock:quote('DELL',85),executionDecision:{...executionDecision,positions:[{...position,intradayMomentumAdvisory:{...advisory,price:90,changeFromCompletedClosePct:0}}]}}).label,'VERIFY STOP URGENTLY','Conflicting same-time observations leave an apparent stop breach urgently unresolved');
   const duplicateObserved={...position,intradayMomentumAdvisory:advisory};
   eq(present({...input,position:duplicateObserved,stock:quote('DELL',84),decision:{...decision,positions:[duplicateObserved]}}).label,'VERIFY STOP URGENTLY','Duplicate base and execution advisories cannot conceal a third conflicting verified quote at the same timestamp');
@@ -150,10 +150,10 @@ async function main(){try{
  })){
   const position=holding('DELL',{action:'Stop review'}),input=args(position,quote('DELL',85,patch));
   const result=unchanged(input,`${name}: the original account evidence remains intact`);
-  eq(result.label,name==='missingPrice'?'HOLD':'VERIFY STOP URGENTLY',`${name}: an unsupported apparent breach cannot become a Sell or an ordinary Hold`);
+  eq(result.label,name==='missingPrice'?'STOP STATUS UNVERIFIED':'VERIFY STOP URGENTLY',`${name}: an unsupported apparent breach cannot become a Sell or an ordinary Hold`);
   eq(result.stopTriggered,false,`${name}: no new stop trigger is manufactured`);
   eq(result.urgent,name!=='missingPrice',`${name}: urgency requires an actual displayed apparent breach`);
-  if(name==='missingTimestamp')match(result.reason,/unverified|verify|verification/i,'An unverified apparent stop breach has a plain verification caveat');
+  if(name==='missingTimestamp')match(result.reason,/provider quote timestamp is missing or invalid/i,'An unverified apparent stop breach identifies the missing verification evidence');
  }
 
  // Existing confirmed exits keep their actual priority; expired live pricing
@@ -345,7 +345,7 @@ async function main(){try{
   const before=copy({position,stock,decision});
   const evidence={classification:stock.testWeak?'Momentum Weakening':'Momentum Intact',status:'available',label:stock.testWeak?'Momentum Weakening':'Momentum Intact',tone:stock.testWeak?'weakening':'intact',explanation:'Technical evidence sentinel: source rank and MACD.',sourceSessionDate:source,limitations:[]};
   const bindings={...require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1HoldPill.js'),...helpers,c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
-   c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
+   stopOwnershipCurrent:true,stopQuoteRow:s=>s,c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
    swingTimeReview:()=>({}),holdingReason:(s,decision)=>decision.reason,sym:s=>s.symbol,price:s=>s.price,cls:action=>/sell|exit|stop/i.test(action)?'red':'yellow',factorFor:()=> 'Sector',
    portfolioDateDisplay:()=> 'Oct 1, 2026',specialSituation:()=>null,money:n=>'$'+Number(n).toFixed(2),pct:n=>Number(n).toFixed(2)+'%'};
   new Function('require','module','exports',...Object.keys(bindings),rowCode)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports,...Object.values(bindings));
@@ -460,8 +460,8 @@ async function main(){try{
  same(redirected,redirectBefore,'Redirect copy preserves the original Single Symbol action and reason');
 
  const missingStop=holding('DELL',{stops:[]}),missingPresentation=present(args(missingStop,quote('DELL',1))),missingInput={action:missingPresentation.label,presentation:missingPresentation,position:missingStop};
- eq(missingPresentation.label,'HOLD','A low quote without a recorded stop cannot invent a stop exit');
- eq(c1DecisionTrigger(missingInput),'No recorded stop is available.','Missing stop data never invents a fixed percentage or stop level');
+ eq(missingPresentation.label,'STOP STATUS UNVERIFIED','A low quote without a recorded stop must disclose unavailable stop status without inventing an exit');
+ eq(c1DecisionTrigger(missingInput),'Use Verify stop now to check current stop evidence.','Missing stop data requires verification without inventing a fixed percentage or stop level');
  absent(c1PlainDecisionReason(missingInput),/\$|14%|stop triggered/i,'Missing stops cannot create a fictitious level or breach');
  const multiStop={...missingStop,stops:[{price:86},{price:90}]};
  eq(c1DecisionTrigger({action:'HOLD',position:multiStop}),'Multiple recorded stops; review the account plan.','Different recorded stops are never collapsed into an invented single threshold');
