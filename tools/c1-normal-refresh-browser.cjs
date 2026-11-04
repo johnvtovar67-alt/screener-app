@@ -25,7 +25,7 @@ async function main(){
   const json=(data,status=200)=>{res.writeHead(status,{'content-type':'application/json','x-fixture-clock':api.fixture.now.toISOString()});res.end(JSON.stringify(data));};
   if(url.pathname==='/__control'){state.fail=body.fail;if(Object.hasOwn(body,'shadowOwnership'))state.shadowOwnership=body.shadowOwnership;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
   if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,symbol:url.searchParams.get('symbol'),finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
-  const target=state.fail&&state.fail!=='stop-quote-body-hold'&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:state.fail==='version-body-hold'?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
+  const target=state.fail&&!state.fail.startsWith('stop-quote-')&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:state.fail==='version-body-hold'?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
   if(target){
    const mode=state.fail;
    if(mode==='version-body-hold'){const serialized=JSON.stringify(versionPayload());res.writeHead(200,{'content-type':'application/json','content-length':Buffer.byteLength(serialized)});res.write(serialized.slice(0,12));await new Promise(resolve=>state.held.push(resolve));res.end(serialized.slice(12));return;}
@@ -62,7 +62,12 @@ async function main(){
    }
    let status=200,value;const headers={};
    await stopQuoteHandler({method:req.method,query:Object.fromEntries(url.searchParams)},{setHeader(k,v){headers[k]=v;},status(code){status=code;return this;},json(data){value=data;return this;}});
-   for(const [name,value]of Object.entries(headers))res.setHeader(name,value);return json(value,status);
+   for(const [name,value]of Object.entries(headers))res.setHeader(name,value);
+   if(state.fail==='stop-quote-success-hold'&&url.searchParams.get('symbol')==='LLL'){
+    const serialized=JSON.stringify(value);res.writeHead(status,{'content-type':'application/json','content-length':Buffer.byteLength(serialized)});res.write(serialized.slice(0,12));
+    await new Promise(resolve=>state.held.push(resolve));res.end(serialized.slice(12));return;
+   }
+   return json(value,status);
   }
   if(url.pathname==='/api')return json({stock:{...api.fixture.screenRows().find(row=>row.symbol===url.searchParams.get('symbol')),quoteVerification:{verifiedRegularSession:true,providerAttempted:true,newDataAccepted:true}}});
   if(url.pathname==='/api/version')return json(versionPayload());
@@ -164,8 +169,18 @@ async function main(){
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Timeout never changes actual account records');
    await control(null,{release:true,prices:{LLL:100},advanceMs:1000});
    await js(`document.querySelector('[aria-label="Verify stop now for LLL"]').click()`);
-   await wait(`document.querySelector('[aria-label="Verify stop now for LLL"]').closest('li').textContent.includes('Quote verified at that check.')`,'Explicit retry recovers after stalled body');
+   await wait(`document.querySelector('[aria-label="Verify stop now for LLL"]').closest('li').textContent.includes('Current price is above the recorded stops.')`,'Explicit retry recovers after stalled body');
    assert.equal(requests.slice(heldCursor).filter(r=>r.path==='/api/c1-account'||r.path==='/api/top5').length,0,'Timeout and retry never invoke financial or screen routes');
+   await control('stop-quote-success-hold');const refreshCursor=requests.length;
+   await js(`document.querySelector('[aria-label="Verify stop now for LLL"]').click()`);
+   for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Verification response reached the successful-body gate');
+   await control(null);await settledReload();
+   await control(null,{release:true});
+   await wait(`document.querySelector('[aria-label="Verify stop now for LLL"]').closest('li').querySelector('[role="status"]')?.textContent.includes('Current price is above the recorded stops.')`,'An identical-account refresh completes one bounded fresh quote recheck');
+   assert.equal(requests.slice(refreshCursor).filter(r=>r.path==='/api/c1-stop-quote').length,2,'One new quote request follows the superseded response; no retry loop');
+   await settledReload();
+   assert(!await js(`document.querySelector('[aria-label="C1 stop verification"]').textContent.includes('Holding details changed')`),'Ordinary refresh cannot claim that holdings changed');
+   assert.equal(JSON.stringify(api.fixture.account),baseline,'Refresh recovery preserves all account records');
    trace.cases.push({failure:'stop-verification-screen-pending',actualHomeAction:true,verifiedSellBeforePurchaseScreen:true,affectedShares:800,manualExecution:true,newerRecoveryClearsTransientSignal:true,stopOnlyAccountWrites:0,newOwnershipImmediatelyWithdrawsOldQuantity:true,accountRecordIdentical:true});
   }
   if(advanced.includes('opening-pending')){

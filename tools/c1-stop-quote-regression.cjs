@@ -30,7 +30,21 @@ async function invoke(fetchQuote,req={method:'GET',query:{symbol:'SYNA'}},timeou
  const a=verifier.verify({symbol:'A',collect:()=>new Promise(r=>releaseA=r),publish:x=>published.push(x)});
  const b=verifier.verify({symbol:'B',collect:()=>new Promise(r=>releaseB=r),publish:x=>published.push(x)});
  releaseB({price:2});releaseA({price:1});assert.equal((await a).status,'published');assert.equal((await b).status,'published');assert.equal(published.length,2,'Separate holdings retain independent verified observations');
+ // A transport generation can change while the reconciled economic snapshot is identical.
+ let owner='old-frame',identity='same-account-and-portfolio',attempts=0,accepted=[];
+ const retry=createC1StopVerification(()=>owner,()=>identity);
+ assert.equal((await retry.verify({symbol:'SYNA',collect:async()=>{attempts++;if(attempts===1)owner='new-frame';return {attempt:attempts};},publish:x=>accepted.push(x)})).status,'published');
+ assert.equal(attempts,2);assert.equal(accepted.length,1);assert.equal(accepted[0].binding,'new-frame');assert.equal(accepted[0].stock.attempt,2,'Old response is discarded, never rebound');
+ for(const change of ['different-revision','different-shares','different-stops','different-entered-portfolio',null]){
+  owner='before';identity='original';attempts=0;accepted=[];
+  const fenced=createC1StopVerification(()=>owner,()=>identity);
+  const result=await fenced.verify({symbol:'SYNA',collect:async()=>{attempts++;owner=change===null?null:'after';identity=change;return quote;},publish:x=>accepted.push(x)});
+  assert.equal(result.status,'superseded');assert.equal(attempts,1);assert.equal(accepted.length,0,'Changed/unknown ownership cannot trigger retry or publication');
+ }
+ owner='one';identity='unchanged';attempts=0;
+ const twice=createC1StopVerification(()=>owner,()=>identity);
+ assert.equal((await twice.verify({symbol:'SYNA',collect:async()=>{owner=String(++attempts);return quote;},publish:()=>assert.fail('Continuously changing frames cannot publish')})).status,'superseded');assert.equal(attempts,2,'No retry loop');
  const page=fs.readFileSync('pages/index.js','utf8'),body=page.slice(page.indexOf('  async function verifyStopNow('),page.indexOf('  const stopPositionRows='));
- assert(body.includes('collect:requestC1StopQuote'));assert(!/fetchHoldingQuotes|fetchStock|refreshC1Account|fetchScreen/.test(body));assert(page.includes('stopVerifying[sym(held)]'));assert(page.includes('role="status">{stopVerificationStatus[sym(held)]'));
+ assert(body.includes('collect:wanted=>requestC1StopQuote(wanted,{timeoutMs:Math.max(1,deadline-performance.now())})'));assert(!/fetchHoldingQuotes|fetchStock|refreshC1Account|fetchScreen/.test(body));assert(page.includes('stopVerifying[sym(held)]'));assert(page.includes('role="status">{stopVerificationStatus[sym(held)]'));
  console.log('PASS: quote-only handler, strict provenance, bounded fetch/body, independent holdings, visible retry status; no live I/O.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
