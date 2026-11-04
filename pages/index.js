@@ -153,7 +153,10 @@ export default function Home(){
     return c1StopVerificationCurrent(stopVerificationContext.current,{accountOwner:accountRequestId.current,
       portfolioOwner:syncPullId.current,observedDecision:stopAccountObserved.current,enteredPortfolio:localStorage.getItem(KEY)||'[]'});
   }
-  if(!stopVerifier.current)stopVerifier.current=createC1StopVerification(readStopBinding);
+  if(!stopVerifier.current)stopVerifier.current=createC1StopVerification(readStopBinding,()=>{
+    const context=stopVerificationContext.current;
+    return readStopBinding()?JSON.stringify([context.decisionIdentity,context.portfolioSignature]):null;
+  });
   useEffect(()=>()=>stopVerifier.current.cancel(),[]);
   const syncRevision=useRef({key:"",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);
   function publishC1AccountState(state){
@@ -637,27 +640,28 @@ export default function Home(){
     return observation?.binding===stopBinding?holdingQuoteRow(stock,observation.stock,stock):stock;
   }
   async function verifyStopNow(symbol){
-    const binding=readStopBinding();
+    const binding=readStopBinding(),deadline=performance.now()+12000;
     if(!binding||stopRequests.current.has(symbol))return;
     stopRequests.current.add(symbol);
     setStopVerifying(prior=>({...prior,[symbol]:true}));
     setStopVerificationStatus(prior=>({...prior,[symbol]:{binding,message:'Checking a current quote…'}}));
     try{
-      const result=await stopVerifier.current.verify({symbol,collect:requestC1StopQuote,publish:observation=>{
+      const result=await stopVerifier.current.verify({symbol,collect:wanted=>requestC1StopQuote(wanted,{timeoutMs:Math.max(1,deadline-performance.now())}),publish:observation=>{
         setStopVerification(prior=>({...prior,[symbol]:observation}));
         const position=accountView?.decision?.positions?.find(row=>row.symbol===symbol);
         const presentation=c1PositionPresentation({decision:accountView?.decision,position,stock:observation.stock,
           executionDecision:accountView?.executionDecision,now:new Date()});
+        const levels=[...new Set((position?.stops||[]).map(stop=>stop.price).filter(value=>Number.isFinite(value)&&value>0))];
         const message='Checked at '+new Date().toLocaleTimeString()+'. '+(presentation?.quoteVerified?
-          'Quote verified at that check.':presentation?.verificationReason||'Current quote is unverified.');
-        setStopVerificationStatus(prior=>({...prior,[symbol]:{binding,message}}));
+          'Price '+money(presentation.quotePrice)+'; recorded '+(levels.length===1?'stop ':'stops ')+levels.map(money).join(', ')+'. '+(presentation.stopStatusVerified?levels.some(stop=>presentation.quotePrice<=stop)?'Current price is at or below a recorded stop.':'Current price is above the recorded stops.':presentation.verificationReason):
+          presentation?.verificationReason||'Current quote is unverified.');
+        setStopVerificationStatus(prior=>({...prior,[symbol]:{binding:observation.binding,message}}));
       }});
-      if(result.status!=='published')setStopVerificationStatus(prior=>({...prior,[symbol]:{binding,message:'Holding details changed during verification. Verify again.'}}));
+      if(result.status!=='published')setStopVerificationStatus(prior=>({...prior,[symbol]:{binding:readStopBinding(),message:'A page refresh interrupted this check. Wait for Reload to finish, then verify again.'}}));
     }catch(error){
-      if(readStopBinding()===binding){
-        setStopVerification(prior=>({...prior,[symbol]:{symbol,binding,stock:{symbol,error:'Current provider verification failed.',staleVerification:true}}}));
-        setStopVerificationStatus(prior=>({...prior,[symbol]:{binding,message:'STOP STATUS UNVERIFIED — '+(error.message?.startsWith('Quote verification timed out')?error.message:'Current quote verification failed. Retry Verify stop now.')+' Checked at '+new Date().toLocaleTimeString()+'.'}}));
-      }
+      const currentBinding=readStopBinding();
+      if(currentBinding===binding)setStopVerification(prior=>({...prior,[symbol]:{symbol,binding,stock:{symbol,error:'Current provider verification failed.',staleVerification:true}}}));
+      setStopVerificationStatus(prior=>({...prior,[symbol]:{binding:currentBinding,message:'New quote check failed — '+(error.message?.startsWith('Quote verification timed out')?error.message:'Current quote verification failed. Retry Verify stop now.')+' Checked at '+new Date().toLocaleTimeString()+'.'}}));
     }finally{
       stopRequests.current.delete(symbol);
       setStopVerifying(prior=>({...prior,[symbol]:false}));
@@ -795,7 +799,7 @@ export default function Home(){
         const stock=stopQuoteRow(results.find(row=>sym(row)===sym(held))||stocks.find(row=>sym(row)===sym(held))||held);
         const presentation=c1PositionPresentation({decision,position,symbol:sym(held),stock,executionDecision:accountView?.executionDecision,now:new Date()});
         const instruction=c1RecordedSellInstruction(position,presentation);
-        return <li key={sym(held)}><b>{sym(held)}: {presentation.label}</b> <span>{presentation.reason}</span> <small>Quote observed: {presentation.quoteAt||presentation.quoteStatus?.quoteAt||'unavailable'}.</small> {position?.stops?.length>0&&<small>Recorded stops: {position.stops.map(stop=>`${money(stop.price)} (${stop.shares} shares)`).join(" · ")}.</small>} {presentation.quoteVerified&&<span>Verified price: {money(presentation.quotePrice)}.</span>} {instruction&&<span>{instruction.next} {instruction.status}</span>} <button type="button" aria-label={'Verify stop now for '+sym(held)} disabled={!stopBinding||stopVerifying[sym(held)]} onClick={()=>verifyStopNow(sym(held))}>{stopVerifying[sym(held)]?'Verifying stop…':'Verify stop now'}</button> {stopVerificationStatus[sym(held)]&&<p role="status">{stopVerificationStatus[sym(held)].binding===stopBinding?stopVerificationStatus[sym(held)].message:'Holding details changed; verify again.'}</p>}</li>;
+        return <li key={sym(held)}><b>{sym(held)}: {presentation.label}</b> <span>{presentation.reason}</span> <small>Quote observed: {presentation.quoteAt||presentation.quoteStatus?.quoteAt||'unavailable'}.</small> {position?.stops?.length>0&&<small>Recorded stops: {position.stops.map(stop=>`${money(stop.price)} (${stop.shares} shares)`).join(" · ")}.</small>} {presentation.quoteVerified&&<span>Verified price: {money(presentation.quotePrice)}.</span>} {instruction&&<span>{instruction.next} {instruction.status}</span>} <button type="button" aria-label={'Verify stop now for '+sym(held)} disabled={!stopBinding||stopVerifying[sym(held)]} onClick={()=>verifyStopNow(sym(held))}>{stopVerifying[sym(held)]?'Verifying stop…':'Verify stop now'}</button> {stopVerificationStatus[sym(held)]&&<p role="status">{stopVerificationStatus[sym(held)].binding===stopBinding?stopVerificationStatus[sym(held)].message:'The page refreshed after the last check. The current stop status is shown above.'}</p>}</li>;
       })}</ul>
       {!stopBinding&&<p role="status">STOP STATUS UNVERIFIED — reconcile the recorded holdings before using a sell quantity.</p>}
     </section>}
