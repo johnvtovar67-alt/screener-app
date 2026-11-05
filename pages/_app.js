@@ -31,17 +31,37 @@ function cachedResponse(hit){
 }
 function forceLiveRefresh(){if(typeof window==="undefined")return;emitFeedNotice("");window.dispatchEvent(new CustomEvent("screener-request-live-refresh"));}
 
+function waitForFinancialResponse(request){
+  let timer;
+  // Expiry stops waiting, without aborting or replaying an uncertain write.
+  // The original response remains observed by the release guard.
+  return Promise.race([request,new Promise((_,reject)=>{timer=setTimeout(()=>{
+    const error=new Error("The request did not finish; its result is unconfirmed. If you submitted a change, check the saved account before retrying; never enter a trade twice.");
+    error.code='FINANCIAL_REQUEST_UNCONFIRMED';reject(error);
+  },C1_ACCOUNT_TIMEOUT_MS);})]).finally(()=>clearTimeout(timer));
+}
+
 function installResilientApiFetch(){
   if(typeof window==="undefined"||window.__screenerResilientFetchInstalled)return;
   const nativeFetch=window.fetch.bind(window);
   const inflight=new Map();
   window.fetch=async function resilientFetch(input,init={}){
     let url;try{url=new URL(typeof input==="string"?input:input?.url,window.location.href);}catch{return nativeFetch(input,init);}
-    const method=String(init?.method||(typeof input!=="string"&&input?.method)||"GET").toUpperCase(),sameOrigin=url.origin===window.location.origin,resilient=sameOrigin&&url.pathname.startsWith("/api/")&&method==="GET";
+    const method=String(init?.method||(typeof input!=="string"&&input?.method)||"GET").toUpperCase(),sameOrigin=url.origin===window.location.origin,resilient=sameOrigin&&(url.pathname==="/api"||url.pathname.startsWith("/api/"))&&method==="GET";
     if(!resilient){
       const financial=sameOrigin&&!['GET','HEAD'].includes(method)&&['/api/c1-account','/api/portfolio-sync','/api/performance'].includes(url.pathname);
       const finish=financial?window.__c1ClientReleaseGuard?.beginMutation():null;
-      try{return observeC1ClientMutation(nativeFetch(input,init),finish);}catch(error){finish?.({unconfirmed:true});throw error;}
+      try{const request=observeC1ClientMutation(nativeFetch(input,init),finish);
+        if(!financial)return await request;
+        const response=await waitForFinancialResponse(request);
+        // Some existing forms read json() directly. Bound their body wait as
+        // well, retaining the original response and native write observation.
+        for(const method of ['arrayBuffer','blob','formData','json','text'])if(typeof response[method]==='function'){
+          const read=response[method].bind(response);
+          response[method]=(...args)=>waitForFinancialResponse(read(...args)).catch(error=>{finish?.({unconfirmed:true,pending:error?.code==='FINANCIAL_REQUEST_UNCONFIRMED'});throw error;});
+        }
+        return response;
+      }catch(error){finish?.({unconfirmed:true,pending:error?.code==='FINANCIAL_REQUEST_UNCONFIRMED'});throw error;}
     }
 
     const cacheParams=new URLSearchParams(url.search);cacheParams.delete("verificationPass");const isTop5=url.pathname==="/api/top5",cacheKey=isTop5?`${url.pathname}?${cacheParams.toString()}`:"",hit=isTop5?readTop5Cache(cacheKey):null,age=hit?Date.now()-Number(hit.ts||0):Infinity;
@@ -59,9 +79,13 @@ function installResilientApiFetch(){
         response=await nativeFetch(input,{...init,signal:controller.signal});
         if(response.ok){
           if(isTop5){const body=await response.clone().text();parseTop5Response(body,response);writeTop5Cache(cacheKey,body);emitFeedNotice("");return new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});}
-          return response;
         }
-      }catch(e){error=e;}finally{clearTimeout(timer);if(parentSignal)parentSignal.removeEventListener("abort",onAbort);}
+        // Keep the deadline through the body, including error responses.
+        // Returning headers alone leaves callers' json() reads unbounded.
+        let body;try{body=await response.arrayBuffer();}catch(error){response=null;throw error;}
+        response=new Response([204,205,304].includes(response.status)?null:body,{status:response.status,statusText:response.statusText,headers:response.headers});
+        if(!isTop5)return response;
+      }catch(e){error=e;if(!isTop5)response=null;}finally{clearTimeout(timer);if(parentSignal)parentSignal.removeEventListener("abort",onAbort);}
       if(isTop5&&hit&&age<TOP5_STALE_MS){emitFeedNotice("Live refresh failed. Showing a clearly paused prior snapshot for continuity; no fresh-capital action may use it.");return cachedResponse(hit);}
       if(response)return response;
       const timedOut=error?.name==="AbortError"||error?.name==="TimeoutError";
@@ -82,7 +106,7 @@ function clientBuildIdentity(){
 }
 
 export default function App({ Component, pageProps }) {
-  const [version,setVersion]=useState(null),[feedNotice,setFeedNotice]=useState(""),[releaseNotice,setReleaseNotice]=useState("");
+  const [version,setVersion]=useState(null),[versionResolved,setVersionResolved]=useState(false),[feedNotice,setFeedNotice]=useState(""),[releaseNotice,setReleaseNotice]=useState("");
   useEffect(()=>{
     installResilientApiFetch();
     const onNotice=e=>setFeedNotice(String(e?.detail||""));window.addEventListener("screener-feed-notice",onNotice);
@@ -91,8 +115,8 @@ export default function App({ Component, pageProps }) {
     const releaseGuard=installC1ClientReleaseGuard({window,document,fetcher:window.fetch.bind(window),
       clientCommit:client.commit,environment:client.environment,
       onNotice:setReleaseNotice,onVersion:setVersion});
-    if(/^[a-f0-9]{40}$/.test(client.commit))void releaseGuard?.check();
-    else fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{});
+    if(/^[a-f0-9]{40}$/.test(client.commit))void releaseGuard?.check().finally(()=>setVersionResolved(true));
+    else fetch("/api/version",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setVersion).catch(()=>{}).finally(()=>setVersionResolved(true));
     const onHeaderReload=e=>{const b=e.target?.closest?.('header button');if(!b)return;const text=String(b.textContent||'').trim();if(text==='Reload'||text==='Reloading...')emitFeedNotice("");};
     document.addEventListener('click',onHeaderReload,true);
     return()=>{releaseGuard?.destroy();window.removeEventListener("screener-feed-notice",onNotice);document.removeEventListener('click',onHeaderReload,true);};
@@ -101,6 +125,6 @@ export default function App({ Component, pageProps }) {
     {releaseNotice&&<div role="status" style={{padding:'9px 14px',background:'#eff6ff',color:'#1e40af',fontSize:13,fontWeight:700}}>{releaseNotice}</div>}
     {feedNotice&&<div style={{position:"sticky",top:0,zIndex:10000,padding:"9px 14px",background:"#fff7ed",borderBottom:"1px solid #fb923c",color:"#9a3412",fontWeight:800,fontSize:13,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}><span>{feedNotice}</span><button type="button" onClick={forceLiveRefresh} style={{border:"1px solid #fb923c",background:"#fff",color:"#9a3412",borderRadius:8,padding:"5px 9px",fontWeight:900,cursor:"pointer",whiteSpace:"nowrap"}}>Force live refresh</button></div>}
     <Component {...pageProps} />
-    <div data-version-stamp style={{position:"relative",width:"fit-content",maxWidth:"calc(100% - 20px)",margin:"14px auto 8px",fontSize:10,padding:"4px 7px",borderRadius:6,background:"rgba(15,23,42,.82)",color:"#e2e8f0",fontFamily:"ui-monospace,SFMono-Regular,Menlo,monospace",pointerEvents:"none",textAlign:"center",overflowWrap:"anywhere"}}>{version?`Production • ${version.commit} • ${version.project} • ${version.release}`:"Production • version loading…"}</div>
+    <div data-version-stamp style={{position:"relative",width:"fit-content",maxWidth:"calc(100% - 20px)",margin:"14px auto 8px",fontSize:10,padding:"4px 7px",borderRadius:6,background:"rgba(15,23,42,.82)",color:"#e2e8f0",fontFamily:"ui-monospace,SFMono-Regular,Menlo,monospace",pointerEvents:"none",textAlign:"center",overflowWrap:"anywhere"}}>{version?`Production • ${version.commit} • ${version.project} • ${version.release}`:versionResolved?"Production • version unavailable":"Production • version loading…"}</div>
   </>;
 }

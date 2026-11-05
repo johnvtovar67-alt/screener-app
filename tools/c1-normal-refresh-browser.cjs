@@ -1,6 +1,7 @@
 // Actual production Home/App request flow; localhost synthetic account/evidence only.
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{spawn}=require('node:child_process');
 const {createWorkflowApi}=require('./fixtures/c1-trading-workflow-api.cjs');
+const {waitForBrowserStartup}=require('./c1-browser-startup.cjs');
 const root=process.cwd(),out=path.resolve(process.env.C1_NORMAL_BROWSER_EVIDENCE||'work/normal-refresh-browser');fs.mkdirSync(out,{recursive:true});
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),trace={scope:'Actual Home + App → localhost HTTP → real C1 handler / memory fixture; top5/quote bodies supplied synthetic evidence',cases:[],liveWrites:0};
 async function main(){
@@ -25,7 +26,7 @@ async function main(){
   const json=(data,status=200)=>{res.writeHead(status,{'content-type':'application/json','x-fixture-clock':api.fixture.now.toISOString()});res.end(JSON.stringify(data));};
   if(url.pathname==='/__control'){state.fail=body.fail;if(Object.hasOwn(body,'shadowOwnership'))state.shadowOwnership=body.shadowOwnership;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
   if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,symbol:url.searchParams.get('symbol'),finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
-  const target=state.fail&&!state.fail.startsWith('stop-quote-')&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:state.fail==='version-body-hold'?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
+  const target=state.fail&&!state.fail.startsWith('stop-quote-')&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:['version-body-hold','version-unavailable'].includes(state.fail)?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
   if(target){
    const mode=state.fail;
    if(mode==='version-body-hold'){const serialized=JSON.stringify(versionPayload());res.writeHead(200,{'content-type':'application/json','content-length':Buffer.byteLength(serialized)});res.write(serialized.slice(0,12));await new Promise(resolve=>state.held.push(resolve));res.end(serialized.slice(12));return;}
@@ -34,6 +35,7 @@ async function main(){
    if(['screen-body-after-handler','screen-interrupted-after-handler'].includes(mode)){const captured=await readScreen(Object.fromEntries(url.searchParams));assert.equal(captured.status,200);for(const[name,value]of Object.entries(captured.headers))res.setHeader(name,value);res.writeHead(200,{'content-type':'application/json',...(mode==='screen-interrupted-after-handler'?{'content-length':100000}:{})});res.write('{"stocks":');if(mode==='screen-interrupted-after-handler'){await pause(100);res.destroy();}else res.end();return;}
    if(mode==='opening-hold'){const captured=await api.request(req.method,body,true);await new Promise(resolve=>state.held.push(resolve));return json(captured.body,captured.status);}
    if(mode==='opening-body-hold'){const captured=await api.request(req.method,body,true),serialized=JSON.stringify(captured.body);res.writeHead(captured.status,{'content-type':'application/json','content-length':Buffer.byteLength(serialized),'x-fixture-clock':api.fixture.now.toISOString()});res.write(serialized.slice(0,12));await new Promise(resolve=>state.held.push(resolve));res.end(serialized.slice(12));return;}
+   if(mode==='quote-body-hold'){res.writeHead(200,{'content-type':'application/json','content-length':100000});res.write('{"stock":');await new Promise(resolve=>state.held.push(resolve));res.end();return;}
    if(mode==='cloud-hold'){const captured={portfolio:api.fixture.portfolio,etag:'"fixture-portfolio-1"'};await new Promise(resolve=>state.held.push(resolve));return json(captured);}
    if(mode==='account-inputs-hold'){const captured=await api.request(req.method,body,true);await new Promise(resolve=>state.held.push(resolve));return json(captured.body,captured.status);}
    if(mode==='quote-hold-failure'){await new Promise(resolve=>state.held.push(resolve));return json({error:'Synthetic quote provider outage'},503);}
@@ -74,14 +76,15 @@ async function main(){
   if(url.pathname==='/client.js'){res.setHeader('content-type','text/javascript');res.end(fs.readFileSync(path.join(out,'client.js')));return;}
   if(url.pathname==='/'){
    state.documentLoads++;const portfolio=JSON.stringify(api.fixture.portfolio),css=fs.readFileSync('styles/card-layout.css','utf8');
-   res.setHeader('content-type','text/html');res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>window.__C1_TEST_CLOCK=${JSON.stringify(api.fixture.now.toISOString())};const NativeDate=Date;window.Date=class extends NativeDate{constructor(...a){super(...(a.length?a:[window.__C1_TEST_CLOCK]));}static now(){return NativeDate.parse(window.__C1_TEST_CLOCK);}};localStorage.setItem('stock_screener_portfolio_v1',${JSON.stringify(portfolio)});localStorage.setItem('stock_screener_portfolio_sync_key_v1','offline_workflow_fixture_key_000001');const originalFetch=window.fetch.bind(window);window.fetch=async(...args)=>{const response=await originalFetch(...args);const clock=response.headers.get('x-fixture-clock');if(clock)window.__C1_TEST_CLOCK=clock;return response;};</script></head><body><div id="root"></div><script src="/client.js"></script></body></html>`);return;
+   res.setHeader('content-type','text/html');res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>window.__C1_TEST_CLOCK=${JSON.stringify(api.fixture.now.toISOString())};const NativeDate=Date;window.Date=class extends NativeDate{constructor(...a){super(...(a.length?a:[window.__C1_TEST_CLOCK]));}static now(){return NativeDate.parse(window.__C1_TEST_CLOCK);}};localStorage.setItem('stock_screener_portfolio_v1',${JSON.stringify(portfolio)});localStorage.setItem('stock_screener_portfolio_sync_key_v1','offline_workflow_fixture_key_000001');const originalFetch=window.fetch.bind(window);window.fetch=async(...args)=>{const response=await originalFetch(...args);const clock=response.headers.get('x-fixture-clock');if(clock)window.__C1_TEST_CLOCK=clock;return response;};</script></head><body><div id="root"></div><script src="/client.js"></script></body></html>`);return;
   }res.writeHead(404);res.end('Unexpected fixture URL');
  }catch(error){res.writeHead(500,{'content-type':'application/json'});res.end(JSON.stringify({error:error.message}));}});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port;
  const profile=fs.mkdtempSync(path.join(out,'profile-')),chrome=spawn(binary,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--disable-background-networking','--disable-component-update','--disable-sync','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:['ignore','ignore',fs.openSync(path.join(out,'chromium.log'),'w')]});
  let socket,accountRecordUnchanged=()=>null;
  try{
-  const portFile=path.join(profile,'DevToolsActivePort');for(let i=0;!fs.existsSync(portFile)&&i<200;i++)await pause(50);trace.browserStartup={binary,exitCode:chrome.exitCode,signal:chrome.signalCode};assert(fs.existsSync(portFile),'Chromium did not start: '+JSON.stringify(trace.browserStartup)+' '+fs.readFileSync(path.join(out,'chromium.log'),'utf8').slice(-2000));
+  const portFile=path.join(profile,'DevToolsActivePort'),startup=await waitForBrowserStartup({process:chrome,isReady:()=>fs.existsSync(portFile),timeoutMs:60000});
+  trace.browserStartup={binary,...startup};assert(startup.ready&&fs.existsSync(portFile),'Chromium did not start: '+JSON.stringify(trace.browserStartup)+' '+fs.readFileSync(path.join(out,'chromium.log'),'utf8').slice(-2000));
   const [port,endpoint]=fs.readFileSync(portFile,'utf8').trim().split('\n');socket=new WebSocket('ws://127.0.0.1:'+port+endpoint);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});
   let serial=0;const pending=new Map();trace.browserErrors=[];trace.refreshFailures=[];socket.addEventListener('message',event=>{const r=JSON.parse(event.data);if(r.method==='Runtime.exceptionThrown')trace.browserErrors.push(String(r.params?.exceptionDetails?.exception?.description||r.params?.exceptionDetails?.text||'Browser exception').split('\n')[0]);if(r.method==='Runtime.consoleAPICalled'&&r.params?.args?.[0]?.value==='C1_REFRESH_FAILURE')try{trace.refreshFailures.push(JSON.parse(r.params.args[1].value));}catch{}if(r.id&&pending.has(r.id)){const {resolve,reject}=pending.get(r.id);pending.delete(r.id);r.error?reject(Error(JSON.stringify(r.error))):resolve(r.result);}});
   const send=(method,params={},sessionId)=>new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});
@@ -128,7 +131,7 @@ async function main(){
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Recovery cannot change account economic history');
    trace.cases.push({failure:mode,retainedAnalysis:true,...(mode==='performance-body'?{optionalTelemetryOnly:true,checkedQuantitiesUnchanged:true}:{quantitiesSuppressed:true}),normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
   }
-  const advanced=(process.env.C1_NORMAL_BROWSER_ADVANCED||'stop-verification-screen-pending,opening-pending,portfolio-inputs-pending,portfolio-account-failure,overlap-tabs,overlap-cloud,body-timeout').split(',').filter(mode=>mode!=='none');
+  const advanced=(process.env.C1_NORMAL_BROWSER_ADVANCED||'stop-verification-screen-pending,opening-pending,portfolio-inputs-pending,portfolio-account-failure,overlap-tabs,overlap-cloud,body-timeout,bounded-async,version-result').split(',').filter(mode=>mode!=='none');
   async function requestSeen(cursor,predicate,description){for(let i=0;i<200;i++){if(requests.slice(cursor).some(predicate))return;await pause(25);}throw Error('HTTP fixture timeout: '+description);}
   if(advanced.includes('stop-verification-screen-pending')){
    trace.activeCase='stop-verification-screen-pending';await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Ready before stop-only verification');
@@ -201,7 +204,8 @@ async function main(){
    if(await js('document.querySelector("nav .active")?.textContent')!=='My Portfolio'){await click('My Portfolio');await wait('document.querySelector("header button")?.textContent==="Reload"','Initial Portfolio completed');}
    for(const mode of ['account-inputs','account-inputs-conflict']){
     trace.activeCase=mode;await control(mode);const cursor=requests.length;await click('Reload');await requestSeen(cursor,r=>r.operation==='refresh-account-inputs','Portfolio account refresh');await pause(150);await wait('document.querySelector("header button")?.textContent==="Reload"','Failed Portfolio refresh settled');
-    const text=await js('document.body.innerText');assert(text.includes('Latest completed signal session: 2026-10-14'),'Portfolio retains prior source analysis');assert(!/Buy \d+ shares/.test(text),'Failed Portfolio account verification suppresses old quantities');
+    const text=await js('document.body.innerText');assert(text.includes('Analysis source session: 2026-10-14'),'Portfolio retains the exact prior analysis source date');assert(text.includes('Expected completed session: 2026-10-14'),'Expected completed session remains independently identified');
+    assert.equal(await js('document.querySelector("[data-publication-state]")?.getAttribute("data-publication-state")'),'CURRENT','Current dated publication remains distinct from failed account verification');assert(!/Buy \d+ shares/.test(text),'Failed Portfolio account verification suppresses old quantities');
     const during=requests.slice(cursor);assert.equal(during.filter(r=>r.operation==='refresh-account-inputs').length,1,'Never retry potentially committed input POST');assert.equal(during.filter(r=>r.operation==='prepare-execution').length,0,'Failed input review cannot issue opening POST');
     assert.equal(during.filter(r=>r.path==='/api/c1-account'&&r.method==='GET').length,mode==='account-inputs-conflict'?1:0,'Conflict recovery reads once without retrying POST');
     assert.equal(JSON.stringify(api.fixture.account),baseline);await control(null);await click('Reload');await wait('/Buy \\d+ shares/.test(document.body.innerText)','Explicit Portfolio Reload recovers');await wait('document.querySelector("header button")?.textContent==="Reload"','Portfolio recovery settled');
@@ -249,12 +253,55 @@ async function main(){
    await settledReload();await wait('/Buy \\d+ shares/.test(document.body.innerText)','Explicit Reload recovers after body timeout');assert.equal(JSON.stringify(api.fixture.account),baseline);
    trace.cases.push({failure:'opening-body-timeout',elapsedMs,retainedAnalysis:true,quantitiesSuppressed:true,lateBodyIgnored:true,normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
   }
+  if(advanced.includes('bounded-async')){
+   for(const viewport of [{width:1440,height:1000,mobile:false},{width:390,height:844,mobile:true}]){
+    await cdp('Emulation.setDeviceMetricsOverride',{...viewport,deviceScaleFactor:1});
+    const status=await js(`(()=>{const root=document.querySelector('[aria-label="Market data freshness"]');return {text:root?.innerText,state:root?.querySelector('[data-publication-state]')?.getAttribute('data-publication-state')};})()`);
+    assert(status.text.includes('Analysis source session: 2026-10-14'));assert(status.text.includes('Expected completed session: 2026-10-14'));assert.equal(status.state,'CURRENT');
+   }
+   await cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+   trace.activeCase='opening-header-timeout';await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Ready before opening header stall');
+   await control('opening-hold');let cursor=requests.length,started=Date.now();await click('Reload');
+   for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Real opening handler completed with headers withheld');
+   await wait('document.querySelector("header button")?.textContent==="Reload"','90s deadline settles opening header stall',105000);
+   let elapsedMs=Date.now()-started,text=await js('document.body.innerText');assert(elapsedMs>=89000&&elapsedMs<105000);
+   assert(text.includes('result is unconfirmed'),'Uncertain result is visible in actual Home/App');assert(!text.includes('holdings changed'),'Ordinary refresh cannot imply a holdings change');assert(!/Buy \d+ shares/.test(text));
+   assert(text.includes('Signals based on 2026-10-14 close'));assert.equal(requests.slice(cursor).filter(r=>r.operation==='prepare-execution').length,1);
+   assert.equal(requests.slice(cursor).find(r=>r.operation==='prepare-execution').finished,false,'Uncertain opening request is neither aborted nor replayed');
+   await control(null,{release:true});await pause(200);assert(!/Buy \d+ shares/.test(await js('document.body.innerText')),'Late old headers cannot revive quantities');
+   await settledReload();await wait('/Buy \\d+ shares/.test(document.body.innerText)','Normal refresh recovers after header timeout');assert.equal(JSON.stringify(api.fixture.account),baseline);
+   trace.cases.push({failure:'opening-header-timeout',viewport:'desktop',elapsedMs,visibleUnconfirmedResult:true,lateResponseIgnored:true,normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
+
+   await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+   trace.activeCase='quote-body-timeout';await click('My Portfolio');await wait('document.querySelector("header button")?.textContent==="Reload"','Mobile portfolio ready');
+   await control('quote-body-hold');cursor=requests.length;started=Date.now();await click('Reload');
+   for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Held quote delivered headers with stalled JSON body');
+   await wait('document.querySelector("header button")?.textContent==="Reload"','15s API body deadline settles mobile portfolio',25000);
+   elapsedMs=Date.now()-started;text=await js('document.body.innerText');assert(elapsedMs>=14000&&elapsedMs<25000);
+   assert(text.includes('provider verification failed; no new data accepted.'),'Mobile refresh has a visible bounded quote result');
+   assert.equal(JSON.stringify(api.fixture.account),baseline,'Read failure cannot rewrite ownership/history');
+   await control(null,{release:true});await pause(200);assert((await js('document.body.innerText')).includes('provider verification failed; no new data accepted.'),'Late body cannot overwrite failure result');
+   await click('Reload');await wait('document.querySelector("header button")?.textContent==="Reload"','Mobile ordinary refresh recovers');
+   await wait('!document.querySelector("[aria-label=\\"Market data freshness\\"]")?.textContent.includes("provider verification failed")','Current quote recovery visible');
+   assert.equal(JSON.stringify(api.fixture.account),baseline);await shot('bounded-mobile-recovery');
+   trace.cases.push({failure:'quote-body-timeout',viewport:'mobile',elapsedMs,visibleBoundedResult:true,lateResponseIgnored:true,normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
+   await cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Return to desktop opportunities');
+  }
   if(advanced.includes('expired-opening-evidence')){
    trace.activeCase='expired-opening-evidence';await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Opportunities ready before delayed screen');await control('screen-hold');const cursor=requests.length;await click('Reload');
    for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Actual produced screen reached the delayed HTTP gate');await requestSeen(cursor,r=>r.operation==='prepare-execution'&&r.finished,'Independent opening completed before evidence expiry');
    await control(null,{advanceMs:10*60000,release:true});await wait('document.querySelector("header button")?.textContent==="Reload"','Delayed response settled after evidence expiry');const expiredText=await js('document.body.innerText');assert(!/Buy \d+ shares/.test(expiredText),'Expired evidence cannot restore quantities when a delayed response finally arrives');assert(expiredText.includes('Signals based on 2026-10-14 close'),'Prior source analysis remains visible after evidence expiry');assert.equal(JSON.stringify(api.fixture.account),baseline);
    await control(null,actualScreen?{expireScreen:true}:{});await settledReload();await wait('/Buy \\d+ shares/.test(document.body.innerText)','Explicit normal refresh acquires current evidence after expiry');assert.equal(JSON.stringify(api.fixture.account),baseline);
    trace.cases.push({failure:'expired-opening-evidence',retainedAnalysis:true,expiredQuantitiesWithheld:true,normalReloadRecovered:true,automaticMutationRetries:0,accountRecordIdentical:true});
+  }
+  if(advanced.includes('version-result')){
+   trace.activeCase='version-unavailable';await control('version-unavailable');await cdp('Page.reload');
+   await wait('document.querySelector("[data-version-stamp]")?.textContent==="Production • version unavailable"','Failed version check has a visible finished result');
+   await wait('document.querySelector("header button")?.textContent==="Reload"','Application remains usable when version metadata is unavailable');
+   assert.equal(JSON.stringify(api.fixture.account),baseline);await control(null);await cdp('Page.reload');
+   await wait('document.querySelector("[data-version-stamp]")?.textContent.includes("synthetic-only")','Ordinary next document recovers version metadata');
+   await wait('/Buy \\d+ shares/.test(document.body.innerText)','Ordinary account flow recovers independently of version metadata');
+   trace.cases.push({failure:'version-unavailable',visibleFinishedResult:true,normalReloadRecovered:true,accountRecordIdentical:true});
   }
   if(advanced.includes('uncertain-cash-write')){
    trace.activeCase='uncertain-cash-write';await control(null);await click('My Portfolio');await wait('document.querySelector("header button")?.textContent==="Reload"','Portfolio ready for isolated cash observation');

@@ -244,13 +244,16 @@ async function main(){try{
   const marker='    {["opportunities","portfolio"].includes(tab)&&<div className="refreshEvidence"',bannerStart=page.indexOf(marker),bannerEnd=page.indexOf('\n',bannerStart);
   ok(bannerStart>=0&&bannerEnd>bannerStart,'The actual application exposes the market-data freshness banner');
   const expression=page.slice(bannerStart,bannerEnd).trim().slice(1,-1),record={exports:{}};
-  const code=babel.transformSync('import React from "react";function Freshness({tab,accountView,applicationRefreshAt,quoteRefreshStatus}){return ('+expression+');}module.exports=Freshness;',{
+  const code=babel.transformSync('import React from "react";function Freshness({tab,accountView,applicationRefreshAt,quoteRefreshStatus,publicationStatus}){return ('+expression+');}module.exports=Freshness;',{
    filename:'c1-freshness-banner-regression.jsx',babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
   new Function('require','module','exports',code)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
   for(const tab of ['portfolio','opportunities']){
-   const html=renderToStaticMarkup(React.createElement(record.exports,{tab,accountView:{decision:{sourceSessionDate:source}},applicationRefreshAt:new Date(instant),quoteRefreshStatus:disclosure}));
+   const publicationStatus=modules.load('lib/c1PublicationStatus.js').c1PublicationStatus({sourceSessionDate:source,analysisSessionDate:source,now:new Date(instant)});
+   const html=renderToStaticMarkup(React.createElement(record.exports,{tab,accountView:{decision:{sourceSessionDate:source}},applicationRefreshAt:new Date(instant),quoteRefreshStatus:disclosure,publicationStatus}));
    match(html,/aria-label="Market data freshness"/,'Each trading view exposes the same freshness disclosure');
-   match(html,/Latest completed signal session: 2026-10-14/,'The signal session stays distinct from the application refresh clock');
+   match(html,/Analysis source session: 2026-10-14/,'The analysis source stays distinct from the application refresh clock');
+   match(html,/Expected completed session: 2026-10-14/,'Expected completed session is independently labeled');
+   match(html,/data-publication-state="CURRENT"/,'Publication status is visible in the actual banner');
    match(html,/Last application refresh:/,'The application refresh clock has its own label');
    match(html,/Provider checked; no new quote data received/,'A manual refresh with no new provider data is disclosed in actual rendered markup');
   }

@@ -1,4 +1,5 @@
 import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';
+import {c1PublicationStatus} from '../lib/c1PublicationStatus';
 import C1NonCashAdoption from '../components/C1NonCashAdoption';
 import {resolveC1NonCashPortfolio} from '../lib/c1NonCashPortfolio';
 import C1IntradayActivity from '../components/C1IntradayActivity';
@@ -824,9 +825,10 @@ export default function Home(){
   const displayedSwingCapital=Number.isFinite(accountView?.decision?.strategyCash)?visibleResults.filter(row=>row.role==='Swing').reduce((total,row)=>total+(Number(row.value)||0),0)+accountView.decision.strategyCash:riskSnapshot.swingCapital;
 
   const busy=reloading||loading||checking||accountBusy;
+  const publicationStatus=c1PublicationStatus({sourceSessionDate:accountView?.decision?.publicationStatus?.sourceSessionDate,analysisSessionDate:accountView?.decision?.sourceSessionDate,now:new Date()});
   return <main>
     <header><div><h1>🧠 Investment Operating System</h1><p>Expert analysis underneath. Portfolio-level risk governance on top.</p>{lastUpdated&&<small className="updated">Screen data as of {lastUpdated.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}</small>}</div><button disabled={busy} onClick={handleReload}>{busy?"Reloading...":"Reload"}</button></header>
-    {["opportunities","portfolio"].includes(tab)&&<div className="refreshEvidence" aria-label="Market data freshness"><p>Latest completed signal session: {accountView?.decision?.sourceSessionDate||"unavailable"} · Last application refresh: {applicationRefreshAt?applicationRefreshAt.toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit",second:"2-digit"}):"pending"}</p>{quoteRefreshStatus&&<p role="status">{quoteRefreshStatus}</p>}</div>}
+    {["opportunities","portfolio"].includes(tab)&&<div className="refreshEvidence" aria-label="Market data freshness"><p>Analysis source session: {accountView?.decision?.sourceSessionDate||"unavailable"} · Expected completed session: {publicationStatus.expectedSessionDate||"unavailable"} · Last application refresh: {applicationRefreshAt?applicationRefreshAt.toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit",second:"2-digit"}):"pending"}</p><p role="status" data-publication-state={publicationStatus.code}>{publicationStatus.message}</p>{quoteRefreshStatus&&<p role="status">{quoteRefreshStatus}</p>}</div>}
     <nav>{["opportunities","portfolio","themes","single"].map(x=><button className={tab==x?"active":""} onClick={()=>openTab(x)} key={x}>{x==="portfolio"?"My Portfolio":x[0].toUpperCase()+x.slice(1)}</button>)}</nav>
     {["opportunities","portfolio"].includes(tab)&&portfolio.some(row=>row.role==='Swing'&&!CASH.includes(sym(row)))&&<section className="card" aria-label="C1 stop verification" hidden style={{display:"none"}}>
       <h2>Stop verification</h2><p className="sub">C1 gives manual sell instructions. It does not place or maintain a Schwab stop order.</p>
