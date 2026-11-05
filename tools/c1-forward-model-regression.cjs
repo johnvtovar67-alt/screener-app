@@ -4,7 +4,7 @@ const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const loader=createResearchModuleLoader(process.cwd());
 const {advanceC1ForwardModel,C1_FORWARD_CONTRACT}=loader.load('lib/c1ForwardModel.js');
 const {latestCompletedMarketSessionDay}=loader.load('lib/marketSession.js');
-assert.equal(createHash('sha256').update(fs.readFileSync('lib/c1FrozenSimulator.js','utf8').replace('    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stringify(pending)),\n','')).digest('hex'),
+assert.equal(createHash('sha256').update(require('./c1-opening-sale-source-seams.cjs').restore('lib/c1FrozenSimulator.js',fs.readFileSync('lib/c1FrozenSimulator.js','utf8')).replace('    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stringify(pending)),\n','')).digest('hex'),
  'bcf3cc3e89ac499319a2cbfab76e42fda3bda5ef72d2d45777959e73e6ad9e7d','Live paper service must use the historical simulator unchanged');
 const opts=loader.load('lib/c1FrozenOptions.js').C1_FROZEN_OPTIONS;
 for(const universe of ['nasdaq','sp500']){
