@@ -21,10 +21,10 @@ Complete model parity compares ledger (fills/cash/positions), pending sleeve ord
 
 1. Baseline/specification and normal-log evidence: complete.
 2. Exact incident economic reproduction: BLOCKED. Need exact accepted production market book `research/c1-dated-index-production-v1/sp500.json.gz` and at least two November 4 repeat-confirming observations from the fixed `/observations/2026-11-04/<hash>.json.gz` paths. No private holdings/key/namespace enumeration needed. Initial sandboxed reads failed connecting to the configured proxy. Authorized subprocess/network execution with the inherited proxy resolved that transport issue. Exact SDK pathname and fixed configured-store URL reads now return no object (SDK null) for the accepted book and both known November4 observations995e86b9… and7080aa5b…. This establishes missing artifacts in the configured store, not their absence from actual production or harmless revisions. Diagnostic capture metadata unavailable. Do not infer revision cause from ticker A or magnitude.
-3. Archive-first bounded recovery: implementation assigned; valid archives currently cannot recover when fresh provider acquisition fails (reproduced before change).
-4. Bounded browser header/body completion: implementation assigned; POST headers and non-account GET bodies can hang beyond existing body/GET-header deadlines.
-5. Accurate source/publication window display: implementation assigned. Existing account copy remains pending/reload indefinitely beyond35-minute closing grace and freshness label calls retained source latest.
-6. Full parity mismatch diagnostics: implementation assigned; evidence only, strict acceptance unchanged.
+3. Archive-first bounded recovery: source and focused regression implemented. Defective200263d requires fresh collection before recovery; repaired real acceptance/store chain resumes archived work under provider failure.
+4. Bounded browser completion: implemented with failure-before and real Home/App90s header/body + mobile15s quote evidence, including late-write ownership.
+5. Accurate publication display: implemented; grace/overdue/unknown/source dates and mixed-version behavior independently tested without quantity/policy changes.
+6. Full parity mismatch diagnostics and offline artifact inspector: implemented. Proven serialized-array representation differences are classified diagnostically only; even these still reject under the unchanged strict gate.
 7. Focused/full build/audit/three actual Home/App browser jobs, independent review, exact-head CI and release: pending.
 
 ## Release and rollback
@@ -83,3 +83,9 @@ node tools/inspect-c1-index-transition.cjs --book work/incident-market-book.json
 ```
 
 Inspect full fills, cash, positions, queue, stops, summaries and metadata; classify each difference from evidence. If meaningful ratings/orders/quantities/risk would change, present that exact decision separately to owner. Continue supported repairs; do not waive economic checks. No unattended watch is configured by this work.
+
+## Review/CI checkpoint (superseded heads do not authorize release)
+
+Draft PR352: https://github.com/johnvtovar67-alt/screener-app/pull/352. Initial head579220f independent source review found no remaining substantive issue. CI41958144111 actual-screen and lifecycle-client jobs passed; normal job failed an old-label assertion in the existing portfolio retained-source test. That assertion now checks the renamed exact analysis-source date, independently checks expected date/CURRENT, and retains withheld-quantity checks. Build exposed the existing cron source oracle: added exact diagnostic-only inverse with original SHA untouched; focused production-access regression passes. Final revised head and all four checks remain required.
+
+Independent review requested two additional improvements: a consecutive multi-session repeat-confirmed revision→material rejection→valid recovery chain through real archive/accept/store boundaries, and typed recovered date/hash success logs for the next ordinary scheduled outcome. Both added without widening acceptance. Full initial build output is exploratory/superseded; only final-head checks count.

@@ -4,10 +4,10 @@ const loader=createResearchModuleLoader(process.cwd()),clone=value=>JSON.parse(J
 const canonical=value=>JSON.stringify(value,(_key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
 const digest=value=>crypto.createHash('sha256').update(canonical(value)).digest('hex');
 const {buildC1ModelParityDiagnostic:build,safeC1ModelParityDiagnostic:safe}=loader.load('lib/c1ModelParityDiagnostic.js');
-function reconciliation(){
- if(!process.env.C1_PARITY_BASELINE_FILE)return loader.load('lib/c1ReviewedSessionRevision.js').reconcileC1VerifiedProviderRevision;
- const box={...loader.load('lib/c1RecordedSaleFinalization.js'),...loader.load('lib/c1RecordedSaleRevision.js'),...loader.load('lib/c1SessionRevisionReview.js')};
- vm.createContext(box);vm.runInContext(fs.readFileSync(process.env.C1_PARITY_BASELINE_FILE,'utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'')+';this.run=reconcileC1VerifiedProviderRevision;',box);return box.run;
+function reconciliation(diagnosticOverride){
+ if(!process.env.C1_PARITY_BASELINE_FILE&&!diagnosticOverride)return loader.load('lib/c1ReviewedSessionRevision.js').reconcileC1VerifiedProviderRevision;
+ const box={...loader.load('lib/c1RecordedSaleFinalization.js'),...loader.load('lib/c1RecordedSaleRevision.js'),...loader.load('lib/c1SessionRevisionReview.js'),buildC1ModelParityDiagnostic:diagnosticOverride||build};
+ vm.createContext(box);vm.runInContext(fs.readFileSync(process.env.C1_PARITY_BASELINE_FILE||'lib/c1ReviewedSessionRevision.js','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'')+';this.run=reconcileC1VerifiedProviderRevision;',box);return box.run;
 }
 const fields=['ledger','pendingBySleeve','paperExecution','paperExecutionStatus','summary'];
 const bar={symbol:'AAA',date:'2026-11-03',open:100,high:102,low:98,close:100,volume:1000};
@@ -37,6 +37,10 @@ assert.equal(report.interpretation,'requires-evidence-review');assert.equal(repo
 assert.equal(report.privateAccounts,'not-compared');assert.equal(canonical(safe(report)),canonical(report));
 assert.doesNotMatch(JSON.stringify(report),/PRIVATE_SENTINEL|serialized history|revised history/);
 assert.equal(canonical(prior.model.sessions[0].prices[0]),canonical(bar),'Diagnostic cannot rewrite accepted evidence');
+let diagnosticFailure;
+try{reconciliation(()=>{throw new Error('Diagnostic unavailable');})(prior,input,new Date(input.observedAt),digest,model=>clone(model.sessions[0].prices[0].close===100?original:revised),observations);}catch(cause){diagnosticFailure=cause;}
+assert.equal(diagnosticFailure?.providerRevisionDiagnostic?.stage,'model-parity');assert.equal(diagnosticFailure.providerRevisionDiagnostic.modelParity,undefined);
+assert.match(diagnosticFailure.message,/economic parity failed/,'A diagnostic failure cannot replace the original economic rejection');
 
 const many=Object.fromEntries(fields.map(field=>[field,{}])),after=clone(many);
 for(let i=0;i<500;i++)after.ledger['PRIVATE_SENTINEL_'+i]=i;
@@ -50,6 +54,19 @@ const reordered=clone(original);reordered.ledger=Object.fromEntries(Object.entri
 const orderDigest=value=>crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const orderReport=build(original,reordered,orderDigest);assert.equal(orderReport.changedPathCount,1);assert.equal(orderReport.counts['representation-order'],1);assert(safe(orderReport));
 assert(JSON.stringify(large).length<8192,'Scheduled diagnostic stays below an explicit aggregate byte bound');
+const historyOriginal=clone(original);historyOriginal.paperExecution.modelHistory=JSON.stringify([{id:'base:1',shares:2,price:100}]);
+const historyRevised=clone(historyOriginal);historyRevised.paperExecution.modelHistory='[ { "price": 100.0, "shares": 2, "id": "base:1" } ]';
+const serialization=build(historyOriginal,historyRevised,digest);assert.equal(serialization.changedPathCount,1);assert.equal(serialization.counts['representation-json'],1);assert(safe(serialization));
+assert.equal(serialization.sample[0].before.value,undefined);assert.equal(serialization.sample[0].after.value,undefined);
+for(const meaningful of ['[{"id":"base:1","shares":3,"price":100}]','[{"id":"base:1","shares":2,"price":100.000001}]','[{"id":"base:2","shares":2,"price":100}]',
+ '[{"id":"base:1","shares":"2","price":100}]','[{"id":"base:1","shares":2,"price":100},{}]','invalid JSON','null']){
+ const changed=clone(historyOriginal);changed.paperExecution.modelHistory=meaningful;
+ const report=build(historyOriginal,changed,digest);assert.equal(report.counts['representation-json'],0);assert.equal(report.counts.unclassified,1);
+}
+let serializationRejection;
+try{reconciliation()(prior,input,new Date(input.observedAt),digest,model=>clone(model.sessions[0].prices[0].close===100?historyOriginal:historyRevised),observations);}catch(cause){serializationRejection=cause;}
+assert.equal(serializationRejection?.providerRevisionDiagnostic?.stage,'model-parity','Proven serialization differences still reject under unchanged economic hashes');
+assert.equal(serializationRejection.providerRevisionDiagnostic.modelParity.counts['representation-json'],1);
 const unknown=clone(original);unknown.summary.PRIVATE_SENTINEL={confidential:'PRIVATE_SENTINEL'};
 const unknownReport=build(original,unknown,digest);assert.equal(unknownReport.counts.unclassified,1);assert(safe(unknownReport));
 assert.doesNotMatch(JSON.stringify(unknownReport),/PRIVATE_SENTINEL|confidential/);

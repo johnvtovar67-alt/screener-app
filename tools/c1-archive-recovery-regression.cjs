@@ -52,7 +52,7 @@ function harness({now='2026-09-15T22:30:00.000Z',initial=seed}={}){
   interrupt:day=>{unacknowledged=day;},fail:(day,count=2)=>{failSession=day;failCount=count;}};
 }
 async function populate(h,values=inputs.slice(1)){for(const value of values)await h.save(value);}
-function identical(h){assert.equal(JSON.stringify(h.record()),JSON.stringify(expected),'Complete cash, quantities, stops, queues, fills, summaries and accepted identities match uninterrupted execution');assert.equal(JSON.stringify(seed),seedBytes,'Original accepted record remains immutable');}
+function identical(h){assert.equal(JSON.stringify(h.record()),JSON.stringify(expected),'Complete persisted cash, quantities, positions, queues, fills, summaries and accepted identities match uninterrupted execution');assert.equal(JSON.stringify(seed),seedBytes,'Original accepted record remains immutable');}
 (async()=>{
  const outage=harness();await populate(outage);
  const recovered=await outage.run();assert.equal(recovered.sourceSessionDate,days.at(-1));assert.equal(recovered.recovered.length,4);
@@ -98,6 +98,72 @@ function identical(h){assert.equal(JSON.stringify(h.record()),JSON.stringify(exp
  await backlogOnly.save(inputs.at(-1));await backlogOnly.run();identical(backlogOnly);
 
  const fresh=harness();await populate(fresh,inputs.slice(1,-1));await fresh.run({collect:async()=>clone(inputs.at(-1))});identical(fresh);
+
+ // Successive provider vintages traverse the real immutable archive, strict
+ // reconciliation and conditional store together. CVX has no candidate signal
+ // or exposure; AAA is actually held before its material correction is tested.
+ const revisionDays=['2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06'];
+ function revisionInput(day,previous,corrections={}){
+  const value=input(day,previous);value.sourceReceipt.provider='FMP';
+  value.session.universeSymbols=[...value.session.universeSymbols,'CVX'];
+  value.session.prices.push({symbol:'CVX',open:100,close:100,high:101,low:99,volume:10000000,adjusted:true});
+  value.priorSessionPrices.closes.CVX=100;
+  for(const [symbol,bar]of Object.entries(corrections))value.priorSessionPrices.closes[symbol]=bar.close;
+  value.priceEvidence={contract:'c1-provider-price-fields-v1',endpoint:'historical-price-eod/dividend-adjusted',
+   rows:[...value.session.prices.map(price=>({price,date:previous})),...value.session.prices.map(price=>({price,date:day}))].map(({price,date})=>{
+    const bar=date===previous?{...price,...corrections[price.symbol]}:price;
+    return {symbol:price.symbol,date,adjOpen:bar.open,adjHigh:bar.high,adjLow:bar.low,adjClose:bar.close,volume:bar.volume};
+   })};return value;
+ }
+ function at(value,time){const next=clone(value);next.observedAt=next.session.decisionAt=value.sourceSessionDate+'T'+time+'.000Z';
+  for(const row of next.session.signals)row.timestamp=Date.parse(next.observedAt)/1000;return next;}
+ const cleanRevisionInputs=revisionDays.map((day,index)=>revisionInput(day,index?revisionDays[index-1]:'2026-10-30'));
+ const revisionSeed=book.acceptC1DatedInput(null,cleanRevisionInputs[0],new Date(cleanRevisionInputs[0].observedAt));
+ const revisionSeedBytes=JSON.stringify(revisionSeed),vintages=harness({initial:revisionSeed,now:'2026-11-06T22:30:00Z'});
+ const benign1=revisionInput(revisionDays[1],revisionDays[0],{CVX:{close:99.9}});
+ const benign2=revisionInput(revisionDays[2],revisionDays[1],{CVX:{close:99.8}});
+ const material=revisionInput(revisionDays[3],revisionDays[2],{AAA:{open:1,high:1.01,low:.99,close:1}});
+ const nextVintage=revisionInput(revisionDays[4],revisionDays[3],{CVX:{close:99.6}});
+ for(const value of [benign1,benign2,material,nextVintage])await populate(vintages,[at(value,'21:00:00'),value]);
+ await assert.rejects(()=>vintages.run(),error=>{
+  assert.equal(error.providerRevisionDiagnostic.stage,'model-parity');
+  assert(error.providerRevisionDiagnostic.modelParity.changedPathCount>0,'Material revision produces a demonstrated complete-state difference');
+  assert(error.providerRevisionDiagnostic.modelParity.comparedFields.some(field=>field.field==='ledger'&&field.changedPathCount>0));
+  assert.deepEqual(Array.from(error.indexRecovery.recoveredSessionDates),revisionDays.slice(1,3));return true;
+ });
+ const checkpoint=clone(vintages.record());assert.equal(checkpoint.captures.at(-1).sessionDate,revisionDays[2]);
+ assert.equal(checkpoint.reconciliations.length,2);
+ for(let index=0;index<2;index++){
+  const audit=checkpoint.reconciliations[index];assert.equal(audit.contract,'c1-provider-revision-reconciliation-v1');
+  assert.equal(audit.confirmationCount,1);assert.equal(audit.observations.length,2);assert.equal(audit.identicalModelEconomics,true);
+  assert.equal(audit.mismatches[0].symbol,'CVX');assert.equal(audit.mismatches[0].revised.close,[99.9,99.8][index]);
+ }
+ assert(checkpoint.model.ledger.fills.some(fill=>fill.symbol==='AAA'),'Material rejection concerns actual modeled exposure');
+ assert(!checkpoint.model.ledger.fills.some(fill=>fill.symbol==='CVX'),'Harmless correction is independently unexposed');
+ assert.equal(vintages.writeDates.includes(revisionDays[3]),false,'An economically material vintage never becomes accepted history');
+ assert.equal(JSON.stringify(revisionSeed),revisionSeedBytes);
+ assert.equal(JSON.stringify(checkpoint.model.sessions.slice(0,1)),JSON.stringify(revisionSeed.model.sessions));
+ assert.equal(JSON.stringify(checkpoint.captures.slice(0,1)),JSON.stringify(revisionSeed.captures));
+
+ // A later independently confirmed observation restores AAA's original basis
+ // while retaining another harmless revision. The rejected records remain
+ // archived; acceptance resumes from the last completed durable checkpoint.
+ const repairedVintage=revisionInput(revisionDays[3],revisionDays[2],{CVX:{close:99.7}});
+ const repairedLatest=at(repairedVintage,'22:15:00');await populate(vintages,[at(repairedVintage,'22:05:00'),repairedLatest]);
+ await vintages.run();const finished=vintages.record();
+ assert.equal((await vintages.read(revisionDays[3],{now:new Date('2026-11-06T22:30:00Z')})).length,4,'Rejected and corrected vintages are both immutable evidence');
+ assert.equal(finished.reconciliations.length,4);assert.equal(finished.captures.at(-1).sessionDate,revisionDays.at(-1));
+ assert.equal(JSON.stringify(finished.captures.slice(0,checkpoint.captures.length)),JSON.stringify(checkpoint.captures));
+ assert.equal(JSON.stringify(finished.model.sessions.slice(0,checkpoint.model.sessions.length)),JSON.stringify(checkpoint.model.sessions));
+ assert.equal(JSON.stringify(finished.reconciliations.slice(0,2)),JSON.stringify(checkpoint.reconciliations));
+ assert.equal(JSON.stringify(finished.model.ledger.fills.slice(0,checkpoint.model.ledger.fills.length)),JSON.stringify(checkpoint.model.ledger.fills));
+ cleanRevisionInputs[3]=at(cleanRevisionInputs[3],'22:15:00');let revisionExpected=revisionSeed;
+ for(const value of cleanRevisionInputs.slice(1))revisionExpected=book.acceptC1DatedInput(revisionExpected,value,new Date(value.observedAt));
+ assert.equal(JSON.stringify(finished.model),JSON.stringify(revisionExpected.model),'All persisted fills, cash, quantities, positions, summaries, pending orders and metadata equal uninterrupted original-basis execution');
+ assert.equal(JSON.stringify(finished.captures),JSON.stringify(revisionExpected.captures),'Revision evidence never rewrites accepted session identities');
+ for(const day of revisionDays.slice(1))assert.equal(vintages.writeDates.filter(value=>value===day).length,1);
+ const completedWrites=vintages.writes();assert.equal((await vintages.run()).status,'already-current');assert.equal(vintages.writes(),completedWrites);
+
  for(const calendar of [
   ['2026-10-29','2026-10-30','2026-11-02','2026-11-03','2026-11-04'],
   ['2026-11-25','2026-11-27','2026-11-30','2026-12-01'],
@@ -114,5 +180,5 @@ function identical(h){assert.equal(JSON.stringify(h.record()),JSON.stringify(exp
  await assert.rejects(()=>tooFar.run({collect:async()=>today}),/five missing sessions/);assert.equal(tooFar.writes(),0,'Recovery remains bounded');
  assert.equal((await tooFar.read('2026-09-22',{now:new Date('2026-09-22T22:30:00Z')})).length,1);
 
- console.log('PASS: real immutable archive → strict accepted book → frozen accounting sequences; provider outage, duplicate retry, interrupted writes, restart, concurrent workers, missing/corrupt/economic evidence, bounded backlog and fresh acquisition');
+ console.log('PASS: real immutable archive → strict accepted book → frozen accounting sequences; provider outage, duplicate retry, interrupted writes, restart, concurrent workers, successive confirmed revisions, material rejection then corrected recovery, missing/corrupt evidence, bounded backlog and fresh acquisition');
 })().catch(error=>{console.error(error);process.exitCode=1;});

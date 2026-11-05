@@ -110,6 +110,17 @@ function recoveryDiagnostic(error) {
       r.recoveredSessionDates.some((day,i)=>day>r.sessionDate||(i&&day<=r.recoveredSessionDates[i-1])))return undefined;
   return {state:'blocked',sessionDate:r.sessionDate,acquisition:r.acquisition,recoveredSessionDates:[...r.recoveredSessionDates]};
 }
+function recoveredDiagnostic(result) {
+  const rows=result?.recovered;
+  if(!Array.isArray(rows)||rows.length>6||rows.some((row,i)=>
+      !/^\d{4}-\d{2}-\d{2}$/.test(row?.sessionDate||'')||
+      !/^[a-f0-9]{64}$/.test(row?.observationHash||'')||
+      (i&&row.sessionDate<=rows[i-1].sessionDate))||
+      rows.some(row=>row.sessionDate>result.sourceSessionDate)||
+      (rows.length&&rows.at(-1).sessionDate!==result.sourceSessionDate&&
+       observationDiagnostic(result.observationReceipt)?.sourceSessionDate!==result.sourceSessionDate))return undefined;
+  return rows.map(row=>({sessionDate:row.sessionDate,observationHash:row.observationHash}));
+}
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') {
@@ -137,7 +148,7 @@ export default async function handler(req, res) {
       sourceSessionDate: result.sourceSessionDate, sourceHash: result.sourceHash,
       recordHash: result.recordHash, decisionId: result.decisionSnapshot.decisionId,
       executable: false, activationAuthorized: false };
-    console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate, observation: observationDiagnostic(result.observationReceipt) }));
+    console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate, observation: observationDiagnostic(result.observationReceipt), recovered: recoveredDiagnostic(result) }));
     if(Date.now()-startedAt<280000)await observeC1ScheduledReadiness({index:result,deadlineMs:Math.min(Date.now()+25000,startedAt+290000)});
     return res.status(200).json(body);
   } catch (error) {

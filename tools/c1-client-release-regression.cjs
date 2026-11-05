@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
 const l=require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd());
-const {c1ClientReleaseState:compare,installC1ClientReleaseGuard:install,observeC1ClientMutation:observe}=l.load('lib/c1ClientRelease.js');
+const {c1ClientReleaseState:compare,installC1ClientReleaseGuard:install,observeC1ClientMutation:observe}=l.load(process.env.C1_RELEASE_SOURCE||'lib/c1ClientRelease.js');
 const old='a'.repeat(40),next='b'.repeat(40),remote={buildCommit:next,clientProtocol:1,project:'screener-app-cq5t',environment:'production'};
 class Target{constructor(){this.listeners=new Map();}addEventListener(type,fn){if(!this.listeners.has(type))this.listeners.set(type,new Set());this.listeners.get(type).add(fn);}removeEventListener(type,fn){this.listeners.get(type)?.delete(fn);}emit(type,detail={}){for(const fn of this.listeners.get(type)||[])fn(detail);}}
 function fixture(options={}){const win=new Target(),doc=new Target(),stored=new Map(),timers=new Map(),nodes=new Set(),notices=[];let serial=0,navigations=0,calls=0;

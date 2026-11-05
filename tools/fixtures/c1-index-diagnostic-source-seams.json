@@ -1,0 +1,40 @@
+{
+  "pages/api/cron/c1-index.js": {
+    "baselineBlob": "fec06b6ee56b7cf8852cebcfdbb98adfa8de927d",
+    "authorizedBlob": "dd3a83dd37b8f7f1f8694abe2767f9d921856f16",
+    "chunks": [
+      {
+        "before": "",
+        "after": "import {safeC1ModelParityDiagnostic} from '../../../lib/c1ModelParityDiagnostic';\n"
+      },
+      {
+        "before": "",
+        "after": "    'Index observation archive integrity failed',\n    'Index observation recovery limit exceeded',\n    'Invalid index observation recovery date',\n    'Index recovery exceeds five missing sessions; original preserved',\n    'Reviewed index observation unavailable; original preserved',\n"
+      },
+      {
+        "before": "",
+        "after": "  if (/^Missing archived index session: \\d{4}-\\d{2}-\\d{2}; no historical membership backfill$/.test(message)) return message;\n"
+      },
+      {
+        "before": "",
+        "after": "  const modelParity = detail.stage === 'model-parity' ? safeC1ModelParityDiagnostic(detail.modelParity) : undefined;\n"
+      },
+      {
+        "before": "    { unconfirmedCount: detail.unconfirmedCount }) };\n",
+        "after": "    { unconfirmedCount: detail.unconfirmedCount }), ...(modelParity ? {modelParity} : {}) };\n"
+      },
+      {
+        "before": "",
+        "after": "}\nfunction recoveryDiagnostic(error) {\n  const r=error?.indexRecovery,date=v=>typeof v==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(v);\n  if(r?.state!=='blocked'||!date(r.sessionDate)||!['failed','archived'].includes(r.acquisition)||\n      !Array.isArray(r.recoveredSessionDates)||r.recoveredSessionDates.length>6||\n      !r.recoveredSessionDates.every(date)||new Set(r.recoveredSessionDates).size!==r.recoveredSessionDates.length||\n      r.recoveredSessionDates.some((day,i)=>day>r.sessionDate||(i&&day<=r.recoveredSessionDates[i-1])))return undefined;\n  return {state:'blocked',sessionDate:r.sessionDate,acquisition:r.acquisition,recoveredSessionDates:[...r.recoveredSessionDates]};\n}\nfunction recoveredDiagnostic(result) {\n  const rows=result?.recovered;\n  if(!Array.isArray(rows)||rows.length>6||rows.some((row,i)=>\n      !/^\\d{4}-\\d{2}-\\d{2}$/.test(row?.sessionDate||'')||\n      !/^[a-f0-9]{64}$/.test(row?.observationHash||'')||\n      (i&&row.sessionDate<=rows[i-1].sessionDate))||\n      rows.some(row=>row.sessionDate>result.sourceSessionDate)||\n      (rows.length&&rows.at(-1).sessionDate!==result.sourceSessionDate&&\n       observationDiagnostic(result.observationReceipt)?.sourceSessionDate!==result.sourceSessionDate))return undefined;\n  return rows.map(row=>({sessionDate:row.sessionDate,observationHash:row.observationHash}));\n"
+      },
+      {
+        "before": "    console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate, observation: observationDiagnostic(result.observationReceipt) }));\n",
+        "after": "    console.info('[c1-index]', JSON.stringify({ status: 'succeeded', sourceSessionDate: result.sourceSessionDate, observation: observationDiagnostic(result.observationReceipt), recovered: recoveredDiagnostic(result) }));\n"
+      },
+      {
+        "before": "",
+        "after": "      recovery: recoveryDiagnostic(error),\n"
+      }
+    ]
+  }
+}

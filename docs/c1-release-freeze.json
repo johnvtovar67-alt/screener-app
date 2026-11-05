@@ -118,7 +118,7 @@
     "lib/c1AccountOperationalStatus.js": "0000407bef8c173e80d8e51d0e2e65286bb85549",
     "lib/c1ApiErrors.js": "b5896aabd7d1f0e4433c03daf35385076e78517e",
     "pages/api/catalysts.js": "cd43dbf13e263e39c511b438413f7c6d55d6c768",
-    "pages/api/cron/c1-index.js": "71b27963654ac208738da08f8faa8ca043dd3099",
+    "pages/api/cron/c1-index.js": "dd3a83dd37b8f7f1f8694abe2767f9d921856f16",
     "pages/api/cron/fmp-research-backtest.js": "4ce2d0302bd451103c86f0412ee197ffb4d50f72",
     "pages/api/cron/full-market-discovery.js": "87e0b2db1d23101c62bd843fe34dc628c21817ea",
     "pages/api/entry-timing.js": "b2cf1085b9cc02d339afebb0141eda089aeb6afe",
@@ -257,7 +257,7 @@
     "lib/c1StopVerification.js": "9364f4642f784aa8f0c24340b92de0ec79176173",
     "lib/c1SwingStopPolicy.js": "04017086dbcf4475703ac9577177b0719844ad9c",
     "pages/api/c1-stop-quote.js": "ad8c767c6fd0d5736b49bb3c2afb4ab9fba17122",
-    "lib/c1ModelParityDiagnostic.js": "dc14fb6a9bd69e60a2b85ee9d79b552a3f12c3b2",
+    "lib/c1ModelParityDiagnostic.js": "aba73043979bec5b031e15fb0087cc5bafb1e29f",
     "lib/c1PublicationStatus.js": "5c468fa10e57f47075d601e22bcd99851375ded3"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
