@@ -1,0 +1,16 @@
+{
+  "title": "C1 production recovery check",
+  "createdAt": "2026-11-05T03:44:37.971202Z",
+  "schedule": "BEGIN:VEVENT\nDTSTART;TZID=America/Chicago:20261105T062000\nEND:VEVENT",
+  "timezone": "America/Chicago",
+  "scheduledForUtc": "2026-11-05T12:20:00Z",
+  "timingMode": "exact_schedule",
+  "isEnabled": true,
+  "verification": "Create returned success; private lookup confirmed enabled and identical one-time saved schedule. next_run_time and last_run_time were null. No execution is claimed.",
+  "recurrence": null,
+  "oldReliabilityWatch": "Remains paused; not modified",
+  "scope": "One read-only current production log/readiness check independent of historical artifacts; no manual application jobs or financial/configuration changes.",
+  "historicalRequestPreserved": true,
+  "stabilitySessionsVerified": 0,
+  "result": "PENDING FUTURE OBSERVATION"
+}
