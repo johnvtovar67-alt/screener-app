@@ -1,105 +1,76 @@
-# Daily data, reconciliation and recovery stabilization
+# Daily recovery: current incident checkpoint
 
-Owner specification: [specification.md](specification.md). One branch: `repair/c1-daily-recovery-20261105`. Root owns integration and release. Current checkpoint: investigation and implementation; no release.
+**November 4 incident: UNRESOLVED / BLOCKED ON ACTUAL EVIDENCE.** Last checked November 4 at 9:32 p.m. America/Chicago (November 5, 2026 at 03:32 UTC). This is the authoritative current status; it replaces the earlier working-status statements. Previous checkpoints remain in Git history.
 
-## Established baseline
+Owner specification: [specification.md](specification.md). Existing dedicated branch: `repair/c1-daily-recovery-20261105`. Release and final CI: [PR #352](https://github.com/johnvtovar67-alt/screener-app/pull/352). This continuation changes documentation only; no application, inspector, investment rule, binding or cron change.
 
-- GitHub main latest commit, local base, actual canonical production deployment and canonical `/api/version` agree on `200263dfae6f0ad49d6e160a1e5b70c95dc1e53d` / release `2026-11-04-c1-automatic-held-stops`.
-- Canonical deployment `dpl_CKpneR7jSr8NPi9QxcHbinBd5AfN`, READY. Checked November 4 evening America/Chicago (November 5 02:43 UTC).
-- Current AGENTS.md read locally and via GitHub. Strategy/financial history protected. All four exact-head CI jobs and independent review required before merge. No cron changes or manual dispatch.
-- Normal scheduled logs November 4 21:18–23:48 UTC repeatedly reject November 3→4 at `model-parity`, 275 changed prior closing anchors. Latest observation hash `995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422`. No complete economic diff logged.
-- Normal account traffic at 19:06,19:29,20:28,20:34 UTC reports `CHECKED_ZERO_UNCONDITIONAL_BUY_ORDERS`. Later update failure does not explain the entire trading day's cash position.
-- Read-only readiness at 02:44 UTC: CHECK_EXPIRED, source unknown, expected November 4, after-hours; no private account/browser certification.
+## One current status
 
-## Architecture and limits
+| Work or acceptance boundary | Current status and evidence |
+| --- | --- |
+| IMPLEMENTED — independently supported repairs | Complete: bounded archive-first recovery through existing acceptance/CAS, browser completion/ownership, accurate publication state, parity diagnostics and existing local inspector. Synthetic tests do not resolve November 4. |
+| RELEASED | Verified: main, canonical deployment `dpl_9jbmZFR6LvC6PrasJ3K6wpR6JwAe` and canonical `/api/version` agree on `7a0d19d1759efe424517503c2d33d892f1e833dd`. Reviewed head `4b809f16169e47ab8a0e2c3add800a97d1b2d03d` and main share tree `c54c4a756858d08fb123e5d791340080dbe9457b`. |
+| Incident deployment's storage binding | **NOT VERIFIED.** Deployment identity is confirmed, but available non-secret metadata exposes no deployment environment snapshot or resolved runtime Blob authorization/store binding. Current project settings are not that proof. |
+| Actual incident artifacts | **0 of 3 retrieved from a verified incident store.** Earlier null reads were against the workspace store; they do not establish missing production objects. |
+| Exact economic difference / deployed repair's incident recoverability | **UNKNOWN.** The existing inspector has not run on actual incident evidence. No conclusion that a revision is harmless, representational, recoverable, or policy-changing is justified. |
+| PRODUCTION VERIFIED — November 4 recovery | **PENDING / NOT OBSERVED.** No normal `[c1-index]` log was returned for the released deployment from 03:20:03 to 03:32:03 UTC. This is outside scheduled collection hours and is not a processing failure. Readiness at 03:32 UTC is `DEPLOYMENT_NOT_CHECKED`, severity unknown, executable false, account/browser parity NOT_VERIFIED. |
+| STABILITY WINDOW COMPLETE | **PENDING, 0/5 trading sessions observed.** No unattended monitor configured. No future session counts as evidence. |
 
-Provider checked membership/history → immutable market-only observation archive → dated book CAS connection → repeat-confirmed revisions and model economic comparison → immutable accepted session → derived private account analysis/opening checks → owned refresh frame → browser publication. Archive evidence never itself supplies accepted session or execution authority. Model and private records are separate.
+The new deployment was READY at 03:20:03 UTC; its initial 20-minute observation/job budget was still open at this check. The unchanged index cron is `*/15 12-23 * * 1-5`. The next ordinary attempt is November 5 at 6:00 a.m. America/Chicago (12:00 UTC); allow its normal 20-minute job/observation budget. That future outcome cannot be verified in this checkpoint. No job was manually dispatched and no stopped automation restarted.
 
-Complete model parity compares ledger (fills/cash/positions), pending sleeve orders, paper execution/status and summary. Recorded-sale correction path requires no new original model fills and unchanged queue; it is not proof that November 4 is harmless. Stored model ledger does not persist simulator stop/high-water detail. No price tolerance or financial acceptance rule will change without exact evidence.
+## Precise remaining action
 
-## Milestones
+Follow [owner-artifact-handoff.md](owner-artifact-handoff.md), which contains a copyable non-secret Vercel support request and the concrete owner download/upload steps.
 
-1. Baseline/specification and normal-log evidence: complete.
-2. Exact incident economic reproduction: BLOCKED. Need exact accepted production market book `research/c1-dated-index-production-v1/sp500.json.gz` and at least two November 4 repeat-confirming observations from the fixed `/observations/2026-11-04/<hash>.json.gz` paths. No private holdings/key/namespace enumeration needed. Initial sandboxed reads failed connecting to the configured proxy. Authorized subprocess/network execution with the inherited proxy resolved that transport issue. Exact SDK pathname and fixed configured-store URL reads now return no object (SDK null) for the accepted book and both known November4 observations995e86b9… and7080aa5b…. This establishes missing artifacts in the configured store, not their absence from actual production or harmless revisions. Diagnostic capture metadata unavailable. Do not infer revision cause from ticker A or magnitude.
-3. Archive-first bounded recovery: source and focused regression implemented. Defective200263d requires fresh collection before recovery; repaired real acceptance/store chain resumes archived work under provider failure.
-4. Bounded browser completion: implemented with failure-before and real Home/App90s header/body + mobile15s quote evidence, including late-write ownership.
-5. Accurate publication display: implemented; grace/overdue/unknown/source dates and mixed-version behavior independently tested without quantity/policy changes.
-6. Full parity mismatch diagnostics and offline artifact inspector: implemented. Proven serialized-array representation differences are classified diagnostically only; even these still reject under the unchanged strict gate.
-7. Focused/full build/audit/three actual Home/App browser jobs, independent review, exact-head CI and release: pending.
+1. Establish supported metadata tying **incident deployment** `dpl_CKpneR7jSr8NPi9QxcHbinBd5AfN`, commit `200263dfae6f0ad49d6e160a1e5b70c95dc1e53d`, production target, project `prj_9MJJaMsEfOdtQKXj4VFI7TfJcBjQ` and team `team_vBLhac1QJ54zPEiWFFK7XmGN` to its actual runtime Blob authorization/store binding. If the owner's normal dashboard does not expose that historical metadata, obtain only this non-secret confirmation through the existing Vercel support channel. No message to support has been sent by this agent.
+2. From that verified store, use existing owner-authorized exact-file lookup/download and attach only these original gzip files here:
 
-## Release and rollback
+```text
+research/c1-dated-index-production-v1/sp500.json.gz
+research/c1-dated-index-production-v1/sp500/observations/2026-11-04/7080aa5b3e56463b81199264f9427e0f97713a6de9779f6b22572af988f5b10b.json.gz
+research/c1-dated-index-production-v1/sp500/observations/2026-11-04/995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422.json.gz
+```
 
-No production writes, collection, cron dispatch, research rerun or financial canary authorized by this checkpoint. Permitted production diagnostics used Vercel connector version/readiness and normal traffic logs only. Dedicated branch may be published for CI/review. Do not merge until all four GitHub jobs PASS on reviewed head. No freeze/CI/oracle weakening; only documented affected application manifest entries may change.
+3. Preserve the pathname mapping, non-secret binding record and available object size/time/ETag/version metadata. The accepted book must be the intact incident predecessor ending **2026-11-03**; preserve its original recordHash and full capture/model history. The book path is a mutable CAS head. A later book cannot reproduce the rejected transition; never truncate/rebuild it or recompute an earlier hash. Record any remaining historical identity gap explicitly.
+4. Once actual artifacts and predecessor identity are available, run the **existing** offline inspector using the command in the handoff. Inspect complete fills, cash, positions, pending orders, stops, summaries and metadata. Record the exact difference and whether the deployed strict acceptance path accepts it unchanged. A local result alone does not prove ordinary production recovery.
+5. Verify the next applicable ordinary scheduled transition from normal logs and accepted source identity, then check the five-session criteria separately. Do not relax investment rules, rewrite accepted history, fabricate sessions, replay uncertain financial writes or manually dispatch processing.
 
-Changes must remain backward compatible with original accepted books/accounts and existing audits. Archive recovery only appends through unchanged validation/CAS, never rewrites accepted history. A rollback restores prior code deployment, never resets model/account/cash/trades or deletes evidence. Prior code can read existing accepted session schema. Operational diagnostics remain non-authoritative. Document any additional schema before release.
+The available connection cannot satisfy step 1. Consequently step 2 has no verified store target, step 4 has no actual input files and step 5 has no observed incident recovery. No credentials, sync keys, bindings, unrelated object namespaces, new endpoint or export system are requested.
 
-## Acceptance status
+## Storage verification evidence and its limits
 
-- IMPLEMENTED: pending integrated source/regression/review completion.
-- RELEASED: no; production remains200263d.
-- PRODUCTION VERIFIED: pending next ordinary scheduled processing after release, with20-minute normal observation/job budget.
-- STABILITY WINDOW COMPLETE: no; zero of five postrelease sessions observed.
+See [storage-access-metadata.json](storage-access-metadata.json).
 
-## Five-session checklist (all pending; no unattended monitor configured)
+- Incident `get_deployment(..., withGitRepoInfo=true)` confirms deployment/commit/project/team/production identity. Its returned schema contains deployment/build/Git/alias metadata but no deployment environment snapshot or runtime Blob store binding.
+- Scoped incident logs contain no `BLOB_STORE_ID` entry. The inspected opening build metadata confirms `main`/`200263d` but supplies no store binding. Archive receipts confirm observations were archived by those requests; they do not replace file contents or identify the store.
+- Non-secret workspace `BLOB_STORE_ID` is `store_qqfA6z8gVpu1EKB0`. Earlier current-project metadata showed plain `BLOB_STORE_ID=store_lC22UIsWjB8e7yXZ`, production+preview targets, unchanged since August 25. This establishes a workspace/current-project discrepancy only. **Neither ID is treated as a verified incident deployment binding.**
+- Exact case-sensitive store-detail requests under the specified team returned 404 in this connector scope. They do not establish production data loss or prove store ownership. No available tool exposes the required historical binding or a verified-store exact-object download path. No guessed-store read or alternate access-control route was attempted in this continuation.
+- The original exact-path workspace reads returned null. They are not evidence that the production book or observations are absent. The owner has not identified an alternate verified store/dataset; none is being requested or searched for.
 
-For each of five consecutive exchange trading sessions, record actual session date, expected close/early close and35-minute grace, canonical commit/release, scheduled job request/time/result, source date/record hash, revision evidence and exact economic diff classification, unchanged accepted history/accounting/stops/quantities, normal account/browser result if observed (otherwise UNKNOWN), recovery stage/retries, and final outcome. Check readiness semantically at scheduled observation hours; HTTP200/CHECK_PASSED is not purchase or private-account parity authority. A failure resets consecutive-success count after diagnosis/recovery. Holidays/weekends do not count. Never mark future rows complete.
+## Established incident facts
 
-| Session | Scheduled update/recovery | Normal account/browser | Acceptance |
+Normal production logs on November 4 at 21:18–23:48 UTC repeatedly rejected November 3→4 at `providerRevision.stage=model-parity`, with 275 changed prior closing anchors. The logs did not identify the full economic difference. Their two selected immutable observation hashes are the exact filenames above. Repeated attempts did not demonstrate recovery.
+
+Earlier normal account traffic at 19:06, 19:29, 20:28 and 20:34 UTC reported `CHECKED_ZERO_UNCONDITIONAL_BUY_ORDERS`. The later update failure does not establish the cause of the entire day's cash position.
+
+The data path remains provider validation → immutable market observation archive → revision/economic reconciliation → accepted dated book → account/opening analysis → owned browser publication. An archive is evidence, not accepted session or execution authority. Accepted history and private account records remain protected.
+
+## Released proof and compatibility
+
+Independent review on `4b809f1` found no remaining substantive implementation findings. [CI run 41959285888](https://github.com/johnvtovar67-alt/screener-app/actions/runs/41959285888) passed full audit/build/regression (171/171) and all three real Home/App browser jobs: normal, actual-screen and lifecycle-client. Matching preview `dpl_DXqHSxwPpq61NS2RvaYDKS38Gpqb` was READY with matching version before merge. Canonical release identity was verified after production became READY.
+
+Synthetic actual-module evidence covers successive repeat-confirmed benign revisions → material held-position rejection after partial durable recovery → later corrected-evidence recovery; duplicate/unacknowledged/partial writes; conflicting/stale workers; missing/corrupt archives; bounded backlog; weekend/holiday/early-close/DST/grace transitions; desktop 90-second header/body and mobile 15-second quote failures; request ownership and late-write client release. Full persisted accounting/session/capture/fill identities are preserved. Persisted model fields omit complete simulator stop state; the inspector separately replays it. These results do not substitute for November 4's actual artifacts.
+
+No price tolerance, economic acceptance exemption, strategy, sizing, concentration, stop, account, brokerage execution or accepted-history change was introduced. Recovery appends only through unchanged acceptance/CAS and retains the previous accepted checkpoint on rejection. Rollback restores previous code only; it never resets model/account/cash/trades or deletes observations. Existing historical compatibility paths and source/economic oracle hashes remain intact.
+
+## Five-session checklist — all pending
+
+For each of five consecutive exchange trading sessions, record actual session date/close/grace, canonical commit/release, ordinary job request/time/result, source date and accepted record hash, revision evidence and exact difference classification, preserved accounting/stops/quantities, normal account/browser result if observed (otherwise unknown), recovery/retry state and final outcome. Missing evidence stays unknown. A failure resets the consecutive-success count after diagnosis/recovery. Holidays/weekends do not count. Readiness HTTP 200/CHECK_PASSED is not purchase authority or private-account parity.
+
+| Session | Ordinary update/recovery | Normal account/browser | Acceptance |
 | --- | --- | --- | --- |
 | 1 | pending | unknown | pending |
 | 2 | pending | unknown | pending |
 | 3 | pending | unknown | pending |
 | 4 | pending | unknown | pending |
 | 5 | pending | unknown | pending |
-
-## Implemented transition rules and structural changes
-
-- Observation archive remains immutable, content-addressed and market-only. Duplicate create succeeds only when the complete saved envelope equals the expected record; bad hash/envelope/path/time/membership evidence fails closed. Archive presence is not acceptance.
-- Accepted model sessions and original captures remain immutable. Confirmed provider revisions still require existing exact evidence/replay/sale proofs. No price tolerance, ignored field, new exception or economic acceptance policy was added. A rejection is logical quarantine: evidence stays archived, book stays at last accepted checkpoint. This repair does not label an unknown economic revision harmless.
-- Recovery first consumes consecutive valid contemporaneous archives, deterministically selecting the latest observation by original observation timestamp (legacy reviewed captures retain their exact compatibility path). It never searches for a favorable economic result. At most five missing prior sessions plus current are attempted. Missing historical evidence prevents that transition; present-day history cannot fabricate it.
-- Each successful session crosses the original acceptance and conditional-write boundary once. Restart reads the accepted checkpoint. Duplicate observations are no-ops. Lost acknowledgements resolve only through validated rereads. A conflicting worker's winner is revalidated; no uncertain financial request is automatically replayed. Today’s independently acquired observation is preserved even when an older gap blocks acceptance.
-- A rejected current archive may receive one fresh bounded acquisition for independent confirmation. If acquisition fails, the existing rejection/diagnostic and recovered dates survive. Strict economic rejection remains blocked across retries.
-- Model-parity diagnostics compare all five existing economic fields, retain full field hashes/difference counts/digest, and log a sanitized bounded sample. They never authorize acceptance. Full local inspection can output original/revised virtual model, complete changes and separate simulator open-position/stop state. Actual private-account replay is outside these diagnostics. Missing exact incident artifacts remain a blocker.
-- API GET deadlines now include bodies and `/api` quote requests. Financial POST header/body waits end with an explicit unconfirmed outcome, never an automatic abort/retry. The original write retains release ownership through its actual full response; an earlier read cannot clear it. Late completion still needs a subsequent saved-account check before code navigation.
-- Publication diagnostics distinguish current analysis, normal35-minute closing publication, overdue source, unknown evidence and account activity pending. Accepted market date, account analysis date and expected completed date are explicit. These labels do not modify decision.current, buy checks, cash/concentration/event restrictions or quantity authority. No per-account producer failure cause is invented when unavailable.
-
-## Focused sequence evidence (synthetic, actual application modules)
-
-- Defective200263d lifecycle plus valid multi-day archives and provider timeout: no recovery attempted. Repaired lifecycle recovers archives without provider acquisition.
-- Real accept/store integration: consecutive sessions, duplicate no-op, unacknowledged commit, partial write then restart, concurrent/stale workers, missing/corrupt evidence, economically changed revision rejection and retained diagnostic after provider outage. Complete persisted accounting/session/capture identities equal uninterrupted processing. Persisted model lacks simulator stops; do not infer stop parity solely from this assertion.
-- Calendar: weekend, holiday, early close, DST, five-session bound, close/grace boundary and late publication. No invented sessions.
-- Browser focused reproduction: old financial POST header never completes; repaired90s result is visible and no duplicate POST occurs. Held quote body ends within existing15s deadline. Native mutation ownership remains through late headers/body, including timeout→earlier read→new deployment→late completion.
-- Publication fail-before: at close+35 old account copy stayed pending/reload; repaired state is overdue with explicit dates and recovery unconfirmed. Subsequent valid session recovers state without changing account revision/cash/shares/cost.
-- Full regression/audit/build, final immutable-head browser/CI results and independent final review remain pending until logged below.
-
-## Resume instructions and missing artifacts
-
-The owner confirms no alternate store or complete dataset is verified; previous evidence came from normal production logs. Verify the production binding using supported non-secret metadata before any alternate search. Do not list namespaces, retrieve keys, change bindings or bypass access controls. Obtain only the accepted market book and the two specified observation files through verified existing authorized production-store access. Null reads in the workspace store are not evidence that production lost the data.
-
-Then run the offline command with explicit local paths:
-
-```
-node tools/inspect-c1-index-transition.cjs --book work/incident-market-book.json.gz --observation work/incident-7080aa5b.json.gz --observation work/incident-995e86b9.json.gz --target 995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422 --output work/incident-inspection
-```
-
-Inspect full fills, cash, positions, queue, stops, summaries and metadata; classify each difference from evidence. If meaningful ratings/orders/quantities/risk would change, present that exact decision separately to owner. Continue supported repairs; do not waive economic checks. No unattended watch is configured by this work.
-
-## Review/CI checkpoint (superseded heads do not authorize release)
-
-Draft PR352: https://github.com/johnvtovar67-alt/screener-app/pull/352. Initial head579220f independent source review found no remaining substantive issue. CI41958144111 actual-screen and lifecycle-client jobs passed; normal job failed an old-label assertion in the existing portfolio retained-source test. That assertion now checks the renamed exact analysis-source date, independently checks expected date/CURRENT, and retains withheld-quantity checks. Build exposed the existing cron source oracle: added exact diagnostic-only inverse with original SHA untouched; focused production-access regression passes. Final revised head and all four checks remain required.
-
-Independent review requested two additional improvements: a consecutive multi-session repeat-confirmed revision→material rejection→valid recovery chain through real archive/accept/store boundaries, and typed recovered date/hash success logs for the next ordinary scheduled outcome. Both added without widening acceptance. Full initial build output is exploratory/superseded; only final-head checks count.
-
-## Final application review and second CI checkpoint
-
-Independent agent reviewed immutable application headbe3bb655629066e911727b5b5e702c71310348bb with no remaining substantive findings. All requested ownership, mixed-version, diagnostic, recovery-log and consecutive-revision findings were addressed. Local full normal real Home/App journey passed22 cases (including both90s account waits and mobile15s quote body); browser errors empty, account record identical. Focused diagnostics, archive sequence, source compatibility and freeze/canonical checks pass.
-
-CI41958553806 on that head: lifecycle-client passed; actual-screen failed before any journey because Chrome had not created DevToolsActivePort within the harness10-second startup wait (process still running, no exit/signal/log output). This is not application acceptance. A bounded startup readiness wait with early process-exit failure and unchanged journey assertions is being added; normal push, not manual job dispatch, will run the full unchanged four-job workflow. Full final CI/preview remain release gates. No production release at this checkpoint.
-
-Acceptance evidence after this committed checkpoint is recorded in PR352 and its linked exact-head CI/deployment checks. Read those actual records before updating implementation/release/production/five-session statuses. Future processing remains pending until observed.
-
-## Storage-access discrepancy: metadata findings
-
-See [storage-access-metadata.json](storage-access-metadata.json). Exact production deployment/project/team/commit were verified at baseline. Runtime non-secret workspace BLOB_STORE_ID is store_qqfA6z8gVpu1EKB0. Current production project metadata (decrypt=false) identifies BLOB_STORE_ID as store_lC22UIsWjB8e7yXZ, targeting preview+production, created/updated August25 before the incident deployment. These IDs differ. No credential variable value was retrieved or decrypted. Store-detail reads using the exact case-sensitive IDs under the specified team return404, so this connector cannot establish store ownership/connection or the deployment's snapshotted runtime binding. Existing production archive receipts remain evidence of successful archive creation, not substitutes for contents.
-
-Minimum concrete action: make an existing authorized read-only connection to the production-bound store_lC22UIsWjB8e7yXZ available to this workspace, with non-secret project/team/deployment binding verified, scoped to the fixed market book and the two known November4 observation paths. No production binding change, credential retrieval or unspecified backup search is requested. Then rerun exact-path reads and the offline inspector. November4 cause and recovery remain UNRESOLVED; PR352 must not be described as resolving that incident merely because unrelated/focused tests pass.

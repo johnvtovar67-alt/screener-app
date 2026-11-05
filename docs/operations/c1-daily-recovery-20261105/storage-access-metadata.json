@@ -34,13 +34,33 @@
       "operation": "GET /storage/stores/{id}"
     }
   },
-  "productionStoreMetadata": {
+  "conclusion": "UNRESOLVED: incident deployment identity is verified, but its historical runtime Blob authorization/store binding is not exposed by the available connection. The workspace store differs from the CURRENT PROJECT configuration only; this is not deployment-specific proof and neither candidate is a verified incident store. Earlier null exact-path reads do not prove production data loss. No credential values, namespace listing, binding changes or new export system.",
+  "minimumAction": "Use existing owner-authorized deployment/storage metadata to confirm the incident runtime store binding (or obtain that non-secret confirmation from Vercel support), then download and attach only the three exact original gzip objects using the existing dashboard. Follow owner-artifact-handoff.md. No credentials or binding changes.",
+  "checkedAt": "2026-11-05T03:32:09Z",
+  "incidentDeploymentVerification": {
+    "status": "BINDING_NOT_VERIFIED",
+    "confirmed": {
+      "deployment": "dpl_CKpneR7jSr8NPi9QxcHbinBd5AfN",
+      "commit": "200263dfae6f0ad49d6e160a1e5b70c95dc1e53d",
+      "project": "prj_9MJJaMsEfOdtQKXj4VFI7TfJcBjQ",
+      "team": "team_vBLhac1QJ54zPEiWFFK7XmGN",
+      "target": "production"
+    },
+    "availableConnection": "Vercel get_deployment with withGitRepoInfo=true",
+    "missingFields": "No deployment environment snapshot, resolved Blob store ID or runtime Blob authorization/store binding is exposed.",
+    "normalIncidentLogs": "No BLOB_STORE_ID log entries in the scoped incident deployment window; archive receipts do not identify store binding.",
+    "openingBuildMetadata": "First25 build events bind build to main/200263d but contain no Blob binding metadata.",
+    "projectConfigurationIsNotDeploymentProof": true,
+    "verifiedStoreId": null,
+    "retrievalThisContinuation": "Not attempted against a guessed/candidate store; prerequisite binding verification failed.",
+    "actualIncidentArtifactsRetrieved": 0,
+    "actualIncidentInspectorRun": false
+  },
+  "candidateProjectStoreMetadata": {
     "error": {
       "message": "Vercel API request failed (404: not_found). Blob not found.",
       "status": 404,
       "code": "not_found"
     }
-  },
-  "conclusion": "Configured workspace store differs from current production-project BLOB_STORE_ID. Project variable targets production+preview and predates the incident unchanged. Exact deployment runtime binding and direct production-store access are not established; store metadata returns404 in this connector scope. No credential decryption, object listing, or binding changes.",
-  "minimumAction": "Grant this workspace an authorized read-only connection to store_lC22UIsWjB8e7yXZ for the fixed accepted market book and two known observation paths; verify non-secret store/team/project/deployment binding in that connection. Do not change production bindings or retrieve credentials."
+  }
 }
