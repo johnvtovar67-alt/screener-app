@@ -74,7 +74,7 @@ For each of five consecutive exchange trading sessions, record actual session da
 
 ## Resume instructions and missing artifacts
 
-Obtain only the accepted market book and the two specified known observation files from the actual production archive, or correct the configured store binding through its normal reviewed configuration workflow. Do not list namespaces or retrieve keys. Current SDK fixed-path reads return null even at the supplied configured store host; no live book contents were inspected.
+The owner confirms no alternate store or complete dataset is verified; previous evidence came from normal production logs. Verify the production binding using supported non-secret metadata before any alternate search. Do not list namespaces, retrieve keys, change bindings or bypass access controls. Obtain only the accepted market book and the two specified observation files through verified existing authorized production-store access. Null reads in the workspace store are not evidence that production lost the data.
 
 Then run the offline command with explicit local paths:
 
@@ -89,3 +89,17 @@ Inspect full fills, cash, positions, queue, stops, summaries and metadata; class
 Draft PR352: https://github.com/johnvtovar67-alt/screener-app/pull/352. Initial head579220f independent source review found no remaining substantive issue. CI41958144111 actual-screen and lifecycle-client jobs passed; normal job failed an old-label assertion in the existing portfolio retained-source test. That assertion now checks the renamed exact analysis-source date, independently checks expected date/CURRENT, and retains withheld-quantity checks. Build exposed the existing cron source oracle: added exact diagnostic-only inverse with original SHA untouched; focused production-access regression passes. Final revised head and all four checks remain required.
 
 Independent review requested two additional improvements: a consecutive multi-session repeat-confirmed revision→material rejection→valid recovery chain through real archive/accept/store boundaries, and typed recovered date/hash success logs for the next ordinary scheduled outcome. Both added without widening acceptance. Full initial build output is exploratory/superseded; only final-head checks count.
+
+## Final application review and second CI checkpoint
+
+Independent agent reviewed immutable application headbe3bb655629066e911727b5b5e702c71310348bb with no remaining substantive findings. All requested ownership, mixed-version, diagnostic, recovery-log and consecutive-revision findings were addressed. Local full normal real Home/App journey passed22 cases (including both90s account waits and mobile15s quote body); browser errors empty, account record identical. Focused diagnostics, archive sequence, source compatibility and freeze/canonical checks pass.
+
+CI41958553806 on that head: lifecycle-client passed; actual-screen failed before any journey because Chrome had not created DevToolsActivePort within the harness10-second startup wait (process still running, no exit/signal/log output). This is not application acceptance. A bounded startup readiness wait with early process-exit failure and unchanged journey assertions is being added; normal push, not manual job dispatch, will run the full unchanged four-job workflow. Full final CI/preview remain release gates. No production release at this checkpoint.
+
+Acceptance evidence after this committed checkpoint is recorded in PR352 and its linked exact-head CI/deployment checks. Read those actual records before updating implementation/release/production/five-session statuses. Future processing remains pending until observed.
+
+## Storage-access discrepancy: metadata findings
+
+See [storage-access-metadata.json](storage-access-metadata.json). Exact production deployment/project/team/commit were verified at baseline. Runtime non-secret workspace BLOB_STORE_ID is store_qqfA6z8gVpu1EKB0. Current production project metadata (decrypt=false) identifies BLOB_STORE_ID as store_lC22UIsWjB8e7yXZ, targeting preview+production, created/updated August25 before the incident deployment. These IDs differ. No credential variable value was retrieved or decrypted. Store-detail reads using the exact case-sensitive IDs under the specified team return404, so this connector cannot establish store ownership/connection or the deployment's snapshotted runtime binding. Existing production archive receipts remain evidence of successful archive creation, not substitutes for contents.
+
+Minimum concrete action: make an existing authorized read-only connection to the production-bound store_lC22UIsWjB8e7yXZ available to this workspace, with non-secret project/team/deployment binding verified, scoped to the fixed market book and the two known November4 observation paths. No production binding change, credential retrieval or unspecified backup search is requested. Then rerun exact-path reads and the offline inspector. November4 cause and recovery remain UNRESOLVED; PR352 must not be described as resolving that incident merely because unrelated/focused tests pass.

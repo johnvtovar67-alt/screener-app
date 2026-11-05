@@ -1,6 +1,7 @@
 // Actual production Home/App request flow; localhost synthetic account/evidence only.
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict'),{spawn}=require('node:child_process');
 const {createWorkflowApi}=require('./fixtures/c1-trading-workflow-api.cjs');
+const {waitForBrowserStartup}=require('./c1-browser-startup.cjs');
 const root=process.cwd(),out=path.resolve(process.env.C1_NORMAL_BROWSER_EVIDENCE||'work/normal-refresh-browser');fs.mkdirSync(out,{recursive:true});
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),trace={scope:'Actual Home + App → localhost HTTP → real C1 handler / memory fixture; top5/quote bodies supplied synthetic evidence',cases:[],liveWrites:0};
 async function main(){
@@ -82,7 +83,8 @@ async function main(){
  const profile=fs.mkdtempSync(path.join(out,'profile-')),chrome=spawn(binary,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--disable-background-networking','--disable-component-update','--disable-sync','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:['ignore','ignore',fs.openSync(path.join(out,'chromium.log'),'w')]});
  let socket,accountRecordUnchanged=()=>null;
  try{
-  const portFile=path.join(profile,'DevToolsActivePort');for(let i=0;!fs.existsSync(portFile)&&i<200;i++)await pause(50);trace.browserStartup={binary,exitCode:chrome.exitCode,signal:chrome.signalCode};assert(fs.existsSync(portFile),'Chromium did not start: '+JSON.stringify(trace.browserStartup)+' '+fs.readFileSync(path.join(out,'chromium.log'),'utf8').slice(-2000));
+  const portFile=path.join(profile,'DevToolsActivePort'),startup=await waitForBrowserStartup({process:chrome,isReady:()=>fs.existsSync(portFile),timeoutMs:60000});
+  trace.browserStartup={binary,...startup};assert(startup.ready&&fs.existsSync(portFile),'Chromium did not start: '+JSON.stringify(trace.browserStartup)+' '+fs.readFileSync(path.join(out,'chromium.log'),'utf8').slice(-2000));
   const [port,endpoint]=fs.readFileSync(portFile,'utf8').trim().split('\n');socket=new WebSocket('ws://127.0.0.1:'+port+endpoint);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});
   let serial=0;const pending=new Map();trace.browserErrors=[];trace.refreshFailures=[];socket.addEventListener('message',event=>{const r=JSON.parse(event.data);if(r.method==='Runtime.exceptionThrown')trace.browserErrors.push(String(r.params?.exceptionDetails?.exception?.description||r.params?.exceptionDetails?.text||'Browser exception').split('\n')[0]);if(r.method==='Runtime.consoleAPICalled'&&r.params?.args?.[0]?.value==='C1_REFRESH_FAILURE')try{trace.refreshFailures.push(JSON.parse(r.params.args[1].value));}catch{}if(r.id&&pending.has(r.id)){const {resolve,reject}=pending.get(r.id);pending.delete(r.id);r.error?reject(Error(JSON.stringify(r.error))):resolve(r.result);}});
   const send=(method,params={},sessionId)=>new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})}));});
