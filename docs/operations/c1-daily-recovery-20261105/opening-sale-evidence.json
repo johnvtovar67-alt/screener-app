@@ -1,0 +1,384 @@
+{
+  "contract": "c1-november4-opening-sale-recovery-evidence-v1",
+  "baseCommit": "7a0d19d1759efe424517503c2d33d892f1e833dd",
+  "source": "authenticated Vercel dashboard exact-path downloads from project-connected store_lC22UIsWjB8e7yXZ",
+  "historicalDeploymentBinding": "not independently exposed; intact record/payload hashes and exact economic differences correlate to incident logs",
+  "files": [
+    {
+      "name": "7080aa5b3e56463b81199264f9427e0f97713a6de9779f6b22572af988f5b10b.json.gz",
+      "bytes": 341614,
+      "sha256": "72e38bc2d6629dde6a495512787b7814cc285fa436a5eaeb174c33a7428fe5d5"
+    },
+    {
+      "name": "995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422.json.gz",
+      "bytes": 341587,
+      "sha256": "01ab24dd7cacc1d7650bf0080665518b87a56131bf2cedf4833f8a19a9f10351"
+    },
+    {
+      "name": "sp500.json.gz",
+      "bytes": 12985865,
+      "sha256": "1b60a61b91c71d1d131e9e442897647e4624800abcf4193dbcd10a0528ec4b76"
+    }
+  ],
+  "before": {
+    "contract": "c1-offline-index-transition-inspection-v1",
+    "status": "rejected",
+    "priorRecordHash": "8c71b09c0b54b0f735913ca1bbbcd19026d8a27ec381d087fea286c5b5852cb6",
+    "previousSessionDate": "2026-11-03",
+    "currentSessionDate": "2026-11-04",
+    "observationHash": "995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422",
+    "observedAt": "2026-11-04T23:48:06.369Z",
+    "eligibleObservationHashes": [
+      "7080aa5b3e56463b81199264f9427e0f97713a6de9779f6b22572af988f5b10b",
+      "995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422"
+    ],
+    "originalInputsPreserved": true,
+    "networkRequests": 0,
+    "storageWrites": 0,
+    "privateAccountsRead": false,
+    "productionConclusion": "requires-actual-incident-artifacts",
+    "simulatorStops": "separately-replayed-local-evidence",
+    "rejection": {
+      "message": "Corporate action, removal, or price revision requires reconciliation: A",
+      "providerRevision": {
+        "stage": "model-parity",
+        "modelParity": {
+          "contract": "c1-model-parity-diagnostic-v1",
+          "comparedFields": [
+            {
+              "field": "ledger",
+              "originalHash": "3b590b02eeaa6575b5bcdd6535128e78b116ecde921f0ed3b77a9e52c2b86fdf",
+              "revisedHash": "5fe7b25a060ae9e95f44bb28dc4801948d608e90f67432b6bc40402048c8fdde",
+              "changedPathCount": 6
+            },
+            {
+              "field": "pendingBySleeve",
+              "originalHash": "0759978b2645f79366a92b385b518c7dba9e7687640a4ebebe40a2c168728a31",
+              "revisedHash": "0759978b2645f79366a92b385b518c7dba9e7687640a4ebebe40a2c168728a31",
+              "changedPathCount": 0
+            },
+            {
+              "field": "paperExecution",
+              "originalHash": "a2c84ccef2d0815525094c53da7b25649e55ae10a423573e638d4f95b16c8d6e",
+              "revisedHash": "a2c84ccef2d0815525094c53da7b25649e55ae10a423573e638d4f95b16c8d6e",
+              "changedPathCount": 0
+            },
+            {
+              "field": "paperExecutionStatus",
+              "originalHash": "0d0826c51d2aa2d9c6570bec03f6d5a77983cc5f2719b812b1e6498977ddd9ac",
+              "revisedHash": "05475faadacc740fee3838e0cbe61c337edc38cdedfd62123978d50f44bb304e",
+              "changedPathCount": 2
+            },
+            {
+              "field": "summary",
+              "originalHash": "0a4d6811d78c6f5b6798eb69e4594cf64ab4e83cc29aa20e28c1aeb0a21d2941",
+              "revisedHash": "0ac3cfb8fe5d5e2b65ef0b30cacb0adab884611ad52c3a404fa832eeb4c40164",
+              "changedPathCount": 10
+            }
+          ],
+          "changedPathCount": 18,
+          "counts": {
+            "financial-state": 14,
+            "decision-state": 4,
+            "representation-order": 0,
+            "representation-json": 0,
+            "unclassified": 0
+          },
+          "changesHash": "b679bbc100210c18293fb407a2d73c633c898351e30ba2a30ddc1f499594683a",
+          "sampleLimit": 12,
+          "sampleByteLimit": 4800,
+          "sample": [
+            {
+              "path": "/ledger/fills/28/price",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "cf1c580fef2c5ad532a19af637f2098ed021d12e041a373fed3232dd144dd0c2",
+                "value": 244.05678
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "ee8aa3d46d71d1a2417b0b0ed312e7192e2b8c2b744a828333a8553ee03dcfaf",
+                "value": 243.886984
+              }
+            },
+            {
+              "path": "/ledger/fills/31/price",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "cf1c580fef2c5ad532a19af637f2098ed021d12e041a373fed3232dd144dd0c2",
+                "value": 244.05678
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "ee8aa3d46d71d1a2417b0b0ed312e7192e2b8c2b744a828333a8553ee03dcfaf",
+                "value": 243.886984
+              }
+            },
+            {
+              "path": "/ledger/fills/34/price",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "cf1c580fef2c5ad532a19af637f2098ed021d12e041a373fed3232dd144dd0c2",
+                "value": 244.05678
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "ee8aa3d46d71d1a2417b0b0ed312e7192e2b8c2b744a828333a8553ee03dcfaf",
+                "value": 243.886984
+              }
+            },
+            {
+              "path": "/ledger/sleeves/base/cash",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "a09287c4f51023e8c192dbcdc8367cde5dfb793d55033f36b1a0718587e48a73",
+                "value": 23706.862211485073
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "52d0b4d5e6d3473f6b7e7b89bb4636c04361faa85d3930d7f96c2d5ce13c86df",
+                "value": 23701.428739485073
+              }
+            },
+            {
+              "path": "/ledger/sleeves/cooldown15/cash",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "c95594a7f404c69357129d08bf6b3ce1bc144be4de5a04c275fef9b109b3c565",
+                "value": 47413.72442297015
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "04247766fabf3f1b6d33a37f1aa9875a72415e61b339bec6c2ce23a50d721862",
+                "value": 47402.857478970145
+              }
+            },
+            {
+              "path": "/ledger/sleeves/sector40/cash",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "a09287c4f51023e8c192dbcdc8367cde5dfb793d55033f36b1a0718587e48a73",
+                "value": 23706.862211485073
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "52d0b4d5e6d3473f6b7e7b89bb4636c04361faa85d3930d7f96c2d5ce13c86df",
+                "value": 23701.428739485073
+              }
+            },
+            {
+              "path": "/paperExecutionStatus/reason",
+              "kind": "decision-state",
+              "before": {
+                "present": true,
+                "type": "null",
+                "sha256": "1c197daef20de3f47eec5e2f735ec6669869d3180cc29f35be4788511e0af0f8",
+                "value": null
+              },
+              "after": {
+                "present": true,
+                "type": "string",
+                "sha256": "eec06a03192e09bd326f42150ec334148350be2757575036a45e36eae911b19e"
+              }
+            },
+            {
+              "path": "/paperExecutionStatus/status",
+              "kind": "decision-state",
+              "before": {
+                "present": true,
+                "type": "string",
+                "sha256": "8853cda7f9889302688ebaf6535015ef600aa82852acc0fa55c10b48e8e8b251"
+              },
+              "after": {
+                "present": true,
+                "type": "string",
+                "sha256": "8dc1f5e95de17b124c10d2c5da4c9a9cd9545754ee3946bfa4ed31e0aa9a2041"
+              }
+            },
+            {
+              "path": "/summary/cash",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "89e7e9bb2894309ba401d8462d837ec5cf843e884314031f3f8e4a4bfce78326",
+                "value": 94827.4488459403
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "1319465fff0277fcf3a522b1b03df74837033a0e79a6bce8b271a06592f4486e",
+                "value": 94805.71495794029
+              }
+            },
+            {
+              "path": "/summary/combinedPortfolio/cash",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "89e7e9bb2894309ba401d8462d837ec5cf843e884314031f3f8e4a4bfce78326",
+                "value": 94827.4488459403
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "1319465fff0277fcf3a522b1b03df74837033a0e79a6bce8b271a06592f4486e",
+                "value": 94805.71495794029
+              }
+            },
+            {
+              "path": "/summary/combinedPortfolio/~20342d1760ec",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "fbcaff38b7b98a39d19649b8e8206606951d367bd2fd1ffbeaaa0b9db558665d",
+                "value": 100
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "a6c50d837c5b3825273c9711531c5cb21140703edd4f70645ef2b3a02cb84794",
+                "value": 100.00000000000001
+              }
+            },
+            {
+              "path": "/summary/combinedPortfolio/equity",
+              "kind": "financial-state",
+              "before": {
+                "present": true,
+                "type": "number",
+                "sha256": "89e7e9bb2894309ba401d8462d837ec5cf843e884314031f3f8e4a4bfce78326",
+                "value": 94827.4488459403
+              },
+              "after": {
+                "present": true,
+                "type": "number",
+                "sha256": "1319465fff0277fcf3a522b1b03df74837033a0e79a6bce8b271a06592f4486e",
+                "value": 94805.71495794029
+              }
+            }
+          ],
+          "truncated": true,
+          "interpretation": "requires-evidence-review",
+          "simulatorStops": "not-present-in-compared-model",
+          "privateAccounts": "not-compared"
+        }
+      }
+    },
+    "comparedFields": [
+      {
+        "field": "ledger",
+        "originalHash": "3b590b02eeaa6575b5bcdd6535128e78b116ecde921f0ed3b77a9e52c2b86fdf",
+        "revisedHash": "5fe7b25a060ae9e95f44bb28dc4801948d608e90f67432b6bc40402048c8fdde",
+        "changedPathCount": 6
+      },
+      {
+        "field": "pendingBySleeve",
+        "originalHash": "0759978b2645f79366a92b385b518c7dba9e7687640a4ebebe40a2c168728a31",
+        "revisedHash": "0759978b2645f79366a92b385b518c7dba9e7687640a4ebebe40a2c168728a31",
+        "changedPathCount": 0
+      },
+      {
+        "field": "paperExecution",
+        "originalHash": "a2c84ccef2d0815525094c53da7b25649e55ae10a423573e638d4f95b16c8d6e",
+        "revisedHash": "a2c84ccef2d0815525094c53da7b25649e55ae10a423573e638d4f95b16c8d6e",
+        "changedPathCount": 0
+      },
+      {
+        "field": "paperExecutionStatus",
+        "originalHash": "0d0826c51d2aa2d9c6570bec03f6d5a77983cc5f2719b812b1e6498977ddd9ac",
+        "revisedHash": "05475faadacc740fee3838e0cbe61c337edc38cdedfd62123978d50f44bb304e",
+        "changedPathCount": 2
+      },
+      {
+        "field": "summary",
+        "originalHash": "0a4d6811d78c6f5b6798eb69e4594cf64ab4e83cc29aa20e28c1aeb0a21d2941",
+        "revisedHash": "0ac3cfb8fe5d5e2b65ef0b30cacb0adab884611ad52c3a404fa832eeb4c40164",
+        "changedPathCount": 10
+      }
+    ],
+    "completeChangedPathCount": 18,
+    "completeDifferencesHash": "4e52416722185fd73a43d5f987f4af4bcc781e3a04b5150dd5f26d9a60b126ea",
+    "simulatorStateChangedPathCount": 9,
+    "simulatorStateDifferencesHash": "42903f40de354688266249432e9c2244eb1e637be59860501359b3fe9b5aa9fe"
+  },
+  "after": {
+    "contract": "c1-offline-index-transition-inspection-v1",
+    "status": "accepted",
+    "priorRecordHash": "8c71b09c0b54b0f735913ca1bbbcd19026d8a27ec381d087fea286c5b5852cb6",
+    "previousSessionDate": "2026-11-03",
+    "currentSessionDate": "2026-11-04",
+    "observationHash": "995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422",
+    "observedAt": "2026-11-04T23:48:06.369Z",
+    "eligibleObservationHashes": [
+      "7080aa5b3e56463b81199264f9427e0f97713a6de9779f6b22572af988f5b10b",
+      "995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422"
+    ],
+    "originalInputsPreserved": true,
+    "networkRequests": 0,
+    "storageWrites": 0,
+    "privateAccountsRead": false,
+    "productionConclusion": "requires-actual-incident-artifacts",
+    "simulatorStops": "separately-replayed-local-evidence",
+    "acceptedRecordHash": "b56231287e3e0f5fc8f56da1f1a607089697a7d6fce259bea70d4e1e79b2fb0d",
+    "comparedFields": [
+      {
+        "field": "ledger",
+        "originalHash": "3b590b02eeaa6575b5bcdd6535128e78b116ecde921f0ed3b77a9e52c2b86fdf",
+        "revisedHash": "5fe7b25a060ae9e95f44bb28dc4801948d608e90f67432b6bc40402048c8fdde",
+        "changedPathCount": 6
+      },
+      {
+        "field": "pendingBySleeve",
+        "originalHash": "0759978b2645f79366a92b385b518c7dba9e7687640a4ebebe40a2c168728a31",
+        "revisedHash": "0759978b2645f79366a92b385b518c7dba9e7687640a4ebebe40a2c168728a31",
+        "changedPathCount": 0
+      },
+      {
+        "field": "paperExecution",
+        "originalHash": "a2c84ccef2d0815525094c53da7b25649e55ae10a423573e638d4f95b16c8d6e",
+        "revisedHash": "a2c84ccef2d0815525094c53da7b25649e55ae10a423573e638d4f95b16c8d6e",
+        "changedPathCount": 0
+      },
+      {
+        "field": "paperExecutionStatus",
+        "originalHash": "0d0826c51d2aa2d9c6570bec03f6d5a77983cc5f2719b812b1e6498977ddd9ac",
+        "revisedHash": "05475faadacc740fee3838e0cbe61c337edc38cdedfd62123978d50f44bb304e",
+        "changedPathCount": 2
+      },
+      {
+        "field": "summary",
+        "originalHash": "0a4d6811d78c6f5b6798eb69e4594cf64ab4e83cc29aa20e28c1aeb0a21d2941",
+        "revisedHash": "0ac3cfb8fe5d5e2b65ef0b30cacb0adab884611ad52c3a404fa832eeb4c40164",
+        "changedPathCount": 10
+      }
+    ],
+    "completeChangedPathCount": 18,
+    "completeDifferencesHash": "4e52416722185fd73a43d5f987f4af4bcc781e3a04b5150dd5f26d9a60b126ea",
+    "simulatorStateChangedPathCount": 9,
+    "simulatorStateDifferencesHash": "42903f40de354688266249432e9c2244eb1e637be59860501359b3fe9b5aa9fe"
+  },
+  "privateAccountParity": "NOT_VERIFIED",
+  "productionRecovery": "NOT_OBSERVED",
+  "interpretation": "The inspector productionConclusion is a fixed conservative label; actual source artifacts were recovered and validated. Acceptance is local, not a production write. No private brokerage records, new historical experiment or provider call occurred."
+}

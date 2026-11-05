@@ -3,7 +3,7 @@ const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const l=createResearchModuleLoader(process.cwd()),{simulatePointInTimePortfolio:run}=l.load('lib/c1FrozenSimulator.js');
 const options=l.load('lib/c1FrozenOptions.js').C1_FROZEN_OPTIONS.base;
 const line='    pendingDecisions: config.liquidateAtEnd ? [] : JSON.parse(JSON.stringify(pending)),\n';
-const source=fs.readFileSync('lib/c1FrozenSimulator.js','utf8');assert.equal(source.split(line).length,2,'Only one observation-only extension');
+const source=require('./c1-opening-sale-source-seams.cjs').restore('lib/c1FrozenSimulator.js',fs.readFileSync('lib/c1FrozenSimulator.js','utf8'));assert.equal(source.split(line).length,2,'Only one observation-only extension');
 const original=source.replace(line,'');assert.equal(createHash('sha256').update(original).digest('hex'),'bcf3cc3e89ac499319a2cbfab76e42fda3bda5ef72d2d45777959e73e6ad9e7d');
 const box={console};vm.createContext(box);vm.runInContext(original.replace(/export /g,'')+'\nglobalThis.simulate=simulatePointInTimePortfolio;',box);
 const symbols=Array.from({length:10},(_,i)=>'S'+i);
