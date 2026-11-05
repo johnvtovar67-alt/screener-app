@@ -27,7 +27,7 @@ Synthetic real simulator/forward tests cover opening revisions across separate d
 
 Old-source negative control proves the former validator rejects the positive opening fixture. Old account code recognizes the unchanged audit envelope and rejects proof-v2 instead of skipping an unknown type. Existing closing proofs retain their original behavior.
 
-Only the four application entries in the release-freeze manifest change. Explicit exact inverse source seams bind old/new complete Git blobs and preserve all earlier source/economic oracle hashes and assertions. Tests still execute the current runtime separately. No guard implementation, build hook, workflow, or job requirement is removed or weakened.
+Only the four application entries in the release-freeze manifest change. Explicit exact inverse source seams bind old/new complete Git blobs and preserve all earlier source/economic oracle hashes and assertions. Tests still execute the current runtime separately. The account generator first removes only the exact observation seam before its unchanged historical hash check; its generated account code remains byte-identical. No guard implementation, build hook, workflow, or job requirement is removed or weakened.
 
 Independent review found the risk-state gap, verified its repair and added the real-output regression. Full build, dependency audit and all three browser CI jobs on the final head remain required; record their actual results in the PR before merge.
 
@@ -43,3 +43,9 @@ PRODUCTION VERIFIED: pending actual processing and accepted source-date evidence
 STABILITY WINDOW COMPLETE: pending,0/5 consecutive sessions. One manual job cannot satisfy this window.
 
 The next ordinary C1 index opportunity remains November5 at06:00 America/Chicago. The existing single06:20 read-only follow-up is separate from processing. No new recurring monitoring or additional manual job is configured by this repair. A second immediate manual run needs the owner's explicit approval because the earlier approval covered one run only.
+
+## Release follow-up
+
+Initial head4f6b29c CI41968369804 passed the actual-screen and lifecycle browser jobs and169/172 regressions; three existing generator-dependent tests failed because the observer source was not reversed before the generator's immutable historical hash. The generator now uses the same hash-bound exact inverse, retaining the original expected SHA and generated account bytes. This changes no application logic. All four jobs must pass on the revised head.
+
+The latest observation from the failed owner-authorized job was subsequently downloaded by exact pathname: observation0b98b620eb2108b2d57ae95fb2b56fef32bd3db0db21dedfb694cb428a757e21, observed2026-11-05T04:04:17.836Z, gzip341603bytes, SHA25677e1fd030a634e2e441ed523fec7ba5947690dcbf46d1519f9325253e7d98b72. It also accepts offline with the same18 model/9 simulator monetary differences and full operational-state proof; accepted local record954fc6cffafd2c95c83de7912d2e01b778bb73daf7a98190ea71c0a8bd1dff04. No favorable older observation was selected instead of the latest known one. All four original gzip files are preserved in a verified complete private archive.
