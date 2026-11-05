@@ -20,7 +20,7 @@ Complete model parity compares ledger (fills/cash/positions), pending sleeve ord
 ## Milestones
 
 1. Baseline/specification and normal-log evidence: complete.
-2. Exact incident economic reproduction: BLOCKED. Need exact accepted production market book `research/c1-dated-index-production-v1/sp500.json.gz` and at least two November 4 repeat-confirming observations from the fixed `/observations/2026-11-04/<hash>.json.gz` paths. No private holdings/key/namespace enumeration needed. Exact-path SDK read failed `fetch failed`; git/curl fail connecting to configured proxy port8080. Environment reports policy enforced and bindings ready, but actual connectivity fails; diagnostic capture metadata unavailable. Do not infer revision cause from ticker A or magnitude.
+2. Exact incident economic reproduction: BLOCKED. Need exact accepted production market book `research/c1-dated-index-production-v1/sp500.json.gz` and at least two November 4 repeat-confirming observations from the fixed `/observations/2026-11-04/<hash>.json.gz` paths. No private holdings/key/namespace enumeration needed. Initial sandboxed reads failed connecting to the configured proxy. Authorized subprocess/network execution with the inherited proxy resolved that transport issue. Exact SDK pathname and fixed configured-store URL reads now return no object (SDK null) for the accepted book and both known November4 observations995e86b9… and7080aa5b…. This establishes missing artifacts in the configured store, not their absence from actual production or harmless revisions. Diagnostic capture metadata unavailable. Do not infer revision cause from ticker A or magnitude.
 3. Archive-first bounded recovery: implementation assigned; valid archives currently cannot recover when fresh provider acquisition fails (reproduced before change).
 4. Bounded browser header/body completion: implementation assigned; POST headers and non-account GET bodies can hang beyond existing body/GET-header deadlines.
 5. Accurate source/publication window display: implementation assigned. Existing account copy remains pending/reload indefinitely beyond35-minute closing grace and freshness label calls retained source latest.
@@ -51,3 +51,35 @@ For each of five consecutive exchange trading sessions, record actual session da
 | 3 | pending | unknown | pending |
 | 4 | pending | unknown | pending |
 | 5 | pending | unknown | pending |
+
+## Implemented transition rules and structural changes
+
+- Observation archive remains immutable, content-addressed and market-only. Duplicate create succeeds only when the complete saved envelope equals the expected record; bad hash/envelope/path/time/membership evidence fails closed. Archive presence is not acceptance.
+- Accepted model sessions and original captures remain immutable. Confirmed provider revisions still require existing exact evidence/replay/sale proofs. No price tolerance, ignored field, new exception or economic acceptance policy was added. A rejection is logical quarantine: evidence stays archived, book stays at last accepted checkpoint. This repair does not label an unknown economic revision harmless.
+- Recovery first consumes consecutive valid contemporaneous archives, deterministically selecting the latest observation by original observation timestamp (legacy reviewed captures retain their exact compatibility path). It never searches for a favorable economic result. At most five missing prior sessions plus current are attempted. Missing historical evidence prevents that transition; present-day history cannot fabricate it.
+- Each successful session crosses the original acceptance and conditional-write boundary once. Restart reads the accepted checkpoint. Duplicate observations are no-ops. Lost acknowledgements resolve only through validated rereads. A conflicting worker's winner is revalidated; no uncertain financial request is automatically replayed. Today’s independently acquired observation is preserved even when an older gap blocks acceptance.
+- A rejected current archive may receive one fresh bounded acquisition for independent confirmation. If acquisition fails, the existing rejection/diagnostic and recovered dates survive. Strict economic rejection remains blocked across retries.
+- Model-parity diagnostics compare all five existing economic fields, retain full field hashes/difference counts/digest, and log a sanitized bounded sample. They never authorize acceptance. Full local inspection can output original/revised virtual model, complete changes and separate simulator open-position/stop state. Actual private-account replay is outside these diagnostics. Missing exact incident artifacts remain a blocker.
+- API GET deadlines now include bodies and `/api` quote requests. Financial POST header/body waits end with an explicit unconfirmed outcome, never an automatic abort/retry. The original write retains release ownership through its actual full response; an earlier read cannot clear it. Late completion still needs a subsequent saved-account check before code navigation.
+- Publication diagnostics distinguish current analysis, normal35-minute closing publication, overdue source, unknown evidence and account activity pending. Accepted market date, account analysis date and expected completed date are explicit. These labels do not modify decision.current, buy checks, cash/concentration/event restrictions or quantity authority. No per-account producer failure cause is invented when unavailable.
+
+## Focused sequence evidence (synthetic, actual application modules)
+
+- Defective200263d lifecycle plus valid multi-day archives and provider timeout: no recovery attempted. Repaired lifecycle recovers archives without provider acquisition.
+- Real accept/store integration: consecutive sessions, duplicate no-op, unacknowledged commit, partial write then restart, concurrent/stale workers, missing/corrupt evidence, economically changed revision rejection and retained diagnostic after provider outage. Complete persisted accounting/session/capture identities equal uninterrupted processing. Persisted model lacks simulator stops; do not infer stop parity solely from this assertion.
+- Calendar: weekend, holiday, early close, DST, five-session bound, close/grace boundary and late publication. No invented sessions.
+- Browser focused reproduction: old financial POST header never completes; repaired90s result is visible and no duplicate POST occurs. Held quote body ends within existing15s deadline. Native mutation ownership remains through late headers/body, including timeout→earlier read→new deployment→late completion.
+- Publication fail-before: at close+35 old account copy stayed pending/reload; repaired state is overdue with explicit dates and recovery unconfirmed. Subsequent valid session recovers state without changing account revision/cash/shares/cost.
+- Full regression/audit/build, final immutable-head browser/CI results and independent final review remain pending until logged below.
+
+## Resume instructions and missing artifacts
+
+Obtain only the accepted market book and the two specified known observation files from the actual production archive, or correct the configured store binding through its normal reviewed configuration workflow. Do not list namespaces or retrieve keys. Current SDK fixed-path reads return null even at the supplied configured store host; no live book contents were inspected.
+
+Then run the offline command with explicit local paths:
+
+```
+node tools/inspect-c1-index-transition.cjs --book work/incident-market-book.json.gz --observation work/incident-7080aa5b.json.gz --observation work/incident-995e86b9.json.gz --target 995e86b9c5032ff61f306d7b512337d6964d185f8ac816fa7f539e0b8d4d0422 --output work/incident-inspection
+```
+
+Inspect full fills, cash, positions, queue, stops, summaries and metadata; classify each difference from evidence. If meaningful ratings/orders/quantities/risk would change, present that exact decision separately to owner. Continue supported repairs; do not waive economic checks. No unattended watch is configured by this work.

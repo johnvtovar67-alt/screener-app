@@ -4,5 +4,7 @@ const fs=require('node:fs'),path=require('node:path');
 module.exports=function(source){
  if(process.env.C1_NORMAL_BROWSER_HOME_SOURCE&&this.resourcePath===path.resolve('pages/index.js'))
   source=fs.readFileSync(process.env.C1_NORMAL_BROWSER_HOME_SOURCE,'utf8');
+ if(process.env.C1_NORMAL_BROWSER_APP_SOURCE&&this.resourcePath===path.resolve('pages/_app.js'))
+  source=fs.readFileSync(process.env.C1_NORMAL_BROWSER_APP_SOURCE,'utf8');
  return require('./c1-workflow-babel-loader.cjs').call(this,source);
 };

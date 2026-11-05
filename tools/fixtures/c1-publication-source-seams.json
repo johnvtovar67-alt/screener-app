@@ -1,0 +1,34 @@
+{
+  "pages/index.js": {
+    "baselineBlob": "65d8137f95c2a71e28ba2e667e2148d434c29586",
+    "authorizedBlob": "dd0b5e01963955815e55bde9ea22d28e5692440f",
+    "chunks": [
+      {
+        "before": "",
+        "after": "import {c1PublicationStatus} from '../lib/c1PublicationStatus';\n"
+      },
+      {
+        "before": "",
+        "after": "  const publicationStatus=c1PublicationStatus({sourceSessionDate:accountView?.decision?.publicationStatus?.sourceSessionDate,analysisSessionDate:accountView?.decision?.sourceSessionDate,now:new Date()});\n"
+      },
+      {
+        "before": "    {[\"opportunities\",\"portfolio\"].includes(tab)&&<div className=\"refreshEvidence\" aria-label=\"Market data freshness\"><p>Latest completed signal session: {accountView?.decision?.sourceSessionDate||\"unavailable\"} \u00b7 Last application refresh: {applicationRefreshAt?applicationRefreshAt.toLocaleString([], {month:\"short\",day:\"numeric\",hour:\"numeric\",minute:\"2-digit\",second:\"2-digit\"}):\"pending\"}</p>{quoteRefreshStatus&&<p role=\"status\">{quoteRefreshStatus}</p>}</div>}\n",
+        "after": "    {[\"opportunities\",\"portfolio\"].includes(tab)&&<div className=\"refreshEvidence\" aria-label=\"Market data freshness\"><p>Analysis source session: {accountView?.decision?.sourceSessionDate||\"unavailable\"} \u00b7 Expected completed session: {publicationStatus.expectedSessionDate||\"unavailable\"} \u00b7 Last application refresh: {applicationRefreshAt?applicationRefreshAt.toLocaleString([], {month:\"short\",day:\"numeric\",hour:\"numeric\",minute:\"2-digit\",second:\"2-digit\"}):\"pending\"}</p><p role=\"status\" data-publication-state={publicationStatus.code}>{publicationStatus.message}</p>{quoteRefreshStatus&&<p role=\"status\">{quoteRefreshStatus}</p>}</div>}\n"
+      }
+    ]
+  },
+  "lib/c1AccountService.js": {
+    "baselineBlob": "fc414c25c27cafeedad017cfb8e2d5606217dcee",
+    "authorizedBlob": "b7fbc6b01ef182f697ce03eea021ae09d9635d0d",
+    "chunks": [
+      {
+        "before": "",
+        "after": "import {c1PublicationStatus} from './c1PublicationStatus';\n"
+      },
+      {
+        "before": " const updateReason=decision.current?null:latest<required?\n  `Market-data update pending for ${required}. Last completed C1 analysis: ${through}. Reload after the update completes.`:\n  `Confirm completed-session activity in Account settings to update C1 beyond ${through}.`;\n return {stockScreen,...decision,updateReason,\n",
+        "after": " const publicationStatus=c1PublicationStatus({sourceSessionDate:latest,analysisSessionDate:through,now});\n const updateReason=decision.current?null:publicationStatus.message;\n return {stockScreen,...decision,updateReason,publicationStatus,\n"
+      }
+    ]
+  }
+}

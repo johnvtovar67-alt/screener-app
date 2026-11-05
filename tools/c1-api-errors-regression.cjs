@@ -13,8 +13,11 @@ const serviceFile=path.resolve('lib/c1AccountService.js');
 const currentService=fs.readFileSync(serviceFile,'utf8');
 const originalCatch="try{stockScreen=buildC1StockScreenSnapshot(sessions.at(-1),now,book.model.sessions.filter(s=>s.date<=through));}catch{stockScreen={contract:'c1-stock-screen-v1',sourceSessionDate:sessions.at(-1).date,candidates:[]};}";
 const oldService=currentService.replace(/try\{stockScreen=buildC1StockScreenSnapshot[\s\S]*?\n \}/,originalCatch);
+// Hash-only compatibility reversal. Runtime comparisons retain the new
+// publication annotation on both sides and compare complete service outputs.
+const historicalService=require('./c1-publication-source-seams.cjs').restore('lib/c1AccountService.js',currentService).replace(/try\{stockScreen=buildC1StockScreenSnapshot[\s\S]*?\n \}/,originalCatch);
 const hash=require('node:crypto').createHash;
-assert.equal(hash('sha1').update('blob '+Buffer.byteLength(oldService)+'\0').update(oldService).digest('hex'),'4ae7a2e61f47bddc78404b85e6423eda4c5b82c9','Exact reversal recovers original service; no other account behavior changes');
+assert.equal(hash('sha1').update('blob '+Buffer.byteLength(historicalService)+'\0').update(historicalService).digest('hex'),'4ae7a2e61f47bddc78404b85e6423eda4c5b82c9','Exact reversal recovers original service; no other account behavior changes');
 function screenService(builder,source=currentService){
  const imports={},names=[...source.matchAll(/export function (\w+)/g)].map(m=>m[1]);
  const code=source.replace(/import\s*{([^}]+)}\s*from\s*['"]([^'"]+)['"];?/g,(_,spec,request)=>{

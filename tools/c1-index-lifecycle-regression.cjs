@@ -17,7 +17,7 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
   assert.equal(cached.status,'already-current');assert.equal(collections,0);assert.equal(connections,0);
   const advanced = await box.run({...dependencies,prepare:async()=>({sourceSessionDate:'2026-09-10'})});
   assert.equal(advanced.status,'advanced');assert.equal(collections,1);assert.equal(connections,1);
-  assert.equal(stages.join(','),'prepare,prepare,collect,archive,connect');
+  assert.equal(stages.join(','),'prepare,prepare,archive-read,collect,archive,connect');
   assert.equal(archived.length,1);
   await assert.rejects(()=>box.run({...dependencies,prepare:async()=>{throw new Error('Changed seed');}}),/Changed seed/);
   assert.equal(collections,1,'Seed integrity is checked before provider calls');
@@ -38,7 +38,7 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
     readObservations:async day=>[{sourceSessionDate:day,observationHash:'a'.repeat(64),observedAt:day+'T22:00:00Z',payload:{sourceSessionDate:day}}],
     connect:async(input,options)=>{replay.push([input.sourceSessionDate,options.now.toISOString()]);return input;}};
   const caughtUp=await box.run(recoveryDeps);
-  assert.equal(caughtUp.recovered.length,2);
+  assert.equal(caughtUp.recovered.length,3,'The current archived session also recovers without a new provider collection');
   assert.equal(replay.map(r=>r[0]).join(','),'2026-09-11,2026-09-14,2026-09-15');
   assert.equal(replay[0][1],'2026-09-11T22:00:00.000Z','Original observation time, no invented historical input');
   await assert.rejects(()=>box.run({...recoveryDeps,readObservations:async()=>[]}),/Missing archived index session/);
@@ -56,7 +56,8 @@ vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1I
   assert.equal(reviewedConnections,1);
   await assert.rejects(()=>box.run({...reviewedDeps,readObservations:async()=>[newerCapture]}),/Reviewed index observation unavailable/);
   await assert.rejects(()=>box.run({...reviewedDeps,connect:async()=>{throw new Error('Economic parity rejected');}}),/Economic parity rejected/);
-  await assert.rejects(()=>box.run({...reviewedDeps,prepare:async()=>({sourceSessionDate:'2026-09-16',recordHash:'different'})}),/Must recover/);
+  await assert.rejects(()=>box.run({...reviewedDeps,prepare:async()=>({sourceSessionDate:'2026-09-16',recordHash:'different'}),
+    connect:async input=>{assert.equal(input,newerCapture.payload,'An unrelated record follows deterministic latest evidence, never the legacy reviewed hash');throw new Error('Unreviewed observation rejected');}}),/Unreviewed observation rejected/);
 
   let calls=0; const logs=[];
   const route={Buffer,timingSafeEqual,console:{info:(...args)=>logs.push(args.join(' ')),error:(...args)=>logs.push(args.join(' '))},process:{env:{CRON_SECRET:'test-secret'}},refreshC1Index:async()=>{calls++;return {status:'advanced',decisionSnapshot:{decisionId:'same'}};}};

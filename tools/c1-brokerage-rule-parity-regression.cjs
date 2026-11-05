@@ -147,7 +147,7 @@ function withoutRecordedSaleFinalization(source){
  return source;
 }
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
-  const source = Buffer.from(require('./c1-opening-quote-repair-seams.cjs').restore(file,require('./c1-initial-swing-stop-seams.cjs').restoreInitialSwingStopPolicy(fs.readFileSync(path.join(root, file),'utf8'),file)));
+  const source = Buffer.from(require('./c1-archive-recovery-source-seams.cjs').restore(file,require('./c1-opening-quote-repair-seams.cjs').restore(file,require('./c1-initial-swing-stop-seams.cjs').restoreInitialSwingStopPolicy(fs.readFileSync(path.join(root, file),'utf8'),file))));
   const comparable = file === 'lib/c1AccountInput.js' ? withoutRecordedSaleFinalization(source.toString('utf8')) : file === 'lib/c1OpeningPriceReview.js' ? withoutOpeningRevisionPolicyRepair(source.toString('utf8')) :
     file === 'lib/c1AccountSimulator.js' ?
     require('./c1-simulator-accounting-extraction.cjs').restoreSimulatorAccounting(source.toString('utf8')) :
@@ -255,8 +255,22 @@ const cashFields = new Set(['strategyCash', 'brokerageCash', 'executableCash',
   'brokerageCashCurrent', 'brokerageCashObservedAt', 'brokerageCashStatus',
   'brokerageCashReason', 'cashAuthority', 'cashBlockedOrders', 'purchaseFundingPolicy','additionalSwingCapacity']);
 function withoutCashOverlay(value, rawPlan = false) {
+  // The owner requested accurate publication state. Reverse only this fixed,
+  // independently tested non-authority annotation; every pre-existing economic
+  // and decision field remains in the unchanged historical comparison.
+  if (!rawPlan) {
+    const status = value.publicationStatus;
+    assert.deepEqual(Object.keys(status).sort(), ['analysisSessionDate','code','contract','executable','expectedSessionDate','message','sourceSessionDate'].sort());
+    assert.equal(status.contract, 'c1-publication-status-v1');
+    assert.equal(status.executable, false);
+    assert.equal(status.code, 'CURRENT');
+    assert.equal(status.analysisSessionDate, value.sourceSessionDate);
+    assert.equal(status.sourceSessionDate, book.model.sessions.at(-1).date);
+    assert.equal(status.expectedSessionDate, current.load('lib/marketSession.js').latestCompletedMarketSessionDay(now));
+    assert.equal(status.message, `Analysis is current for completed session ${value.sourceSessionDate}.`);
+  }
   const original = Object.fromEntries(Object.entries(value).filter(([key]) =>
-    !cashFields.has(key) && !(rawPlan && key === 'actualCash')));
+    !cashFields.has(key) && !(rawPlan && key === 'actualCash') && !(key === 'publicationStatus' && !rawPlan)));
   // The owner authorized this new read-only portfolio annotation. Keep every
   // pre-existing action, economic and risk field in the pinned comparison.
   if (!rawPlan && Array.isArray(original.positions)) original.positions = original.positions.map(position => {

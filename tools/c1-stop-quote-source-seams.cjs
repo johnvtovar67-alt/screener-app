@@ -4,6 +4,7 @@ const assert=require('node:assert/strict'),crypto=require('node:crypto');
 const seams=require('./fixtures/c1-stop-quote-source-seams.json');
 const blob=s=>crypto.createHash('sha1').update('blob '+Buffer.byteLength(s)+'\0').update(s).digest('hex');
 function restore(file,source){
+ source=require('./c1-publication-source-seams.cjs').restore(file,source);
  const record=seams[file];if(!record||blob(source)===record.baselineBlob)return source;
  assert.equal(blob(source),record.authorizedBlob,'Complete authorized quote-only repair: '+file);
  for(const {before,after}of [...record.chunks].reverse()){

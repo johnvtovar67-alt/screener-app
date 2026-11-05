@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { refreshC1Index } from '../../../lib/c1IndexLifecycle';
 import {observeC1ScheduledReadiness} from '../../../lib/c1ReadinessProbe';
+import {safeC1ModelParityDiagnostic} from '../../../lib/c1ModelParityDiagnostic';
 
 // Only application-owned messages enter logs. Never log arbitrary SDK errors,
 // request headers, provider URLs/bodies, credentials, or portfolio data.
@@ -26,6 +27,11 @@ function failureDetail(error) {
     'Dated model write conflict',
     'Current provider observation required for archive',
     'Index observation archive unavailable',
+    'Index observation archive integrity failed',
+    'Index observation recovery limit exceeded',
+    'Invalid index observation recovery date',
+    'Index recovery exceeds five missing sessions; original preserved',
+    'Reviewed index observation unavailable; original preserved',
     'Index membership count is outside the declared range',
     'Invalid or duplicate index member',
     'Input observation timestamp is required',
@@ -46,6 +52,7 @@ function failureDetail(error) {
     'Execution before first eligible opening'
   ];
   if (known.includes(message)) return message;
+  if (/^Missing archived index session: \d{4}-\d{2}-\d{2}; no historical membership backfill$/.test(message)) return message;
   if (/^Market data provider returned HTTP [1-5][0-9]{2}$/.test(message)) return message;
   if (/^(Corporate action, removal, or price revision requires reconciliation: |Provider returned malformed price rows for |Current sector is missing for |Price history is missing for |Invalid, unordered, or unadjusted price history for |Current completed price is missing for |Price history contains a session gap for )[A-Z0-9.^-]{1,20}$/.test(message)) return message;
   const name = ['BlobError', 'BlobAccessError', 'BlobNotFoundError', 'BlobStoreNotFoundError',
@@ -82,8 +89,9 @@ function revisionDiagnostic(error) {
   if (!detail || !stages.includes(detail.stage) ||
       (detail.unconfirmedCount !== undefined && (!Number.isInteger(detail.unconfirmedCount) ||
        detail.unconfirmedCount < 0 || detail.unconfirmedCount > 600))) return undefined;
+  const modelParity = detail.stage === 'model-parity' ? safeC1ModelParityDiagnostic(detail.modelParity) : undefined;
   return { stage: detail.stage, ...(detail.unconfirmedCount === undefined ? {} :
-    { unconfirmedCount: detail.unconfirmedCount }) };
+    { unconfirmedCount: detail.unconfirmedCount }), ...(modelParity ? {modelParity} : {}) };
 }
 
 export const config = { maxDuration: 300 };
@@ -93,6 +101,14 @@ function observationDiagnostic(receipt) {
       !/^[a-f0-9]{64}$/.test(receipt.observationHash || '') ||
       !/^\d{4}-\d{2}-\d{2}$/.test(receipt.sourceSessionDate || '') || receipt.acceptedModelInput !== false) return undefined;
   return { observationHash: receipt.observationHash, sourceSessionDate: receipt.sourceSessionDate, acceptedModelInput: false };
+}
+function recoveryDiagnostic(error) {
+  const r=error?.indexRecovery,date=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v);
+  if(r?.state!=='blocked'||!date(r.sessionDate)||!['failed','archived'].includes(r.acquisition)||
+      !Array.isArray(r.recoveredSessionDates)||r.recoveredSessionDates.length>6||
+      !r.recoveredSessionDates.every(date)||new Set(r.recoveredSessionDates).size!==r.recoveredSessionDates.length||
+      r.recoveredSessionDates.some((day,i)=>day>r.sessionDate||(i&&day<=r.recoveredSessionDates[i-1])))return undefined;
+  return {state:'blocked',sessionDate:r.sessionDate,acquisition:r.acquisition,recoveredSessionDates:[...r.recoveredSessionDates]};
 }
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -127,6 +143,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('[c1-index]', JSON.stringify({ status: 'failed', stage, reason: failureDetail(error),
       providerRevision: revisionDiagnostic(error), priceAnchors: anchorDiagnostic(error),
+      recovery: recoveryDiagnostic(error),
       observation: observationDiagnostic(error?.indexObservation) }));
     if(Date.now()-startedAt<280000)await observeC1ScheduledReadiness({indexFailed:true,deadlineMs:Math.min(Date.now()+25000,startedAt+290000)});
     return res.status(503).json({ status: 'index-unavailable', executable: false,

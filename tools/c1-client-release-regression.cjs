@@ -25,6 +25,21 @@ async function main(){
  const observed=observe(Promise.resolve(response),state=>settlements.push(state),{setTimer:writing.setTimer,clearTimer:writing.clearTimer});assert.equal(await observed,response);assert.equal(settlements.length,0,'Headers cannot finish a save observation');
  controller.enqueue(new TextEncoder().encode('PRIVATE_BODY_SENTINEL'));controller.close();await new Promise(resolve=>setTimeout(resolve,15));assert.equal(settlements.length,1);assert.equal(settlements[0].unconfirmed,false);assert.equal(await response.text(),'PRIVATE_BODY_SENTINEL','The original response is unconsumed and unchanged');
  const timeout=fixture(),states=[];let retries=0;await observe(Promise.resolve(new Response(new ReadableStream({start(){}}))),s=>states.push(s),{setTimer:timeout.setTimer,clearTimer:timeout.clearTimer,timeoutMs:20});timeout.flush();assert.equal(states[0].unconfirmed,true);assert.equal(retries,0);
+ // An early verified read cannot resolve a write whose native request or
+ // complete body is still running after the UI has stopped waiting.
+ for(const phase of ['headers','body']){
+  const pendingWrite=fixture();let resolveHeaders,completeBody;
+  const stream=new ReadableStream({start(controller){completeBody=controller;}}),lateResponse=new Response(stream);
+  const native=phase==='headers'?new Promise(resolve=>{resolveHeaders=resolve;}):Promise.resolve(lateResponse);
+  const observedWrite=observe(native,pendingWrite.guard.beginMutation(),{setTimer:pendingWrite.setTimer,clearTimer:pendingWrite.clearTimer,timeoutMs:20});
+  await pendingWrite.guard.check();pendingWrite.flush();pendingWrite.win.emit('c1-account-read-observed');pendingWrite.flush();
+  assert.equal(pendingWrite.guard.state().writes,1,'Deadline retains unresolved native write ownership');assert.equal(pendingWrite.navigations,0,'Read before late outcome cannot authorize navigation');
+  if(resolveHeaders)resolveHeaders(lateResponse);await observedWrite;
+  pendingWrite.win.emit('c1-account-read-observed');pendingWrite.flush();assert.equal(pendingWrite.navigations,0,'Headers alone cannot release body ownership');
+  completeBody.enqueue(new TextEncoder().encode('PRIVATE_BODY_SENTINEL'));completeBody.close();await new Promise(resolve=>setTimeout(resolve,15));pendingWrite.flush();
+  assert.equal(pendingWrite.guard.state().writes,0);assert.equal(pendingWrite.navigations,0,'Timed-out result requires a read after its complete outcome');
+  pendingWrite.win.emit('c1-account-read-observed');pendingWrite.flush();assert.equal(pendingWrite.navigations,1);pendingWrite.guard.destroy();
+ }
  // Reproduce the mobile post-header stall against the actual helper. A
  // deadline must settle without awaiting a permanently unresolved body.
  let versionReads=0;
