@@ -92,9 +92,9 @@ try{
  assert.match(flatCard,/<h3>BBB<\/h3><b>NO PURCHASE<\/b>/);
  assert.match(flatCard,/earlier purchase plan closed with the sale/i);
  assert.doesNotMatch(flatCard,/planned position is complete|Buy \d+ shares/i);
- const completePlan={...noOrders,entryReviews:[{symbol:'BBB',reason:'target-complete'}]};
- const completed=render({openingPlan:completePlan,manualRecommendations:buildC1ManualRecommendations({decision,openingPlan:completePlan})});
- assert.match(article(section(completed,'C1 account opportunities'),'BBB'),/earlier purchase plan is complete/i);
+ const flatCompletedTargetPlan={...noOrders,entryReviews:[{symbol:'BBB',reason:'target-complete'}]};
+ const flatTargetHtml=render({openingPlan:flatCompletedTargetPlan,manualRecommendations:buildC1ManualRecommendations({decision,openingPlan:flatCompletedTargetPlan})});
+ assert.match(article(section(flatTargetHtml,'C1 account opportunities'),'BBB'),/earlier purchase plan is complete/i);
  // The original checked 2-share purchase fixture still shows Strong Buy.
  const {c1CashAvailability}=loader.load('lib/c1BrokerageCash.js');
  const {c1OpportunityPresentation}=loader.load('lib/c1EntryReview.js');
