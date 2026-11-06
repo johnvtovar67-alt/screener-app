@@ -118,6 +118,15 @@ function client(fetcher){
  delayed.state.view={decision:{decisionId:'newer:5'}};
  finishOpening({ok:true,json:async()=>execution});await pendingOpening;
  assert.equal(delayed.state.view.decision.decisionId,'newer:5');
+ for(const interrupted of [false,true]){
+  let reply;
+  const changedScreen=client(async()=>new Promise((resolve,reject)=>{reply=()=>interrupted?reject(new TypeError('Load failed')):resolve({ok:true,json:async()=>execution});}));
+  const pending=changedScreen.box.prepareC1Execution(analysis);
+  changedScreen.box.screenRequestId.current++;
+  changedScreen.state.view={decision:{decisionId:'new-screen'}};
+  reply();await pending;
+  assert.equal(changedScreen.state.view.decision.decisionId,'new-screen','Superseded success and interrupted reads cannot publish');
+ }
  const closed=client(async()=>{throw new Error('No opening request for stale analysis');});
  await closed.box.prepareC1Execution({decision:{current:false}});
  let finishRecovery;

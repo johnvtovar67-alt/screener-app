@@ -203,10 +203,11 @@ export default function Home(){
     if(!view?.decision?.current)return view;
     const requestId=accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
     if(!key)return;
+    const screenOwner=screenRequestId.current;
+    const isCurrent=()=>requestId===accountRequestId.current&&screenOwner===screenRequestId.current&&localStorage.getItem(SYNC_KEY)===key;
     try{
-      const screenOwner=screenRequestId.current;
-      const {response:r,execution}=await readC1OpeningReview(key,()=>requestId===accountRequestId.current&&screenOwner===screenRequestId.current&&localStorage.getItem(SYNC_KEY)===key,fetch);
-      if(requestId!==accountRequestId.current||localStorage.getItem(SYNC_KEY)!==key)return;
+      const {response:r,execution}=await readC1OpeningReview(key,isCurrent,fetch);
+      if(!isCurrent())return;
       if(!r.ok)throw new Error(execution.error||'Opening checks unavailable.');
       if(execution.decision?.decisionId!==view.decision.decisionId||execution.decision?.revision!==view.decision.revision){
         observeStopOwnership(null);
@@ -216,7 +217,7 @@ export default function Home(){
       const completed=inheritC1JourneyReceipt({...execution,decision:view.decision},execution);
       publish({view:completed});return completed;
     }catch(error){
-      if(requestId===accountRequestId.current&&localStorage.getItem(SYNC_KEY)===key){const paused=inheritC1JourneyReceipt({...view,openingError:error.message},view);publish({view:paused});return paused;}
+      if(isCurrent()){const paused=inheritC1JourneyReceipt({...view,openingError:error.message},view);publish({view:paused});return paused;}
     }
   }
   async function recoverC1Account(){
@@ -839,7 +840,7 @@ export default function Home(){
       <ul>{portfolio.filter(row=>row.role==='Swing'&&!CASH.includes(sym(row))).map(held=>{
         const decision=stopOwnershipCurrent?accountView?.decision:null,position=decision?.positions?.find(row=>row.symbol===sym(held));
         const stock=stopQuoteRow(results.find(row=>sym(row)===sym(held))||stocks.find(row=>sym(row)===sym(held))||held);
-        const presentation=c1PositionPresentation({decision,position,symbol:sym(held),stock,executionDecision:accountView?.executionDecision,now:new Date()});
+        const presentation=c1PositionPresentation({requireOpeningReview:true,decision,position,symbol:sym(held),stock,executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations:accountView?.manualRecommendations,now:new Date()});
         const instruction=c1RecordedSellInstruction(position,presentation);
         return <li key={sym(held)}><b>{sym(held)}: {presentation.label}</b> <span>{presentation.reason}</span> <small>Quote observed: {presentation.quoteAt||presentation.quoteStatus?.quoteAt||'unavailable'}.</small> {position?.stops?.length>0&&<small>Recorded stops: {position.stops.map(stop=>`${money(stop.price)} (${stop.shares} shares)`).join(" · ")}.</small>} {presentation.quoteVerified&&<span>Verified price: {money(presentation.quotePrice)}.</span>} {instruction&&<span>{instruction.next} {instruction.status}</span>} <button type="button" aria-label={'Verify stop now for '+sym(held)} disabled={!stopBinding||stopVerifying[sym(held)]} onClick={()=>verifyStopNow(sym(held))}>{stopVerifying[sym(held)]?'Verifying stop…':'Verify stop now'}</button> {stopVerificationStatus[sym(held)]&&<p role="status">{stopVerificationStatus[sym(held)].binding===stopBinding?stopVerificationStatus[sym(held)].message:'The page refreshed after the last check. The current stop status is shown above.'}</p>}</li>;
       })}</ul>

@@ -23,11 +23,11 @@ function createWorkflowApi(kind='buy',options={}){
   collectHoldings:never,collectRanks:never,store:{read:async()=>({record:fixture.account,etag}),write:async(_path,record,expected)=>{
    if(expected!==etag)throw Error('Fixture ETag conflict');fixture.persist(record);etag='"fixture-'+fixture.writes+'"';
   }}});
- return {fixture,requests,async request(method,body,authorized=true){
+ return {fixture,requests,async request(method,body,authorized=true,query={}){
   requests.push({method,operation:body?.operation||null});
   fixture.advance();let status=200,value;const headers={};
   const res={setHeader(name,value){headers[name]=value;},status(code){status=code;return this;},json(body){value=body;return this;}};
-  await handler({method,body,headers:authorized?{authorization:'Bearer offline_workflow_fixture_key_000001'}:{}},res);
+  await handler({method,body,query,headers:authorized?{authorization:'Bearer offline_workflow_fixture_key_000001'}:{}},res);
   return {status,headers,body:{...value,testClock:fixture.now.toISOString(),testPortfolio:fixture.adoptionPortfolioRecord?.portfolio||fixture.portfolio,testScreenRows:fixture.screenRows()}};
  }};
 }

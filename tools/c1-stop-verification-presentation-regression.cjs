@@ -72,8 +72,14 @@ equal(present(args(position({role:'Core'}),quote(228,{role:'Core'}))),null,'Core
  const review={policy:'c1-owner-authorized-manual-20260911',status:'ready',date:plan.date,sourceSessionDate:plan.sourceSessionDate,
   observedAt:plan.observedAt,validUntil:'2026-11-03T16:01:00Z',decisionId:input.decision.decisionId,revision:input.decision.revision,orders:[order]};
  equal(present({...input,openingPlan:plan,manualRecommendations:review}).label,'SELL','Current opening exit appears');
+ equal(sell(input.position,present({...input,openingPlan:plan,manualRecommendations:review})).shares,10,'Only the checked opening exit sleeve supplies its ten shares');
  for(const patch of [{},{openingPlan:null,manualRecommendations:{status:'waiting'}},
   {openingPlan:plan,manualRecommendations:{...review,validUntil:now.toISOString()}},
+  {openingPlan:{...plan,providerVerified:false},manualRecommendations:review},
+  {openingPlan:{...plan,sourceSessionDate:'2026-10-30'},manualRecommendations:review},
+  {openingPlan:{...plan,observedAt:'2026-11-03T15:59:10Z'},manualRecommendations:review},
+  {openingPlan:plan,manualRecommendations:{...review,orders:[{...order,sleeve:'sector40'}]}},
+  {openingPlan:plan,manualRecommendations:{...review,orders:[order,{...order,id:'second',sleeve:'sector40'}]}},
   {openingPlan:plan,manualRecommendations:{...review,orders:[]}},
   {openingPlan:{...plan,orders:[]},manualRecommendations:review}]){
   equal(present({...input,...patch}).label,'EXIT REVIEW PENDING','An unavailable or inconsistent review cannot publish HOLD');

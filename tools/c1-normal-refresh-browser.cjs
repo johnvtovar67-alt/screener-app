@@ -25,7 +25,7 @@ async function main(){
   let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):null,url=new URL(req.url,'http://127.0.0.1');
   const json=(data,status=200)=>{res.writeHead(status,{'content-type':'application/json','x-fixture-clock':api.fixture.now.toISOString()});res.end(JSON.stringify(data));};
   if(url.pathname==='/__control'){state.fail=body.fail;if(Object.hasOwn(body,'shadowOwnership'))state.shadowOwnership=body.shadowOwnership;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
-  if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,symbol:url.searchParams.get('symbol'),finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
+  if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,review:url.searchParams.get('review'),symbol:url.searchParams.get('symbol'),finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
   const target=state.fail&&!state.fail.startsWith('stop-quote-')&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:['version-body-hold','version-unavailable'].includes(state.fail)?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
   if(target){
    const mode=state.fail;
@@ -33,6 +33,12 @@ async function main(){
    if(mode==='screen-hold'){const captured=await readScreen(Object.fromEntries(url.searchParams));await new Promise(resolve=>state.held.push(resolve));return json(captured.body,captured.status);}
    if(mode==='cash-response-lost'){const captured=await api.request(req.method,body,true);assert.equal(captured.status,200,'Synthetic cash mutation genuinely committed through the real handler');for(const[name,value]of Object.entries(captured.headers))res.setHeader(name,value);res.writeHead(200,{'content-type':'application/json','content-length':100000});res.write('{"decision":');await pause(100);res.destroy();return;}
    if(['screen-body-after-handler','screen-interrupted-after-handler'].includes(mode)){const captured=await readScreen(Object.fromEntries(url.searchParams));assert.equal(captured.status,200);for(const[name,value]of Object.entries(captured.headers))res.setHeader(name,value);res.writeHead(200,{'content-type':'application/json',...(mode==='screen-interrupted-after-handler'?{'content-length':100000}:{})});res.write('{"stocks":');if(mode==='screen-interrupted-after-handler'){await pause(100);res.destroy();}else res.end();return;}
+   if(mode==='opening-response-lost'){
+    const captured=await api.request(req.method,body,true);
+    assert.equal(captured.status,200);
+    res.writeHead(200,{'content-type':'application/json','content-length':100000});
+    res.write('{"decision":');await pause(100);res.destroy();return;
+   }
    if(mode==='opening-hold'){const captured=await api.request(req.method,body,true);await new Promise(resolve=>state.held.push(resolve));return json(captured.body,captured.status);}
    if(mode==='opening-body-hold'){const captured=await api.request(req.method,body,true),serialized=JSON.stringify(captured.body);res.writeHead(captured.status,{'content-type':'application/json','content-length':Buffer.byteLength(serialized),'x-fixture-clock':api.fixture.now.toISOString()});res.write(serialized.slice(0,12));await new Promise(resolve=>state.held.push(resolve));res.end(serialized.slice(12));return;}
    if(mode==='quote-body-hold'){res.writeHead(200,{'content-type':'application/json','content-length':100000});res.write('{"stock":');await new Promise(resolve=>state.held.push(resolve));res.end();return;}
@@ -52,7 +58,7 @@ async function main(){
    else return json({error:'Synthetic verification unavailable',detail:'Synthetic verification unavailable'},mode==='account-inputs-conflict'?409:503);
   }
   if(url.pathname==='/api/c1-journey-observation'){let status=200,value;await observationHandler({method:req.method,headers:req.headers,body},{setHeader(){},status(code){status=code;return this;},json(data){value=data;return this;}});return json(value,status);}
-  if(url.pathname==='/api/c1-account'){const result=await api.request(req.method,body,req.headers.authorization==='Bearer offline_workflow_fixture_key_000001');if(state.shadowOwnership&&req.method==='GET'&&result.status===200)result.body={...result.body,decision:{...result.body.decision,revision:result.body.decision.revision+1,positions:result.body.decision.positions.map(position=>position.symbol==='LLL'?{...position,shares:5,stops:position.stops.map(stop=>({...stop,shares:5}))}:position)}};for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
+  if(url.pathname==='/api/c1-account'){const result=await api.request(req.method,body,req.headers.authorization==='Bearer offline_workflow_fixture_key_000001',Object.fromEntries(url.searchParams));if(state.shadowOwnership&&req.method==='GET'&&result.status===200)result.body={...result.body,decision:{...result.body.decision,revision:result.body.decision.revision+1,positions:result.body.decision.positions.map(position=>position.symbol==='LLL'?{...position,shares:5,stops:position.stops.map(stop=>({...stop,shares:5}))}:position)}};for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
   if(url.pathname==='/api/top5'){const result=await readScreen(Object.fromEntries(url.searchParams));for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
   if(url.pathname==='/api/performance')return json({records:actualScreen?.ledger()?.records||[],persistentStorage:true});
   if(url.pathname==='/api/entry-timing')return json({timing:Object.fromEntries(api.fixture.screenRows().map(row=>[row.symbol,row.entryTiming]))});
@@ -243,6 +249,17 @@ async function main(){
    trace.cases.push({failure:'overlap-before-cloud-read',supersededIntentNoDownstreamRequests:true,newerRefreshRetained:true,automaticMutationRetries:0,accountRecordIdentical:true});
   }
   if(advanced.includes('body-timeout')){
+   trace.activeCase='opening-response-lost';
+   await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Ready before lost opening response');
+   await control('opening-response-lost');const recoveryCursor=requests.length;
+   await settledReload();
+   await requestSeen(recoveryCursor,r=>r.method==='GET'&&r.review==='opening'&&r.finished,'Read-only opening recovery completed');
+   await wait('/Buy \\d+ shares/.test(document.body.innerText)','Verified review published after lost response');
+   const recoveryRequests=requests.slice(recoveryCursor);
+   assert.equal(recoveryRequests.filter(r=>r.operation==='prepare-execution').length,1,'Uncertain POST is never replayed');
+   assert.equal(recoveryRequests.filter(r=>r.review==='opening').length,1,'Exactly one read-only recovery');
+   assert.equal(JSON.stringify(api.fixture.account),baseline);
+   trace.cases.push({failure:'opening-response-lost',verifiedReviewPublished:true,openingReadRecovery:1,automaticMutationRetries:0,accountRecordIdentical:true});
    trace.activeCase='opening-body-timeout';await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Ready before body stall');await control('opening-body-hold');const cursor=requests.length,started=Date.now();await click('Reload');
    for(let i=0;i<200&&!state.held.length;i++)await pause(25);assert(state.held.length,'Real opening response delivered headers with held body');
    await wait('document.querySelector("header button")?.textContent==="Reload"','90s account body deadline settles the normal refresh',105000);
