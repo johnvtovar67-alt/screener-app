@@ -28,3 +28,20 @@ check(s=>{delete s.at(-1).signals[0].entryTiming.macdImproving;},'MACD_MISSING',
 check(s=>{s.at(-1).signals[0].entryTiming.asOf=days[4];},'TIMING_DATE',source);
 check(s=>{s.at(-1).signals[0].entryTiming.available=false;},'TIMING_MISSING',source);
 console.log('PASS: precise dated momentum blockers are isolated by issuer and clear on complete accepted inputs.');
+const {c1MomentumWatchReview}=loader.load('lib/c1MarketMomentumIssues.js');
+const review={why:'Verified recent-momentum evidence is unavailable; fresh purchases and additions are paused.', next:'Dated evidence is missing.'};
+function windowReview(sourceSessionDate,missingInputs){
+ return c1MomentumWatchReview(review,{recentMomentumGate:{sourceSessionDate,available:false,missingInputs}},sourceSessionDate);
+}
+const absent=(...dates)=>dates.map(date=>({date,code:'CLOSE_MISSING'}));
+const waiting=windowReview('2026-11-05',absent('2026-10-29','2026-10-30','2026-11-02'));
+assert.match(waiting.why,/3 of the 6/);assert.match(waiting.next,/after the Nov 10 close/);
+assert.match(waiting.next,/Oct 29, Oct 30, Nov 2/);
+assert.match(windowReview('2026-11-06',absent('2026-10-30','2026-11-02')).why,/4 of the 6/);
+assert.match(windowReview('2026-11-09',absent('2026-11-02')).next,/Nov 10 close/);
+assert.match(windowReview('2026-11-25',absent('2026-11-18')).next,/Nov 27 close/);
+assert.equal(windowReview('2026-11-05',[...absent('2026-10-29'),{date:'2026-11-05',code:'MACD_MISSING'}]),review);
+assert.equal(windowReview('2026-11-05',absent('2026-11-04')),review);
+assert.equal(windowReview('2026-11-05',[]),review);
+assert.equal(windowReview('2026-13-99',absent('2026-10-29')),review);
+console.log('PASS: a leading-only close gap reports exact progress and the earliest exchange session; unrelated data or indicator failures stay explicit.');

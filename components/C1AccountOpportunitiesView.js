@@ -18,15 +18,18 @@ export function renderC1AccountOpportunitiesView({portfolioOnly,evidence,opening
   </div>}
   {ready&&actionableBuys.length>0&&(exits.length>0||orders.some(order=>order.side==='sell'&&!order.condition))&&<p className="actionHelp">{portfolioOnly?'Complete the listed sales before buying replacements.':'Complete C1 sales listed in My Portfolio before buying replacements.'}</p>}
   {!portfolioOnly&&ratedTiles.length>0&&!ready?<p role="status">{waitingReason}</p>:null}
- {!portfolioOnly&&ratedTiles.length>0?<div className="grid buyGrid">{ratedTiles.map(tile=>{const held=holdingPresentation(tile.symbol),canPurchase=ready&&tile.order&&(!held||held.canAdd);
+ {!portfolioOnly&&ratedTiles.length>0?<div className="grid buyGrid">{ratedTiles.map(tile=>{const held=holdingPresentation(tile.symbol);
+   const purchases=actionableBuys.filter(order=>order.symbol===tile.symbol&&Number.isSafeInteger(order.shares)&&order.shares>0);
+   const canPurchase=Boolean(ready&&tile.order&&purchases.length&&(!held||held.canAdd));
+   const badge=held?.label||(canPurchase?tile.rating:'NO PURCHASE');
    const sale=held?.action==='Sell'?sellActions.find(row=>row.symbol===tile.symbol):null;
    const tone=held?.action==='Sell'?'exit':canPurchase?'green':'';
    return <article className={'idea'+(tone?' '+tone:'')} key={tile.symbol}>
-   <div className="top"><h3>{tile.symbol}</h3><b className={`pill ${actionTone(held,canPurchase)}`} style={c1HoldPillStyle(held?.label||tile.rating)} >{c1HoldPillLabel(held?.label||tile.rating)}</b></div>
-   <p className="sub">{tile.entryEvidence?.sector||'Sector unavailable'} · {sale?'Prior screen: ':''}{tile.rating} rating as of {decision.sourceSessionDate}</p>
+   <div className="top"><h3>{tile.symbol}</h3><b className={`pill ${actionTone(held,canPurchase)}`} style={c1HoldPillStyle(badge)} >{c1HoldPillLabel(badge)}</b></div>
+   <p className="sub">{tile.entryEvidence?.sector||'Sector unavailable'} · {!canPurchase?'Prior screen: ':''}{tile.rating} rating as of {decision.sourceSessionDate}</p>
    <div className="price"><b>{Number.isFinite(tile.entryEvidence?.close)?'$'+tile.entryEvidence.close.toFixed(2):'Unavailable'}</b><small>Signal closing price</small></div>
    <p className="why">Momentum score: {Number.isFinite(tile.entryEvidence?.momentumScore)?tile.entryEvidence.momentumScore.toFixed(1)+'/100':'Unavailable'}</p>
-   <div className="plan"><small>{held?'Your position':'Purchase check'}</small><b>{canPurchase?<>{actionableBuys.filter(order=>order.symbol===tile.symbol).map(order=><span key={order.id}>{held?'Add':'Buy'} {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. </span>)}</>:sale?.sellInstruction?.shares?'SELL '+sale.sellInstruction.shares+' '+(sale.sellInstruction.shares===1?'share':'shares'):held?.label||'NO PURCHASE'}</b><p>{plainReason(tile.symbol,held?.label||(canPurchase?tile.accountAction:'NO PURCHASE'),held?.reason||tile.detail,held)}</p>{canPurchase&&<p>Confirm current broker price and cash before placing an order.</p>}</div>
+   <div className="plan"><small>{held?'Your position':'Purchase check'}</small><b>{canPurchase?<>{purchases.map(order=><span key={order.id}>{held?'Add':'Buy'} {order.shares} {order.shares===1?'share':'shares'}; opening reference ${order.estimatedPrice.toFixed(2)}. </span>)}</>:sale?.sellInstruction?.shares?'SELL '+sale.sellInstruction.shares+' '+(sale.sellInstruction.shares===1?'share':'shares'):held?.label||'NO PURCHASE'}</b><p>{plainReason(tile.symbol,held?.label||(canPurchase?tile.accountAction:'NO PURCHASE'),held?.reason||tile.detail,held)}</p>{canPurchase&&<p>Confirm current broker price and cash before placing an order.</p>}</div>
   </article>;})}</div>:!portfolioOnly&&<div className="emptyState"><b>{decision.current?'No purchases currently authorized.':'C1 ratings awaiting update.'}</b>{!ready&&<span> {waitingReason}</span>}</div>}
 
   {ready&&(buys.length>0||positionOrders.length>0)&&<p className="sub">Refresh after {new Date(manualRecommendations.validUntil).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} to update the recommendation.</p>}
