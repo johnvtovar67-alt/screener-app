@@ -57,6 +57,24 @@ const overlap=({page})=>page===0?base:[base[999]];
  // complete smaller partition. Never accept or normalize that rejected grid.
  const dataset=Array.from({length:4879},(_,i)=>({symbol:'A'+i,targetedSymbol:'T'+i,transactionDate:'2026-10-29'}));
  const brokenGrid=(data,page,limit)=>limit===1000&&page===1?[data[999],...data.slice(1001,2000)]:data.slice(page*limit,page*limit+limit);
+ // November 6 live logs: the last row of page zero reappeared at index one
+ // of page one. A rejected default page never contributes proof of coverage.
+ for(const offsets of [[1], [13, 67]]){
+  const shiftedGrid=(data,page,limit)=>{
+   const rows=data.slice(page*limit,(page+1)*limit);
+   if(limit===1000&&page===1)for(const [i,offset] of offsets.entries())rows[offset]=data[999-i];
+   return rows;
+  };
+  const h=harness({mergers:({page,limit})=>shiftedGrid(dataset,page,limit)});
+  const risk=await h.run();
+  assert.equal(h.state(risk),'VERIFIED_CLEAR','Recover a shifted overlap using independent complete scans');
+  assert.equal(source(risk).partitionCoverage.rowCount,dataset.length);
+  const withTarget=dataset.map((row,i)=>i===1001?target:row);
+  const blocked=harness({mergers:({page,limit})=>shiftedGrid(withTarget,page,limit)});
+  assert.equal(blocked.state(await blocked.run()),'VERIFIED_BLOCKED','A target omitted by the broken grid is still blocked');
+  const inconsistent=harness({mergers:({page,limit})=>shiftedGrid(limit===991?dataset.slice(1):dataset,page,limit)});
+  assert.equal(inconsistent.state(await inconsistent.run()),'UNVERIFIED','A shifted overlap cannot excuse different replacement records');
+ }
  const oldGrid=harness({before:true,mergers:({page,limit})=>brokenGrid(dataset,page,limit)});assert.equal(oldGrid.state(await oldGrid.run()),'UNVERIFIED');
  const freshGrid=harness({mergers:({page,limit})=>brokenGrid(dataset,page,limit)}),freshRisk=await freshGrid.run();assert.equal(freshGrid.state(freshRisk),'VERIFIED_CLEAR');
  const proof=source(freshRisk).partitionCoverage;assert.equal(proof.contract,'c1-merger-partition-coverage-v1');assert.equal(proof.matched,true);assert.equal(proof.rowCount,4879);assert.match(proof.digest,/^[a-f0-9]{64}$/);
