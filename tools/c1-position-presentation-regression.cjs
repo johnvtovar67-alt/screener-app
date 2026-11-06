@@ -494,7 +494,14 @@ async function main(){try{
  const decision=decisionFor(dell,{positions:[dell,mpc],stockScreen:{contract:'c1-stock-screen-v1',sourceSessionDate:source,candidates:[dell,mpc].map((position,index)=>({symbol:position.symbol,sector:'Sector '+index,issuer:'issuer:'+position.symbol,sourcePrice:position.symbol==='MPC'?115:90,researchRank:index+1,momentumPercentile:99-index,
   sourceTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000},recentMomentumGate:{sourceSessionDate:source,available:true,entryAllowed:position.symbol==='MPC'}}))}});
  const before=copy({decision,stocks});
- const opportunityHtml=renderToStaticMarkup(React.createElement(Component,{decision,executionDecision:decision,screenRows:stocks,screenCurrent:true,portfolio:stocks,view:'opportunities'}));
+ const componentProps={decision,executionDecision:decision,screenRows:stocks,screenCurrent:true,portfolio:stocks,view:'opportunities'};
+ const uncheckedHtml=renderToStaticMarkup(React.createElement(Component,componentProps));
+ match(uncheckedHtml,/EXIT REVIEW PENDING/,'Held Opportunities needs a current opening review to display Hold');
+ absent(uncheckedHtml,/>HOLD</,'An incomplete opening review cannot clear a held exit');
+ const openingPlan={providerVerified:true,date:'2026-10-15',observedAt:instant,sourceSessionDate:source,orders:[]};
+ const manualRecommendations={policy:'c1-owner-authorized-manual-20260911',status:'ready',decisionId:decision.decisionId,revision:decision.revision,
+  sourceSessionDate:source,date:openingPlan.date,observedAt:instant,validUntil:'2026-10-15T15:10:00Z',orders:[]};
+ const opportunityHtml=renderToStaticMarkup(React.createElement(Component,{...componentProps,openingPlan,manualRecommendations}));
  match(opportunityHtml,/SELL — STOP TRIGGERED/,'Held Opportunities uses the same stop action as Portfolio');
  match(opportunityHtml,/>HOLD</,'Held Opportunities uses the same no-exit Hold status as Portfolio');
   same({decision,stocks},before,'Rendering both views preserves orders, cash, ownership and accepted price evidence');
