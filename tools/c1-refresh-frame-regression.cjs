@@ -15,7 +15,7 @@ function harness({opening,accountReply,screenFailure=false}={}){
  Object.defineProperty(state,'busy',{enumerable:true,get:()=>Boolean(state.loading||state.reloading)});
  const calls=[],now='2026-11-02T15:00:00Z',holdings=[{symbol:'AAA',shares:2,avgCost:90,role:'Swing'}];
  class Clock extends Date{constructor(...args){super(...(args.length?args:[now]));}static now(){return Date.parse(now);}}
- const box={...loader.load('lib/c1RefreshFrame.js'),...loader.load('lib/c1RefreshResponse.js'),...loader.load('lib/c1JourneyClient.js'),
+ const box={...loader.load('lib/c1OpeningReviewRead.js'),...loader.load('lib/c1RefreshFrame.js'),...loader.load('lib/c1RefreshResponse.js'),...loader.load('lib/c1JourneyClient.js'),
   Object,Date:Clock,Promise,Map,Set,console,accountRequestId:{current:0},screenRequestId:{current:0},SYNC_KEY:'key',KEY:'portfolio',C1_DRAWDOWN_KEY:'capital',
   localStorage:{getItem:key=>key==='key'?'offline_fixture_key_000001':'[]',setItem:(...args)=>state.writes.push(args)},
   portfolio:holdings,results:state.results,syncKey:'',CASH:['CASH'],setPortfolio:v=>{state.portfolio=v;},

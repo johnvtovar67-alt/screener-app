@@ -95,9 +95,9 @@ function makeHarness({disabled=false,highVol=false,missing=false,stale=false,out
   readBook:async()=>{state.bookReads++;return {record:f.book};},store:{read:async()=>{state.reads++;return {record:JSON.parse(state.bytes),etag:state.etag};},write:async(_path,account,etag)=>{
    assert.equal(etag,state.etag);state.writes++;state.bytes=JSON.stringify(account);state.etag='"request-fixture-'+state.writes+'"';
   }}});
- return {f,state,directPrepare:executionBox.prepare,async request(method='POST',body={operation:'prepare-execution'},authorized=true){
+ return {f,state,directPrepare:executionBox.prepare,async request(method='POST',body={operation:'prepare-execution'},authorized=true,query={}){
   const before=JSON.stringify(body),res={setHeader(){},status(status){this.statusCode=status;return this;},json(value){this.body=value;return this;}};
-  await handler({method,body,headers:authorized?{authorization:'Bearer offline_request_diagnostics_fixture_00001'}:{}},res);
+  await handler({method,body,query,headers:authorized?{authorization:'Bearer offline_request_diagnostics_fixture_00001'}:{}},res);
   assert.equal(JSON.stringify(body),before,'The handler must not mutate its request body');return res;
  }};
 }
@@ -199,6 +199,12 @@ async function main(){
  assert.equal(malformed.diagnostics.review.openingPlanAvailable,null,'Projector failure cannot assert that the existing opening plan is absent');
  assert.equal(malformed.diagnostics.review.openingErrorPresent,null,'Projector failure cannot assert that the existing view has no opening error');
 
+ const readOnly=makeHarness(),beforeRead=readOnly.state.bytes;
+ assert.equal((await readOnly.request('GET',{},false,{review:'opening'})).statusCode,401);
+ const recovery=await readOnly.request('GET',{operation:'record-intraday'},true,{review:'opening'});
+ assert.equal(recovery.statusCode,200);
+ assert.equal(recovery.body.manualRecommendations.status,'ready','Read-only recovery produces a checked opening result');
+ assert.equal(readOnly.state.bytes,beforeRead);assert.equal(readOnly.state.writes,0,'GET ignores mutation fields and never saves');
  const auth=makeHarness(),beforeAuth=auth.state.bytes;
  assert.equal((await auth.request('POST',{operation:'prepare-execution'},false)).statusCode,401);
  assert.equal(auth.state.reads,0);assert.equal(auth.state.bookReads,0);assert.equal(auth.state.collections.length,0);assert.deepEqual(auth.state.imports,{});

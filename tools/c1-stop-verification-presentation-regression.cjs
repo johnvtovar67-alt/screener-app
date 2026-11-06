@@ -65,4 +65,27 @@ equal(staleRevision.quoteVerified,false,'Superseded advisory cannot attach a ver
 const lines=timing({position:position(),presentation:expired,current:true});
 matches(lines.join('\n'),/STOP STATUS UNVERIFIED/,'Timing details do not describe missing current proof as a safe stop state');
 equal(present(args(position({role:'Core'}),quote(228,{role:'Core'}))),null,'Core remains outside Swing stop presentation');
+{
+ const input=args(position(),quote(250),{requireOpeningReview:true});
+ const order={id:'base:opening-exit',symbol:'SYNA',side:'sell',reason:'portfolio-drawdown-stop',sleeve:'base',shares:10,estimatedPrice:250};
+ const plan={providerVerified:true,date:'2026-11-03',sourceSessionDate:'2026-11-02',observedAt:now.toISOString(),orders:[order]};
+ const review={policy:'c1-owner-authorized-manual-20260911',status:'ready',date:plan.date,sourceSessionDate:plan.sourceSessionDate,
+  observedAt:plan.observedAt,validUntil:'2026-11-03T16:01:00Z',decisionId:input.decision.decisionId,revision:input.decision.revision,orders:[order]};
+ equal(present({...input,openingPlan:plan,manualRecommendations:review}).label,'SELL','Current opening exit appears');
+ equal(sell(input.position,present({...input,openingPlan:plan,manualRecommendations:review})).shares,10,'Only the checked opening exit sleeve supplies its ten shares');
+ for(const patch of [{},{openingPlan:null,manualRecommendations:{status:'waiting'}},
+  {openingPlan:plan,manualRecommendations:{...review,validUntil:now.toISOString()}},
+  {openingPlan:{...plan,providerVerified:false},manualRecommendations:review},
+  {openingPlan:{...plan,sourceSessionDate:'2026-10-30'},manualRecommendations:review},
+  {openingPlan:{...plan,observedAt:'2026-11-03T15:59:10Z'},manualRecommendations:review},
+  {openingPlan:plan,manualRecommendations:{...review,orders:[{...order,sleeve:'sector40'}]}},
+  {openingPlan:plan,manualRecommendations:{...review,orders:[order,{...order,id:'second',sleeve:'sector40'}]}},
+  {openingPlan:plan,manualRecommendations:{...review,orders:[]}},
+  {openingPlan:{...plan,orders:[]},manualRecommendations:review}]){
+  equal(present({...input,...patch}).label,'EXIT REVIEW PENDING','An unavailable or inconsistent review cannot publish HOLD');
+ }
+ equal(present({...input,openingPlan:{...plan,orders:[]},manualRecommendations:{...review,orders:[]}}).label,'HOLD','A current matching review can clear the pending state');
+ equal(present({...input,position:position({exits:[order]})}).label,'SELL','A recorded exit survives an interrupted review');
+ equal(present({...input,stock:quote(228)}).label,'SELL — STOP TRIGGERED','Fresh stop breach takes priority');
+}
 console.log(`PASS: ${count} stop-verification presentation assertions (synthetic; no account writes).`);

@@ -30,7 +30,7 @@ const save=extract('  async function saveC1Activity(','  const[transactionCheck'
 const disconnect=extract('  function disconnectSync(','  async function copySyncKey(');
 function client(fetcher){
  const state={view:{decision:{id:'previous'}},verified:true,error:'',key:'test-only-key',writes:0};
- const box={readC1AccountResponse,setAccountResponseVerified:v=>{state.verified=v;},accountRequestId:{current:0},syncPullId:{current:0},syncWriteId:{current:0},syncRevision:{current:{}},syncDirty:{current:false},SYNC_KEY:'key',
+ const box={readC1OpeningReview:createResearchModuleLoader(process.cwd()).load('lib/c1OpeningReviewRead.js').readC1OpeningReview,screenRequestId:{current:1},readC1AccountResponse,setAccountResponseVerified:v=>{state.verified=v;},accountRequestId:{current:0},syncPullId:{current:0},syncWriteId:{current:0},syncRevision:{current:{}},syncDirty:{current:false},SYNC_KEY:'key',
   localStorage:{getItem:()=>state.key,removeItem:()=>{state.key='';},setItem:()=>{state.writes++;}},
   fetch:fetcher,setAccountView:v=>{state.view=v;},setAccountAbsent:v=>{state.absent=v;},setAccountError:v=>{state.error=v;},
   setSyncKey(){},setSyncInput(){},setSyncStatus(){}};
@@ -118,6 +118,15 @@ function client(fetcher){
  delayed.state.view={decision:{decisionId:'newer:5'}};
  finishOpening({ok:true,json:async()=>execution});await pendingOpening;
  assert.equal(delayed.state.view.decision.decisionId,'newer:5');
+ for(const interrupted of [false,true]){
+  let reply;
+  const changedScreen=client(async()=>new Promise((resolve,reject)=>{reply=()=>interrupted?reject(new TypeError('Load failed')):resolve({ok:true,json:async()=>execution});}));
+  const pending=changedScreen.box.prepareC1Execution(analysis);
+  changedScreen.box.screenRequestId.current++;
+  changedScreen.state.view={decision:{decisionId:'new-screen'}};
+  reply();await pending;
+  assert.equal(changedScreen.state.view.decision.decisionId,'new-screen','Superseded success and interrupted reads cannot publish');
+ }
  const closed=client(async()=>{throw new Error('No opening request for stale analysis');});
  await closed.box.prepareC1Execution({decision:{current:false}});
  let finishRecovery;
