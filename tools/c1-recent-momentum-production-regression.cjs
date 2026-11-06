@@ -254,4 +254,39 @@ for(const [name,patch] of Object.entries({missing:{available:false},stale:{stale
   eq(JSON.stringify(sold),before,'Sale and reentry analysis preserve all accepted prior execution evidence');
 }
 
+// An opening SELL must carry the actual sleeve arithmetic from the same replay.
+{
+  const c=testCase([100,85,84,86],{shares:900,symbol:'PSX'});
+  const {applyC1OpeningPlan}=loader.load('lib/c1AccountDecision.js');
+  const decision=at(c,0).decision;
+  const plan=opening(c,0);
+  const reviewed=applyC1OpeningPlan(decision,{...plan,providerVerified:true});
+  const exits=reviewed.positions.find(row=>row.symbol==='PSX').exits.filter(row=>row.reason==='portfolio-drawdown-stop');
+  ok(exits.length>0,'Known sleeve drawdown emits a portfolio stop');
+  for(const {sleeve,portfolioStopEvidence:e} of exits){
+    const book=plan.openingBooks[sleeve];
+    const quantity=book.positions.PSX.shares;
+    eq(e.date,plan.date,'Original trigger date is the opening session');
+    eq(e.sleeve,sleeve,'Evidence belongs to this sleeve');
+    near(e.peak,book.cash+quantity*100,'Peak matches original owned sleeve equity');
+    near(e.opening,book.cash+quantity*85,'Opening equity includes actual sleeve cash');
+    near(e.lossPct,100*(e.peak-e.opening)/e.peak,'Checked drawdown can be recomputed in actual dollars');
+    eq(e.limitPct,12,'Threshold comes from the active sleeve');
+  }
+  ok(!JSON.stringify(plan).includes('portfolioStopEvidence'),'Historical plan serialization stays unchanged');
+}
+// An unfilled sleeve exit retains the original peak and trigger date even
+// when a later accepted open recovers. Per-stock loss alone would miss it.
+{
+  const c=testCase([100,120,101,105],{shares:950,symbol:'VEEV'});
+  const first=position(c,2),later=position(c,3);
+  const firstStops=first.exits.filter(exit=>exit.reason==='portfolio-drawdown-stop');
+  ok(firstStops.length>0,'The rebound from basis can still cross the sleeve peak loss limit');
+  for(const exit of firstStops){
+    const carried=later.exits.find(next=>next.sleeve===exit.sleeve&&next.reason===exit.reason);
+    ok(carried,'Unfilled sell persists after the next opening');
+    same(carried.portfolioStopEvidence,exit.portfolioStopEvidence,'Subsequent opening cannot move an older trigger');
+    eq(carried.portfolioStopEvidence.date,c.dates[2],'Shows original session rather than the current screen date');
+  }
+}
 console.log(`PASS: ${count} live recent-momentum production integration assertions; synthetic accounts only.`);

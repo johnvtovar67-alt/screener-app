@@ -1,3 +1,4 @@
+import {readC1OpeningReview} from '../lib/c1OpeningReviewRead';
 import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';
 import {c1PublicationStatus} from '../lib/c1PublicationStatus';
 import C1NonCashAdoption from '../components/C1NonCashAdoption';
@@ -203,7 +204,8 @@ export default function Home(){
     const requestId=accountRequestId.current,key=localStorage.getItem(SYNC_KEY)||"";
     if(!key)return;
     try{
-      const r=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},body:JSON.stringify({operation:'prepare-execution'}),cache:'no-store'}),execution=await readC1AccountResponse(r,{stage:'opening-review'});
+      const screenOwner=screenRequestId.current;
+      const {response:r,execution}=await readC1OpeningReview(key,()=>requestId===accountRequestId.current&&screenOwner===screenRequestId.current&&localStorage.getItem(SYNC_KEY)===key,fetch);
       if(requestId!==accountRequestId.current||localStorage.getItem(SYNC_KEY)!==key)return;
       if(!r.ok)throw new Error(execution.error||'Opening checks unavailable.');
       if(execution.decision?.decisionId!==view.decision.decisionId||execution.decision?.revision!==view.decision.revision){
@@ -341,6 +343,8 @@ export default function Home(){
     const deadlines=(decision?.positions||[]).map(position=>c1PositionPresentation({decision,position,
       stock:results.find(row=>sym(row)===position.symbol)||stocks.find(row=>sym(row)===position.symbol),
       executionDecision:accountView?.executionDecision,now})?.quoteValidUntil).map(Date.parse).filter(stamp=>stamp>=now.getTime());
+    const reviewDeadline=Date.parse(accountView?.manualRecommendations?.validUntil);
+    if(reviewDeadline>=now.getTime())deadlines.push(reviewDeadline);
     if(!deadlines.length)return;
     const timer=setTimeout(()=>setMarketState(marketExecutionState(new Date())),Math.min(...deadlines)-now.getTime()+1);
     return()=>clearTimeout(timer);
@@ -804,7 +808,7 @@ export default function Home(){
     const decision=pd(s);
     const accountDecision=s.role==="Swing"&&!CASH.includes(sym(s))&&stopOwnershipCurrent&&!accountHoldingMismatch?accountView?.decision:null;
     const position=accountDecision?.positions?.find(row=>row.symbol===sym(s));
-    const presentation=s.role==="Swing"&&!CASH.includes(sym(s))?c1PositionPresentation({decision:accountDecision,position,symbol:sym(s),stock:stopQuoteRow(s),executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations:accountView?.manualRecommendations,now:new Date()}):null;
+    const presentation=s.role==="Swing"&&!CASH.includes(sym(s))?c1PositionPresentation({requireOpeningReview:true,decision:accountDecision,position,symbol:sym(s),stock:stopQuoteRow(s),executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations:accountView?.manualRecommendations,now:new Date()}):null;
     // Sector evidence is separate from thematic risk factors and never changes exposure controls.
     const sectorEvidence=accountDecision?.stockScreen?.sourceSessionDate===accountDecision?.sourceSessionDate?
       accountDecision?.stockScreen?.candidates?.find(row=>row.symbol===sym(s))?.sector:null;

@@ -3,7 +3,7 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
 function restoreOpportunitiesProjection(source){
  source=require('./c1-opportunities-contract-extraction.cjs').restoreOpportunitiesContract(source);
- const projection=fs.readFileSync('lib/c1OpportunitiesProjection.js','utf8');
+ const projection=require('./c1-exit-review-source-seams.cjs').restore('lib/c1OpportunitiesProjection.js',fs.readFileSync('lib/c1OpportunitiesProjection.js','utf8'));
  const start=source.indexOf(' const projection=projectC1Opportunities('),bodyStart=projection.indexOf(' const ready=');
  assert(start>=0&&bodyStart>=0,'Only the declared synchronous projection seam is reversible');
  let prefix=source.slice(0,start).replace("import {projectC1Opportunities} from '../lib/c1OpportunitiesProjection';\n",'');

@@ -100,7 +100,7 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
   if(rejectUnauthorizedC1Owner(res,{key,environment,surface:'account'}))return;
   const scope=environment==='production'?'production':`preview-${commit}`;
   const path=`c1-accounts-v1/${scope}/${createHash('sha256').update(key).digest('hex')}.json`;
-  const requestId=randomUUID(),body=req.body||{},operation=req.method==='GET'?'refresh-analysis':body.operation;
+  const requestId=randomUUID(),body=req.body||{},operation=req.method==='GET'?(req.query?.review==='opening'?'prepare-execution':'refresh-analysis'):body.operation;
   let stage='account-read',sourceSessionDate=null;
   res.setHeader('X-C1-Request-Id',requestId);
   try{

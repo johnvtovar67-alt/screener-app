@@ -343,11 +343,14 @@ async function main(){try{
   filename:'portfolio-action-first-regression.jsx',babelrc:false,configFile:false,
   presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]
  }).code;
- function portfolioHtml(position,stock,{mobile=false,current=true,sector,sourceDate=source}={}){
+ function portfolioHtml(position,stock,{mobile=false,current=true,sector,sourceDate=source,openingComplete=true}={}){
   const decision=decisionFor(position,{current,stockScreen:{sourceSessionDate:sourceDate,candidates:sector?[{symbol:position.symbol,sector}]:[]}}),record={exports:{}};
   const before=copy({position,stock,decision});
   const evidence={classification:stock.testWeak?'Momentum Weakening':'Momentum Intact',status:'available',label:stock.testWeak?'Momentum Weakening':'Momentum Intact',tone:stock.testWeak?'weakening':'intact',explanation:'Technical evidence sentinel: source rank and MACD.',sourceSessionDate:source,limitations:[]};
-  const bindings={...require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1HoldPill.js'),...helpers,c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
+  const openingPlan={providerVerified:true,date:'2026-10-15',observedAt:instant,sourceSessionDate:sourceDate,orders:[]};
+  const manualRecommendations={policy:'c1-owner-authorized-manual-20260911',status:'ready',decisionId:decision.decisionId,revision:decision.revision,
+   sourceSessionDate:sourceDate,date:openingPlan.date,observedAt:instant,validUntil:'2026-10-15T15:10:00Z',orders:[]};
+  const bindings={...require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1HoldPill.js'),...helpers,c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming,stocks:[stock],portfolio:[stock],accountView:{decision,executionDecision:decision,...(openingComplete?{openingPlan,manualRecommendations}:{openingError:"Load failed"})},accountMatches:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:10000,
    stopOwnershipCurrent:true,stopQuoteRow:s=>s,c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
    swingTimeReview:()=>({}),holdingReason:(s,decision)=>decision.reason,sym:s=>s.symbol,price:s=>s.price,cls:action=>/sell|exit|stop/i.test(action)?'red':'yellow',factorFor:()=> 'Sector',
    portfolioDateDisplay:()=> 'Oct 1, 2026',specialSituation:()=>null,money:n=>'$'+Number(n).toFixed(2),pct:n=>Number(n).toFixed(2)+'%'};
@@ -381,6 +384,8 @@ async function main(){try{
   absent(stop,/<details\b/,'Technical rules are not reintroduced in a disclosure');
   const reason=mobile?stop.match(/<small>Why \/ Evidence<\/small><p>([\s\S]*?)<\/p>/)?.[1]:[...stop.matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/g)][3]?.[1]?.match(/^<p>([\s\S]*?)<\/p>/)?.[1];
   eq((reason?.match(/[.!?](?=\s+[A-Z]|$)/g)||[]).length,1,'Each Portfolio row has exactly one plain-English reason sentence');
+  const incomplete=portfolioHtml(holding('MPC'),quote('MPC',115),{mobile,openingComplete:false});
+  match(incomplete,/>EXIT REVIEW PENDING</,'An interrupted review cannot display HOLD in either layout');
   const hold=portfolioHtml(holding('MPC'),quote('MPC',115),{mobile});
   match(hold,/>HOLD</,'MPC without an exit retains the current Hold action in the historical layout');
   match(hold,/class="[^"]*pill yellow[^\"]*"[^>]*>HOLD</,'The historical action pill retains the current Hold color');

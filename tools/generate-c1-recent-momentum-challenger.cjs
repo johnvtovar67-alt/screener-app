@@ -299,6 +299,12 @@ replace('        const executionSignal=recentExecutionSignal(order,fill,effectiv
         }
         const executionSignal=recentExecutionSignal(order,fill,effectiveStopPrice);`);
 
+// Observe the values in the existing risk branch. The replay, pending orders
+// and accounting records do not contain the display-only evidence.
+source = "import {observeC1PortfolioStop,carryC1PortfolioStop} from './c1PortfolioStopEvidence';\n" + source;
+replace("          executeSale({\n            date: session.date,\n            symbol,\n            position,\n            reason: \"portfolio-drawdown-stop\",", "          if (actualReplay) observeC1PortfolioStop(position, session.date, accountSeed, portfolioHighWatermark,\n            openEquity, config.portfolioDrawdownStopPct, pendingActualRiskExits.get(symbol)?.reason === 'portfolio-drawdown-stop');\n          executeSale({\n            date: session.date,\n            symbol,\n            position,\n            reason: \"portfolio-drawdown-stop\",");
+replace("    trades.push(trade);\n    if (positionClosed)", "    if (actualReplay) carryC1PortfolioStop(position, trade);\n    trades.push(trade);\n    if (positionClosed)");
+
 if (process.argv.includes('--check')) {
   assert.equal(fs.readFileSync(target, 'utf8'), source, 'Regenerate the isolated recent-momentum Challenger');
 } else fs.writeFileSync(target, source);
