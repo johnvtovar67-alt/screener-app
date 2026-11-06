@@ -14,4 +14,14 @@ const seams=[
     "  try{const query=new URLSearchParams({...params,...(kind==='EARNINGS'?{}:{page:String(page),limit:String(limit)}),apikey:options.apiKey}),url='https://financialmodelingprep.com/stable/'+spec.endpoint+'?'+query;responseUrls.push(url);body=await fetchJson(url,options);assertTop5Active();}\n"
   ]
 ];
-exports.restore=source=>{for(const [after,before]of seams){assert.equal(source.split(after).length,2,'Unique cache-validity seam');source=source.replace(after,before);}assert.equal(createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex'),'bd4b1d962b2575c2f4c0f1ffece47edaa926260f','Complete October 30 event source');return source;};
+// Reverse the November 6 recovery dispatch before checking the older pins.
+function restoreBeforeOverlapRepair(source){
+ const current="if(!partitionScan&&reason==='PAGINATION_OVERLAP'){";
+ const prior="if(!partitionScan&&reason==='PAGINATION_OVERLAP'&&overlaps.length===1&&first===0&&fingerprint(body[0])===fingerprint(rows.at(-1))){";
+ assert.equal(source.split(current).length,2,'Unique merger overlap recovery condition');
+ const restored=source.replace(current,prior);
+ assert.equal(createHash('sha1').update('blob '+Buffer.byteLength(restored)+'\0').update(restored).digest('hex'),
+  'a9e578cabf729ed1aa0b27f6f41ffc5602794cbb','Exact pre-November 6 event module');
+ return restored;
+}
+exports.restore=source=>{source=restoreBeforeOverlapRepair(source);for(const [after,before]of seams){assert.equal(source.split(after).length,2,'Unique cache-validity seam');source=source.replace(after,before);}assert.equal(createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex'),'bd4b1d962b2575c2f4c0f1ffece47edaa926260f','Complete October 30 event source');return source;};
