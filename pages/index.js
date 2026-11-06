@@ -449,7 +449,15 @@ export default function Home(){
     return rows;
   }
   function holdingQuoteRow(position,quote,prior){
-    if(prior?.shares!=null&&!sameC1HoldingPeriod(position,prior))prior=null;
+    if(prior?.shares!=null&&!sameC1HoldingPeriod(position,prior)){
+      if(quote&&!quote.error&&sym(prior)===sym(position)&&prior.quoteVerification?.verifiedRegularSession===true&&Number(prior.timestamp)>Number(quote.timestamp)){
+        const {symbol,ticker,timestamp,quoteVerification,_fmpQuoteProvider,_fmpQuoteEndpoint,_fmpQuoteCache,
+          _fmpQuoteFetchedAt,_fmpQuoteObservation,_fmpQuoteRequest}=prior;
+        quote={symbol,ticker,price:price(prior),timestamp,quoteVerification,_fmpQuoteProvider,_fmpQuoteEndpoint,
+          _fmpQuoteCache,_fmpQuoteFetchedAt,_fmpQuoteObservation,_fmpQuoteRequest};
+      }
+      prior=null;
+    }
     if(CASH.includes(sym(position)))return {...position,...calc(position,position.avgCost||1),role:role(position.symbol,position.role)};
     if(!quote||quote.error)return {...prior,...position,error:quote?.error||'Current quote unavailable.',staleVerification:true};
     if(prior?.quoteVerification?.verifiedRegularSession===true&&Number(prior.timestamp)>Number(quote.timestamp))

@@ -8,7 +8,7 @@ const imports={createHash,...market,...loader.load('lib/c1ForwardModel.js'),...l
 const source=file=>fs.readFileSync(file,'utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
 function load(file,bindings,names){const box={Date,process,...bindings};vm.createContext(box);vm.runInContext(source(file)+'\nglobalThis.api={'+names+'};',box);return box.api;}
 const book=load('lib/c1DatedBook.js',imports,'acceptC1DatedInput,c1DatedBookView');
-const stored=load('lib/c1DatedBookStore.js',book,'connectStoredC1DatedInput,prepareStoredC1DatedBook');
+const stored=load('lib/c1DatedBookStore.js',{...book,...loader.load('lib/c1MarketScreenObservation.js')},'connectStoredC1DatedInput,prepareStoredC1DatedBook');
 const archive=load('lib/c1IndexObservationStore.js',{...imports,c1DatedBookPath:()=> 'fixture/book.json.gz'},'archiveC1IndexObservation,readC1IndexObservations');
 const symbols=['AAA','BBB','CCC','DDD'];
 function input(date,previous){const observedAt=date+'T22:00:00.000Z';return {
