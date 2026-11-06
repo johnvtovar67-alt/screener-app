@@ -1,7 +1,7 @@
 {
   "pages/index.js": {
     "beforeHash": "d65eca8b5e3c2946e0e3aa5ce31d249335e596ba",
-    "afterHash": "b406b072ceebb3e847593e5ec15526799463b8c9",
+    "afterHash": "1dc4d8a02d9afc26494e6bb601ba081c04ad012c",
     "chunks": [
       {
         "before": "import {readC1OpeningReview} from",
@@ -16,8 +16,8 @@
         "after": "\n  useEffect(()=>{\n    let local=[];\n    try{\n      const entered=JSON.parse(localStorage.getItem(KEY)||'[]');\n      if(Array.isArray(entered)){\n        local=entered.map(p=>({...p,role:role(p.symbol,p.role),winnerHistory:winnerHistoryFor(p)}));\n        setPortfolio(local);localStorage.setItem(KEY,JSON.stringify(local));\n      }\n    }catch{}\n    const key=localStorage.getItem(SYNC_KEY)||'';\n    let pricePortfolio=local;\n    if(key){\n      setSyncKey(key);setSyncInput(key);\n      pricePortfolio=pullCloudPortfolio(key,local,true).then(()=>{\n        try{\n          const entered=JSON.parse(localStorage.getItem(KEY)||'[]');\n          return Array.isArray(entered)?entered:[];\n        }catch{return [];}\n      });\n    }\n    load(\"opportunities\",0,{pricePortfolio});\n  },[]);\n  useEffect(()=>{c"
       },
       {
-        "before": "uotes=t===\"opportunities\"&&pricePortfolio.length?fetchHoldingQuotes(pricePortfolio,verificationPass>0,results,{isCurrent:()=>requestId===screenRequestId.current}).then(quoteRows=>{\n      if(requestId===screenRequestId.current)view.setResults(prior=>pricePortfolio.map(p=>holdingQuoteRow(p",
-        "after": "uotes=t===\"opportunities\"?Promise.resolve(pricePortfolio).then(async holdings=>{\n      if(requestId!==screenRequestId.current)return;\n      const quoteRows=holdings.length?await fetchHoldingQuotes(holdings,verificationPass>0,results,{isCurrent:()=>requestId===screenRequestId.current}):new Map();\n      if(requestId===screenRequestId.current)view.setResults(prior=>holdings.map(p=>holdingQuoteRow(p"
+        "before": "uotes=t===\"opportunities\"&&pricePortfolio.length?fetchHoldingQuotes(pricePortfolio,verificationPass>0,results,{isCurrent:()=>requestId===screenRequestId.current}).then(quoteRows=>{\n      if(requestId===screenRequestId.current)view.setResults(prior=>pricePortfolio.map(p=>holdingQuoteRow(p,quoteRows.get(sym(p)),prior.find(row=>sym(row)===sym(p)))));\n    }):null;\n    let openingRe",
+        "after": "uotes=t===\"opportunities\"?(async()=>{\n      const holdings=Array.isArray(pricePortfolio)?pricePortfolio:await pricePortfolio;\n      if(requestId!==screenRequestId.current)return;\n      const quoteRows=holdings.length?await fetchHoldingQuotes(holdings,verificationPass>0,results,{isCurrent:()=>requestId===screenRequestId.current}):new Map();\n      if(requestId===screenRequestId.current)view.setResults(prior=>holdings.map(p=>holdingQuoteRow(p,quoteRows.get(sym(p)),prior.find(row=>sym(row)===sym(p)))));\n    })():null;\n    let openingRe"
       },
       {
         "before": "ion,quote,prior){\n    if(CASH.includes(sym(positio",

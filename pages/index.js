@@ -406,11 +406,12 @@ export default function Home(){
     const frame=createC1RefreshFrame(()=>requestId===screenRequestId.current&&(accountOwner===null||accountOwner===accountRequestId.current));
     const view={setResults:frame.defer(setResults),setStocks:frame.defer(setStocks),setFeedHealth:frame.defer(setFeedHealth),setMarketScope:frame.defer(setMarketScope),setMarketRadar:frame.defer(setMarketRadar),setThemeStocks:frame.defer(setThemeStocks),setThemeFeedHealth:frame.defer(setThemeFeedHealth),setLastUpdated:frame.defer(setLastUpdated),setErr:frame.defer(setErr)};
     const accountPublish=frame.defer(publishC1AccountState),portfolioPublish=frame.defer(setPortfolio);
-    const holdingQuotes=t==="opportunities"?Promise.resolve(pricePortfolio).then(async holdings=>{
+    const holdingQuotes=t==="opportunities"?(async()=>{
+      const holdings=Array.isArray(pricePortfolio)?pricePortfolio:await pricePortfolio;
       if(requestId!==screenRequestId.current)return;
       const quoteRows=holdings.length?await fetchHoldingQuotes(holdings,verificationPass>0,results,{isCurrent:()=>requestId===screenRequestId.current}):new Map();
       if(requestId===screenRequestId.current)view.setResults(prior=>holdings.map(p=>holdingQuoteRow(p,quoteRows.get(sym(p)),prior.find(row=>sym(row)===sym(p)))));
-    }):null;
+    })():null;
     let openingReview=null;
     try{
       const accountRequest=t==="opportunities"?refreshC1Account(null,{publish:accountPublish,publishPortfolio:portfolioPublish}):null;

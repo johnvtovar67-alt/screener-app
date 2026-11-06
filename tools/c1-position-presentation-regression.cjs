@@ -277,7 +277,7 @@ async function main(){try{
   const before=copy({position,account});
   function harness({defer=false}={}){
    const state={rows:[],stocks:[],health:{status:'healthy'},requests:[],quotePending:[],status:'',error:'',accountCalls:[],refreshes:0};
-   const scope={...modules.load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},accountView:{decision:account},portfolio:[position],results:[],screenRequestId:{current:0},
+   const scope={...modules.load('lib/c1CurrentHoldingRows.js'),...modules.load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},accountView:{decision:account},portfolio:[position],results:[],screenRequestId:{current:0},
     sym:row=>row.symbol,price:row=>Number(row.price),CASH:['CASH'],signalPersistence:()=>({}),
     readTop5Response:modules.load('lib/top5Response.js').readTop5Response,performanceHistory:async()=>({records:[],available:true}),
     refreshC1Account:async(...args)=>{state.accountCalls.push(args);return {decision:account};},prepareC1Execution:()=>{},
