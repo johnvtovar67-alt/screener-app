@@ -81,6 +81,21 @@ try{
  assert.doesNotMatch(paused,/No C1 Buy ratings|Candidates awaiting a C1 Buy rating/);
  assert.match(paused,/Includes blocked Buy-rated candidates/);
  assert.match(section(paused,'C1 account opportunities'),/Strong Buy rating/,'Verified candidates retain their investment rating');
+ // A flat holding still carries its historical stock rating. Only a new checked
+ // purchase may display Buy as the headline, including after a recorded exit.
+ const noPurchaseCard=article(section(paused,'C1 account opportunities'),'BBB');
+ assert.match(noPurchaseCard,/<h3>BBB<\/h3><b>NO PURCHASE<\/b>/);
+ assert.match(noPurchaseCard,/Prior screen: Strong Buy rating as of 2026-10-14/);
+ const closedPlan={...noOrders,entryReviews:[{symbol:'BBB',reason:'completion-closed'}]};
+ const afterExit=render({openingPlan:closedPlan,manualRecommendations:buildC1ManualRecommendations({decision,openingPlan:closedPlan})});
+ const flatCard=article(section(afterExit,'C1 account opportunities'),'BBB');
+ assert.match(flatCard,/<h3>BBB<\/h3><b>NO PURCHASE<\/b>/);
+ assert.match(flatCard,/earlier purchase plan closed with the sale/i);
+ assert.doesNotMatch(flatCard,/planned position is complete|Buy \d+ shares/i);
+ const completePlan={...noOrders,entryReviews:[{symbol:'BBB',reason:'target-complete'}]};
+ const completed=render({openingPlan:completePlan,manualRecommendations:buildC1ManualRecommendations({decision,openingPlan:completePlan})});
+ assert.match(article(section(completed,'C1 account opportunities'),'BBB'),/earlier purchase plan is complete/i);
+ // The original checked 2-share purchase fixture still shows Strong Buy.
  const {c1CashAvailability}=loader.load('lib/c1BrokerageCash.js');
  const {c1OpportunityPresentation}=loader.load('lib/c1EntryReview.js');
  // A closed-market review cannot prove that the four-position capacity is full.
