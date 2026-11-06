@@ -131,7 +131,9 @@ async function main(){
   const opportunities=renderToStaticMarkup(React.createElement(Opportunities,props));
   assert.doesNotMatch(opportunities,/C1 strategy cash|Available to deploy/);
   assert.match(opportunities,new RegExp('Schwab cash available to trade: \\$'+balance.toFixed(2).replace('.','\\.')));
-  assert.match(opportunities,/<article[^>]*class="[^"]*idea green/,'A verified C1 rating remains visible even when cash blocks purchase');
+  const blockedCard=opportunities.match(/<article[^>]*>[\s\S]*?<\/article>/g).find(card=>card.includes('BBB'));
+  assert.match(blockedCard,/Buy rating as of/,'A verified C1 rating remains visible even when cash blocks purchase');
+  assert.doesNotMatch(blockedCard,/idea green|idea exit/,'Cash-blocked purchase has neutral card styling');
   assert.match(opportunities,/<h3[^>]*>BBB<\/h3>/,'Cash-blocked BBB retains its verified C1 Buy rating');
   assert.doesNotMatch(opportunities,/<td[^>]*><b[^>]*>BBB<\/b>/,'The verified Buy-rated BBB is not mislabeled Watch');
   assert.match(opportunities,/available brokerage cash is insufficient for a new purchase\./);

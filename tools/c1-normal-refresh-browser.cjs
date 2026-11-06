@@ -81,7 +81,10 @@ async function main(){
   if(url.pathname==='/api/version')return json(versionPayload());
   if(url.pathname==='/client.js'){res.setHeader('content-type','text/javascript');res.end(fs.readFileSync(path.join(out,'client.js')));return;}
   if(url.pathname==='/'){
-   state.documentLoads++;const portfolio=JSON.stringify(api.fixture.portfolio),css=fs.readFileSync('styles/card-layout.css','utf8');
+   state.documentLoads++;
+   const staleLocal={symbol:'FORMER',role:'Swing',shares:27,avgCost:403.38,openedAt:'2026-09-22'};
+   const localRows=!reliability&&!actualScreen&&state.documentLoads===1?[...api.fixture.portfolio,staleLocal]:api.fixture.portfolio;
+   const portfolio=JSON.stringify(localRows),css=fs.readFileSync('styles/card-layout.css','utf8');
    res.setHeader('content-type','text/html');res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>window.__C1_TEST_CLOCK=${JSON.stringify(api.fixture.now.toISOString())};const NativeDate=Date;window.Date=class extends NativeDate{constructor(...a){super(...(a.length?a:[window.__C1_TEST_CLOCK]));}static now(){return NativeDate.parse(window.__C1_TEST_CLOCK);}};localStorage.setItem('stock_screener_portfolio_v1',${JSON.stringify(portfolio)});localStorage.setItem('stock_screener_portfolio_sync_key_v1','offline_workflow_fixture_key_000001');const originalFetch=window.fetch.bind(window);window.fetch=async(...args)=>{const response=await originalFetch(...args);const clock=response.headers.get('x-fixture-clock');if(clock)window.__C1_TEST_CLOCK=clock;return response;};</script></head><body><div id="root"></div><script src="/client.js"></script></body></html>`);return;
   }res.writeHead(404);res.end('Unexpected fixture URL');
  }catch(error){res.writeHead(500,{'content-type':'application/json'});res.end(JSON.stringify({error:error.message}));}});
@@ -106,6 +109,12 @@ async function main(){
   await wait('document.querySelector("header button")?.textContent==="Reload"&&document.querySelector("[aria-label=\\"C1 account opportunities\\"]")','normal signed-in synthetic page');
   await wait('/Buy \\d+ shares/.test(document.body.innerText)','initial checked quantity');
   await wait('document.querySelector("header button")?.textContent==="Reload"','initial reload settled');
+  if(!reliability&&!actualScreen){
+   assert(requests.some(r=>r.path==='/api/portfolio-sync'&&r.method==='GET'&&r.finished),'The current synced portfolio loaded');
+   assert(!requests.some(r=>r.path==='/api'&&r.symbol==='FORMER'),'A closed holding from device storage is never priced as a current holding');
+   assert(!(await js('document.body.innerText')).includes('FORMER'),'The completed screen excludes the former holding');
+   trace.cases.push({case:'stale-local-holding',oldHoldingPriced:false,closedHoldingRendered:false});
+  }
   let baseline=JSON.stringify(api.fixture.account);const beforeText=await js('document.body.innerText');
   accountRecordUnchanged=()=>JSON.stringify(api.fixture.account)===baseline;
   trace.initial={checkedQuantity:/Buy \d+ shares/.test(beforeText),normalAccountReads:requests.filter(r=>r.path==='/api/c1-account'&&r.method==='GET').length,normalOpeningReviews:requests.filter(r=>r.operation==='prepare-execution').length};

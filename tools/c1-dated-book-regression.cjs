@@ -49,7 +49,7 @@ assert.equal(result.decisionSnapshot.universe,'nasdaq');assert.equal(result.exec
 assert.equal(view(second,holdings,new Date('2026-09-11T22:00:00Z')).decisionSnapshot.status,'unavailable');
 const corrupt=JSON.parse(JSON.stringify(second));corrupt.model.summary.cash+=1;
 assert.throws(()=>view(corrupt,holdings,nextNow),/integrity/);
-const storeBox={...box.api,Date,process};vm.createContext(storeBox);
+const storeBox={...box.api,...loader.load('lib/c1MarketScreenObservation.js'),Date,process};vm.createContext(storeBox);
 vm.runInContext(fs.readFileSync('lib/c1DatedBookStore.js','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'')+'\nglobalThis.api={connectStoredC1DatedInput,c1DatedBookPath,prepareStoredC1DatedBook,C1_ACCEPTED_INDEX_SEED};',storeBox);
 const {connectStoredC1DatedInput:connect,c1DatedBookPath:path,prepareStoredC1DatedBook:prepare,C1_ACCEPTED_INDEX_SEED:seedPolicy}=storeBox.api;
 assert.throws(()=>path('nasdaq','production'),/S&P 500/);

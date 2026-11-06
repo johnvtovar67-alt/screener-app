@@ -11,7 +11,7 @@ assert(api.includes("req.headers.authorization"),'API must require bearer sync k
 assert(page.includes('Portfolio Sync'),'portfolio sync UI must render');
 assert(page.includes("const SYNC_KEY=\"stock_screener_portfolio_sync_key_v1\""),'device pairing key must persist locally');
 assert(page.includes("if(syncKey)void pushCloudPortfolio(x,syncKey)"),'portfolio edits must push to cloud');
-assert(page.includes("void pullCloudPortfolio(k,local,true)"),'paired devices must pull cloud portfolio on load');
+assert(page.includes("pricePortfolio=pullCloudPortfolio(key,local,true).then("),'paired devices must pull cloud portfolio on load');
 assert(page.includes('openedAt'),'opened date metadata must remain in synchronized portfolio');
 assert(page.includes('winnerHistory'),'winner lifecycle metadata must remain in synchronized portfolio');
 assert(api.includes('c1ControlState:cleanC1ControlState(c1ControlState)'),'C1 drawdown state must be sanitized and stored with the cloud portfolio');

@@ -5,6 +5,7 @@ const blob=source=>crypto.createHash('sha1').update('blob '+Buffer.byteLength(so
 function restore(file,source){
  const patch=files[file];
  if(!patch||blob(source)===patch.baselineBlob)return source;
+ source=require('./c1-current-screen-source-seams.cjs').restore(file,source);
  assert.equal(blob(source),patch.authorizedBlob,'Reviewed exit evidence and opening recovery source: '+file);
  for(const {before,after} of [...patch.chunks].reverse()){
   assert.equal(source.split(after).length,2,'Unique exit review change: '+file);

@@ -214,7 +214,7 @@ async function main(){try{
   const rows={DELL:quote('DELL',460,{_fmpQuoteRequest:{providerAttempted:true,newDataAccepted:false,refreshRequested:true,refreshStatus:'provider-unchanged'}}),
    MPC:quote('MPC',115,{_fmpQuoteCache:'fresh-memory',_fmpQuoteRequest:{providerAttempted:false,newDataAccepted:false,refreshRequested:true,refreshStatus:'rate-limited'}})};
   for(const stock of Object.values(rows))stock.quoteVerification=verifyC1Quote(stock,new Date());
-  const scope={sym:stock=>stock.symbol,price:stock=>Number(stock.price),CASH:['CASH'],setQuoteRefreshStatus:value=>{disclosure=value;},
+  const scope={...modules.load('lib/c1CurrentHoldingRows.js'),sym:stock=>stock.symbol,price:stock=>Number(stock.price),CASH:['CASH'],setQuoteRefreshStatus:value=>{disclosure=value;},
    calc:(position,price)=>({shares:position.shares,avgCost:position.avgCost,price,value:position.shares*price}),role:(symbol,value)=>value||'Swing',winnerHistoryFor:()=>[],
    fetch:async(url,options)=>{calls.push({url,options});const symbol=new URL(url,'https://offline.invalid').searchParams.get('symbol');if(symbol==='ERROR')throw new Error('Synthetic provider failure');return {ok:true,json:async()=>({stock:rows[symbol]})};}};
   const boundary=new Function(...Object.keys(scope),extract+'\n'+page.slice(start,end)+'\nreturn {fetchHoldingQuotes,holdingQuoteRow};')(...Object.values(scope));
@@ -277,7 +277,7 @@ async function main(){try{
   const before=copy({position,account});
   function harness({defer=false}={}){
    const state={rows:[],stocks:[],health:{status:'healthy'},requests:[],quotePending:[],status:'',error:'',accountCalls:[],refreshes:0};
-   const scope={...modules.load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},accountView:{decision:account},portfolio:[position],results:[],screenRequestId:{current:0},
+   const scope={...modules.load('lib/c1CurrentHoldingRows.js'),...modules.load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},accountView:{decision:account},portfolio:[position],results:[],screenRequestId:{current:0},
     sym:row=>row.symbol,price:row=>Number(row.price),CASH:['CASH'],signalPersistence:()=>({}),
     readTop5Response:modules.load('lib/top5Response.js').readTop5Response,performanceHistory:async()=>({records:[],available:true}),
     refreshC1Account:async(...args)=>{state.accountCalls.push(args);return {decision:account};},prepareC1Execution:()=>{},
@@ -504,6 +504,16 @@ async function main(){try{
  const opportunityHtml=renderToStaticMarkup(React.createElement(Component,{...componentProps,openingPlan,manualRecommendations}));
  match(opportunityHtml,/SELL — STOP TRIGGERED/,'Held Opportunities uses the same stop action as Portfolio');
  match(opportunityHtml,/>HOLD</,'Held Opportunities uses the same no-exit Hold status as Portfolio');
+ const partial={id:'base:partial',symbol:'MPC',side:'sell',reason:'portfolio-drawdown-stop',sleeve:'base',shares:3,estimatedPrice:115};
+ const saleProps={...componentProps,openingPlan:{...openingPlan,orders:[partial]},manualRecommendations:{...manualRecommendations,orders:[partial]}};
+ const sellHtml=renderToStaticMarkup(React.createElement(Component,saleProps));
+ const sellCard=[...sellHtml.matchAll(/<article[^>]*>[\s\S]*?<\/article>/g)].map(m=>m[0]).find(card=>card.includes('MPC'));
+ match(sellCard,/class="[^"]*idea exit/,'A Buy-rated holding with a checked Sell has exit styling');
+ absent(sellCard,/idea green|Add 3 shares|Buy 3 shares/,'The exit cannot render as a green purchase');
+ match(sellCard,/SELL 3 shares/,'Opportunities displays the exact partial exit');
+ match(sellCard,/Prior screen: Buy rating as of 2026-10-14/,'The earlier rating is explicitly dated and separate from the exit');
+ const sellPortfolio=renderToStaticMarkup(React.createElement(Component,{...saleProps,view:'portfolio'}));
+ match(sellPortfolio,/Checked recommendation: sell 3 shares/,'The portfolio and opportunity cards use the same checked quantity');
   same({decision,stocks},before,'Rendering both views preserves orders, cash, ownership and accepted price evidence');
  const ordinaryDell=holding('DELL'),conflictDecision={...decision,positions:[ordinaryDell,mpc]};
  const conflictScreen=stocks.map(stock=>stock.symbol==='DELL'?{...stock,price:90}:stock);

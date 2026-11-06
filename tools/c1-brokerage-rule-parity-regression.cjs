@@ -147,7 +147,9 @@ function withoutRecordedSaleFinalization(source){
  return source;
 }
 for (const [file, expected] of Object.entries(fixture.unchangedRuleSha256)) {
-  const source = Buffer.from(require('./c1-archive-recovery-source-seams.cjs').restore(file,require('./c1-opening-quote-repair-seams.cjs').restore(file,require('./c1-initial-swing-stop-seams.cjs').restoreInitialSwingStopPolicy(fs.readFileSync(path.join(root, file),'utf8'),file))));
+  const deployed=fs.readFileSync(path.join(root,file),'utf8');
+  const policySource=file==='lib/c1StockClassification.js'?require('./c1-current-screen-source-seams.cjs').restore(file,deployed):deployed;
+  const source = Buffer.from(require('./c1-archive-recovery-source-seams.cjs').restore(file,require('./c1-opening-quote-repair-seams.cjs').restore(file,require('./c1-initial-swing-stop-seams.cjs').restoreInitialSwingStopPolicy(policySource,file))));
   const comparable = file === 'lib/c1AccountInput.js' ? withoutRecordedSaleFinalization(source.toString('utf8')) : file === 'lib/c1OpeningPriceReview.js' ? withoutOpeningRevisionPolicyRepair(source.toString('utf8')) :
     file === 'lib/c1AccountSimulator.js' ?
     require('./c1-simulator-accounting-extraction.cjs').restoreSimulatorAccounting(source.toString('utf8')) :
