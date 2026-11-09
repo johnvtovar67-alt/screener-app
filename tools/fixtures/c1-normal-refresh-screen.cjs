@@ -66,7 +66,12 @@ function createNormalRefreshScreen(fixture){
    if(!request.startsWith('.'))throw Error('External import forbidden in refresh fixture: '+request);
    let dep=path.resolve(path.dirname(file),request);if(!fs.existsSync(dep))dep+='.js';
    if(dep===path.join(root,'lib/fullMarketDiscovery.js'))return{getFullMarketDiscovery:async()=>({status:'ready',stale:false,builtAt:fixture.now.toISOString(),candidates:symbols.map(symbol=>({symbol,price:100,marketCap:2e9,avgVolume:1e7})),sourceUniverseSize:symbols.length,eligibleUniverseSize:symbols.length,liquidityCoveragePct:100,config:{minAvgDollarVolume:1e7}})};
-   if(dep===path.join(root,'lib/v11ProductionSnapshot.js'))return{getV11ProductionSnapshot:async()=>({...load(path.join(root,'lib/v11ProductionPolicy.js')).buildV11ProductionSnapshot(fixture.book.model.sessions.at(-1),fixture.now),status:'ready',requiredSessionDate:fixture.book.model.sessions.at(-1).date,snapshotAgeSessions:0,independentlyValidated:true,activationAuthorized:true,evidenceStatus:'independently-validated'})};
+   if(dep===path.join(root,'lib/v11ProductionSnapshot.js'))return{getV11ProductionSnapshot:async()=>{
+    const session=fixture.book.model.sessions.at(-1);
+    return {...load(path.join(root,'lib/v11ProductionPolicy.js')).buildV11ProductionSnapshot(session,fixture.now),
+     ...(load(path.join(root,'lib/c1QualifiedSelection.js')).c1QualifiedSelectionApplies(session.date)?{accountScreen:load(path.join(root,'lib/c1StockClassification.js')).buildC1StockScreenSnapshot(session,fixture.now,fixture.book.model.sessions)}:{}),
+     status:'ready',requiredSessionDate:session.date,snapshotAgeSessions:0,independentlyValidated:true,activationAuthorized:true,evidenceStatus:'independently-validated'};
+   }};
    return load(dep);
   },module,module.exports);return module.exports;
  }

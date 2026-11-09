@@ -2,8 +2,8 @@
 // source-shape checks. The complete pre-extraction blob is pinned independently.
 const fs=require('node:fs');
 function readLegacyTop5Source(){
- const producer=fs.readFileSync('lib/c1ScreenProducer.js','utf8');
- const view=fs.readFileSync('lib/c1ScreenSnapshotView.js','utf8');
+ const producer=require('./c1-qualified-selection-seams.cjs').restore('lib/c1ScreenProducer.js',fs.readFileSync('lib/c1ScreenProducer.js','utf8'));
+ const view=require('./c1-qualified-selection-seams.cjs').restore('lib/c1ScreenSnapshotView.js',fs.readFileSync('lib/c1ScreenSnapshotView.js','utf8'));
  const route=fs.readFileSync('pages/api/top5.js','utf8');
  const producerMarker='// Complete the original acquisition and conditional performance observation before any read.\n';
  let core=producer.slice(0,producer.indexOf(producerMarker));
