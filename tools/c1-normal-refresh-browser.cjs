@@ -124,8 +124,8 @@ async function main(){
     const text=await js('document.querySelector(\'[aria-label="C1 account opportunities"]\').innerText');
     assert(text.includes('Signals based on 2026-11-09 close'),'New completed-session selection is published');
     const purchaseCards=await js(`[...document.querySelectorAll('[aria-label="C1 account opportunities"] article')].map(e=>e.innerText)`);
-    for(const symbol of ['JJJ','KKK','LLL'])assert(purchaseCards.some(t=>t.includes(symbol)&&/Buy \\d+ shares/.test(t)),symbol+' has a checked purchase in the actual Home/App at width '+width);
-    assert(!purchaseCards.some(t=>t.includes('MRNA')&&/Buy \\d+ shares/.test(t)),'A weak historical leader is not an authorized purchase');
+    for(const symbol of ['JJJ','KKK','LLL'])assert(purchaseCards.some(t=>t.includes(symbol)&&/Buy \d+ shares/.test(t)),symbol+' has a checked purchase in the actual Home/App at width '+width+': '+JSON.stringify(purchaseCards));
+    assert(!purchaseCards.some(t=>t.includes('MRNA')&&/Buy \d+ shares/.test(t)),'A weak historical leader is not an authorized purchase');
     assert((await js('document.body.innerText')).includes('MRNA'),'Blocked historical leader remains visible in Watch');
     await shot('qualified-selection-'+width);
    }
