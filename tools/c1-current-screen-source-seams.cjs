@@ -9,6 +9,7 @@ function replace(source,from,to){
  return source.replace(from,()=>to);
 }
 function restore(file,source){
+ source=require('./c1-qualified-selection-seams.cjs').restore(file,source);
  const action=accountActions[file];
  if(action&&blob(source)===action.afterHash){
   for(const {before,after} of [...action.chunks].reverse())source=replace(source,after,before);

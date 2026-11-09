@@ -190,6 +190,7 @@ const seams={
   ]
 };
 function restoreInitialSwingStopPolicy(source,file){
+ source=require('./c1-qualified-selection-seams.cjs').restore(file,source);
  source=require('./c1-opening-sale-source-seams.cjs').restore(file,source);
  for(const [before,after] of [...(seams[file]||[])].reverse()){
   assert.equal(source.split(after).length,2,'Exact initial Swing stop seam: '+file);
