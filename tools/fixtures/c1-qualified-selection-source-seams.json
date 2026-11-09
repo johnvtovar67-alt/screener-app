@@ -49,6 +49,16 @@
       }
     ]
   },
+  "lib/c1ScreenProducer.js": {
+    "beforeHash": "bc49f09de2740113b17a135eafb0cfb6d61da167",
+    "afterHash": "361d2ba00a359d412e92bc2efa4ed01a9de626fe",
+    "chunks": [
+      {
+        "before": "        ? fullMarketDiscovery.candidates\n        : [],\n      productionRankBySymbol = new Map(\n        (productionPolicySnapshot?.candidates || []).map((candidate) => [\n          normalizeSymbol(candidate.symbol),\n          Number(candidate.researchRank) || Number.POSITIVE_INFINITY,\n        ]),\n",
+        "after": "        ? fullMarketDiscovery.candidates\n        : [],\n      productionRankBySymbol = new Map(\n        (productionPolicySnapshot?.accountScreen?.selectionPolicy==='c1-momentum-qualified-selection-v1'&&\n          productionPolicySnapshot.accountScreen.sourceSessionDate===productionPolicySnapshot.sourceSessionDate\n          ?productionPolicySnapshot.accountScreen.candidates:productionPolicySnapshot?.candidates || []).map((candidate) => [\n          normalizeSymbol(candidate.symbol),\n          Number(candidate.researchRank) || Number.POSITIVE_INFINITY,\n        ]),\n"
+      }
+    ]
+  },
   "lib/c1ScreenSnapshotView.js": {
     "beforeHash": "721ce874edbb96f502915091ef0951488865b851",
     "afterHash": "0257fa356055ea594b57c1eb710dab7d8561a0f4",
@@ -74,6 +84,20 @@
       {
         "before": "        right.policyScore - left.policyScore ||\n        left.symbol.localeCompare(right.symbol),\n    )\n    .map((candidate, index) => ({ ...candidate, researchRank: index + 1 }))\n    .slice(0, V11_PRODUCTION_ENTRY_QUEUE_COUNT);\n  if (candidates.length < V11_PRODUCTION_TARGET_COUNT)\n    throw new Error(\n      `C1 production snapshot has insufficient qualified candidates (${candidates.length}/${V11_PRODUCTION_TARGET_COUNT})`,\n    );\n  return {contract:'c1-stock-screen-v1',sourceSessionDate,candidates};\n}\n\nfunction currentEventRisk(row = {}) {\n",
         "after": "        right.policyScore - left.policyScore ||\n        left.symbol.localeCompare(right.symbol),\n    )\n    .map((candidate, index) => ({ ...candidate, researchRank: index + 1 }));\n  const qualifiedSelection=c1QualifiedSelectionApplies(sourceSessionDate);\n  const qualified=qualifiedSelection?c1MomentumQualifiedPool(rankedCandidates,candidate=>candidate.recentMomentumGate,sourceSessionDate):[];\n  const qualifiedRanks=new Map(qualified.map((candidate,index)=>[candidate.symbol,index+1]));\n  // Retain the original leaders in Watch for continuity, and independently\n  // include the nine strongest momentum-qualified candidates. At most 18\n  // names require current provider checks; never scan live quotes unboundedly.\n  const candidates=qualifiedSelection?rankedCandidates\n    .filter(candidate=>candidate.researchRank<=V11_PRODUCTION_ENTRY_QUEUE_COUNT||qualifiedRanks.get(candidate.symbol)<=C1_QUALIFIED_SELECTION_QUEUE_COUNT)\n    .map(candidate=>({...candidate,qualifiedRank:qualifiedRanks.get(candidate.symbol)??null})):\n    rankedCandidates.slice(0,V11_PRODUCTION_ENTRY_QUEUE_COUNT);\n  if (candidates.length < V11_PRODUCTION_TARGET_COUNT)\n    throw new Error(\n      `C1 production snapshot has insufficient qualified candidates (${candidates.length}/${V11_PRODUCTION_TARGET_COUNT})`,\n    );\n  return {contract:'c1-stock-screen-v1',sourceSessionDate,candidates,...(qualifiedSelection?{selectionPolicy:C1_QUALIFIED_SELECTION}:{})};\n}\n\nfunction currentEventRisk(row = {}) {\n"
+      }
+    ]
+  },
+  "lib/v11ProductionSnapshot.js": {
+    "beforeHash": "309934278d3d2ab1e0a2ea90a60c8fb5f31f6ff2",
+    "afterHash": "216f22386bb24d4be9224730e0f05220178f011f",
+    "chunks": [
+      {
+        "before": "import { advanceStoredC1ForwardModel } from \"./c1ForwardStore\";\nimport { archiveC1Input } from \"./c1InputArchive\";\nimport { buildC1DecisionSnapshot } from \"./c1DecisionSnapshot\";\nimport {\n  latestCompletedMarketSessionDay,\n  marketSessionDistance,\n",
+        "after": "import { advanceStoredC1ForwardModel } from \"./c1ForwardStore\";\nimport { archiveC1Input } from \"./c1InputArchive\";\nimport { buildC1DecisionSnapshot } from \"./c1DecisionSnapshot\";\nimport {buildC1StockScreenSnapshot} from './c1StockClassification';\nimport {c1QualifiedSelectionApplies} from './c1QualifiedSelection';\nimport {\n  latestCompletedMarketSessionDay,\n  marketSessionDistance,\n"
+      },
+      {
+        "before": "      const { record, view, path } = await readStoredC1DatedBook(\"sp500\", { now });\n      const session = record.model.sessions.at(-1);\n      return assessSnapshot({ ...buildV11ProductionSnapshot(session, now),\n        forwardAccounting: { ...view.model, environment: process.env.VERCEL_ENV },\n        datasetThrough: session.date, sourceChunkPath: path,\n        sourceChunkEnd: record.model.sessions.length,\n",
+        "after": "      const { record, view, path } = await readStoredC1DatedBook(\"sp500\", { now });\n      const session = record.model.sessions.at(-1);\n      return assessSnapshot({ ...buildV11ProductionSnapshot(session, now),\n        // Acquisition priorities follow the same current account candidates.\n        // Keep legacy snapshot ranking/authority metadata unchanged.\n        ...(c1QualifiedSelectionApplies(session.date)?{accountScreen:buildC1StockScreenSnapshot(session,now,record.model.sessions)}:{}),\n        forwardAccounting: { ...view.model, environment: process.env.VERCEL_ENV },\n        datasetThrough: session.date, sourceChunkPath: path,\n        sourceChunkEnd: record.model.sessions.length,\n"
       }
     ]
   }

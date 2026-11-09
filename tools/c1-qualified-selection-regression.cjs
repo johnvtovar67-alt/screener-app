@@ -192,6 +192,15 @@ try{
 }finally{fs.rmSync(scratch,{recursive:true,force:true});}
 
 async function actualAccountFlow(){
+ const vm=require('node:vm');
+ const bridge={...loader.load('lib/v11ProductionPolicy.js'),...loader.load('lib/marketSession.js'),...loader.load('lib/c1DecisionSnapshot.js'),...loader.load('lib/c1QualifiedSelection.js'),...original,Date,process:{env:{VERCEL_ENV:'production'}},
+  readStoredC1DatedBook:async()=>({record:{model:{sessions:f.sessions}},view:{model:null,recordHash:'synthetic-qualified'},path:'synthetic/index'})};
+ vm.createContext(bridge);
+ vm.runInContext(fs.readFileSync('lib/v11ProductionSnapshot.js','utf8').replace(/import\s+[\s\S]*?\s+from\s+["'][^"']+["'];/g,'').replace(/export /g,'')+'\nglobalThis.api={getV11ProductionSnapshot};',bridge);
+ const productionBridge=await bridge.api.getV11ProductionSnapshot({now});
+ eq(productionBridge.accountScreen,snapshot,'Actual hosted snapshot bridge exposes account candidates to provider acquisition');
+ eq(productionBridge.candidates.map(c=>c.symbol),symbols.slice(0,9),'Legacy snapshot scoring and authority remain unchanged');
+ eq(productionBridge.activationAuthorized,false,'Candidate acquisition does not grant aggregate trading authority');
  const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
  const workflow=createWorkflowFixture('buy',{baselineDate:'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}]});
  // Explicitly weak original leaders; four lower-ranked names retain complete,
@@ -208,6 +217,13 @@ async function actualAccountFlow(){
  workflow.setCash(100000);const adoptionBefore=JSON.stringify(workflow.account.adoption);
  const view=await workflow.prepare();
  eq(buyNames(view.openingPlan),['JJJ','KKK','LLL'],'Normal account-to-opening flow selects the same newly qualified candidates');
+ const actualScreen=require('./fixtures/c1-normal-refresh-screen.cjs').createNormalRefreshScreen(workflow);
+ const workflowSnapshot=original.buildC1StockScreenSnapshot(workflow.book.model.sessions.at(-1),workflow.now,workflow.book.model.sessions);
+ const response=await actualScreen.request({compact:'1',screenSymbols:workflowSnapshot.candidates.map(c=>c.symbol).join(',')});
+ eq(response.status,200,'Actual screen producer completes with expanded acquisition priorities');
+ eq(buys(original.classifyC1StockScreen({snapshot:workflowSnapshot,rows:response.body.stocks,current:true})),['JJJ','KKK','LLL'],'Actual provider adapters and transport yield the same qualified screen names');
+ for(const symbol of ['JJJ','KKK','LLL'])yes(actualScreen.calls.some(c=>c.endpoint==='historical-price-eod/full'&&c.symbol===symbol),'New candidate gets timing evidence: '+symbol);
+ yes(['JJJ','KKK','LLL'].every(symbol=>response.body.stocks.find(r=>r.symbol===symbol)?.eventRisk?.eventVerification?.state==='VERIFIED_CLEAR'),'New candidates receive verified current event evidence despite the old ranking cutoff');
  const accepted=await workflow.prepare({id:'qualified-fill-1',symbol:'JJJ',side:'buy',shares:10,price:100.12,fee:0,executedAt:workflow.now.toISOString()});
  workflow.account=copy(accepted.account);
  const completedBook={...workflow.book,model:{sessions:workflow.sessions.slice(0,222)},captures:workflow.sessions.slice(0,222).map(s=>({sessionDate:s.date,hash:'synthetic-workflow:'+s.date,observedAt:s.decisionAt}))};

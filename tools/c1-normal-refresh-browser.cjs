@@ -429,5 +429,5 @@ async function main(){
 }
 main().then(()=>{
  if(!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
-  require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_QUALIFIED:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'qualified-selection')},timeout:120000});
+  require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_QUALIFIED:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'qualified-selection')},timeout:120000});
 }).catch(error=>{trace.status='FAIL';trace.failure=error.message;fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');console.error(error);process.exitCode=1;});

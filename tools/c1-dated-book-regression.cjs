@@ -78,7 +78,7 @@ assert.notEqual(path('nasdaq','preview','a'.repeat(40)),path('sp500','preview','
  await assert.rejects(()=>prepare({now:firstNow,path:'new',store:{read:async p=>p===seedPolicy.path?{record:indexRecord}:null,write:async()=>{seedWrites++;}}}),/seed is missing or changed/);
  assert.equal(seedWrites,0,'A missing or different seed must never initialize a new book');
  let reads=0;
- const bridge={...imports,...loader.load('lib/v11ProductionPolicy.js'),Date,
+ const bridge={...imports,...loader.load('lib/v11ProductionPolicy.js'),...loader.load('lib/c1QualifiedSelection.js'),...loader.load('lib/c1StockClassification.js'),Date,
   process:{env:{VERCEL_ENV:'preview'}},
   readStoredC1DatedBook:async universe=>{assert.equal(universe,'sp500');reads++;return {record:indexRecord,view:indexView,path:'preview/index'};}};
  vm.createContext(bridge);
