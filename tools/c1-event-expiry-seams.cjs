@@ -16,6 +16,7 @@ const seams=[
 ];
 // Reverse the November 6 recovery dispatch before checking the older pins.
 function restoreBeforeOverlapRepair(source){
+ source=require('./c1-earnings-recovery-seams.cjs').restore(source);
  const current="if(!partitionScan&&reason==='PAGINATION_OVERLAP'){";
  const prior="if(!partitionScan&&reason==='PAGINATION_OVERLAP'&&overlaps.length===1&&first===0&&fingerprint(body[0])===fingerprint(rows.at(-1))){";
  assert.equal(source.split(current).length,2,'Unique merger overlap recovery condition');
