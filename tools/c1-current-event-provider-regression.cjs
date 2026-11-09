@@ -124,7 +124,9 @@ async function run(){
   for(const elapsed of [0,0,300001]){
    before.advance(elapsed);after.advance(elapsed);
    assert.deepEqual(plain([...await after.map(['CRWD','AMD'])]),plain([...await before.map(['CRWD','AMD'])]),'Complete source/output equality against frozen production event module');
-   assert.deepEqual(after.calls,before.calls,'Provider queries, call order, warm reuse and failure cooldown remain identical');
+   const recoveringMalformed=scenario.EARNINGS?.[0]?.date==='not-a-day';
+   assert.deepEqual(recoveringMalformed?after.calls.filter(call=>call.kind!=='EARNINGS'||call.query.from!==call.query.to):after.calls,before.calls,'Original provider queries, warm reuse and failure cooldown remain identical; only the malformed calendar adds the reviewed daily recovery');
+   if(recoveringMalformed)assert.equal(after.calls.filter(call=>call.kind==='EARNINGS'&&call.query.from===call.query.to).length,10*after.calls.filter(call=>call.kind==='EARNINGS'&&call.query.from!==call.query.to).length);
   }
  }
  const emptyNews=news({title:'',text:''});
@@ -268,6 +270,27 @@ async function run(){
   ['NEWS',[news({publishedDate:'2026-10-19T13:00:00Z'})]],['NEWS',[news({publishedDate:'2026-02-30T13:00:00Z'})]],['NEWS',[news({title:'',text:''})]],
  ];
  for(const [kind,value]of malformedCases){const h=harness({[kind]:value});verification(await h.risk(),'UNVERIFIED',h);}
+ // Malformed aggregate calendars must use all ten independently valid daily
+ // responses. These are synthetic recovery fixtures, not observed provider rows.
+ for(const malformed of [{error:sentinel},null,[{},earning()]]){
+  const daily=harness({EARNINGS:({query})=>query.from!==query.to?malformed:query.from==='2026-10-22'?[earning()]:[]});
+  verification(await daily.risk(),'VERIFIED_BLOCKED',daily);
+  const calls=daily.calls.filter(row=>row.kind==='EARNINGS');
+  assert.equal(calls.length,11);assert.equal(new Set(calls.slice(1).map(row=>row.query.from)).size,10);
+ }
+ const noRiskRecovery=harness({EARNINGS:({query})=>query.from!==query.to?{error:sentinel}:[]});
+ verification(await noRiskRecovery.risk(),'VERIFIED_CLEAR',noRiskRecovery);
+ const vanishedRisk=harness({EARNINGS:({query})=>query.from!==query.to?[{},earning()]:[]});
+ const vanished=verification(await vanishedRisk.risk(),'UNVERIFIED',vanishedRisk);
+ assert(vanished.eventVerification.reasons.includes('EARNINGS_CONTRADICTORY_RESPONSE'));
+ assert.equal(vanished.earningsDate,'2026-10-22','Failed replacement cannot erase the observed earnings risk');
+ for(const dailyFailure of [{error:sentinel},[{}],new Error(sentinel),[earning('2026-10-24')]]){
+  const h=harness({EARNINGS:({query})=>query.from!==query.to?[{}]:query.from==='2026-10-25'?dailyFailure:[]});
+  verification(await h.risk(),'UNVERIFIED',h);
+ }
+ const noBudget=harness({EARNINGS:[{}]});
+ verification(await noBudget.risk('CRWD',{deadlineMs:epoch}),'UNVERIFIED',noBudget);
+ assert.equal(noBudget.calls.filter(row=>row.kind==='EARNINGS').length,0,'Recovery cannot extend the acquisition deadline');
  const recovered=harness({EARNINGS:{error:sentinel}});verification(await recovered.risk(),'UNVERIFIED',recovered);
  const failedEarningsCalls=recovered.calls.filter(row=>row.kind==='EARNINGS').length;
  recovered.set('EARNINGS',[]);verification(await recovered.risk(),'VERIFIED_CLEAR',recovered);
