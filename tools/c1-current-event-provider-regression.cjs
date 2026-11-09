@@ -12,8 +12,8 @@ process.env.FMP_API_KEY=fixtureKey;
 const plain=value=>JSON.parse(JSON.stringify(value));
 const endpointKind=endpoint=>endpoint==='earnings-calendar'?'EARNINGS':endpoint==='mergers-acquisitions-latest'?'MERGERS':endpoint==='news/stock'?'NEWS':endpoint==='economic-calendar'?'MACRO':'UNKNOWN';
 let cases=0;
-function harness(initial={},baseline=false){
- let milliseconds=epoch;const calls=[],feeds={...initial};
+function harness(initial={},baseline=false,initialEpoch=epoch){
+ let milliseconds=initialEpoch;const calls=[],feeds={...initial};
  class ClockDate extends NativeDate{constructor(...args){super(...(args.length?args:[milliseconds]));}static now(){return milliseconds;}}
  const fetcher=async raw=>{
   const url=new URL(raw),endpoint=url.pathname.split('/stable/')[1],kind=endpointKind(endpoint);
@@ -29,7 +29,7 @@ function harness(initial={},baseline=false){
  global.Date=ClockDate;global.fetch=fetcher;
  let provider,read;
  const readFileSync=fs.readFileSync;
- try{if(baseline)fs.readFileSync=(file,...args)=>String(file)===path.resolve('lib/eventRisk.js')?originalEventSource:readFileSync(file,...args);const loader=createResearchModuleLoader(process.cwd());provider=loader.load('lib/eventRisk.js');read=loader.load('lib/c1CurrentEventEvidence.js').readC1CurrentEventEvidence;}
+ try{if(baseline)fs.readFileSync=(file,...args)=>String(file)===path.resolve('lib/eventRisk.js')?(baseline==='preSymbolRepair'?require('./c1-earnings-symbol-seams.cjs').restore(readFileSync(file,...args)):originalEventSource):readFileSync(file,...args);const loader=createResearchModuleLoader(process.cwd());provider=loader.load('lib/eventRisk.js');read=loader.load('lib/c1CurrentEventEvidence.js').readC1CurrentEventEvidence;}
  finally{fs.readFileSync=readFileSync;global.Date=NativeDate;global.fetch=originalFetch;}
  return {calls,set(kind,value){feeds[kind]=value;},advance(ms){milliseconds+=ms;},now:()=>new ClockDate(),read,
   async risk(symbol='CRWD',options={}){const map=await provider.fetchEventRiskMap([symbol],options);assert.equal(map.size,1);return map.get(symbol);},
@@ -102,10 +102,37 @@ async function run(){
  const ampersandQueries=ampersandDaily.calls.filter(row=>row.kind==='EARNINGS');assert.equal(ampersandQueries.length,11);
  assert.equal(new Set(ampersandQueries.filter(call=>call.query.from===call.query.to).map(call=>call.query.from)).size,10,'All ten original policy-window dates require validated coverage');
  for(const call of ampersandQueries)assert.equal(Object.hasOwn(call.query,'includeReportTimes'),false);
- for(const invalid of ['M_MFIN.NS','BAD SYMBOL','BAD\nSYMBOL','BAD\tSYMBOL','BAD\u0000SYMBOL','&INVALID','INVALID$','A'.repeat(33)]){
+ for(const invalid of ['M_MFIN','_MFIN.NS','MFIN_.NS','M__MFIN.NS','M_MFIN.','M_MFIN.123','SALAM_BAH.AE\n','SALAM_BAH.AE ','SALAM_BAH/AE','BAD SYMBOL','BAD\nSYMBOL','BAD\tSYMBOL','BAD\u0000SYMBOL','&INVALID','INVALID$','A'.repeat(33)]){
   const h=harness({EARNINGS:[earning('2026-10-22',{symbol:invalid})]}),risk=verification(await h.risk(),'UNVERIFIED',h);
   assert(risk.eventVerification.reasons.includes('EARNINGS_MALFORMED_RESPONSE'),'Literal ampersands do not admit unrelated invalid symbol forms');
  }
+
+ // November9 ordinary production diagnostics observed exactly this symbol/date
+ // and response counts. Other calendar rows below are explicitly synthetic.
+ const observedCalendarRow={symbol:'SALAM_BAH.AE',date:'2026-11-16'};
+ const observedEpoch=NativeDate.parse('2026-11-09T15:14:49.448Z');
+ const internationalFeed=({query})=>query.from!==query.to?
+  [observedCalendarRow,...Array.from({length:3999},(_,i)=>({symbol:'SYNTH'+i,date:'2026-11-09'}))]:
+  query.from==='2026-11-16'?[observedCalendarRow,...Array.from({length:448},(_,i)=>({symbol:'SYNTH'+i,date:query.from}))]:[];
+ const beforeSymbols=harness({EARNINGS:internationalFeed},'preSymbolRepair',observedEpoch);
+ const oldSymbolRisk=verification(await beforeSymbols.risk(),'UNVERIFIED',beforeSymbols);
+ assert(oldSymbolRisk.eventVerification.reasons.includes('EARNINGS_MALFORMED_RESPONSE'),'Reproduce the actual underscore rejection before repair');
+ const afterSymbols=harness({EARNINGS:internationalFeed},false,observedEpoch);
+ verification(await afterSymbols.risk(),'VERIFIED_CLEAR',afterSymbols);
+ assert.equal(afterSymbols.calls.filter(call=>call.kind==='EARNINGS').length,11,'The 4000-row aggregate still requires all ten complete daily queries');
+ for(const symbol of ['SALAM_BAH.AE','M_MFIN.NS','SYNTH_ONE_TWO.AE']){
+  const h=harness({EARNINGS:[earning('2026-10-22',{symbol})]});
+  verification(await h.risk(),'VERIFIED_CLEAR',h);
+  verification(await h.risk(symbol),'VERIFIED_BLOCKED',h);
+  const mixed=harness({EARNINGS:[earning('2026-10-22',{symbol}),earning()]});
+  verification(await mixed.risk(),'VERIFIED_BLOCKED',mixed);
+ }
+ for(const badDate of ['2026-02-30',null,'2026-11-16T00:00:00Z']){
+  const h=harness({EARNINGS:[{...observedCalendarRow,date:badDate}]},false,observedEpoch);
+  verification(await h.risk(),'UNVERIFIED',h);
+ }
+ const interruptedInternational=harness({EARNINGS:args=>args.query.from===args.query.to&&args.query.from==='2026-11-12'?new Error(sentinel):internationalFeed(args)},false,observedEpoch);
+ verification(await interruptedInternational.risk(),'UNVERIFIED',interruptedInternational);
 
  // Preserve independent production-source outputs and provider/cache call budgets
  // for complete successful feeds and unaffected availability/coverage failures.

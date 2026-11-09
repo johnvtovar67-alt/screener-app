@@ -1,0 +1,11 @@
+# November 9 shared earnings rejection: identified cause
+
+Ordinary production traffic on release 5436791 at 15:14:49 UTC (09:14 Chicago) recorded a 4000-row aggregate earnings calendar and a 449-row November16 calendar. Each had exactly one rejected row with public fields symbol SALAM_BAH.AE and date 2026-11-16. Nine of ten daily queries were complete. The symbol validator rejected the underscore; the date passed. No raw provider error bodies, credentials, private records or manual producer invocation were used.
+
+The Dubai Financial Market primary issuer page identifies SALAM_BAH as Al Salam Bank's trading symbol: https://www.dfm.ae/the-exchange/market-information/company/SALAM_BAH/profile . This is a valid international listing shape in the global feed, not evidence that all C1 candidates report earnings.
+
+Owner explicitly requested repair. Recognize exchange-qualified internal-underscore identifiers in the earnings calendar only. This is a bounded grammar, not a ticker whitelist. Keep the exact row identity and date, full ten-day coverage, 4000-row cap recovery, adverse-event attribution, expiration and contradiction checks. The C1 universe and quote, account, news and merger symbol rules are unchanged. No historical/model/account/cash/trade records, stop levels, cron schedules, dependencies or configuration change.
+
+Tests reproduce the old failure using the observed two public fields and aggregate/day counts, with all remaining rows explicitly synthetic. The repaired capped calendar must obtain all ten complete daily responses. Valid underscore symbols preserve a block when the requested issuer has near-term earnings, preserve a simultaneous U.S. issuer block, and do not block unrelated issuers. Missing days, bad dates, whitespace, repeated/leading/trailing underscores, unqualified names, malformed suffixes and overlength identifiers remain incomplete. The prior test assumption that every internal underscore was invalid is corrected only for this provider-calendar grammar. Existing economic/source hashes remain pinned through an exact new inverse.
+
+Only lib/eventRisk.js changes in the application freeze manifest. Full four-job CI on the exact head is required. Live recovery remains pending deployment and an ordinary production observation.
