@@ -12,7 +12,8 @@ page=page.replace(purchaseDiagnosticProp,'');
 for(const [before,after] of require('./c1-opening-refresh-ui-seams.cjs')){assert.equal(page.split(after).length,2);page=page.replace(after,before);}
 for(const [a,b] of require('./c1-combined-evidence-ui-seams.cjs')){assert.equal(page.split(b).length,2);page=page.replace(b,a);}for(const [a,b] of require('./c1-holding-timing-ui-seams.cjs')){assert.equal(page.split(b).length,2);page=page.replace(b,a);}
 for(const [before,after] of require('./c1-non-cash-ui-seams.cjs')){assert.equal(page.split(after).length,2,'Only the declared adoption UI seam');page=page.replace(after,before);}
-const opportunities=[fs.readFileSync('components/C1AccountOpportunities.js','utf8'),require('./c1-current-screen-source-seams.cjs').restore('components/C1AccountOpportunitiesView.js',fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8')),fs.readFileSync('lib/c1OpportunitiesProjection.js','utf8'),fs.readFileSync('lib/c1OpportunitiesContract.js','utf8')].join('\n');
+const historicalSource=file=>require('./c1-account-policy-seams.cjs').restore(file,fs.readFileSync(file,'utf8'));
+const opportunities=[historicalSource('components/C1AccountOpportunities.js'),require('./c1-current-screen-source-seams.cjs').restore('components/C1AccountOpportunitiesView.js',historicalSource('components/C1AccountOpportunitiesView.js')),historicalSource('lib/c1OpportunitiesProjection.js'),historicalSource('lib/c1OpportunitiesContract.js')].join('\n');
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
 const exact=(name,value,expected)=>assert.equal(sha(value),expected,`${name} must match the pinned historical UI region`);
 const between=(text,start,end)=>{

@@ -5,6 +5,7 @@ const assert=require('node:assert/strict'),crypto=require('node:crypto');
 const seams=require('./fixtures/c1-publication-source-seams.json');
 const blob=s=>crypto.createHash('sha1').update('blob '+Buffer.byteLength(s)+'\0').update(s).digest('hex');
 function restore(file,source){
+ source=require('./c1-account-policy-seams.cjs').restore(file,source);
  source=require('./c1-exit-review-source-seams.cjs').restore(file,source);
  const record=seams[file];if(!record||blob(source)===record.baselineBlob)return source;
  assert.equal(blob(source),record.authorizedBlob,'Complete authorized publication-state repair: '+file);

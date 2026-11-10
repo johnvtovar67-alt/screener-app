@@ -8,7 +8,7 @@ const {readC1CurrentEventEvidence}=loader.load('lib/c1CurrentEventEvidence.js');
 const fixedNow='2026-09-30T15:00:00Z',NativeDate=Date;
 class FixedDate extends NativeDate{constructor(value){super(value===undefined?fixedNow:value)}static now(){return NativeDate.parse(fixedNow)}}
 const source=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
-const context={...market,Date:FixedDate,Map,console,process,URL,URLSearchParams,AbortSignal,Response,setTimeout,clearTimeout,
+const context={...market,...loader.load('lib/c1QualifiedSelection.js'),...loader.load('lib/c1UniverseVerification.js'),createHash:require('node:crypto').createHash,Date:FixedDate,Map,console,process,URL,URLSearchParams,AbortSignal,Response,setTimeout,clearTimeout,
  C1_LIVE_UNIVERSES:{sp500:{endpoint:'sp500-constituent'}},
  c1LiveMembers:(universe,rows)=>rows.map(row=>({symbol:row.symbol,name:row.name,sector:row.sector})).sort((a,b)=>a.symbol.localeCompare(b.symbol)),
  normalizeHistoricalBars:rows=>rows.map(row=>({...row,adjusted:true}))};

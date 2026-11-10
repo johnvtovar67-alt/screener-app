@@ -5,7 +5,7 @@ const vm = require("vm");
 // The application intentionally remains a Next.js/CommonJS project. This small
 // loader lets offline research commands execute the same ES-module source files
 // that production imports, avoiding a second copy of the decision methodology.
-function createResearchModuleLoader(root = process.cwd()) {
+function createResearchModuleLoader(root = process.cwd(), overrides = {}) {
   const cache = new Map();
 
   function resolveModule(fromFile, request) {
@@ -23,6 +23,8 @@ function createResearchModuleLoader(root = process.cwd()) {
     const file = request.startsWith(".")
       ? resolveModule(fromFile, request)
       : path.resolve(root, request);
+    const override=overrides[path.relative(root,file).split(path.sep).join('/')];
+    if(override)return override;
     if (cache.has(file)) return cache.get(file).exports;
     const record = { exports: {} };
     cache.set(file, record);

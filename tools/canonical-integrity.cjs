@@ -31,7 +31,11 @@ if(fs.existsSync(workflowDir)){
 
 const manifest=read('lib/releaseManifest.js');
 hasAll(manifest,[
-  'release:"2026-11-04-c1-automatic-held-stops"',
+  'release:"2026-11-11-c1-account-policy-v2"',
+  '"account-wide-realized-loss-cooldowns"',
+  '"coherent-account-stock-actions"',
+  '"complete-supported-universe-selection"',
+  '"separate-operational-risk-reference"',
   '"explicit-held-stop-verification"',
   '"prospective-ten-percent-swing-stop"',
   'canonicalProject:"screener-app-cq5t"',

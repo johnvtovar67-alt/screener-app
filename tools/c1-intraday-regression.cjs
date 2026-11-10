@@ -152,7 +152,7 @@ const boundaryPlan=execution.planC1ContinuedAccountOpening({adoption:privateAcco
 const lowered=originalBar.close*.99;
 assert.throws(()=>priceReview.reviewC1OpeningPriceRevisions({account:privateAccount,sessions:[baseline],opening:{...boundaryOpening,priceBasisRevisions:[{...revision,observedBar:{...observedBar,close:lowered,low:Math.min(observedBar.low,lowered)}}]},plan:boundaryPlan,now}),/changes opening orders/);
 
-const provider={...loader.load('lib/marketSession.js'),Date};vm.createContext(provider);vm.runInContext(fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function '),provider);
+const provider={...loader.load('lib/marketSession.js'),...loader.load('lib/c1QualifiedSelection.js'),Date};vm.createContext(provider);vm.runInContext(fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function '),provider);
 const tinyBaseline={date:baseline.date,universeSymbols:['AAA'],prices:[{symbol:'AAA',close:100}],signals:[{symbol:'AAA',sector:'Technology'}]};
 const anchor={date:baseline.date,open:100,high:101,low:99,close:100.04};
 const tiny={baseline:tinyBaseline,symbols:['AAA'],membersBefore:[{symbol:'AAA',sector:'Technology'}],membersAfter:[{symbol:'AAA',sector:'Technology'}],observations:{AAA:{quote:{symbol:'AAA',timestamp:now.getTime()/1000,open:100,price:100},anchor,anchorRecheck:{...anchor}}},now};

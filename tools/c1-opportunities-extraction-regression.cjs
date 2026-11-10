@@ -7,10 +7,11 @@ const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
 const file=path.resolve('components/C1AccountOpportunities.js'),viewFile=path.resolve('components/C1AccountOpportunitiesView.js');
 const currentSource=fs.readFileSync(file,'utf8'),source=require('./c1-opportunities-projection-extraction.cjs').restoreOpportunitiesProjection(currentSource),viewSource=fs.readFileSync(viewFile,'utf8');
 assert.equal(crypto.createHash('sha256').update(source).digest('hex'),'794a87727bfb4dcfc17e98fbb6948690fd4fa64606a29febd3cd5e1691a335b2','Shared projection extraction reconstructs the exact PR331 component');
-const seam=source.indexOf(' return renderC1AccountOpportunitiesView('),bodyStart=viewSource.indexOf(' return <><section');
+const historicalViewSource=require('./c1-holding-wording-seams.cjs').restoreView(require('./c1-current-screen-source-seams.cjs').restore('components/C1AccountOpportunitiesView.js',viewSource));
+const seam=source.indexOf(' return renderC1AccountOpportunitiesView('),bodyStart=historicalViewSource.indexOf(' return <><section');
 assert(seam>=0&&bodyStart>=0);
 const original="import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';\n"+
- source.slice(0,seam).replace("import {renderC1AccountOpportunitiesView} from './C1AccountOpportunitiesView';\n",'')+require('./c1-holding-wording-seams.cjs').restoreView(require('./c1-current-screen-source-seams.cjs').restore('components/C1AccountOpportunitiesView.js',viewSource)).slice(bodyStart);
+ source.slice(0,seam).replace("import {renderC1AccountOpportunitiesView} from './C1AccountOpportunitiesView';\n",'')+historicalViewSource.slice(bodyStart);
 assert.equal(crypto.createHash('sha256').update(original).digest('hex'),'0b72fd1afff37128fce1f203753a1eebbf3afa6a73dee618a8c919a422d6c71c',
  'Reversing only the render extraction reproduces the complete deployed component, including all authority/effect code and literal markup');
 const NativeDate=Date,nativeFetch=global.fetch,nativeWindow=global.window,nativeSetTimeout=global.setTimeout,nativeClearTimeout=global.clearTimeout;

@@ -233,16 +233,30 @@ ${purchaseBody}
   };
 
   const applyRecentProjectionFacts = (session,sessionIndex) => {
-    if (!liveRecentMomentum || !recentOpenEnabled(session)) return;
-    for (const fact of actualReplay?.reconciledProjectionExecutions(session.date) || []) {
+    if (!liveRecentMomentum) return;
+    const projection=recentOpenEnabled(session);
+    const accountHistory=c1AccountPolicyApplies(session.date)&&!projection;
+    if(!projection&&!accountHistory)return;
+    // A prior completed liquidation resets at this opening before later actual
+    // intraday purchases are replayed. Their existence cannot retroactively
+    // turn a flat eligible opening into an inherited holding at activation.
+    if(accountPolicy?.active===true&&c1AccountPolicyApplies(session.date)&&accountPolicy.operationalRiskDecision?.status==='approved'){
+      const beforeFacts=equityValue(cash,positions,priceMap(session),'open');
+      operationalRiskState=operationalRiskForSession({policy:accountPolicy,
+        state:operationalRiskState||{historicalHighWater:historicalPortfolioHighWatermark,operationalHighWater:portfolioHighWatermark,appliedEpochs:[],
+          requiresLiquidationEpoch:activeSessionNumber<=portfolioRiskPausedThrough},
+        session,allocation:accountSeed.sleeve,openingEquity:beforeFacts,equityScale:accountSeed.actualDollarsPerModelDollar,hasOpenHoldings:positions.size>0});
+    }
+    const facts=projection?actualReplay?.reconciledProjectionExecutions(session.date):actualReplay?.reconciledAccountExecutions(session.date);
+    for (const fact of facts || []) {
       const existing = positions.get(fact.symbol);
       if (fact.side === 'sell') {
         if (!existing || fact.shares > existing.shares + 1e-7)
           throw new Error('Reconciled projected sale lost its original ownership');
         const sale=executeSale({date:session.date,symbol:fact.symbol,position:existing,shares:fact.shares,
           fill:fact.price,reason:fact.reason,recordedProjection:fact});
-        sale.actualProjectionFillId=fact.id;
-        sale.actualProjectionFee=fact.fee;
+        if(projection){sale.actualProjectionFillId=fact.id;sale.actualProjectionFee=fact.fee;}
+        else {sale.actualAccountFillId=fact.id;sale.actualAccountFee=fact.fee;}
         continue;
       }
       const signal = fact.sourceSignal || existing?.stock;
@@ -261,8 +275,8 @@ ${purchaseBody}
         executionSignal:recentExecutionSignal(order,fact.price,effectiveStopPrice),orderSector:order.sector,orderIssuer:order.issuer,stopDistancePct:distance,
         entryGapPct:null});
       const purchase=trades.at(-1);
-      purchase.actualProjectionFillId=fact.id;
-      purchase.actualProjectionFee=fact.fee;
+      if(projection){purchase.actualProjectionFillId=fact.id;purchase.actualProjectionFee=fact.fee;}
+      else {purchase.actualAccountFillId=fact.id;purchase.actualAccountFee=fact.fee;}
       const held=positions.get(fact.symbol);
       if (!existing) {held.recentProjectionOpenedAt=session.date;held.recentOpeningStopDistancePct=distance;}
       // Partial fills of this same-session opening lifecycle retain its weighted
@@ -277,7 +291,7 @@ ${purchaseBody}
         held.recentMomentumPeakPrice=held.entryPrice;
         held.stock=recentExecutionSignal(order,held.entryPrice,held.stopPrice);
       }
-      recentRecordedPurchaseSymbols.add(fact.symbol);
+      if(projection)recentRecordedPurchaseSymbols.add(fact.symbol);
     }
   };
 
@@ -302,8 +316,74 @@ replace('        const executionSignal=recentExecutionSignal(order,fill,effectiv
 // Observe the values in the existing risk branch. The replay, pending orders
 // and accounting records do not contain the display-only evidence.
 source = "import {observeC1PortfolioStop,carryC1PortfolioStop} from './c1PortfolioStopEvidence';\n" + source;
-replace("          executeSale({\n            date: session.date,\n            symbol,\n            position,\n            reason: \"portfolio-drawdown-stop\",", "          if (actualReplay) observeC1PortfolioStop(position, session.date, accountSeed, portfolioHighWatermark,\n            openEquity, config.portfolioDrawdownStopPct, pendingActualRiskExits.get(symbol)?.reason === 'portfolio-drawdown-stop');\n          executeSale({\n            date: session.date,\n            symbol,\n            position,\n            reason: \"portfolio-drawdown-stop\",");
+replace("          executeSale({\n            date: session.date,\n            symbol,\n            position,\n            reason: \"portfolio-drawdown-stop\",", "          if (actualReplay) observeC1PortfolioStop(position, session.date, accountSeed, portfolioRiskReference,\n            openEquity, config.portfolioDrawdownStopPct, pendingActualRiskExits.get(symbol)?.reason === 'portfolio-drawdown-stop');\n          executeSale({\n            date: session.date,\n            symbol,\n            position,\n            reason: \"portfolio-drawdown-stop\",");
 replace("    trades.push(trade);\n    if (positionClosed)", "    if (actualReplay) carryC1PortfolioStop(position, trade);\n    trades.push(trade);\n    if (positionClosed)");
+
+// Reproduce the already released qualified-selection seams before adding v2.
+// The earlier reviewed source/oracle fixture is reused without changing it.
+for (const chunk of require('./fixtures/c1-qualified-selection-source-seams.json')['lib/c1RecentMomentumChallengerSimulator.js'].chunks) replace(chunk.before,chunk.after);
+
+// Owner-authorized account policy v2 is prospective. The canonical source pin,
+// recorded fills, research engine and earlier economic oracles remain intact.
+source = "import {c1AccountPolicyApplies,c1AccountPolicySourceApplies} from './c1AccountPolicy';\n" + source;
+source = "import {operationalRiskForSession} from './c1OperationalRiskEpoch';\n" + source;
+replace("  const liveRecentMomentum = recentLivePolicy?.contract === 'c1-recent-momentum-live-v1';",
+`  const liveRecentMomentum = recentLivePolicy?.contract === 'c1-recent-momentum-live-v1';
+  const accountPolicy = recentLivePolicy?.accountPolicy || actualExecutions?.accountPolicy || null;
+  const policyClose = session => liveRecentMomentum && session.date === recentLivePolicy.sourceSessionDate && c1AccountPolicySourceApplies(session.date);
+  const policyOpen = session => liveRecentMomentum && session.date === recentLivePolicy.projectionDate && c1AccountPolicyApplies(session.date);
+  const blockedAccountStock = (session,symbol) => (policyClose(session)||policyOpen(session)) && accountPolicy?.active === true && (accountPolicy.blockedSymbols?.includes(symbol)||accountPolicy.activeExitSymbols?.includes(symbol)||Boolean(accountPolicy.purchaseBlocks?.[symbol]));`);
+replace('  let portfolioRiskPausedThrough = -1;', '  let portfolioRiskPausedThrough = -1;\n  let operationalRiskState = null;\n  let historicalPortfolioHighWatermark = config.initialCapital;');
+replace('      portfolioHighWatermark = accountSeed.highWater;', '      portfolioHighWatermark = accountSeed.highWater;\n      historicalPortfolioHighWatermark = accountSeed.highWater;');
+replace('      portfolioHighWatermark+=event.value;nonCashFlow+=event.value;', '      portfolioHighWatermark+=event.value;historicalPortfolioHighWatermark+=event.value;nonCashFlow+=event.value;');
+replace('      if (activeSessionNumber === portfolioRiskPausedThrough + 1)\n        portfolioHighWatermark = equityValue(cash, positions, prices, "open");\n      const openEquity = equityValue(cash, positions, prices, "open");\n      portfolioHighWatermark = Math.max(portfolioHighWatermark, openEquity);',
+`      const policyRiskActive = liveRecentMomentum && accountPolicy?.active === true && c1AccountPolicyApplies(session.date);
+      const operationalRiskApproved=policyRiskActive&&accountPolicy.operationalRiskDecision?.status==='approved';
+      // Retain the legacy reference and its exact reset chronology. The new
+      // operational epoch and the cumulative historical peak are separate.
+      historicalPortfolioHighWatermark=Math.max(historicalPortfolioHighWatermark,portfolioHighWatermark);
+      if (activeSessionNumber === portfolioRiskPausedThrough + 1)
+        portfolioHighWatermark = equityValue(cash, positions, prices, "open");
+      const openEquity = equityValue(cash, positions, prices, "open");
+      portfolioHighWatermark = Math.max(portfolioHighWatermark, openEquity);
+      historicalPortfolioHighWatermark=Math.max(historicalPortfolioHighWatermark,openEquity);
+      if (policyRiskActive) {
+        operationalRiskState = operationalRiskForSession({policy:accountPolicy,
+          state:operationalRiskState || {historicalHighWater:historicalPortfolioHighWatermark,operationalHighWater:portfolioHighWatermark,appliedEpochs:[],
+            requiresLiquidationEpoch:activeSessionNumber<=portfolioRiskPausedThrough},
+          session,allocation:accountSeed.sleeve,openingEquity:openEquity,equityScale:accountSeed.actualDollarsPerModelDollar,hasOpenHoldings:positions.size>0});
+        operationalRiskState.historicalHighWater=historicalPortfolioHighWatermark;
+        if(!operationalRiskApproved)operationalRiskState.operationalHighWater=portfolioHighWatermark;
+        else if(operationalRiskState.purchaseRiskReady)operationalRiskState.operationalHighWater=Math.max(operationalRiskState.operationalHighWater,openEquity);
+      }
+      // Before a first verified new epoch exists, retain all legacy protection
+      // for existing holdings, including its scheduled reference resumption.
+      // After an epoch, a new loss cannot fall back to the older historic peak.
+      const operationalEpochEstablished=operationalRiskApproved&&operationalRiskState.appliedEpochs.length>0;
+      if(policyRiskActive)operationalRiskState.referenceMode=operationalEpochEstablished?'operational-epoch':'legacy-continuity';
+      const portfolioRiskReference=operationalEpochEstablished?operationalRiskState.operationalHighWater:portfolioHighWatermark;
+      const portfolioRiskCheckEnabled=operationalEpochEstablished?operationalRiskState.purchaseRiskReady:activeSessionNumber>portfolioRiskPausedThrough;`);
+replace('        portfolioHighWatermark > 0\n          ? ((openEquity - portfolioHighWatermark) / portfolioHighWatermark) * 100',
+  '        portfolioRiskReference > 0\n          ? ((openEquity - portfolioRiskReference) / portfolioRiskReference) * 100');
+replace('        activeSessionNumber > portfolioRiskPausedThrough &&',
+  '        portfolioRiskCheckEnabled &&');
+replace('        portfolioRiskPausedThrough =\n          activeSessionNumber +',
+`        if(operationalRiskApproved)operationalRiskState={...operationalRiskState,requiresLiquidationEpoch:true,purchaseRiskReady:false,status:'awaiting-completed-liquidation',triggerDate:session.date};
+        portfolioRiskPausedThrough =
+          activeSessionNumber +`);
+replace("        if (portfolioRiskPaused) {noteEntrySkip('portfolio-cooldown');continue;}",
+`        if (portfolioRiskPaused && !(policyRiskActive&&operationalRiskApproved)) {noteEntrySkip('portfolio-cooldown');continue;}
+        if (policyOpen(session) && accountPolicy?.active !== true) {noteEntrySkip('account-policy-evidence-unavailable');continue;}
+        if (policyOpen(session) && !operationalRiskState?.purchaseRiskReady) {noteEntrySkip(operationalRiskState?.decisionRequired?'operational-risk-decision-required':'operational-risk-evidence-required');continue;}
+        if (blockedAccountStock(session,order.symbol)) {noteEntrySkip('account-stock-cooldown');continue;}`);
+replace("      const qualifiedQueue=new Set(qualifiedPool.slice(0,C1_QUALIFIED_SELECTION_QUEUE_COUNT).map(symbolOf));",
+"      const qualifiedQueue=new Set((policyClose(session)?qualifiedPool:qualifiedPool.slice(0,C1_QUALIFIED_SELECTION_QUEUE_COUNT)).map(symbolOf));");
+replace("        !allocationBlocked.has(symbolOf(signal)) &&\n        sessionIndex > number(cooldownThrough.get(symbolOf(signal)), -1) &&",
+"        !allocationBlocked.has(symbolOf(signal)) &&\n        !blockedAccountStock(session,symbolOf(signal)) &&\n        sessionIndex > number(cooldownThrough.get(symbolOf(signal)), -1) &&");
+replace("          rankedSelection\n            ? Math.max(\n                rankedTargetCount,\n                Math.floor(\n                  number(config.rankedEntryQueueCount, rankedTargetCount * 3),\n                ),\n              )\n            : undefined,",
+"          policyClose(session) ? undefined : rankedSelection\n            ? Math.max(\n                rankedTargetCount,\n                Math.floor(\n                  number(config.rankedEntryQueueCount, rankedTargetCount * 3),\n                ),\n              )\n            : undefined,");
+replace('accountRisk:{highWater:portfolioHighWatermark,pausedThrough:portfolioRiskPausedThrough,activeSessionNumber}',
+  'accountRisk:{highWater:operationalRiskState?.referenceMode===\'operational-epoch\'?operationalRiskState.operationalHighWater:portfolioHighWatermark,pausedThrough:portfolioRiskPausedThrough,activeSessionNumber,...(operationalRiskState?{historicalHighWater:historicalPortfolioHighWatermark,legacyHighWater:portfolioHighWatermark,operationalRisk:operationalRiskState}:{})}');
 
 if (process.argv.includes('--check')) {
   assert.equal(fs.readFileSync(target, 'utf8'), source, 'Regenerate the isolated recent-momentum Challenger');

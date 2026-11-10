@@ -17,7 +17,7 @@ function currentEventEvidenceFor(symbols,now,overrides={}){
  });
 }
 function createWorkflowFixture(kind='buy',options={}){
- const loader=createResearchModuleLoader(root),service=loader.load('lib/c1AccountService.js');
+ const loader=createResearchModuleLoader(root,options.moduleOverrides||{}),service=loader.load('lib/c1AccountService.js');
  const market=loader.load('lib/marketSession.js'),{analyzeEntryTiming}=loader.load('lib/entryTiming.js');
  const symbols=['MRNA','BBB','CCC','DDD','EEE','FFF','GGG','HHH','III','JJJ','KKK','LLL','DELL'];
  const baselineDate=options.baselineDate||'2026-10-14',dates=[baselineDate];for(let i=0;i<220;i++)dates.unshift(market.previousMarketSessionDay(dates[0]));
@@ -42,8 +42,8 @@ function createWorkflowFixture(kind='buy',options={}){
  const equity=portfolio.reduce((sum,p)=>sum+p.shares*(p.symbol==='DELL'?500:p.symbol==='CASH'?1:100),0);
  const signature=loader.load('lib/portfolioGovernor.js').portfolioCompositionSignature(portfolio);
  let account=service.adoptC1Account({portfolio,capitalRecord:{version:2,highWater:equity,portfolioSignature:signature,reconciliationRequired:false},book,now:new Date(baselineDate+'T22:00:00Z')});
- let now=new Date(options.now||dates[221]+'T17:00:00Z'),openingFailure=kind==='missing',writes=0;const quotes={};
- const opening=()=>({currentEventEvidence:currentEventEvidenceFor(symbols,now),date:now.toISOString().slice(0,10),decisionAt:now.toISOString(),universeSymbols:symbols,corporateActions:[],
+ let now=new Date(options.now||dates[221]+'T17:00:00Z'),openingFailure=kind==='missing',eventEvidenceOverride=null,writes=0;const quotes={};
+ const opening=()=>({currentEventEvidence:eventEvidenceOverride??currentEventEvidenceFor(symbols,now),date:now.toISOString().slice(0,10),decisionAt:now.toISOString(),universeSymbols:symbols,corporateActions:[],
   prices:sessions[221].prices.map(p=>({...p,open:p.symbol==='DELL'?500:100,observedPrice:quotes[p.symbol]??(p.symbol==='DELL'?460:100),observedAt:now.toISOString()})),
   receipt:{observedAt:now.toISOString(),membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true}});
  const collectOpening=async()=>{if(openingFailure)throw Error('MRNA entry verification incomplete: current opening quote unavailable');return opening();};
@@ -54,7 +54,7 @@ function createWorkflowFixture(kind='buy',options={}){
   eventRisk:{status:'Clear'},entryTiming:{available:true,liquidityPass:true,averageDollarVolume20:500000000},recommendation:{expertDecision:{strongBuyPass:symbol==='MRNA',metrics:{quoteFreshnessPass:true}}}}));}
  return {root,loader,service,book,sessions,portfolio,prepare,opening,collectOpening,screenRows,
   get account(){return account;},set account(value){account=value;},get now(){return now;},set now(value){now=new Date(value);},
-  setQuote(symbol,price){quotes[symbol]=price;},get writes(){return writes;},persist(value){account=value;writes++;},setOpeningFailure(value){openingFailure=value;},
+  setQuote(symbol,price){quotes[symbol]=price;},get writes(){return writes;},persist(value){account=value;writes++;},setOpeningFailure(value){openingFailure=value;},setEventEvidence(value){eventEvidenceOverride=value;},
   setCash(balance){account=service.updateC1BrokerageCash({account,brokerageCash:balance,expectedRevision:account.revision,now});},
   advance(){now=new Date(now.getTime()+60000);},clone};
 }
