@@ -9,9 +9,11 @@ async function main(){
  const reliability=process.env.C1_NORMAL_BROWSER_RELIABILITY==='1',clientCommit='a'.repeat(40),observationSecret='offline-browser-observation-secret';
  const w=require('next/dist/compiled/webpack/webpack');w.init();
  await new Promise((resolve,reject)=>w.webpack({mode:'development',target:'web',devtool:false,plugins:reliability?[new w.webpack.DefinePlugin({'process.env.NEXT_PUBLIC_C1_CLIENT_COMMIT':JSON.stringify(clientCommit),'process.env.NEXT_PUBLIC_C1_CLIENT_ENVIRONMENT':JSON.stringify('production')})]:[],entry:path.resolve('tools/fixtures/c1-normal-refresh-browser.jsx'),output:{path:out,filename:'client.js'},resolve:{modules:[path.join(root,'node_modules')],alias:{'@babel/runtime':path.join(path.dirname(require.resolve('next/package.json')),'dist/compiled/@babel/runtime')}},module:{rules:[{test:/\.jsx?$/,exclude:/node_modules/,use:{loader:path.join(root,'tools/fixtures/c1-normal-refresh-babel-loader.cjs')}},{test:/\.css$/,type:'asset/source'}]}}).run((error,stats)=>error?reject(error):stats.hasErrors()?reject(Error(stats.toString({all:false,errors:true}))):resolve()));
- const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1';
+ const sourceGate=process.env.C1_NORMAL_BROWSER_SOURCE_GATE==='1';
+ const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1'||sourceGate;
  const api=createWorkflowApi('buy',qualified?{baselineDate:'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}]}:reliability?{baselineDate:'2026-10-29',now:'2026-10-30T19:00:00Z',commit:clientCommit,observationSecret}:{});api.fixture.setCash(100000);
- if(qualified)for(let index=215;index<=220;index++){
+ if(sourceGate)require('./fixtures/c1-source-eligibility.cjs').applySourceEligibilityFixture(api.fixture);
+ if(qualified&&!sourceGate)for(let index=215;index<=220;index++){
   const session=api.fixture.sessions[index];
   for(const symbol of ['MRNA','BBB','CCC','DDD','EEE','FFF','GGG','HHH','III']){
    const p=session.prices.find(p=>p.symbol===symbol);p.close=105-(index-215);p.open=p.close;p.high=p.close*1.001;p.low=p.close*.999;
@@ -124,17 +126,21 @@ async function main(){
     const text=await js('document.querySelector(\'[aria-label="C1 account opportunities"]\').innerText');
     assert(text.includes('Signals based on 2026-11-09 close'),'New completed-session selection is published');
     const purchaseCards=await js(`[...document.querySelectorAll('[aria-label="C1 account opportunities"] article')].map(e=>e.innerText)`);
-    for(const symbol of ['JJJ','KKK','LLL'])assert(purchaseCards.some(t=>t.includes(symbol)&&/Buy \d+ shares/.test(t)),symbol+' has a checked purchase in the actual Home/App at width '+width+': '+JSON.stringify(purchaseCards));
+    for(const symbol of sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'])assert(purchaseCards.some(t=>t.includes(symbol)&&/Buy \d+ shares/.test(t)),symbol+' has a checked purchase in the actual Home/App at width '+width+': '+JSON.stringify(purchaseCards));
     assert(!purchaseCards.some(t=>t.includes('MRNA')&&/Buy \d+ shares/.test(t)),'A weak historical leader is not an authorized purchase');
     assert((await js('document.body.innerText')).includes('MRNA'),'Blocked historical leader remains visible in Watch');
+    if(sourceGate){
+     assert(!purchaseCards.some(t=>t.includes('MRNA')),'Source-ineligible leader is in Watch, not Opportunities');
+     assert.match(await js('document.body.innerText'),/375\.71%.*100\.00%/,'Actual screen explains the unchanged volatility rejection');
+    }
     await shot('qualified-selection-'+width);
    }
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Read and opening checks cannot rewrite account economics');
    assert.equal(api.fixture.writes,0);assert.deepEqual(trace.browserErrors,[]);
    assert(requests.some(r=>r.path==='/api/c1-account'&&r.method==='GET'&&r.finished));
    assert(requests.some(r=>r.operation==='prepare-execution'&&r.finished),'Lower-ranked purchases came through the real account opening handler');
-   trace.status='PASS';trace.cases.push({case:'qualified-selection',checkedSymbols:['JJJ','KKK','LLL'],watchLeadersRetained:true,widths:[1440,390],accountRecordIdentical:true});
-   console.log('PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
+   trace.status='PASS';trace.cases.push({case:sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:true,widths:[1440,390],accountRecordIdentical:true});
+   console.log(sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
   }
   if(!reliability&&!actualScreen){
    assert(requests.some(r=>r.path==='/api/portfolio-sync'&&r.method==='GET'&&r.finished),'The current synced portfolio loaded');
@@ -428,6 +434,8 @@ async function main(){
  }finally{trace.accountRecordIdentical=accountRecordUnchanged();trace.syntheticAccountWrites=api.fixture.writes;state.held.splice(0).forEach(release=>release());try{socket?.close();}catch{}await new Promise(resolve=>{if(chrome.exitCode!==null||chrome.signalCode!==null)resolve();else{chrome.once('exit',resolve);chrome.kill('SIGTERM');}});server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');}
 }
 main().then(()=>{
+ if(!process.env.C1_NORMAL_BROWSER_SOURCE_GATE&&!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
+  require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_SOURCE_GATE:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'source-eligibility')},timeout:120000});
  if(!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
   require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_QUALIFIED:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'qualified-selection')},timeout:120000});
 }).catch(error=>{trace.status='FAIL';trace.failure=error.message;fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');console.error(error);process.exitCode=1;});

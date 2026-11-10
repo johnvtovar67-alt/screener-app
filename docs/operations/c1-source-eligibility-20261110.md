@@ -1,0 +1,11 @@
+# Source eligibility before C1 selection
+
+The owner requested completion and testing of the qualified candidate enhancement. The November 10 screenshot shows MRNA outside the account purchase queue at 375.71% accepted volatility, while VEEV and CRL remain blocked by its healthcare selection.
+
+The released classifier reproduced this defect offline: it selected a source-ineligible healthcare leader, reserved its sector and one of three selection slots, then the actual account rejected that leader. The screen applied price, liquidity and momentum source checks but omitted the frozen account's timing availability, factor coverage and 100% volatility requirements.
+
+`lib/c1StockClassification.js` now applies those remaining source predicates before constructing the qualified queue and before sector/issuer/slot consumption. All three frozen account sleeves share these requirements; the regression compares the projection against their actual eligibility predicate. Blocked leaders retain their historical rank and exact reason in Watch. Eligible alternatives still need every current quote/event/gap check and the account's cash, sizing and capacity approval. This repairs the active November 9 source policy on refresh; no further activation day is introduced.
+
+Only this application file and its freeze entry change. The account simulator, accepted history, recorded fills, holding rank exits, stops, risk thresholds, sizing, financial records, cron, dependencies, guard and CI/build hooks remain unchanged. Pre-November 9 screen snapshots remain byte-equivalent. The exact inverse seam preserves the previous source and economic oracle hashes; none is replaced or weakened.
+
+Validation includes the released-code reproduction; all three account predicates across valid, missing, malformed and boundary source values; excluded leaders not consuming the nine-name queue; sector uniqueness and zero purchases when all sources fail; real account/opening and real screen/provider/transport agreement; and actual Home/App desktop and mobile publication with no account mutation. The existing full regression/build/audit and all three browser jobs are required on the reviewed head before merge. Synthetic evidence does not establish an owner's brokerage parity or guarantee a particular stock will qualify in production.
