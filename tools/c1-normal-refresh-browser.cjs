@@ -10,10 +10,12 @@ async function main(){
  const w=require('next/dist/compiled/webpack/webpack');w.init();
  await new Promise((resolve,reject)=>w.webpack({mode:'development',target:'web',devtool:false,plugins:reliability?[new w.webpack.DefinePlugin({'process.env.NEXT_PUBLIC_C1_CLIENT_COMMIT':JSON.stringify(clientCommit),'process.env.NEXT_PUBLIC_C1_CLIENT_ENVIRONMENT':JSON.stringify('production')})]:[],entry:path.resolve('tools/fixtures/c1-normal-refresh-browser.jsx'),output:{path:out,filename:'client.js'},resolve:{modules:[path.join(root,'node_modules')],alias:{'@babel/runtime':path.join(path.dirname(require.resolve('next/package.json')),'dist/compiled/@babel/runtime')}},module:{rules:[{test:/\.jsx?$/,exclude:/node_modules/,use:{loader:path.join(root,'tools/fixtures/c1-normal-refresh-babel-loader.cjs')}},{test:/\.css$/,type:'asset/source'}]}}).run((error,stats)=>error?reject(error):stats.hasErrors()?reject(Error(stats.toString({all:false,errors:true}))):resolve()));
  const sourceGate=process.env.C1_NORMAL_BROWSER_SOURCE_GATE==='1';
- const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1'||sourceGate;
- const api=createWorkflowApi('buy',qualified?{baselineDate:'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}]}:reliability?{baselineDate:'2026-10-29',now:'2026-10-30T19:00:00Z',commit:clientCommit,observationSecret}:{});api.fixture.setCash(100000);
+ const accountPolicy=process.env.C1_NORMAL_BROWSER_ACCOUNT_POLICY==='1';
+ const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1'||sourceGate||accountPolicy;
+ const api=createWorkflowApi('buy',qualified?{baselineDate:accountPolicy?'2026-11-10':'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],...(accountPolicy?{moduleOverrides:require('./fixtures/c1-account-policy-risk.cjs').approvedOperationalRiskModules(root)}:{})}:reliability?{baselineDate:'2026-10-29',now:'2026-10-30T19:00:00Z',commit:clientCommit,observationSecret}:{});api.fixture.setCash(100000);
+ if(accountPolicy)require('./fixtures/c1-account-policy-universe.cjs').applyAccountPolicyUniverseFixture(api.fixture);
  if(sourceGate)require('./fixtures/c1-source-eligibility.cjs').applySourceEligibilityFixture(api.fixture);
- if(qualified&&!sourceGate)for(let index=215;index<=220;index++){
+ if(qualified&&!sourceGate&&!accountPolicy)for(let index=215;index<=220;index++){
   const session=api.fixture.sessions[index];
   for(const symbol of ['MRNA','BBB','CCC','DDD','EEE','FFF','GGG','HHH','III']){
    const p=session.prices.find(p=>p.symbol===symbol);p.close=105-(index-215);p.open=p.close;p.high=p.close*1.001;p.low=p.close*.999;
@@ -34,7 +36,7 @@ async function main(){
  const server=http.createServer(async(req,res)=>{try{
   let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):null,url=new URL(req.url,'http://127.0.0.1');
   const json=(data,status=200)=>{res.writeHead(status,{'content-type':'application/json','x-fixture-clock':api.fixture.now.toISOString()});res.end(JSON.stringify(data));};
-  if(url.pathname==='/__control'){state.fail=body.fail;if(Object.hasOwn(body,'shadowOwnership'))state.shadowOwnership=body.shadowOwnership;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
+  if(url.pathname==='/__control'){if(Object.hasOwn(body,'eventEvidenceUnavailable'))api.fixture.setEventEvidence(body.eventEvidenceUnavailable?[]:null);state.fail=body.fail;if(Object.hasOwn(body,'shadowOwnership'))state.shadowOwnership=body.shadowOwnership;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
   if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,review:url.searchParams.get('review'),symbol:url.searchParams.get('symbol'),finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
   const target=state.fail&&!state.fail.startsWith('stop-quote-')&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:['version-body-hold','version-unavailable'].includes(state.fail)?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
   if(target){
@@ -121,12 +123,19 @@ async function main(){
   await wait('document.querySelector("header button")?.textContent==="Reload"','initial reload settled');
   if(qualified){
    const baseline=JSON.stringify(api.fixture.account);accountRecordUnchanged=()=>JSON.stringify(api.fixture.account)===baseline;
+   let publishedActionVersion=null;
    for(const width of [1440,390]){
     await cdp('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<500});
     const text=await js('document.querySelector(\'[aria-label="C1 account opportunities"]\').innerText');
-    assert(text.includes('Signals based on 2026-11-09 close'),'New completed-session selection is published');
+    assert(text.includes('Signals based on '+(accountPolicy?'2026-11-10':'2026-11-09')+' close'),'New completed-session selection is published');
     const purchaseCards=await js(`[...document.querySelectorAll('[aria-label="C1 account opportunities"] article')].map(e=>e.innerText)`);
-    for(const symbol of sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'])assert(purchaseCards.some(t=>t.includes(symbol)&&/Buy \d+ shares/.test(t)),symbol+' has a checked purchase in the actual Home/App at width '+width+': '+JSON.stringify(purchaseCards));
+    for(const symbol of accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'])assert(purchaseCards.some(t=>t.includes(symbol)&&/Buy \d+ shares/.test(t)),symbol+' has a checked purchase in the actual Home/App at width '+width+': '+JSON.stringify(purchaseCards));
+    if(accountPolicy){
+     assert.equal(purchaseCards.filter(t=>/Buy \d+ shares/.test(t)).length,3,'One aggregate instruction perstock, not one perallocation');
+     const version=await js('document.querySelector(\'[aria-label="C1 account opportunities"]\').dataset.c1DecisionVersion');
+     assert(version,'The shared renderer publishes its authoritative action version at both widths');
+     if(publishedActionVersion)assert.equal(version,publishedActionVersion,'Desktop and mobile consume exactly the same authoritative account action version');else publishedActionVersion=version;
+    }
     assert(!purchaseCards.some(t=>t.includes('MRNA')&&/Buy \d+ shares/.test(t)),'A weak historical leader is not an authorized purchase');
     assert((await js('document.body.innerText')).includes('MRNA'),'Blocked historical leader remains visible in Watch');
     if(sourceGate){
@@ -135,12 +144,20 @@ async function main(){
     }
     await shot('qualified-selection-'+width);
    }
+   if(accountPolicy){
+    await control(null,{eventEvidenceUnavailable:true,expireScreen:true});
+    await click('Reload');await wait('document.querySelector("header button")?.textContent==="Reload"','Unavailable event review completed');
+    await wait(`document.querySelector('[aria-label="Current candidate evidence"]')`,'Explicit current evidence status');
+    assert.match(await js(`document.querySelector('[aria-label="Current candidate evidence"]').innerText`),/incomplete/i);
+    assert(!(await js(`document.querySelector('[aria-label="C1 account opportunities"]').innerText`)).match(/Buy \d+ shares/),'All missing current events cannot become a fabricated purchase pass');
+    trace.cases.push({case:'account-policy-current-events-unavailable',explicitIncomplete:true,authorizedBuys:0,accountRecordIdentical:true});
+   }
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Read and opening checks cannot rewrite account economics');
    assert.equal(api.fixture.writes,0);assert.deepEqual(trace.browserErrors,[]);
    assert(requests.some(r=>r.path==='/api/c1-account'&&r.method==='GET'&&r.finished));
    assert(requests.some(r=>r.operation==='prepare-execution'&&r.finished),'Lower-ranked purchases came through the real account opening handler');
-   trace.status='PASS';trace.cases.push({case:sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:true,widths:[1440,390],accountRecordIdentical:true});
-   console.log(sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
+   trace.status='PASS';trace.cases.push({case:accountPolicy?'account-policy-v2':sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:!accountPolicy,widths:[1440,390],accountRecordIdentical:true});
+   console.log(accountPolicy?'PASS: actual Home/App v2 advances ranks25–27, aggregates nine allocation orders into three stock instructions and publishes one authoritative action version on desktop/mobile; no account mutation.':sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
   }
   if(!reliability&&!actualScreen){
    assert(requests.some(r=>r.path==='/api/portfolio-sync'&&r.method==='GET'&&r.finished),'The current synced portfolio loaded');
@@ -434,6 +451,8 @@ async function main(){
  }finally{trace.accountRecordIdentical=accountRecordUnchanged();trace.syntheticAccountWrites=api.fixture.writes;state.held.splice(0).forEach(release=>release());try{socket?.close();}catch{}await new Promise(resolve=>{if(chrome.exitCode!==null||chrome.signalCode!==null)resolve();else{chrome.once('exit',resolve);chrome.kill('SIGTERM');}});server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');}
 }
 main().then(()=>{
+ if(!process.env.C1_NORMAL_BROWSER_ACCOUNT_POLICY&&!process.env.C1_NORMAL_BROWSER_SOURCE_GATE&&!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
+  require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_ACCOUNT_POLICY:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'account-policy-v2')},timeout:120000});
  if(!process.env.C1_NORMAL_BROWSER_SOURCE_GATE&&!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
   require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_SOURCE_GATE:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'source-eligibility')},timeout:120000});
  if(!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)

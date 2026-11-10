@@ -3,7 +3,7 @@ const {createWorkflowFixture}=require('./c1-trading-workflow.cjs');
 // The real production API handler with isolated memory storage and supplied
 // quote evidence. No live Blob, FMP or Schwab connection can be used here.
 function createWorkflowApi(kind='buy',options={}){
- const fixture=createWorkflowFixture(kind==='sell-missing'?'sell':kind,options.portfolio?{portfolio:options.portfolio,baselineDate:options.baselineDate,now:options.now}:['capacity','adoption'].includes(kind)?{portfolio:[...['BBB','CCC','LLL'].map(symbol=>({symbol,role:'Swing',shares:40,avgCost:100,openedAt:'2026-10-14'})),{symbol:'CASH',role:'Swing',shares:8000,avgCost:1}]}:{baselineDate:options.baselineDate,now:options.now});if(kind==='sell-missing')fixture.setOpeningFailure(true);
+ const fixture=createWorkflowFixture(kind==='sell-missing'?'sell':kind,options.portfolio?{portfolio:options.portfolio,baselineDate:options.baselineDate,now:options.now,moduleOverrides:options.moduleOverrides}:['capacity','adoption'].includes(kind)?{portfolio:[...['BBB','CCC','LLL'].map(symbol=>({symbol,role:'Swing',shares:40,avgCost:100,openedAt:'2026-10-14'})),{symbol:'CASH',role:'Swing',shares:8000,avgCost:1}]}:{baselineDate:options.baselineDate,now:options.now,moduleOverrides:options.moduleOverrides});if(kind==='sell-missing')fixture.setOpeningFailure(true);
  if(kind==='adoption'){fixture.now='2026-10-14T22:00:00Z';fixture.setCash(5000);fixture.adoptionPortfolioRecord={etag:'\"adoption-core-1\"',portfolio:[...fixture.portfolio,{symbol:'MRNA',role:'Core',shares:20,avgCost:88,openedAt:'2026-10-01'}]};}
  const file=path.join(fixture.root,'pages/api/c1-account.js'),imports={};
  const never=()=>{throw Error('Live provider/storage access forbidden in workflow test');};

@@ -45,7 +45,7 @@ function validator(f){
  const source=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8');
  const start=source.indexOf('const canonicalSymbol='),end=source.indexOf('export async function collectC1AccountOpening(');
  assert(start>=0&&end>start,'The real opening-validation boundary must remain available');
- const context={...f.loader.load('lib/marketSession.js'),Date};
+ const context={...f.loader.load('lib/marketSession.js'),...f.loader.load('lib/c1QualifiedSelection.js'),Date};
  vm.createContext(context);
  vm.runInContext(source.slice(start,end).replace('export function ','function ')+';globalThis.validate=validateC1OpeningObservations;',context);
  return context.validate;

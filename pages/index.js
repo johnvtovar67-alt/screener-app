@@ -1,5 +1,6 @@
 import {currentC1HoldingRows,sameC1HoldingPeriod} from '../lib/c1CurrentHoldingRows';
 import {readC1OpeningReview} from '../lib/c1OpeningReviewRead';
+import {continueC1ReadOnlyScan} from '../lib/c1ScanContinuation';
 import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';
 import {c1PublicationStatus} from '../lib/c1PublicationStatus';
 import C1NonCashAdoption from '../components/C1NonCashAdoption';
@@ -211,12 +212,14 @@ export default function Home(){
       const {response:r,execution}=await readC1OpeningReview(key,isCurrent,fetch);
       if(!isCurrent())return;
       if(!r.ok)throw new Error(execution.error||'Opening checks unavailable.');
-      if(execution.decision?.decisionId!==view.decision.decisionId||execution.decision?.revision!==view.decision.revision){
+      const completedDecision=execution.actionVersion?execution.completedDecision:execution.decision;
+      if(completedDecision?.decisionId!==view.decision.decisionId||completedDecision?.revision!==view.decision.revision){
         observeStopOwnership(null);
         throw new Error('The account changed during opening verification. Tap Reload to recheck the current account.');
       }
       bindC1JourneyReceipt(execution,r);
-      const completed=inheritC1JourneyReceipt({...execution,decision:view.decision},execution);
+      const completed=inheritC1JourneyReceipt({...execution,decision:execution.actionVersion?execution.decision:view.decision},execution);
+      if(execution.actionVersion)observeStopOwnership(completed.decision);
       publish({view:completed});return completed;
     }catch(error){
       if(isCurrent()){const paused=inheritC1JourneyReceipt({...view,openingError:error.message},view);publish({view:paused});return paused;}
@@ -396,8 +399,12 @@ export default function Home(){
   function screenHealth(meta={},performance={available:false}){const quoteStatus=String(meta?.quoteFeedStatus||"live"),status=meta?.clientSnapshotFallback||quoteStatus==="stale-verified"?"stale":quoteStatus!=="live"?quoteStatus:meta?.fundamentalFeedStatus||"healthy";return{status,coverage:meta?.fundamentalCoveragePct??100,quoteCoverage:meta?.coveragePct??100,deferred:meta?.fundamentalsDeferred??0,persistenceAvailable:performance.available};}
   function pausePriorRows(rows=[]){return rows.map(s=>({...s,clientSnapshotFallback:true,dataFeedSnapshotStale:true}));}
   function decorateSnapshot(rows,performance,meta={}){const clientSnapshotFallback=Boolean(meta?.clientSnapshotFallback),dataFeedSnapshotStale=Boolean(clientSnapshotFallback||meta?.quoteFeedStatus&&meta.quoteFeedStatus!=="live");return(rows||[]).map(s=>({...s,clientSnapshotFallback,dataFeedSnapshotStale:Boolean(s?.dataFeedSnapshotStale||dataFeedSnapshotStale),signalPersistence:{...signalPersistence(performance.records,sym(s)),historyAvailable:performance.available}}));}
-  async function fetchScreen(t,verificationPass=0,{full=false,includeSymbol="",screenSymbols=accountView?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[]}={}){
-    const requested=(includeSymbol?`&symbol=${encodeURIComponent(includeSymbol)}`:"")+(screenSymbols.length?`&screenSymbols=${encodeURIComponent(screenSymbols.join(","))}`:""),r=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${verificationPass}${full?"":"&compact=1"}${requested}`,{cache:"no-store"}),d=await readTop5Response(r);const performance=await performanceHistory();return{...d,stocks:decorateSnapshot(d.stocks||[],performance,d.meta),performance};
+  async function fetchScreen(t,verificationPass=0,{full=false,includeSymbol="",screenSymbols=accountView?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[],isCurrent=()=>true}={}){
+    const requested=(includeSymbol?`&symbol=${encodeURIComponent(includeSymbol)}`:"")+(screenSymbols.length?`&screenSymbols=${encodeURIComponent(screenSymbols.join(","))}`:"");
+    const read=async pass=>{const response=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${pass}${full?"":"&compact=1"}${requested}`,{cache:"no-store"});return readTop5Response(response);};
+    const initial=await read(verificationPass);
+    const d=await continueC1ReadOnlyScan({initial,next:({pass})=>read(verificationPass+pass),scanOf:value=>value?.meta?.c1UniverseScan,isCurrent});
+    const performance=await performanceHistory();return{...d,stocks:decorateSnapshot(d.stocks||[],performance,d.meta),performance};
   }
 
   async function load(t,verificationPass=0,{pricePortfolio=portfolio}={}){
@@ -420,7 +427,7 @@ export default function Home(){
       if(requestId!==screenRequestId.current)return;
       if(account)openingReview=prepareC1Execution(account,{publish:accountPublish});
       const screenSymbols=(account?.decision?.stockScreen?.candidates||[]).map(c=>c.symbol);
-      const d=await fetchScreen(t,verificationPass,{screenSymbols});
+      const d=await fetchScreen(t,verificationPass,{screenSymbols,isCurrent:()=>requestId===screenRequestId.current&&(accountOwner===null||accountOwner===accountRequestId.current)});
       if(requestId!==screenRequestId.current)return;
       const health=screenHealth(d.meta,d.performance);
       if(t==="opportunities"){view.setStocks(d.stocks||[]);view.setFeedHealth(health);view.setMarketScope(d.meta||null);view.setMarketRadar((d.meta?.marketCycleRadar?.length?d.meta.marketCycleRadar:(d.themeLeadership||[])).slice(0,6));}else{view.setThemeStocks(d.stocks||[]);view.setThemeFeedHealth(health);}
@@ -581,7 +588,7 @@ export default function Home(){
     setLoading(true);setReloading(false);setErr("");setAnalysisCapitalReady(false);
     try{
       let freshAccount=null,accountRefreshFailed=false;try{const accountRequest=refreshC1Account({operation:'refresh-account-inputs'},{publish:accountPublish,publishPortfolio:portfolioPublish});accountOwner=accountRequestId.current;freshAccount=await accountRequest;if(requestId!==screenRequestId.current)return;accountRefreshFailed=freshAccount===undefined;if(freshAccount)openingReview=prepareC1Execution(freshAccount,{publish:accountPublish});}catch(e){if(requestId!==screenRequestId.current)return;accountRefreshFailed=true;view.setErr(e.message);}if(freshAccount?.decision?.nonCashAdoptions?.length)analysisPortfolio=resolveC1NonCashPortfolio(analysisPortfolio,freshAccount.decision);view.setAnalysisCapitalReady(false);view.setHoldingsComparison(null);const rows=[];let snapshot=[],performance=[],timingBySymbol=new Map(),screenLive=false,screenLoaded=false,currentProductionPolicy={};
-      try{const sd=await fetchScreen("opportunities",0,{screenSymbols:freshAccount?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[]});if(requestId!==screenRequestId.current)return;screenLoaded=true;snapshot=sd.stocks||[];performance=sd.performance.records;currentProductionPolicy=sd.meta?.productionPolicy||{};screenLive=!sd.meta?.clientSnapshotFallback&&String(sd.meta?.quoteFeedStatus||"live")==="live";view.setFeedHealth(screenHealth(sd.meta,sd.performance));view.setMarketScope(sd.meta||null);view.setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}
+      try{const sd=await fetchScreen("opportunities",0,{screenSymbols:freshAccount?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[],isCurrent:()=>requestId===screenRequestId.current&&(accountOwner===null||accountOwner===accountRequestId.current)});if(requestId!==screenRequestId.current)return;screenLoaded=true;snapshot=sd.stocks||[];performance=sd.performance.records;currentProductionPolicy=sd.meta?.productionPolicy||{};screenLive=!sd.meta?.clientSnapshotFallback&&String(sd.meta?.quoteFeedStatus||"live")==="live";view.setFeedHealth(screenHealth(sd.meta,sd.performance));view.setMarketScope(sd.meta||null);view.setMarketRadar((sd.meta?.marketCycleRadar?.length?sd.meta.marketCycleRadar:(sd.themeLeadership||[])).slice(0,6));}
       catch(e){if(requestId!==screenRequestId.current)return;view.setErr(`Portfolio positions were analyzed, but fresh-capital allocation is paused because the broad screen failed: ${e.message}`);view.setFeedHealth(h=>({...h,status:"unavailable"}));}
       let heldTimingVerified=true;
       try{const heldSymbols=analysisPortfolio.filter(p=>role(p.symbol,p.role)==="Swing").map(p=>sym(p)).filter(s=>s&&!CASH.includes(s));if(heldSymbols.length){const tr=await fetch(`/api/entry-timing?symbols=${encodeURIComponent(heldSymbols.join(','))}`,{cache:'no-store'}),td=await tr.json();if(requestId!==screenRequestId.current)return;if(!tr.ok||!td.timing||typeof td.timing!=="object")throw new Error(td.error||"holding timing verification failed");timingBySymbol=new Map(Object.entries(td.timing));heldTimingVerified=heldSymbols.every(symbol=>timingBySymbol.has(symbol));if(!heldTimingVerified)throw new Error("holding timing verification was incomplete");}}catch(e){if(requestId!==screenRequestId.current)return;heldTimingVerified=false;screenLive=false;view.setErr(`Portfolio positions remain visible, but all capital actions are paused because held-position verification failed: ${e.message}`);}
@@ -865,7 +872,7 @@ export default function Home(){
   const displayedSwingCapital=Number.isFinite(accountView?.decision?.strategyCash)?visibleResults.filter(row=>row.role==='Swing').reduce((total,row)=>total+(Number(row.value)||0),0)+accountView.decision.strategyCash:riskSnapshot.swingCapital;
 
   const busy=reloading||loading||checking||accountBusy;
-  const publicationStatus=c1PublicationStatus({sourceSessionDate:accountView?.decision?.publicationStatus?.sourceSessionDate,analysisSessionDate:accountView?.decision?.sourceSessionDate,now:new Date()});
+  const publicationStatus=c1PublicationStatus({sourceSessionDate:accountView?.decision?.publicationStatus?.sourceSessionDate,analysisSessionDate:accountView?.decision?.sourceSessionDate,selectionEvidence:accountView?.decision?.selectionEvidence,now:new Date()});
   return <main>
     <header><div><h1>🧠 Investment Operating System</h1><p>Expert analysis underneath. Portfolio-level risk governance on top.</p>{lastUpdated&&<small className="updated">Screen data as of {lastUpdated.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}</small>}</div><button disabled={busy} onClick={handleReload}>{busy?"Reloading...":"Reload"}</button></header>
     {["opportunities","portfolio"].includes(tab)&&<div className="refreshEvidence" aria-label="Market data freshness"><p>Analysis source session: {accountView?.decision?.sourceSessionDate||"unavailable"} · Expected completed session: {publicationStatus.expectedSessionDate||"unavailable"} · Last application refresh: {applicationRefreshAt?applicationRefreshAt.toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit",second:"2-digit"}):"pending"}</p><p role="status" data-publication-state={publicationStatus.code}>{publicationStatus.message}</p>{quoteRefreshStatus&&<p role="status">{quoteRefreshStatus}</p>}</div>}
@@ -905,6 +912,7 @@ export default function Home(){
     {accountView?.holdingReviewError&&<p role="status">{accountView.holdingReviewError}</p>}
     {!accountView&&marketState&&!marketState.isOpen&&<div className="marketClosedBanner"><b>Market {marketState.phase}</b><span>Signals use the latest completed U.S. session. Any capital action shown now is a plan only and must be revalidated after regular trading opens.</span></div>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&!accountMatches&&<p role="status">Account details need attention. <button onClick={()=>setTab("account-tools")}>Open Account settings</button></p>}
+    {["opportunities","portfolio"].includes(tab)&&marketScope?.selectionScanStatus==="incomplete"&&<section className="card" role="status" aria-label="C1 universe scan status"><b>Opportunity scan incomplete</b><p>{marketScope.selectionScanReason} Verified {marketScope.c1UniverseScan?.completed??marketScope.c1UniverseScan?.scanned??0} of {marketScope.c1UniverseScan?.total??"the supported"} candidates. Refresh to continue the bounded scan.</p></section>}
     {["opportunities","portfolio"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} positionRows={stopPositionRows} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status==="healthy"} executionDecision={accountView.executionDecision} manualRecommendations={accountView.manualRecommendations} purchaseDiagnostics={accountView.purchaseDiagnostics} openingPlan={accountMatches&&accountResponseVerified?accountView.openingPlan:null} openingError={accountView.openingError} decision={stopOwnershipCurrent?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:"Resolve the holding differences in Account settings to restore candidates and checked quantities."}}/>}
     {tab==="opportunities"&&!accountView&&<section className="card" aria-label="C1 account unavailable">
       <h2>Opportunities</h2>

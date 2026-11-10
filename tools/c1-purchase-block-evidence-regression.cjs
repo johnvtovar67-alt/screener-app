@@ -38,7 +38,7 @@ function loadOpeningCollector(loader){
  // runner's Blob/storage graph. The module is pure and performs no I/O.
  const normalizeHistoricalBars=loader.load('lib/fmpPriceBars.js').normalizeHistoricalBars;
  const source=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,async)=>(async||'')+'function ');
- const context={...loader.load('lib/marketSession.js'),...loader.load('lib/c1LiveInput.js'),normalizeHistoricalBars,Map,Date:FixedDate,console,process:{env:{}},URLSearchParams,AbortSignal,fetch:global.fetch};
+ const context={...loader.load('lib/marketSession.js'),...loader.load('lib/c1LiveInput.js'),...loader.load('lib/c1QualifiedSelection.js'),...loader.load('lib/c1UniverseVerification.js'),createHash:require('node:crypto').createHash,normalizeHistoricalBars,Map,Date:FixedDate,console,process:{env:{}},URLSearchParams,AbortSignal,fetch:global.fetch};
  require('./c1-provider-transport-seams.cjs').installProviderTransport(context);
  vm.createContext(context);vm.runInContext(source+';globalThis.collect=collectC1AccountOpening;',context);
  return context.collect;

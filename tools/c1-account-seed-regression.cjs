@@ -619,7 +619,7 @@ assert.ok(stopped.sleeves[stopOrder.sleeve].trades.some(t=>t.symbol===stopOrder.
 console.log('PASS: a partial actual entry can trigger its recorded standing stop later in the session; untriggered stops do not become fabricated exits.');
 
 const openingProviderSource=fs.readFileSync('lib/c1AccountOpeningProvider.js','utf8').replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
-const providerBox={...loader.load('lib/marketSession.js'),Date};vm.createContext(providerBox);vm.runInContext(openingProviderSource+'\nglobalThis.validate=validateC1OpeningObservations;',providerBox);
+const providerBox={...loader.load('lib/marketSession.js'),...loader.load('lib/c1QualifiedSelection.js'),Date};vm.createContext(providerBox);vm.runInContext(openingProviderSource+'\nglobalThis.validate=validateC1OpeningObservations;',providerBox);
 const observedSymbols=['T4','SPY','QQQ'],memberRows=symbols.map(symbol=>({symbol,sector:baseline.signals.find(s=>s.symbol===symbol).sector}));
 const observationRows=Object.fromEntries(observedSymbols.map(symbol=>[symbol,{quote:{symbol,open:100,price:101,timestamp:Date.parse(observedAt)/1000},anchor:baseline.prices.find(p=>p.symbol===symbol)&&{...baseline.prices.find(p=>p.symbol===symbol),date:baseline.date}}]));
 const observedInput={baseline,symbols:observedSymbols,membersBefore:memberRows,membersAfter:memberRows,observations:observationRows,now:new Date(observedAt)};

@@ -1,5 +1,20 @@
 # C1 operating instructions
 
+## Owner-authorized account policy revision — November 10, 2026
+The owner explicitly authorized one versioned revision covering account-wide
+stock cooldowns from completed net losing investments, coherent account actions,
+and removal of both nine-name purchase/Watch cutoffs. The proposed activation
+is documented in docs/operations/c1-account-policy-v2-20261110.md. This instruction
+permits only those scoped behavior changes and their verification; preserve
+financial history, ranking formula, position stops, exposure checks and four
+distinct Swing-stock capacity. Historical holding-exit rank thresholds remain.
+Release remains blocked until the operational risk-baseline decision is settled
+and all four required CI jobs pass on the exact reviewed head.
+The owner subsequently approved the once-per-completed-loss-episode operational
+reference at the next eligible opening, using confirmed fills and net post-exit
+equity while preserving historical peaks and total drawdown reporting. This
+approval is for the software policy, not brokerage execution or fabricated fills.
+
 ## Current owner decision — September 13, 2026
 The owner explicitly restored the reviewed application at commit 8007dc84820a9f2cb52266fe616df5406768815f through PR #177, then requested protection against another unintended change. This is the active source of truth for this repository.
 

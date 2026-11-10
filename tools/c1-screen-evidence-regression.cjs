@@ -17,7 +17,7 @@ const page=fs.readFileSync('pages/index.js','utf8');
 const boundary=page.slice(page.indexOf('  function screenHealth('),page.indexOf('  async function fetchStock('));
 function client(){
  const state={stocks:[],health:null,requests:[]};let resolveAccount;
- const box={...loader.load('lib/c1RefreshFrame.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},setResults(){},accountView:null,portfolio:[],screenRequestId:{current:0},Date,setTimeout:fn=>{fn();},readTop5Response,
+ const box={...loader.load('lib/c1RefreshFrame.js'),...loader.load('lib/c1ScanContinuation.js'),accountRequestId:{current:0},publishC1AccountState(){},setPortfolio(){},setResults(){},accountView:null,portfolio:[],screenRequestId:{current:0},Date,setTimeout:fn=>{fn();},readTop5Response,
   refreshC1Account:()=>new Promise(resolve=>{resolveAccount=resolve;}),prepareC1Execution:()=>{},
   performanceHistory:async()=>({records:[],available:true}),signalPersistence:()=>({}),sym:r=>r.symbol,
   fetch:async url=>{state.requests.push(url);const u=new URL(url,'https://offline.invalid');return new Response(JSON.stringify({stocks:compact(crowded,80,'',u.searchParams.get('screenSymbols')||''),meta:{quoteFeedStatus:'live',fundamentalFeedStatus:'healthy'}}));},

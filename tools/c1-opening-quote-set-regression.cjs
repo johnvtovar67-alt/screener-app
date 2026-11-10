@@ -11,7 +11,7 @@ function fixture(){const f=createWorkflowFixture();f.setCash(5000);const baselin
 function collector(h,{old=false,correction=100,missing=false,stale=false}={}){
  const {f,baseline,members}=h,file='lib/c1AccountOpeningProvider.js';let source=fs.readFileSync(file,'utf8');if(old)source=restore(file,source);
  source=source.replace(/^import .*;$/gm,'').replace(/export (async )?function /g,(_,a)=>(a||'')+'function ');
- const box={...f.loader.load('lib/marketSession.js'),...f.loader.load('lib/c1LiveInput.js'),normalizeHistoricalBars:f.loader.load('lib/fmpPriceBars.js').normalizeHistoricalBars,Date:FixedDate,console:{info(){}},process:{env:{}},URLSearchParams,AbortSignal,fetch:global.fetch};
+ const box={...f.loader.load('lib/marketSession.js'),...f.loader.load('lib/c1LiveInput.js'),...f.loader.load('lib/c1QualifiedSelection.js'),...f.loader.load('lib/c1UniverseVerification.js'),createHash:require('node:crypto').createHash,normalizeHistoricalBars:f.loader.load('lib/fmpPriceBars.js').normalizeHistoricalBars,Date:FixedDate,console:{info(){}},process:{env:{}},URLSearchParams,AbortSignal,fetch:global.fetch};
  require('./c1-provider-transport-seams.cjs').installProviderTransport(box);vm.createContext(box);vm.runInContext(source+';globalThis.collect=collectC1AccountOpening;',box);
  const calls={batch:[],anchors:[],membership:0,events:[]};
  const collect=async args=>box.collect({...args,apiKey:'offline-quote-set-fixture',collectEvents:async symbols=>{calls.events.push([...symbols]);return new Map(currentEventEvidenceFor(symbols,f.now).map(r=>[r.symbol,r]));},fetcher:async raw=>{
