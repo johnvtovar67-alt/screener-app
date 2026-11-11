@@ -48,7 +48,8 @@ print('Generated exact v2 source inverses for '+str(len(files))+' existing files
 }else if(process.argv.includes('--check')){
  for(const [file,patch]of Object.entries(fixture.files)){
   const source=fs.readFileSync(file,'utf8');
-  assert.equal(blob(source),patch.afterHash,'Current reviewed v2 source: '+file);
+  const releasedSource=require('./c1-account-policy-replay-repair-seams.cjs').restore(file,source);
+  assert.equal(blob(releasedSource),patch.afterHash,'Current source reverses to reviewed released v2 source: '+file);
   assert.equal(blob(restore(file,source)),patch.beforeHash,'Retained pre-v2 source: '+file);
  }
  console.log('PASS: every declared v2 inverse restores its exact pre-v2 source ('+Object.keys(fixture.files).length+' files).');
