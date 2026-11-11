@@ -10,7 +10,7 @@ assert.equal(createHash('sha256').update(fs.readFileSync('tools/fixtures/c1-watc
 assert.deepEqual(Object.keys(fixture.files),['components/C1AccountOpportunitiesView.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
  const current=fs.readFileSync(file,'utf8'),released=numbering.restore(file,current);
- assert.equal(numbering.blob(current),patch.afterHash,'Exact reviewed presentation-only numbering source');
+ assert.equal(numbering.blob(require('./c1-watch-clean-display-seams.cjs').restore(file,current)),patch.afterHash,'Exact reviewed presentation-only numbering source');
  assert.equal(numbering.blob(released),patch.beforeHash,'Exact prior deployed source recovered');
  assert.equal(patch.beforeHash,previous.files[file].afterHash,'The prior released source identity is unchanged');
  assert.equal(numbering.blob(monitoring.restore(file,current)),previous.files[file].beforeHash,'Existing historical chain remains exact');
