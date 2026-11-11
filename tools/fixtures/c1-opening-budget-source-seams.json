@@ -1,0 +1,20 @@
+{
+  "contract": "c1-opening-budget-source-inverse-v1",
+  "baselineCommit": "dd2d86db2dc8da521bf83d83912d8c46b7f86a2e",
+  "files": {
+    "lib/c1AccountOpeningProvider.js": {
+      "beforeHash": "b3bac61b68ffb2dc921ef23f88b10e01412404b0",
+      "afterHash": "d348978d7045d6f4101533374f7ad4ef0a8be2c6",
+      "chunks": [
+        {
+          "before": " await collectAnchors(required);",
+          "after": " // Fast anchor batches share one account review. Slow batches retain their\n // committed progress for read-only HTTP continuation. Admission uses the\n // observed batch cost; the original provider deadline remains authoritative.\n const collectWithinBudget=sharedAnchors?async targets=>{\n  let completed=-1;\n  for(;;){\n   const batchStarted=Date.now();\n   try{return await collectAnchors(targets);}\n   catch(error){\n    const scan=error?.scan,batchMs=Date.now()-batchStarted,count=scan?.completed;\n    if(error?.code!=='C1_SCAN_INCOMPLETE'||scan.sourceIdentity!==anchorIdentity||scan.total!==targets.length||\n     !Number.isSafeInteger(count)||count<=completed||count>=targets.length||\n     deadline-Date.now()<=Math.max(10000,2*batchMs+1000))throw error;\n    completed=count;\n   }\n  }\n }:collectAnchors;\n await collectWithinBudget(required);"
+        },
+        {
+          "before": "   await collectAnchors(missing);",
+          "after": "   await collectWithinBudget(missing);"
+        }
+      ]
+    }
+  }
+}
