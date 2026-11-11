@@ -1,8 +1,8 @@
 // Operational/browser fixture only. Extend the existing real-handler workflow
 // through its shared synthetic arrays; no production data or provider access.
-function applyAccountPolicyUniverseFixture(workflow){
+function applyAccountPolicyUniverseFixture(workflow,{count=30}={}){
  const symbols=workflow.sessions[0].universeSymbols;
- while(symbols.length<30)symbols.push('X'+String(symbols.length-12).padStart(2,'0'));
+ while(symbols.length<count)symbols.push('X'+String(symbols.length-12).padStart(2,'0'));
  for(const session of workflow.sessions){
   const priceTemplate=session.prices.find(row=>row.symbol==='BBB');
   for(const symbol of symbols)if(!session.prices.some(row=>row.symbol===symbol))session.prices.push({...priceTemplate,symbol});
