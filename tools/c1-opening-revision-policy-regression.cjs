@@ -26,6 +26,22 @@ async function main(){
   const result=review({account:f.account,sessions,historySessions:f.book.model.sessions,opening,plan:{...p,sourceReceipt:opening.receipt},now:f.now});
   for(const key of ['orders','blockedOrders','openingBooks','projectedBooks'])assert.deepEqual(clone(result[key]),clone(p[key]),'Exact policy combination parity: '+key);
  }
+ // November 11 activation uses both the live account policy and current brokerage cash.
+ const policyFixture=createWorkflowFixture('buy',{baselineDate:'2026-11-10'});policyFixture.setCash(5000);
+ const policyControl=await policyFixture.prepare();
+ assert(policyControl.openingPlan,'Active-policy control opening must be available');
+ assert.equal(policyControl.openingPlan.accountPolicy?.active,true,'November 11 account policy must be active');
+ const policyOpening=policyFixture.opening(),policySaved=policyFixture.sessions[220].prices.find(p=>p.symbol==='LLL');
+ policyOpening.receipt.previousAdjustedClosesUnchanged=false;
+ policyOpening.priceBasisRevisions=[{symbol:'LLL',savedClose:policySaved.close,rechecked:true,observedBar:{...policySaved,close:99.9,low:99.8}}];
+ const policyReviewed=await policyFixture.loader.load('lib/c1AccountExecutionView.js').prepareC1AccountExecution({
+  account:policyFixture.account,book:policyFixture.book,now:policyFixture.now,collectOpening:async()=>clone(policyOpening)});
+ assert.equal(policyReviewed.openingError,null,'Revision replay must retain the active account policy and current brokerage cash');
+ assert.deepEqual(clone(policyReviewed.openingPlan.accountPolicy),clone(policyControl.openingPlan.accountPolicy),'Active account policy survives the revised-close comparison');
+ for(const key of ['orders','blockedOrders','openingBooks','projectedBooks','purchaseFundingPolicy','additionalSwingCapacity'])
+  assert.deepEqual(clone(policyReviewed.openingPlan[key]),clone(policyControl.openingPlan[key]),'Active policy/cash parity: '+key);
+ assert.equal(policyReviewed.openingPlan.sourceReceipt.priceBasisReview.revisions[0].accountTreatment,'preserved-recorded-basis');
+ assert.equal(policyFixture.writes,0,'Read-only verification must not write account records');
  const invalid=clone(opening);invalid.priceBasisRevisions[0].rechecked=false;
  assert.throws(()=>review({account:f.account,sessions,historySessions:f.book.model.sessions,opening:invalid,plan:normal.openingPlan,now:f.now}),/consistent provider evidence/);
  const boundary=f.opening(),candidate=f.sessions[220].prices.find(p=>p.symbol==='MRNA');
