@@ -1,7 +1,10 @@
-const assert=require('node:assert/strict');
+const assert=require('node:assert/strict'),fs=require('node:fs');
 const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
 const clone=x=>JSON.parse(JSON.stringify(x));
 async function main(){
+ const inputSeams=require('./c1-opening-revision-inputs-seams.cjs');
+ inputSeams.restoreReview(fs.readFileSync('lib/c1OpeningPriceReview.js','utf8'));
+ inputSeams.restoreExecutionView(fs.readFileSync('lib/c1AccountExecutionView.js','utf8'));
  const f=createWorkflowFixture('buy');f.setCash(5000);
  const execution=f.loader.load('lib/c1AccountExecutionView.js');
  const original=JSON.stringify({account:f.account,book:f.book});
