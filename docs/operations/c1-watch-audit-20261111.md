@@ -21,6 +21,12 @@ Existing production logs, read passively through the Vercel connector:
   later successful responses establish recovery of that path, not account parity.
 - Read-only `/api/c1-readiness` returned `DEPLOYMENT_NOT_CHECKED`, no observation
   or source date, and both private parity and browser acceptance `NOT_VERIFIED`.
+- Screen logs on this deployment show November 10 source data with 632 source
+  rows and 406 client rows. At 02:40:43.111 through 02:41:33.914 UTC the quote
+  feed was `SCREEN_QUOTE_VERIFICATION_INCOMPLETE`; at 02:41:42.951 UTC it became
+  `SCREEN_FEEDS_HEALTHY` (`request=544d0feb29`). Every response still marked
+  C1 selection, account opening and browser rendering `NOT_VERIFIED`. These
+  are broad response row counts, not counts of fully evaluated C1 stocks.
 
 No private account, financial POST, producer, cron or research route was invoked.
 No production storage object was changed. The workspace began without a checkout
