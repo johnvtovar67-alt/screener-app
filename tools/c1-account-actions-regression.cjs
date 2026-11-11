@@ -71,8 +71,22 @@ async function run(){
  const input={...view,screenRows:api.fixture.screenRows(),positionRows:api.fixture.screenRows(),screenCurrent:true,portfolio:api.fixture.portfolio};
  const joined=join(input,{readTime:()=>api.fixture.now});
  assert.equal(joined.projection.actionableBuys.length,3,'The real account-to-classifier-to-publication join consumes one instruction per stock');
- const stale=project({...input,evidence:{...joined.evidence,decisionId:'an-older-account-version'}},{readTime:()=>api.fixture.now});
- assert.equal(stale.actionableBuys.length,0);assert.equal(stale.ratedTiles.length,0);assert.equal(stale.watchView.rows.length,0,'An older screen cannot leak its old Watch priorities into the new decision');
+ const staleRatings=[{symbol:'OLD',rating:'Watch',priority:-999,entryEvidence:{momentumScore:100,close:999}},
+  ...joined.evidence.ratings.map(row=>({...row,priority:-999,appearanceCount:999,entryEvidence:{momentumScore:100,close:999}}))];
+ const stale=project({...input,evidence:{...joined.evidence,ratings:staleRatings,decisionId:'an-older-account-version'}},{readTime:()=>api.fixture.now});
+ assert.equal(stale.actionableBuys.length,0,'An older live screen still cannot authorize purchases');
+ assert.equal(stale.ratedTiles.length,0,'An older live screen cannot publish actionable rating cards');
+ assert(stale.watchView.rows.length>0,'The matching current dated server source still supports monitoring while live verification waits');
+ const currentSources=new Map(input.executionDecision.stockScreen.candidates.map(row=>[row.symbol,row]));
+ assert(!stale.watchView.rows.some(row=>row.symbol==='OLD'),'An older screen cannot introduce its previous candidates');
+ assert(stale.watchView.rows.every((row,index)=>row.priority===currentSources.get(row.symbol)?.researchRank&&
+  row.close==='$'+currentSources.get(row.symbol).sourcePrice.toFixed(2)&&
+  (index===0||row.priority>stale.watchView.rows[index-1].priority)),
+ 'Monitoring uses only current dated ranks and prices; stale priorities and appearance counts cannot leak');
+ const staleSource=project({...input,decision:{...input.decision,current:false},executionDecision:{...input.executionDecision,current:false},
+  evidence:{...joined.evidence,decisionId:'an-older-account-version'}},{readTime:()=>api.fixture.now});
+ assert.equal(staleSource.watchView.rows.length,0,'A genuinely stale server source remains unknown rather than a current monitoring list');
+ assert.equal(staleSource.watchSelection.totalEligible,null);
  assert.equal(join({...input,decision:{...input.decision,current:false,accountMismatch:true}},{readTime:()=>api.fixture.now}).projection.actionableBuys.length,0,'A current execution view cannot override the ownership-mismatch veto');
  assert.equal(join({...input,executionDecision:{...input.executionDecision,revision:input.decision.revision+1}},{readTime:()=>api.fixture.now}).projection.actionableBuys.length,0,'Competing account revisions cannot publish mixed instructions');
  const serverDecision=loader.load('lib/c1OperationalRiskDecision.js');
