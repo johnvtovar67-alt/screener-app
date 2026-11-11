@@ -139,7 +139,7 @@ async function main(){
      assert.deepEqual(watch.map(row=>row.symbol),Array.from({length:10},(_,index)=>'X'+(index+15)),'Actual Watch displays only the current ten highest-ranked eligible candidates');
      assert.deepEqual(watch.map(row=>row.rank),Array.from({length:10},(_,index)=>index+28),'Watch shows unchanged source momentum ranks, rather than prior appearance priority');
      const watchText=await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`);
-     assert.match(watchText,/23 eligible; 10 shown/);assert.match(watchText,/scan complete: 50 names; 50 source candidates/);
+     assert.match(watchText,/23 monitoring candidates; 10 shown/);assert.match(watchText,/scan complete: 50 names; 50 source candidates/);
      assert(!watchText.includes('MRNA'),'A known volatility disqualification is excluded from Watch');
     }
     assert(!purchaseCards.some(t=>t.includes('MRNA')&&/Buy \d+ shares/.test(t)),'A weak historical leader is not an authorized purchase');
@@ -156,15 +156,34 @@ async function main(){
     await wait(`document.querySelector('[aria-label="Current candidate evidence"]')`,'Explicit current evidence status');
     assert.match(await js(`document.querySelector('[aria-label="Current candidate evidence"]').innerText`),/incomplete/i);
     assert(!(await js(`document.querySelector('[aria-label="C1 account opportunities"]').innerText`)).match(/Buy \d+ shares/),'All missing current events cannot become a fabricated purchase pass');
-    assert.equal(await js(`document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr').length`),0,'Missing current event evidence cannot fabricate ten eligible Watch rows');
-    trace.cases.push({case:'account-policy-current-events-unavailable',explicitIncomplete:true,authorizedBuys:0,accountRecordIdentical:true});
+    assert.equal(await js(`document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr').length`),10,'Missing execution events retain valid dated monitoring candidates');
+    assert.match(await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`),/WAIT.*current quote, event or opening evidence is incomplete/i);
+    trace.cases.push({case:'account-policy-current-events-unavailable',explicitIncomplete:true,authorizedBuys:0,datedWatchRetained:10,accountRecordIdentical:true});
+    await control(null,{eventEvidenceUnavailable:false,now:'2026-11-11T14:00:00Z',expireScreen:true});
+    await click('Reload');await wait('document.querySelector("header button")?.textContent==="Reload"','Premarket monitoring refresh completed');
+    await wait(`document.querySelector('[aria-label="Watch monitoring status"]')?.innerText.includes('market is closed')`,'Closed market WAIT is explicit');
+    const closedWatch=await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr')].map(row=>row.querySelector('td:nth-child(2) b').textContent)`);
+    assert.equal(closedWatch.length,10,'Closed market cannot erase valid dated monitors: '+await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`));
+    assert(!(await js(`document.querySelector('[aria-label="C1 account opportunities"]').innerText`)).match(/Buy \d+ shares/),'Dated monitors cannot create purchase quantities');
+    await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:path.join(out,'downloads')});
+    await js(`window.__watchExports=[];window.__watchCreateObjectURL=URL.createObjectURL.bind(URL);URL.createObjectURL=blob=>{blob.text().then(text=>window.__watchExports.push(JSON.parse(text)));return window.__watchCreateObjectURL(blob);};`);
+    await js(`window.__watchDownloadFetches=[];window.__watchDownloadFetch=window.fetch;window.fetch=(...args)=>{if(window.__watchDownloadActive)window.__watchDownloadFetches.push(String(args[0]));return window.__watchDownloadFetch(...args);};window.__watchDownloadActive=true;try{[...document.querySelectorAll('button')].find(button=>button.textContent==='Download Watch details').click();}finally{window.__watchDownloadActive=false;}`);
+    await wait('window.__watchExports.length===1','Local Watch details downloaded from loaded props');
+    const details=await js('window.__watchExports[0]');
+    assert.equal(details.contract,'c1-watch-monitoring-details-v1');assert.equal(details.sourceSessionDate,'2026-11-10');
+    assert.equal(details.candidates.length,50);assert.equal(details.counts.displayed,10,'Closed-market download retains the dated list: '+JSON.stringify({source:details.source,counts:details.counts,readiness:details.executionReadiness}));assert.equal(details.executionReadiness.marketOpen,false);
+    assert(details.waitCounts['market-closed']>0);assert.deepEqual(await js('window.__watchDownloadFetches'),[],'Watch download makes no API/provider/storage calls');
+    assert.equal(details.executionReadiness.serverDatedCurrent,true);assert.equal(details.executionReadiness.displayDecisionMasked,true,'The actual page ownership mask is recorded separately from the current captured source');
+    assert(!JSON.stringify(details).match(/offline_workflow_fixture_key|brokerageCash|actualCash|syncKey|authorization|allocationBreakdown|fills/),'Local export excludes keys, balances and financial ledger data');
+    await shot('watch-monitoring-closed-mobile');
+    trace.cases.push({case:'dated-watch-closed-market-local-details',watchRows:10,exportedCandidates:50,marketOpen:false,downloadRequests:0,authorizedBuys:0,accountRecordIdentical:true});
    }
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Read and opening checks cannot rewrite account economics');
    assert.equal(api.fixture.writes,0);assert.deepEqual(trace.browserErrors,[]);
    assert(requests.some(r=>r.path==='/api/c1-account'&&r.method==='GET'&&r.finished));
    assert(requests.some(r=>r.operation==='prepare-execution'&&r.finished),'Lower-ranked purchases came through the real account opening handler');
    trace.status='PASS';trace.cases.push({case:accountPolicy?'account-policy-v2':sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:!accountPolicy,...(accountPolicy?{sourceUniverse:50,eligibleWatch:23,displayedWatch:10,watchSymbols:Array.from({length:10},(_,index)=>'X'+(index+15)),watchRanks:Array.from({length:10},(_,index)=>index+28)}:{}),widths:[1440,390],accountRecordIdentical:true});
-   console.log(accountPolicy?'PASS: actual Home/App v2 scans 50 names, buys ranks25–27 independently, displays current eligible Watch ranks28–37 only, excludes blocked/unknown rows and publishes one action version on desktop/mobile; no account mutation.':sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
+   console.log(accountPolicy?'PASS: actual Home/App scans 50 names, preserves checked purchases, displays at most ten dated monitors through event/opening/closed-market waits, and downloads all candidate diagnostics locally on mobile; no account mutation.':sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
   }
   if(!reliability&&!actualScreen){
    assert(requests.some(r=>r.path==='/api/portfolio-sync'&&r.method==='GET'&&r.finished),'The current synced portfolio loaded');

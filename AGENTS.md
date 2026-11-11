@@ -15,6 +15,17 @@ reference at the next eligible opening, using confirmed fills and net post-exit
 equity while preserving historical peaks and total drawdown reporting. This
 approval is for the software policy, not brokerage execution or fabricated fills.
 
+## Owner Watch clarification — November 11, 2026
+Watch is a dated monitoring list, not a list of stocks already authorized for
+immediate purchase. Scan the full supported universe and display at most the
+current top ten worthwhile monitors without previous-appearance preference.
+Market closure and unavailable execution checks must explain waiting rather
+than erase an otherwise valid dated list. Keep actual Buy/Add authorization,
+stock cooldowns, protective exits, funding and exposure safeguards separate.
+Diagnose actual candidate exclusions; missing evidence is not "no candidates."
+Continue this correction and its deployed owner-screen verification in the
+existing implementation, without redesign or duplicate implementation threads.
+
 ## Current owner decision — September 13, 2026
 The owner explicitly restored the reviewed application at commit 8007dc84820a9f2cb52266fe616df5406768815f through PR #177, then requested protection against another unintended change. This is the active source of truth for this repository.
 

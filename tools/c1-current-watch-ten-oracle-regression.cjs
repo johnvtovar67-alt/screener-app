@@ -17,7 +17,8 @@ assert.deepEqual(Object.keys(fixture.files).sort(),[
 ]);
 for(const [file,patch]of Object.entries(fixture.files)){
  const current=fs.readFileSync(file,'utf8'),released=watch.restore(file,current);
- assert.equal(watch.blob(current),patch.afterHash,'Exact reviewed current Watch display source: '+file);
+ const priorWatchSource=require('./c1-watch-monitoring-seams.cjs').restore(file,current);
+ assert.equal(watch.blob(priorWatchSource),patch.afterHash,'Exact reviewed prior Watch display source recovered: '+file);
  assert.equal(watch.blob(released),patch.beforeHash,'Exact released display source recovered: '+file);
  assert.equal(patch.beforeHash,v2.files[file].afterHash,'Existing v2 source pin is retained: '+file);
  assert.equal(policy.blob(policy.restore(file,current)),v2.files[file].beforeHash,'All prior source and economic oracle identities remain exact: '+file);

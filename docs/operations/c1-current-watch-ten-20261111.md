@@ -1,5 +1,9 @@
 # Current eligible Watch: ten-row presentation
 
+The owner subsequently clarified that monitoring must remain independent of
+immediate execution clearance. The admission boundary below is superseded by
+[the dated monitoring correction](c1-dated-watch-monitoring-20261111.md).
+
 The owner reported 347 Watch rows and recurring leaders, then explicitly asked
 for at most the current top ten eligible Watch candidates while the full
 supported dated universe and purchase-search continuation remain independent.
