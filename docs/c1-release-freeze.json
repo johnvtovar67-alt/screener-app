@@ -235,7 +235,7 @@
     "components/C1AccountOpportunitiesView.js": "1e3b55cd4e2aabb225107b55025fe13e4674fae2",
     "lib/blobErrors.js": "7fdd02966515b29acf8a1b36fd2150d2ad5252a9",
     "lib/c1SimulatorAccounting.js": "dacc9188b7e387fa6bd781396b1063f98983c002",
-    "lib/c1OpportunitiesProjection.js": "3ecc9770385ac9bb869cef6f5ae8c2a1906d07c7",
+    "lib/c1OpportunitiesProjection.js": "4fc4a8e1d6dcc3f1baa7808886b60a39ca1e7a6b",
     "lib/publicApiFailure.js": "ea81b49991dee995edfb1c79efd174379ed8b1bd",
     "lib/c1OwnerAccess.js": "29fedd8f30cddbce0e09c24687e9a386a2323fc7",
     "lib/c1RefreshResponse.js": "4c8995f93482508f576ff187679c376cb46df20b",

@@ -1,0 +1,5 @@
+// Exact inverse for historical oracles; no previous pins or assertions change.
+const assert=require('node:assert/strict');
+const patch={"before": " const watch=[...blockedTiles,...presentation.watch];", "after": " // Watch is a ranked display shortlist; purchase evaluation above remains complete.\n const watch=[...blockedTiles,...presentation.watch]\n  .sort((a,b)=>(a.priority??Number.MAX_SAFE_INTEGER)-(b.priority??Number.MAX_SAFE_INTEGER)||a.symbol.localeCompare(b.symbol))\n  .filter((row,index,rows)=>rows.findIndex(candidate=>candidate.symbol===row.symbol)===index)\n  .slice(0,10);", "beforeHash": "3ecc9770385ac9bb869cef6f5ae8c2a1906d07c7", "afterHash": "4fc4a8e1d6dcc3f1baa7808886b60a39ca1e7a6b"};
+function restore(file,source){if(file!=='lib/c1OpportunitiesProjection.js'||!source.includes(patch.after))return source;const blob=require('./c1-account-policy-seams.cjs').blob;if(blob(source)!==patch.afterHash)return source;source=source.replace(patch.after,patch.before);assert.equal(blob(source),patch.beforeHash);return source;}
+module.exports={restore};

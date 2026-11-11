@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const {createResearchModuleLoader}=require('./research-module-loader.cjs');
+const {projectC1Opportunities:project}=createResearchModuleLoader(process.cwd()).load('lib/c1OpportunitiesProjection.js');
+const rows=Array.from({length:347},(_,i)=>({symbol:'S'+String(i).padStart(3,'0'),rating:'Watch',priority:i,screenReview:{why:'Current candidate '+i,next:'Current entry checks'},entryEvidence:{momentumScore:100-i/4,close:100,sector:'Test'}}));
+const input={decision:{current:true,positions:[],opportunities:rows},evidence:{ratings:rows,verified:true,pending:false,buySymbols:[]}};
+const before=JSON.stringify(input);
+let result=project(input);
+assert.equal(result.watch.length,10);assert.equal(result.watchView.rows.length,10);
+assert.equal(result.ratedRows.length,347,'Display limit does not truncate evaluated evidence');
+assert.deepEqual(Array.from(result.watch.map(r=>r.symbol)),rows.slice(0,10).map(r=>r.symbol));
+assert.equal(JSON.stringify(input),before,'Financial and selection inputs are untouched');
+const revised=rows.map(r=>r.symbol==='S346'?{...r,priority:-1}:r).reverse();
+result=project({...input,evidence:{...input.evidence,ratings:revised}});
+assert.equal(result.watch[0].symbol,'S346','Current higher rank displaces prior leaders regardless of input order');
+assert(!result.watch.some(r=>r.symbol==='S009'));
+result=project({...input,decision:{...input.decision,current:false}});
+assert.equal(result.watch.length,0,'Stale account cannot expose the shortlist');
+console.log('PASS: 347-row real projection caps Watch at ten, ranks current competitors, retains full evidence and preserves inputs.');
