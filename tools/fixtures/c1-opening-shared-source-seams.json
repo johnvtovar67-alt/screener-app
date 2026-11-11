@@ -1,0 +1,28 @@
+{
+  "contract": "c1-opening-shared-source-inverse-v1",
+  "baselineCommit": "97c458bf1a21cd218971d2422d0497a1add772bf",
+  "files": {
+    "lib/c1AccountOpeningProvider.js": {
+      "beforeHash": "1c7133d1db261011ea648cf45d0caf09cfaa3e59",
+      "afterHash": "b3bac61b68ffb2dc921ef23f88b10e01412404b0",
+      "chunks": [
+        {
+          "before": "import {collectC1OpeningAnchorScan} from './c1UniverseVerification';",
+          "after": "import {collectC1OpeningAnchorScan} from './c1UniverseVerification';\nimport {createC1OpeningAnchorStore} from './c1OpeningAnchorStore';"
+        },
+        {
+          "before": "resolveSymbols,essentialSymbols,fetcher=fetch",
+          "after": "resolveSymbols,essentialSymbols,anchorStore,fetcher=fetch"
+        },
+        {
+          "before": " const anchorIdentity=createHash('sha256').update(JSON.stringify([baseline.date,baseline.prices,Boolean(allowPriceRevisionReview)])).digest('hex');",
+          "after": " const anchorIdentity=createHash('sha256').update(JSON.stringify([baseline.date,baseline.prices,Boolean(allowPriceRevisionReview)])).digest('hex');\n const sharedAnchors=fullUniverse?(anchorStore===undefined&&['production','preview'].includes(process.env.VERCEL_ENV)?createC1OpeningAnchorStore():anchorStore):null;\n const anchorContext=()=>({sourceIdentity:anchorIdentity,sourceSessionDate:baseline.date,allowedSymbols:baseline.prices.map(row=>row.symbol),now:new Date()});"
+        },
+        {
+          "before": "   const collected=await collectC1OpeningAnchorScan({sourceIdentity:anchorIdentity,symbols:targets,collect:async symbol=>{try{return await collectAnchor(symbol);}catch(error){if(!essentials.includes(symbol))return {unverified:true};throw error;}}});",
+          "after": "   const retained=sharedAnchors?await sharedAnchors.read(anchorContext()):null;\n   const restoredCount=retained?.size||0;\n   const restoredTargets=targets.filter(symbol=>retained?.has(symbol)).length;\n   const cache=retained?new Map([[anchorIdentity,{anchors:retained,expiresAt:Date.now()+300000}]]):undefined;\n   let collected=await collectC1OpeningAnchorScan({sourceIdentity:anchorIdentity,symbols:targets,cache,collect:async symbol=>{try{return await collectAnchor(symbol);}catch(error){if(!essentials.includes(symbol))return {unverified:true};throw error;}}});\n   if(sharedAnchors&&collected.scan.completed>restoredTargets){\n    const committed=await sharedAnchors.write({...anchorContext(),anchors:collected.anchors});\n    const pending=targets.filter(symbol=>!committed.has(symbol));\n    collected={anchors:new Map(targets.filter(symbol=>committed.has(symbol)).map(symbol=>[symbol,committed.get(symbol)])),\n     scan:{...collected.scan,completed:targets.length-pending.length,remaining:pending.length,complete:pending.length===0,\n      nextCursor:pending.length?targets.indexOf(pending[0]):null,status:pending.length?'incomplete':'complete'}};\n   }\n   console.info('C1_OPENING_SCAN',JSON.stringify({sourceSessionDate:baseline.date,total:collected.scan.total,completed:collected.scan.completed,\n    remaining:collected.scan.remaining,complete:collected.scan.complete,shared:Boolean(sharedAnchors),restored:restoredCount,elapsedMs:Date.now()-started}));"
+        }
+      ]
+    }
+  }
+}
