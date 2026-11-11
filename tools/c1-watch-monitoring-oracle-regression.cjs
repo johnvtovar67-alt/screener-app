@@ -19,7 +19,7 @@ assert.deepEqual(Object.keys(fixture.files).sort(),[
 ]);
 for(const [file,patch]of Object.entries(fixture.files)){
  const current=fs.readFileSync(file,'utf8'),released=monitoring.restore(file,current);
- assert.equal(monitoring.blob(current),patch.afterHash,'Exact reviewed monitoring-only Watch source: '+file);
+ assert.equal(monitoring.blob(require('./c1-watch-numbering-seams.cjs').restore(file,current)),patch.afterHash,'Exact reviewed monitoring-only Watch source: '+file);
  assert.equal(monitoring.blob(released),patch.beforeHash,'Exact released pre-correction Watch source recovered: '+file);
  if(previousWatch.files[file])assert.equal(patch.beforeHash,previousWatch.files[file].afterHash,'Prior Watch source pin is unchanged: '+file);
  else assert.equal(patch.beforeHash,'894fea6f2be9af95283c1bf49482f456bd5cc95d','The released standalone Watch selector is pinned exactly');

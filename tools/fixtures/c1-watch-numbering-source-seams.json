@@ -1,0 +1,24 @@
+{
+  "contract": "c1-watch-numbering-source-inverse-v1",
+  "baselineCommit": "823b15326a8f5892cfc751b6a1ada447c3a114fd",
+  "files": {
+    "components/C1AccountOpportunitiesView.js": {
+      "beforeHash": "461e8335e1a8f468ab623d6d316c7c70accefbb3",
+      "afterHash": "4fe0e3e5bf505ae8fa05d56998f92032d54d6c1e",
+      "chunks": [
+        {
+          "before": "ordered by dated momentum rank.",
+          "after": "ordered strongest first."
+        },
+        {
+          "before": "watchSelection?'Momentum rank':'Priority'",
+          "after": "watchSelection?'Watch rank':'Priority'"
+        },
+        {
+          "before": "watchView.rows.map(row=><tr key={row.symbol}><td>{row.priority}</td>",
+          "after": "watchView.rows.map((row,index)=><tr key={row.symbol}><td>{watchSelection?index+1:row.priority}</td>"
+        }
+      ]
+    }
+  }
+}

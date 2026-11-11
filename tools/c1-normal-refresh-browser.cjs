@@ -137,7 +137,7 @@ async function main(){
      if(publishedActionVersion)assert.equal(version,publishedActionVersion,'Desktop and mobile consume exactly the same authoritative account action version');else publishedActionVersion=version;
      const watch=await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr')].map(row=>({symbol:row.querySelector('td:nth-child(2) b').textContent,rank:Number(row.querySelector('td').textContent)}))`);
      assert.deepEqual(watch.map(row=>row.symbol),Array.from({length:10},(_,index)=>'X'+(index+15)),'Actual Watch displays only the current ten highest-ranked eligible candidates');
-     assert.deepEqual(watch.map(row=>row.rank),Array.from({length:10},(_,index)=>index+28),'Watch shows unchanged source momentum ranks, rather than prior appearance priority');
+     assert.deepEqual(watch.map(row=>row.rank),Array.from({length:10},(_,index)=>index+1),'Watch is numbered consecutively strongest first, independently of gaps in source momentum ranks');
      const watchText=await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`);
      assert.match(watchText,/23 monitoring candidates; 10 shown/);assert.match(watchText,/scan complete: 50 names; 50 source candidates/);
      assert(!watchText.includes('MRNA'),'A known volatility disqualification is excluded from Watch');
@@ -172,6 +172,8 @@ async function main(){
     const details=await js('window.__watchExports[0]');
     assert.equal(details.contract,'c1-watch-monitoring-details-v1');assert.equal(details.sourceSessionDate,'2026-11-10');
     assert.equal(details.candidates.length,50);assert.equal(details.counts.displayed,10,'Closed-market download retains the dated list: '+JSON.stringify({source:details.source,counts:details.counts,readiness:details.executionReadiness}));assert.equal(details.executionReadiness.marketOpen,false);
+    assert.deepEqual(await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr')].map(row=>Number(row.querySelector('td').textContent))`),Array.from({length:10},(_,index)=>index+1),'Closed-market monitoring remains numbered 1 through 10');
+    assert.deepEqual(closedWatch.map(symbol=>details.candidates.find(row=>row.symbol===symbol).researchRank),Array.from({length:10},(_,index)=>index+25),'Local details retain the original source ranks rather than display positions');
     assert(details.waitCounts['market-closed']>0);assert.deepEqual(await js('window.__watchDownloadFetches'),[],'Watch download makes no API/provider/storage calls');
     assert.equal(details.executionReadiness.serverDatedCurrent,true);assert.equal(details.executionReadiness.displayDecisionMasked,true,'The actual page ownership mask is recorded separately from the current captured source');
     assert(!JSON.stringify(details).match(/offline_workflow_fixture_key|brokerageCash|actualCash|syncKey|authorization|allocationBreakdown|fills/),'Local export excludes keys, balances and financial ledger data');
@@ -182,7 +184,7 @@ async function main(){
    assert.equal(api.fixture.writes,0);assert.deepEqual(trace.browserErrors,[]);
    assert(requests.some(r=>r.path==='/api/c1-account'&&r.method==='GET'&&r.finished));
    assert(requests.some(r=>r.operation==='prepare-execution'&&r.finished),'Lower-ranked purchases came through the real account opening handler');
-   trace.status='PASS';trace.cases.push({case:accountPolicy?'account-policy-v2':sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:!accountPolicy,...(accountPolicy?{sourceUniverse:50,eligibleWatch:23,displayedWatch:10,watchSymbols:Array.from({length:10},(_,index)=>'X'+(index+15)),watchRanks:Array.from({length:10},(_,index)=>index+28)}:{}),widths:[1440,390],accountRecordIdentical:true});
+   trace.status='PASS';trace.cases.push({case:accountPolicy?'account-policy-v2':sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:!accountPolicy,...(accountPolicy?{sourceUniverse:50,eligibleWatch:23,displayedWatch:10,watchSymbols:Array.from({length:10},(_,index)=>'X'+(index+15)),watchPositions:Array.from({length:10},(_,index)=>index+1),sourceMomentumRanks:Array.from({length:10},(_,index)=>index+28)}:{}),widths:[1440,390],accountRecordIdentical:true});
    console.log(accountPolicy?'PASS: actual Home/App scans 50 names, preserves checked purchases, displays at most ten dated monitors through event/opening/closed-market waits, and downloads all candidate diagnostics locally on mobile; no account mutation.':sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
   }
   if(!reliability&&!actualScreen){
