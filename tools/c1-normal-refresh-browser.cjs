@@ -13,7 +13,7 @@ async function main(){
  const accountPolicy=process.env.C1_NORMAL_BROWSER_ACCOUNT_POLICY==='1';
  const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1'||sourceGate||accountPolicy;
  const api=createWorkflowApi('buy',qualified?{baselineDate:accountPolicy?'2026-11-10':'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],...(accountPolicy?{moduleOverrides:require('./fixtures/c1-account-policy-risk.cjs').approvedOperationalRiskModules(root)}:{})}:reliability?{baselineDate:'2026-10-29',now:'2026-10-30T19:00:00Z',commit:clientCommit,observationSecret}:{});api.fixture.setCash(100000);
- if(accountPolicy)require('./fixtures/c1-account-policy-universe.cjs').applyAccountPolicyUniverseFixture(api.fixture);
+ if(accountPolicy)require('./fixtures/c1-account-policy-universe.cjs').applyAccountPolicyUniverseFixture(api.fixture,{count:50});
  if(sourceGate)require('./fixtures/c1-source-eligibility.cjs').applySourceEligibilityFixture(api.fixture);
  if(qualified&&!sourceGate&&!accountPolicy)for(let index=215;index<=220;index++){
   const session=api.fixture.sessions[index];
@@ -135,9 +135,15 @@ async function main(){
      const version=await js('document.querySelector(\'[aria-label="C1 account opportunities"]\').dataset.c1DecisionVersion');
      assert(version,'The shared renderer publishes its authoritative action version at both widths');
      if(publishedActionVersion)assert.equal(version,publishedActionVersion,'Desktop and mobile consume exactly the same authoritative account action version');else publishedActionVersion=version;
+     const watch=await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr')].map(row=>({symbol:row.querySelector('td:nth-child(2) b').textContent,rank:Number(row.querySelector('td').textContent)}))`);
+     assert.deepEqual(watch.map(row=>row.symbol),Array.from({length:10},(_,index)=>'X'+(index+15)),'Actual Watch displays only the current ten highest-ranked eligible candidates');
+     assert.deepEqual(watch.map(row=>row.rank),Array.from({length:10},(_,index)=>index+28),'Watch shows unchanged source momentum ranks, rather than prior appearance priority');
+     const watchText=await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`);
+     assert.match(watchText,/23 eligible; 10 shown/);assert.match(watchText,/scan complete: 50 names; 50 source candidates/);
+     assert(!watchText.includes('MRNA'),'A known volatility disqualification is excluded from Watch');
     }
     assert(!purchaseCards.some(t=>t.includes('MRNA')&&/Buy \d+ shares/.test(t)),'A weak historical leader is not an authorized purchase');
-    assert((await js('document.body.innerText')).includes('MRNA'),'Blocked historical leader remains visible in Watch');
+    if(!accountPolicy)assert((await js('document.body.innerText')).includes('MRNA'),'Legacy blocked historical leader remains visible in Watch');
     if(sourceGate){
      assert(!purchaseCards.some(t=>t.includes('MRNA')),'Source-ineligible leader is in Watch, not Opportunities');
      assert.match(await js('document.body.innerText'),/375\.71%.*100\.00%/,'Actual screen explains the unchanged volatility rejection');
@@ -150,14 +156,15 @@ async function main(){
     await wait(`document.querySelector('[aria-label="Current candidate evidence"]')`,'Explicit current evidence status');
     assert.match(await js(`document.querySelector('[aria-label="Current candidate evidence"]').innerText`),/incomplete/i);
     assert(!(await js(`document.querySelector('[aria-label="C1 account opportunities"]').innerText`)).match(/Buy \d+ shares/),'All missing current events cannot become a fabricated purchase pass');
+    assert.equal(await js(`document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr').length`),0,'Missing current event evidence cannot fabricate ten eligible Watch rows');
     trace.cases.push({case:'account-policy-current-events-unavailable',explicitIncomplete:true,authorizedBuys:0,accountRecordIdentical:true});
    }
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Read and opening checks cannot rewrite account economics');
    assert.equal(api.fixture.writes,0);assert.deepEqual(trace.browserErrors,[]);
    assert(requests.some(r=>r.path==='/api/c1-account'&&r.method==='GET'&&r.finished));
    assert(requests.some(r=>r.operation==='prepare-execution'&&r.finished),'Lower-ranked purchases came through the real account opening handler');
-   trace.status='PASS';trace.cases.push({case:accountPolicy?'account-policy-v2':sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:!accountPolicy,widths:[1440,390],accountRecordIdentical:true});
-   console.log(accountPolicy?'PASS: actual Home/App v2 advances ranks25–27, aggregates nine allocation orders into three stock instructions and publishes one authoritative action version on desktop/mobile; no account mutation.':sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
+   trace.status='PASS';trace.cases.push({case:accountPolicy?'account-policy-v2':sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:!accountPolicy,...(accountPolicy?{sourceUniverse:50,eligibleWatch:23,displayedWatch:10,watchSymbols:Array.from({length:10},(_,index)=>'X'+(index+15)),watchRanks:Array.from({length:10},(_,index)=>index+28)}:{}),widths:[1440,390],accountRecordIdentical:true});
+   console.log(accountPolicy?'PASS: actual Home/App v2 scans 50 names, buys ranks25–27 independently, displays current eligible Watch ranks28–37 only, excludes blocked/unknown rows and publishes one action version on desktop/mobile; no account mutation.':sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
   }
   if(!reliability&&!actualScreen){
    assert(requests.some(r=>r.path==='/api/portfolio-sync'&&r.method==='GET'&&r.finished),'The current synced portfolio loaded');
