@@ -32,3 +32,16 @@ fixture bytes remain intact through an exact additional inverse. Release must
 pass all four exact-head CI jobs. Real cold-worker HTTP behavior and synthetic
 storage tests establish software recovery; an ordinary owner reload and its
 production response/visible screen are still required for deployed recovery.
+
+## Production-build test boundary
+
+The first Vercel build rejected the release: its production environment caused
+the older warm-worker provider regression to select the new default Blob
+adapter. Its VM intentionally has no dynamic external-import callback, so it
+failed with `ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING` before external I/O. Local
+and GitHub CI runs without `VERCEL_ENV=production` did not exercise that default.
+Explicitly inject `anchorStore:null` into that synthetic warm-worker test; the
+new cold-worker regression separately injects and exercises shared storage.
+Application behavior and assertions remain unchanged. Re-run the full build
+with the production environment plus all four exact-head CI jobs, then verify
+the deployed owner path. A failed deployment is not a completed release.
