@@ -25,5 +25,20 @@ function restoreExecutionView(source){
  assert.equal(gitBlob(source),'5fbe7dd0ce76e52788fe0f51ccfb3a10f712181e','Pre-repair execution view source identity');
  return source;
 }
+// Restore the newest input-parity seam only when the exact reviewed current
+// blob is present. This lets historical inverse chains compose without
+// applying an inverse twice or normalizing any unreviewed source.
+const currentBlobs={
+ 'lib/c1OpeningPriceReview.js':'034435a70c486727a56ec89271616e4d4f9ba568',
+ 'lib/c1AccountExecutionView.js':'2d791b9b0c45156d3b37647b2907dc594a722306'
+};
+function restoreCurrent(file,source){
+ const expected=currentBlobs[file];
+ if(expected&&gitBlob(source)===expected){
+  return file==='lib/c1OpeningPriceReview.js'?restoreReview(source):restoreExecutionView(source);
+ }
+ return source;
+}
 exports.restoreReview=restoreReview;
 exports.restoreExecutionView=restoreExecutionView;
+exports.restoreCurrent=restoreCurrent;
