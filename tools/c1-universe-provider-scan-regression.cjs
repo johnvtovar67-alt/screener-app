@@ -70,7 +70,7 @@ async function run(){
   else throw Error('Unexpected provider route');
   return new Response(JSON.stringify(body),{status:200,headers:{'content-type':'application/json'}});
  };
- const input={baseline,symbols:required,now,fetcher,apiKey:'synthetic-provider',collectEvents:async names=>new Map(names.map(s=>[s,risk(s)]))};
+ const input={baseline,symbols:required,now,anchorStore:null,fetcher,apiKey:'synthetic-provider',collectEvents:async names=>new Map(names.map(s=>[s,risk(s)]))};
  let complete;
  for(let i=0;i<4;i++){
   try{complete=await collectC1AccountOpening(input);assert.equal(i,3,'No partial scan can authorize a plan');}
@@ -134,7 +134,7 @@ async function run(){
   return new Response(JSON.stringify(body),{status:200,headers:{'content-type':'application/json'}});
  };
  let verifiedOpening;
- const lowInput={baseline:liveBaseline,symbols:[...symbols,'SPY','QQQ'],essentialSymbols:['SPY','QQQ'],now,fetcher:lowQuoteFetcher,apiKey:'synthetic-provider',collectEvents:async names=>new Map(names.map(symbol=>[symbol,risk(symbol)]))};
+ const lowInput={baseline:liveBaseline,symbols:[...symbols,'SPY','QQQ'],essentialSymbols:['SPY','QQQ'],now,anchorStore:null,fetcher:lowQuoteFetcher,apiKey:'synthetic-provider',collectEvents:async names=>new Map(names.map(symbol=>[symbol,risk(symbol)]))};
  for(let pass=0;pass<3;pass++){
   try{verifiedOpening=await collectC1AccountOpening(lowInput);}catch(error){assert.equal(error.code,'C1_SCAN_INCOMPLETE');}
  }
