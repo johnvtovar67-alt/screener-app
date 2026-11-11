@@ -132,6 +132,7 @@ async function main(){
     for(const symbol of accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'])assert(purchaseCards.some(t=>t.includes(symbol)&&/Buy \d+ shares/.test(t)),symbol+' has a checked purchase in the actual Home/App at width '+width+': '+JSON.stringify(purchaseCards));
     if(accountPolicy){
      assert.equal(purchaseCards.filter(t=>/Buy \d+ shares/.test(t)).length,3,'One aggregate instruction perstock, not one perallocation');
+     assert.equal(await js(`document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr').length`),10,'Full-universe Watch is bounded to ten on desktop and mobile while ranks25–27 remain purchasable');
      const version=await js('document.querySelector(\'[aria-label="C1 account opportunities"]\').dataset.c1DecisionVersion');
      assert(version,'The shared renderer publishes its authoritative action version at both widths');
      if(publishedActionVersion)assert.equal(version,publishedActionVersion,'Desktop and mobile consume exactly the same authoritative account action version');else publishedActionVersion=version;
