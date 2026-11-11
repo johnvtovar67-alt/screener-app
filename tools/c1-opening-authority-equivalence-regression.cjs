@@ -8,7 +8,7 @@ const {compareC1OpeningPlans:compare,verifiedC1OpeningPlanComparison:verifiedCom
 const review=f.loader.load('lib/c1OpeningPriceReview.js');
 const logs=[];
 function oldReview(){
- let source=require('./c1-opening-authority-repair-seams.cjs').restore(require('./c1-initial-swing-stop-seams.cjs').restoreInitialSwingStopPolicy(fs.readFileSync('lib/c1OpeningPriceReview.js','utf8'),'lib/c1OpeningPriceReview.js'));
+ let source=require('./c1-opening-authority-repair-seams.cjs').restore(require('./c1-initial-swing-stop-seams.cjs').restoreInitialSwingStopPolicy(require('./c1-opening-revision-inputs-seams.cjs').restoreReview(fs.readFileSync('lib/c1OpeningPriceReview.js','utf8')),'lib/c1OpeningPriceReview.js'));
  const deps={};source=source.replace(/import\s*{([^}]+)}\s*from\s*['"]([^'"]+)['"];?/g,(_,names,file)=>{const m=f.loader.load(file,path.resolve('lib/c1OpeningPriceReview.js'));for(const name of names.split(',').map(n=>n.trim()))deps[name]=m[name];return '';}).replace(/export function /g,'function ');
  const box={...deps,Date,console:{warn:(...args)=>logs.push(args)}};vm.createContext(box);vm.runInContext(source+';globalThis.review=reviewC1OpeningPriceRevisions;',box);return box.review;
 }

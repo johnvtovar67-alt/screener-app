@@ -1,5 +1,5 @@
 // Provider lifecycle verification only. Synthetic data, no network or financial writes.
-const assert=require('node:assert/strict');
+const assert=require('node:assert/strict'),fs=require('node:fs');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const NativeDate=Date;
 const now=new NativeDate('2026-11-11T15:00:00.000Z');
@@ -14,6 +14,7 @@ function risk(symbol){
  sources:[['EARNINGS','earnings-calendar'],['MERGERS','mergers-acquisitions-latest'],['NEWS','news/stock']].map(([kind,endpoint])=>({kind,endpoint,complete:true,reason:'OK',fetchedAt:observedAt,expiresAt}))}};
 }
 async function run(){
+ require('./c1-opening-anchor-batch-seam.cjs').restore(fs.readFileSync('lib/c1UniverseVerification.js','utf8'));
  const cache=new Map(),calls=[];
  const collect=async batch=>{calls.push([...batch]);return new Map(batch.map(s=>[s,risk(s)]));};
  let first=await collectC1UniverseEvents({sourceIdentity:'accepted-first',symbols,collect,now,cache});
@@ -54,7 +55,7 @@ async function run(){
   assert.equal([...deadlineCache.values()][0].attempted.size,0,'Expired owners cannot publish late verification progress');
  }finally{Object.defineProperty(global,'performance',{configurable:true,value:originalPerformance});}
 
- // Execute the real opening collector: 205 requested candidates require seven
+ // Execute the real opening collector: 205 requested candidates require four
  // refreshes, fresh quote requests are <=100 names, dated anchors fetched once.
  const {collectC1AccountOpening}=loader.load('lib/c1AccountOpeningProvider.js');
  const members=Array.from({length:500},(_,i)=>({symbol:'U'+String(i).padStart(3,'0'),sector:'Sector '+i%8}));
@@ -71,9 +72,9 @@ async function run(){
  };
  const input={baseline,symbols:required,now,fetcher,apiKey:'synthetic-provider',collectEvents:async names=>new Map(names.map(s=>[s,risk(s)]))};
  let complete;
- for(let i=0;i<7;i++){
-  try{complete=await collectC1AccountOpening(input);assert.equal(i,6,'No partial scan can authorize a plan');}
-  catch(error){assert.equal(error.code,'C1_SCAN_INCOMPLETE');assert.equal(error.scan.complete,false);assert.equal(error.scan.completed,32*(i+1));}
+ for(let i=0;i<4;i++){
+  try{complete=await collectC1AccountOpening(input);assert.equal(i,3,'No partial scan can authorize a plan');}
+  catch(error){assert.equal(error.code,'C1_SCAN_INCOMPLETE');assert.equal(error.scan.complete,false);assert.equal(error.scan.completed,64*(i+1));}
  }
  assert.equal(complete.prices.length,205);assert.equal(anchors.length,205);assert.equal(new Set(anchors).size,205);
  assert(quotes.every(batch=>batch.length<=100),'The actual provider never emits an unbounded quote URL');
@@ -93,8 +94,8 @@ async function run(){
  assert.equal(emptyFirstBatch.candidateDisqualifications.length,100);
  missingQuoteSymbols=new Set();
  const altered={...baseline,prices:baseline.prices.map((r,i)=>i? r:{...r,close:101})};
- await assert.rejects(collectC1AccountOpening({...input,baseline:altered}),error=>error.code==='C1_SCAN_INCOMPLETE'&&error.scan.completed===32);
- assert.equal(anchors.length,237,'A changed accepted price basis starts its own scan');
+ await assert.rejects(collectC1AccountOpening({...input,baseline:altered}),error=>error.code==='C1_SCAN_INCOMPLETE'&&error.scan.completed===64);
+ assert.equal(anchors.length,269,'A changed accepted price basis starts its own 64-name scan');
 
  // Real Home/screen producer, current provider adapters, classifier, response
  // serializer and in-memory storage. A full source of eighty names takes
