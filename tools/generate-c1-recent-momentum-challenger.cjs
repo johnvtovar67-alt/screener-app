@@ -375,7 +375,7 @@ replace("        if (portfolioRiskPaused) {noteEntrySkip('portfolio-cooldown');c
 `        if (portfolioRiskPaused && !(policyRiskActive&&operationalRiskApproved)) {noteEntrySkip('portfolio-cooldown');continue;}
         if (policyOpen(session) && accountPolicy?.active !== true) {noteEntrySkip('account-policy-evidence-unavailable');continue;}
         if (policyOpen(session) && !operationalRiskState?.purchaseRiskReady) {noteEntrySkip(operationalRiskState?.decisionRequired?'operational-risk-decision-required':'operational-risk-evidence-required');continue;}
-        if (blockedAccountStock(session,order.symbol)) {noteEntrySkip('account-stock-cooldown');continue;}`);
+        if (policyOpen(session) && blockedAccountStock(session,order.symbol)) {noteEntrySkip('account-stock-cooldown');continue;}`);
 replace("      const qualifiedQueue=new Set(qualifiedPool.slice(0,C1_QUALIFIED_SELECTION_QUEUE_COUNT).map(symbolOf));",
 "      const qualifiedQueue=new Set((policyClose(session)?qualifiedPool:qualifiedPool.slice(0,C1_QUALIFIED_SELECTION_QUEUE_COUNT)).map(symbolOf));");
 replace("        !allocationBlocked.has(symbolOf(signal)) &&\n        sessionIndex > number(cooldownThrough.get(symbolOf(signal)), -1) &&",
