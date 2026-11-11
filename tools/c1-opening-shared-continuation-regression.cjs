@@ -11,6 +11,11 @@ const root=process.cwd(),NativeDate=Date,commit='a'.repeat(40);
 let clock=NativeDate.parse('2026-11-11T15:00:00Z');
 global.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[clock]));}static now(){return clock;}};
 const copy=value=>JSON.parse(JSON.stringify(value));
+async function captureScanBatches(run,rows){
+ const info=console.info;
+ console.info=(label,value,...rest)=>{if(label==='C1_OPENING_SCAN')rows.push(JSON.parse(value));info(label,value,...rest);};
+ try{return await run();}finally{console.info=info;}
+}
 function memory(){
  const records=new Map(),operations=[];let version=0,conflicts=0,unavailable=false;
  return {records,operations,get conflicts(){return conflicts;},set unavailable(value){unavailable=value;},
@@ -90,7 +95,7 @@ async function storeCases(){
  console.log('PASS: shared-anchor conditional union, cold-worker reads, source/deployment isolation, TTL, schema, conflicting anchors and unavailable storage.');
 }
 async function httpCase(){
- const storage=memory(),calls=[],requests=[],steps=[],workerIds=[];let api,mode='healthy',worker=0;
+ const storage=memory(),calls=[],requests=[],steps=[],batches=[],workerIds=[];let api,mode='healthy',worker=0;
  const provider=async(raw)=>{
   const url=new URL(raw),endpoint=url.pathname.split('/').at(-1),baseline=api.fixture.book.model.sessions.at(-1);
   calls.push({endpoint,symbol:url.searchParams.get('symbol'),worker});let body;
@@ -115,8 +120,8 @@ async function httpCase(){
   const modules=createResearchModuleLoader(root);
   const anchorStore=modules.load('lib/c1OpeningAnchorStore.js').createC1OpeningAnchorStore({store:storage,environment:'production',commit});
   try{
-   const result=await modules.load('lib/c1AccountOpeningProvider.js').collectC1AccountOpening({...input,anchorStore,fetcher:provider,apiKey:'synthetic-only',
-    collectEvents:async symbols=>{calls.push({endpoint:'current-events',worker});return new Map(currentEventEvidenceFor(symbols,input.now,mode==='blocked-event'?{X12:{state:'VERIFIED_BLOCKED'}}:{}).map(row=>[row.symbol,row]));}});
+   const result=await captureScanBatches(()=>modules.load('lib/c1AccountOpeningProvider.js').collectC1AccountOpening({...input,anchorStore,fetcher:provider,apiKey:'synthetic-only',
+    collectEvents:async symbols=>{calls.push({endpoint:'current-events',worker});return new Map(currentEventEvidenceFor(symbols,input.now,mode==='blocked-event'?{X12:{state:'VERIFIED_BLOCKED'}}:{}).map(row=>[row.symbol,row]));}}),batches);
    steps.push(copy(result.scan));return result;
   }catch(error){if(error.code==='C1_SCAN_INCOMPLETE')steps.push(copy(error.scan));throw error;}
  };
@@ -140,14 +145,16 @@ async function httpCase(){
   const read=()=>readC1OpeningReview('offline_workflow_fixture_key_000001',()=>true,(url,options)=>fetch(origin+url,options));
   const result=await read();
   assert.equal(result.response.status,200);
-  assert(steps.length>1&&steps[0].total>64,'The actual account requires multiple bounded anchor batches: '+JSON.stringify({steps,error:result.execution.openingError,calls}));
-  assert.equal(steps[0].completed,64);assert.equal(steps[0].complete,false);
-  assert(steps.every((scan,index)=>index===0||scan.completed>steps[index-1].completed),'Cross-worker progress is strictly increasing');
+  assert.equal(steps.length,1,'Fast bounded batches finish in one account-handler request: '+JSON.stringify({steps,error:result.execution.openingError,calls}));
+  assert(steps[0].total>64);assert.deepEqual(batches.map(scan=>scan.completed),[64,78]);
+  assert.equal(batches[0].complete,false);assert.equal(batches.at(-1).complete,true);
+  assert.equal(storage.operations.filter(row=>row.method==='write').length,2,'Both bounded batches publish their own recoverable progress');
   assert.equal(new Set(steps.map(scan=>scan.sourceIdentity)).size,1);
   assert.equal(steps.at(-1).completed,steps.at(-1).total);assert.equal(steps.at(-1).complete,true);
   assert.equal(result.execution.openingError,null,'Full cross-worker scan reaches the actual planner rather than returning the incomplete message');
   assert(result.execution.openingPlan?.providerVerified,'The real account handler returns its verified opening plan');
   assert.equal(requests[0].method,'POST');assert.equal(requests[0].body.operation,'prepare-execution');
+  assert.equal(requests.length,1,'No additional HTTP account replay is needed for a fast complete source');
   assert(requests.slice(1).every(row=>row.method==='GET'&&row.review==='opening'&&row.body===null),'Continuation uses read-only GET, never repeats the POST');
   assert.equal(new Set(workerIds).size,requests.length,'Each request used newly created provider/store module globals');
   assert.equal(calls.filter(row=>row.endpoint==='dividend-adjusted').length,steps.at(-1).total,'Immutable anchors are acquired once across independent workers');
@@ -164,14 +171,14 @@ async function httpCase(){
   assert(!blocked.execution.openingPlan.orders.some(order=>order.side==='buy'&&order.symbol==='X12'),'Fresh corporate-event block still excludes the stock after anchor-cache completion');
   assert.equal(JSON.stringify(api.fixture.account),financialBefore);assert.equal(api.fixture.writes,0);
   assert(storage.operations.every(row=>row.path.startsWith('operations/c1-opening-anchors-v1/')),'Only synthetic market-progress cache writes occur');
-  console.log('PASS: real opening-read HTTP account path completes '+steps[0].total+' anchors across '+completeRequests+' cold workers with monotonic full-source evidence, fresh execution checks and zero account writes.');
+  console.log('PASS: real opening-read HTTP account path completes '+steps[0].total+' anchors in '+completeRequests+' POST with separate 64-name progress commits, fresh execution checks and zero account writes.');
  }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 }
-async function largeUniverseCase(){
+async function largeUniverseCase({slow=false}={}){
  const storage=memory(),members=Array.from({length:500},(_,index)=>({symbol:'U'+String(index).padStart(3,'0'),sector:'Sector'+index%8}));
  const symbols=members.slice(0,205).map(row=>row.symbol);
  const baseline={date:'2026-11-10',universeSymbols:members.map(row=>row.symbol),prices:members.map(row=>({symbol:row.symbol,close:100})),signals:members.map(row=>({...row,price:100}))};
- const requests=[],history=[],quoteBatches=[];let eventChecks=0;
+ const requests=[],batches=[],history=[],quoteBatches=[];let eventChecks=0;
  const fetcher=async raw=>{
   const url=new URL(raw),endpoint=url.pathname.split('/').at(-1);let body;
   if(endpoint==='sp500-constituent')body=members;
@@ -179,6 +186,7 @@ async function largeUniverseCase(){
    const batch=url.searchParams.get('symbols').split(',');quoteBatches.push(batch);
    body=batch.map(symbol=>({symbol,price:100,open:100,timestamp:clock/1000}));
   }else if(endpoint==='dividend-adjusted'){
+   if(slow)clock+=350; // Synthetic budget clock only; no sleep or performance claim.
    history.push(url.searchParams.get('symbol'));body=[{date:baseline.date,adjOpen:100,adjHigh:101,adjLow:99,adjClose:100,volume:1e7}];
   }else throw Error('External route forbidden');
   return new Response(JSON.stringify(body),{headers:{'content-type':'application/json'}});
@@ -189,18 +197,21 @@ async function largeUniverseCase(){
   const anchorStore=modules.load('lib/c1OpeningAnchorStore.js').createC1OpeningAnchorStore({store:storage,environment:'production',commit});
   let scan,openingError=null;
   try{
-   scan=(await modules.load('lib/c1AccountOpeningProvider.js').collectC1AccountOpening({baseline,symbols,essentialSymbols:[symbols[0]],now,anchorStore,fetcher,apiKey:'synthetic-only',
-    collectEvents:async names=>{eventChecks++;return new Map(currentEventEvidenceFor(names,now).map(row=>[row.symbol,row]));}})).scan;
+   scan=(await captureScanBatches(()=>modules.load('lib/c1AccountOpeningProvider.js').collectC1AccountOpening({baseline,symbols,essentialSymbols:[symbols[0]],now,anchorStore,fetcher,apiKey:'synthetic-only',
+    collectEvents:async names=>{eventChecks++;return new Map(currentEventEvidenceFor(names,new NativeDate(clock)).map(row=>[row.symbol,row]));}}),batches)).scan;
   }catch(error){assert.equal(error.code,'C1_SCAN_INCOMPLETE');scan=error.scan;openingError=error.message;}
   requests.push({method:options.method,scan:copy(scan)});
   return new Response(JSON.stringify({decision:{contract:'c1-account-decision-v1',decisionId:'synthetic-large-source',revision:1,positions:[],scan},openingError}));
  });
- assert.deepEqual(requests.map(row=>row.method),['POST','GET','GET','GET']);
- assert.deepEqual(requests.map(row=>row.scan.completed),[64,128,192,205],'Production-sized source completes across four independent worker globals');
+ assert.deepEqual(requests.map(row=>row.method),slow?['POST','GET','GET','GET']:['POST']);
+ assert.deepEqual(requests.map(row=>row.scan.completed),slow?[64,128,192,205]:[205],slow?'A slow source retains safe GET continuation across four cold workers':'A fast source avoids all three repeat account replays');
+ assert.deepEqual(batches.map(row=>row.completed),[64,128,192,205]);
+ assert(batches.every((row,index)=>row.completed-(batches[index-1]?.completed||0)<=64),'The fusion changes no 64-name provider batch bound');
+ assert.equal(storage.operations.filter(row=>row.method==='write').length,4,'Every completed batch remains independently recoverable');
  assert.equal(new Set(requests.map(row=>row.scan.sourceIdentity)).size,1);assert.equal(result.execution.decision.scan.complete,true);assert.equal(result.execution.openingError,null);
  assert.equal(history.length,205);assert.equal(new Set(history).size,205,'All original 205 anchors are collected exactly once');
- assert.equal(quoteBatches.length,12);assert(quoteBatches.every(batch=>batch.length<=100),'All four requests independently obtain bounded current quotes');
+ assert.equal(quoteBatches.length,slow?12:3);assert(quoteBatches.every(batch=>batch.length<=100),'Every request independently obtains bounded current quotes');
  assert.equal(eventChecks,1);
- console.log('PASS: real 205-name opening collector/client completes 64 -> 128 -> 192 -> 205 through four cold workers; no quote or event cache.');
+ console.log('PASS: real 205-name collector/client '+(slow?'retains four cold-worker requests under a synthetic 350ms-per-anchor budget clock':'finishes all four 64-name batches in one POST')+'; no quote or event cache.');
 }
-(async()=>{await storeCases();await httpCase();await largeUniverseCase();})().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{global.Date=NativeDate;});
+(async()=>{await storeCases();await httpCase();await largeUniverseCase();await largeUniverseCase({slow:true});})().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{global.Date=NativeDate;});
