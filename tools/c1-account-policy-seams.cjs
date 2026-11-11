@@ -8,6 +8,7 @@ const blob=source=>createHash('sha1').update('blob '+Buffer.byteLength(source)+'
 function restore(file,source){
  source=require('./c1-opening-revision-inputs-seams.cjs').restoreCurrent(file,source);
  const patch=fixture.files[file];
+ if(patch&&blob(source)===patch.beforeHash)return source;
  const invertPolicy=()=>{
   if(!patch||blob(source)!==patch.afterHash)return false;
   for(const {before,after} of [...patch.chunks].reverse()){
