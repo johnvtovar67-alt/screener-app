@@ -19,7 +19,7 @@ function createWorkflowApi(kind='buy',options={}){
  }).replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
  const box={...imports,Date,console,process:{env:{}},Response};vm.createContext(box);vm.runInContext(source,box,{filename:file});
  let etag='"fixture-0"';const requests=[];
- const handler=box.factory({environment:'test',commit:options.commit||'workflow-only',readPortfolio:async()=>{if(!fixture.adoptionPortfolioRecord)throw Error('Synthetic adoption portfolio required');return JSON.parse(JSON.stringify(fixture.adoptionPortfolioRecord));},clock:()=>fixture.now,readBook:async()=>({record:fixture.book}),collectOpening:fixture.collectOpening,
+ const handler=box.factory({environment:'test',commit:options.commit||'workflow-only',readPortfolio:async()=>{if(!fixture.adoptionPortfolioRecord)throw Error('Synthetic adoption portfolio required');return JSON.parse(JSON.stringify(fixture.adoptionPortfolioRecord));},clock:()=>fixture.now,readBook:async()=>({record:fixture.book}),collectOpening:options.collectOpening||fixture.collectOpening,
   collectHoldings:never,collectRanks:never,store:{read:async()=>({record:fixture.account,etag}),write:async(_path,record,expected)=>{
    if(expected!==etag)throw Error('Fixture ETag conflict');fixture.persist(record);etag='"fixture-'+fixture.writes+'"';
   }}});

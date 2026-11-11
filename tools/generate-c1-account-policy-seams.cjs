@@ -47,7 +47,7 @@ print('Generated exact v2 source inverses for '+str(len(files))+' existing files
  assert.equal(result.status,0,'Generate reviewed v2 inverse fixture');
 }else if(process.argv.includes('--check')){
  for(const [file,patch]of Object.entries(fixture.files)){
-  const source=fs.readFileSync(file,'utf8');
+  const source=require('./c1-opening-shared-seams.cjs').restore(file,fs.readFileSync(file,'utf8'));
   const inputSource=require('./c1-opening-revision-inputs-seams.cjs').restoreCurrent(file,source);
   const monitoringSource=require('./c1-watch-monitoring-seams.cjs').restore(file,inputSource);
   const watchSource=require('./c1-current-watch-ten-seams.cjs').restore(file,monitoringSource);
