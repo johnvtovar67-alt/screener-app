@@ -61,7 +61,7 @@ const file=require('node:path').resolve('components/C1IntradayActivity.js'),reco
 const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
 new Function('require','module','exports',code)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
 const html=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:[],tickets:[],revision:0},onSave(){}}));
-assert.equal((html.match(/C1 planned sale: T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
+assert.equal((html.match(/Planned C1 sale (record only if filled): T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
 assert.match(html,/Other completed sale: T4/);assert.match(html,/up to 3 shares/);assert.match(html,/Save trade and update C1/);assert.match(html,/This trade has filled at Schwab/);
 assert.match(fs.readFileSync(file,'utf8'),/Saved in C1:/,'The form must show an explicit authoritative trade receipt');
 const savedHtml=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:saved.intradayActivity.fills,tickets:saved.intradayActivity.tickets,revision:1},onSave(){},onCorrectDetails(){}}));
