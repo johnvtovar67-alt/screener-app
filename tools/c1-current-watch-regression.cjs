@@ -74,7 +74,7 @@ async function run(){
  for(const row of joined.projection.watchView.rows){
   const rated=joined.projection.ratedRows.find(candidate=>candidate.symbol===row.symbol);
   assert.match(rated.screenReview.why,/below the three selected opportunities/);
-  assert(row.review.why.includes(rated.screenReview.why),'Watch must preserve the actual authoritative selection blocker');
+  assert(row.review.why.includes('Higher-ranked candidates fill the three selected opportunities.'),'Watch must explain the actual authoritative selection blocker without restoring hidden research ranks');
   assert(!row.review.why.includes('Dated monitoring only'),'A known selection blocker cannot become an empty fallback');
   assert(diagnostic(joined,row.symbol).waitReasons.includes('selected-opportunity-limit'));
  }
@@ -115,6 +115,7 @@ async function run(){
   ['entry-timing-unavailable',({candidates})=>{candidates.find(row=>row.symbol===first).sourceTiming.available=false;}],
   ['entry-trigger-wait',({candidates})=>{const row=candidates.find(row=>row.symbol===first);row.sourceTiming.pass=false;row.sourceTiming.strongPass=false;}],
   ['current-liquidity-unverified',({rows})=>{const row=rows.find(row=>row.symbol===first);row.entryTiming={...row.entryTiming,available:true,liquidityPass:false,averageDollarVolume20:1};}],
+  ['current-liquidity-below-floor',({rows})=>{const row=rows.find(row=>row.symbol===first);row.entryTiming={...row.entryTiming,available:true,liquidityVerified:true,liquidityPass:false,averageDollarVolume20:299_000_000};}],
   ['current-price-floor',({rows})=>{rows.find(row=>row.symbol===first).price=4;}],
   ['current-entry-evidence-unverified',({decision})=>{decision.selectionEvidence={...(decision.selectionEvidence||{}),complete:true,unverifiedSymbols:[first]};}],
   ['account-verification-required',({decision})=>{decision.accountMismatch=true;}],
@@ -128,6 +129,18 @@ async function run(){
   assert(diagnostic(value,first).waitReasons.includes(code),'WAIT is explicit and structured: '+code);
   assert.equal(diagnostic(value,first).eligible,true);
   assert.equal(value.projection.watchSelection.verified,true,'Dated source readiness is independent of live execution readiness');
+ }
+ for(const verified of [false,true]){
+  const value=join(changed(base,({rows})=>{
+   const row=rows.find(row=>row.symbol===first);
+   row.entryTiming={...row.entryTiming,available:true,liquidityPass:false,averageDollarVolume20:299_000_000};
+   if(verified)row.entryTiming.liquidityVerified=true;else delete row.entryTiming.liquidityVerified;
+  }));
+  const codes=diagnostic(value,first).waitReasons,why=value.projection.watchView.rows.find(row=>row.symbol===first).review.why;
+  assert.equal(codes.includes('current-liquidity-below-floor'),verified,'A verified low-volume result is distinct from a missing liquidity receipt');
+  assert.equal(codes.includes('current-liquidity-unverified'),!verified,'Missing liquidity verification stays unknown instead of a verified threshold failure');
+  assert(why.includes(verified?'Verified trailing dollar volume is below the $300 million fresh-capital floor.':'Trailing dollar-liquidity verification is incomplete; missing evidence cannot authorize a purchase.'),
+   'The visible Watch explanation states whether liquidity failed or could not be verified');
  }
  const eventMissingAndTriggerWait=join(changed(base,({rows,candidates})=>{
   delete rows.find(row=>row.symbol===first).eventRisk;

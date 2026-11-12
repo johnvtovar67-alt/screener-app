@@ -6,7 +6,7 @@ const fixture=require('./fixtures/c1-current-blocker-source-seams.json');
 const sha=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 assert.equal(fixture.contract,'c1-current-blocker-source-inverse-v1');
 assert.equal(fixture.baselineCommit,'b9f2182b7716525bfef58f3fd4cd43b716506ff7');
-assert.equal(sha('tools/fixtures/c1-current-blocker-source-seams.json'),'d80f2b2a0bac36acd9ebb71b6611da7a94a99c617b97b2f01a897cb4adfecbba',
+assert.equal(sha('tools/fixtures/c1-current-blocker-source-seams.json'),'97f5c8952890371eada38c1ba8b7e19966a857faf269e811faff7ffefe551bdc',
  'The reviewed current-evidence inverse fixture is pinned exactly');
 const prior={
  'lib/c1CurrentWatchSelection.js':'bb913df72a95c0d33bc63304f6d20e1cfbea61f3',

@@ -237,7 +237,7 @@
     "lib/blobErrors.js": "7fdd02966515b29acf8a1b36fd2150d2ad5252a9",
     "lib/c1SimulatorAccounting.js": "dacc9188b7e387fa6bd781396b1063f98983c002",
     "lib/c1OpportunitiesProjection.js": "665f21a1a257423d2ff632e3967f60ec089a7825",
-    "lib/c1CurrentWatchSelection.js": "8ad0f1ef03055f516f67a9bd698a911a0e342e84",
+    "lib/c1CurrentWatchSelection.js": "fd8385374e112d19c3254a3c1e75fa63d2613ec5",
     "lib/c1WatchDetails.js": "d9cab34f362d630ab0a94f17086001cd80aebea0",
     "lib/publicApiFailure.js": "ea81b49991dee995edfb1c79efd174379ed8b1bd",
     "lib/c1OwnerAccess.js": "29fedd8f30cddbce0e09c24687e9a386a2323fc7",
