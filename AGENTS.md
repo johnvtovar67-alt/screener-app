@@ -26,6 +26,15 @@ Diagnose actual candidate exclusions; missing evidence is not "no candidates."
 Continue this correction and its deployed owner-screen verification in the
 existing implementation, without redesign or duplicate implementation threads.
 
+## Owner Watch blocker correction — November 12, 2026
+The owner explicitly reports that Watch rows appear blocked by “unavailable”
+checks and directs repair so the screener can be used as intended. Correct the
+displayed primary reason when a different entry trigger or shared account/
+opening check already blocks the row; retain raw missing-event diagnostics and
+keep event verification fail-closed as the final gate for an otherwise-qualified
+Buy/Add. Keep the earlier consistent-WAIT behavior. Do not weaken trading rules,
+change candidate ranking or infer that a missing event receipt is clear.
+
 ## Current owner decision — September 13, 2026
 The owner explicitly restored the reviewed application at commit 8007dc84820a9f2cb52266fe616df5406768815f through PR #177, then requested protection against another unintended change. This is the active source of truth for this repository.
 

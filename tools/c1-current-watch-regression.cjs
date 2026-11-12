@@ -45,6 +45,15 @@ const diagnostic=(joined,symbol)=>joined.projection.watchSelection.diagnostics.f
 async function run(){
  const base=await prepare(),{spec,input,joined,join}=base;
  const originalBuys=copy(joined.projection.actionableBuys),expected=spec.symbols.slice(27,37),baselineBytes=JSON.stringify(input);
+ const {watchWaitText}=base.f.loader.load('lib/c1CurrentWatchSelection.js');
+ const eventOnly=watchWaitText(['event-unverified'],[]);
+ assert(eventOnly.includes('Current company-event verification is unavailable.'),'An unresolved event check remains visible when it is the sole blocker');
+ const triggerFirst=watchWaitText(['event-unverified','recent-entry-trigger-wait'],[]);
+ assert(triggerFirst.includes('Recent momentum has not cleared the Buy/Add trigger.'),'The failed entry trigger is the primary row explanation');
+ assert(!triggerFirst.includes('Current company-event verification is unavailable.'),'An event receipt not required yet does not obscure a failed entry trigger');
+ const sharedFirst=watchWaitText(['event-unverified','opening-checks-unavailable'],['opening-checks-unavailable']);
+ assert(sharedFirst.includes('Opening execution checks are unavailable.'),'A shared opening blocker remains visible');
+ assert(!sharedFirst.includes('Current company-event verification is unavailable.'),'An unneeded per-row event message does not obscure a shared blocker');
  assert.equal(joined.evidence.verified,true);assert.equal(joined.evidence.ratings.length,50);
  assert.equal(input.decision.stockScreen.candidates.length,50,'The full dated selection universe remains intact');
  eq(names(originalBuys),['X12','X13','X14']);
@@ -93,6 +102,15 @@ async function run(){
   assert.equal(diagnostic(value,first).eligible,true);
   assert.equal(value.projection.watchSelection.verified,true,'Dated source readiness is independent of live execution readiness');
  }
+ const eventMissingAndTriggerWait=join(changed(base,({rows,candidates})=>{
+  delete rows.find(row=>row.symbol===first).eventRisk;
+  candidates.find(row=>row.symbol===first).recentMomentumGate.entryAllowed=false;
+ }));
+ assert(diagnostic(eventMissingAndTriggerWait,first).waitReasons.includes('event-unverified'),'Raw event evidence remains available in row diagnostics');
+ assert(diagnostic(eventMissingAndTriggerWait,first).waitReasons.includes('recent-entry-trigger-wait'),'The independent entry failure remains in row diagnostics');
+ const eventReason=eventMissingAndTriggerWait.projection.watchView.rows.find(row=>row.symbol===first).review.why;
+ assert(eventReason.includes('Recent momentum has not cleared the Buy/Add trigger.'),'The screen leads with the actual failed entry trigger');
+ assert(!eventReason.includes('Current company-event verification is unavailable.'),'The screen does not misstate an unneeded event check as the blocker');
  const noLive=join({...copy(input),screenRows:[],positionRows:[],screenCurrent:false,openingPlan:null,manualRecommendations:null,openingError:'Synthetic opening checks unavailable'});
  eq(names(noLive.projection.watchView.rows),spec.symbols.slice(24,34),'Without displayed Buy cards the highest ten dated monitoring candidates remain visible');
  assert.equal(noLive.projection.actionableBuys.length,0);

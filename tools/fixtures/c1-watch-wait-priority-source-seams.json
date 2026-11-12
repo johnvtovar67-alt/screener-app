@@ -1,0 +1,20 @@
+{
+  "contract": "c1-watch-wait-priority-source-inverse-v1",
+  "baselineCommit": "481cf0798f4abe743219b69a2554564a8ef79468",
+  "files": {
+    "lib/c1CurrentWatchSelection.js": {
+      "beforeHash": "4760f398c75df336f1cbde92bd45227230272daf",
+      "afterHash": "bb913df72a95c0d33bc63304f6d20e1cfbea61f3",
+      "chunks": [
+        {
+          "before": "   screenReview:{why:row.waitReasons.some(reason=>!commonWaitReasons.includes(reason))?'WAIT — '+row.waitReasons.filter(reason=>!commonWaitReasons.includes(reason)).slice(0,3).map(reason=>C1_WATCH_REASON_TEXT[reason]).join(' '):'Dated monitoring candidate; this is not a purchase instruction.',",
+          "after": "   screenReview:{why:watchWaitText(row.waitReasons,commonWaitReasons),"
+        },
+        {
+          "before": "",
+          "after": "export function watchWaitText(waitReasons=[],commonWaitReasons=[]){\n // Event evidence is a final purchase gate, but it is intentionally collected\n // only for candidates that can still become actionable. Do not report a\n // missing event receipt as the row's blocker when another check already\n // prevents entry; retain it in structured waitReasons for diagnostics.\n const otherReasons=waitReasons.filter(reason=>reason!=='event-unverified');\n const visibleReasons=otherReasons.length?otherReasons:waitReasons;\n const specific=visibleReasons.filter(reason=>!commonWaitReasons.includes(reason)),shared=visibleReasons.filter(reason=>commonWaitReasons.includes(reason));\n const detail=[...specific,...shared].slice(0,3).map(reason=>C1_WATCH_REASON_TEXT[reason]||'Current Buy/Add checks are not cleared.');\n return 'WAIT — '+(detail.length?detail.join(' '):'Dated monitoring only; no Buy/Add is currently authorized.');\n}\n\n"
+        }
+      ]
+    }
+  }
+}
