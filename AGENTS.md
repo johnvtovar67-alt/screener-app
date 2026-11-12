@@ -26,6 +26,15 @@ Diagnose actual candidate exclusions; missing evidence is not "no candidates."
 Continue this correction and its deployed owner-screen verification in the
 existing implementation, without redesign or duplicate implementation threads.
 
+## Owner Watch blocker correction — November 12, 2026
+The owner explicitly reports that Watch rows appear blocked by “unavailable”
+checks and directs repair so the screener can be used as intended. Correct the
+displayed primary reason when a different entry trigger or shared account/
+opening check already blocks the row; retain raw missing-event diagnostics and
+keep event verification fail-closed as the final gate for an otherwise-qualified
+Buy/Add. Keep the earlier consistent-WAIT behavior. Do not weaken trading rules,
+change candidate ranking or infer that a missing event receipt is clear.
+
 ## Current owner decision — September 13, 2026
 The owner explicitly restored the reviewed application at commit 8007dc84820a9f2cb52266fe616df5406768815f through PR #177, then requested protection against another unintended change. This is the active source of truth for this repository.
 
@@ -58,3 +67,7 @@ This is an accidental-change guard, not an access-control boundary. Repository a
 
 ## Owner-authorized reconstructed Buy recorder correction — November 12, 2026
 The owner explicitly identified a contradiction: the prior-session recorder presented OKTA as a planned purchase while the current Opportunities and Watch views showed no authorized purchases and Watch/WAIT. Repair only the prior-session recorder presentation so a historical model reconstruction cannot be mistaken for a Buy C1 actually issued. Hide reconstructed Buy choices unless the plan itself is provider-verified and executable; explain that retrospective model inputs do not prove what the live screen displayed or that an order was authorized. Preserve the live ranking, Watch reasons, event and timing checks, execution, account data, and all trading rules. Do not create or infer fills. See `docs/operations/c1-pending-reconstructed-buy-correction-20261112.md`.
+
+
+## Owner-authorized consistent Watch WAIT wording — November 12, 2026
+The owner explicitly reports that mixing blocking `WAIT` messages with neutral dated-monitoring copy is wrong because both statuses mean no current Buy/Add authorization. Repair only the Watch-row explanation: every non-Buy monitor must display `WAIT`; show specific row gates first and shared account/opening/execution blockers next, with a plain monitor-only fallback when no individual reason is present. Preserve the dated top-ten monitor list, ranking, candidate inclusion, structured wait reasons, all entry/event/account/execution gates, purchase authority, orders and records. No strategy behavior changes. Add focused regression assertions. See `docs/operations/c1-watch-wait-wording-20261112.md`.
