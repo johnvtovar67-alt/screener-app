@@ -57,6 +57,7 @@ async function run(){
  assert.equal(selection.counts.excluded,24,'The fixture has twenty-four known source-volatility exclusions');
  assert.equal(selection.counts.datedUnverified,0);
  assert(selection.rows.every(row=>row.monitoring===true&&!row.order&&!row.shares),'Watch rows never create an order or a quantity');
+ assert(selection.rows.every(row=>row.screenReview.why.startsWith('WAIT —')),'Every non-Buy monitoring row uses the same blocking WAIT status, even when only shared execution checks block it');
 
  // All of these are dated monitoring candidates with an execution wait, not
  // hard exclusions. The real classifier still withholds purchase authority.
@@ -100,6 +101,7 @@ async function run(){
  const noOpening=join({...copy(input),openingPlan:null,manualRecommendations:null});
  assert.equal(noOpening.projection.watchView.rows.length,10);assert.equal(noOpening.projection.actionableBuys.length,0);
  assert(noOpening.projection.watch.every(row=>row.waitReasons.includes('opening-checks-unavailable')));
+ assert(noOpening.projection.watch.every(row=>row.screenReview.why.startsWith('WAIT —')&&row.screenReview.why.includes('Opening execution checks are unavailable.')),'Shared opening blockers are shown as WAIT for every monitor');
  // The normal page masks its display decision during account verification;
  // matching unmodified server evidence may still prove the dated source.
  const pageMasked=join({...input,decision:{...input.decision,current:false,accountMismatch:true,opportunities:[]}});
