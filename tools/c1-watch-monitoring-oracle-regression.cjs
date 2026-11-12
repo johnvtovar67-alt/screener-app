@@ -23,7 +23,7 @@ assert.deepEqual(Object.keys(fixture.files).sort(),[
 assert.equal(priorityFixture.contract,'c1-watch-wait-priority-source-inverse-v1');
 assert.deepEqual(Object.keys(priorityFixture.files),['lib/c1CurrentWatchSelection.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),reviewed=waitPriority.restore(file,current),released=monitoring.restore(file,reviewed);
+ const current=require('./c1-current-blocker-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),reviewed=waitPriority.restore(file,current),released=monitoring.restore(file,reviewed);
  if(priorityFixture.files[file]){
   const priority=priorityFixture.files[file];
   assert.equal(waitPriority.blob(current),priority.afterHash,'Exact reviewed Watch blocker-priority source: '+file);

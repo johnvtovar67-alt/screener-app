@@ -6,6 +6,7 @@ const {createHash}=require('node:crypto');
 const fixture=require('./fixtures/c1-account-policy-source-seams.json');
 const blob=source=>createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
 function restore(file,source){
+ source=require('./c1-current-blocker-seams.cjs').restore(file,source);
  source=require('./c1-opening-shared-seams.cjs').restore(file,source);
  source=require('./c1-opening-revision-inputs-seams.cjs').restoreCurrent(file,source);
  const patch=fixture.files[file];
