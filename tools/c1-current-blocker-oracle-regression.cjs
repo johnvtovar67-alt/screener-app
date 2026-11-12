@@ -16,7 +16,7 @@ const prior={
 };
 assert.deepEqual(Object.keys(fixture.files).sort(),Object.keys(prior).sort());
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),previous=inverse.restore(file,current);
+ const current=require('./c1-canonical-timing-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),previous=inverse.restore(file,current);
  assert.equal(patch.beforeHash,prior[file],'The exact current-production baseline is retained: '+file);
  assert.equal(inverse.blob(current),patch.afterHash,'Only reviewed source can enter this inverse: '+file);
  assert.equal(inverse.blob(previous),patch.beforeHash,'The released source is restored exactly: '+file);
