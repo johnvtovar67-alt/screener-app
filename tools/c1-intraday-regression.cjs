@@ -61,8 +61,8 @@ const file=require('node:path').resolve('components/C1IntradayActivity.js'),reco
 const code=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
 new Function('require','module','exports',code)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
 const html=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:[],tickets:[],revision:0},onSave(){}}));
-assert.equal((html.match(/Planned C1 sale (record only if filled): T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
-assert.match(html,/Other completed sale (filled): T4/);assert.match(html,/up to 3 shares/);assert.match(html,/Save trade and update C1/);assert.match(html,/This trade has filled at Schwab/);
+assert.equal((html.match(/Planned C1 sale \\(record only if filled\\): T4/g)||[]).length,1,'One broker fill form aggregates sleeve orders');
+assert.match(html,/Other completed sale \\(filled\\): T4/);assert.match(html,/up to 3 shares/);assert.match(html,/Save trade and update C1/);assert.match(html,/This trade has filled at Schwab/);
 assert.match(fs.readFileSync(file,'utf8'),/Saved in C1:/,'The form must show an explicit authoritative trade receipt');
 const savedHtml=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan,fills:saved.intradayActivity.fills,tickets:saved.intradayActivity.tickets,revision:1},onSave(){},onCorrectDetails(){}}));
 assert.match(savedHtml,/Saved completed trades/);assert.match(savedHtml,/Sold 3 T4/);assert.match(savedHtml,/Correct details/);
@@ -75,7 +75,7 @@ const discretionary=intraday.recordC1IntradayActivity({account:privateAccount,pl
 assert(discretionary.intradayActivity.recordingEvidence);assert(discretionary.intradayActivity.plan.orders.some(o=>o.reason==='owner-discretionary-exit'));
 assert(!intraday.c1IntradayDecision({decision:prior,activity:discretionary.intradayActivity,revision:1,now}).positions.some(p=>p.symbol==='T4'));
 const discretionaryHtml=renderToStaticMarkup(React.createElement(record.exports.default,{session:{date:plan.date,plan:discretionaryPlan,fills:[],tickets:[],revision:0},onSave(){}}));
-assert.match(discretionaryHtml,/Other completed sale (filled): T4/);assert.doesNotMatch(discretionaryHtml,/C1 stop-triggered sale \\(record only if filled\\): T4/);
+assert.match(discretionaryHtml,/Other completed sale \\(filled\\): T4/);assert.doesNotMatch(discretionaryHtml,/C1 stop-triggered sale \\(record only if filled\\): T4/);
 assert.throws(()=>intraday.recordC1IntradayActivity({account:privateAccount,plan:discretionaryPlan,ticket:{...discretionaryTicket,side:'buy'},expectedRevision:0,now}),/Only a completed sale/);
 
 const partial=intraday.recordC1IntradayActivity({account:privateAccount,plan,ticket:{...ticket,shares:1},expectedRevision:0,now});
