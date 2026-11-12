@@ -1,0 +1,19 @@
+{
+  "contract": "c1-pending-session-ui-source-inverse-v1",
+  "files": {
+    "pages/index.js": {
+      "beforeHash": "9bb815309d28026811139e4b3e2ba63416ba738c",
+      "afterHash": "eff53f0c9ddd3684fb6e265bae5aae7bcd6754c0",
+      "chunks": [
+        {
+          "before": "      {accountView?.pendingSession&&<details><summary>Record completed trades</summary><C1AccountActivity key={accountView.pendingSession.date} pending={accountView.pendingSession} pendingSessions={accountView.pendingSessions} onSave={saveC1Activity} busy={accountBusy}/></details>}\n",
+          "after": "      {accountView?.pendingSession&&tab==='account-tools'&&<details open><summary>Record completed trades — {accountView.pendingSession.date}</summary><C1AccountActivity key={accountView.pendingSession.date} pending={accountView.pendingSession} pendingSessions={accountView.pendingSessions} onSave={saveC1Activity} busy={accountBusy}/></details>}\n"
+        },
+        {
+          "before": "",
+          "after": "    {[\"opportunities\",\"portfolio\"].includes(tab)&&accountView?.pendingSession&&<section className=\"card\" aria-label=\"Prior C1 session activity\">\n      <h2>Complete prior C1 session — {accountView.pendingSession.date}</h2>\n      <p role=\"status\">A prior session still needs its actual activity recorded before C1 can complete today's Buy/Add review. This form records fills that already occurred at Schwab; it does not place an order. If no orders filled, leave the fills blank, confirm that all activity is included, and save the session.</p>\n      <C1AccountActivity key={accountView.pendingSession.date} pending={accountView.pendingSession} pendingSessions={accountView.pendingSessions} onSave={saveC1Activity} busy={accountBusy}/>\n    </section>}\n"
+        }
+      ]
+    }
+  }
+}
