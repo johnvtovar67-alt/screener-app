@@ -6,6 +6,7 @@ const {createHash}=require('node:crypto');
 const fixture=require('./fixtures/c1-watch-monitoring-source-seams.json');
 const blob=source=>createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
 function restore(file,source){
+ source=require('./c1-current-blocker-seams.cjs').restore(file,source);
  source=require('./c1-watch-numbering-seams.cjs').restore(file,source);
  const patch=fixture.files[file];
  if(!patch||blob(source)!==patch.afterHash)return source;

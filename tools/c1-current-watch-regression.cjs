@@ -54,6 +54,8 @@ async function run(){
  const sharedFirst=watchWaitText(['event-unverified','opening-checks-unavailable'],['opening-checks-unavailable']);
  assert(sharedFirst.includes('Opening execution checks are unavailable.'),'A shared opening blocker remains visible');
  assert(!sharedFirst.includes('Current company-event verification is unavailable.'),'An unneeded per-row event message does not obscure a shared blocker');
+ assert.match(watchWaitText(['event-unverified','entry-trigger-wait'],[]),/Current company-event verification is unavailable/,
+  'Informational accepted timing cannot hide the mandatory unresolved event gate');
  assert.equal(joined.evidence.verified,true);assert.equal(joined.evidence.ratings.length,50);
  assert.equal(input.decision.stockScreen.candidates.length,50,'The full dated selection universe remains intact');
  eq(names(originalBuys),['X12','X13','X14']);
@@ -67,10 +69,32 @@ async function run(){
  assert.equal(selection.counts.datedUnverified,0);
  assert(selection.rows.every(row=>row.monitoring===true&&!row.order&&!row.shares),'Watch rows never create an order or a quantity');
  assert(selection.rows.every(row=>row.screenReview.why.startsWith('WAIT —')),'Every non-Buy monitoring row uses the same blocking WAIT status, even when only shared execution checks block it');
+ // Reproduce the production wording defect through the real join: healthy
+ // quoted monitors already have a concrete classifier selection result.
+ for(const row of joined.projection.watchView.rows){
+  const rated=joined.projection.ratedRows.find(candidate=>candidate.symbol===row.symbol);
+  assert.match(rated.screenReview.why,/below the three selected opportunities/);
+  assert(row.review.why.includes(rated.screenReview.why),'Watch must preserve the actual authoritative selection blocker');
+  assert(!row.review.why.includes('Dated monitoring only'),'A known selection blocker cannot become an empty fallback');
+  assert(diagnostic(joined,row.symbol).waitReasons.includes('selected-opportunity-limit'));
+ }
 
  // All of these are dated monitoring candidates with an execution wait, not
  // hard exclusions. The real classifier still withholds purchase authority.
  const first=expected[0];
+ for(const [field,code] of [['sector','selected-sector-representative'],['issuer','selected-issuer-representative']]){
+  const value=join(changed(base,({candidates})=>{
+   const candidate=candidates.splice(candidates.findIndex(row=>row.symbol===first),1)[0];
+   const leader=candidates.find(row=>row.symbol==='X12');
+   candidate[field]=leader[field];
+   candidates.splice(candidates.findIndex(row=>row.symbol==='X13'),0,candidate);
+  }));
+  const row=value.projection.watchView.rows.find(row=>row.symbol===first),rated=value.projection.ratedRows.find(row=>row.symbol===first);
+  assert(diagnostic(value,first).waitReasons.includes(code),'Classifier '+field+' selection is a concrete monitoring blocker');
+  assert(row.review.why.includes(rated.screenReview.why));
+  eq(value.projection.actionableBuys.map(order=>({symbol:order.symbol,shares:order.shares})),originalBuys.map(order=>({symbol:order.symbol,shares:order.shares})),
+   'Watch explanation cannot alter checked quantities');
+ }
  for(const reason of ['not-in-entry-queue','brokerage-cash-insufficient','account-position-limit','account-sector-position-limit',
   'account-concentration-limit','account-issuer-limit','account-allocation-whole-share-limit','account-allocation-trade-size-limit',
   'account-exposure-unverified','entry-gap-limit','entry-invalidated-at-open']){
@@ -87,8 +111,11 @@ async function run(){
   ['quote-unverified',({rows})=>{rows.find(row=>row.symbol===first).dataFeedSnapshotStale=true;}],
   ['recent-entry-trigger-wait',({candidates})=>{candidates.find(row=>row.symbol===first).recentMomentumGate.entryAllowed=false;}],
   ['recent-momentum-unavailable',({candidates})=>{candidates.find(row=>row.symbol===first).recentMomentumGate.available=false;}],
+  ['recent-momentum-unavailable',({candidates})=>{candidates.find(row=>row.symbol===first).recentMomentumGate.sourceSessionDate='2026-11-09';}],
   ['entry-timing-unavailable',({candidates})=>{candidates.find(row=>row.symbol===first).sourceTiming.available=false;}],
   ['entry-trigger-wait',({candidates})=>{const row=candidates.find(row=>row.symbol===first);row.sourceTiming.pass=false;row.sourceTiming.strongPass=false;}],
+  ['current-liquidity-unverified',({rows})=>{const row=rows.find(row=>row.symbol===first);row.entryTiming={...row.entryTiming,available:true,liquidityPass:false,averageDollarVolume20:1};}],
+  ['current-price-floor',({rows})=>{rows.find(row=>row.symbol===first).price=4;}],
   ['current-entry-evidence-unverified',({decision})=>{decision.selectionEvidence={...(decision.selectionEvidence||{}),complete:true,unverifiedSymbols:[first]};}],
   ['account-verification-required',({decision})=>{decision.accountMismatch=true;}],
   ['account-policy-unverified',({policy})=>{policy.complete=false;}],
@@ -111,7 +138,30 @@ async function run(){
  const eventReason=eventMissingAndTriggerWait.projection.watchView.rows.find(row=>row.symbol===first).review.why;
  assert(eventReason.includes('Recent momentum has not cleared the Buy/Add trigger.'),'The screen leads with the actual failed entry trigger');
  assert(!eventReason.includes('Current company-event verification is unavailable.'),'The screen does not misstate an unneeded event check as the blocker');
+ const informationalTiming=join(changed(base,({candidates})=>{candidates.find(row=>row.symbol===first).sourceTiming.pass=false;}));
+ assert(!informationalTiming.projection.watchView.rows.find(row=>row.symbol===first).review.why.includes('Accepted-close timing is not confirmed'),
+  'Frozen policy does not require timing.pass; an informational flag must not be presented as the purchase blocker');
+ eq(informationalTiming.projection.actionableBuys.map(order=>({symbol:order.symbol,shares:order.shares})),originalBuys.map(order=>({symbol:order.symbol,shares:order.shares})));
+ const missingFinalEvent=join(changed(base,({rows,candidates})=>{
+  const symbol=originalBuys[0].symbol;
+  rows.find(row=>row.symbol===symbol).eventRisk={status:'Manual',blockNewCapital:true,checkComplete:false};
+  candidates.find(row=>row.symbol===symbol).sourceTiming.pass=false;
+ }));
+ assert(!missingFinalEvent.projection.actionableBuys.some(row=>row.symbol===originalBuys[0].symbol),'Informational timing never bypasses failed final event verification');
+ const missingEventRow=missingFinalEvent.projection.watchView.rows.find(row=>row.symbol===originalBuys[0].symbol);
+ assert(missingEventRow?.review.why.includes('Current company-event verification is unavailable.'),'The final event failure remains the actual visible blocker for an otherwise-qualified stock');
  const noLive=join({...copy(input),screenRows:[],positionRows:[],screenCurrent:false,openingPlan:null,manualRecommendations:null,openingError:'Synthetic opening checks unavailable'});
+ const failedOpening=join({...copy(input),manualRecommendations:{...input.manualRecommendations,status:'waiting',reason:'Confirm completed-session activity in Account settings.'}});
+ assert.equal(failedOpening.projection.actionableBuys.length,0);
+ assert(failedOpening.projection.watchView.rows.every(row=>row.review.why.includes('Confirm completed-session activity in Account settings.')),
+  'Every row explains the actual shared account review blocker rather than a generic not-executable message');
+ const openingFailure=join({...copy(input),openingPlan:null,manualRecommendations:null,openingError:'Opening membership could not be verified'});
+ assert(openingFailure.projection.watchView.rows.every(row=>row.review.why.includes('Opening membership could not be verified')),
+  'Failed opening verification stays a verification failure with its real reason');
+ const expiredOpening=join(copy(input),new Date(Date.parse(input.manualRecommendations.validUntil)+1));
+ assert.equal(expiredOpening.projection.actionableBuys.length,0);
+ assert(expiredOpening.projection.watchView.rows.every(row=>row.review.why.includes('checked review expired or no longer matches')),
+  'An expired review is not reported as a valid no-Buy session');
  eq(names(noLive.projection.watchView.rows),spec.symbols.slice(24,34),'Without displayed Buy cards the highest ten dated monitoring candidates remain visible');
  assert.equal(noLive.projection.actionableBuys.length,0);
  assert(noLive.projection.watch.every(row=>row.waitReasons.includes('quote-unverified')&&row.waitReasons.includes('event-unverified')&&row.waitReasons.includes('opening-checks-unavailable')));
