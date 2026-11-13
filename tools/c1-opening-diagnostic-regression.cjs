@@ -4,7 +4,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
 const clone=value=>JSON.parse(JSON.stringify(value)),logs=[];
-const loader=createResearchModuleLoader(process.cwd()),file=path.resolve('lib/c1OpeningPriceReview.js'),source=fs.readFileSync(file,'utf8');
+const baseline=require('./c1-background-policy-seams.cjs');
+const compareSource=baseline.restore('lib/c1OpeningPlanComparison.js',fs.readFileSync('lib/c1OpeningPlanComparison.js','utf8'));
+const comparisonBox={Date,console};vm.createContext(comparisonBox);vm.runInContext(compareSource.replace(/export function /g,'function ')+
+ ';globalThis.exports={compareC1OpeningPlans,verifiedC1OpeningPlanComparison};',comparisonBox);
+const baselineComparison=comparisonBox.exports;
+const loader=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPlanComparison.js':baselineComparison}),file=path.resolve('lib/c1OpeningPriceReview.js'),
+ source=baseline.restore('lib/c1OpeningPriceReview.js',fs.readFileSync(file,'utf8'));
 function load(text){
  const deps={};text=text.replace(/import\s*{([^}]+)}\s*from\s*['"]([^'"]+)['"];?/g,(_,names,request)=>{
   const values=loader.load(request,file);for(const name of names.split(',').map(name=>name.trim()))deps[name]=values[name];return '';
@@ -49,8 +55,8 @@ for(const [,serialized] of logs){const event=JSON.parse(serialized);
  for(const secret of ['X20','123456789','PRIVATE_ID_SENTINEL','PRIVATE_VERSION_SENTINEL','ANOTHER_PRIVATE_SENTINEL','PRIVATE_SYNC_SENTINEL','PRIVATE_ACCOUNT_SENTINEL'])assert(!serialized.includes(secret),'No symbol/value/account evidence enters telemetry');}
 async function main(){
  const f=createWorkflowFixture('buy',{baselineDate:'2026-11-12'});require('./fixtures/c1-account-policy-universe.cjs').applyAccountPolicyUniverseFixture(f,{count:50});f.setCash(100000);
- const oldExecution=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPriceReview.js':previous}).load('lib/c1AccountExecutionView.js');
- const newExecution=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPriceReview.js':current}).load('lib/c1AccountExecutionView.js');
+ const oldExecution=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPriceReview.js':previous,'lib/c1OpeningPlanComparison.js':baselineComparison}).load('lib/c1AccountExecutionView.js');
+ const newExecution=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPriceReview.js':current,'lib/c1OpeningPlanComparison.js':baselineComparison}).load('lib/c1AccountExecutionView.js');
  const originalBytes=JSON.stringify({account:f.account,book:f.book});
  const opening=(symbol,close)=>{const value=f.opening();if(!symbol)return value;const bar=f.sessions[220].prices.find(row=>row.symbol===symbol);
   value.receipt.previousAdjustedClosesUnchanged=false;value.priceBasisRevisions=[{symbol,savedClose:bar.close,rechecked:true,observedBar:{...bar,close,low:Math.min(bar.low,close)}}];return value;};

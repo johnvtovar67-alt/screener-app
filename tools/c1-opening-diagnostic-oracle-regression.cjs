@@ -9,7 +9,7 @@ assert.equal(fixture.baselineCommit,'1450e5a375dc9e75e74df4b6d27213d736830eae');
 assert.equal(sha('tools/fixtures/c1-opening-diagnostic-source-seams.json'),
  '135df473e4d560fc496ef9cd9ef80b58aee581684ad9d833238d980aae2f7cf4','The diagnostic-only source inverse is pinned exactly');
 assert.deepEqual(Object.keys(fixture.files),['lib/c1OpeningPriceReview.js']);
-const file='lib/c1OpeningPriceReview.js',patch=fixture.files[file],current=fs.readFileSync(file,'utf8'),previous=inverse.restore(file,current);
+const file='lib/c1OpeningPriceReview.js',patch=fixture.files[file],current=require('./c1-background-policy-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),previous=inverse.restore(file,current);
 assert.equal(patch.beforeHash,'034435a70c486727a56ec89271616e4d4f9ba568','The prior released review source remains the baseline');
 assert.equal(inverse.blob(current),patch.afterHash,'Only exact reviewed diagnostic source may enter its inverse');
 assert.equal(inverse.blob(previous),patch.beforeHash,'The prior review source is restored exactly');

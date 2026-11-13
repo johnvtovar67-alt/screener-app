@@ -5,7 +5,7 @@ const {createWorkflowFixture,currentEventEvidenceFor}=require('./fixtures/c1-tra
 const {applyAccountPolicyUniverseFixture}=require('./fixtures/c1-account-policy-universe.cjs');
 const seam=require('./c1-watch-clean-display-seams.cjs'),fixture=require('./fixtures/c1-watch-clean-display-source-seams.json');
 const file='components/C1AccountOpportunitiesView.js',source=fs.readFileSync(file,'utf8'),before=seam.restore(file,source);
-assert.equal(seam.blob(source),fixture.files[file].afterHash);
+assert.equal(seam.blob(require('./c1-opening-copy-seams.cjs').restore(file,source)),fixture.files[file].afterHash);
 assert.equal(seam.blob(before),fixture.files[file].beforeHash);
 assert.equal(seam.restore(file,before),before);
 assert.equal(seam.restore(file,source+'\n// unreviewed'),source+'\n// unreviewed');
