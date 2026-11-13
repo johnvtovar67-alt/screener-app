@@ -6,6 +6,7 @@ function replaceOnce(source,from,to,label){
  return source.replace(from,to);
 }
 function restoreReview(source){
+ source=require('./c1-opening-diagnostic-seams.cjs').restore('lib/c1OpeningPriceReview.js',source);
  source=replaceOnce(source,
   'additionalSwingCapacity:plan.additionalSwingCapacity?.contract===C1_ADDITIONAL_SWING_CAPACITY,prospectiveSwingStopPolicy:plan.prospectiveSwingStopPolicy,accountPolicy,brokerageCashAvailable});',
   'additionalSwingCapacity:plan.additionalSwingCapacity?.contract===C1_ADDITIONAL_SWING_CAPACITY,prospectiveSwingStopPolicy:plan.prospectiveSwingStopPolicy});',
@@ -33,6 +34,7 @@ const currentBlobs={
  'lib/c1AccountExecutionView.js':'2d791b9b0c45156d3b37647b2907dc594a722306'
 };
 function restoreCurrent(file,source){
+ source=require('./c1-opening-diagnostic-seams.cjs').restore(file,source);
  const expected=currentBlobs[file];
  if(expected&&gitBlob(source)===expected){
   return file==='lib/c1OpeningPriceReview.js'?restoreReview(source):restoreExecutionView(source);
