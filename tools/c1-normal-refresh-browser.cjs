@@ -12,7 +12,16 @@ async function main(){
  const sourceGate=process.env.C1_NORMAL_BROWSER_SOURCE_GATE==='1';
  const accountPolicy=process.env.C1_NORMAL_BROWSER_ACCOUNT_POLICY==='1';
  const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1'||sourceGate||accountPolicy;
- const api=createWorkflowApi('buy',qualified?{baselineDate:accountPolicy?'2026-11-10':'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],...(accountPolicy?{moduleOverrides:require('./fixtures/c1-account-policy-risk.cjs').approvedOperationalRiskModules(root)}:{})}:reliability?{baselineDate:'2026-10-29',now:'2026-10-30T19:00:00Z',commit:clientCommit,observationSecret}:{});api.fixture.setCash(100000);
+ let accountPolicyRevisionInjected=false;
+ const api=createWorkflowApi('buy',qualified?{baselineDate:accountPolicy?'2026-11-10':'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],...(accountPolicy?{collectOpening:async()=>{
+  const opening=api.fixture.opening();
+  if(!accountPolicyRevisionInjected){
+   accountPolicyRevisionInjected=true;const bar=api.fixture.book.model.sessions.at(-1).prices.find(row=>row.symbol==='X20');
+   opening.receipt.previousAdjustedClosesUnchanged=false;
+   opening.priceBasisRevisions=[{symbol:'X20',savedClose:bar.close,rechecked:true,observedBar:{...bar,close:99,low:99}}];
+  }
+  return opening;
+ }}:{}),...(accountPolicy?{moduleOverrides:require('./fixtures/c1-account-policy-risk.cjs').approvedOperationalRiskModules(root)}:{})}:reliability?{baselineDate:'2026-10-29',now:'2026-10-30T19:00:00Z',commit:clientCommit,observationSecret}:{});api.fixture.setCash(100000);
  if(accountPolicy)require('./fixtures/c1-account-policy-universe.cjs').applyAccountPolicyUniverseFixture(api.fixture,{count:50});
  if(sourceGate)require('./fixtures/c1-source-eligibility.cjs').applySourceEligibilityFixture(api.fixture);
  if(qualified&&!sourceGate&&!accountPolicy)for(let index=215;index<=220;index++){
@@ -22,6 +31,7 @@ async function main(){
    for(const field of ['signals','positionSignals']){const s=session[field].find(s=>s.symbol===symbol);s.price=p.close;s.entryTiming.macdImproving=false;}
   }
  }
+ const revisionControl=accountPolicy?await api.fixture.prepare():null;
  const actualScreen=process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN==='1'?require('./fixtures/c1-normal-refresh-screen.cjs').createNormalRefreshScreen(api.fixture):null;
  if(actualScreen)trace.scope='Actual Home/App → localhost HTTP → current top5 handler + real quote/fundamental/event/timing/decision/performance modules + real C1 handler; provider fetch, accepted book/snapshot reads and Blob are isolated synthetic boundaries';
  const observations=[];
@@ -29,7 +39,7 @@ async function main(){
  const verify=require('./fixtures/c1-operational-modules.cjs').createOperationalModuleLoader(process.cwd()).load('lib/c1JourneyObservation.js').verifyC1JourneyObservation;
  const observationHandler=observation.createC1JourneyObservationHandler({clock:()=>api.fixture.now,verify:token=>verify(token,{now:api.fixture.now,secret:observationSecret,commit:clientCommit}),emit:(...args)=>observations.push(args)});
  const stopQuoteHandler=require('./fixtures/c1-operational-modules.cjs').createOperationalModuleLoader(root,{'../../lib/fmpQuotes':{fetchFmpQuote:()=>{throw Error('Real provider forbidden');}}}).load('pages/api/c1-stop-quote.js').createC1StopQuoteHandler({clock:()=>api.fixture.now,fetchQuote:async symbol=>api.fixture.screenRows().find(row=>row.symbol===symbol)});
- const requests=[],state={fail:null,shadowOwnership:false,portfolioPuts:0,held:[],versionCommit:clientCommit,documentLoads:0};trace.requests=requests;
+ const requests=[],state={fail:null,shadowOwnership:false,portfolioPuts:0,held:[],versionCommit:clientCommit,documentLoads:0,openingReviews:[]};trace.requests=requests;
  const screenPayload=()=>({stocks:api.fixture.screenRows(),meta:{snapshotAsOf:api.fixture.now.toISOString(),quoteFeedStatus:'live',fundamentalFeedStatus:'healthy',coveragePct:100,fundamentalCoveragePct:100},themeLeadership:[]});
  const versionPayload=()=>reliability?{commit:state.versionCommit.slice(0,7),buildCommit:state.versionCommit,clientProtocol:1,environment:'production',project:'screener-app-cq5t',release:'fixture'}:{commit:'synthetic-only',project:'localhost',release:'fixture'};
  const readScreen=async query=>actualScreen?actualScreen.request(query):{status:200,body:screenPayload(),headers:{}};
@@ -70,7 +80,7 @@ async function main(){
    else return json({error:'Synthetic verification unavailable',detail:'Synthetic verification unavailable'},mode==='account-inputs-conflict'?409:503);
   }
   if(url.pathname==='/api/c1-journey-observation'){let status=200,value;await observationHandler({method:req.method,headers:req.headers,body},{setHeader(){},status(code){status=code;return this;},json(data){value=data;return this;}});return json(value,status);}
-  if(url.pathname==='/api/c1-account'){const result=await api.request(req.method,body,req.headers.authorization==='Bearer offline_workflow_fixture_key_000001',Object.fromEntries(url.searchParams));if(state.shadowOwnership&&req.method==='GET'&&result.status===200)result.body={...result.body,decision:{...result.body.decision,revision:result.body.decision.revision+1,positions:result.body.decision.positions.map(position=>position.symbol==='LLL'?{...position,shares:5,stops:position.stops.map(stop=>({...stop,shares:5}))}:position)}};for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
+  if(url.pathname==='/api/c1-account'){const result=await api.request(req.method,body,req.headers.authorization==='Bearer offline_workflow_fixture_key_000001',Object.fromEntries(url.searchParams));if(body?.operation==='prepare-execution')state.openingReviews.push({manualStatus:result.body.manualRecommendations?.status,providerVerified:result.body.openingPlan?.providerVerified,receipt:result.body.openingPlan?.sourceReceipt,orders:result.body.manualRecommendations?.orders||[]});if(state.shadowOwnership&&req.method==='GET'&&result.status===200)result.body={...result.body,decision:{...result.body.decision,revision:result.body.decision.revision+1,positions:result.body.decision.positions.map(position=>position.symbol==='LLL'?{...position,shares:5,stops:position.stops.map(stop=>({...stop,shares:5}))}:position)}};for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
   if(url.pathname==='/api/top5'){const result=await readScreen(Object.fromEntries(url.searchParams));for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
   if(url.pathname==='/api/performance')return json({records:actualScreen?.ledger()?.records||[],persistentStorage:true});
   if(url.pathname==='/api/entry-timing')return json({timing:Object.fromEntries(api.fixture.screenRows().map(row=>[row.symbol,row.entryTiming]))});
@@ -123,6 +133,15 @@ async function main(){
   await wait('document.querySelector("header button")?.textContent==="Reload"','initial reload settled');
   if(qualified){
    const baseline=JSON.stringify(api.fixture.account);accountRecordUnchanged=()=>JSON.stringify(api.fixture.account)===baseline;
+   if(accountPolicy){
+    const reviewed=state.openingReviews.find(row=>row.receipt?.priceBasisReview?.contract==='c1-verified-opening-price-review-v4');
+    assert(reviewed,'The actual owner opening path must produce the explicit verified background-policy proof');
+    assert.equal(reviewed.providerVerified,true);assert.equal(reviewed.manualStatus,'ready');
+    assert(api.fixture.loader.load('lib/c1OpeningPriceReview.js').verifiedC1OpeningPriceBasis(reviewed.receipt),'The real receipt validator accepts the complete v4 proof');
+    const economic=orders=>orders.filter(order=>order.side==='buy'&&!order.condition).map(({symbol,sleeve,shares,estimatedPrice,targetShares})=>({symbol,sleeve,shares,estimatedPrice,targetShares}));
+    assert.deepEqual(economic(reviewed.orders),economic(revisionControl.manualRecommendations.orders),'The backup-only revision leaves all actual checked purchase quantities unchanged');
+    trace.cases.push({case:'verified-background-policy-price-revision',proof:'c1-verified-opening-price-review-v4',checkedSymbols:[...new Set(reviewed.orders.filter(order=>order.side==='buy').map(order=>order.symbol))],checkedQuantitiesUnchanged:true,accountRecordIdentical:true});
+   }
    let publishedActionVersion=null;
    for(const width of [1440,390]){
     await cdp('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<500});
