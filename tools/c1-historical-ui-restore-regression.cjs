@@ -44,7 +44,7 @@ exact('Literal seven historical Portfolio headers',headers,'4b145a6924d8258079e0
 const globalCss=page.match(/<style jsx global>\{`([\s\S]*?)`}\s*<\/style>/)?.[1];
 assert.ok(globalCss,'The historical application stylesheet must exist');
 exact('Historical application CSS',globalCss,'fe3b39074dfa1061bda6ba18e80d207df25249d38440635c0114c4fd875dddd2');
-exact('Historical external card CSS',fs.readFileSync('styles/card-layout.css'),'7deed53e823d07eee10cb4dd5cdfa7929e6576b1b0311d05f0faf93c48be4477');
+exact('Historical external card CSS',require('./c1-recovery-form-mobile-seams.cjs').restore('styles/card-layout.css',fs.readFileSync('styles/card-layout.css','utf8')),'7deed53e823d07eee10cb4dd5cdfa7929e6576b1b0311d05f0faf93c48be4477');
 const opportunityCss=opportunities.match(/<style jsx>\{`([\s\S]*?)`}\s*<\/style>/)?.[1];
 assert.ok(opportunityCss,'The historical account Opportunities stylesheet must exist');
 exact('Historical account Opportunities CSS',opportunityCss,'1040a44e51ecf2f74a26094a5a4f398cd6940b04cd562a15f161e61e8357ba46');
