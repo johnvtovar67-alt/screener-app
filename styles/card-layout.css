@@ -22,3 +22,21 @@
 .brokerageCashEditor .inputs{align-items:flex-end;}
 .brokerageCashEditor label{display:flex;flex-direction:column;gap:4px;min-width:0;max-width:100%;}
 .brokerageCashEditor input{width:180px;max-width:100%;}
+
+/* Completed-trade fields must stay readable inside the phone-width card. */
+.c1TradeRecorder{min-width:0;}
+.c1TradeRecorder form>label,.c1TradeRecorder .inputs>label,.c1RecoveryFields>label{display:flex;flex-direction:column;gap:5px;min-width:0;max-width:100%;}
+.c1TradeRecorder .inputs>label{flex:1 1 180px;}
+.c1TradeRecorder input:not([type=checkbox]),.c1TradeRecorder select{width:100%;max-width:100%;min-width:0;min-inline-size:0;color:#111827;background:#fff;font-size:16px;}
+.c1TradeRecorder button{max-width:100%;min-height:44px;white-space:normal;overflow-wrap:anywhere;color:#111827;-webkit-text-fill-color:currentColor;background:#fff;}
+.c1TradeRecorder button:disabled{color:#334155;-webkit-text-fill-color:currentColor;}
+.c1TradeRecorder .c1TradeSave{color:#fff;background:#1d4ed8;border-color:#1d4ed8;}
+.c1TradeRecorder .c1TradeSave:disabled{color:#fff;-webkit-text-fill-color:currentColor;}
+.c1TradeRecorder button:focus-visible,.c1TradeRecorder input:focus-visible,.c1TradeRecorder select:focus-visible{outline:3px solid #60a5fa;outline-offset:2px;}
+.c1RecoveryAllocation{min-width:0;max-width:100%;margin:14px 0;padding:12px;border:1px solid #cbd5e1;border-radius:10px;}
+.c1RecoveryAllocation legend{max-width:100%;font-weight:700;}
+.c1RecoveryFields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+.c1RecoveryFields small{display:block;color:#53657f;}
+.c1TradeRecorder .c1TradeConfirmation{display:flex;align-items:flex-start;gap:8px;line-height:1.4;}
+.c1TradeConfirmation input{flex:0 0 auto;margin-top:4px;}
+@media(max-width:700px){.c1TradeRecorder .inputs{display:grid;grid-template-columns:minmax(0,1fr);}.c1RecoveryFields{grid-template-columns:minmax(0,1fr);}.c1TradeRecorder .c1TradeSave{width:100%;}}
