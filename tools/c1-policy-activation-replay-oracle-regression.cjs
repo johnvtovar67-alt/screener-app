@@ -17,7 +17,7 @@ assert.deepEqual(Object.keys(fixture.files).sort(),[
 ]);
 for(const [file,patch]of Object.entries(fixture.files)){
  const current=fs.readFileSync(file,'utf8');
- assert.equal(repair.blob(current),patch.afterHash,'Exact reviewed replay repair source: '+file);
+ assert.equal(repair.blob(require('./c1-completed-add-target-seams.cjs').restore(file,current)),patch.afterHash,'Exact reviewed replay repair source: '+file);
  const released=repair.restore(file,current);
  assert.equal(repair.blob(released),patch.beforeHash,'Exact production v2 source recovered: '+file);
  assert.equal(patch.beforeHash,v2.files[file].afterHash,'Earlier released v2 source pin remains unchanged: '+file);

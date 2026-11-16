@@ -18,6 +18,8 @@ import {collectC1AccountOpening} from '../../lib/c1AccountOpeningProvider';
 import {prepareC1AccountExecution} from '../../lib/c1AccountExecutionView';
 import {deriveC1CompletedAccount,deriveC1AccountAnalysis,importC1PositionContext,correctC1AccountOpenedAt,reconcileC1BrokerCash,updateC1BrokerageCash,adoptC1Account,evaluateC1Account,appendC1AccountSession} from '../../lib/c1AccountService';
 import {correctC1IntradayTradeTime,correctC1IntradayTradeDetails} from '../../lib/c1IntradayActivity';
+import {recordC1CompletedAddRecovery,recordC1IssuedBuy,c1CompletedAddRecordingSession} from '../../lib/c1CompletedAddRecovery';
+import {retainC1IssuedEntries,c1RetainedEntrySession,c1SessionWithIssuedTrades,c1RetainedTradeSessions} from '../../lib/c1IssuedTradeLog';
 import {easternMarketClock,marketSessionCloseMinutes} from '../../lib/marketSession';
 
 export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
@@ -39,7 +41,9 @@ function completedAnalysisView({account,book,now,holdingReviewError=null}){
  const {decision}=deriveC1AccountAnalysis({account,book,now});
  const activity=account.intradayActivity,clock=easternMarketClock(now);
  const intradaySession=activity?.date===clock?.key?{date:activity.date,revision:account.revision,plan:activity.plan,fills:activity.fills||[],tickets:activity.tickets||[],...(activity.plan.recordingOnly?{sellOnly:true}:{}),...(clock.minutes>=marketSessionCloseMinutes(clock.key)?{afterClose:true}:{})}:null;
- return {decision,pendingSession:null,pendingSessions:[],intradaySession,openingPlan:null,openingError:null,manualRecommendations:buildC1ManualRecommendations({decision,now}),holdingReviewError};
+ const available=intradaySession||(clock?.key>='2026-11-16'?c1CompletedAddRecordingSession({account,book,now}):null);
+ const recording=account.issuedC1Entries?.length?c1SessionWithIssuedTrades(available||c1RetainedEntrySession({account,now}),account):available;
+ return {decision,pendingSession:null,pendingSessions:[],intradaySession:recording,...(account.issuedC1Entries?.length?{retainedTradeSessions:c1RetainedTradeSessions({account,now})}:{}),openingPlan:null,openingError:null,manualRecommendations:buildC1ManualRecommendations({decision,now}),holdingReviewError};
 }
 
 // Missing daily holding prices must be verified before they can be displayed
@@ -123,9 +127,28 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
    }
    if(operation==='prepare-execution'||operation==='record-intraday'){
     account=await verifyAccountHoldingPrices({account,book,now,collectHoldings:checkedHoldings});
+    if(operation==='record-intraday'&&['owner-confirmed-completed-add','recorded-issued-buy'].includes(body.ticket?.recordingReason)){
+     const record=body.ticket.recordingReason==='recorded-issued-buy'?recordC1IssuedBuy:recordC1CompletedAddRecovery;
+     const next=record({account,book,ticket:body.ticket,expectedRevision:body.expectedRevision,now});
+     stage='account-save';
+     account=await saveC1AccountUpdate({store:checkedStore,path,saved,account:next,operation,book,now});
+     return res.status(200).json({...completedAnalysisView({account,book,now}),savedTradeTicket:account.intradayActivity?.tickets.find(row=>row.id===body.ticket.id)});
+    }
     const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})});
+    if(operation==='prepare-execution'){
+     const retained=prepared.manualRecommendations?.date>='2026-11-16'&&prepared.manualRecommendations.status==='ready'&&prepared.manualRecommendations.orders.some(order=>order.side==='buy'&&!order.condition)?retainC1IssuedEntries({account:prepared.account,view:prepared}):prepared.account;
+     if(retained!==prepared.account){
+      // Persist recommendation evidence before publishing a checked Buy. This
+      // never saves derived carry records, observations, fills or a revision.
+      stage='account-save';
+      await saveC1AccountUpdate({store:checkedStore,path,saved,account:{...saved.record,issuedC1Entries:retained.issuedC1Entries},operation:'retain-issued-entries',book,now});
+     }
+     if(retained.issuedC1Entries?.length)prepared.intradaySession=c1SessionWithIssuedTrades(prepared.intradaySession||c1RetainedEntrySession({account:retained,now}),retained);
+    }
+    if(operation==='record-intraday'&&prepared.account.issuedC1Entries?.length)prepared.intradaySession=c1SessionWithIssuedTrades(prepared.intradaySession,prepared.account);
     if(operation==='record-intraday'){stage='account-save';await saveC1AccountUpdate({store:checkedStore,path,saved,account:prepared.account,operation,book,now});}
     const {account:preparedAccount,...view}=prepared;
+    if(preparedAccount.issuedC1Entries?.length)view.retainedTradeSessions=c1RetainedTradeSessions({account:preparedAccount,now});
     if(operation==='prepare-execution')try{const completedAt=clock(),context={operation,now:completedAt,requestId,commit},observed={...view,holdingReviewError};logC1AccountOperationalStatus(observed,context);
      const receipt=signC1JourneyObservation(c1AccountOperationalStatus(observed,context),{now:completedAt});if(receipt)res.setHeader('X-C1-Operational-Receipt',receipt);}catch{}
     return res.status(200).json({...view,holdingReviewError});
