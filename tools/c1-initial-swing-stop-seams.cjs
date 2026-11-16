@@ -190,6 +190,8 @@ const seams={
   ]
 };
 function restoreInitialSwingStopPolicy(source,file){
+ source=require('./c1-completed-add-target-seams.cjs').restore(file,source);
+ source=require('./c1-issued-trade-retention-seams.cjs').restore(file,source);
  source=require('./c1-opening-revision-inputs-seams.cjs').restoreCurrent(file,source);
  source=require('./c1-qualified-selection-seams.cjs').restore(file,source);
  source=require('./c1-opening-sale-source-seams.cjs').restore(file,source);

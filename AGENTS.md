@@ -1,5 +1,18 @@
 # C1 operating instructions
 
+## Owner-authorized issued-trade retention repair — November 16, 2026
+The owner reports that an actually completed C1 Add disappeared from trade entry
+after refresh, leaving the saved holding short of the broker holding. The owner
+explicitly requires an issued recommendation to remain in the trade log for
+recording and directs repair now. Retain final verified, account-capped Buy/Add
+offers before returning them to the screen; keep this recording evidence
+separate from current purchase authorization. Append only owner-confirmed real
+fills. A legacy missing offer cannot be reconstructed as a verified issuance:
+any recovery attribution must be disclosed and explicitly confirmed by the
+owner. Preserve prior holdings, fills, basis, dates, stops, cash observations,
+historical peaks, loss history and all future trading safeguards. See
+`docs/operations/c1-issued-trade-retention-20261116.md`.
+
 ## Owner-authorized account policy revision — November 10, 2026
 The owner explicitly authorized one versioned revision covering account-wide
 stock cooldowns from completed net losing investments, coherent account actions,

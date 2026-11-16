@@ -385,6 +385,11 @@ replace("          rankedSelection\n            ? Math.max(\n                ran
 replace('accountRisk:{highWater:portfolioHighWatermark,pausedThrough:portfolioRiskPausedThrough,activeSessionNumber}',
   'accountRisk:{highWater:operationalRiskState?.referenceMode===\'operational-epoch\'?operationalRiskState.operationalHighWater:portfolioHighWatermark,pausedThrough:portfolioRiskPausedThrough,activeSessionNumber,...(operationalRiskState?{historicalHighWater:historicalPortfolioHighWatermark,legacyHighWater:portfolioHighWatermark,operationalRisk:operationalRiskState}:{})}');
 
+// A completed accounting receipt cannot manufacture an unknown future target.
+// Existing targets and ordinary strategy/research purchases retain their rules.
+replace('          existing.entryTargetShares=existing.entryTargetShares??recordedBuy?.targetShares??(total+Math.max(0,plannedShares-shares));',
+  "          if(!['owner-confirmed-completed-add','recorded-issued-buy'].includes(recordedBuy?.reason)||Number.isFinite(recordedBuy?.targetShares))\n            existing.entryTargetShares=existing.entryTargetShares??recordedBuy?.targetShares??(total+Math.max(0,plannedShares-shares));");
+
 if (process.argv.includes('--check')) {
   assert.equal(fs.readFileSync(target, 'utf8'), source, 'Regenerate the isolated recent-momentum Challenger');
 } else fs.writeFileSync(target, source);
