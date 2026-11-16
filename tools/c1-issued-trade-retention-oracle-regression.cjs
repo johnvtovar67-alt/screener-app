@@ -6,7 +6,7 @@ assert.equal(fixture.baselineCommit,'6c71f5ca809b301fe49751b6abab4592124b66f0');
 assert.equal(createHash('sha256').update(fs.readFileSync(filename)).digest('hex'),'20efabb85136c4979ed44bf748466c4a6a795ff0576920518f13b0c27f80ba5e');
 assert.deepEqual(Object.keys(fixture.files),['components/C1IntradayActivity.js','lib/c1AccountLedger.js','lib/c1ApiErrors.js','lib/c1IntradayActivity.js','pages/api/c1-account.js','pages/index.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,current);
+ const current=require('./c1-recovery-form-mobile-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),prior=inverse.restore(file,current);
  assert.equal(inverse.blob(current),patch.afterHash,'Exact reviewed issued-trade source: '+file);
  assert.equal(inverse.blob(prior),patch.beforeHash,'Exact previous published source: '+file);
  assert.equal(inverse.restore(file,prior),prior,'The inverse is idempotent');

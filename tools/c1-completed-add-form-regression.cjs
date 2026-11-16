@@ -86,8 +86,10 @@ async function run(){
  assert(!Object.hasOwn(single.calls[0].ticket,'providerVerified'),'Owner-reported legacy recovery is not labeled as issued C1 authority');
 
  const multi=harness({...copy(base),issuedChoices:[]});multi.choose('completed-add:ZZQA');details(multi,'3');
+ const fields=multi.all();assert(fields.indexOf(fields.find(node=>node.type==='input'&&node.props['aria-label']==='Shares filled'))<fields.indexOf(fields.find(node=>node.type==='button'&&text(node)==='Propose using existing holding proportions')),'Enter actual quantity before the allocation proposal');
  for(const name of ['Base','15-session allocation','40% sector allocation'])assert.equal(multi.input('Filled shares for '+name).props.value,'','No distribution is silently inferred before owner action');
  multi.approve();await multi.submit();assert.equal(multi.calls.length,0,'Confirmation cannot save an unspecified multi-allocation attribution');
+ assert.match(multi.visible,/must total 3 added shares.*Propose using existing holding proportions/,'The validation message identifies the missing split and next action');
  assert.match(multi.visible,/recovery attribution, not a verified reconstruction/);
  multi.button('Propose using existing holding proportions').props.onClick();
  assert.equal(multi.confirm().props.checked,false,'A proposed distribution withdraws the prior confirmation');

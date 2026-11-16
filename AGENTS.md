@@ -1,5 +1,14 @@
 # C1 operating instructions
 
+## Owner-reported recovery-form usability defect — November 16, 2026
+The owner’s deployed phone screen shows blank allocation boxes interleaved with
+their labels, a visually blank submit control, and an unexplained allocation
+validation error after otherwise complete fill entry. Repair the recorder’s
+field order, scoped mobile layout, button contrast and explanatory copy only.
+Preserve the existing explicit proposal, owner confirmation, allocation math,
+ticket payloads, financial validation and recording safeguards. See
+`docs/operations/c1-recovery-form-mobile-20261116.md`.
+
 ## Owner-authorized issued-trade retention repair — November 16, 2026
 The owner reports that an actually completed C1 Add disappeared from trade entry
 after refresh, leaving the saved holding short of the broker holding. The owner
