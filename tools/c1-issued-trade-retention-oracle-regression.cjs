@@ -3,7 +3,7 @@ const inverse=require('./c1-issued-trade-retention-seams.cjs');
 const filename='tools/fixtures/c1-issued-trade-retention-source-seams.json',fixture=require('./fixtures/c1-issued-trade-retention-source-seams.json');
 assert.equal(fixture.contract,'c1-issued-trade-retention-source-inverse-v1');
 assert.equal(fixture.baselineCommit,'6c71f5ca809b301fe49751b6abab4592124b66f0');
-assert.equal(createHash('sha256').update(fs.readFileSync(filename)).digest('hex'),'b22c393d94efdbec8dfb925869fff0ef9a668d91fbd981e0b74ab48ba695db3d');
+assert.equal(createHash('sha256').update(fs.readFileSync(filename)).digest('hex'),'20efabb85136c4979ed44bf748466c4a6a795ff0576920518f13b0c27f80ba5e');
 assert.deepEqual(Object.keys(fixture.files),['components/C1IntradayActivity.js','lib/c1AccountLedger.js','lib/c1ApiErrors.js','lib/c1IntradayActivity.js','pages/api/c1-account.js','pages/index.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
  const current=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,current);

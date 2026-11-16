@@ -122,7 +122,7 @@
     "pages/_app.js": "1a85dfedc0631279cc3f3a732c5ac568296ea302",
     "pages/api/c1-account.js": "0a643a545d76640d58f14d5e4afc344d97adbdaf",
     "lib/c1AccountOperationalStatus.js": "0000407bef8c173e80d8e51d0e2e65286bb85549",
-    "lib/c1ApiErrors.js": "d4dd35d0f2265d73fde25be6e7cb967cc1168808",
+    "lib/c1ApiErrors.js": "ecb8b6fd9a5c8efbae7018ad635d32fc381f29c9",
     "pages/api/catalysts.js": "cd43dbf13e263e39c511b438413f7c6d55d6c768",
     "pages/api/cron/c1-index.js": "dd3a83dd37b8f7f1f8694abe2767f9d921856f16",
     "pages/api/cron/fmp-research-backtest.js": "4ce2d0302bd451103c86f0412ee197ffb4d50f72",
@@ -195,7 +195,7 @@
     "lib/c1EntryReview.js": "a8bec74733f9da6fbae537b968fbe05623170476",
     "lib/portfolioDateDisplay.js": "50382f05065b9263e14e7c112ac1ffc037860ac9",
     "lib/c1StockClassification.js": "e0a583dd8bf8ee38a315e4ca45f4250428636459",
-    "lib/c1IntradayActivity.js": "878e3aae26c765c54d418e34e1e947a81843ad93",
+    "lib/c1IntradayActivity.js": "f28b0fd3163ef56c6e18434eea0b9d26c85e6b0f",
     "components/C1IntradayActivity.js": "7fb60165fce74887d748e0be50878b291378c596",
     "lib/c1OpeningPriceReview.js": "affed543bf8494b2b1fdba52797394442156dc57",
     "lib/c1HeldCloseRevisionReview.js": "0baa882f99933328028dc6a32d4175f206970ec5",
@@ -278,8 +278,8 @@
     "lib/c1AccountStockCooldown.js": "0737ed7fa9d65dab1e0436bc4d9dc37aed6d725b",
     "lib/c1AccountActions.js": "a508f373f3b8da8d88a04f1c3655ff17e2f20c8e",
     "lib/c1OpeningAnchorStore.js": "3779a53c45cac92c36c62324f4f91ec5e5d5abe5",
-    "lib/c1CompletedAddRecovery.js": "c74eea1c5165917df6e8a634bf6e66493832e893",
-    "lib/c1IssuedTradeLog.js": "1c5af65199a4071607cb4c4dd45eb7718944a587"
+    "lib/c1CompletedAddRecovery.js": "34f7f6cb0ea1ddea46a4320d018d365981c7f869",
+    "lib/c1IssuedTradeLog.js": "823a3899dd192640c72af4d0e5e69e092e4e7de3"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",

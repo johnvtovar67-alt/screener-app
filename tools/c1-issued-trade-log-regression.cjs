@@ -45,6 +45,8 @@ async function main(){
  assert.equal(saved.body.intradaySession.tickets[0].id,ticket.id);
  money(saved.body.decision.actualCash,before.actualCash-100.44);
  const savedBytes=JSON.stringify(f.account),savedWrites=f.writes;
+ const invalidCorrection=await api.request('POST',{operation:'correct-intraday-details',ticketId:ticket.id,price:ticket.price,fee:ticket.fee,executedAt:'2026-11-16T17:00:30.000Z',expectedRevision:f.account.revision});
+ assert.equal(invalidCorrection.status,422,'A correction cannot move a fill before the retained issuance');assert.equal(JSON.stringify(f.account),savedBytes);
  const retry=await api.request('POST',{operation:'record-intraday',ticket,expectedRevision:original.revision});assert.equal(retry.status,200);assert.equal(f.writes,savedWrites);assert.equal(JSON.stringify(f.account),savedBytes);
  const conflict=await api.request('POST',{operation:'record-intraday',ticket:{...ticket,price:90},expectedRevision:f.account.revision});assert.equal(conflict.status,409);assert.equal(JSON.stringify(f.account),savedBytes);
  const duplicated=await api.request('POST',{operation:'record-intraday',ticket:{...ticket,id:'duplicate-new-reference'},expectedRevision:f.account.revision});assert.equal(duplicated.status,422);assert.equal(JSON.stringify(f.account),savedBytes);
@@ -84,6 +86,13 @@ async function main(){
  for(const stop of oldView.positions.find(row=>row.symbol==='BBB').stops)money(held.stops.find(row=>row.sleeve===stop.sleeve).price,stop.price);
  assert.equal(result.body.manualRecommendations.status,'waiting');assert.equal(result.body.manualRecommendations.orders.length,0);
  assert.deepEqual(clone(r.account.adoption),prior.adoption);assert.deepEqual(clone(r.account.records),prior.records);assert.deepEqual(clone(r.account.brokerageCash),prior.brokerageCash);
+ const chronology=make(),c=chronology.fixture;c.account=clone(r.account);c.now='2026-11-16T17:10:00Z';
+ c.account.intradayActivity.plan.orders.push({id:'fictional-owned-sale',sleeve:'base',symbol:'BBB',side:'sell',shares:5,reason:'owner-discretionary-exit',recordingOnly:true,executable:false});
+ c.account.intradayActivity.fills.push({id:'fictional-sale:base',orderId:'fictional-owned-sale',symbol:'BBB',side:'sell',shares:5,price:100,fee:0,executedAt:'2026-11-16T17:00:00.000Z'});
+ c.account.intradayActivity.recordingEvidence=clone(c.account.intradayActivity.plan);
+ const chronologyBytes=JSON.stringify(c.account);
+ const invalidLifecycle=await chronology.request('POST',{operation:'correct-intraday-details',ticketId:legacy.id,price:legacy.price,fee:legacy.fee,executedAt:'2026-11-16T17:01:00.000Z',expectedRevision:c.account.revision});
+ assert.equal(invalidLifecycle.status,422,'Moving an old Add after a full sale cannot become a new holding lifecycle');assert.equal(JSON.stringify(c.account),chronologyBytes);
  const ledger=r.loader.load('lib/c1AccountLedger.js'),closing=completed(r,r.account);
  const oldRun=ledger.continueC1ActualAccount({adoption:prior.adoption,sessions:r.sessions.slice(220,221),historySessions:r.book.model.sessions,records:prior.records,observedAt:r.now});
  const newRun=ledger.continueC1ActualAccount({adoption:closing.account.adoption,sessions:r.sessions.slice(220,222),historySessions:closing.book.model.sessions,records:closing.account.records,observedAt:closing.now});
