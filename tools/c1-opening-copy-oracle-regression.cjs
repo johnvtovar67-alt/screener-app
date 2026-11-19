@@ -5,7 +5,7 @@ assert.equal(fixture.contract,'c1-opening-copy-source-inverse-v1');
 assert.equal(fixture.baselineCommit,'adba79f987e89b63b7a85142b1356e4d2798ef53');
 assert.equal(sha('tools/fixtures/c1-opening-copy-source-seams.json'),'b2051e25b1c61e4c0d3f58f2c7bd93a4a92f7bdcbbf00a0f487e6194a82794fe','The copy-only inverse is pinned exactly');
 assert.deepEqual(Object.keys(fixture.files),['lib/c1DecisionCopy.js','components/C1AccountOpportunitiesView.js']);
-const file='lib/c1DecisionCopy.js',source=fs.readFileSync(file,'utf8'),patch=fixture.files[file],before=inverse.restore(file,source);
+const file='lib/c1DecisionCopy.js',source=require('./c1-stock-momentum-exit-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),patch=fixture.files[file],before=inverse.restore(file,source);
 assert.equal(patch.beforeHash,'41ce498f6252cd6389fa31a11a1559e54e88acd4');
 assert.equal(inverse.blob(source),patch.afterHash);assert.equal(inverse.blob(before),patch.beforeHash);assert.notEqual(source,before);
 assert.equal(inverse.restore(file,before),before,'The exact inverse is idempotent');

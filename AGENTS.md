@@ -1,5 +1,18 @@
 # C1 operating instructions
 
+## Owner-authorized stock-level momentum exit — November 19, 2026
+The owner explicitly directed: “Make the fix now” because a later purchase must
+not keep a weakening stock while an older allocation has a confirmed momentum
+exit. Use one ordinary recent-momentum confirmation clock per continuous
+account-level stock holding. A confirmed recent-momentum exit covers every
+recorded Swing share across allocations and remains pending until actual full
+liquidation. Adds and partial sales do not reset it. Preserve existing verified
+profit-protection criteria, individual stops, historical decisions/fills, basis,
+cash, cooldowns and operational-risk references. Activate prospectively at the
+November 19 opening using accepted November 18 source evidence. No brokerage
+execution or fabricated fills are authorized. See
+`docs/operations/c1-stock-momentum-exit-20261119.md`.
+
 ## Owner-reported recovery-form usability defect — November 16, 2026
 The owner’s deployed phone screen shows blank allocation boxes interleaved with
 their labels, a visually blank submit control, and an unexplained allocation
