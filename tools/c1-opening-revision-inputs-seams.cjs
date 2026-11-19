@@ -19,6 +19,7 @@ function restoreReview(source){
  return source;
 }
 function restoreExecutionView(source){
+ source=require('./c1-stock-momentum-exit-seams.cjs').restore('lib/c1AccountExecutionView.js',source);
  source=replaceOnce(source,
   'openingPlan=reviewC1OpeningPriceRevisions({account,sessions,historySessions,opening,plan:openingPlan,now,accountPolicy:continuation.accountPolicy,brokerageCashAvailable:continuation.brokerageCashAvailable});',
   'openingPlan=reviewC1OpeningPriceRevisions({account,sessions,historySessions,opening,plan:openingPlan,now});',
@@ -34,6 +35,7 @@ const currentBlobs={
  'lib/c1AccountExecutionView.js':'2d791b9b0c45156d3b37647b2907dc594a722306'
 };
 function restoreCurrent(file,source){
+ source=require('./c1-stock-momentum-exit-seams.cjs').restore(file,source);
  source=require('./c1-opening-diagnostic-seams.cjs').restore(file,source);
  const expected=currentBlobs[file];
  if(expected&&gitBlob(source)===expected){
