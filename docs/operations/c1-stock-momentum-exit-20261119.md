@@ -28,6 +28,13 @@ cash, holdings and standing stops are calculated. Protective exits retain priori
 without duplicate sales. Same-name purchases remain blocked across allocations.
 Every view and the completed-trade recorder consume that same authority.
 
+An already-open pre-release trade session may have recorded only the older
+allocation's exit. Its original recommendation targets are archived and its
+posted ticket/fill bytes and executed order IDs remain unchanged. Retired orders
+authorize only their already filled quantity; deterministic new identities cover
+the actual remaining shares. The fresh checked plan and accounting-only fallback
+use those same identities. A completed older partial sale is never replayed.
+
 This derives prospective instructions only. It does not execute trades, infer
 fills, edit historical records, reset stops, change cost basis or cash, or reset
 the portfolio-loss reference. Only the existing verified full loss-exit process

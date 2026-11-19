@@ -3,7 +3,7 @@ const inverse=require('./c1-stock-momentum-exit-seams.cjs'),fixture=require('./f
 const hash=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 assert.equal(fixture.contract,'c1-stock-momentum-exit-source-inverse-v1');
 assert.equal(fixture.baselineCommit,'da4e430ab6d0fc8bdd19927a488947be7d5498bb');
-assert.equal(hash('tools/fixtures/c1-stock-momentum-exit-source-seams.json'),'251c15006c87d8adb7c830a5efc6b406a5cc01ea5b69f70f8b25dd58a4ae768d');
+assert.equal(hash('tools/fixtures/c1-stock-momentum-exit-source-seams.json'),'f22de344ef352b1b1c7ec059acb8526bfad7fc69a4539584fe1ff549398c8fa8');
 assert.equal(hash('lib/c1StockMomentumExit.js'),'38eb4498fc3d462af6d766769b0ec3fef668b7d3b0debb044b673aacfd7a5bd5');
 assert.deepEqual(Object.keys(fixture.files),['lib/c1AccountExecutionView.js','lib/c1AccountPolicy.js','lib/c1AccountProjection.js','lib/c1AccountService.js','lib/c1CompletedAddRecovery.js','lib/c1DecisionCopy.js','lib/c1IntradayActivity.js']);
 for(const [file,patch]of Object.entries(fixture.files)){

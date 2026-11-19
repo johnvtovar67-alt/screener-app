@@ -219,6 +219,62 @@ async function actualHandler(){
  f.book.captures=f.book.model.sessions.map(session=>({sessionDate:session.date,hash:'synthetic-stock-exit:'+session.date,observedAt:session.decisionAt}));
  f.account.sourceHashes=f.book.captures.filter(row=>row.sessionDate>='2026-11-13').map(row=>({date:row.sessionDate,hash:row.hash}));
  f.setCash(9000);
+ async function legacyPartialCase(missingOpening,withPostedBuy=false){
+  let legacyFixture;
+  const legacyApi=createWorkflowApi('buy',{baselineDate:'2026-11-13',now:'2026-11-19T17:00:00.000Z',
+   collectOpening:async()=>{
+    if(missingOpening)throw Error('Fictional opening unavailable after legacy partial execution');
+    const source=legacyFixture.book.model.sessions.at(-1),observedAt=legacyFixture.now.toISOString();
+    return {date:'2026-11-19',decisionAt:observedAt,universeSymbols:source.universeSymbols,corporateActions:[],
+     currentEventEvidence:currentEventEvidenceFor(source.universeSymbols,legacyFixture.now),
+     prices:source.prices.map(row=>({...row,date:'2026-11-19',open:row.close,observedPrice:row.close,observedAt})),
+     receipt:{provider:'FMP',observedAt,membershipCheckedTwice:true,previousAdjustedClosesUnchanged:true}};
+   }});
+  legacyFixture=legacyApi.fixture;legacyFixture.account=clone(f.account);
+  legacyFixture.book.model=clone(f.book.model);legacyFixture.book.captures=clone(f.book.captures);
+  const originalLedger=legacyFixture.loader.load('lib/c1AccountLedger.js');
+  const actualBefore=originalLedger.continueC1ActualAccount({adoption:legacyFixture.account.adoption,
+   sessions:legacyFixture.book.model.sessions.filter(row=>row.date>='2026-11-13'),historySessions:legacyFixture.book.model.sessions,
+   records:legacyFixture.account.records,observedAt:legacyFixture.now});
+  const oldOrder={id:'fictional-legacy:base:momentum',sleeve:'base',symbol,date:'2026-11-19',side:'sell',shares:3,
+   estimatedPrice:96.88,reason:'recent-momentum-deterioration',phase:1,executable:false};
+  const oldPlan={contract:'c1-actual-account-opening-plan-v1',date:'2026-11-19',sourceSessionDate:'2026-11-18',observedAt:'2026-11-19T15:00:00.000Z',
+   providerVerified:true,executable:false,openingBooks:clone(actualBefore.books),orders:[oldOrder,
+    ...['cooldown15','sector40'].map(sleeve=>({id:'fictional-legacy:stop:'+sleeve,sleeve,symbol,date:'2026-11-19',side:'sell',shares:actualBefore.books[sleeve].positions[symbol].shares,
+     estimatedPrice:85.14,reason:'initial-stop',condition:'stop-triggered',phase:4,executable:false}))]};
+  const oldTicket={id:'fictional-pre-release-sale',symbol,side:'sell',shares:3,price:96.75,fee:.03,executedAt:'2026-11-19T16:45:00.000Z'};
+  const oldFill={id:oldTicket.id+':base',orderId:oldOrder.id,symbol,side:'sell',shares:3,price:96.75,fee:.03,executedAt:oldTicket.executedAt};
+  const buyOrder={id:'fictional-legacy:unrelated-buy',sleeve:'base',symbol:'CCC',date:'2026-11-19',side:'buy',shares:1,estimatedPrice:100,reason:'Buy',executable:false};
+  const buyTicket={id:'fictional-pre-release-buy',symbol:'CCC',side:'buy',shares:1,price:100,fee:.01,executedAt:'2026-11-19T16:46:00.000Z'};
+  const buyFill={...buyTicket,id:buyTicket.id+':base',orderId:buyOrder.id};
+  if(withPostedBuy)oldPlan.orders.push(buyOrder);
+  legacyFixture.account.revision++;
+  legacyFixture.account.intradayActivity={date:'2026-11-19',openingObservedAt:oldPlan.observedAt,plan:oldPlan,recordingEvidence:clone(oldPlan),tickets:[oldTicket,...(withPostedBuy?[buyTicket]:[])],fills:[oldFill,...(withPostedBuy?[buyFill]:[])]};
+  const ticketBytes=JSON.stringify(oldTicket),fillBytes=JSON.stringify(oldFill),recordsBytes=JSON.stringify(legacyFixture.account.records);
+  let response=await legacyApi.request('POST',{operation:'prepare-execution'});assert.equal(response.status,200,JSON.stringify(response.body));
+  const session=response.body.intradaySession;
+  if(!missingOpening){
+   const checked=response.body.manualRecommendations.orders.filter(order=>order.symbol===symbol&&order.side==='sell'&&!order.condition);
+   assert.equal(checked.reduce((sum,order)=>sum+order.shares,0),7,'A newly deployed full-stock policy expands a legacy partial-sale plan to the actual remaining seven shares');
+  }else assert.equal(session.sellOnly,true,'Unavailable opening supplies accounting-only recording, not checked trade authority');
+  const remaining=originalLedger.reconcileC1ActualAccountFills({plan:session.plan,fills:session.fills,observedAt:legacyFixture.now.toISOString()});
+  assert.equal(remaining.outstanding.filter(order=>order.symbol===symbol&&order.side==='sell'&&!order.condition).reduce((sum,order)=>sum+order.shares,0),7,'Legacy original executed IDs coexist with new remaining full-stock recorder quantity');
+  assert.equal(JSON.stringify(legacyFixture.account.intradayActivity.tickets[0]),ticketBytes);
+  assert.equal(JSON.stringify(legacyFixture.account.intradayActivity.fills[0]),fillBytes);
+  const finish={id:'fictional-after-release-sale',symbol,side:'sell',shares:7,price:96.5,fee:.07,executedAt:legacyFixture.now.toISOString()};
+  response=await legacyApi.request('POST',{operation:'record-intraday',ticket:finish,expectedRevision:legacyFixture.account.revision});assert.equal(response.status,200,JSON.stringify(response.body));
+  assert(!response.body.decision.positions.some(row=>row.symbol===symbol),'The remaining completed actual sale is recordable after release without owner-exit relabeling');
+  const saved=legacyFixture.account.intradayActivity;
+  assert.equal(saved.tickets.length,withPostedBuy?3:2);assert.equal(JSON.stringify(saved.tickets[0]),ticketBytes);assert.equal(JSON.stringify(saved.fills.find(fill=>fill.id===oldFill.id)),fillBytes);
+  if(withPostedBuy){
+   assert.equal(JSON.stringify(saved.tickets.find(ticket=>ticket.id===buyTicket.id)),JSON.stringify(buyTicket),'The unrelated already completed purchase ticket remains byte-identical');
+   assert.equal(JSON.stringify(saved.fills.find(fill=>fill.id===buyFill.id)),JSON.stringify(buyFill),'The unrelated posted Buy cannot be remapped or replayed by a stock-exit upgrade');
+   assert.equal(response.body.decision.positions.find(row=>row.symbol==='CCC').shares,1,'A different owned stock is unaffected by the full-stock sale');
+  }
+  assert.equal(saved.plan.orders.find(order=>order.id===oldOrder.id).reason,oldOrder.reason,'The historical executed sale retains its original reason and order identity');
+  assert.equal(JSON.stringify(legacyFixture.account.records),recordsBytes,'Release migration never rewrites prior completed financial records');
+ }
+ await legacyPartialCase(false);await legacyPartialCase(true);await legacyPartialCase(false,true);
  const financial=JSON.stringify({adoption:f.account.adoption,records:f.account.records,brokerageCash:f.account.brokerageCash});
  let result=await api.request('GET');assert.equal(result.status,200,JSON.stringify(result.body));
  let position=result.body.decision.positions.find(row=>row.symbol===symbol);assert.equal(position.shares,10);
