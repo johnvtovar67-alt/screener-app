@@ -31,7 +31,11 @@ function harness(baseline,browser){
   if(components.has(componentFile))return components.get(componentFile);
   // The immutable original hash above stays unchanged. Allow only the owner-
   // requested heading copy when comparing every other render/effect byte.
-  const text=baseline&&componentFile===file?require('./c1-current-screen-source-seams.cjs').applyView(original.replace(require('./c1-holding-wording-seams.cjs').oldLabel,require('./c1-holding-wording-seams.cjs').newLabel)):fs.readFileSync(componentFile,'utf8'),record={exports:{}};
+  // Preserve literal historical HTML/CSS identity by reversing only the exact
+  // reviewed Sell-summary presentation. Its new raw rendering has separate
+  // focused coverage; unknown source cannot receive this normalization.
+  const text=baseline&&componentFile===file?require('./c1-current-screen-source-seams.cjs').applyView(original.replace(require('./c1-holding-wording-seams.cjs').oldLabel,require('./c1-holding-wording-seams.cjs').newLabel)):
+   componentFile===viewFile?require('./c1-sell-quantity-summary-seams.cjs').restore('components/C1AccountOpportunitiesView.js',fs.readFileSync(componentFile,'utf8')):fs.readFileSync(componentFile,'utf8'),record={exports:{}};
   const compiled=babel.transformSync(text,{filename:componentFile,babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
   new Function('require','module','exports',compiled)(name=>name==='react'?hooks:name.startsWith('../lib/')?loader.load(name,componentFile):name.startsWith('.')?load(path.resolve(path.dirname(componentFile),name.endsWith('.js')?name:name+'.js')):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
   components.set(componentFile,record.exports);return record.exports;
