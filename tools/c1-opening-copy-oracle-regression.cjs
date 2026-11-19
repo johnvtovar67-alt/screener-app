@@ -10,7 +10,7 @@ assert.equal(patch.beforeHash,'41ce498f6252cd6389fa31a11a1559e54e88acd4');
 assert.equal(inverse.blob(source),patch.afterHash);assert.equal(inverse.blob(before),patch.beforeHash);assert.notEqual(source,before);
 assert.equal(inverse.restore(file,before),before,'The exact inverse is idempotent');
 const unknown=source+'\n// Unreviewed explanation source must retain its own identity.\n';assert.equal(inverse.restore(file,unknown),unknown);
-const view='components/C1AccountOpportunitiesView.js',viewSource=fs.readFileSync(view,'utf8'),oldView=inverse.restore(view,viewSource);
+const view='components/C1AccountOpportunitiesView.js',viewSource=require('./c1-stock-momentum-exit-seams.cjs').restore(view,fs.readFileSync(view,'utf8')),oldView=inverse.restore(view,viewSource);
 assert.equal(inverse.blob(oldView),'a75a15f74616e30c5ce5636f80f6eaefcb453a9f');
 assert.equal(inverse.blob(viewSource),fixture.files[view].afterHash);assert.notEqual(viewSource,oldView);
 assert.equal(inverse.restore(view,viewSource+'\n// unknown view\n'),viewSource+'\n// unknown view\n');

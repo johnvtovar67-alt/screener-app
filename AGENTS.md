@@ -1,5 +1,14 @@
 # C1 operating instructions
 
+## Owner-requested Sell-summary clarification — November 19, 2026
+After the stock-level momentum release, the owner requested “Also make the other
+fix you noted.” The remaining noted display issue is that Sell summaries omit
+whether the recommendation is partial or full and how many shares would remain.
+Clarify those quantities from the existing recorded Sell instruction only.
+Missing quantities stay unknown. Describe remaining shares as conditional on
+actual execution, and preserve every signal, authorized quantity, stop, record
+and trading safeguard. See `docs/operations/c1-sell-quantity-summary-20261119.md`.
+
 ## Owner-authorized stock-level momentum exit — November 19, 2026
 The owner explicitly directed: “Make the fix now” because a later purchase must
 not keep a weakening stock while an older allocation has a confirmed momentum
