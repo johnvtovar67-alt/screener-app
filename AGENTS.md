@@ -1,5 +1,14 @@
 # C1 operating instructions
 
+## Owner-authorized sector-label repair — November 20, 2026
+The owner reports missing MSTR and MTD sector labels and directs “Make a small
+repair, please.” Repair only the portfolio display's metadata fallback. Core
+holdings must not depend on a Swing decision; unknown source labels must not
+hide known metadata. Keep MSTR's Bitcoin/Digital Assets theme distinct from its
+formal sector. These display profiles must never enter C1 selection, exposure,
+orders or financial records. Preserve all account facts and trading safeguards.
+See `docs/operations/c1-sector-label-repair-20261120.md`.
+
 ## Owner-requested Sell-summary clarification — November 19, 2026
 After the stock-level momentum release, the owner requested “Also make the other
 fix you noted.” The remaining noted display issue is that Sell summaries omit
