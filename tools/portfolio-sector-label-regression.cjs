@@ -31,7 +31,7 @@ for(const [name,input,expected] of cases){
  assert.equal(portfolioSectorLabel(input),expected,name);
  assert.equal(JSON.stringify(input),before,name+': classification cannot mutate account, holding or exposure evidence');
 }
-for(const missing of ['Other','UNKNOWN','Unclassified','Unavailable','Sector unavailable','N/A','NA','None','null','undefined','—','-','']){
+for(const missing of ['Other','UNKNOWN','Unclassified','Unavailable','Unverified','Sector unavailable','N/A','NA','None','null','undefined','—','-','']){
  const input=freeze({stock:{symbol:'ZZQA',sector:missing},decision:dated('ZZQA',missing),position:{entryContext:{sector:missing}},openingPlan:plan('ZZQA',missing)});
  assert.equal(portfolioSectorLabel(input),'Sector unavailable','Missing labels do not become classification evidence: '+missing);
 }

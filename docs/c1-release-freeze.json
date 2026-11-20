@@ -281,7 +281,7 @@
     "lib/c1CompletedAddRecovery.js": "bd64ac89d37986c97fcfb2afef2ac44494a00a06",
     "lib/c1IssuedTradeLog.js": "823a3899dd192640c72af4d0e5e69e092e4e7de3",
     "lib/c1StockMomentumExit.js": "82e98e16088f8a7c50a494d8807d8ca80db5104b",
-    "lib/portfolioSectorLabel.js": "00f075b260e7d9a6b7fac1dacb37f4e2056381ff"
+    "lib/portfolioSectorLabel.js": "d116f843ac11255e651fdae84f6e0318ea190870"
   },
   "buyAuthorityAuthorization": "Owner identified a live-capital inconsistency on September 30: Portfolio Actions authorized a replacement buy that the verified Opportunities screen did not classify as Buy/Strong Buy. Fail closed by requiring the same current verified C1 opportunity classification before any Portfolio Actions replacement buy is displayed. No exit, ranking, sizing, cash, stop, fill, or execution rule is changed.",
   "entryRecheckAuthorization": "Owner reported the September 30 post-NTRA-sale opening review failing with 'Entry recheck does not establish a failed price gate'. Preserve the 3% gate and server-generated evidence; validate the recorded reference against the accepted source close with bounded numeric identity rather than brittle exact floating-point equality. No gap threshold, rank, sizing, cash, stop, fill, or execution rule changes.",

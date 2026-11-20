@@ -4,7 +4,7 @@ const hash=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex'
 assert.equal(fixture.contract,'portfolio-sector-label-source-inverse-v1');
 assert.equal(fixture.baselineCommit,'6398f3f33df67bf61ddceb099d9bbe5eff301a34');
 assert.equal(hash('tools/fixtures/portfolio-sector-label-source-seams.json'),'fb74dc6874cbbf6c73915b6e7bf2deab3482c816051bf7f63b0344e1bcca5ace');
-assert.equal(hash('lib/portfolioSectorLabel.js'),'8f04b2d813397a6aa5fcfd82c21ae7d42e8010d8b3e5da5f269b991f46a48251');
+assert.equal(hash('lib/portfolioSectorLabel.js'),'4bd8cce7d484ee585764906a9e56eca4f34cdb6a13d645b0999b48ecac8623fa');
 assert.deepEqual(Object.keys(fixture.files),['pages/index.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
  const current=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,current);
