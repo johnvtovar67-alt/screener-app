@@ -2,6 +2,7 @@ import {currentC1HoldingRows,sameC1HoldingPeriod} from '../lib/c1CurrentHoldingR
 import {readC1OpeningReview} from '../lib/c1OpeningReviewRead';
 import {continueC1ReadOnlyScan} from '../lib/c1ScanContinuation';
 import {c1HoldPillLabel,c1HoldPillStyle} from '../lib/c1HoldPill';
+import {portfolioSectorLabel} from '../lib/portfolioSectorLabel';
 import {c1PublicationStatus} from '../lib/c1PublicationStatus';
 import C1NonCashAdoption from '../components/C1NonCashAdoption';
 import {resolveC1NonCashPortfolio} from '../lib/c1NonCashPortfolio';
@@ -852,12 +853,7 @@ export default function Home(){
     const accountDecision=s.role==="Swing"&&!CASH.includes(sym(s))&&stopOwnershipCurrent&&!accountHoldingMismatch?accountView?.decision:null;
     const position=accountDecision?.positions?.find(row=>row.symbol===sym(s));
     const presentation=s.role==="Swing"&&!CASH.includes(sym(s))?c1PositionPresentation({requireOpeningReview:true,decision:accountDecision,position,symbol:sym(s),stock:stopQuoteRow(s),executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations:accountView?.manualRecommendations,now:new Date()}):null;
-    // Sector evidence is separate from thematic risk factors and never changes exposure controls.
-    const sectorEvidence=accountDecision?.stockScreen?.sourceSessionDate===accountDecision?.sourceSessionDate?
-      accountDecision?.stockScreen?.candidates?.find(row=>row.symbol===sym(s))?.sector:null;
-    const heldSector=position?.entryContext?.sector;
-    const displaySector=sectorEvidence||heldSector;
-    const sector=typeof displaySector==='string'&&displaySector.trim()&&!/^(other|unknown|unclassified)$/i.test(displaySector.trim())?displaySector.trim():'Sector unavailable';
+    const sector=portfolioSectorLabel({stock:s,decision:accountDecision,position,openingPlan:accountView?.openingPlan});
     const displayAction=presentation?.label||(decision.source==="c1-capital-reconciliation"?"Verification needed":decision.source==="c1-actual-account"&&decision.action==="Exit candidate"?"Exit":decision.action),time=swingTimeReview(s),showMomentumEvidence=s.role==="Swing"&&!CASH.includes(sym(s)),evidence=showMomentumEvidence?momentumEvidenceFor(s):null,d={...decision,reason:c1PlainDecisionReason({action:displayAction,reason:presentation?.reason||holdingReason(s,decision,time),presentation,position,evidence})},label=`${s.role} · ${(Number.isFinite(accountView?.decision?.brokerageCash)?displayedPortfolioValue?(Number(s.value)||0)/displayedPortfolioValue*100:0:+s.weightPct||0).toFixed(1)}% of portfolio · ${sector}`,openDate=s.role==="Swing"&&!CASH.includes(sym(s))&&(decision.openedAt||s.openedAt)?portfolioDateDisplay(decision.openedAt||s.openedAt):"—",cashDryPowder=CASH.includes(sym(s));
     const actionClass=presentation?presentation.action==='Sell'?'red':presentation.urgent?'orange':'yellow':cls(d.action);
     const badge=showMomentumEvidence&&<span className={`momentumBadge ${evidence.tone}`}>{evidence.label}</span>;
