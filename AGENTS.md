@@ -1,5 +1,20 @@
 # C1 operating instructions
 
+## Owner-reported Watch verification warning — November 23, 2026
+The owner asks why Watch names all say “Current account exposure unverified,”
+whether it prevents recommendations, and follows up “What about the watchlist?”
+The owner subsequently explicitly approves “Restore the download button.” This
+supersedes only the earlier removal of that control; keep universe figures off
+the normal Watch display.
+Correct the reproduced display conflation: a per-candidate opening-price or
+exposure block must not claim the whole account is unverified. Preserve the
+actual account-wide warning when its explicit shared flag is false. Restore
+the existing allowlisted read-only Watch-details download so the owner can
+provide current verification evidence. Do not change ranking, eligibility,
+quantities, account records or any purchase/sale safeguard. The separate holding-exit question does not authorize an exit-policy
+revision.
+See `docs/operations/c1-watch-exposure-copy-20261123.md`.
+
 ## Owner-authorized sector-label repair — November 20, 2026
 The owner reports missing MSTR and MTD sector labels and directs “Make a small
 repair, please.” Repair only the portfolio display's metadata fallback. Core

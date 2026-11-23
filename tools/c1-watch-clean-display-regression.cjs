@@ -28,9 +28,10 @@ new Function('require','module','exports',compiled)(name=>name.startsWith('../li
  const watch=html.slice(html.indexOf('aria-label="Watch opportunities"'));
  assert.match(watch,/1 is strongest/);
  assert.deepEqual([...watch.matchAll(/<tr[^>]*><td[^>]*>(\d+)<\/td>/g)].map(match=>Number(match[1])),Array.from({length:10},(_,i)=>i+1));
- assert(!/Download Watch details|universe|source candidates|monitoring candidates|Momentum rank/i.test(watch));
+ assert.equal((watch.match(/>Download Watch details<\/button>/g)||[]).length,1,'The owner-approved read-only download is available exactly once');
+ assert(!/universe|source candidates|monitoring candidates|Momentum rank/i.test(watch));
  assert(!watch.includes('MRNA'),'No MRNA explanation was added to the screener');
  assert(!/href=.*blob:/.test(watch));
  assert.equal(JSON.stringify({input,account:f.account,watch:joined.watch,orders:joined.orders}),original,'Rendering preserves candidates, orders and all financial facts');
- console.log('PASS: real account projection renders Watch 1–10 strongest first without download, universe figures or MRNA explanation; original selection, orders and financial facts remain identical.');
+ console.log('PASS: real account projection renders Watch 1–10 strongest first with the owner-approved read-only download, no universe figures or MRNA explanation; original selection, orders and financial facts remain identical.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
