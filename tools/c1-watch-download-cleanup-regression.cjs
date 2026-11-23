@@ -12,6 +12,11 @@ const file='components/C1AccountOpportunitiesView.js',source=fs.readFileSync(fil
 assert(!source.includes('downloadC1WatchDetails'),'Raw production View has no diagnostic-download import or callback');
 assert(priorSource.includes('downloadC1WatchDetails(watchSelection)'),'Exact prior View includes the temporary control');
 const loader=createResearchModuleLoader(process.cwd());
+// Keep the cleanup's historical warning assertions on their exact original
+// selector; the raw-current entry-blocker regression covers the later repair.
+const selectorFile='lib/c1CurrentWatchSelection.js',historicalSelector={exports:{}};
+const historicalCode=babel.transformSync(require('./c1-watch-entry-blocker-seams.cjs').restore(selectorFile,fs.readFileSync(selectorFile,'utf8')),{filename:path.resolve(selectorFile),babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
+new Function('require','module','exports',historicalCode)(name=>name.startsWith('./')?loader.load(name,path.resolve(selectorFile)):require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),historicalSelector,historicalSelector.exports);
 function compile(text){
  const record={exports:{}},code=babel.transformSync(text,{filename:path.resolve(file),babelrc:false,configFile:false,presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
  new Function('require','module','exports',code)(name=>name.startsWith('../lib/')?loader.load(name,path.resolve(file)):name==='react'?React:require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports);
@@ -22,7 +27,7 @@ function elements(node){if(Array.isArray(node))return node.flatMap(elements);if(
 function text(node){if(Array.isArray(node))return node.map(text).join('');if(React.isValidElement(node))return text(node.props.children);return node==null||typeof node==='boolean'?'':String(node);}
 
 (async()=>{
- const f=createWorkflowFixture('buy',{baselineDate:'2026-11-10',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}]});
+ const f=createWorkflowFixture('buy',{baselineDate:'2026-11-10',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],moduleOverrides:{[selectorFile]:historicalSelector.exports}});
  const spec=applyAccountPolicyUniverseFixture(f,{count:50});f.setCash(100000);
  const financial=JSON.stringify({account:f.account,book:f.book});
  const view=await f.prepare(),events=new Map(currentEventEvidenceFor(spec.symbols,f.now).map(row=>[row.symbol,row]));

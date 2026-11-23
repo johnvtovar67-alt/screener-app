@@ -1,0 +1,16 @@
+{
+  "contract": "c1-watch-entry-blocker-source-inverse-v1",
+  "baselineCommit": "5ff4ff3ff0e6e1552ccd39fa7d8ffe489b07918f",
+  "files": {
+    "lib/c1CurrentWatchSelection.js": {
+      "beforeHash": "45ec39dd479304e040e18297f1886e247d5e0976",
+      "afterHash": "f44ccb1ed64b9c89e3bdd0c0abb66f54551fc5ee",
+      "chunks": [
+        {
+          "before": " const blockingReasons=waitReasons.filter(reason=>reason!=='entry-trigger-wait');\n",
+          "after": " // Planner opening prices may be unrequested for a failed entry trigger.\n // Keep the generic per-stock diagnostic, but explain the known trigger first.\n // Explicit shared failures and otherwise-qualified/unknown entry checks stay visible.\n const deferredPurchaseCheck=waitReasons.includes('recent-entry-trigger-wait')&&!commonWaitReasons.includes('account-exposure-unverified');\n const blockingReasons=waitReasons.filter(reason=>reason!=='entry-trigger-wait'&&!(deferredPurchaseCheck&&reason==='account-exposure-unverified'));\n"
+        }
+      ]
+    }
+  }
+}

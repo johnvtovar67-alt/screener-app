@@ -6,7 +6,7 @@ assert.equal(fixture.baselineCommit,'42e6917d19d3d7a2aa4c6a4d56491e3c3f141c4b');
 assert.equal(hash('tools/fixtures/c1-watch-exposure-copy-source-seams.json'),'52fd053f023f426eb6cf34c30e4c81d43cc616c3f163358f38a67adc852d5fec');
 assert.deepEqual(Object.keys(fixture.files),['components/C1AccountOpportunitiesView.js','lib/c1CurrentWatchSelection.js','lib/c1WatchDetails.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
- const source=require('./c1-watch-download-cleanup-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),prior=inverse.restore(file,source);
+ const source=require('./c1-watch-download-cleanup-seams.cjs').restore(file,require('./c1-watch-entry-blocker-seams.cjs').restore(file,fs.readFileSync(file,'utf8'))),prior=inverse.restore(file,source);
  assert.equal(inverse.blob(source),patch.afterHash);assert.equal(inverse.blob(prior),patch.beforeHash);
  assert.equal(inverse.restore(file,prior),prior,'Exact inverse is idempotent');
  const unknown=source+'\n/* unreviewed source retains its own identity */\n';
