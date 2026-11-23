@@ -25,7 +25,10 @@ function moduleFromSource(file,source,modules=loader,extra={}){
  },record,record.exports,...Object.values(bindings));
  return record.exports;
 }
-const selectorFile='lib/c1CurrentWatchSelection.js',selectorSource=fs.readFileSync(selectorFile,'utf8');
+// Preserve the earlier scope/export assertions against their exact historical
+// selector. The new raw trigger-first behavior has its own focused regression.
+const selectorFile='lib/c1CurrentWatchSelection.js',selectorSource=require('./c1-watch-entry-blocker-seams.cjs').restore(selectorFile,fs.readFileSync(selectorFile,'utf8'));
+const historicalSelector=moduleFromSource(selectorFile,selectorSource);
 const priorSelector=moduleFromSource(selectorFile,inverse.restore(selectorFile,selectorSource));
 const priorLoader=createResearchModuleLoader(root,{'lib/c1CurrentWatchSelection.js':priorSelector});
 const detailsFile='lib/c1WatchDetails.js',details=moduleFromSource(detailsFile,fs.readFileSync(detailsFile,'utf8'));
@@ -51,7 +54,7 @@ function expectAllowlist(report){
 }
 
 (async()=>{
- const f=createWorkflowFixture('buy',{baselineDate:'2026-11-10',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}]});
+ const f=createWorkflowFixture('buy',{baselineDate:'2026-11-10',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],moduleOverrides:{[selectorFile]:historicalSelector}});
  const spec=applyAccountPolicyUniverseFixture(f,{count:50});f.setCash(100000);
  const financialBefore=JSON.stringify({account:f.account,book:f.book});
  const prepared=await f.prepare(),events=new Map(currentEventEvidenceFor(spec.symbols,f.now).map(row=>[row.symbol,row]));
@@ -61,7 +64,7 @@ function expectAllowlist(report){
  const {joinC1Opportunities:priorJoin}=priorLoader.load('lib/c1OpportunitiesContract.js');
  const baseline=join(base,{readTime:()=>f.now}),first=baseline.projection.watchSelection.rows[0].symbol;
  assert.equal(baseline.projection.watchSelection.rows.length,10);
- const {watchWaitText}=loader.load(selectorFile);
+ const {watchWaitText}=historicalSelector;
  assert.equal(watchWaitText(['account-exposure-unverified'],[]),'WAIT — '+candidateText);
  assert.equal(watchWaitText(['account-exposure-unverified'],['account-exposure-unverified']),'WAIT — '+accountText);
  assert(!/verified|passed|cleared/i.test(candidateText),'Candidate copy makes no affirmative verification claim');

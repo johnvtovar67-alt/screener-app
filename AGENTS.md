@@ -1,5 +1,17 @@
 # C1 operating instructions
 
+## Watch entry-blocker follow-up — November 23, 2026
+The owner reports that every Watch row now says “This stock's opening price or
+purchase limit checks are incomplete.” Continue the existing authorized warning
+repair: when verified recent momentum already blocks entry, explain that known
+block instead of the generic secondary per-stock purchase-check sentence.
+Planner opening prices can be unrequested for these non-entry monitors. Keep
+all raw diagnostics, actual purchase restrictions, explicit shared account
+failures and incomplete evidence for qualified or unknown-entry candidates.
+No ranking, financial record, trading rule, provider or job changes. The removed
+download button stays removed. See
+`docs/operations/c1-watch-entry-blocker-copy-20261123.md`.
+
 ## Owner-requested diagnostic-control cleanup — November 23, 2026
 After the Watch diagnosis, the owner asks “So we are good and this is done? Are
 you going to remove the download button from the screener?” Remove the
