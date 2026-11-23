@@ -30,7 +30,10 @@ const priorSelector=moduleFromSource(selectorFile,inverse.restore(selectorFile,s
 const priorLoader=createResearchModuleLoader(root,{'lib/c1CurrentWatchSelection.js':priorSelector});
 const detailsFile='lib/c1WatchDetails.js',details=moduleFromSource(detailsFile,fs.readFileSync(detailsFile,'utf8'));
 const viewModules={load:(request,from)=>request==='../lib/c1WatchDetails'?details:loader.load(request,from)};
-const {renderC1AccountOpportunitiesView:render}=moduleFromSource('components/C1AccountOpportunitiesView.js',fs.readFileSync('components/C1AccountOpportunitiesView.js','utf8'),viewModules);
+// Preserve the prior, explicitly temporary download's historical coverage.
+// The new raw UI/control absence is checked by c1-watch-download-cleanup-regression.
+const viewFile='components/C1AccountOpportunitiesView.js';
+const {renderC1AccountOpportunitiesView:render}=moduleFromSource(viewFile,require('./c1-watch-download-cleanup-seams.cjs').restore(viewFile,fs.readFileSync(viewFile,'utf8')),viewModules);
 function elements(node){if(Array.isArray(node))return node.flatMap(elements);if(!React.isValidElement(node))return [];return [node,...elements(node.props.children)];}
 function text(node){if(Array.isArray(node))return node.map(text).join('');if(React.isValidElement(node))return text(node.props.children);return node==null||typeof node==='boolean'?'':String(node);}
 const names=selection=>selection.rows.map(row=>row.symbol);
