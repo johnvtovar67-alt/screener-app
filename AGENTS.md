@@ -3,6 +3,9 @@
 ## Owner-reported Watch verification warning — November 23, 2026
 The owner asks why Watch names all say “Current account exposure unverified,”
 whether it prevents recommendations, and follows up “What about the watchlist?”
+The owner subsequently explicitly approves “Restore the download button.” This
+supersedes only the earlier removal of that control; keep universe figures off
+the normal Watch display.
 Correct the reproduced display conflation: a per-candidate opening-price or
 exposure block must not claim the whole account is unverified. Preserve the
 actual account-wide warning when its explicit shared flag is false. Restore

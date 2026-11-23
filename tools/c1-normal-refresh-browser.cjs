@@ -158,7 +158,9 @@ async function main(){
      assert.deepEqual(watch.map(row=>row.symbol),Array.from({length:10},(_,index)=>'X'+(index+15)),'Actual Watch displays only the current ten highest-ranked eligible candidates');
      assert.deepEqual(watch.map(row=>row.rank),Array.from({length:10},(_,index)=>index+1),'Watch is numbered consecutively strongest first, independently of gaps in source momentum ranks');
      const watchText=await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`);
-     assert.match(watchText,/Up to 10 stocks to watch.*1 is strongest/);assert(!/universe|source candidates|monitoring candidates|Download Watch details/i.test(watchText),'Watch hides diagnostic counts and download control');
+     assert.match(watchText,/Up to 10 stocks to watch.*1 is strongest/);assert(!/universe|source candidates|monitoring candidates/i.test(watchText),'Watch keeps universe and diagnostic counts off the normal display');
+     const watchDownloads=await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] button')].filter(button=>button.textContent==='Download Watch details').map(button=>({type:button.type,disabled:button.disabled,visible:button.offsetParent!==null}))`);
+     assert.deepEqual(watchDownloads,[{type:'button',disabled:false,visible:true}],'The owner-approved read-only details button is visible exactly once at each width');
      assert(!watchText.includes('MRNA'),'A known volatility disqualification is excluded from Watch');
     }
     assert(!purchaseCards.some(t=>t.includes('MRNA')&&/Buy \d+ shares/.test(t)),'A weak historical leader is not an authorized purchase');
