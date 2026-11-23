@@ -160,7 +160,7 @@ async function main(){
      const watchText=await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`);
      assert.match(watchText,/Up to 10 stocks to watch.*1 is strongest/);assert(!/universe|source candidates|monitoring candidates/i.test(watchText),'Watch keeps universe and diagnostic counts off the normal display');
      const watchDownloads=await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] button')].filter(button=>button.textContent==='Download Watch details').map(button=>({type:button.type,disabled:button.disabled,visible:button.offsetParent!==null}))`);
-     assert.deepEqual(watchDownloads,[{type:'button',disabled:false,visible:true}],'The owner-approved read-only details button is visible exactly once at each width');
+     assert.deepEqual(watchDownloads,[],'The temporary diagnostic download control is absent at each width');
      assert(!watchText.includes('MRNA'),'A known volatility disqualification is excluded from Watch');
     }
     assert(!purchaseCards.some(t=>t.includes('MRNA')&&/Buy \d+ shares/.test(t)),'A weak historical leader is not an authorized purchase');
@@ -187,18 +187,18 @@ async function main(){
     assert.equal(closedWatch.length,10,'Closed market cannot erase valid dated monitors: '+await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`));
     assert(!(await js(`document.querySelector('[aria-label="C1 account opportunities"]').innerText`)).match(/Buy \d+ shares/),'Dated monitors cannot create purchase quantities');
     assert.deepEqual(await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] tbody tr')].map(row=>Number(row.querySelector('td').textContent))`),Array.from({length:10},(_,index)=>index+1),'Closed-market monitoring remains numbered 1 through 10');
-    assert.equal(await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] button')].filter(button=>button.textContent==='Download Watch details'&&button.type==='button'&&!button.disabled&&button.offsetParent!==null).length`),1,'The approved read-only report remains available while the market is closed');
+    assert.equal(await js(`[...document.querySelectorAll('[aria-label="Watch opportunities"] button')].filter(button=>button.textContent==='Download Watch details').length`),0,'The temporary download control is absent while the market is closed');
     assert(!/universe|source candidates|monitoring candidates/i.test(await js(`document.querySelector('[aria-label="Watch opportunities"]').innerText`)),'No universe counts on mobile');
-    assert.deepEqual(closedWatch,Array.from({length:10},(_,index)=>'X'+(index+12)),'Restoring the read-only report preserves the same source-ranked candidates');
+    assert.deepEqual(closedWatch,Array.from({length:10},(_,index)=>'X'+(index+12)),'Removing the temporary report control preserves the same source-ranked candidates');
     await shot('watch-monitoring-closed-mobile');
-    trace.cases.push({case:'dated-watch-closed-market-clean-display',watchRows:10,marketOpen:false,downloadControl:true,authorizedBuys:0,accountRecordIdentical:true});
+    trace.cases.push({case:'dated-watch-closed-market-clean-display',watchRows:10,marketOpen:false,downloadControl:false,authorizedBuys:0,accountRecordIdentical:true});
    }
    assert.equal(JSON.stringify(api.fixture.account),baseline,'Read and opening checks cannot rewrite account economics');
    assert.equal(api.fixture.writes,0);assert.deepEqual(trace.browserErrors,[]);
    assert(requests.some(r=>r.path==='/api/c1-account'&&r.method==='GET'&&r.finished));
    assert(requests.some(r=>r.operation==='prepare-execution'&&r.finished),'Lower-ranked purchases came through the real account opening handler');
    trace.status='PASS';trace.cases.push({case:accountPolicy?'account-policy-v2':sourceGate?'source-eligibility':'qualified-selection',checkedSymbols:accountPolicy?['X12','X13','X14']:sourceGate?['BBB','DDD','EEE']:['JJJ','KKK','LLL'],watchLeadersRetained:!accountPolicy,...(accountPolicy?{sourceUniverse:50,eligibleWatch:23,displayedWatch:10,watchSymbols:Array.from({length:10},(_,index)=>'X'+(index+15)),watchPositions:Array.from({length:10},(_,index)=>index+1),sourceMomentumRanks:Array.from({length:10},(_,index)=>index+28)}:{}),widths:[1440,390],accountRecordIdentical:true});
-   console.log(accountPolicy?'PASS: actual Home/App scans 50 names, preserves checked purchases, displays at most ten dated monitors through event/opening/closed-market waits, with consecutive Watch positions, the approved read-only download and no universe figures on mobile; no account mutation.':sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
+   console.log(accountPolicy?'PASS: actual Home/App scans 50 names, preserves checked purchases, displays at most ten dated monitors through event/opening/closed-market waits, with consecutive Watch positions and no temporary download control or universe figures on mobile; no account mutation.':sourceGate?'PASS: actual Home/App excludes high-volatility leader and publishes the eligible sector replacement with checked quantities on desktop/mobile; no account mutation.':'PASS: actual Home/App publishes newly qualified ranks 10–12 with checked quantities on desktop/mobile; no account mutation.');return;
   }
   if(!reliability&&!actualScreen){
    assert(requests.some(r=>r.path==='/api/portfolio-sync'&&r.method==='GET'&&r.finished),'The current synced portfolio loaded');

@@ -1,5 +1,15 @@
 # C1 operating instructions
 
+## Owner-requested diagnostic-control cleanup — November 23, 2026
+After the Watch diagnosis, the owner asks “So we are good and this is done? Are
+you going to remove the download button from the screener?” Remove the
+temporarily restored Watch download import/control, returning the normal Watch
+display to its earlier clean presentation. Keep the corrected account-wide vs
+stock-specific explanations and every trading safeguard. Do not change ranking,
+selection, quantities, account records, timers or any financial data. Historical
+download coverage remains separate from the new raw control-absence check.
+See `docs/operations/c1-watch-download-cleanup-20261123.md`.
+
 ## Owner-reported Watch verification warning — November 23, 2026
 The owner asks why Watch names all say “Current account exposure unverified,”
 whether it prevents recommendations, and follows up “What about the watchlist?”
