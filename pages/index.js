@@ -138,6 +138,36 @@ function winnerHistoryFor(p={}){
   return{};
 }
 
+function c1ApprovedRepairReceipt(view){
+  const receipt=view?.approvedAccountRepairReceipt;
+  return receipt?.contract==='c1-approved-account-repair-receipt-v1'&&receipt.status==='applied'&&
+    receipt.authorizationId==='c1-owner-approved-repair-20261125'&&/^[a-f0-9]{64}$/.test(receipt.reviewId||'')&&
+    /^[a-f0-9]{64}$/.test(receipt.attributionProposalId||'')&&receipt.originalRecordsPreserved===true&&
+    Number.isSafeInteger(receipt.revision)&&receipt.revision===view.decision?.revision&&Array.isArray(receipt.basisCorrections)&&
+    receipt.basisCorrections.length<=20&&receipt.basisCorrections.every(row=>row&&typeof row.symbol==='string'&&
+      /^[A-Z][A-Z0-9.-]{0,15}$/.test(row.symbol)&&Number.isSafeInteger(row.remainingShares)&&row.remainingShares>=0&&
+      Number.isFinite(row.basisBefore)&&row.basisBefore>=0&&Number.isFinite(row.basisAfter)&&row.basisAfter>=0)?receipt:null;
+}
+function c1ApprovedPortfolioBasis(portfolio,view){
+  const receipt=c1ApprovedRepairReceipt(view);if(!receipt||!Array.isArray(portfolio))return portfolio;
+  const canonical=mergeC1AccountPortfolio(portfolio,view.decision),corrections=receipt.basisCorrections;
+  let changed=false;
+  const rows=portfolio.map(position=>{
+    if(position.role!=='Swing'||CASH.includes(position.symbol))return position;
+    const matches=corrections.filter(row=>row.symbol===position.symbol),held=canonical.filter(row=>row.role==='Swing'&&row.symbol===position.symbol);
+    if(matches.length!==1||held.length!==1)return position;
+    const correction=matches[0],recorded=held[0],shares=Number(position.shares);
+    if(!Number.isSafeInteger(correction.remainingShares)||correction.remainingShares<=0||shares!==correction.remainingShares||recorded.shares!==shares||
+      !Number.isFinite(correction.basisBefore)||correction.basisBefore<0||!Number.isFinite(correction.basisAfter)||correction.basisAfter<=0||
+      !Number.isFinite(recorded.avgCost)||recorded.avgCost<=0||Math.abs(recorded.avgCost-correction.basisAfter/shares)>1e-6||
+      !Number.isFinite(Number(position.avgCost)))return position;
+    if(Number(position.avgCost)===recorded.avgCost)return position;
+    if(Math.abs(Number(position.avgCost)-correction.basisBefore/shares)>.0200001)return position;
+    changed=true;return {...position,avgCost:recorded.avgCost};
+  });
+  return changed?rows:portfolio;
+}
+
 export default function Home(){
   const[tab,setTab]=useState("opportunities"),[stocks,setStocks]=useState([]),[themeStocks,setThemeStocks]=useState([]),[selectedTheme,setSelectedTheme]=useState("ai_compute");
   const[portfolio,setPortfolio]=useState([]),[analyzedRows,setResults]=useState([]);
@@ -191,6 +221,21 @@ export default function Home(){
         throw new Error(recovered?'Your saved account was reloaded. Please retry the change.':r.status===409&&body?.operation==='update-brokerage-cash'?'The saved account changed. Reload before updating brokerage cash.':d.error||"C1 account refresh failed.");
       }
       observeStopOwnership(d.decision);
+      if(c1ApprovedRepairReceipt(d)){
+        await syncQueue.current;
+        if(requestId!==accountRequestId.current||localStorage.getItem(SYNC_KEY)!==key)return;
+        if(!syncDirty.current){
+          if(syncRevision.current.key!==key||!syncRevision.current.etag)await pullCloudPortfolio(key,[],true,d);
+          if(requestId!==accountRequestId.current||localStorage.getItem(SYNC_KEY)!==key)return;
+          if(syncRevision.current.key===key&&syncRevision.current.etag&&!syncDirty.current){
+            const entered=JSON.parse(localStorage.getItem(KEY)||'[]'),resolved=c1ApprovedPortfolioBasis(entered,d);
+            if(resolved!==entered){
+              localStorage.setItem(KEY,JSON.stringify(resolved));publishPortfolio(resolved);
+              if(!await pushCloudPortfolio(resolved,key))setAccountError('The approved account repair is saved. Portfolio synchronization is pending.');
+            }
+          }else setAccountError('The approved account repair is saved. Portfolio synchronization is pending.');
+        }
+      }
       if(d.decision?.nonCashAdoptions?.length){
         const entered=JSON.parse(localStorage.getItem(KEY)||'[]'),resolved=resolveC1NonCashPortfolio(entered,d.decision);
         if(JSON.stringify(entered)!==JSON.stringify(resolved)){localStorage.setItem(KEY,JSON.stringify(resolved));publishPortfolio(resolved);}
@@ -444,8 +489,9 @@ export default function Home(){
   useEffect(()=>{const live=()=>{void handleReload();};window.addEventListener("screener-request-live-refresh",live);return()=>window.removeEventListener("screener-request-live-refresh",live);},[tab,selectedTheme,portfolio]);
   useEffect(()=>{try{window.dispatchEvent(new CustomEvent('c1-refresh-busy',{detail:Boolean(loading||reloading||accountBusy||checking)}));}catch{}},[loading,reloading,accountBusy,checking]);
   useEffect(()=>{if(!loading&&!reloading&&!accountBusy&&accountResponseVerified&&accountView)
-    reportC1PublishedJourney(accountView,{generation:screenRequestId.current,paused:Boolean(accountView.openingError||feedHealth.status!=='healthy'||accountView.decision?.current!==true)});
-  },[loading,reloading,accountBusy,accountResponseVerified,accountView,feedHealth.status]);
+    reportC1PublishedJourney(accountView,{generation:screenRequestId.current,paused:Boolean(accountView.openingError||feedHealth.status!=='healthy'||accountView.decision?.current!==true||
+      c1ApprovedRepairReceipt(accountView)&&(c1AccountDifferences(accountView.decision,portfolio).length>0||syncDirty.current||syncStatus!=='Synced'))});
+  },[loading,reloading,accountBusy,accountResponseVerified,accountView,feedHealth.status,portfolio,syncStatus]);
 
   async function performanceHistory(){
     try{const r=await fetch('/api/performance',{cache:'no-store'}),d=await r.json();if(r.ok&&d.persistentStorage!==false&&Array.isArray(d.records))return{records:d.records,available:true};}catch{}
@@ -548,7 +594,7 @@ export default function Home(){
     });
     syncQueue.current=task.then(()=>undefined,()=>undefined);return task;
   }
-  async function pullCloudPortfolio(key,fallback=[],quiet=false){
+  async function pullCloudPortfolio(key,fallback=[],quiet=false,repairView=accountView){
     const requestId=++syncPullId.current,signature=localStorage.getItem(KEY)||'[]';
     try{
       if(!quiet)setSyncStatus('Loading cloud portfolio…');
@@ -556,11 +602,13 @@ export default function Home(){
       if(requestId!==syncPullId.current||(localStorage.getItem(KEY)||'[]')!==signature)return false;
       if(r.status===404){if(quiet&&fallback.length){await pushCloudPortfolio(fallback,key);return true;}throw new Error('No portfolio found for this sync key.');}
       if(!r.ok)throw new Error(d.error||'Sync failed');
-      const rows=resolveC1NonCashPortfolio(Array.isArray(d.portfolio)?d.portfolio:[],accountView?.decision);
+      if(c1ApprovedRepairReceipt(repairView)&&!(typeof d.etag==='string'&&/^"[^"\r\n]+"$/.test(d.etag)))throw new Error('The approved repair is waiting for the saved portfolio identity.');
+      const originalRows=resolveC1NonCashPortfolio(Array.isArray(d.portfolio)?d.portfolio:[],accountView?.decision),rows=c1ApprovedPortfolioBasis(originalRows,repairView);
       if(signature!==JSON.stringify(rows))localStorage.setItem('stock_screener_portfolio_before_sync_v1',JSON.stringify({savedAt:new Date().toISOString(),portfolio:JSON.parse(signature)}));
       setPortfolio(rows);localStorage.setItem(KEY,JSON.stringify(rows));
       if(d.c1ControlState&&typeof d.c1ControlState==='object')localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(d.c1ControlState));
-      syncRevision.current={key,etag:d.etag};syncDirty.current=false;setSyncStatus('Synced');return true;
+      syncRevision.current={key,etag:d.etag};syncDirty.current=false;setSyncStatus('Synced');
+      return rows!==originalRows?await pushCloudPortfolio(rows,key):true;
     }catch(e){if(requestId===syncPullId.current)setSyncStatus(`Sync error: ${e.message}`);return false;}
   }
   async function refreshEnteredPortfolio(){
@@ -947,7 +995,7 @@ export default function Home(){
       <C1NonCashAdoption decision={accountView?.decision} portfolio={portfolio} onReview={reviewMRNAAdoption} onConfirm={confirmMRNAAdoption} busy={accountBusy||reloading||loading} ready={syncStatus==='Synced'&&!syncDirty.current}/>
       <C1PositionContextImport ready={syncStatus==='Synced'&&!reloading&&!loading&&!accountBusy} decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext} onRefresh={recoverC1Account} refreshing={accountBusy}/>
       {accountView?.intradaySession&&<C1IntradayActivity session={accountView.intradaySession} onSave={saveC1Intraday} onCorrectDetails={correctC1IntradayDetails} onCorrectAttribution={correctC1SaleAllocation} busy={accountBusy}/>}
-      {accountView?.decision&&<C1BrokerCashReview decision={accountView.decision} onReview={reviewBrokerCashHistory} onConfirm={confirmBrokerCashHistory} busy={accountBusy||reloading||loading} ready={syncStatus==='Synced'&&!syncDirty.current&&!reloading&&!loading}/>}
+      {accountView?.decision&&<C1BrokerCashReview applied={Boolean(c1ApprovedRepairReceipt(accountView))} decision={accountView.decision} onReview={reviewBrokerCashHistory} onConfirm={confirmBrokerCashHistory} busy={accountBusy||reloading||loading} ready={syncStatus==='Synced'&&!syncDirty.current&&!reloading&&!loading}/>}
       {accountView?.retainedTradeSessions?.length>0&&<details><summary>Previously issued C1 buys awaiting recording review</summary><p>These dated entries are retained for completed-trade accounting. They do not authorize a purchase now.</p>{accountView.retainedTradeSessions.map(session=><C1IntradayActivity key={session.date} session={session} onSave={saveC1Intraday} onCorrectDetails={correctC1IntradayDetails} busy={accountBusy}/>)}</details>}
       {accountView?.intradaySession&&accountView.openingError&&<p role="status">You can record an already filled trade above. New purchase authorization is paused: {accountView.openingError}</p>}
       {accountView&&!accountView.intradaySession&&<section className="card" aria-label="Completed trade entry status"><h3>Record a completed trade</h3><p role="status">{accountView.openingError||(!accountView.decision?.current?'C1 account analysis is not current. Refresh it to load the trade-entry form.':accountView.pendingSession?'Use Record completed trades below for the completed session.':'The current-session trade plan is unavailable. Retry during regular market hours.')}</p><button disabled={accountBusy||loading||reloading} onClick={recoverC1Account}>{accountBusy?'Checking trade entry…':'Retry trade entry'}</button>{accountError&&<p role="alert">{accountError}</p>}</section>}

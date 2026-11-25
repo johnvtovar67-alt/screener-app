@@ -8,6 +8,7 @@ function client(fetch){
   syncQueue:{current:Promise.resolve()},syncRevision:{current:{key:'synthetic-key',etag:'v1'}},syncPullId:{current:0},syncWriteId:{current:0},syncDirty:{current:false},accountRequestId:{current:0},
   localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v),removeItem:k=>saved.delete(k)},
   setSyncStatus:v=>state.status=v,setPortfolio:v=>state.rows=v,setAccountView(){},setAccountAbsent(){},setAccountError(){},setSyncKey(){},setSyncInput(){}};
+ require('./c1-approved-repair-client-bindings.cjs').bindC1ApprovedRepairClientHelpers(box,page);
  vm.createContext(box);vm.runInContext(source+disconnect+'\nthis.push=pushCloudPortfolio;this.pull=pullCloudPortfolio;this.refresh=refreshEnteredPortfolio;this.disconnect=disconnectSync;',box);
  return {box,state,saved};
 }
