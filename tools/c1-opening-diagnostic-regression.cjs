@@ -55,8 +55,12 @@ for(const [,serialized] of logs){const event=JSON.parse(serialized);
  for(const secret of ['X20','123456789','PRIVATE_ID_SENTINEL','PRIVATE_VERSION_SENTINEL','ANOTHER_PRIVATE_SENTINEL','PRIVATE_SYNC_SENTINEL','PRIVATE_ACCOUNT_SENTINEL'])assert(!serialized.includes(secret),'No symbol/value/account evidence enters telemetry');}
 async function main(){
  const f=createWorkflowFixture('buy',{baselineDate:'2026-11-12'});require('./fixtures/c1-account-policy-universe.cjs').applyAccountPolicyUniverseFixture(f,{count:50});f.setCash(100000);
- const oldExecution=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPriceReview.js':previous,'lib/c1OpeningPlanComparison.js':baselineComparison}).load('lib/c1AccountExecutionView.js');
- const newExecution=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPriceReview.js':current,'lib/c1OpeningPlanComparison.js':baselineComparison}).load('lib/c1AccountExecutionView.js');
+ // Both exact historical branches retain their own receipt validator after
+ // that shared browser helper's behavior-preserving module extraction.
+ const oldExecution=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPriceReview.js':previous,'lib/c1OpeningPlanComparison.js':baselineComparison,
+  'lib/c1OpeningPriceBasis.js':{verifiedC1OpeningPriceBasis:previous.verifiedC1OpeningPriceBasis}}).load('lib/c1AccountExecutionView.js');
+ const newExecution=createResearchModuleLoader(process.cwd(),{'lib/c1OpeningPriceReview.js':current,'lib/c1OpeningPlanComparison.js':baselineComparison,
+  'lib/c1OpeningPriceBasis.js':{verifiedC1OpeningPriceBasis:current.verifiedC1OpeningPriceBasis}}).load('lib/c1AccountExecutionView.js');
  const originalBytes=JSON.stringify({account:f.account,book:f.book});
  const opening=(symbol,close)=>{const value=f.opening();if(!symbol)return value;const bar=f.sessions[220].prices.find(row=>row.symbol===symbol);
   value.receipt.previousAdjustedClosesUnchanged=false;value.priceBasisRevisions=[{symbol,savedClose:bar.close,rechecked:true,observedBar:{...bar,close,low:Math.min(bar.low,close)}}];return value;};

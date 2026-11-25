@@ -22,6 +22,9 @@ async function run({legacy=false,symbol='X20',value=99,revision=true}={}){
  const comp=legacy?oldComparator:comparison;
  overrides['lib/c1OpeningPlanComparison.js']={...comp,compareC1OpeningPlans:(a,b,o)=>{const result=comp.compareC1OpeningPlans(a,b,o);pairs.push({a:clone(a),b:clone(b),options:clone(o),equivalent:result.equivalent});return result;}};
  if(legacy)overrides['lib/c1OpeningPriceReview.js']=Object.fromEntries(['reviewC1OpeningPriceRevisions','c1OpeningRevisionFailure','c1OpeningRevisionSources','verifiedC1OpeningPriceBasis'].map(name=>[name,(...args)=>review[name](...args)]));
+ // The shared browser validator moved modules without changing its body.
+ // A historical execution must still use its exact historical validator.
+ if(legacy)overrides['lib/c1OpeningPriceBasis.js']={verifiedC1OpeningPriceBasis:(...args)=>review.verifiedC1OpeningPriceBasis(...args)};
  const f=createWorkflowFixture('buy',{baselineDate:'2026-11-12',moduleOverrides:overrides});
  review=legacy?loadSource('lib/c1OpeningPriceReview.js',oldReviewSource,f.loader):f.loader.load('lib/c1OpeningPriceReview.js');
  require('./fixtures/c1-account-policy-universe.cjs').applyAccountPolicyUniverseFixture(f,{count:50});f.setCash(100000);
