@@ -37,7 +37,7 @@ function fixture(){
  const imports={},file=path.resolve('pages/api/c1-account.js');
  const never=()=>{throw Error('Unexpected external access');};
  const source=fs.readFileSync(file,'utf8').replace(/import\s*{([^}]+)}\s*from\s*['"]([^'"]+)['"];?/g,(_,names,request)=>{
-  const values=request.startsWith('node:')?require(request):request.endsWith('c1ApiErrors')?errors:request.endsWith('c1SaleAttributionRecovery')?loader.load('lib/c1SaleAttributionRecovery.js'):
+  const values=request.startsWith('node:')?require(request):request.endsWith('c1ApiErrors')?errors:request.endsWith('c1SaleAttributionRecovery')?loader.load('lib/c1SaleAttributionRecovery.js'):request.endsWith('c1SaleAttributionHold')?loader.load('lib/c1SaleAttributionHold.js'):
    request.endsWith('c1AccountSave')?saver:request.endsWith('c1OwnerAccess')?require('./c1-owner-access-extraction.cjs').ownerAccessFixture():request.endsWith('c1AccountOperationalStatus')?{...operational,
     logC1AccountOperationalStatus:(view,context)=>{
      if(state.observerFailure)throw Error(secret);

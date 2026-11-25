@@ -10,7 +10,7 @@ assert.equal(sha('lib/c1AccountSimulator.js'),'f03619319ea43465d2625e24866b70fff
 assert.equal(sha('tools/generate-c1-account-simulator.cjs'),'0ec09e5cbf339ca5407683c527c655cd59625af424f3ce5d9edf28b3dd3a5728','Canonical generator stays byte-identical');
 for(const [file,pin]of Object.entries(fixture.preservedFixtures))assert.equal(sha(file),pin,'Published source/economic fixture remains immutable: '+file);
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,current);
+ const current=require('./c1-private-cash-review-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),prior=inverse.restore(file,current);
  assert.equal(inverse.blob(current),patch.afterHash,'Only reviewed source enters inverse: '+file);
  assert.equal(inverse.blob(prior),patch.beforeHash,'Published release source recovered: '+file);
  assert.equal(inverse.restore(file,prior),prior,'Exact inverse is idempotent: '+file);

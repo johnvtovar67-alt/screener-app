@@ -1,4 +1,5 @@
-import {useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
+import {C1_BROKER_CASH_RECOVERY_PREFIX,loadC1BrokerCashRecovery,markC1BrokerCashRecoveryAttempt,updateC1BrokerCashRecovery,clearC1BrokerCashRecovery} from '../lib/c1BrokerCashRecovery';
 
 export const C1_BROKER_STATEMENT_MAX_BYTES=500*1024;
 const money=value=>Number.isFinite(value)?value.toLocaleString('en-US',{style:'currency',currency:'USD'}):'Unavailable';
@@ -8,11 +9,12 @@ const amount=rows=>(rows||[]).filter(row=>row.shares>0).map(row=>`${row.shares} 
 const byteLength=value=>new TextEncoder().encode(value).byteLength;
 const cashEventName={journal:'Transfer / journal','core-purchase':'Core purchase','core-sale':'Core sale',interest:'Interest',fee:'Fee'};
 
-export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=false}){
+export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=false,ready=false}){
  const [statementText,setStatementText]=useState(''),[fileName,setFileName]=useState(''),[reviewState,setReviewState]=useState(null);
  const [confirmedId,setConfirmedId]=useState(null),[attributionId,setAttributionId]=useState(null),[invalidId,setInvalidId]=useState(null);
  const [working,setWorking]=useState(''),[error,setError]=useState(''),[receipt,setReceipt]=useState(null);
  const generation=useRef(0),currentRevision=useRef(decision?.revision),operation=useRef(false);
+ const [recovery,setRecovery]=useState(null);
  currentRevision.current=decision?.revision;
  const review=reviewState?.proposal,revision=decision?.revision,accountReady=Number.isSafeInteger(revision)&&revision>=0;
  const valid=Boolean(review&&reviewState.revision===revision&&reviewState.statementText===statementText&&reviewState.generation===generation.current&&invalidId!==review.reviewId);
@@ -21,8 +23,25 @@ export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=fal
  const saved=Boolean(review&&receipt?.reviewId===review.reviewId),blocked=busy||Boolean(working);
  const canConfirm=Boolean(valid&&!saved&&review.financialValid!==false&&review.remainingRoundedBalanceAdjustment?.allowed===true&&confirmed&&(!requiresAttribution||attributionConfirmed)&&onConfirm&&!blocked);
 
+ useEffect(()=>{
+  const restore=()=>{try{const draft=loadC1BrokerCashRecovery({location:window.location,history:window.history,storage:window.sessionStorage});
+   if(draft){generation.current++;setStatementText(draft.source.statementText);setRecovery(draft);setReviewState(null);setConfirmedId(null);setAttributionId(null);setReceipt(null);
+    setError(draft.storageUnavailable?'Your statement is loaded. Keep this page open and select Review statement; the browser could not retain the draft.':'');}}
+  catch{setError('The statement recovery draft could not be restored. Keep this page open if your statement is already shown.');}};
+  const changed=()=>{if(window.location.hash.startsWith(C1_BROKER_CASH_RECOVERY_PREFIX))restore();};
+  restore();window.addEventListener('hashchange',changed);
+  return()=>window.removeEventListener('hashchange',changed);
+ },[]);
+ useEffect(()=>{
+  if(!recovery||recovery.attempted||recovery.expired||!ready||busy||!accountReady||operation.current||!onReview)return;
+  try{if(markC1BrokerCashRecoveryAttempt(window.sessionStorage,recovery)){
+   setRecovery({...recovery,attempted:true});void preview({preventDefault(){}});
+  }}catch{setError('Automatic review could not retain its attempt marker. Your loaded statement is ready for an explicit review.');}
+ },[recovery,ready,busy,revision,onReview,working]);
+
  function edit(value,name=''){
   generation.current++;setStatementText(value);setFileName(name);setConfirmedId(null);setAttributionId(null);setError('');setReceipt(null);
+  if(recovery)try{setRecovery(updateC1BrokerCashRecovery(window.sessionStorage,recovery,value));}catch{setError('Keep this page open; the browser could not retain the edited statement.');}
  }
  async function upload(event){
   const file=event.target.files?.[0];event.target.value='';
@@ -45,7 +64,8 @@ export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=fal
   const sourceText=statementText,sourceRevision=revision,sourceGeneration=generation.current;
   operation.current=true;setWorking('review');setConfirmedId(null);setAttributionId(null);setReceipt(null);
   try{
-   const proposal=await onReview(sourceText,sourceRevision);
+   if(recovery&&!recovery.attempted){try{markC1BrokerCashRecoveryAttempt(window.sessionStorage,recovery);}catch{}setRecovery({...recovery,attempted:true});}
+   const proposal=await onReview(sourceText,sourceRevision,...(recovery?[recovery.source.targetAccountHash]:[]));
    if(!proposal||typeof proposal.reviewId!=='string'||!proposal.reviewId||proposal.revision!==sourceRevision)throw new Error('C1 did not return a matching statement review. Reload the saved account before retrying.');
    if(generation.current!==sourceGeneration||currentRevision.current!==sourceRevision){setError('The statement or account changed during review. Review the current text again.');return;}
    setReviewState({proposal,statementText:sourceText,revision:sourceRevision,generation:sourceGeneration});setInvalidId(null);
@@ -57,9 +77,11 @@ export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=fal
   const source=reviewState;
   operation.current=true;setWorking('confirm');setError('');
   try{
-   const result=await onConfirm({reviewId:review.reviewId,statementText:source.statementText,expectedRevision:source.revision,confirmed:true,attributionConfirmed:requiresAttribution&&attributionConfirmed});
+   const result=await onConfirm({reviewId:review.reviewId,statementText:source.statementText,expectedRevision:source.revision,confirmed:true,attributionConfirmed:requiresAttribution&&attributionConfirmed,
+    ...(recovery?{targetAccountHash:recovery.source.targetAccountHash}:{})});
    if(result?.reviewId!==review.reviewId)throw new Error('C1 did not confirm this statement correction. Reload the saved account before retrying.');
    setReceipt({reviewId:result.reviewId,warning:result.warning||''});setConfirmedId(null);setAttributionId(null);
+   if(recovery)try{clearC1BrokerCashRecovery(window.sessionStorage,recovery);setRecovery(null);}catch{} // A saved receipt is already established; never repeat its write.
   }catch(failure){setInvalidId(review.reviewId);setConfirmedId(null);setAttributionId(null);setError((failure.message||'The save result is unconfirmed.')+' Your statement text is retained. Reload the saved account and review again before retrying a save.');}
   finally{operation.current=false;setWorking('');}
  }
@@ -70,8 +92,9 @@ export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=fal
   <p>Current Schwab cash available to trade: <strong>{money(decision?.brokerageCash)}</strong>.</p>
   {decision?.brokerageCashObservedAt&&<p className="sub">Broker balance observed {new Date(decision.brokerageCashObservedAt).toLocaleString()} · {decision.brokerageCashCurrent?'Current':'Update required'}</p>}
   <p>Use your Schwab activity export to review transfers, Core trades, income, fees and C1 trade cash. C1 has no live Schwab connection. Review first, then confirm the accounting correction. No new broker trade is placed or recorded.</p>
+  {recovery&&<p role="status">Your previously supplied statement is loaded. No upload or retyping is needed.{recovery.expired?' Select Review statement to check the current account.':''}</p>}
   <form onSubmit={preview}>
-   <label>Private Schwab statement (CSV or TSV, up to 500 KB)<input aria-label="Private Schwab statement file" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" disabled={blocked||!accountReady} onChange={upload}/></label>
+   {!recovery&&<label>Private Schwab statement (CSV or TSV, up to 500 KB)<input aria-label="Private Schwab statement file" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" disabled={blocked||!accountReady} onChange={upload}/></label>}
    {fileName&&<p className="sub">Loaded {fileName}. Review is required before saving.</p>}
    <label>Or paste the statement text<textarea aria-label="Schwab statement text" rows="8" value={statementText} disabled={blocked||!accountReady} onChange={event=>edit(event.target.value)} spellCheck={false} style={{width:'100%',maxWidth:'100%',boxSizing:'border-box',resize:'vertical',fontSize:16}}/></label>
    <p className="sub">Keep the header and dated activity rows. The original financial records are retained for audit; uploading or pasting alone saves no correction.</p>
