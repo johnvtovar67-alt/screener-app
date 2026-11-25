@@ -16,7 +16,7 @@ assert.deepEqual(Object.keys(fixture.files).sort(),[
  'tools/generate-c1-recent-momentum-challenger.cjs'
 ]);
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8');
+ const current=require('./c1-cash-authority-seams.cjs').restore(file,fs.readFileSync(file,'utf8'));
  assert.equal(repair.blob(require('./c1-completed-add-target-seams.cjs').restore(file,current)),patch.afterHash,'Exact reviewed replay repair source: '+file);
  const released=repair.restore(file,current);
  assert.equal(repair.blob(released),patch.beforeHash,'Exact production v2 source recovered: '+file);

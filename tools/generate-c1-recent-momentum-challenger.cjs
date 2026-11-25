@@ -390,6 +390,33 @@ replace('accountRisk:{highWater:portfolioHighWatermark,pausedThrough:portfolioRi
 replace('          existing.entryTargetShares=existing.entryTargetShares??recordedBuy?.targetShares??(total+Math.max(0,plannedShares-shares));',
   "          if(!['owner-confirmed-completed-add','recorded-issued-buy'].includes(recordedBuy?.reason)||Number.isFinite(recordedBuy?.targetShares))\n            existing.entryTargetShares=existing.entryTargetShares??recordedBuy?.targetShares??(total+Math.max(0,plannedShares-shares));");
 
+// Only a statement journal marked by the server's validated original-account
+// pass supplies these events. No serialized execution field enables a flow.
+source="import {applyC1CashFlowEvents} from './c1CashFlowReplay';\n"+source;
+replace('      applyRecentProjectionFacts(session,sessionIndex);',
+`      const openingStatementCashEvents=actualReplay?.openingCashEvents(session.date)||[];
+      if(openingStatementCashEvents.length){
+        if(openingStatementCashEvents.some(event=>event.kind!=='pnl')||[...positions.keys()].some(symbol=>!Number.isFinite(prices.get(symbol)?.open)||prices.get(symbol).open<=0))
+          throw new Error('Known current P&L and verified opening marks are required');
+        const openingCashEffect=applyC1CashFlowEvents({cash,equity:equityValue(cash,positions,prices,'open'),
+          portfolioHighWatermark,operationalRiskState,events:openingStatementCashEvents});
+        cash=openingCashEffect.cash;
+      }
+      applyRecentProjectionFacts(session,sessionIndex);`);
+replace('      portfolioHighWatermark+=event.value;historicalPortfolioHighWatermark+=event.value;nonCashFlow+=event.value;\n    }\n    for (const [symbol, position] of positions) {',
+`      portfolioHighWatermark+=event.value;historicalPortfolioHighWatermark+=event.value;nonCashFlow+=event.value;
+    }
+    const statementCashEvents=actualReplay?.cashEvents(session.date)||[];
+    if(statementCashEvents.length){
+      if([...positions.keys()].some(symbol=>!Number.isFinite(prices.get(symbol)?.close)||prices.get(symbol).close<=0))
+        throw new Error('Verified closing marks are required for statement cash flows');
+      const cashEffect=applyC1CashFlowEvents({cash,equity:equityValue(cash,positions,prices),
+        portfolioHighWatermark,operationalRiskState,events:statementCashEvents});
+      cash=cashEffect.cash;portfolioHighWatermark=cashEffect.portfolioHighWatermark;
+      operationalRiskState=cashEffect.operationalRiskState;nonCashFlow+=cashEffect.capitalFlow;
+    }
+    for (const [symbol, position] of positions) {`);
+
 if (process.argv.includes('--check')) {
   assert.equal(fs.readFileSync(target, 'utf8'), source, 'Regenerate the isolated recent-momentum Challenger');
 } else fs.writeFileSync(target, source);

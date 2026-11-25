@@ -14,7 +14,7 @@ const pins={
 };
 assert.deepEqual(Object.keys(fixture.files).sort(),Object.keys(pins).sort());
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),previous=inverse.restore(file,current);
+ const current=require('./c1-cash-authority-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),previous=inverse.restore(file,current);
  assert.equal(patch.beforeHash,pins[file],'Exact deployed diagnostic baseline retained: '+file);
  assert.equal(inverse.blob(current),patch.afterHash,'Only reviewed current source may enter its inverse: '+file);
  assert.equal(inverse.blob(previous),patch.beforeHash,'Exact diagnostic source recovered: '+file);

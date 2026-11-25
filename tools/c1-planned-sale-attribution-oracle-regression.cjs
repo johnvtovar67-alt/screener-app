@@ -6,7 +6,7 @@ assert.equal(fixture.baselineCommit,'a3d7e614888289d82962556d85bf7507f1fe6064');
 assert.equal(hash('tools/fixtures/c1-planned-sale-attribution-source-seams.json'),'8862e81589a4857110f9caf917044a5e3a6dc7998f63ebfedb7bd105569862b7');
 assert.deepEqual(Object.keys(fixture.files),["components/C1IntradayActivity.js","lib/c1ApiErrors.js","lib/c1IntradayActivity.js","lib/c1SaleAttributionRecovery.js","pages/api/c1-account.js","pages/index.js"]);
 for(const [file,patch]of Object.entries(fixture.files)){
- const source=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,source);
+ const source=require('./c1-cash-authority-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),prior=inverse.restore(file,source);
  assert.equal(inverse.blob(source),patch.afterHash);assert.equal(inverse.blob(prior),patch.beforeHash);
  assert.equal(inverse.restore(file,prior),prior,'Exact inverse is idempotent');
  const unknown=source+'\n/* Unreviewed source retains its own identity. */\n';
