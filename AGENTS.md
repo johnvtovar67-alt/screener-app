@@ -1,5 +1,23 @@
 # C1 operating instructions
 
+## Observed automatic-repair rejection — November 25, 2026
+The owner's normal reload of production 877b25f returns HTTP 422 at
+approved-account-repair and prevents analysis. Continue the same authorized
+repair; no new recovery form or financial input is required from the owner.
+Use the existing portfolioHoldings boundary when binding security ownership:
+legacy cash pseudo-positions already supported by the application are brokerage
+metadata, with funding still checked independently against the exact current
+confirmed brokerage balance. Keep every real security, Core role, quantity,
+economic-source fingerprint, strong ETag and full financial-review safeguard.
+Add bounded per-guard failure identifiers so the actual production rejection
+can be identified without logging private values, hashes, payloads or errors.
+The legacy-cash incompatibility is demonstrated in the application path; its
+presence in the owner's saved portfolio remains unverified until actual native
+evidence establishes it. Do not claim this is the observed root cause yet.
+Preserve all 88 prior fixture blobs and add a new exact inverse from published
+877b25f. Complete all required release gates and verify actual normal loading,
+saved correction/readback and publication separately from synthetic tests.
+
 ## Owner-authorized automatic account repair — November 25, 2026
 After the recovery handoff failed and the session was missed, the owner directs:
 "just update the screener, don't make me do anything but open and use it."

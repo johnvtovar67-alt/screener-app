@@ -6,7 +6,7 @@ const clone=value=>JSON.parse(JSON.stringify(value)),same=(a,b)=>assert.equal(JS
 const fixtureFile=path.resolve('tools/c1-broker-cash-api-regression.cjs'),fixtureSource=fs.readFileSync(fixtureFile,'utf8'),at=fixtureSource.indexOf('\nlet cases=0;'),fixtureModule=new Module(fixtureFile,module);
 fixtureModule.filename=fixtureFile;fixtureModule.paths=Module._nodeModulePaths(path.dirname(fixtureFile));fixtureModule._compile(fixtureSource.slice(0,at)+'\nmodule.exports={fictionalInput};',fixtureFile);
 const {fictionalInput}=fixtureModule.exports;
-function fixture({environment='production',configured=true,targetAccountHash}={}){
+function fixture({environment='production',configured=true,targetAccountHash,configurationTransform}={}){
  const input=fictionalInput('planned');input.portfolioRecord.portfolio.find(row=>row.symbol==='LLL').shares=75;
  const config={contract:'c1-owner-approved-account-repair-v1',authorizationId:'c1-owner-approved-repair-20261125',targetAccountHash:targetAccountHash||createHash('sha256').update(key).digest('hex'),
   sourceEconomicFingerprint:repair.c1ApprovedAccountRepairFingerprint(input.account),portfolioFingerprint:repair.c1ApprovedRepairPortfolioFingerprint(input.portfolioRecord.portfolio),confirmedBrokerageCash:input.expectedCash,statementText:input.statementText};
@@ -17,7 +17,7 @@ function fixture({environment='production',configured=true,targetAccountHash}={}
  }).replace(/export const /g,'const ').replace(/export function /g,'function ').replace('export default createC1AccountHandler();','globalThis.factory=createC1AccountHandler;');
  const box={...imports,Date,Response,process:{env:{}},console:{info:(...args)=>state.logs.push(args.join(' ')),warn:(...args)=>state.logs.push(args.join(' ')),error:(...args)=>state.logs.push(args.join(' '))}};
  vm.createContext(box);vm.runInContext(source,box,{filename:file});
- const handler=box.factory({environment,commit:'a'.repeat(40),approvedRepairConfiguration:configured?JSON.stringify(config):undefined,clock:()=>now,
+ const handler=box.factory({environment,commit:'a'.repeat(40),approvedRepairConfiguration:configured?(configurationTransform?configurationTransform(JSON.stringify(config),clone(config)):JSON.stringify(config)):undefined,clock:()=>now,
   readBook:async()=>({record:clone(state.book)}),readPortfolio:async()=>{state.portfolios++;return clone(state.portfolioRecord);},collectOpening:never,collectHoldings:never,collectRanks:never,
   store:{read:async()=>{state.reads++;if(state.unreadableAfterWrite&&state.attempts)throw Error('PRIVATE_READBACK_FAILURE');return {record:clone(state.account),etag:state.etag};},
    write:async(_path,account,etag)=>{state.attempts++;assert.equal(etag,'"fictional-before"');if(state.conflict)throw Object.assign(Error('PRIVATE_ETAG'),{name:'BlobPreconditionFailedError',status:412});
@@ -49,9 +49,58 @@ async function check(name,run){await run();cases++;console.log('PASS '+name);}
   assert.equal(response.statusCode,200);assert.equal(response.body.approvedAccountRepairReceipt,undefined);assert.equal(h.state.account.approvedAccountRepairs,undefined);assert.equal(h.state.account.cashAccountingCorrections,undefined);assert.equal(h.state.account.saleAttributionCorrections,undefined);
  });
  await check('changed economic source, portfolio identity or current cash fail before a financial write',async()=>{
-  for(const change of [h=>{h.state.account.positionContext=[{symbol:'LLL',shares:999}];},h=>{h.state.portfolioRecord.portfolio.find(row=>row.symbol==='LLL').shares++;},h=>{h.state.account.brokerageCash.balance++;}]){
+  for(const [change,reasonId]of [[h=>{h.state.account.positionContext=[{symbol:'LLL',shares:999}];},'SOURCE_CHANGED'],[h=>{h.state.portfolioRecord.portfolio.find(row=>row.symbol==='LLL').shares++;},'PORTFOLIO_CHANGED'],[h=>{h.state.account.brokerageCash.balance++;},'CASH_CHANGED']]){
    const h=fixture();change(h);const before=clone(h.state.account),response=await h.request();assert.equal(response.statusCode,422);assert.equal(h.state.attempts,0);same(h.state.account,before);
+   assert.equal(response.body.diagnostic?.contract,'c1-approved-account-repair-failure-v1');assert.equal(response.body.diagnostic.reasonId,reasonId);
   }
+ });
+ await check('hidden legacy cash aliases are metadata, never ownership or additional funding',async()=>{
+  const aliases=['CASH','SWVXX','VMFXX','SPAXX','FDRXX','MMF'];
+  for(const [index,symbol]of aliases.entries()){
+   const h=fixture(),original=clone(h.state.account),holdings=h.state.portfolioRecord.portfolio.filter(row=>!aliases.includes(row.symbol)),core=clone(holdings.filter(row=>row.role==='Core'));
+   h.state.portfolioRecord.portfolio=[...holdings,{symbol,role:index%2?'Core':'Swing',shares:987654.32,avgCost:1,openedAt:'2026-09-01',lastTradeAt:'2026-09-01'}];
+   const savedPortfolio=clone(h.state.portfolioRecord.portfolio);assert.equal(repair.c1ApprovedRepairPortfolioFingerprint(savedPortfolio),repair.c1ApprovedRepairPortfolioFingerprint(holdings));
+   const response=await h.request();assert.equal(response.statusCode,200,JSON.stringify(response.body));assert.equal(response.body.approvedAccountRepairReceipt.status,'applied');assert.equal(h.state.writes,1);
+   assert.equal(response.body.decision.actualCash,h.input.expectedCash,'Legacy cash metadata cannot fund the account');assert.equal(response.body.decision.positions.find(row=>row.symbol==='LLL').shares,75);
+   assert(!response.body.decision.positions.some(row=>aliases.includes(row.symbol)));same(h.state.portfolioRecord.portfolio,savedPortfolio);same(h.state.portfolioRecord.portfolio.filter(row=>row.role==='Core'&&!aliases.includes(row.symbol)),core);
+   same(h.state.account.adoption,original.adoption);same(h.state.account.records,original.records);same(h.state.account.intradayActivity.plan,original.intradayActivity.plan);same(h.state.account.intradayActivity.tickets,original.intradayActivity.tickets);
+  }
+ });
+ await check('admission diagnostics identify only bounded source, cash and portfolio reasons without leaking values',async()=>{
+  const secret='PRIVATE_DIAGNOSTIC_SENTINEL_7843';
+  for(const [change,reasonId]of [
+   [h=>{h.state.account.positionContext=[{symbol:secret}];},'SOURCE_CHANGED'],
+   [h=>{h.state.account.brokerageCash.observedAt='2026-11-23T14:30:00Z';},'CASH_NOT_CURRENT'],
+   [h=>{h.state.account.brokerageCash.balance++;},'CASH_CHANGED'],
+   [h=>{h.state.portfolioRecord.portfolio=null;},'PORTFOLIO_INPUT'],
+   [h=>{h.state.portfolioRecord.portfolio.find(row=>row.symbol==='LLL').role=secret;},'PORTFOLIO_ROW'],
+   [h=>{h.state.portfolioRecord.portfolio.push({symbol:secret,role:'Swing',shares:1});},'PORTFOLIO_CHANGED'],
+  ]){
+   const h=fixture();change(h);const before=clone(h.state.account),response=await h.request();assert.equal(response.statusCode,422);assert.equal(response.body.diagnostic?.contract,'c1-approved-account-repair-failure-v1');assert.equal(response.body.diagnostic.reasonId,reasonId);
+   assert.equal(h.state.attempts,0);same(h.state.account,before);assert(!JSON.stringify({body:response.body,logs:h.state.logs}).includes(secret));assert(!JSON.stringify(h.state.logs).includes(h.input.statementText));
+  }
+ });
+ await check('malformed staged evidence reports configuration classes without exposing the staged text',async()=>{
+  const secret='PRIVATE_CONFIGURATION_SENTINEL_2948';
+  for(const [configurationTransform,reasonId]of [
+   [()=>secret+'{','CONFIG_JSON'],
+   [(_text,config)=>JSON.stringify({...config,privateExtra:secret}),'CONFIG_SHAPE'],
+   [(_text,config)=>JSON.stringify({...config,sourceEconomicFingerprint:secret}),'CONFIG_VALUES'],
+  ]){
+   const h=fixture({configurationTransform}),response=await h.request();assert.equal(response.statusCode,422);assert.equal(response.body.diagnostic?.contract,'c1-approved-account-repair-failure-v1');assert.equal(response.body.diagnostic.reasonId,reasonId);
+   assert.equal(h.state.attempts,0);assert(!JSON.stringify({body:response.body,logs:h.state.logs}).includes(secret));
+  }
+ });
+ await check('unknown reason properties and unrelated error contexts cannot forge or leak repair diagnostics',async()=>{
+  const errors=loader.load('lib/c1ApiErrors.js'),message='The owner-approved account repair could not be verified. Purchases remain paused.',secret='PRIVATE_UNKNOWN_REASON_SENTINEL_8913',
+   unknown=errors.c1AccountApiFailure(Object.assign(Error(message),{c1ApprovedRepairReason:secret}),{operation:'approved-account-repair'});
+  assert.equal(unknown.status,422);assert.equal(unknown.diagnostic,undefined);assert(!JSON.stringify(unknown).includes(secret));
+  const known=Object.assign(Error(message),{c1ApprovedRepairReason:'SOURCE_CHANGED'});
+  for(const context of [undefined,{operation:'refresh-analysis'},{operation:'review-broker-cash-history'}]){
+   const response=errors.c1AccountApiFailure(known,context);assert.equal(response.status,422);assert.equal(response.diagnostic,undefined);
+  }
+  const unrelated=errors.c1AccountApiFailure(Object.assign(Error(secret),{c1ApprovedRepairReason:'SOURCE_CHANGED'}),{operation:'approved-account-repair'});
+  assert.notEqual(unrelated.diagnostic?.reasonId,'SOURCE_CHANGED');assert(!JSON.stringify(unrelated).includes(secret));
  });
  await check('existing financial guards run before migration and cannot be bypassed by server approval',async()=>{
   const h=fixture();h.state.book.captures.find(row=>row.sessionDate===h.state.account.sourceHashes[0].date).hash='changed';const before=clone(h.state.account),response=await h.request();assert.equal(response.statusCode,500);assert.equal(h.state.attempts,0);same(h.state.account,before);
