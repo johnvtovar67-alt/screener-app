@@ -58,6 +58,9 @@ The owner explicitly reaffirms keeping allocation-based partial exits while
 repairing repeated sale notices. Available evidence does not establish superior
 after-cost performance for broader whole-stock or account-wide liquidations;
 this release makes neither policy change nor investment-performance claim.
+Keep statement journals and financial replay out of the browser dependency
+graph. The browser and server share the unchanged pure opening-receipt
+validator; no Node compatibility shim or build/config exception is used.
 
 All private evidence and owner figures stay outside version control. Public
 regressions use fictional data. Preserve old source/economic fixtures and pins,

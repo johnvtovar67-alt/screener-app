@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=require('node:crypto');
 const inverse=require('./c1-cash-authority-seams.cjs'),fixture=require('./fixtures/c1-cash-authority-source-seams.json');
-const fixtureSha256='32e3a779c26894e8f8667f62693289e32ebfb2b454272b23bd9d33ecd9b8e54e';
+const fixtureSha256='acfd03e1fca3f2a436a722f9fa8712875437a6e514dd01075e1bdfbf04ef6664';
 const sha=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 assert.equal(fixture.contract,'c1-cash-authority-source-inverse-v1');
 assert.equal(fixture.baselineCommit,'434ae3d43168ff98edd7990fcd29be17df18383d');
