@@ -1,5 +1,32 @@
 # C1 operating instructions
 
+## Owner-authorized automatic account repair — November 25, 2026
+After the recovery handoff failed and the session was missed, the owner directs:
+"just update the screener, don't make me do anything but open and use it."
+For this already identified incident only, that explicitly supersedes the prior
+native-form confirmation requirement. Apply only the previously confirmed saved
+sales and supplied broker activity; do not require another link, upload, manual
+validation or approval form. No new brokerage execution or strategy change is
+authorized.
+Use one production-only Sensitive server variable to stage the supplied private
+evidence with its account and economic-source fingerprints. This reuses the
+existing Vercel project, adds no service or credential, and must never expose
+data in Git, public assets, query strings, logs or client configuration.
+Only normal authenticated account loading/preparation may apply the repair,
+after matching its known source, ownership and current cash and passing the
+existing complete financial-review/confirmation pipeline. Preserve original
+facts, prior audits, stops, risk episodes and the once-only operational reset.
+Use one conditional account save, read back and verify the genuine journal and
+sale-correction receipts, and make retries/concurrent loads idempotent. A changed
+financial source must fail closed; never infer missing trades or cash movements.
+Apply only the approved derived-basis changes to matching client portfolio rows
+through existing ETag sync, preserving quantities, Core, dates and all other
+fields. The normal owner screen must not request recovery actions. Reuse existing
+signed journey evidence to verify the published repaired frame without another
+monitoring task. Preserve all 87 prior fixtures and add a new exact inverse from
+published ea45b3e. Full release gates and real normal-load evidence remain
+required before claiming the incident is complete.
+
 ## Unfinished repeat-sale recovery — November 25, 2026
 The owner reports that the secondary partial sales remain actionable four hours
 after requesting their repair and rejects another statement upload. Finish the

@@ -37,6 +37,7 @@ function harness({opening,accountReply,screenFailure=false}={}){
    return body instanceof Response?body:new Response(JSON.stringify(body));
   }};
  require('./fixtures/c1-stop-observer-bindings.cjs').bindC1StopOwnershipObserver(box,page);
+ require('./c1-approved-repair-client-bindings.cjs').bindC1ApprovedRepairClientHelpers(box,page);
  vm.createContext(box);vm.runInContext(code+';this.api={load,analyze};',box);return {box,state,calls,...box.api};
 }
 (async()=>{

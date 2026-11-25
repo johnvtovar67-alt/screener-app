@@ -20,6 +20,7 @@ import {deriveC1CompletedAccount,deriveC1AccountAnalysis,importC1PositionContext
 import {correctC1IntradayTradeTime,correctC1IntradayTradeDetails} from '../../lib/c1IntradayActivity';
 import {reviewC1SaleAttribution,correctC1SaleAttribution} from '../../lib/c1SaleAttributionRecovery';
 import {applyC1SaleAttributionHold,assertC1SaleAttributionHold} from '../../lib/c1SaleAttributionHold';
+import {applyC1ApprovedAccountRepair} from '../../lib/c1ApprovedAccountRepair';
 import {reviewC1BrokerCashCorrection,confirmC1BrokerCashCorrection} from '../../lib/c1BrokerCashReviewService';
 import {c1BrokerCashJournalStatus} from '../../lib/c1BrokerCashJournal';
 import {c1AccountCashAvailability} from '../../lib/c1BrokerageCash';
@@ -125,7 +126,7 @@ async function reviewAccountHoldings({account,book,now,collectRanks}){
  return {account,holdingReviewError};
 }
 
-export function createC1AccountHandler({store=storage,readPortfolio=readAdoptionPortfolio,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,collectHoldings=collectC1HoldingCoverage,collectRanks=collectC1HeldRankReviews,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local'}={}){
+export function createC1AccountHandler({store=storage,readPortfolio=readAdoptionPortfolio,readBook=readStoredC1DatedBook,clock=()=>new Date(),collectOpening=collectC1AccountOpening,collectHoldings=collectC1HoldingCoverage,collectRanks=collectC1HeldRankReviews,environment=process.env.VERCEL_ENV||'local',commit=process.env.VERCEL_GIT_COMMIT_SHA||'local',approvedRepairConfiguration=process.env.C1_OWNER_APPROVED_ACCOUNT_REPAIR_V1}={}){
  const checkedStore={read:(...args)=>c1AccountDependency(()=>store.read(...args),'storage'),
   write:(...args)=>c1AccountDependency(()=>store.write(...args),'storage')};
  const checkedHoldings=(...args)=>c1AccountDependency(()=>collectHoldings(...args),'holdings');
@@ -148,7 +149,7 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
     (typeof body.targetAccountHash!=='string'||!/^[a-f0-9]{64}$/.test(body.targetAccountHash)||
      body.targetAccountHash!==createHash('sha256').update(key).digest('hex')))
     throw new Error('This private recovery link belongs to a different C1 account.');
-   const now=clock(),saved=await checkedStore.read(path);
+   const now=clock();let saved=await checkedStore.read(path);
    if(environment==='production'&&operation==='adopt'&&!saved)return res.status(403).json({error:'New production accounts are disabled. Connect the existing saved account.'});
    if(operation!=='adopt'&&!saved)return res.status(404).json({error:'No C1 account has been initialized.'});
    // The stored daily dataset is authoritative; this cannot initialize it.
@@ -158,12 +159,23 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
    stage='account-analysis';
    let account=saved?.record,holdingReviewError=null;
    if(account?.adoption?.nonCashHoldings?.length)verifyC1NonCashReceipts(account);
+   let approvedAccountRepairReceipt=null,approvedRepairView=null;
+   if(['refresh-analysis','prepare-execution'].includes(operation)&&environment==='production'&&approvedRepairConfiguration){
+    stage='approved-account-repair';
+    const repaired=await applyC1ApprovedAccountRepair({environment,key,saved,path,book,store:checkedStore,now,configuration:approvedRepairConfiguration,
+     readPortfolio:()=>c1AccountDependency(()=>readPortfolio(key),'portfolio'),validateView:next=>completedAnalysisView({account:next,book,now})});
+    saved=repaired.saved;account=saved.record;approvedAccountRepairReceipt=repaired.receipt;approvedRepairView=repaired.view||null;
+    if(approvedAccountRepairReceipt)console.info('C1_APPROVED_ACCOUNT_REPAIR',JSON.stringify({code:repaired.appliedNow?'APPLIED_AND_READ_VERIFIED':'ALREADY_APPLIED_READ_VERIFIED',
+     authorizationId:approvedAccountRepairReceipt.authorizationId,requestId,commit:/^[a-f0-9]{7,40}$/.test(commit)?commit:'local',revision:account.revision,
+     realJournalVerified:true,originalRecordsPreserved:true}));
+    stage='account-analysis';
+   }
    if(operation==='refresh-analysis'){
     account=await verifyAccountHoldingPrices({account,book,now,collectHoldings:checkedHoldings});
-    const view=completedAnalysisView({account,book,now});
+    const view=approvedRepairView&&account===saved.record?approvedRepairView:completedAnalysisView({account,book,now});
     try{const completedAt=clock(),context={operation,now:completedAt,requestId,commit};logC1AccountOperationalStatus(view,context);
      const receipt=signC1JourneyObservation(c1AccountOperationalStatus(view,context),{now:completedAt});if(receipt)res.setHeader('X-C1-Operational-Receipt',receipt);}catch{}
-    return res.status(200).json(view);
+    return res.status(200).json({...view,...(approvedAccountRepairReceipt?{approvedAccountRepairReceipt:{...approvedAccountRepairReceipt,revision:view.decision.revision}}:{})});
    }
    if(operation==='review-broker-cash-history'||operation==='confirm-broker-cash-history'){
     stage='broker-cash-portfolio-read';
@@ -223,7 +235,7 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
     view=applyC1SaleAttributionHold({view,account:saved.record,now});
     if(operation==='prepare-execution')try{const completedAt=clock(),context={operation,now:completedAt,requestId,commit},observed={...view,holdingReviewError};logC1AccountOperationalStatus(observed,context);
      const receipt=signC1JourneyObservation(c1AccountOperationalStatus(observed,context),{now:completedAt});if(receipt)res.setHeader('X-C1-Operational-Receipt',receipt);}catch{}
-    return res.status(200).json({...view,holdingReviewError});
+    return res.status(200).json({...view,holdingReviewError,...(approvedAccountRepairReceipt?{approvedAccountRepairReceipt:{...approvedAccountRepairReceipt,revision:view.decision.revision}}:{})});
    }
    if(operation==='review-mrna-adoption'||operation==='confirm-mrna-adoption'){
     if(operation==='confirm-mrna-adoption'&&body.confirmed===true&&account.adoption.nonCashHoldings?.some(e=>e.id===body.reviewId))return res.status(200).json(completedAnalysisView({account,book,now}));
@@ -283,7 +295,7 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
    stage='saved-account-analysis';
    return res.status(200).json(completedAnalysisView({account,book,now,holdingReviewError}));
   }catch(error){
-   const {status,...failure}=c1AccountApiFailure(error,{operation,stage});
+   const {status,...failure}=c1AccountApiFailure(error,{operation:stage==='approved-account-repair'?'approved-account-repair':operation,stage});
    // Bounded structured fields only: no key, request body, holdings, prices,
    // account path, raw provider error or stack enters an operational log.
    console.warn('C1_ACCOUNT_API_FAILURE',JSON.stringify({requestId,code:failure.code,status,stage,

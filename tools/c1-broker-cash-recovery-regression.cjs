@@ -100,5 +100,8 @@ let cases=0;async function check(name,run){await run();cases++;console.log('PASS
    assert.equal(reply.statusCode,200,JSON.stringify(reply.body));const value=await responseReader.readC1BrokerCashReviewResponse({ok:true,status:200,headers:{get:()=>null},json:async()=>reply.body},{expectedRevision:revision});return value.cashReview;
   }});await h.flush();assert.equal(h.calls.review.length,1);assert(h.visible.includes('Operational risk review'));assert.equal(h.calls.confirm.length,0);assert.equal(api.state.writeAttempts,0);assert.equal(api.state.writes,0);assert.equal(api.state.providerCalls,0);
  });
+ await check('an already-applied verified repair exposes no upload or confirmation controls and starts no review',async()=>{
+  const h=componentHarness(browser(),{ready:true,applied:true});await h.flush();assert.equal(h.render(),null);assert.equal(h.calls.review.length,0);assert.equal(h.calls.confirm.length,0);assert.equal(h.browser.win.location.hash,'');
+ });
  console.log(`PASS: ${cases} private recovery flows; actual effects, strict account-bound source transport, retained evidence, one read-only review, native explicit confirmation and zero production writes.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});

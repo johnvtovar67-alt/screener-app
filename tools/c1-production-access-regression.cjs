@@ -66,7 +66,7 @@ async function main(){
  const accountFile='pages/api/c1-account.js',accountSource=fs.readFileSync(accountFile,'utf8');
  assert.equal(hash(require('./c1-owner-access-extraction.cjs').originalAccountSource(accountSource).replace(/^   if\(environment==='production'&&operation==='adopt'&&!saved\).*\n/m,'')),hashes[accountFile]);
  const accountCode=accountSource.replace(/^import .*;\n/gm,'').replace('export const config=','const config=').replace('export function createC1AccountHandler','function createC1AccountHandler').replace('export default createC1AccountHandler();','this.factory=createC1AccountHandler;');
- const dependencies={...require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),createHash:crypto.createHash,randomUUID:crypto.randomUUID,...loader.load('lib/c1ApiErrors.js'),Response,console,process:{env:{}},readStoredC1DatedBook:()=>{},collectC1AccountOpening:()=>{},collectC1HoldingCoverage:()=>{},collectC1HeldRankReviews:()=>{}};
+ const dependencies={...require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),createHash:crypto.createHash,randomUUID:crypto.randomUUID,...loader.load('lib/c1ApiErrors.js'),...loader.load('lib/c1ApprovedAccountRepair.js'),Response,console,process:{env:{}},readStoredC1DatedBook:()=>{},collectC1AccountOpening:()=>{},collectC1HoldingCoverage:()=>{},collectC1HeldRankReviews:()=>{}};
  vm.createContext(dependencies);vm.runInContext(accountCode,dependencies);
  let writes=0,bookReads=0;
  const handler=dependencies.factory({environment:'production',store:{read:async()=>null,write:async()=>{writes++;}},readBook:async()=>{bookReads++;throw Error('Inputs must not be read');}});

@@ -9,7 +9,7 @@ const amount=rows=>(rows||[]).filter(row=>row.shares>0).map(row=>`${row.shares} 
 const byteLength=value=>new TextEncoder().encode(value).byteLength;
 const cashEventName={journal:'Transfer / journal','core-purchase':'Core purchase','core-sale':'Core sale',interest:'Interest',fee:'Fee'};
 
-export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=false,ready=false}){
+export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=false,ready=false,applied=false}){
  const [statementText,setStatementText]=useState(''),[fileName,setFileName]=useState(''),[reviewState,setReviewState]=useState(null);
  const [confirmedId,setConfirmedId]=useState(null),[attributionId,setAttributionId]=useState(null),[invalidId,setInvalidId]=useState(null);
  const [working,setWorking]=useState(''),[error,setError]=useState(''),[receipt,setReceipt]=useState(null);
@@ -33,11 +33,11 @@ export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=fal
   return()=>window.removeEventListener('hashchange',changed);
  },[]);
  useEffect(()=>{
-  if(!recovery||recovery.attempted||recovery.expired||!ready||busy||!accountReady||operation.current||!onReview)return;
+  if(applied||!recovery||recovery.attempted||recovery.expired||!ready||busy||!accountReady||operation.current||!onReview)return;
   try{if(markC1BrokerCashRecoveryAttempt(window.sessionStorage,recovery)){
    setRecovery({...recovery,attempted:true});void preview({preventDefault(){}});
   }}catch{setError('Automatic review could not retain its attempt marker. Your loaded statement is ready for an explicit review.');}
- },[recovery,ready,busy,revision,onReview,working]);
+ },[recovery,ready,busy,revision,onReview,working,applied]);
 
  function edit(value,name=''){
   generation.current++;setStatementText(value);setFileName(name);setConfirmedId(null);setAttributionId(null);setError('');setReceipt(null);
@@ -87,6 +87,7 @@ export default function C1BrokerCashReview({decision,onReview,onConfirm,busy=fal
  }
  const allocations=Array.isArray(review?.financialPreview?.allocations)?review.financialPreview.allocations:[];
  const preserved=Array.isArray(review?.financialPreview?.preserved)?review.financialPreview.preserved.filter(value=>typeof value==='string'):[];
+ if(applied)return null;
  return <section className="card c1TradeRecorder" aria-label="Review brokerage cash and statement">
   <h3>Review brokerage cash and account activity</h3>
   <p>Current Schwab cash available to trade: <strong>{money(decision?.brokerageCash)}</strong>.</p>

@@ -37,6 +37,7 @@ function client(fetcher){
  Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
  if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  require('./fixtures/c1-stop-observer-bindings.cjs').bindC1StopOwnershipObserver(box,page);
+ require('./c1-approved-repair-client-bindings.cjs').bindC1ApprovedRepairClientHelpers(box,page);
  vm.createContext(box);vm.runInContext(refresh+disconnect+'\nthis.refresh=refreshC1Account;this.disconnect=disconnectSync;',box);
  return {state,box};
 }
