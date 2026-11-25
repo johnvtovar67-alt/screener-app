@@ -20,19 +20,45 @@ submissions that do not identify the selected group. Keep unambiguous legacy
 entries and explicit owner-discretionary sale accounting compatible. Use the
 existing safe error boundary to return actionable reload/validation errors.
 
-The correction changes only the recorder component, recorder domain function
-and allowlisted API errors. It does not change recommended quantities, signals,
-stop triggers, risk thresholds, resets, cooldowns, selection, sizing or funding.
-No automatic migration or reassignment of existing financial records is included.
-The original tickets, fills, identities and financial facts remain unchanged.
-Current saved account evidence is required for any separate historical recovery;
-an offline reproduction cannot establish the exact private account attribution.
+The owner subsequently supplied a fresh private saved record confirming the
+same attribution defect. Keep that evidence outside version control. Add an
+explicit current-session correction review using only the saved original plan,
+broker tickets and allocation parts. Eligible cases require the complete
+original portfolio-loss sale target, no later dependent purchases, one affected
+allocation, and a flat allocation after correction. Unsupported or finalized
+cases remain unavailable; they must not be guessed or silently migrated.
+
+The owner reviews the original and proposed share splits, unchanged account
+quantities/cash, and any change in calculated remaining C1 basis caused by
+correcting which allocation's shares were sold. The original purchase bases,
+dates, stop prices, broker execution prices/fees/times/IDs, plan and prior daily
+records stay intact. Confirmation archives the original tickets and raw parts,
+source revision/digest, intended effective parts and approval time in a durable
+append-only audit. Only the live effective fill vector is reclassified; the
+audit is not counted as another trade. A hash-bound review plus the existing
+revision and strong-ETag write prevents stale or duplicate application. The
+normal account analysis must validate before saving. Original form selection
+and pre-execution issuance are unavailable and are not fabricated.
+
+This is a recording repair, not a risk-model revision. Existing thresholds,
+signals, stops, cooldowns, sizing, funding and operational reset rules continue.
+A completed liquidation still requires the normal verified next-eligible-opening
+process; no historical peak or loss is cleared. Do not automatically replay an
+uncertain correction POST. The owner confirms this accounting correction in the
+normal authenticated account, without a sync-key request or direct Blob edit.
+
+Application scope: components/C1IntradayActivity.js, lib/c1IntradayActivity.js,
+lib/c1ApiErrors.js, new lib/c1SaleAttributionRecovery.js,
+pages/api/c1-account.js and pages/index.js. Update only these freeze entries and
+scoped authorization metadata. The freeze checker, canonical checker, CI and
+build hooks remain unchanged. The exact new source inverse covers these files;
+all previously published source/economic fixtures and pins remain immutable.
+Manual API test harnesses import the new real helper and the existing sector
+label oracle explicitly reverses only the new exact index source seam.
 
 Committed checks use wholly fictional holdings and prices. Private screenshots,
 account values, quantities, files and owner fill facts stay outside this repo.
-Update only the three affected freeze entries and scoped authorization metadata.
-An exact source inverse must preserve all historical fixtures and pins. Require
-focused real-form/domain/API checks, complete regression/build/audit, all four
-CI jobs on the exact reviewed head, matching preview and merged-tree identity,
-canonical production served-code checks and the owner's actual recovery path.
-Do not call this complete from tests or deployment alone.
+Require focused actual form/domain/API checks, complete regression/build/audit,
+all four CI jobs on the exact reviewed head, matching preview and merged-tree
+identity, canonical production served-code checks and the owner's actual
+review/confirmation/reload path. Tests and a deployment alone are insufficient.

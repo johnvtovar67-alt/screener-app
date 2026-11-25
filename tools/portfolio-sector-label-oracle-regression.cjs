@@ -7,7 +7,7 @@ assert.equal(hash('tools/fixtures/portfolio-sector-label-source-seams.json'),'fb
 assert.equal(hash('lib/portfolioSectorLabel.js'),'4bd8cce7d484ee585764906a9e56eca4f34cdb6a13d645b0999b48ecac8623fa');
 assert.deepEqual(Object.keys(fixture.files),['pages/index.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,current);
+ const current=require('./c1-planned-sale-attribution-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),prior=inverse.restore(file,current);
  assert.equal(inverse.blob(current),patch.afterHash);assert.equal(inverse.blob(prior),patch.beforeHash);
  assert.equal(inverse.restore(file,prior),prior,'The exact inverse is idempotent');
  const unknown=current+'\n/* unreviewed source retains its own identity */\n';

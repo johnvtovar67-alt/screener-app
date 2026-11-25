@@ -3,8 +3,37 @@ import {useMemo,useState} from 'react';
 const localInput=value=>{const d=new Date(value),pad=n=>String(n).padStart(2,'0');return Number.isFinite(d.getTime())?`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`:'';};
 const allocationName={base:'Base',cooldown15:'15-session allocation',sector40:'40% sector allocation'};
 const completedAddReason='owner-confirmed-completed-add';
+const money=value=>Number.isFinite(value)?'$'+value.toFixed(2):'Unavailable';
 
-export default function C1IntradayActivity({session,onSave,onCorrectDetails,busy}){
+function SaleAttributionReview({review,onConfirm,busy}){
+ const [confirmedId,setConfirmedId]=useState(null),[error,setError]=useState(''),[receipt,setReceipt]=useState(null);
+ if(!review)return null;
+ if(review.status==='applied')return <p role="status">Sale allocation correction saved. Original broker trades and the earlier allocation split are retained in C1’s audit history.</p>;
+ if(review.status!=='confirmation-required')return <p role="status">{review.message||'A saved sale allocation needs reconciliation before it can be corrected.'}</p>;
+ const confirmed=confirmedId===review.proposalId;
+ async function confirm(){
+  if(!confirmed||busy||!onConfirm)return;
+  setError('');
+  try{
+   const result=await onConfirm(review.proposalId,review.revision);
+   if(result?.proposalId!==review.proposalId)throw new Error('C1 did not confirm the allocation correction. Reload before retrying.');
+   setReceipt({proposalId:review.proposalId,warning:result.warning||''});setConfirmedId(null);
+  }catch(failure){setError(failure.message);}
+ }
+ const allocationText=rows=>(rows||[]).filter(row=>row.shares>0).map(row=>`${row.shares} ${allocationName[row.sleeve]||row.sleeve}`).join(', ')||'None';
+ return <fieldset className="c1RecoveryAllocation"><legend>Review the recorded sale allocations</legend>
+  <p>C1 split these completed sales across other groups’ stop orders, leaving the planned loss exit unfinished. Review the correction below. This records no new trade and changes no broker execution.</p>
+  {review.rows.map(row=><div key={row.symbol}><p><b>{row.symbol}: {row.shares} shares already sold</b><br/>Recorded sale split: {allocationText(row.allocationsBefore)}.<br/>Corrected sale split: {allocationText(row.allocationsAfter)}.<br/>Remaining account holding: {row.remainingShares} shares. Calculated remaining C1 cost basis: {money(row.basisBefore)} → {money(row.basisAfter)}.</p></div>)}
+  <p>Total C1 strategy cash stays {money(review.summary.cashAfter)}. The original quantities, execution prices, fees, times and trade identities remain unchanged. Original purchase records, stop prices, historical losses and risk references are retained. The old allocation split is preserved in the correction audit.</p>
+  <p>The saved trade format did not retain your original planned-versus-stop selection. Confirm the intended sale allocation below; C1 cannot reconstruct that selection as verified historical issuance.</p>
+  <label className="c1TradeConfirmation"><input type="checkbox" checked={confirmed} disabled={busy} onChange={event=>{setConfirmedId(event.target.checked?review.proposalId:null);setError('');}}/> These were the planned C1 sales I selected. I approve the corrected allocations shown above, and I have not executed the repeat sale notices.</label>
+  <button className="c1TradeSave" type="button" disabled={busy||!confirmed||!onConfirm} onClick={confirm}>{busy?'Saving correction…':'Confirm sale allocation correction'}</button>
+  {error&&<p role="alert">{error}</p>}
+  {receipt?.proposalId===review.proposalId&&<p role="status">Sale allocation correction saved. Do not record these sales again. {receipt.warning}</p>}
+ </fieldset>;
+}
+
+export default function C1IntradayActivity({session,onSave,onCorrectDetails,onCorrectAttribution,busy}){
  const [selection,setSelection]=useState(''),[shares,setShares]=useState(''),[price,setPrice]=useState(''),[fee,setFee]=useState('0'),[time,setTime]=useState(''),[confirmed,setConfirmed]=useState(false),[error,setError]=useState(''),[ticketId,setTicketId]=useState(null),[receipt,setReceipt]=useState(null);
  const [correcting,setCorrecting]=useState(null),[correctedPrice,setCorrectedPrice]=useState(''),[correctedFee,setCorrectedFee]=useState(''),[correctedTime,setCorrectedTime]=useState(''),[correctionMessage,setCorrectionMessage]=useState('');
  const [allocationShares,setAllocationShares]=useState({});
@@ -77,6 +106,7 @@ export default function C1IntradayActivity({session,onSave,onCorrectDetails,busy
  return <section className="card c1TradeRecorder" aria-label={session.historicalIssued?`Record a completed trade for ${session.date}`:"Record today's completed trade"}>
   <h3>Record a completed trade — {session.date}</h3>
   <p>This form records only a trade you already placed and Schwab filled. A planned purchase, planned sale, or stop level in the selector is not proof of a fill or a Buy instruction. Do not record an unfilled order. Saving a confirmed fill updates your holdings and cash, then checks C1 for the next action.</p>
+  <SaleAttributionReview review={session.saleAttributionReview} onConfirm={onCorrectAttribution} busy={busy}/>
   {session.recordingBlockedReason&&<p role="status">{session.recordingBlockedReason}</p>}
   <form onSubmit={submit}>
    <label>Completed trade <select aria-label="Completed trade" value={selection} onChange={e=>{setAllocationShares({});edit(setSelection,e.target.value);}}><option value="">Select a trade</option>{choices.map(c=><option key={c.key} value={c.key}>{c.kind==='issued'?'Retained C1 buy (record only if already filled)':c.kind==='completed-add'?'Recover an already filled addition':c.kind==='owner-exit'?'Other completed sale (filled)':c.kind==='stop'?'C1 stop-triggered sale (record only if filled)':c.side==='sell'?'Planned C1 sale (record only if filled)':'Planned C1 buy (record only if filled)'}: {c.symbol}{c.kind!=='completed-add'&&<> · up to {c.shares} shares</>}</option>)}</select></label>

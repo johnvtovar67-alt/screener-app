@@ -3,8 +3,8 @@ const inverse=require('./c1-planned-sale-attribution-seams.cjs'),fixture=require
 const hash=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 assert.equal(fixture.contract,'c1-planned-sale-attribution-source-inverse-v1');
 assert.equal(fixture.baselineCommit,'a3d7e614888289d82962556d85bf7507f1fe6064');
-assert.equal(hash('tools/fixtures/c1-planned-sale-attribution-source-seams.json'),'9efefaab75518a61b16b206daf54fc158bb6dbd70c565b99e88f8a73f5e512dc');
-assert.deepEqual(Object.keys(fixture.files),['components/C1IntradayActivity.js','lib/c1ApiErrors.js','lib/c1IntradayActivity.js']);
+assert.equal(hash('tools/fixtures/c1-planned-sale-attribution-source-seams.json'),'8862e81589a4857110f9caf917044a5e3a6dc7998f63ebfedb7bd105569862b7');
+assert.deepEqual(Object.keys(fixture.files),["components/C1IntradayActivity.js","lib/c1ApiErrors.js","lib/c1IntradayActivity.js","lib/c1SaleAttributionRecovery.js","pages/api/c1-account.js","pages/index.js"]);
 for(const [file,patch]of Object.entries(fixture.files)){
  const source=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,source);
  assert.equal(inverse.blob(source),patch.afterHash);assert.equal(inverse.blob(prior),patch.beforeHash);

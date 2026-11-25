@@ -305,6 +305,23 @@ export default function Home(){
     }finally{setAccountBusy(false);}
   }
 
+  async function correctC1SaleAllocation(proposalId,expectedRevision){
+    setAccountBusy(true);setErr('');
+    try{
+      const d=await refreshC1Account({operation:'correct-sale-attribution',proposalId,confirmed:true,expectedRevision});
+      if(d?.saleAttributionReceipt?.proposalId!==proposalId)throw new Error('C1 did not confirm the sale allocation correction. Reload the saved account before retrying.');
+      const updated=mergeC1AccountPortfolio(portfolio,d.decision);
+      localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);
+      let warning='';
+      try{
+        if(!await pushCloudPortfolio(updated))warning='The allocation correction is saved. Portfolio sync needs a retry; do not record another sale.';
+        else await analyze(updated);
+      }catch{warning='The allocation correction is saved. Account analysis needs a refresh; do not record another sale.';}
+      if(warning)setErr(warning);
+      return {proposalId,warning};
+    }finally{setAccountBusy(false);}
+  }
+
   async function importPositionContext(context){
     setAccountBusy(true);setErr('');
     try{
@@ -892,7 +909,7 @@ export default function Home(){
       <div className="syncBox"><div><b>☁ Portfolio Sync</b><small>One portfolio across your Mac and phone.</small></div><div className="syncControls"><input type={syncKey?'password':'text'} value={syncInput} onChange={e=>setSyncInput(e.target.value)} placeholder="Sync key" autoComplete="off" spellCheck="false"/>{syncKey?<><button onClick={copySyncKey}>Copy Key</button><button onClick={disconnectSync}>Disconnect</button></>:<><button onClick={enableSync}>Enable Sync</button><button onClick={connectSync}>Connect</button></>}</div>{syncStatus&&<span className="syncStatus">{syncStatus}</span>}</div>
       <C1NonCashAdoption decision={accountView?.decision} portfolio={portfolio} onReview={reviewMRNAAdoption} onConfirm={confirmMRNAAdoption} busy={accountBusy||reloading||loading} ready={syncStatus==='Synced'&&!syncDirty.current}/>
       <C1PositionContextImport ready={syncStatus==='Synced'&&!reloading&&!loading&&!accountBusy} decision={accountView?.decision} portfolio={portfolio} onImport={importPositionContext} onRefresh={recoverC1Account} refreshing={accountBusy}/>
-      {accountView?.intradaySession&&<C1IntradayActivity session={accountView.intradaySession} onSave={saveC1Intraday} onCorrectDetails={correctC1IntradayDetails} busy={accountBusy}/>}
+      {accountView?.intradaySession&&<C1IntradayActivity session={accountView.intradaySession} onSave={saveC1Intraday} onCorrectDetails={correctC1IntradayDetails} onCorrectAttribution={correctC1SaleAllocation} busy={accountBusy}/>}
       {accountView?.retainedTradeSessions?.length>0&&<details><summary>Previously issued C1 buys awaiting recording review</summary><p>These dated entries are retained for completed-trade accounting. They do not authorize a purchase now.</p>{accountView.retainedTradeSessions.map(session=><C1IntradayActivity key={session.date} session={session} onSave={saveC1Intraday} onCorrectDetails={correctC1IntradayDetails} busy={accountBusy}/>)}</details>}
       {accountView?.intradaySession&&accountView.openingError&&<p role="status">You can record an already filled trade above. New purchase authorization is paused: {accountView.openingError}</p>}
       {accountView&&!accountView.intradaySession&&<section className="card" aria-label="Completed trade entry status"><h3>Record a completed trade</h3><p role="status">{accountView.openingError||(!accountView.decision?.current?'C1 account analysis is not current. Refresh it to load the trade-entry form.':accountView.pendingSession?'Use Record completed trades below for the completed session.':'The current-session trade plan is unavailable. Retry during regular market hours.')}</p><button disabled={accountBusy||loading||reloading} onClick={recoverC1Account}>{accountBusy?'Checking trade entry…':'Retry trade entry'}</button>{accountError&&<p role="alert">{accountError}</p>}</section>}
