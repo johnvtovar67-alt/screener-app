@@ -15,7 +15,7 @@ assert.equal(currentC1HoldingRows([second,{...old,openedAt:'2026-09-22T12:00:00Z
 for (const change of [{shares:16},{avgCost:461.19},{role:'Core'}])
   assert(!sameC1HoldingPeriod(old,{...old,...change}));
 const start = page.indexOf('  useEffect(()=>{\n    let local=');
-const end = page.indexOf('  useEffect(()=>{const update=',start);
+const end = page.indexOf('  useEffect(',start+1);
 assert(start>=0 && end>start);
 async function boot(local,synced) {
   let finish, priced, entered;
