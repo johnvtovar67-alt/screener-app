@@ -11,6 +11,7 @@ export default function C1IntradayActivity({session,onSave,onCorrectDetails,busy
  const choices=useMemo(()=>{
   const groups=new Map(),unconditional=new Set(session.plan.orders.filter(o=>o.side==='sell'&&!o.condition).map(o=>o.symbol+':'+o.sleeve));
   for(const order of session.plan.orders){
+   if(order.reason==='owner-discretionary-exit')continue;
    if(session.sellOnly&&order.side!=='sell')continue;
    if(order.condition&&unconditional.has(order.symbol+':'+order.sleeve))continue;
    let remaining=order.shares-session.fills.filter(f=>f.orderId===order.id).reduce((n,f)=>n+f.shares,0);
@@ -19,7 +20,7 @@ export default function C1IntradayActivity({session,onSave,onCorrectDetails,busy
     remaining=Math.min(remaining,held);
    }
    if(remaining<=0)continue;
-   const kind=order.condition?'stop':'planned',key=kind+':'+order.side+':'+order.symbol,prior=groups.get(key)||{key,kind,symbol:order.symbol,side:order.side,shares:0};prior.shares+=remaining;groups.set(key,prior);
+   const kind=order.condition?'stop':'planned',key=kind+':'+order.side+':'+order.symbol,prior=groups.get(key)||{key,kind,symbol:order.symbol,side:order.side,shares:0,orderIds:[]};prior.shares+=remaining;prior.orderIds.push(order.id);groups.set(key,prior);
   }
   const held=new Map();
   for(const book of Object.values(session.plan.openingBooks))for(const [symbol,position] of Object.entries(book.positions))held.set(symbol,(held.get(symbol)||0)+position.shares);
@@ -59,7 +60,7 @@ export default function C1IntradayActivity({session,onSave,onCorrectDetails,busy
   if(allocations&&(!allocations.length||allocations.some(row=>!Number.isSafeInteger(row.shares)||row.shares<=0)||allocations.reduce((sum,row)=>sum+row.shares,0)!==+shares)){setError(`The C1 group boxes must total ${+shares} added shares. Tap “Propose using existing holding proportions”, review the boxes, then check the confirmation again.`);return;}
   const id=ticketId||globalThis.crypto.randomUUID();setTicketId(id);
   try{
-   const result=await onSave({id,symbol:choice.symbol,side:choice.side,shares:+shares,price:+price,fee:+fee,executedAt:at.toISOString(),...(choice.recordingReason?{recordingReason:choice.recordingReason}:{}),...(allocations?{allocations}:{})},session.revision);
+   const result=await onSave({id,symbol:choice.symbol,side:choice.side,shares:+shares,price:+price,fee:+fee,executedAt:at.toISOString(),...(choice.recordingReason?{recordingReason:choice.recordingReason}:{}),...(allocations?{allocations}:{}),...(choice.side==='sell'&&['planned','stop'].includes(choice.kind)?{saleSelection:{kind:choice.kind,orderIds:choice.orderIds}}:{})},session.revision);
    if(result?.ticket?.id!==id)throw new Error('C1 did not return a saved-trade receipt. Nothing was cleared; reload the saved account before retrying.');
    setReceipt({side:choice.side,symbol:choice.symbol,shares:+shares,price:+price,cash:result.view.decision.brokerageCash,warning:result.warning||''});
    setSelection('');setShares('');setPrice('');setTime('');setConfirmed(false);setTicketId(null);setAllocationShares({});

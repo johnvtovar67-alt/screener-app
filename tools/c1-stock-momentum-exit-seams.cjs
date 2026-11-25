@@ -4,6 +4,7 @@ const assert=require('node:assert/strict'),{createHash}=require('node:crypto');
 const fixture=require('./fixtures/c1-stock-momentum-exit-source-seams.json');
 const blob=source=>createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
 function restore(file,source){
+ source=require('./c1-planned-sale-attribution-seams.cjs').restore(file,source);
  source=require('./c1-watch-download-cleanup-seams.cjs').restore(file,source);
  source=require('./c1-watch-exposure-copy-seams.cjs').restore(file,source);
  source=require('./portfolio-sector-label-seams.cjs').restore(file,source);
