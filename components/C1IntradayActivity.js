@@ -39,9 +39,10 @@ export default function C1IntradayActivity({session,onSave,onCorrectDetails,onCo
  const [correcting,setCorrecting]=useState(null),[correctedPrice,setCorrectedPrice]=useState(''),[correctedFee,setCorrectedFee]=useState(''),[correctedTime,setCorrectedTime]=useState(''),[correctionMessage,setCorrectionMessage]=useState('');
  const [allocationShares,setAllocationShares]=useState({});
  const choices=useMemo(()=>{
-  const groups=new Map(),unconditional=new Set(session.plan.orders.filter(o=>o.side==='sell'&&!o.condition).map(o=>o.symbol+':'+o.sleeve));
+  const groups=new Map(),withheld=new Set(session.withheldSaleOrderIds||[]),unconditional=new Set(session.plan.orders.filter(o=>o.side==='sell'&&!o.condition&&!withheld.has(o.id)).map(o=>o.symbol+':'+o.sleeve));
   for(const order of session.plan.orders){
    if(order.reason==='owner-discretionary-exit')continue;
+   if(order.side==='sell'&&!order.condition&&withheld.has(order.id))continue;
    if(session.sellOnly&&order.side!=='sell')continue;
    if(order.condition&&unconditional.has(order.symbol+':'+order.sleeve))continue;
    let remaining=order.shares-session.fills.filter(f=>f.orderId===order.id).reduce((n,f)=>n+f.shares,0);
@@ -107,6 +108,7 @@ export default function C1IntradayActivity({session,onSave,onCorrectDetails,onCo
  return <section className="card c1TradeRecorder" aria-label={session.historicalIssued?`Record a completed trade for ${session.date}`:"Record today's completed trade"}>
   <h3>Record a completed trade — {session.date}</h3>
   <p>This form records only a trade you already placed and Schwab filled. A planned purchase, planned sale, or stop level in the selector is not proof of a fill or a Buy instruction. Do not record an unfilled order. Saving a confirmed fill updates your holdings and cash, then checks C1 for the next action.</p>
+  {session.saleAttributionHold?.status==='review-required'&&<p role="status">{session.saleAttributionHold.reason}</p>}
   <SaleAttributionReview review={session.saleAttributionReview} onConfirm={onCorrectAttribution} busy={busy}/>
   {session.recordingBlockedReason&&<p role="status">{session.recordingBlockedReason}</p>}
   <form onSubmit={submit}>

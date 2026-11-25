@@ -6,7 +6,7 @@ assert.equal(fixture.baselineCommit,'e17ac1e0d27f12852e874523fcbce6789b5dfc80');
 assert.equal(hash('tools/fixtures/c1-sell-quantity-summary-source-seams.json'),'c6bb8f8c572f2197a02e321111e45f5f7f3e430cdfe619016ed4212fb75d37df');
 assert.deepEqual(Object.keys(fixture.files),['components/C1AccountOpportunitiesView.js','lib/c1PositionPresentation.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
- const source=require('./c1-watch-exposure-copy-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),prior=inverse.restore(file,source);
+ const source=require('./c1-watch-exposure-copy-seams.cjs').restore(file,require('./c1-private-cash-review-seams.cjs').restore(file,fs.readFileSync(file,'utf8'))),prior=inverse.restore(file,source);
  assert.equal(inverse.blob(source),patch.afterHash);assert.equal(inverse.blob(prior),patch.beforeHash);
  assert.equal(inverse.restore(file,prior),prior);
  const unknown=source+'\n/* unreviewed source must retain its own identity */\n';assert.equal(inverse.restore(file,unknown),unknown);

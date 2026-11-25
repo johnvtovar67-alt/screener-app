@@ -1,5 +1,25 @@
 # C1 operating instructions
 
+## Unfinished repeat-sale recovery — November 25, 2026
+The owner reports that the secondary partial sales remain actionable four hours
+after requesting their repair and rejects another statement upload. Finish the
+original misattribution repair. Quarantine only the disputed repeat planned
+portfolio-loss sales reconstructed from the saved original plan and fills;
+preserve separate stops, other verified exits, purchase restrictions and every
+original financial fact. All current action views and planned-trade recording
+must respect the same quarantine until an explicitly confirmed correction.
+Do not silently apply the allocation or cash correction, cancel a risk episode,
+reset its reference, change partial-exit policy or invent an execution.
+Reuse the existing private recovery-link pattern to bring the already supplied
+statement into the authenticated app, bind it to the existing account hash,
+remove it from the address and retain a tab-session draft across reloads. Run
+only one automatic read-only review; never import confirmation flags or retry
+financial writes. The native concrete correction and final confirmation remain
+required. No private evidence in Git, public assets, environment configuration,
+logs or query parameters; no new storage or credentials. Preserve all 86 prior
+fixture blobs and use a new exact inverse against published dd0f34d. Require
+the full release gates and the owner's actual recovery before claiming success.
+
 ## Actual cash-review recovery — November 25, 2026
 The owner reports the deployed statement review rejecting an export, then
 remaining on Reviewing statement with the already validated prepared activity.

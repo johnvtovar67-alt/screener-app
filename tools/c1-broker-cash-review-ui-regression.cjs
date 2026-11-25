@@ -3,11 +3,12 @@
 // brokerage authentication, investment performance or a financial write.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const React=require('react'),babel=require('next/dist/compiled/babel/core');
+const loader=require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd());
 const file=path.resolve('components/C1BrokerCashReview.js'),clone=value=>JSON.parse(JSON.stringify(value));
 const compiled=babel.transformSync(fs.readFileSync(file,'utf8'),{filename:file,babelrc:false,configFile:false,
  presets:[[require.resolve('next/babel'),{'preset-env':{modules:'commonjs'}}]]}).code;
 let active;
-const mockReact={...React,useState:initial=>{
+const mockReact={...React,useEffect(){},useState:initial=>{
  const state=active,index=state.index++;
  if(!(index in state.values))state.values[index]=typeof initial==='function'?initial():initial;
  return [state.values[index],value=>{state.values[index]=typeof value==='function'?value(state.values[index]):value;}];
@@ -16,7 +17,7 @@ const mockReact={...React,useState:initial=>{
 }};
 function load(react){
  const record={exports:{}};
- new Function('require','module','exports',compiled)(name=>name==='react'?react:name.startsWith('@babel/runtime/')?require('next/dist/compiled/'+name):require(name),record,record.exports);
+ new Function('require','module','exports',compiled)(name=>name==='react'?react:name.startsWith('../lib/')?loader.load(name,file):name.startsWith('@babel/runtime/')?require('next/dist/compiled/'+name):require(name),record,record.exports);
  return record.exports;
 }
 const {default:Component,C1_BROKER_STATEMENT_MAX_BYTES:limit}=load(mockReact);
