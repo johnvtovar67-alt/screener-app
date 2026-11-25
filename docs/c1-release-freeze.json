@@ -121,9 +121,9 @@
     "lib/walkForwardBacktest.js": "9e294411566722e93632d88c9b5a127d29df1535",
     "lib/winnerLifecycle.js": "b588870fec4cd4ef60f4fbab626db3ccace96df2",
     "pages/_app.js": "1a85dfedc0631279cc3f3a732c5ac568296ea302",
-    "pages/api/c1-account.js": "327fd12acd2c1c9c356a7384bdd7dae24d36a78f",
+    "pages/api/c1-account.js": "bb31238ca16e634783897a94ff1757a15a4503b3",
     "lib/c1AccountOperationalStatus.js": "0000407bef8c173e80d8e51d0e2e65286bb85549",
-    "lib/c1ApiErrors.js": "79dbc85831f421276bcac858c045d313b6d9bc86",
+    "lib/c1ApiErrors.js": "703317c87340efdc345908ba9f6209b58e94796b",
     "pages/api/catalysts.js": "cd43dbf13e263e39c511b438413f7c6d55d6c768",
     "pages/api/cron/c1-index.js": "dd3a83dd37b8f7f1f8694abe2767f9d921856f16",
     "pages/api/cron/fmp-research-backtest.js": "4ce2d0302bd451103c86f0412ee197ffb4d50f72",
@@ -190,7 +190,7 @@
     "pages/api/research/v11-stress-test.js": "6c9d2257bd1753c9b069ef9b5f449850a1b6de33",
     "pages/api/top5.js": "e74d2b50627267bd93a540659dac6f52e8d9e907",
     "pages/api/version.js": "f5e779282555759a73822496035efdf16bf4c99f",
-    "pages/index.js": "c961b2df86ad3196da19ff2a5063860520d7558d",
+    "pages/index.js": "466d2c86e40d9b3e0e3ce355b27bd75572d83be6",
     "styles/card-layout.css": "4ac831e11c630ac2927089e2b10dd767ce44f5ce",
     "lib/c1OrderDisplay.js": "652caf4da9ebb08ddf812e8d96a40f7c6850ffd5",
     "lib/c1EntryReview.js": "8db65a9c8ab26384e881596ac875c5a7f48476cd",
@@ -242,7 +242,7 @@
     "lib/c1WatchDetails.js": "ae85e1726e7ef6d07fb6975e302385db22b090c3",
     "lib/publicApiFailure.js": "ea81b49991dee995edfb1c79efd174379ed8b1bd",
     "lib/c1OwnerAccess.js": "29fedd8f30cddbce0e09c24687e9a386a2323fc7",
-    "lib/c1RefreshResponse.js": "4c8995f93482508f576ff187679c376cb46df20b",
+    "lib/c1RefreshResponse.js": "f21208934ac977b42ec2994510343b35fdd8951d",
     "lib/c1OpportunitiesContract.js": "2f24fa64325d27da4ac5673097737e59f3067213",
     "lib/c1ScreenProducer.js": "852882e255cdff1a41be3beedaa47eb2d98a6fb8",
     "lib/c1ScreenSnapshotView.js": "79b6e2bea3e7733eb0235f1630e564e5e96a7b68",
@@ -446,5 +446,6 @@
   "watchDownloadCleanupAuthorization20261123": "After the diagnostic review, the owner asks whether the temporarily restored Watch download button will now be removed. Remove only the view import and control; retain corrected stock/account warnings and all gates and financial facts. Only this application hash and authorization metadata change. An exact one-file inverse preserves prior fixtures, pins and historical export coverage; raw-view and existing browser checks verify the cleanup. See docs/operations/c1-watch-download-cleanup-20261123.md.",
   "watchEntryBlockerCopyAuthorization20261123": "Owner reports every Watch row now shows the replacement incomplete-purchase-check sentence. Continue the existing warning repair only: suppress the secondary per-stock generic exposure prose when a verified recent-momentum trigger already fails. Preserve raw diagnostics and every purchase block; shared account failures and qualified or unknown-entry missing evidence remain explicit. Only lib/c1CurrentWatchSelection.js hash and this authorization metadata change. No financial, ranking, selection, sizing, policy, provider, job, auth, dependency, guard implementation, CI or build-hook changes. Exact new inverse preserves prior fixtures and pins; raw-current tests and full release verification required. See docs/operations/c1-watch-entry-blocker-copy-20261123.md.",
   "plannedSaleAttributionRepairAuthorization20261125": "Owner reports repeated C1 sales and supplied current saved evidence confirming misattribution. Preserve selected planned-vs-stop original order group, validate server identities and reject ambiguous legacy submissions. Add explicit current-session review/confirmation with revision/hash/ETag binding, unchanged broker facts/aggregate shares/cash, disclosed derived basis changes and durable original/effective split audit; never auto-correct or retry uncertain writes. Only six scoped application files change: recorder component/domain, safe errors, new sale-attribution recovery, account API and Home callback. No risk policy/threshold/reset/cooldown/stop-price/provider/job/auth/dependency changes. Update only scoped freeze entries; guard/canonical/CI/build hooks and all previous fixtures/pins immutable. Exact inverse and actual form/domain/API plus full release and owner-path verification required. See docs/operations/c1-planned-sale-attribution-20261125.md.",
-  "brokerCashAuthorityRepairAuthorization20261125": "Owner November25 requires one current brokerage cash balance, supplies dated broker activity, and requests completion of the repeated planned-sector-sale repair. Add explicit owner-reviewed statement and combined sale-attribution correction; preserve original financial facts and strict evidence validation, derive cash-flow adjusted current sizing/exposure/risk, preserve drawdown percentage through capital flows and once-per-completed-episode risk resets. Include dated Core-observation checks, immutable journal lineage, statement-net completed-loss classification, safe errors and explicit native review. Update only affected application entries; canonical simulator, all84 published fixtures, existing guards/build hooks/CI/config stay unchanged. Exact new cash-authority inverse precedes prior inverses; newly generated challenger adds trusted cash-flow hook only. See docs/operations/c1-broker-cash-authority-20261125.md."
+  "brokerCashAuthorityRepairAuthorization20261125": "Owner November25 requires one current brokerage cash balance, supplies dated broker activity, and requests completion of the repeated planned-sector-sale repair. Add explicit owner-reviewed statement and combined sale-attribution correction; preserve original financial facts and strict evidence validation, derive cash-flow adjusted current sizing/exposure/risk, preserve drawdown percentage through capital flows and once-per-completed-episode risk resets. Include dated Core-observation checks, immutable journal lineage, statement-net completed-loss classification, safe errors and explicit native review. Update only affected application entries; canonical simulator, all84 published fixtures, existing guards/build hooks/CI/config stay unchanged. Exact new cash-authority inverse precedes prior inverses; newly generated challenger adds trusted cash-flow hook only. See docs/operations/c1-broker-cash-authority-20261125.md.",
+  "cashReviewResponseRecoveryAuthorization20261125": "Owner reports actual deployed cash-review failure and a stuck Reviewing statement state with already supplied, validated activity, and asks that validation be handled without repeating data entry. Repair the distinct cashReview versus account-decision response contract, strictly validate each type, bound the complete read-only request without retry, and expose bounded operation/stage/invariant diagnostics for existing review/confirm failures only. No financial record, validation safeguard, risk/stop/cooldown/ranking policy, credentials, infrastructure, CI/build hooks or canonical code changes. Preserve all85 prior fixture blobs and pins through the new exact follow-up source inverse against published d2f748d. See docs/operations/c1-cash-review-response-recovery-20261125.md."
 }

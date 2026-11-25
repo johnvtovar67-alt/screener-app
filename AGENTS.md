@@ -1,5 +1,19 @@
 # C1 operating instructions
 
+## Actual cash-review recovery — November 25, 2026
+The owner reports the deployed statement review rejecting an export, then
+remaining on Reviewing statement with the already validated prepared activity.
+They ask for validation without re-entering or manually checking the same data.
+Repair the demonstrated browser contract mismatch: a cash-review response has
+cashReview, not an account decision. Keep both response types strictly checked,
+bound the read-only request without automatic retries, and expose only bounded,
+private-data-safe failure reasons for this actual review/confirmation path.
+Preserve every financial invariant, confirmation requirement, original record,
+stop, risk reference and policy. No account write, invented input, validation
+bypass or brokerage action is authorized by this response-boundary repair.
+Keep all 85 published fixture blobs unchanged; use a new exact source inverse
+against the published d2f748d tree and update only affected application pins.
+
 ## Owner-requested single brokerage-cash authority — November 25, 2026
 The owner rejects the correction screen's separate C1 cash balance and directs
 that broker cash be the one current cash balance. They supplied dated broker

@@ -10,7 +10,7 @@ import C1IntradayActivity from '../components/C1IntradayActivity';
 import C1BrokerCashReview from '../components/C1BrokerCashReview';
 import {portfolioDateDisplay} from '../lib/portfolioDateDisplay';
 import {readTop5Response} from '../lib/top5Response';
-import {readC1AccountResponse} from '../lib/c1RefreshResponse';
+import {readC1AccountResponse,requestC1BrokerCashReview} from '../lib/c1RefreshResponse';
 import {createC1RefreshFrame} from '../lib/c1RefreshFrame';
 import {bindC1JourneyReceipt,inheritC1JourneyReceipt,reportC1PublishedJourney} from '../lib/c1JourneyClient';
 import C1PositionContextImport from '../components/C1PositionContextImport';
@@ -329,9 +329,7 @@ export default function Home(){
       await syncQueue.current;
       if(syncDirty.current||syncStatus!=='Synced')throw new Error('Sync the saved portfolio before reviewing brokerage activity.');
       const key=localStorage.getItem(SYNC_KEY)||'';
-      const response=await fetch('/api/c1-account',{method:'POST',headers:{authorization:`Bearer ${key}`,'content-type':'application/json'},
-        body:JSON.stringify({operation:'review-broker-cash-history',statementText,expectedRevision})});
-      const value=await readC1AccountResponse(response,{stage:'broker-cash-review'});
+      const {response,value}=await requestC1BrokerCashReview(key,{statementText,expectedRevision},fetch);
       if(!response.ok)throw new Error(value.error||'Brokerage cash review is unavailable.');
       if(!value.cashReview?.financialValid)throw new Error('The corrected financial replay has not passed validation.');
       return value.cashReview;
