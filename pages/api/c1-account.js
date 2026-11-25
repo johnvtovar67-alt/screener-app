@@ -158,10 +158,13 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
     return res.status(200).json(view);
    }
    if(operation==='review-broker-cash-history'||operation==='confirm-broker-cash-history'){
+    stage='broker-cash-portfolio-read';
     const portfolioRecord=await c1AccountDependency(()=>readPortfolio(key),'portfolio');
     const args={account,book,portfolioRecord,statementText:body.statementText,expectedRevision:body.expectedRevision,now};
+    stage=operation==='review-broker-cash-history'?'broker-cash-review':'broker-cash-confirm';
     if(operation==='review-broker-cash-history')return res.status(200).json({cashReview:reviewC1BrokerCashCorrection(args)});
     const next=confirmC1BrokerCashCorrection({...args,reviewId:body.reviewId,confirmed:body.confirmed===true,attributionConfirmed:body.attributionConfirmed===true});
+    stage='broker-cash-confirm-analysis';
     const view=completedAnalysisView({account:next,book,now});
     stage='account-save';
     account=await saveC1AccountUpdate({store:checkedStore,path,saved,account:next,operation,book,now});
@@ -269,10 +272,12 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
    stage='saved-account-analysis';
    return res.status(200).json(completedAnalysisView({account,book,now,holdingReviewError}));
   }catch(error){
-   const {status,...failure}=c1AccountApiFailure(error);
+   const {status,...failure}=c1AccountApiFailure(error,{operation,stage});
    // Bounded structured fields only: no key, request body, holdings, prices,
    // account path, raw provider error or stack enters an operational log.
    console.warn('C1_ACCOUNT_API_FAILURE',JSON.stringify({requestId,code:failure.code,status,stage,
+    ...(['review-broker-cash-history','confirm-broker-cash-history'].includes(operation)?{operation}:{}),
+    ...(failure.diagnostic?{reasonId:failure.diagnostic.reasonId,fingerprint:failure.diagnostic.fingerprint}:{}),
     method:req.method,sourceSessionDate:/^\d{4}-\d{2}-\d{2}$/.test(sourceSessionDate||'')?sourceSessionDate:null,
     commit:/^[a-f0-9]{7,40}$/.test(commit)?commit:'local'}));
    return res.status(status).json({...failure,requestId,executable:false});
