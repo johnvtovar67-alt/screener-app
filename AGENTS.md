@@ -1,5 +1,23 @@
 # C1 operating instructions
 
+## Planned-sale attribution repair — November 25, 2026
+The owner reports repeated sale notices after recording completed C1 sales and
+calls the stair-step liquidation inefficient. A reproduced recorder defect
+discards the selected planned-vs-stop group and distributes a planned sale into
+other allocations' conditional stops. Repair that attribution only. Preserve
+the selected original order group through the form, validate it against server
+orders and reject ambiguous old-client submissions before recording. Keep owner
+discretionary sales separate. Never silently reassign existing saved fills or
+change prices, fees, cash, basis, stops or risk references. Current saved evidence
+and a separately reviewed recovery are required before correcting past records.
+The owner has now supplied that evidence. Add an explicit review/confirmation
+for eligible current-session misattribution: preserve broker tickets and the
+original fill split in an append-only audit, disclose derived remaining-basis
+changes, and apply only the reviewed effective split through existing replay
+and conditional saving. Never apply this correction automatically.
+No portfolio-risk policy change is authorized by this defect repair. See
+`docs/operations/c1-planned-sale-attribution-20261125.md`.
+
 ## Watch entry-blocker follow-up — November 23, 2026
 The owner reports that every Watch row now says “This stock's opening price or
 purchase limit checks are incomplete.” Continue the existing authorized warning

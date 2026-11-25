@@ -7,7 +7,7 @@ assert.equal(hash('tools/fixtures/c1-stock-momentum-exit-source-seams.json'),'f2
 assert.equal(hash('lib/c1StockMomentumExit.js'),'38eb4498fc3d462af6d766769b0ec3fef668b7d3b0debb044b673aacfd7a5bd5');
 assert.deepEqual(Object.keys(fixture.files),['lib/c1AccountExecutionView.js','lib/c1AccountPolicy.js','lib/c1AccountProjection.js','lib/c1AccountService.js','lib/c1CompletedAddRecovery.js','lib/c1DecisionCopy.js','lib/c1IntradayActivity.js']);
 for(const [file,patch]of Object.entries(fixture.files)){
- const source=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,source);
+ const source=require('./c1-planned-sale-attribution-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),prior=inverse.restore(file,source);
  assert.equal(inverse.blob(source),patch.afterHash);assert.equal(inverse.blob(prior),patch.beforeHash);
  assert.equal(inverse.restore(file,prior),prior);
  const unknown=source+'\n/* unrelated changes cannot impersonate historical source */\n';assert.equal(inverse.restore(file,unknown),unknown);
