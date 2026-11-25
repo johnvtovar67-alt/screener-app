@@ -11,7 +11,7 @@ for(const [file,pin]of [
  ['tools/fixtures/c1-account-policy-replay-repair-source-seams.json','b74013454d5216c290bf36ef63872c14f197ae9df47aae690315a846477860de']
 ])assert.equal(hash(fs.readFileSync(file)),pin,'The published source fixture remains immutable: '+file);
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),released=inverse.restore(file,current);
+ const current=require('./c1-cash-authority-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),released=inverse.restore(file,current);
  assert.equal(inverse.blob(current),patch.afterHash,'Exact reviewed target-preservation source: '+file);
  assert.equal(inverse.blob(released),patch.beforeHash,'Exact preceding deployed source: '+file);
  assert.equal(policy.blob(policy.restore(file,current)),v2.files[file].beforeHash,'All earlier account-policy source identities remain exact: '+file);

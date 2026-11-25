@@ -1,5 +1,32 @@
 # C1 operating instructions
 
+## Owner-requested single brokerage-cash authority — November 25, 2026
+The owner rejects the correction screen's separate C1 cash balance and directs
+that broker cash be the one current cash balance. They supplied dated broker
+activity, identified Core transactions entered through the portfolio editor,
+and confirmed the current brokerage balance. They explicitly ask not to delay
+the repair over a minor cents discrepancy. Repair the demonstrated disconnect
+between portfolio snapshots, actual cash movements and current C1 accounting.
+Use one confirmed brokerage balance for current funding and consistent current
+sizing, equity and exposure; retain immutable original records for audit.
+Add an explicit reviewed statement/cash-flow correction, never silently invent
+fills, an opening balance, a withdrawal or a loss-reference reset. Core cash
+activity is external capital, not a C1 stock purchase; interest, fees and
+statement cash differences must retain their distinct economic meaning.
+Preserve original positions, purchase bases/dates, stops, plans, fills, in-kind
+adoption receipts, historical peaks/loss records and logical exit episodes.
+Validate original evidence before deriving a detached corrected financial view.
+Cash capital changes must preserve existing drawdown percentage at the flow;
+the same 12% protection and once-per-completed-episode reset continue. Any
+financial correction requires a concrete owner review and confirmation through
+the authenticated app. Ordinary holdings edits cannot fabricate cash activity.
+No ranking, selection, cooldown duration, position-capacity or strategy redesign
+is authorized. Keep every prior oracle fixture/pin and the original canonical
+simulator unchanged. Document exact new generator/inverse and freeze scope.
+The owner subsequently explicitly reaffirms retaining allocation-based partial
+exits while removing the repeat-sale defect. No whole-stock or combined-account
+liquidation-policy change is authorized by the inconclusive model comparison.
+
 ## Planned-sale attribution repair — November 25, 2026
 The owner reports repeated sale notices after recording completed C1 sales and
 calls the stair-step liquidation inefficient. A reproduced recorder defect

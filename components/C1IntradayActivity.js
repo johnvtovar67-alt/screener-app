@@ -10,6 +10,7 @@ function SaleAttributionReview({review,onConfirm,busy}){
  if(!review)return null;
  if(review.status==='applied')return <p role="status">Sale allocation correction saved. Original broker trades and the earlier allocation split are retained in C1’s audit history.</p>;
  if(review.status!=='confirmation-required')return <p role="status">{review.message||'A saved sale allocation needs reconciliation before it can be corrected.'}</p>;
+ if(review.cashAccountingRequired)return <p role="status">The saved cash history needs reconciliation. Use “Review brokerage cash and account activity” below to review the cash and these already completed sales together. Do not enter the sales again.</p>;
  const confirmed=confirmedId===review.proposalId;
  async function confirm(){
   if(!confirmed||busy||!onConfirm)return;
@@ -24,7 +25,7 @@ function SaleAttributionReview({review,onConfirm,busy}){
  return <fieldset className="c1RecoveryAllocation"><legend>Review the recorded sale allocations</legend>
   <p>C1 split these completed sales across other groups’ stop orders, leaving the planned loss exit unfinished. Review the correction below. This records no new trade and changes no broker execution.</p>
   {review.rows.map(row=><div key={row.symbol}><p><b>{row.symbol}: {row.shares} shares already sold</b><br/>Recorded sale split: {allocationText(row.allocationsBefore)}.<br/>Corrected sale split: {allocationText(row.allocationsAfter)}.<br/>Remaining account holding: {row.remainingShares} shares. Calculated remaining C1 cost basis: {money(row.basisBefore)} → {money(row.basisAfter)}.</p></div>)}
-  <p>Total C1 strategy cash stays {money(review.summary.cashAfter)}. The original quantities, execution prices, fees, times and trade identities remain unchanged. Original purchase records, stop prices, historical losses and risk references are retained. The old allocation split is preserved in the correction audit.</p>
+  <p>Schwab cash available to trade stays {money(review.brokerageCash)}. The original quantities, execution prices, fees, times and trade identities remain unchanged. Original purchase records, stop prices, historical losses and risk references are retained. The old allocation split is preserved in the correction audit.</p>
   <p>The saved trade format did not retain your original planned-versus-stop selection. Confirm the intended sale allocation below; C1 cannot reconstruct that selection as verified historical issuance.</p>
   <label className="c1TradeConfirmation"><input type="checkbox" checked={confirmed} disabled={busy} onChange={event=>{setConfirmedId(event.target.checked?review.proposalId:null);setError('');}}/> These were the planned C1 sales I selected. I approve the corrected allocations shown above, and I have not executed the repeat sale notices.</label>
   <button className="c1TradeSave" type="button" disabled={busy||!confirmed||!onConfirm} onClick={confirm}>{busy?'Saving correction…':'Confirm sale allocation correction'}</button>

@@ -26,7 +26,9 @@ async function fictionalAccount(){
  const fills=[['base',6,.06],['cooldown15',13,.13],['sector40',6,.06]].map(([sleeve,shares,fee])=>({
   ...ticket,id:ticket.id+':'+sleeve,orderId:sleeve==='sector40'?target.id:plan.orders.find(order=>order.sleeve===sleeve&&order.condition).id,shares,fee
  }));
- const account={...workflow.account,revision:7,intradayActivity:{date,openingObservedAt:plan.observedAt,plan,fills,tickets:[ticket]}};
+ // This cash observation precedes the injected completed sale. A later balance
+ // already includes that sale and cannot be used as pre-sale cash evidence.
+ const account={...workflow.account,brokerageCash:{...workflow.account.brokerageCash,observedAt:date+'T14:30:00.000Z'},revision:7,intradayActivity:{date,openingObservedAt:plan.observedAt,plan,fills,tickets:[ticket]}};
  return {account,book:workflow.book,service:workflow.service};
 }
 
