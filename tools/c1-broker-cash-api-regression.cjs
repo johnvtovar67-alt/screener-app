@@ -4,11 +4,13 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {createResearchModuleLoader}=require('./research-module-loader.cjs');
 const {createWorkflowFixture}=require('./fixtures/c1-trading-workflow.cjs');
+const {createPortfolioSyncMemory}=require('./fixtures/c1-portfolio-sync-memory.cjs');
 const loader=createResearchModuleLoader(process.cwd()),clone=value=>JSON.parse(JSON.stringify(value));
 const same=(actual,expected,message)=>assert.equal(JSON.stringify(actual),JSON.stringify(expected),message);
 const near=(actual,expected,message)=>assert(Math.abs(actual-expected)<1e-7,message||`${actual} differs from ${expected}`);
 const now=new Date('2026-11-24T17:00:00.000Z'),ids=['base','cooldown15','sector40'];
 const apiFile=path.resolve('pages/api/c1-account.js');
+const key='fictional_cash_review_key_'.repeat(2);
 
 function fictionalInput(kind='plain'){
  const workflow=createWorkflowFixture('buy',{baselineDate:'2026-11-19',portfolio:[
@@ -58,7 +60,7 @@ function harness(kind='plain'){
  const box={...imports,Date,Response,process:{env:{}},console:{info(){},warn(){},error(){}}};vm.createContext(box);vm.runInContext(source,box,{filename:apiFile});
  const handler=box.factory({environment:'preview',commit:'fictional-broker-cash-test',clock:()=>state.now,
   readBook:async()=>({record:clone(state.book)}),readPortfolio:async()=>{state.portfolioReads++;return clone(state.portfolioRecord);},
-  collectOpening:async()=>{if(!state.allowOpening)return never();state.openingCalls++;input.workflow.now=state.now;return input.workflow.collectOpening();},collectHoldings:never,collectRanks:never,
+  collectOpening:async()=>{if(!state.allowOpening)return never();state.openingCalls++;input.workflow.now=state.now;const opening=await input.workflow.collectOpening();await state.whileOpening?.();return opening;},collectHoldings:never,collectRanks:never,
   store:{read:async()=>{state.reads++;return {record:clone(state.account),etag:state.etag};},write:async(_path,account,etag)=>{
    state.writeAttempts++;assert.equal(etag,state.etag,'The real saver must retain the strong account ETag');
    if(state.conflict)throw Object.assign(Error('Fictional ETag conflict'),{name:'BlobPreconditionFailedError',status:412});
@@ -68,7 +70,7 @@ function harness(kind='plain'){
  });
  async function request(body,authorized=true){
   const response={headers:{},setHeader(name,value){this.headers[name]=value;},status(status){this.statusCode=status;return this;},json(value){this.body=value;return this;}};
-  await handler({method:body?'POST':'GET',body,headers:authorized?{authorization:'Bearer '+'fictional_cash_review_key_'.repeat(2)}:{}},response);
+  await handler({method:body?'POST':'GET',body,headers:authorized?{authorization:'Bearer '+key}:{}},response);
   assert.equal(response.headers['Cache-Control'],'no-store');return response;
  }
  async function review(){
@@ -77,7 +79,7 @@ function harness(kind='plain'){
  }
  const confirmPayload=review=>({operation:'confirm-broker-cash-history',statementText:input.statementText,reviewId:review.reviewId,
   expectedRevision:review.revision,confirmed:true,...(review.plannedSaleCorrection?{attributionConfirmed:true}:{})});
- return {input,state,request,review,confirmPayload};
+ return {input,state,request,review,confirmPayload,key,portfolioRequest:createPortfolioSyncMemory({state,loader,key})};
 }
 
 function preserved(original,current,{planned=false}={}){
@@ -96,10 +98,21 @@ function financial(view,input){
  assert.equal(decision.cashAccounting.allocations.length,3);
  return decision;
 }
+const prepare=h=>h.request({operation:'prepare-execution'});
+const buys=response=>response.body.manualRecommendations.orders.filter(order=>order.side==='buy'&&!order.condition);
+async function corrected(){
+ const h=harness(),review=await h.review(),confirmation=await h.request(h.confirmPayload(review));
+ assert.equal(confirmation.statusCode,200,JSON.stringify(confirmation.body));
+ h.state.allowOpening=true;return h;
+}
+async function syncPortfolio(h,portfolio,options={}){
+ const result=await h.portfolioRequest('PUT',{portfolio,expectedEtag:h.state.portfolioRecord.etag,...options});
+ assert.equal(result.statusCode,200,JSON.stringify(result.body));return result.body;
+}
 let cases=0;const failures=[];
 async function check(name,run){try{await run();cases++;console.log('PASS '+name);}catch(error){failures.push({name,error});console.error('FAIL '+name+'\n'+error.stack);}}
 
-(async()=>{
+if(require.main===module)(async()=>{
  await check('unauthorized requests cannot read accounts, statements or portfolios',async()=>{
   const h=harness();const response=await h.request({operation:'review-broker-cash-history',statementText:h.input.statementText,expectedRevision:0},false);
   assert.equal(response.statusCode,401);assert.equal(h.state.reads,0);assert.equal(h.state.portfolioReads,0);assert.equal(h.state.writeAttempts,0);
@@ -227,6 +240,96 @@ async function check(name,run){try{await run();cases++;console.log('PASS '+name)
   same(h.state.account.brokerageCash,originalBroker);same(h.state.account.records,originalRecords);assert.equal(h.state.account.intradayActivity.tickets.at(-1).id,sale.id);
   assert.equal(h.state.providerCalls,0);
  });
+ await check('removing a saved Core holding cannot make old brokerage cash eligible again',async()=>{
+  const h=harness(),review=await h.review();let response=await h.request(h.confirmPayload(review));assert.equal(response.statusCode,200,JSON.stringify(response.body));
+  h.state.allowOpening=true;
+  response=await h.request({operation:'prepare-execution'});assert.equal(response.statusCode,200,JSON.stringify(response.body));
+  assert(response.body.manualRecommendations.orders.some(order=>order.side==='buy'),'The exact fictional starting account is eligible for checked Buys');
+  h.state.now=new Date('2026-11-24T17:05:00.000Z');h.state.portfolioRecord.portfolio.find(position=>position.symbol==='CORC').lastTradeAt=h.state.now.toISOString();
+  response=await h.request({operation:'prepare-execution'});assert.equal(response.statusCode,200,JSON.stringify(response.body));
+  assert.equal(response.body.decision.brokerageCashCurrent,false);
+  const before=clone(h.state.account);
+  h.state.now=new Date('2026-11-24T17:07:00.000Z');
+  const saved=await h.portfolioRequest('PUT',{portfolio:h.state.portfolioRecord.portfolio.filter(position=>position.symbol!=='CORC'),expectedEtag:h.state.portfolioRecord.etag});
+  assert.equal(saved.statusCode,200,JSON.stringify(saved.body));
+  const readback=await h.portfolioRequest('GET');assert.equal(readback.statusCode,200);assert.equal(readback.body.etag,saved.body.etag);
+  assert(!readback.body.portfolio.some(position=>position.symbol==='CORC'),'The deletion actually committed');
+  response=await h.request({operation:'prepare-execution'});assert.equal(response.statusCode,200,JSON.stringify(response.body));
+  assert.equal(response.body.decision.brokerageCashCurrent,false,'Deleting the row must not validate the old broker observation');
+  assert.equal(response.body.decision.executableCash,0);assert(!response.body.manualRecommendations.orders.some(order=>order.side==='buy'));
+  same(h.state.account,before,'A holdings edit or stale review adds no account financial facts');
+ });
+ await check('each economic Core edit blocks old cash through saved portfolio verification; only a newer broker observation restores the same Buy quantities',async()=>{
+  const h=await corrected(),initial=await prepare(h),buySignature=orders=>orders.map(({symbol,sleeve,shares,estimatedPrice})=>({symbol,sleeve,shares,estimatedPrice}));
+  assert.equal(initial.statusCode,200,JSON.stringify(initial.body));const expected=buySignature(buys(initial));assert(expected.length>0);
+  const swing={symbol:'CORX',role:'Swing',shares:2,avgCost:70},core={...swing,role:'Core'};
+  const initialCash=clone(h.state.account.brokerageCash),original=clone(h.state.account.records);
+  const beforeEtag=h.state.portfolioRecord.etag;
+  const originalPositions=clone(h.state.portfolioRecord.portfolio);
+  h.state.now=new Date('2026-11-24T17:02:00.000Z');
+  await syncPortfolio(h,[...originalPositions.slice().reverse(),swing],{coreCashChangeTimes:['2026-11-24T17:01:00.000Z']});
+  assert(!Object.hasOwn(h.state.portfolioRecord,'coreCashChangeTimes'),'Caller cannot inject edit timestamps; reorder and Swing changes are neutral');
+  assert(buys(await prepare(h)).length>0);
+  const rejected=await h.portfolioRequest('PUT',{portfolio:originalPositions,expectedEtag:beforeEtag});assert.equal(rejected.statusCode,409);
+  assert(!Object.hasOwn(h.state.portfolioRecord,'coreCashChangeTimes'),'Conflict cannot commit a Core change or metadata');
+  for(const [name,edit]of Object.entries({
+   addition:rows=>[...rows,{...core,symbol:'CORY'}],
+   quantity:rows=>rows.map(row=>row.symbol==='CORC'?{...row,shares:4}:row),
+   basis:rows=>rows.map(row=>row.symbol==='CORC'?{...row,avgCost:801}:row),
+   'Core to Swing':rows=>rows.map(row=>row.symbol==='CORC'?{...row,role:'Swing'}:row),
+   'Swing to Core':rows=>rows.map(row=>row.symbol==='CORX'?{...row,role:'Core'}:row),
+   removal:rows=>rows.filter(row=>row.symbol!=='CORX')
+  })){
+   h.state.now=new Date(h.state.now.getTime()+60000);
+   const previousAccount=clone(h.state.account),expectedChanges=(h.state.portfolioRecord.coreCashChangeTimes||[]).length+1;
+   await syncPortfolio(h,edit(h.state.portfolioRecord.portfolio),{coreCashChangeTimes:[]});
+   const readback=await h.portfolioRequest('GET');assert.equal(readback.body.coreCashChangeTimes.length,expectedChanges,name);
+   assert.equal(readback.body.coreCashChangeTimes.at(-1),h.state.now.toISOString(),name);
+   const paused=await prepare(h);assert.equal(paused.statusCode,200,JSON.stringify(paused.body));
+   assert.equal(paused.body.decision.brokerageCashStatus,'Core-activity-review',name);assert.equal(paused.body.decision.executableCash,0,name);
+   assert.equal(buys(paused).length,0,name);same(h.state.account,previousAccount,name+' changes no financial records');
+   h.state.now=new Date(h.state.now.getTime()+1000);
+   if(name==='addition'){
+    const changedCash=await h.request({operation:'update-brokerage-cash',brokerageCash:initialCash.balance+100,expectedRevision:h.state.account.revision});
+    assert.equal(changedCash.statusCode,200,'The entered observation can be saved without asserting accounting facts');
+    const unverifiedCash=await prepare(h);assert.equal(unverifiedCash.statusCode,200,JSON.stringify(unverifiedCash.body));
+    assert.equal(unverifiedCash.body.openingPlan.cashAccountingStatus,'review-required');assert.equal(buys(unverifiedCash).length,0,'A newer observation alone cannot resolve an unsupported material difference');
+    same(h.state.account.records,original);h.state.now=new Date(h.state.now.getTime()+1000);
+   }
+   const updated=await h.request({operation:'update-brokerage-cash',brokerageCash:initialCash.balance,expectedRevision:h.state.account.revision});
+   assert.equal(updated.statusCode,200,JSON.stringify(updated.body));assert.equal(h.state.account.brokerageCash.observedAt,h.state.now.toISOString());
+   const restored=await prepare(h);assert.equal(restored.statusCode,200,JSON.stringify(restored.body));assert.equal(restored.body.decision.brokerageCashCurrent,true,name);
+   assert.deepEqual(buySignature(buys(restored)),expected,name+' preserves the strategy and checked quantities');same(h.state.account.records,original);
+  }
+ });
+ await check('a Core save during an opening request cannot publish or retain a stale Buy',async()=>{
+  const h=await corrected(),baseline=await prepare(h),before=clone(h.state.account);
+  const protective=response=>{
+   const {orders,openingBooks}=response.body.openingPlan;
+   return orders.filter(order=>order.side==='sell'&&openingBooks[order.sleeve].positions[order.symbol]?.shares>0)
+    .map(({symbol,sleeve,shares,condition,estimatedPrice})=>({symbol,sleeve,shares,condition,estimatedPrice}));
+  };
+  assert(buys(baseline).length>0);const originalProtection=protective(baseline);assert(originalProtection.length>0);
+  h.state.whileOpening=async()=>{
+   h.state.whileOpening=null;h.state.now=new Date('2026-11-24T17:00:10.000Z');
+   await syncPortfolio(h,h.state.portfolioRecord.portfolio.filter(row=>row.role!=='Core'));
+  };
+  const response=await prepare(h);assert.equal(response.statusCode,200,JSON.stringify(response.body));
+  assert.equal(buys(response).length,0);assert.equal(response.body.decision.brokerageCashStatus,'Core-activity-review');
+  assert.equal(h.state.openingCalls,2,'Each request verifies its own collection, including the race response');
+  assert.deepEqual(protective(response),originalProtection,'The repeat verification preserves protective sell quantities and prices');
+  same(h.state.account,before,'No stale issued entry reaches the saved account');
+ });
+ await check('an unchanged Core quantity and basis cannot erase a previously observed Core timestamp',async()=>{
+  const h=await corrected(),core=h.state.portfolioRecord.portfolio.find(row=>row.role==='Core');
+  h.state.now=new Date('2026-11-24T17:02:00.000Z');core.lastTradeAt='2026-11-24T17:01:00.000Z';
+  const paused=await prepare(h);assert.equal(paused.statusCode,200,JSON.stringify(paused.body));assert.equal(buys(paused).length,0);
+  const before=clone(h.state.account);
+  await syncPortfolio(h,h.state.portfolioRecord.portfolio.map(row=>row===core?{...row,openedAt:'2026-11-21',lastTradeAt:null}:row));
+  same(h.state.portfolioRecord.coreCashChangeTimes,[core.lastTradeAt],'Keep prior evidence without dating the metadata-only save as Core activity');
+  const reloaded=await prepare(h);assert.equal(reloaded.statusCode,200,JSON.stringify(reloaded.body));assert.equal(buys(reloaded).length,0);
+  same(h.state.account,before);
+ });
  await check('a retained issued fill from before a later Core change remains recordable while new buying stays paused',async()=>{
   const h=harness(),review=await h.review();let response=await h.request(h.confirmPayload(review));assert.equal(response.statusCode,200,JSON.stringify(response.body));
   h.state.allowOpening=true;response=await h.request({operation:'prepare-execution'});assert.equal(response.statusCode,200,JSON.stringify(response.body));
@@ -237,6 +340,9 @@ async function check(name,run){try{await run();cases++;console.log('PASS '+name)
   const beforeAttempts=h.state.writeAttempts;
   response=await h.request({operation:'record-intraday',ticket:{...ticket,id:'fictional-after-Core-issued-fill',executedAt:'2026-11-24T17:06:00.000Z'},expectedRevision:h.state.account.revision});
   assert.equal(response.statusCode,422,JSON.stringify(response.body));assert.equal(h.state.writeAttempts,beforeAttempts,'A fill after the Core change needs fresh cash evidence before accounting can assert its funding');
+  await syncPortfolio(h,h.state.portfolioRecord.portfolio.filter(row=>row.symbol!=='CORC'));
+  response=await h.request({operation:'record-intraday',ticket:{...ticket,id:'fictional-after-Core-issued-fill',executedAt:'2026-11-24T17:06:00.000Z'},expectedRevision:h.state.account.revision});
+  assert.equal(response.statusCode,422,JSON.stringify(response.body));assert.equal(h.state.writeAttempts,beforeAttempts,'A later deletion retains the earlier Core cutoff');
   response=await h.request({operation:'record-intraday',ticket,expectedRevision:h.state.account.revision});assert.equal(response.statusCode,200,JSON.stringify(response.body));
   assert.equal(response.body.savedTradeTicket.id,ticket.id);assert.equal(response.body.decision.brokerageCashCurrent,false);assert.equal(response.body.decision.executableCash,0);
   assert(!Object.hasOwn(h.state.account,'coreCashObservationRequired'),'The retained-issued recording branch strips the request-local flag');
@@ -246,3 +352,4 @@ async function check(name,run){try{await run();cases++;console.log('PASS '+name)
  console.log(`Combined brokerage-cash API regression: ${cases}/${cases+failures.length} fictional cases passed.`);
  if(failures.length)process.exitCode=1;
 })().catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={harness};

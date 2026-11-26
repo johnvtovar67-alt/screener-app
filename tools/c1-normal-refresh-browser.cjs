@@ -12,8 +12,20 @@ async function main(){
  const sourceGate=process.env.C1_NORMAL_BROWSER_SOURCE_GATE==='1';
  const accountPolicy=process.env.C1_NORMAL_BROWSER_ACCOUNT_POLICY==='1';
  const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1'||sourceGate||accountPolicy;
+ const coreCash=process.env.C1_NORMAL_BROWSER_CORE_CASH==='1'?require('./c1-broker-cash-api-regression.cjs').harness():null;
+ const syncKey=coreCash?.key||'offline_workflow_fixture_key_000001';
+ let coreApi;
+ if(coreCash){
+  const review=await coreCash.review(),result=await coreCash.request(coreCash.confirmPayload(review));
+  assert.equal(result.statusCode,200,JSON.stringify(result.body));coreCash.state.allowOpening=true;
+  const fixture=coreCash.input.workflow;
+  coreApi={fixture,async request(method,body,authorized){
+   coreCash.state.now=fixture.now;
+   const {statusCode:status,body:value,headers}=await coreCash.request(method==='POST'?body:null,authorized);return {status,body:value,headers};
+  }};
+ }
  let accountPolicyRevisionInjected=false;
- const api=createWorkflowApi('buy',qualified?{baselineDate:accountPolicy?'2026-11-10':'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],...(accountPolicy?{collectOpening:async()=>{
+ const api=coreApi||createWorkflowApi('buy',qualified?{baselineDate:accountPolicy?'2026-11-10':'2026-11-09',portfolio:[{symbol:'CASH',role:'Swing',shares:100000,avgCost:1}],...(accountPolicy?{collectOpening:async()=>{
   const opening=api.fixture.opening();
   if(!accountPolicyRevisionInjected){
    accountPolicyRevisionInjected=true;const bar=api.fixture.book.model.sessions.at(-1).prices.find(row=>row.symbol==='X20');
@@ -21,7 +33,7 @@ async function main(){
    opening.priceBasisRevisions=[{symbol:'X20',savedClose:bar.close,rechecked:true,observedBar:{...bar,close:99,low:99}}];
   }
   return opening;
- }}:{}),...(accountPolicy?{moduleOverrides:require('./fixtures/c1-account-policy-risk.cjs').approvedOperationalRiskModules(root)}:{})}:reliability?{baselineDate:'2026-10-29',now:'2026-10-30T19:00:00Z',commit:clientCommit,observationSecret}:{});api.fixture.setCash(100000);
+ }}:{}),...(accountPolicy?{moduleOverrides:require('./fixtures/c1-account-policy-risk.cjs').approvedOperationalRiskModules(root)}:{})}:reliability?{baselineDate:'2026-10-29',now:'2026-10-30T19:00:00Z',commit:clientCommit,observationSecret}:{});if(!coreCash)api.fixture.setCash(100000);
  if(accountPolicy)require('./fixtures/c1-account-policy-universe.cjs').applyAccountPolicyUniverseFixture(api.fixture,{count:50});
  if(sourceGate)require('./fixtures/c1-source-eligibility.cjs').applySourceEligibilityFixture(api.fixture);
  if(qualified&&!sourceGate&&!accountPolicy)for(let index=215;index<=220;index++){
@@ -80,11 +92,19 @@ async function main(){
    else return json({error:'Synthetic verification unavailable',detail:'Synthetic verification unavailable'},mode==='account-inputs-conflict'?409:503);
   }
   if(url.pathname==='/api/c1-journey-observation'){let status=200,value;await observationHandler({method:req.method,headers:req.headers,body},{setHeader(){},status(code){status=code;return this;},json(data){value=data;return this;}});return json(value,status);}
-  if(url.pathname==='/api/c1-account'){const result=await api.request(req.method,body,req.headers.authorization==='Bearer offline_workflow_fixture_key_000001',Object.fromEntries(url.searchParams));if(body?.operation==='prepare-execution')state.openingReviews.push({manualStatus:result.body.manualRecommendations?.status,providerVerified:result.body.openingPlan?.providerVerified,receipt:result.body.openingPlan?.sourceReceipt,orders:result.body.manualRecommendations?.orders||[]});if(state.shadowOwnership&&req.method==='GET'&&result.status===200)result.body={...result.body,decision:{...result.body.decision,revision:result.body.decision.revision+1,positions:result.body.decision.positions.map(position=>position.symbol==='LLL'?{...position,shares:5,stops:position.stops.map(stop=>({...stop,shares:5}))}:position)}};for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
+  if(url.pathname==='/api/c1-account'){const result=await api.request(req.method,body,req.headers.authorization==='Bearer '+syncKey,Object.fromEntries(url.searchParams));if(body?.operation==='prepare-execution')state.openingReviews.push({manualStatus:result.body.manualRecommendations?.status,providerVerified:result.body.openingPlan?.providerVerified,receipt:result.body.openingPlan?.sourceReceipt,orders:result.body.manualRecommendations?.orders||[],...(coreCash?{cashStatus:result.body.decision?.brokerageCashStatus,executableCash:result.body.decision?.executableCash}:{})});if(state.shadowOwnership&&req.method==='GET'&&result.status===200)result.body={...result.body,decision:{...result.body.decision,revision:result.body.decision.revision+1,positions:result.body.decision.positions.map(position=>position.symbol==='LLL'?{...position,shares:5,stops:position.stops.map(stop=>({...stop,shares:5}))}:position)}};for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
   if(url.pathname==='/api/top5'){const result=await readScreen(Object.fromEntries(url.searchParams));for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);return json(result.body,result.status);}
   if(url.pathname==='/api/performance')return json({records:actualScreen?.ledger()?.records||[],persistentStorage:true});
   if(url.pathname==='/api/entry-timing')return json({timing:Object.fromEntries(api.fixture.screenRows().map(row=>[row.symbol,row.entryTiming]))});
-  if(url.pathname==='/api/portfolio-sync'){assert.equal(req.method,'GET','Normal Reload must not write portfolio');return json({portfolio:api.fixture.portfolio,etag:'"fixture-portfolio-1"'});}
+  if(url.pathname==='/api/portfolio-sync'){
+   if(coreCash){
+    assert.equal(req.headers.authorization,'Bearer '+syncKey);
+    if(req.method==='PUT'&&state.fail==='core-save-hold')await new Promise(resolve=>state.held.push(resolve));
+    coreCash.state.now=api.fixture.now;
+    const result=await coreCash.portfolioRequest(req.method,body);return json(result.body,result.statusCode);
+   }
+   assert.equal(req.method,'GET','Normal Reload must not write portfolio');return json({portfolio:api.fixture.portfolio,etag:'"fixture-portfolio-1"'});
+  }
   if(url.pathname==='/api/c1-stop-quote'){
    if(state.fail==='stop-quote-body-hold'&&url.searchParams.get('symbol')==='LLL'){
     res.writeHead(200,{'content-type':'application/json','content-length':100000});res.write('{"contract":"c1-stop-quote-v1",');
@@ -105,9 +125,9 @@ async function main(){
   if(url.pathname==='/'){
    state.documentLoads++;
    const staleLocal={symbol:'FORMER',role:'Swing',shares:27,avgCost:403.38,openedAt:'2026-09-22'};
-   const localRows=!reliability&&!actualScreen&&state.documentLoads===1?[...api.fixture.portfolio,staleLocal]:api.fixture.portfolio;
+   const localRows=coreCash?.state.portfolioRecord.portfolio||(!reliability&&!actualScreen&&state.documentLoads===1?[...api.fixture.portfolio,staleLocal]:api.fixture.portfolio);
    const portfolio=JSON.stringify(localRows),css=fs.readFileSync('styles/card-layout.css','utf8');
-   res.setHeader('content-type','text/html');res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>window.__C1_TEST_CLOCK=${JSON.stringify(api.fixture.now.toISOString())};const NativeDate=Date;window.Date=class extends NativeDate{constructor(...a){super(...(a.length?a:[window.__C1_TEST_CLOCK]));}static now(){return NativeDate.parse(window.__C1_TEST_CLOCK);}};localStorage.setItem('stock_screener_portfolio_v1',${JSON.stringify(portfolio)});localStorage.setItem('stock_screener_portfolio_sync_key_v1','offline_workflow_fixture_key_000001');const originalFetch=window.fetch.bind(window);window.fetch=async(...args)=>{const response=await originalFetch(...args);const clock=response.headers.get('x-fixture-clock');if(clock)window.__C1_TEST_CLOCK=clock;return response;};</script></head><body><div id="root"></div><script src="/client.js"></script></body></html>`);return;
+   res.setHeader('content-type','text/html');res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><script>window.__C1_TEST_CLOCK=${JSON.stringify(api.fixture.now.toISOString())};const NativeDate=Date;window.Date=class extends NativeDate{constructor(...a){super(...(a.length?a:[window.__C1_TEST_CLOCK]));}static now(){return NativeDate.parse(window.__C1_TEST_CLOCK);}};localStorage.setItem('stock_screener_portfolio_v1',${JSON.stringify(portfolio)});localStorage.setItem('stock_screener_portfolio_sync_key_v1',${JSON.stringify(syncKey)});const originalFetch=window.fetch.bind(window);window.fetch=async(...args)=>{const response=await originalFetch(...args);const clock=response.headers.get('x-fixture-clock');if(clock)window.__C1_TEST_CLOCK=clock;return response;};</script></head><body><div id="root"></div><script src="/client.js"></script></body></html>`);return;
   }res.writeHead(404);res.end('Unexpected fixture URL');
  }catch(error){res.writeHead(500,{'content-type':'application/json'});res.end(JSON.stringify({error:error.message}));}});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port;
@@ -131,6 +151,42 @@ async function main(){
   await wait('document.querySelector("header button")?.textContent==="Reload"&&document.querySelector("[aria-label=\\"C1 account opportunities\\"]")','normal signed-in synthetic page');
   await wait('/Buy \\d+ shares/.test(document.body.innerText)','initial checked quantity');
   await wait('document.querySelector("header button")?.textContent==="Reload"','initial reload settled');
+  if(coreCash){
+   const buyText='/Buy \\d+ shares/.test(document.body.innerText)';
+   const quantities=review=>review.orders.filter(order=>order.side==='buy'&&!order.condition).map(({symbol,sleeve,shares,estimatedPrice})=>({symbol,sleeve,shares,estimatedPrice}));
+   const initial=quantities(state.openingReviews.at(-1));assert(initial.length>0);
+   await click('My Portfolio');await wait(`${buyText} && document.querySelector("header button")?.textContent==="Reload"`,'checked Buy on My Portfolio');
+   const original=JSON.parse(JSON.stringify(coreCash.state.account));
+   await control('core-save-hold',{advanceMs:60000});
+   await js(`[...document.querySelectorAll('.chips span')].find(chip=>chip.querySelector('b')?.textContent==='CORC').querySelector('button').click()`);
+   assert(coreCash.state.portfolioRecord.portfolio.some(row=>row.symbol==='CORC'),'The server save is still held');
+   await wait(`!(${buyText})`,'previous checked quantity disappears before the Core write finishes');
+   await click('Opportunities');await wait(`!(${buyText})`,'no stale Buy on Opportunities while the Core write is pending');
+   await control(null,{release:true});
+   await wait('document.querySelector("main")&&!JSON.parse(localStorage.getItem("stock_screener_portfolio_v1")).some(row=>row.symbol==="CORC")','Core holding removed from entered portfolio');
+   for(let attempt=0;attempt<80&&!requests.some(r=>r.path==='/api/portfolio-sync'&&r.method==='PUT'&&r.finished);attempt++)await pause(50);
+   assert(!coreCash.state.portfolioRecord.portfolio.some(row=>row.symbol==='CORC'),'Actual conditional PUT removed the account Core holding');
+   assert.equal(coreCash.state.portfolioRecord.coreCashChangeTimes?.at(-1),api.fixture.now.toISOString());
+   const afterSave=state.openingReviews.length;await click('Reload');
+   for(let attempt=0;attempt<120&&state.openingReviews.length<=afterSave;attempt++)await pause(50);
+   await wait('document.querySelector("header button")?.textContent==="Reload"','account verification after Core deletion');
+   assert(state.openingReviews.length>afterSave);const stale=state.openingReviews.at(-1);
+   assert.equal(stale.cashStatus,'Core-activity-review');assert.equal(stale.executableCash,0);assert.equal(quantities(stale).length,0);
+   assert.equal(await js(buyText),false);assert(JSON.stringify(coreCash.state.account)===JSON.stringify(original),'Holdings save and stale verification leave the account unchanged');
+   await click('My Portfolio');await wait('document.querySelector(".brokerageCash")?.innerText.includes("Update brokerage cash after the Core holding change")','My Portfolio explains why cash requires an update');
+   await control(null,{advanceMs:1000});await js('document.querySelector(".brokerageCashSummary button").click()');
+   await input('Actual brokerage cash',String(original.brokerageCash.balance));await click('Update Brokerage Cash');
+   await wait('document.querySelector(".brokerageCash")?.innerText.includes("Brokerage cash saved")','existing brokerage form confirms the newer balance');
+   assert(Date.parse(coreCash.state.account.brokerageCash.observedAt)>Date.parse(coreCash.state.portfolioRecord.coreCashChangeTimes.at(-1)));
+   await click('Opportunities');await click('Reload');await wait(buyText,'checked Buy returns only after newer brokerage evidence and verification');
+   assert.deepEqual(quantities(state.openingReviews.at(-1)),initial);
+   for(const field of ['adoption','records','sourceHashes','cashAccountingCorrections','intradayActivity'])assert.deepEqual(coreCash.state.account[field],original[field],field+' remains intact');
+   assert.equal(requests.filter(row=>row.path==='/api/portfolio-sync'&&row.method==='PUT').length,1);assert.equal(requests.filter(row=>row.operation==='update-brokerage-cash').length,1);
+   assert.deepEqual(trace.browserErrors,[]);
+   trace.cases.push({case:'core-removal-cash-freshness',heldSavePaused:true,savedPortfolioVerified:true,oldCashBlocked:true,newObservedCashRestored:true,checkedQuantitiesUnchanged:true,financialHistoryUnchanged:true});
+   trace.status='PASS';trace.browser=(await send('Browser.getVersion')).product;
+   console.log('PASS: actual Home/App Core removal, strong portfolio save, blocked stale Buy, and unchanged quantities after the existing brokerage cash update. No live requests.');return;
+  }
   if(qualified){
    const baseline=JSON.stringify(api.fixture.account);accountRecordUnchanged=()=>JSON.stringify(api.fixture.account)===baseline;
    if(accountPolicy){
@@ -489,13 +545,16 @@ async function main(){
   if(actualScreen){trace.screen={sources:actualScreen.sources(),providerCalls:actualScreen.calls,conditionalWrites:actualScreen.writes,ledgerRecordCount:actualScreen.ledger()?.records.length||0,storageHash:actualScreen.storageHash(),mockedBoundaries:['provider HTTP transport','accepted book/snapshot reads','Blob memory backend'],realModules:['top5 handler','quote/fundamental/event/timing providers','scoring/selection/gates','performanceStore','performanceLedger','strongBuyPersistence']};assert(actualScreen.writes.some(row=>row.name==='screener-performance-ledger.json'),'Actual screen path persists its synthetic observation through the real performance store');}
   assert.deepEqual(trace.browserErrors,[],'Actual application rendering must recover without browser exceptions');
   trace.status='PASS';trace.browser=(await send('Browser.getVersion')).product;trace.requests=requests;fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');console.log('PASS: actual Home/App normal Reload retains account and suppresses/recovers quantities across '+trace.cases.length+' HTTP failures; no automatic mutation retry or live request.');
- }finally{trace.accountRecordIdentical=accountRecordUnchanged();trace.syntheticAccountWrites=api.fixture.writes;state.held.splice(0).forEach(release=>release());try{socket?.close();}catch{}await new Promise(resolve=>{if(chrome.exitCode!==null||chrome.signalCode!==null)resolve();else{chrome.once('exit',resolve);chrome.kill('SIGTERM');}});server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');}
+ }finally{trace.accountRecordIdentical=accountRecordUnchanged();trace.syntheticAccountWrites=coreCash?.state.writes??api.fixture.writes;state.held.splice(0).forEach(release=>release());try{socket?.close();}catch{}await new Promise(resolve=>{if(chrome.exitCode!==null||chrome.signalCode!==null)resolve();else{chrome.once('exit',resolve);chrome.kill('SIGTERM');}});server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');}
 }
 main().then(()=>{
+ if(process.env.C1_NORMAL_BROWSER_CORE_CASH)return;
  if(!process.env.C1_NORMAL_BROWSER_ACCOUNT_POLICY&&!process.env.C1_NORMAL_BROWSER_SOURCE_GATE&&!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
   require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_ACCOUNT_POLICY:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'account-policy-v2')},timeout:120000});
  if(!process.env.C1_NORMAL_BROWSER_SOURCE_GATE&&!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
   require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_SOURCE_GATE:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'source-eligibility')},timeout:120000});
  if(!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
   require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_QUALIFIED:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'qualified-selection')},timeout:120000});
+ if(!process.env.C1_NORMAL_BROWSER_SOURCE_GATE&&!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
+  require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_CORE_CASH:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'core-cash')},timeout:120000});
 }).catch(error=>{trace.status='FAIL';trace.failure=error.message;fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');console.error(error);process.exitCode=1;});
