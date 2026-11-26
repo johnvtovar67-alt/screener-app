@@ -52,7 +52,7 @@ class Clock extends Date{constructor(...args){super(...(args.length?args:['2026-
 const position=freeze({symbol:'MTD',shares:10,avgCost:100,totalCost:1000,openedAt:'2026-11-10',stops:[{sleeve:'base',shares:10,price:88}],exits:[{sleeve:'base',shares:10,reason:'recent-momentum-deterioration'}],reviewRules:[]});
 const accountView=freeze({decision:{contract:'c1-account-decision-v1',sourceSessionDate:date,current:true,revision:1,brokerageCash:600,positions:[position],stockScreen:{sourceSessionDate:date,candidates:[]}}});
 const seen={labels:[],presentations:[]};
-const scope={React,Date:Clock,accountView,stopOwnershipCurrent:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:2600,
+const scope={React,Date:Clock,accountView,manualRecommendations:accountView.manualRecommendations,stopOwnershipCurrent:true,accountHoldingMismatch:false,CASH:['CASH'],displayedPortfolioValue:2600,
  sym:s=>String(s.symbol||s.ticker||'').trim().toUpperCase(),pd:s=>({source:'c1-actual-account',action:'Hold',openedAt:s.openedAt,reason:'Fictional existing holding reason.'}),
  portfolioSectorLabel:input=>{seen.labels.push(input);return portfolioSectorLabel(input);},
  c1PositionPresentation:input=>{seen.presentations.push(input);return present(input);},

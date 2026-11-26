@@ -50,7 +50,7 @@ function account(source,env,options={}){
 function portfolio(source,env,options={}){
  const state={bytes:options.absent?null:JSON.stringify(portfolioRecord),etag:'"v1"',reads:[],writes:[],lists:[],logs:[],ownerLogs:[],hashes:0,compares:0,logFailure:options.logFailure};
  const box={process:{env},Date:FixedDate,Response,createHash:crypto.createHash,randomUUID:()=>requestId,
-  ...loader.load('lib/c1CapitalState.js'),...loader.load('lib/blobErrors.js'),rejectUnauthorizedC1Owner:ownerGuard(env,state),
+  ...loader.load('lib/c1CapitalState.js'),...loader.load('lib/c1AccountPortfolio.js'),...loader.load('lib/blobErrors.js'),rejectUnauthorizedC1Owner:ownerGuard(env,state),
   console:{warn:(...a)=>state.logs.push(a.join(' '))},
   get:async(p,storageOptions)=>{state.reads.push({path:p,options:clone(storageOptions)});if(storageOptions?.useCache!==false)throw Error('Unsafe cache');if(p==='portfolio-sync-health/nonexistent.json')return null;if(options.readFailure)throw Error('private read error');return state.bytes?{statusCode:200,blob:{etag:state.etag},stream:new Response(state.bytes).body}:null;},
   list:async options=>{state.lists.push(clone(options));return {blobs:[]};},

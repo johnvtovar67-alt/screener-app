@@ -32,7 +32,7 @@ const json=value=>JSON.parse(JSON.stringify(value));
 function harness(source=current,{saved=true,environment='production'}={}){
  const state={saved:saved?{body:JSON.stringify(sample),etag:'v1'}:null,reads:[],puts:[],lists:[],logs:[]};
  const code=source.replace(/^import .*;\n/gm,'').replace('export const config=','const config=').replace('export default async function handler','async function handler');
- const box={...require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),Date:Clock,Response,process:{env:{VERCEL_ENV:environment}},createHash:crypto.createHash,randomUUID:()=>requestId,isBlobPreconditionFailed,
+ const box={...require('./c1-owner-access-extraction.cjs').ownerAccessFixture(),...loader.load('lib/c1AccountPortfolio.js'),Date:Clock,Response,process:{env:{VERCEL_ENV:environment}},createHash:crypto.createHash,randomUUID:()=>requestId,isBlobPreconditionFailed,
   cleanC1ControlState:loader.load('lib/c1CapitalState.js').cleanC1ControlState,
   console:{warn:(...args)=>{if(state.logFailure)throw Error(sentinel);state.logs.push(args.join(' '));},error:(...args)=>state.logs.push(args.join(' '))},
   list:async options=>{state.lists.push(json(options));if(state.listError)throw state.listError;return{blobs:[]};},
