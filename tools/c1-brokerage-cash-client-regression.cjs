@@ -41,6 +41,7 @@ async function exercise(result){
   refreshC1Account:async body=>{requests.push(plain(body));if(result==='failure')throw new Error('Revision conflict');return result==='interrupted'?undefined:{decision:{...decision,brokerageCash:363.36}};},
   localStorage:{setItem:(...args)=>economicWrites.push(args)},pushCloudPortfolio:()=>{throw new Error('Cash metadata must not sync holdings');},analyze:()=>{throw new Error('Cash metadata must not recalculate portfolio history');}};
  Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
+ require('./c1-core-cash-client-bindings.cjs').bindC1CoreCashClient(box,page);
  if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  vm.createContext(box);vm.runInContext(source+'\nthis.update=updateBrokerageCash;',box);
  if(result==='success')await box.update(363.36,9);else await assert.rejects(box.update(363.36,9),result==='failure'?/Revision conflict/:/not confirmed/);
@@ -62,7 +63,12 @@ async function exercise(result){
  if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  require('./fixtures/c1-stop-observer-bindings.cjs').bindC1StopOwnershipObserver(box,page);
  require('./c1-approved-repair-client-bindings.cjs').bindC1ApprovedRepairClientHelpers(box,page);
+ require('./c1-core-cash-client-bindings.cjs').bindC1CoreCashClient(box,page);
  vm.createContext(box);vm.runInContext(refreshSource+source+'\nthis.update=updateBrokerageCash;',box);
+ box.observeCoreHoldingsEdit(core,core.slice(1));box.syncDirty.current=true;
+ await assert.rejects(box.update(363.36,9),/Sync the Core holding change before confirming brokerage cash/);
+ assert.equal(requests.length,0,'A failed Core sync delays cash confirmation without sending a financial mutation');
+ box.syncDirty.current=false;
  await assert.rejects(box.update(363.36,9),/Reload before updating brokerage cash/);
  assert.equal(requests.length,1,'A revision conflict remains one dedicated API operation');
  assert.equal(requests[0].options.method,'POST');
