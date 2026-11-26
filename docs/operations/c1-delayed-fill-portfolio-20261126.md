@@ -1,0 +1,17 @@
+# Delayed C1 recording and portfolio saves
+
+The native Home and App rehearsal on production source `1597993` saved a confirmed Swing sale through the account route and held its response. A later Core removal then committed through the actual portfolio route. When the original sale response arrived, its handler merged the recorded shares into the portfolio from the render that submitted the sale. The serialized writer fetched the newer local ETag for those older rows. The conditional save therefore succeeded and restored the removed Core holding. The account journal still contained exactly one sale.
+
+Recording captures the local portfolio and account connection before submission. Its separate portfolio projection waits for pending saves, then uses the corresponding acknowledged rows and strong ETag together. A saved disjoint Core edit survives when Swing and cash rows are unchanged and the saved decision has no overlapping ownership. Other changes or an unconfirmed revision leave the confirmed record intact and display the existing sync warning. An accepted in-kind adoption receipt can still reconcile the exact matched MRNA rows through either account and portfolio reload order.
+
+Before the projected write, the browser checks the connection, acknowledged revision and current draft again. A delayed response uses its own conditional-write receipt. A newer local edit can save after that receipt using its ETag, while the older projection cannot start an account analysis. A real conflict, interrupted response or missing strong identity never authorizes an automatic trade retry or advances acknowledged identity. The server continues to preserve Core cash freshness in the same conditional write. Recording, corrections and cash-journal confirmation keep their existing financial handlers and authority.
+
+## Release acceptance
+
+- Rehearse both response orders in the native browser using fictional account holdings, actual application handlers and the strong conditional memory store. Check the stored and displayed holdings, exact ETag sequence, one recorded sale, original history and brokerage observation, confirmed net proceeds, stop ownership and share deltas, basis, dates and Core cash freshness evidence.
+- Verify an ordinary record and the real conditional route under a competing device save, changed ownership, a lost post-commit response, a missing strong acknowledgement and a disconnected recorder. An observation earlier than the sale counts proceeds once. An observation after the sale retains its balance. Neither rewrites the observation.
+- Run `npm run build`, the dependency audit and all three browser jobs on the reviewed PR head. Verify the matching preview, merged tree and canonical production deployment. Use only authorized passive recovery evidence in production. A deployment, a fictional rehearsal and an account owner's authenticated browser are separate evidence.
+
+## Rollback
+
+Keep the `1597993` server writer and previous recovery compatibility as the minimum acceptable base. This repair changes no stored schema. The preceding release can still read its portfolio snapshots and retains Core freshness timestamps, but it contains the reproduced client overwrite. Prefer a focused forward correction if release checks or passive production evidence indicate a regression. Do not replay a financial mutation or restore a historical portfolio to check recovery.

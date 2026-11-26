@@ -26,7 +26,7 @@ assert.equal(mergeC1AccountPortfolio(core,decision).filter(p=>p.role==='Swing'&&
 
 function extract(from,to){const a=page.indexOf(from),b=page.indexOf(to,a+from.length);assert.ok(a>=0&&b>a);return page.slice(a,b);}
 const refresh=extract('  function publishC1AccountState(','  async function startC1Account(');
-const save=extract('  async function saveC1Activity(','  const[transactionCheck');
+const save=extract('  function captureC1PortfolioInput(','  const[transactionCheck');
 const disconnect=extract('  function disconnectSync(','  async function copySyncKey(');
 function client(fetcher){
  const state={view:{decision:{id:'previous'}},verified:true,error:'',key:'test-only-key',writes:0};
@@ -158,11 +158,13 @@ function client(fetcher){
  // No real account, API, storage credential, model replay or provider is used.
  const writes=[],synced=[],analyzed=[];
  const risk={highWater:9000,triggerDay:'2026-09-01'};
- const clientErrors=[];
- const box={portfolio:plain(portfolio),mergeC1AccountPortfolio,KEY:'portfolio',
-  refreshC1Account:async body=>({decision,intradaySession:{tickets:body?.ticket?[body.ticket]:[]}}),localStorage:{setItem:(k,v)=>writes.push({k,value:JSON.parse(v)}),getItem:()=>JSON.stringify(risk)},
+ const clientErrors=[],saved=new Map([['key','test-only-key'],['portfolio',before]]);
+ const box={portfolio:plain(portfolio),mergeC1AccountPortfolio,KEY:'portfolio',SYNC_KEY:'key',accountRequestId:{current:0},
+  syncQueue:{current:Promise.resolve()},syncDirty:{current:false},syncRevision:{current:{key:'test-only-key',etag:'"v1"',portfolioSignature:before,c1ControlState:risk}},
+  refreshC1Account:async body=>({decision,intradaySession:{tickets:body?.ticket?[body.ticket]:[]}}),localStorage:{setItem:(k,v)=>{saved.set(k,v);writes.push({k,value:JSON.parse(v)});},getItem:k=>saved.get(k)},
   setAccountBusy(){},setErr:value=>clientErrors.push(value),setPortfolio(){},setResults(){},setAnalysisCapitalReady(){},
-  pushCloudPortfolio:async p=>synced.push(plain(p)),analyze:async p=>analyzed.push(plain(p))};
+  pushCloudPortfolio:async(p,key,risk,basis)=>{assert.equal(basis.revision,box.syncRevision.current);box.syncRevision.current={key,etag:'"v2"',portfolioSignature:JSON.stringify(p),c1ControlState:risk};synced.push(plain(p));return true;},
+  analyze:async p=>analyzed.push(plain(p))};
  Object.assign(box,require('./research-module-loader.cjs').createResearchModuleLoader(process.cwd()).load('lib/c1JourneyClient.js'));
  if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  vm.createContext(box);vm.runInContext(save+'\nthis.save=saveC1Activity;this.saveIntraday=saveC1Intraday;',box);

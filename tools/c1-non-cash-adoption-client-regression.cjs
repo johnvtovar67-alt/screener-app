@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {createWorkflowApi}=require('./fixtures/c1-trading-workflow-api.cjs');
+const {createPortfolioSyncMemory}=require('./fixtures/c1-portfolio-sync-memory.cjs');
 (async()=>{
  const api=createWorkflowApi('adoption'),f=api.fixture,page=fs.readFileSync('pages/index.js','utf8');
  const original=JSON.stringify(f.adoptionPortfolioRecord.portfolio),saved=new Map([['key','offline_workflow_fixture_key_000001'],['portfolio',original]]),calls=[],state={error:'',syncAttempts:0};
@@ -33,6 +34,34 @@ const {createWorkflowApi}=require('./fixtures/c1-trading-workflow-api.cjs');
   held=JSON.parse(saved.get('portfolio')).filter(p=>p.symbol==='MRNA');assert.equal(held.length,1);assert.equal(held[0].role,'Swing');assert.equal(held[0].shares,20);
  }
  assert.equal(f.writes,1);assert(!calls.some(x=>x==='record-intraday'||x==='record-session'));
+ // A real adoption receipt can legitimately normalize the raw rows on either
+ // reload ordering. The resulting acknowledged owner may still sync normally.
+ const cloudFetch=box.fetch,stored=JSON.stringify(f.adoptionPortfolioRecord),account=JSON.stringify(f.account);
+ for(const accountFirst of [true,false]){
+  const cloud={now:f.now,portfolioRecord:JSON.parse(stored)},key=saved.get('key'),portfolioRequest=createPortfolioSyncMemory({state:cloud,loader:f.loader,key});
+  const putEtag=[],analyses=[];
+  Object.assign(box,f.loader.load('lib/c1AccountPortfolio.js'),{syncKey:key,c1Control:null,syncWriteId:{current:0},
+   analyze:async rows=>analyses.push(JSON.parse(JSON.stringify(rows))),setAnalysisCapitalReady(){},setErr(){},
+   fetch:async(url,options)=>{
+    if(url!=='/api/portfolio-sync')return cloudFetch(url,options);
+    const method=options.method||'GET',body=options.body?JSON.parse(options.body):undefined;
+    if(method==='PUT')putEtag.push(body.expectedEtag);
+    const result=await portfolioRequest(method,body);
+    return {ok:result.statusCode===200,status:result.statusCode,json:async()=>result.body};
+   }});
+  vm.runInContext(region('  function captureC1PortfolioInput(','  async function saveC1Activity(')+region('  async function pushCloudPortfolio(','  async function pullCloudPortfolio('),box);
+  saved.set('portfolio',original);box.portfolio=JSON.parse(original);box.accountView=null;
+  if(accountFirst){await box.refreshC1Account();assert(await box.pullCloudPortfolio(key));}
+  else{assert(await box.pullCloudPortfolio(key));await box.refreshC1Account();}
+  const input=box.captureC1PortfolioInput(),priorEtag=box.syncRevision.current.etag;
+  assert.equal(JSON.parse(input.signature).find(row=>row.symbol==='MRNA').role,'Swing');
+  assert(await box.syncC1RecordedPortfolio(box.accountView.decision,input,box.accountRequestId.current));
+  assert.deepEqual(putEtag,[priorEtag]);assert.equal(analyses.length,1);
+  const stocks=cloud.portfolioRecord.portfolio.filter(row=>row.symbol==='MRNA');
+  assert.equal(stocks.length,1);assert.equal(stocks[0].role,'Swing');assert.equal(stocks[0].shares,20);assert.equal(stocks[0].avgCost,88);
+  assert.equal(Date.parse(stocks[0].openedAt),Date.parse('2026-10-01'));
+  assert.equal(JSON.stringify(f.account),account);assert.equal(f.writes,1);
+ }
  fs.mkdirSync('work/non-cash-adoption',{recursive:true});fs.writeFileSync('work/non-cash-adoption/client.json',JSON.stringify({status:'PASS',scope:'Real Home handlers → production API → memory fixtures',reviewWrites:0,confirmationWrites:1,brokerCashChange:0,failedPortfolioSyncRecovered:true,bothReloadOrders:'PASS',duplicateShares:false,conversionCreatedTrade:false,liveWrites:0},null,2)+'\n');
- console.log('PASS: actual Home review/confirm/reload handlers preserve one Swing holding through failed portfolio sync; no brokerage trade or cash change.');
+ console.log('PASS: actual Home review/confirm/reload handlers preserve one Swing holding through failed portfolio sync and subsequent conditional projection; no brokerage trade or cash change.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

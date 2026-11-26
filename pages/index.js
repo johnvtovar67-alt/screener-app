@@ -329,21 +329,60 @@ export default function Home(){
     if(!initialStrategyCashInput.trim()){setAccountError('Enter initial C1 strategy cash.');return;}
     try{save(seedInitialC1StrategyCash(portfolio,Number(initialStrategyCashInput)));setInitialStrategyCashInput('');}catch(error){setAccountError(error.message);}
   }
-  async function saveC1Activity(record,expectedRevision){setAccountBusy(true);setErr("");try{const d=await refreshC1Account({operation:'record-session',record,expectedRevision});if(d){const updated=mergeC1AccountPortfolio(portfolio,d.decision);localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);await pushCloudPortfolio(updated);await analyze(updated);}}catch(e){setErr(e.message);}finally{setAccountBusy(false);}}
+  function captureC1PortfolioInput(){
+    return {key:localStorage.getItem(SYNC_KEY),signature:localStorage.getItem(KEY)||'[]',revision:syncRevision.current};
+  }
+
+  async function syncC1RecordedPortfolio(decision,input,accountOwner){
+    const queue=syncQueue.current;
+    await queue;
+    const isCurrent=()=>input.key&&input.key===localStorage.getItem(SYNC_KEY)&&accountOwner===accountRequestId.current;
+    if(!isCurrent()||queue!==syncQueue.current||syncDirty.current)return false;
+    const revision=syncRevision.current,signature=localStorage.getItem(KEY)||'[]';
+    if(revision.key!==input.key||!(typeof revision.etag==='string'&&/^"[^"\r\n]+"$/.test(revision.etag))||
+       typeof revision.portfolioSignature!=='string')return false;
+    // The existing verified in-kind adoption receipt can project saved rows
+    // while the raw portfolio still points at its preceding strong ETag.
+    if(revision.portfolioSignature!==signature&&JSON.stringify(resolveC1NonCashPortfolio(
+       JSON.parse(revision.portfolioSignature),decision))!==signature)return false;
+    const entered=JSON.parse(signature),updated=mergeC1AccountPortfolio(entered,decision);
+    if(input.revision!==revision&&input.signature!==signature){
+      // A disjoint Core edit can be retained. New Swing, cash or overlapping
+      // ownership needs review before projecting an already saved record.
+      const nonCore=rows=>rows.filter(p=>p.role!=='Core');
+      const core=rows=>rows.filter(p=>p.role==='Core');
+      const swingSymbols=new Set(nonCore(updated).map(p=>p.symbol));
+      if(JSON.stringify(nonCore(JSON.parse(input.signature)))!==JSON.stringify(nonCore(entered))||
+         JSON.stringify(core(entered))!==JSON.stringify(core(updated))||
+         core(entered).some(p=>swingSymbols.has(p.symbol)))return false;
+    }
+    const updatedSignature=JSON.stringify(updated);
+    localStorage.setItem(KEY,updatedSignature);setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);
+    const synced=await pushCloudPortfolio(updated,input.key,revision.c1ControlState,{revision,isCurrent});
+    if(synced&&isCurrent()&&localStorage.getItem(KEY)===updatedSignature)await analyze(updated);
+    return synced;
+  }
+
+  async function saveC1Activity(record,expectedRevision){
+    setAccountBusy(true);setErr('');
+    try{
+      const input=captureC1PortfolioInput(),request=refreshC1Account({operation:'record-session',record,expectedRevision});
+      const accountOwner=accountRequestId.current,d=await request;
+      if(d&&!await syncC1RecordedPortfolio(d.decision,input,accountOwner))setErr('The session is saved. Portfolio sync needs a retry; do not record this session again.');
+    }catch(e){setErr(e.message);}finally{setAccountBusy(false);}
+  }
 
   async function saveC1Intraday(ticket,expectedRevision){
     setAccountBusy(true);setErr('');
     try{
-      const d=await refreshC1Account({operation:'record-intraday',ticket,expectedRevision});
+      const input=captureC1PortfolioInput(),request=refreshC1Account({operation:'record-intraday',ticket,expectedRevision});
+      const accountOwner=accountRequestId.current,d=await request;
       if(!d)throw new Error('Trade save was interrupted. Reload the saved account before retrying.');
       const savedTicket=d.savedTradeTicket||d.intradaySession?.tickets?.find(row=>row.id===ticket.id);
       if(!savedTicket)throw new Error('C1 did not confirm the trade was retained. Reload the saved account before retrying.');
-      const updated=mergeC1AccountPortfolio(portfolio,d.decision);
-      localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);
       let warning='';
       try{
-        if(!await pushCloudPortfolio(updated))warning='Portfolio sync needs a retry; do not enter this trade again.';
-        else await analyze(updated);
+        if(!await syncC1RecordedPortfolio(d.decision,input,accountOwner))warning='The trade is saved. Portfolio sync needs a retry; do not enter this trade again.';
       }catch(error){warning='The trade is saved. Account analysis needs a refresh; do not enter this trade again.';}
       if(warning)setErr(warning);
       return {view:d,ticket:savedTicket,warning};
@@ -353,12 +392,13 @@ export default function Home(){
   async function correctC1IntradayDetails(ticketId,price,fee,executedAt,expectedRevision){
     setAccountBusy(true);setErr('');
     try{
-      const d=await refreshC1Account({operation:'correct-intraday-details',ticketId,price,fee,executedAt,expectedRevision});
+      const input=captureC1PortfolioInput(),request=refreshC1Account({operation:'correct-intraday-details',ticketId,price,fee,executedAt,expectedRevision});
+      const accountOwner=accountRequestId.current,d=await request;
       const savedTicket=d?.intradaySession?.tickets?.find(row=>row.id===ticketId);
       if(!savedTicket||savedTicket.executedAt!==executedAt||savedTicket.price!==price||savedTicket.fee!==fee)throw new Error('C1 did not confirm the corrected trade details. Reload before retrying.');
-      const updated=mergeC1AccountPortfolio(portfolio,d.decision);
-      localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);
-      try{await pushCloudPortfolio(updated);await analyze(updated);}catch{setErr('The correction is saved. Portfolio analysis or sync needs a retry; do not enter the trade again.');}
+      try{
+        if(!await syncC1RecordedPortfolio(d.decision,input,accountOwner))setErr('The correction is saved. Portfolio sync needs a retry; do not enter the trade again.');
+      }catch{setErr('The correction is saved. Portfolio analysis or sync needs a retry; do not enter the trade again.');}
       return savedTicket;
     }finally{setAccountBusy(false);}
   }
@@ -366,14 +406,12 @@ export default function Home(){
   async function correctC1SaleAllocation(proposalId,expectedRevision){
     setAccountBusy(true);setErr('');
     try{
-      const d=await refreshC1Account({operation:'correct-sale-attribution',proposalId,confirmed:true,expectedRevision});
+      const input=captureC1PortfolioInput(),request=refreshC1Account({operation:'correct-sale-attribution',proposalId,confirmed:true,expectedRevision});
+      const accountOwner=accountRequestId.current,d=await request;
       if(d?.saleAttributionReceipt?.proposalId!==proposalId)throw new Error('C1 did not confirm the sale allocation correction. Reload the saved account before retrying.');
-      const updated=mergeC1AccountPortfolio(portfolio,d.decision);
-      localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);
       let warning='';
       try{
-        if(!await pushCloudPortfolio(updated))warning='The allocation correction is saved. Portfolio sync needs a retry; do not record another sale.';
-        else await analyze(updated);
+        if(!await syncC1RecordedPortfolio(d.decision,input,accountOwner))warning='The allocation correction is saved. Portfolio sync needs a retry; do not record another sale.';
       }catch{warning='The allocation correction is saved. Account analysis needs a refresh; do not record another sale.';}
       if(warning)setErr(warning);
       return {proposalId,warning};
@@ -397,15 +435,13 @@ export default function Home(){
   async function confirmBrokerCashHistory({reviewId,statementText,expectedRevision,confirmed,attributionConfirmed,targetAccountHash}){
     setAccountBusy(true);setErr('');
     try{
-      const d=await refreshC1Account({operation:'confirm-broker-cash-history',reviewId,statementText,expectedRevision,confirmed,attributionConfirmed,
+      const input=captureC1PortfolioInput(),request=refreshC1Account({operation:'confirm-broker-cash-history',reviewId,statementText,expectedRevision,confirmed,attributionConfirmed,
         ...(typeof targetAccountHash==='string'&&targetAccountHash?{targetAccountHash}:{})});
+      const accountOwner=accountRequestId.current,d=await request;
       if(d?.brokerCashCorrectionReceipt?.reviewId!==reviewId)throw new Error('C1 did not confirm the cash correction. Reload the saved account before retrying.');
-      const updated=mergeC1AccountPortfolio(portfolio,d.decision);
-      localStorage.setItem(KEY,JSON.stringify(updated));setPortfolio(updated);setResults([]);setAnalysisCapitalReady(false);
       let warning='';
       try{
-        if(!await pushCloudPortfolio(updated))warning='The cash correction is saved. Portfolio sync needs a retry; do not save the correction again.';
-        else await analyze(updated);
+        if(!await syncC1RecordedPortfolio(d.decision,input,accountOwner))warning='The cash correction is saved. Portfolio sync needs a retry; do not save the correction again.';
       }catch{warning='The cash correction is saved. Account analysis needs a refresh; do not save the correction again.';}
       if(warning)setErr(warning);
       return {reviewId,warning};
@@ -589,20 +625,27 @@ export default function Home(){
       stale:Boolean(quote.stale||!verified&&prior?.stale),staleFallback:Boolean(quote.staleFallback||!verified&&prior?.staleFallback),current:quote.current,
       role:role(position.symbol,position.role),winnerHistory:position.winnerHistory||winnerHistoryFor(position),openedAt:position.openedAt||null,lastTradeAt:position.lastTradeAt||position.openedAt||null};
   }
-  async function pushCloudPortfolio(rows,key=syncKey,riskState=null){
+  async function pushCloudPortfolio(rows,key=syncKey,riskState=null,basis=null){
     if(!key)return false;
     const writeId=++syncWriteId.current;syncPullId.current++;syncDirty.current=true;
     const task=syncQueue.current.then(async()=>{
+      const sameConnection=()=>!basis||localStorage.getItem(SYNC_KEY)===key&&basis.revision===syncRevision.current;
       try{
+        const portfolioSignature=JSON.stringify(rows);
+        if(basis&&(!basis.isCurrent()||!sameConnection()||
+           writeId!==syncWriteId.current||localStorage.getItem(KEY)!==portfolioSignature))return false;
         setSyncStatus('Syncing…');
         let storedRisk={};try{storedRisk=JSON.parse(localStorage.getItem(C1_DRAWDOWN_KEY)||"{}");}catch{}
         const c1ControlState=riskState||c1Control?.state||storedRisk;
-        const expectedEtag=syncRevision.current.key===key?syncRevision.current.etag:null;
+        const expectedEtag=basis?basis.revision.etag:syncRevision.current.key===key?syncRevision.current.etag:null;
         const r=await fetch('/api/portfolio-sync',{method:'PUT',headers:{'content-type':'application/json',authorization:`Bearer ${key}`},body:JSON.stringify({portfolio:rows,c1ControlState,expectedEtag})}),d=await r.json();
+        if(!sameConnection())return false;
         if(!r.ok)throw new Error(r.status===409?'Sync conflict: another device saved changes. Your local edit is retained. Review Account settings.':d.error||'Sync failed');
-        if(localStorage.getItem(SYNC_KEY)===key){syncRevision.current={key,etag:d.etag};if(writeId===syncWriteId.current){syncDirty.current=false;setSyncStatus('Synced');}}
+        if(basis&&(d.ok!==true||!(typeof d.etag==='string'&&/^"[^"\r\n]+"$/.test(d.etag))))
+          throw new Error('The portfolio save could not be confirmed. Reload before retrying.');
+        if(localStorage.getItem(SYNC_KEY)===key){syncRevision.current={key,etag:d.etag,portfolioSignature,c1ControlState};if(writeId===syncWriteId.current){syncDirty.current=false;setSyncStatus('Synced');}}
         return true;
-      }catch(e){setSyncStatus(e.message.startsWith('Sync conflict:')?e.message:`Sync error: ${e.message}`);return false;}
+      }catch(e){if(sameConnection())setSyncStatus(e.message.startsWith('Sync conflict:')?e.message:`Sync error: ${e.message}`);return false;}
     });
     syncQueue.current=task.then(()=>undefined,()=>undefined);return task;
   }
@@ -620,7 +663,7 @@ export default function Home(){
       if(signature!==JSON.stringify(rows))localStorage.setItem('stock_screener_portfolio_before_sync_v1',JSON.stringify({savedAt:new Date().toISOString(),portfolio:JSON.parse(signature)}));
       setPortfolio(rows);localStorage.setItem(KEY,JSON.stringify(rows));
       if(d.c1ControlState&&typeof d.c1ControlState==='object')localStorage.setItem(C1_DRAWDOWN_KEY,JSON.stringify(d.c1ControlState));
-      syncRevision.current={key,etag:d.etag};syncDirty.current=false;setSyncStatus('Synced');
+      syncRevision.current={key,etag:d.etag,portfolioSignature:JSON.stringify(originalRows),c1ControlState:d.c1ControlState};syncDirty.current=false;setSyncStatus('Synced');
       return rows!==originalRows?await pushCloudPortfolio(rows,key):true;
     }catch(e){if(requestId===syncPullId.current)setSyncStatus(`Sync error: ${e.message}`);return false;}
   }

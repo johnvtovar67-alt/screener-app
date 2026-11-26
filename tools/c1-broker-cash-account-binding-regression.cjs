@@ -35,10 +35,14 @@ let checks=0;
   const h=pageHarness();await h.review(h.input.statementText,0,binding);assert.equal(h.calls.length,1);assert.equal(h.calls[0].targetAccountHash,binding||undefined);assert.equal(Object.hasOwn(h.calls[0],'targetAccountHash'),Boolean(binding));assert.equal(h.state.writeAttempts,0);checks++;
  }
  const file=path.resolve('pages/index.js'),page=fs.readFileSync(file,'utf8'),ast=babel.parseSync(page,{sourceType:'module',babelrc:false,configFile:false,parserOpts:{plugins:['jsx']}}),
-  home=ast.program.body.find(row=>row.type==='ExportDefaultDeclaration').declaration,node=home.body.body.find(row=>row.type==='FunctionDeclaration'&&row.id.name==='confirmBrokerCashHistory');assert(node);
+  home=ast.program.body.find(row=>row.type==='ExportDefaultDeclaration').declaration;
+ const confirmSource=['captureC1PortfolioInput','confirmBrokerCashHistory'].map(name=>{
+  const node=home.body.body.find(row=>row.type==='FunctionDeclaration'&&row.id.name===name);assert(node,name);return page.slice(node.start,node.end);
+ }).join('\n');
  for(const binding of [undefined,'',target]){
-  const calls=[],busy=[],box={Error,setAccountBusy:value=>busy.push(value),setErr(){},refreshC1Account:async body=>{calls.push(body);throw Error('Fictional prewrite boundary');}};
-  vm.createContext(box);vm.runInContext(page.slice(node.start,node.end)+';globalThis.confirm=confirmBrokerCashHistory;',box);
+  const calls=[],busy=[],box={Error,KEY:'portfolio',SYNC_KEY:'key',syncRevision:{current:{}},accountRequestId:{current:0},localStorage:{getItem:()=>null},
+   setAccountBusy:value=>busy.push(value),setErr(){},refreshC1Account:async body=>{calls.push(body);throw Error('Fictional prewrite boundary');}};
+  vm.createContext(box);vm.runInContext(confirmSource+';globalThis.confirm=confirmBrokerCashHistory;',box);
   await assert.rejects(box.confirm({reviewId:'a'.repeat(64),statementText:'FICTIONAL',expectedRevision:0,confirmed:true,targetAccountHash:binding}),/Fictional prewrite/);
   assert.equal(calls.length,1);assert.equal(calls[0].targetAccountHash,binding||undefined);assert.equal(Object.hasOwn(calls[0],'targetAccountHash'),Boolean(binding));assert.deepEqual(busy,[true,false]);checks++;
  }

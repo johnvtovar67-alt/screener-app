@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict');
+const {readFileSync}=require('node:fs');
+const {createHash}=require('node:crypto');
+const {restore,blob}=require('./c1-delayed-fill-portfolio-seams.cjs');
+const path='tools/fixtures/c1-delayed-fill-portfolio-source-seams.json';
+const raw=readFileSync(path),fixture=JSON.parse(raw);
+const sha=data=>createHash('sha256').update(data).digest('hex');
+
+assert.equal(sha(raw),'45b30b28af51701dabddb91b8d1be82045dd36ba9df59ea01d0c35903a957d75');
+assert.equal(fixture.contract,'c1-delayed-fill-portfolio-source-inverse-v1');
+assert.equal(fixture.baselineCommit,'1597993bdc532c216153b2980751a1c4392195ee');
+assert.deepEqual(Object.keys(fixture.files),['pages/index.js']);
+assert.equal(Object.keys(fixture.preservedFixtures).length,92);
+for(const [file,pin] of Object.entries(fixture.preservedFixtures))assert.equal(sha(readFileSync(file)),pin,file);
+const file='pages/index.js',patch=fixture.files[file],current=readFileSync(file,'utf8');
+const original=restore(file,current);
+assert.equal(blob(current),patch.afterHash);
+assert.equal(blob(original),patch.beforeHash);
+assert.equal(restore(file,original),original);
+const unknown=current+'\n/* Unreviewed source must keep its own identity. */\n';
+assert.equal(restore(file,unknown),unknown);
+assert.equal(require('./c1-financial-history-replay-seams.cjs').restore(file,unknown),unknown);
+console.log('PASS: exact portfolio acknowledgement source inverse and all 92 earlier fixture bytes.');
