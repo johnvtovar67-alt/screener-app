@@ -38,6 +38,7 @@ function harness({opening,accountReply,screenFailure=false}={}){
   }};
  require('./fixtures/c1-stop-observer-bindings.cjs').bindC1StopOwnershipObserver(box,page);
  require('./c1-approved-repair-client-bindings.cjs').bindC1ApprovedRepairClientHelpers(box,page);
+ require('./c1-core-cash-client-bindings.cjs').bindC1CoreCashClient(box,page);
  vm.createContext(box);vm.runInContext(code+';this.api={load,analyze};',box);return {box,state,calls,...box.api};
 }
 (async()=>{

@@ -45,6 +45,7 @@ function harness({approved=true,etagReady=false,conflict=false,missingEtag=false
    state.cloud=clone(body.portfolio);state.serverWrites++;state.etag='"portfolio-v'+(state.serverWrites+1)+'"';return new Response(JSON.stringify({etag:state.etag}));
   }};
  for(const [name,get]of [['portfolio',()=>state.portfolio],['accountView',()=>state.accountView],['accountResponseVerified',()=>state.verified],['syncStatus',()=>state.syncStatus],['syncKey',()=>key]])Object.defineProperty(box,name,{get,configurable:true});
+ require('./c1-core-cash-client-bindings.cjs').bindC1CoreCashClient(box,page);
  vm.createContext(box);vm.runInContext(top+'\n'+functions+'\nglobalThis.client={refreshC1Account,pullCloudPortfolio,c1ApprovedRepairReceipt,c1ApprovedPortfolioBasis,publishObservation:'+observed+'};',box);
  return {box,state,values,key,responseView,...box.client};
 }
@@ -62,6 +63,7 @@ function preserved(rows){assert.equal(JSON.stringify(rows[0]),JSON.stringify(sou
  await check('later cloud pulls cannot reintroduce the old basis or overwrite updated Core fields',async()=>{
   const h=harness();await h.refreshC1Account();h.state.cloud=clone(source);h.state.cloud[0].shares=41;h.state.cloud[0].custom='new saved Core metadata';h.state.etag='"concurrent-v3"';
   await h.pullCloudPortfolio(h.key,[],true);assert.equal(h.state.portfolio[1].avgCost,100.05);assert.equal(h.state.portfolio[0].shares,41);assert.equal(h.state.portfolio[0].custom,'new saved Core metadata');assert.equal(h.state.cloud[0].shares,41);assert.equal(h.state.serverWrites,2);
+  assert.equal(h.box.coreCashReviewPending,true,'An actual later Core edit and approved Swing basis recovery keep independent ownership');
  });
  await check('ordinary accounts, unapproved receipts and changed ownership cannot authorize basis or holdings edits',async()=>{
   const h=harness({approved:false});await h.refreshC1Account();assert.equal(h.state.serverWrites,0);assert.equal(JSON.stringify(h.state.portfolio),JSON.stringify(source));

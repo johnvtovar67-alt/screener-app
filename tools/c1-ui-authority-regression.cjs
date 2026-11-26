@@ -26,7 +26,9 @@ const fallback=page.slice(page.indexOf('{tab==="opportunities"&&!accountView'),p
 assert.ok(fallback.includes('C1 analysis is unavailable'));
 assert.doesNotMatch(fallback,/<Card|<OnDeck|opportunityDecision\(/,'Missing account must not show the superseded screener');
 assert.doesNotMatch(page,/over the 35% concentration review level/);
-assert.ok(page.includes('<C1BrokerageCash decision={accountView?.decision}'),'Brokerage cash must have a separate editor without suppressing holding decisions');
+assert.ok(page.includes('<C1BrokerageCash decision={brokerageCashDecision}'),'Brokerage cash must have a separate editor without suppressing holding decisions');
+assert.match(page,/const brokerageCashDecision=coreCashReviewPending&&accountView\?\.decision\?\.brokerageCashCurrent\?\{\.\.\.accountView\.decision,[\s\S]*?\}:accountView\?\.decision;/,
+ 'Only cash freshness is masked during the pending Core edit');
 assert.doesNotMatch(page,/accountCashDifference|cash history is reconciled/,'Brokerage metadata differences cannot become strategy reconciliation gates');
 
 // Render the real component with Next's compiler and React, using only

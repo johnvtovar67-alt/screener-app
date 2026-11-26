@@ -1,0 +1,216 @@
+{
+  "contract": "c1-core-cash-freshness-source-inverse-v1",
+  "baselineCommit": "7a430f753a293303302750ce03ae19be696a3941",
+  "files": {
+    "lib/c1AccountPortfolio.js": {
+      "beforeHash": "fc4a5ea9c3ae3b3a6d86c038384fc12e1f8c2a68",
+      "afterHash": "601567110bf78aa6f5f68b18840fcb787c1849ed",
+      "chunks": [
+        {
+          "before": "  return portfolio.filter(position=>!isPortfolioCash(position));\n}\n",
+          "after": "  return portfolio.filter(position=>!isPortfolioCash(position));\n}\n\nfunction coreHoldings(portfolio){\n  return portfolioHoldings(portfolio).filter(position=>position?.role==='Core');\n}\n\nexport function c1CoreHoldingsSignature(portfolio){\n  return JSON.stringify(coreHoldings(portfolio).map(({symbol,shares,avgCost})=>JSON.stringify([\n    String(symbol).trim().toUpperCase(),Number(shares)||0,Number(avgCost)||0\n  ])).sort());\n}\n\nexport function c1CoreCashChangeTimes(portfolioRecord){\n  const saved=Array.isArray(portfolioRecord.coreCashChangeTimes)?portfolioRecord.coreCashChangeTimes:[];\n  // Older portfolio documents have only the dates on their surviving rows.\n  const legacy=coreHoldings(portfolioRecord.portfolio).map(position=>position.lastTradeAt);\n  return [...saved,...legacy].filter(at=>typeof at==='string'&&Number.isFinite(Date.parse(at)));\n}\n"
+        }
+      ]
+    },
+    "lib/c1BrokerageCash.js": {
+      "beforeHash": "cfcaa4ef0de7eb4ee86febd8617e8319d6605cfb",
+      "afterHash": "0373ea9f176e61b412e5573b5e9a7ef646ae74cd",
+      "chunks": [
+        {
+          "before": "export const C1_BROKERAGE_CASH_SOURCE='manual-broker-balance';\n// Server-captured new execution plans use real brokerage funding. Legacy\n",
+          "after": "export const C1_BROKERAGE_CASH_SOURCE='manual-broker-balance';\nexport const C1_CORE_CASH_REVIEW_REASON='Update brokerage cash after the Core holding change before a new C1 purchase.';\n// Server-captured new execution plans use real brokerage funding. Legacy\n"
+        },
+        {
+          "before": "  brokerCashAuthority:Array.isArray(account?.cashAccountingCorrections)&&account.cashAccountingCorrections.length>0});\n const coreReview=account?.coreCashObservationRequired,\n  coreBlocked=coreReview===true||(typeof coreReview==='string'&&Date.parse(coreReview)<=new Date(now).getTime());\n return coreBlocked?{...value,brokerageCashCurrent:false,executableCash:0,brokerageCashStatus:'Core-activity-review',\n  brokerageCashReason:'Update brokerage cash after the Core holding change before a new C1 purchase.'}:value;\n}\n",
+          "after": "  brokerCashAuthority:Array.isArray(account?.cashAccountingCorrections)&&account.cashAccountingCorrections.length>0});\n const coreReview=account?.coreCashObservationRequired,observed=Date.parse(account?.brokerageCash?.observedAt),time=new Date(now).getTime(),\n  coreBlocked=coreReview===true||Array.isArray(coreReview)&&coreReview.some(at=>{const changed=Date.parse(at);return changed>=observed&&changed<=time;});\n return coreBlocked?{...value,brokerageCashCurrent:false,executableCash:0,brokerageCashStatus:'Core-activity-review',\n  brokerageCashReason:C1_CORE_CASH_REVIEW_REASON}:value;\n}\n"
+        }
+      ]
+    },
+    "pages/api/c1-account.js": {
+      "beforeHash": "e0f1f2771d98e27bedc7b826b92ee51276a59675",
+      "afterHash": "d169668482ceed6e56f553e93718615eb80cc259",
+      "chunks": [
+        {
+          "before": "import {easternMarketClock,marketSessionCloseMinutes} from '../../lib/marketSession';\n\n",
+          "after": "import {easternMarketClock,marketSessionCloseMinutes} from '../../lib/marketSession';\nimport {c1CoreCashChangeTimes} from '../../lib/c1AccountPortfolio';\n\n"
+        },
+        {
+          "before": " },'portfolio');\n const observed=Date.parse(account.brokerageCash?.observedAt),changes=portfolioRecord.portfolio\n  .filter(position=>position?.role==='Core').map(position=>Date.parse(position.lastTradeAt)).filter(at=>Number.isFinite(at)&&at>observed);\n return changes.length?{...account,coreCashObservationRequired:new Date(Math.max(...changes)).toISOString()}:account;\n}\n",
+          "after": " },'portfolio');\n const changes=c1CoreCashChangeTimes(portfolioRecord);\n return changes.length?{...account,coreCashObservationRequired:changes}:withoutCoreCashFreshness(account);\n}\n"
+        },
+        {
+          "before": " const {brokerageCashCurrent,executableCash,brokerageCashStatus,brokerageCashReason}=c1AccountCashAvailability({account,strategyCash:decision.strategyCash,now});\n return {...decision,brokerageCashCurrent,executableCash,brokerageCashStatus,brokerageCashReason};\n",
+          "after": " const {brokerageCashCurrent,executableCash,brokerageCashStatus,brokerageCashReason}=c1AccountCashAvailability({account,strategyCash:decision.strategyCash,now});\n if(brokerageCashStatus!=='Core-activity-review')return decision;\n return {...decision,brokerageCashCurrent,executableCash,brokerageCashStatus,brokerageCashReason};\n"
+        },
+        {
+          "before": "    }\n    const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})});\n    prepared.decision=withCoreCashDecision(prepared.decision,prepared.account,now);\n",
+          "after": "    }\n    let opening;\n    const args={account,book,now,collectOpening:input=>(opening??=collectOpening(input)),...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})};\n    let prepared=await prepareC1AccountExecution(args);\n    if(operation==='prepare-execution'&&account.cashAccountingCorrections?.length&&prepared.manualRecommendations.orders.some(order=>order.side==='buy'&&!order.condition)){\n     // Provider work can outlast a Core save on another device. Recheck the\n     // private portfolio before issuing a buy. A new edit only blocks buying;\n     // reuse this request's verified opening inputs to retain protective exits.\n     const latest=await withCoreCashFreshness({account,key,readPortfolio});\n     if(c1AccountCashAvailability({account:latest,now:clock()}).brokerageCashStatus==='Core-activity-review'){\n      prepared=await prepareC1AccountExecution({...args,account:{...latest,coreCashObservationRequired:true}});\n     }\n    }\n    prepared.decision=withCoreCashDecision(prepared.decision,prepared.account,now);\n"
+        }
+      ]
+    },
+    "pages/api/portfolio-sync.js": {
+      "beforeHash": "c050b3d9cc26641d9e5ee2ea2d18e71c599cf1ad",
+      "afterHash": "c7af6bc79a94edf355407449ca0ebb193a2d0668",
+      "chunks": [
+        {
+          "before": "import {rejectUnauthorizedC1Owner} from '../../lib/c1OwnerAccess';\n\n",
+          "after": "import {rejectUnauthorizedC1Owner} from '../../lib/c1OwnerAccess';\nimport {c1CoreCashChangeTimes,c1CoreHoldingsSignature} from '../../lib/c1AccountPortfolio';\n\n"
+        },
+        {
+          "before": "  if((saved?.etag||null)!==(expectedEtag||null))throw Object.assign(new Error('Portfolio changed on another device. Reload before applying this edit.'),{status:409});\n  const payload={version:2,updatedAt:new Date().toISOString(),portfolio:cleanPortfolio(portfolio),c1ControlState:cleanC1ControlState(c1ControlState)};\n  const result=await put(pathname(key),JSON.stringify(payload),{access:'private',allowOverwrite:Boolean(saved),...(saved?{ifMatch:saved.etag}:{}),addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:0});\n",
+          "after": "  if((saved?.etag||null)!==(expectedEtag||null))throw Object.assign(new Error('Portfolio changed on another device. Reload before applying this edit.'),{status:409});\n  const updatedAt=new Date().toISOString(),rows=cleanPortfolio(portfolio);\n  const payload={version:2,updatedAt,portfolio:rows,c1ControlState:cleanC1ControlState(c1ControlState)};\n  if(saved){\n    // A deletion or role change can erase a row's legacy timestamp. Keep its\n    // freshness evidence in the same conditional write as the holdings edit.\n    const changes=new Set(Array.isArray(saved.coreCashChangeTimes)?saved.coreCashChangeTimes:[]);\n    const survivingTimes=new Set(c1CoreCashChangeTimes({portfolio:rows}));\n    for(const at of c1CoreCashChangeTimes(saved))if(!survivingTimes.has(at))changes.add(at);\n    if(c1CoreHoldingsSignature(rows)!==c1CoreHoldingsSignature(saved.portfolio))changes.add(updatedAt);\n    if(changes.size)payload.coreCashChangeTimes=[...changes];\n  }\n  const result=await put(pathname(key),JSON.stringify(payload),{access:'private',allowOverwrite:Boolean(saved),...(saved?{ifMatch:saved.etag}:{}),addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:0});\n"
+        }
+      ]
+    },
+    "pages/index.js": {
+      "beforeHash": "61baa0ba420a920204f34bfadaebd481b68051f9",
+      "afterHash": "4e64a9c58ad40e7c19482b2b47ed49355c5d40f9",
+      "chunks": [
+        {
+          "before": "import {c1AccountDifferences} from '../lib/c1AccountDifferences';\nimport {mergeC1AccountPortfolio,portfolioHoldings,initialC1StrategyCash,seedInitialC1StrategyCash} from \"../lib/c1AccountPortfolio\";\nimport C1BrokerageCash from '../components/C1BrokerageCash';\n",
+          "after": "import {c1AccountDifferences} from '../lib/c1AccountDifferences';\nimport {c1CoreHoldingsSignature,mergeC1AccountPortfolio,portfolioHoldings,initialC1StrategyCash,seedInitialC1StrategyCash} from \"../lib/c1AccountPortfolio\";\nimport {C1_CORE_CASH_REVIEW_REASON} from \"../lib/c1BrokerageCash\";\nimport C1BrokerageCash from '../components/C1BrokerageCash';\n"
+        },
+        {
+          "before": "  const syncRevision=useRef({key:\"\",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);\n  function publishC1AccountState(state){\n    if(Object.prototype.hasOwnProperty.call(state,'view'))setAccountView(state.view);\n    if(Object.prototype.hasOwnProperty.call(state,'absent'))setAccountAbsent(state.absent);\n",
+          "after": "  const syncRevision=useRef({key:\"\",etag:null}),syncQueue=useRef(Promise.resolve()),syncPullId=useRef(0),syncWriteId=useRef(0),syncDirty=useRef(false);\n  const [coreCashReviewPending,setCoreCashReviewPending]=useState(false),coreCashEditOwner=useRef(0);\n  function observeCoreHoldingsEdit(before,after){\n    if(c1CoreHoldingsSignature(before)===c1CoreHoldingsSignature(after))return;\n    coreCashEditOwner.current++;setCoreCashReviewPending(true);\n  }\n  function publishC1AccountState(state){\n    if(Object.prototype.hasOwnProperty.call(state,'view'))setAccountView(state.view);\n    if(state.coreCashReviewOwner===coreCashEditOwner.current&&!syncDirty.current)setCoreCashReviewPending(false);\n    if(Object.prototype.hasOwnProperty.call(state,'absent'))setAccountAbsent(state.absent);\n"
+        },
+        {
+          "before": "    if(!key)return;\n    const screenOwner=screenRequestId.current;\n",
+          "after": "    if(!key)return;\n    const coreCashReviewOwner=coreCashEditOwner.current,portfolioWritePending=syncDirty.current;\n    const screenOwner=screenRequestId.current;\n"
+        },
+        {
+          "before": "      if(execution.actionVersion)observeStopOwnership(completed.decision);\n      publish({view:completed});return completed;\n    }catch(error){\n",
+          "after": "      if(execution.actionVersion)observeStopOwnership(completed.decision);\n      publish({view:completed,...(!portfolioWritePending?{coreCashReviewOwner}:{})});return completed;\n    }catch(error){\n"
+        },
+        {
+          "before": "    try{\n      const saved=await refreshC1Account({operation:'update-brokerage-cash',brokerageCash,expectedRevision});\n",
+          "after": "    try{\n      if(coreCashReviewPending){\n        await syncQueue.current;\n        if(syncDirty.current)throw new Error('Sync the Core holding change before confirming brokerage cash.');\n      }\n      const saved=await refreshC1Account({operation:'update-brokerage-cash',brokerageCash,expectedRevision});\n"
+        },
+        {
+          "before": "  useEffect(()=>{try{window.dispatchEvent(new CustomEvent('c1-refresh-busy',{detail:Boolean(loading||reloading||accountBusy||checking)}));}catch{}},[loading,reloading,accountBusy,checking]);\n  useEffect(()=>{if(!loading&&!reloading&&!accountBusy&&accountResponseVerified&&accountView)\n    reportC1PublishedJourney(accountView,{generation:screenRequestId.current,paused:Boolean(accountView.openingError||feedHealth.status!=='healthy'||accountView.decision?.current!==true||\n      c1ApprovedRepairReceipt(accountView)&&(c1AccountDifferences(accountView.decision,portfolio).length>0||syncDirty.current||syncStatus!=='Synced'))});\n  },[loading,reloading,accountBusy,accountResponseVerified,accountView,feedHealth.status,portfolio,syncStatus]);\n\n",
+          "after": "  useEffect(()=>{try{window.dispatchEvent(new CustomEvent('c1-refresh-busy',{detail:Boolean(loading||reloading||accountBusy||checking)}));}catch{}},[loading,reloading,accountBusy,checking]);\n  useEffect(()=>{if(!loading&&!reloading&&!accountBusy&&accountResponseVerified&&accountView&&!coreCashReviewPending)\n    reportC1PublishedJourney(accountView,{generation:screenRequestId.current,paused:Boolean(accountView.openingError||feedHealth.status!=='healthy'||accountView.decision?.current!==true||\n      c1ApprovedRepairReceipt(accountView)&&(c1AccountDifferences(accountView.decision,portfolio).length>0||syncDirty.current||syncStatus!=='Synced'))});\n  },[loading,reloading,accountBusy,accountResponseVerified,accountView,feedHealth.status,portfolio,syncStatus,coreCashReviewPending]);\n\n"
+        },
+        {
+          "before": "      const originalRows=resolveC1NonCashPortfolio(Array.isArray(d.portfolio)?d.portfolio:[],accountView?.decision),rows=c1ApprovedPortfolioBasis(originalRows,repairView);\n      if(signature!==JSON.stringify(rows))localStorage.setItem('stock_screener_portfolio_before_sync_v1',JSON.stringify({savedAt:new Date().toISOString(),portfolio:JSON.parse(signature)}));\n",
+          "after": "      const originalRows=resolveC1NonCashPortfolio(Array.isArray(d.portfolio)?d.portfolio:[],accountView?.decision),rows=c1ApprovedPortfolioBasis(originalRows,repairView);\n      if(accountView)observeCoreHoldingsEdit(JSON.parse(signature),rows);\n      if(signature!==JSON.stringify(rows))localStorage.setItem('stock_screener_portfolio_before_sync_v1',JSON.stringify({savedAt:new Date().toISOString(),portfolio:JSON.parse(signature)}));\n"
+        },
+        {
+          "before": "  async function copySyncKey(){if(!syncKey)return;try{await navigator.clipboard.writeText(syncKey);setSyncStatus('Sync key copied.');}catch{setSyncStatus('Copy failed — select the key manually.');}}\n  function save(x){syncPullId.current++;setPortfolio(x);localStorage.setItem(KEY,JSON.stringify(x));if(syncKey)void pushCloudPortfolio(x,syncKey);}\n  async function add(){\n",
+          "after": "  async function copySyncKey(){if(!syncKey)return;try{await navigator.clipboard.writeText(syncKey);setSyncStatus('Sync key copied.');}catch{setSyncStatus('Copy failed — select the key manually.');}}\n  function save(x){observeCoreHoldingsEdit(portfolio,x);syncPullId.current++;setPortfolio(x);localStorage.setItem(KEY,JSON.stringify(x));if(syncKey)void pushCloudPortfolio(x,syncKey);}\n  async function add(){\n"
+        },
+        {
+          "before": "  const accountDifferences=accountView?c1AccountDifferences(accountView.decision,portfolio):[];\n  const accountHoldingMismatch=accountDifferences.length>0;\n",
+          "after": "  const accountDifferences=accountView?c1AccountDifferences(accountView.decision,portfolio):[];\n  const manualRecommendations=coreCashReviewPending&&Array.isArray(accountView?.manualRecommendations?.orders)?{...accountView.manualRecommendations,\n    orders:accountView.manualRecommendations.orders.filter(order=>order.side!=='buy'),reason:C1_CORE_CASH_REVIEW_REASON}:accountView?.manualRecommendations;\n  const brokerageCashDecision=coreCashReviewPending&&accountView?.decision?.brokerageCashCurrent?{...accountView.decision,\n    brokerageCashCurrent:false,brokerageCashReason:'Reload after the Core holding change to verify brokerage cash.'}:accountView?.decision;\n  const accountHoldingMismatch=accountDifferences.length>0;\n"
+        },
+        {
+          "before": "    const position=accountDecision?.positions?.find(row=>row.symbol===sym(s));\n    const presentation=s.role===\"Swing\"&&!CASH.includes(sym(s))?c1PositionPresentation({requireOpeningReview:true,decision:accountDecision,position,symbol:sym(s),stock:stopQuoteRow(s),executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations:accountView?.manualRecommendations,now:new Date()}):null;\n    const sector=portfolioSectorLabel({stock:s,decision:accountDecision,position,openingPlan:accountView?.openingPlan});\n",
+          "after": "    const position=accountDecision?.positions?.find(row=>row.symbol===sym(s));\n    const presentation=s.role===\"Swing\"&&!CASH.includes(sym(s))?c1PositionPresentation({requireOpeningReview:true,decision:accountDecision,position,symbol:sym(s),stock:stopQuoteRow(s),executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations,now:new Date()}):null;\n    const sector=portfolioSectorLabel({stock:s,decision:accountDecision,position,openingPlan:accountView?.openingPlan});\n"
+        },
+        {
+          "before": "        const stock=stopQuoteRow(results.find(row=>sym(row)===sym(held))||stocks.find(row=>sym(row)===sym(held))||held);\n        const presentation=c1PositionPresentation({requireOpeningReview:true,decision,position,symbol:sym(held),stock,executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations:accountView?.manualRecommendations,now:new Date()});\n        const instruction=c1RecordedSellInstruction(position,presentation);\n",
+          "after": "        const stock=stopQuoteRow(results.find(row=>sym(row)===sym(held))||stocks.find(row=>sym(row)===sym(held))||held);\n        const presentation=c1PositionPresentation({requireOpeningReview:true,decision,position,symbol:sym(held),stock,executionDecision:accountView?.executionDecision,openingPlan:accountView?.openingPlan,manualRecommendations,now:new Date()});\n        const instruction=c1RecordedSellInstruction(position,presentation);\n"
+        },
+        {
+          "before": "    {[\"opportunities\",\"portfolio\"].includes(tab)&&marketScope?.selectionScanStatus===\"incomplete\"&&<section className=\"card\" role=\"status\" aria-label=\"C1 universe scan status\"><b>Opportunity scan incomplete</b><p>{marketScope.selectionScanReason} Verified {marketScope.c1UniverseScan?.completed??marketScope.c1UniverseScan?.scanned??0} of {marketScope.c1UniverseScan?.total??\"the supported\"} candidates. Refresh to continue the bounded scan.</p></section>}\n    {[\"opportunities\",\"portfolio\"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} positionRows={stopPositionRows} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status===\"healthy\"} executionDecision={accountView.executionDecision} manualRecommendations={accountView.manualRecommendations} purchaseDiagnostics={accountView.purchaseDiagnostics} openingPlan={accountMatches&&accountResponseVerified?accountView.openingPlan:null} openingError={accountView.openingError} decision={stopOwnershipCurrent?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:\"Resolve the holding differences in Account settings to restore candidates and checked quantities.\"}}/>}\n    {tab===\"opportunities\"&&!accountView&&<section className=\"card\" aria-label=\"C1 account unavailable\">\n",
+          "after": "    {[\"opportunities\",\"portfolio\"].includes(tab)&&marketScope?.selectionScanStatus===\"incomplete\"&&<section className=\"card\" role=\"status\" aria-label=\"C1 universe scan status\"><b>Opportunity scan incomplete</b><p>{marketScope.selectionScanReason} Verified {marketScope.c1UniverseScan?.completed??marketScope.c1UniverseScan?.scanned??0} of {marketScope.c1UniverseScan?.total??\"the supported\"} candidates. Refresh to continue the bounded scan.</p></section>}\n    {[\"opportunities\",\"portfolio\"].includes(tab)&&accountView&&<C1AccountOpportunities view={tab} portfolio={portfolio} positionRows={stopPositionRows} screenRows={stocks} screenCurrent={!reloading&&feedHealth.status===\"healthy\"} executionDecision={accountView.executionDecision} manualRecommendations={manualRecommendations} purchaseDiagnostics={accountView.purchaseDiagnostics} openingPlan={accountMatches&&accountResponseVerified?accountView.openingPlan:null} openingError={accountView.openingError} decision={stopOwnershipCurrent?accountView.decision:{...accountView.decision,current:false,accountMismatch:true,opportunities:[],explanation:\"Resolve the holding differences in Account settings to restore candidates and checked quantities.\"}}/>}\n    {tab===\"opportunities\"&&!accountView&&<section className=\"card\" aria-label=\"C1 account unavailable\">\n"
+        },
+        {
+          "before": "    </section>}\n    {tab===\"portfolio\"&&<><C1BrokerageCash decision={accountView?.decision} onSave={updateBrokerageCash} busy={accountBusy||reloading||loading}/><section className=\"card\"><div className=\"section\"><div><h2>💼 My Portfolio</h2><p className=\"sub\">Your holdings and current trading actions.</p></div><button disabled={loading} onClick={handleReload}>{loading?\"Analyzing...\":\"Analyze Portfolio\"}</button></div><div className=\"inputs\"><input value={ns} onChange={e=>setNs(e.target.value)} placeholder=\"Symbol\"/><input value={nsh} onChange={e=>setNsh(e.target.value)} placeholder=\"Shares\"/><input value={nc} onChange={e=>setNc(e.target.value)} placeholder=\"Avg cost\"/><label className=\"openedInput\" title=\"First purchase date — adding shares does not reset this date\"><small>First purchase date</small><input aria-label=\"Position opened date\" type=\"date\" value={openedDate} onInput={e=>setOpenedDate(e.currentTarget.value)} onChange={e=>setOpenedDate(e.target.value)}/></label><select value={nr} onChange={e=>setNr(e.target.value)}>{ROLES.map(r=><option key={r}>{r}</option>)}</select><button disabled={accountBusy} onClick={add}>Add / Update</button></div><div className=\"chips\">{visiblePortfolio.map(p=><span key={p.symbol}><b>{p.symbol}</b> {p.shares} @ {money(p.avgCost)} <select value={role(p.symbol,p.role)} onChange={e=>setRole(p.symbol,e.target.value)}>{ROLES.map(r=><option key={r}>{r}</option>)}</select><button onClick={()=>save(portfolio.filter(x=>x.symbol!==p.symbol))}>×</button></span>)}</div></section>\n      {results.length>0&&<section className=\"card\"><h2>Portfolio Intelligence</h2>{portfolioAnalyzedAt&&<p className=\"analysisTimestamp\">Analysis updated {portfolioAnalyzedAt.toLocaleTimeString([], {hour:\"numeric\",minute:\"2-digit\",second:\"2-digit\"})} on this device</p>}<div className=\"portfolioSummary\"><div><small>Total Value</small><b>{money(displayedPortfolioValue)}</b></div><div><small>Swing Capital</small><b>{money(displayedSwingCapital)}</b></div><div><small>Net Gain / Loss</small><b className={portfolioGainLoss>=0?\"pos\":\"neg\"}>{money(portfolioGainLoss)} / {pct(portfolioGainLossPct)}</b></div></div>{finalActionGroups.length>0&&<div className=\"rotationBox\"><b>🔄 Recommended Capital Actions</b><p className=\"actionHelp\">Complete the sells first, then place the buys in priority order. Values use the prices from this analysis.</p>{sellActions.length>0&&<div className=\"tradeStep\"><div className=\"tradeStepHead\"><span>1</span><div><b>Sell or reduce</b><small>Orders that create buying power</small></div></div><div className=\"tradeRows\">{sellActions.map((x,i)=><div className=\"tradeRow\" key={`sell-${x.symbol}-${i}`}><div><b>{x.symbol}</b><small>{x.label}</small></div><div><b>Sell {x.shares} {x.shares===1?\"share\":\"shares\"}</b><small>{money(x.amount)} estimated proceeds{x.remainingShares>0?` • Keep ${x.remainingShares} shares`:\"\"}</small></div></div>)}</div></div>} {buyActions.length>0&&<div className=\"tradeStep\"><div className=\"tradeStepHead\"><span>{sellActions.length?2:1}</span><div><b>Buy in this order</b><small>Highest-ranked C1 opportunity first</small></div></div><div className=\"tradeRows\">{buyActions.map(x=><div className=\"tradeRow buyTrade\" key={`buy-${x.symbol}`}><div><b>{x.symbol}</b><small>Priority #{x.rank}</small></div><div><b>Buy {x.shares} {x.shares===1?\"share\":\"shares\"}</b><small>{money(x.amount)} estimated cost</small></div></div>)}</div></div>}<div className=\"cashAfter\"><div><b>Cash remaining</b><small>After all listed sells and buys</small></div><b>{money(estimatedCashAfterActions)}</b></div></div>}<div className=\"desktopTable\"><div className=\"scroll\"><table><thead><tr><th>Position</th><th>Open Date</th><th>Decision</th><th>Why / Evidence</th><th>Price</th><th>Gain/Loss</th></tr></thead><tbody>{visibleResults.map(s=><PortfolioRow key={sym(s)} s={s}/>)}</tbody></table></div></div><div className=\"mobilePortfolio\">{visibleResults.map(s=><PortfolioRow mobile key={sym(s)} s={s}/>)}</div></section>}\n",
+          "after": "    </section>}\n    {tab===\"portfolio\"&&<><C1BrokerageCash decision={brokerageCashDecision} onSave={updateBrokerageCash} busy={accountBusy||reloading||loading}/><section className=\"card\"><div className=\"section\"><div><h2>💼 My Portfolio</h2><p className=\"sub\">Your holdings and current trading actions.</p></div><button disabled={loading} onClick={handleReload}>{loading?\"Analyzing...\":\"Analyze Portfolio\"}</button></div><div className=\"inputs\"><input value={ns} onChange={e=>setNs(e.target.value)} placeholder=\"Symbol\"/><input value={nsh} onChange={e=>setNsh(e.target.value)} placeholder=\"Shares\"/><input value={nc} onChange={e=>setNc(e.target.value)} placeholder=\"Avg cost\"/><label className=\"openedInput\" title=\"First purchase date — adding shares does not reset this date\"><small>First purchase date</small><input aria-label=\"Position opened date\" type=\"date\" value={openedDate} onInput={e=>setOpenedDate(e.currentTarget.value)} onChange={e=>setOpenedDate(e.target.value)}/></label><select value={nr} onChange={e=>setNr(e.target.value)}>{ROLES.map(r=><option key={r}>{r}</option>)}</select><button disabled={accountBusy} onClick={add}>Add / Update</button></div><div className=\"chips\">{visiblePortfolio.map(p=><span key={p.symbol}><b>{p.symbol}</b> {p.shares} @ {money(p.avgCost)} <select value={role(p.symbol,p.role)} onChange={e=>setRole(p.symbol,e.target.value)}>{ROLES.map(r=><option key={r}>{r}</option>)}</select><button onClick={()=>save(portfolio.filter(x=>x.symbol!==p.symbol))}>×</button></span>)}</div></section>\n      {results.length>0&&<section className=\"card\"><h2>Portfolio Intelligence</h2>{portfolioAnalyzedAt&&<p className=\"analysisTimestamp\">Analysis updated {portfolioAnalyzedAt.toLocaleTimeString([], {hour:\"numeric\",minute:\"2-digit\",second:\"2-digit\"})} on this device</p>}<div className=\"portfolioSummary\"><div><small>Total Value</small><b>{money(displayedPortfolioValue)}</b></div><div><small>Swing Capital</small><b>{money(displayedSwingCapital)}</b></div><div><small>Net Gain / Loss</small><b className={portfolioGainLoss>=0?\"pos\":\"neg\"}>{money(portfolioGainLoss)} / {pct(portfolioGainLossPct)}</b></div></div>{finalActionGroups.length>0&&<div className=\"rotationBox\"><b>🔄 Recommended Capital Actions</b><p className=\"actionHelp\">Complete the sells first, then place the buys in priority order. Values use the prices from this analysis.</p>{sellActions.length>0&&<div className=\"tradeStep\"><div className=\"tradeStepHead\"><span>1</span><div><b>Sell or reduce</b><small>Orders that create buying power</small></div></div><div className=\"tradeRows\">{sellActions.map((x,i)=><div className=\"tradeRow\" key={`sell-${x.symbol}-${i}`}><div><b>{x.symbol}</b><small>{x.label}</small></div><div><b>Sell {x.shares} {x.shares===1?\"share\":\"shares\"}</b><small>{money(x.amount)} estimated proceeds{x.remainingShares>0?` • Keep ${x.remainingShares} shares`:\"\"}</small></div></div>)}</div></div>} {buyActions.length>0&&<div className=\"tradeStep\"><div className=\"tradeStepHead\"><span>{sellActions.length?2:1}</span><div><b>Buy in this order</b><small>Highest-ranked C1 opportunity first</small></div></div><div className=\"tradeRows\">{buyActions.map(x=><div className=\"tradeRow buyTrade\" key={`buy-${x.symbol}`}><div><b>{x.symbol}</b><small>Priority #{x.rank}</small></div><div><b>Buy {x.shares} {x.shares===1?\"share\":\"shares\"}</b><small>{money(x.amount)} estimated cost</small></div></div>)}</div></div>}<div className=\"cashAfter\"><div><b>Cash remaining</b><small>After all listed sells and buys</small></div><b>{money(estimatedCashAfterActions)}</b></div></div>}<div className=\"desktopTable\"><div className=\"scroll\"><table><thead><tr><th>Position</th><th>Open Date</th><th>Decision</th><th>Why / Evidence</th><th>Price</th><th>Gain/Loss</th></tr></thead><tbody>{visibleResults.map(s=><PortfolioRow key={sym(s)} s={s}/>)}</tbody></table></div></div><div className=\"mobilePortfolio\">{visibleResults.map(s=><PortfolioRow mobile key={sym(s)} s={s}/>)}</div></section>}\n"
+        }
+      ]
+    }
+  },
+  "preservedFixtures": {
+    "tools/fixtures/c1-account-action-source-seam.json": "d1d403910492bd4787f704c4110869dbfefcee763c5580a559fb7b988d055ce8",
+    "tools/fixtures/c1-account-ledger-9097e89.js": "f861123083c1d08c825808cf76e479cd00cc59eba5eefa24e29d2a286aaa9a77",
+    "tools/fixtures/c1-account-policy-replay-repair-source-seams.json": "b74013454d5216c290bf36ef63872c14f197ae9df47aae690315a846477860de",
+    "tools/fixtures/c1-account-policy-risk.cjs": "eddf9ff10bbd6e51e9b92bae656391a1f63dfa7c71d139ee4d33256a5848eaaf",
+    "tools/fixtures/c1-account-policy-source-seams.json": "87fc19d0285cb01dc5cb70c3eb66295ec24fce48453b116dddce2130ef8de299",
+    "tools/fixtures/c1-account-policy-universe.cjs": "2e5ac5b10d3b5e858c05cce3bb8942c87295232eeb947c585df2dcecc845b6c4",
+    "tools/fixtures/c1-account-projection-9097e89.js": "63805fbd73e5fa28a48fa3adcf38e1c313430f9c36dd820e7225b52e9afbc53b",
+    "tools/fixtures/c1-account-seed-9097e89.js": "c252e5f7c96d55b44aa8aa56dd10f57102d5968617bacadab6f47cb53506147e",
+    "tools/fixtures/c1-account-service-9097e89.js": "0ddc751280d9d639866ef1945dbc4aa082e152005afa1b612139353315863355",
+    "tools/fixtures/c1-account-simulator-9097e89.js": "15aecf5479fa496bb7fe232f8367aab2c4d37597bba0c347b2064e38e1886e4b",
+    "tools/fixtures/c1-approved-account-repair-source-seams.json": "ba9fa0a3e3f07c3aff8efac6faa8427f443ea3f6b614e8543818ad9d18771d40",
+    "tools/fixtures/c1-approved-repair-diagnostics-source-seams.json": "b5fddc2f029e1f813f40924055ca85ab8d2c88e97c7ee70da141f46d25c25ce8",
+    "tools/fixtures/c1-archive-recovery-source-seams.json": "7b25bf5ff4193042e6799975833f1661b75a6121e1f51c2bdddc766ff5a3c8f6",
+    "tools/fixtures/c1-background-policy-source-seams.json": "7683ea3ff2892bdae0676ecba73aef23ae095d5ad2f0c535c08e4037103257cc",
+    "tools/fixtures/c1-brokerage-production-5a1a682.json": "3cc1911d3201c18c2dd9af1fe4a3504174bad80c24e7db585f5cecfd2454bff4",
+    "tools/fixtures/c1-canonical-timing-source-seams.json": "ad0aa103c64b94765caa28bc093efea2e962c6734a1c3f23f071849988ef5c23",
+    "tools/fixtures/c1-cash-authority-source-seams.json": "acfd03e1fca3f2a436a722f9fa8712875437a6e514dd01075e1bdfbf04ef6664",
+    "tools/fixtures/c1-cash-review-recovery-source-seams.json": "98f3ca92f1c6e356379823d19d26967d06405883f4d6da5a3510ad2aa59f49b1",
+    "tools/fixtures/c1-completed-add-target-source-seams.json": "541aff704f5d4ee14f31db05223b607987e18d1bac7ca25d7903f87d99de35c4",
+    "tools/fixtures/c1-current-blocker-source-seams.json": "97f5c8952890371eada38c1ba8b7e19966a857faf269e811faff7ffefe551bdc",
+    "tools/fixtures/c1-current-holding-source-seam.json": "514fe215397cede5edb25d3fd674e0b325854cdd0f7d87f8eebd984ec992a2bd",
+    "tools/fixtures/c1-current-watch-ten-source-seams.json": "b9427d0aa82d77cfc433b14ed9dc0c59ea1238161a59682962d070fd0a2f9ab9",
+    "tools/fixtures/c1-earnings-recovery-source-seam.json": "0093ef4a8240ffe485b8658e01538e37111a46f89e5f94632d92740958d3a87d",
+    "tools/fixtures/c1-earnings-symbol-source-seam.json": "734909dcaf3009bd4ba8e09a69c01f65fef4cff594f9dec1361db55d45957c46",
+    "tools/fixtures/c1-exit-review-source-seams.json": "20fbb389be1537d9b3e9fc78263af353540c5114f4ad5a83ae34e0bb79422cd3",
+    "tools/fixtures/c1-financial-history-replay-source-seams.json": "97b69bb4b3a7e39ec62e2070def712e989adfce2c0e1652c490ffd812288fcdf",
+    "tools/fixtures/c1-fmp-event-response-shapes-20261022.json": "fd70c3ffccf22e87258b593aeafa8ede60f3bbe9203afd7361777f163c8b8506",
+    "tools/fixtures/c1-index-diagnostic-source-seams.json": "b2c4ab43bd279224de6c66b8e190d57aa457994678283c6e5f507ef9b52b69c8",
+    "tools/fixtures/c1-issued-trade-retention-source-seams.json": "20efabb85136c4979ed44bf748466c4a6a795ff0576920518f13b0c27f80ba5e",
+    "tools/fixtures/c1-market-session-9097e89.js": "2b12b67b5000249f05431908e21c8b8e0979d881f2390d11430287aafe818cc6",
+    "tools/fixtures/c1-nasdaq-accounting.json.gz.base64": "9b5a19a7f13ac5adacbeb6d2edff4e9038ead6f645ef3207056212b9a0751ee8",
+    "tools/fixtures/c1-normal-refresh-babel-loader.cjs": "84678600113da8a245fbcd32dd30f02c4772c2a2a10b4c45130b6ab5acdc1fc8",
+    "tools/fixtures/c1-normal-refresh-browser.jsx": "7d7afb24770a8cfa29c538ada2f678cbd3a62490f662763324dffe634f4a7e15",
+    "tools/fixtures/c1-normal-refresh-screen.cjs": "bd885cbe8a6dc52399aa37c338efb7af4db4631db76f9dc7a9ba2a51b345cf99",
+    "tools/fixtures/c1-opening-budget-source-seams.json": "3974d432963013753f3e920bd7f6387c4ea8b0e2b5fd471678fd0bf4928b086b",
+    "tools/fixtures/c1-opening-copy-source-seams.json": "b2051e25b1c61e4c0d3f58f2c7bd93a4a92f7bdcbbf00a0f487e6194a82794fe",
+    "tools/fixtures/c1-opening-diagnostic-source-seams.json": "135df473e4d560fc496ef9cd9ef80b58aee581684ad9d833238d980aae2f7cf4",
+    "tools/fixtures/c1-opening-sale-source-seams.json": "b94b8dcb3791a4b09e383f923e25e0da7a3eff7769f6f31f29b54ff37076d5ea",
+    "tools/fixtures/c1-opening-shared-source-seams.json": "c09caa2751d1b4b7010d4b81b08a97064ee45607b78c0ea69a1fd5b1458bd82e",
+    "tools/fixtures/c1-operational-modules.cjs": "c9c7ce29da468136a02142b2c5a33106e12a62005d5dfbbb0a911796333d9335",
+    "tools/fixtures/c1-original-screen-policy.js": "211593d642484ce9a02c27acd9836eb54c06759a56dfb1aa3565aa8d59f39fd8",
+    "tools/fixtures/c1-pending-session-ui-source-seam.json": "ef2598c7e1ebd4b205d992209718128b591ae2a72a625eaff775e48bf69f474c",
+    "tools/fixtures/c1-planned-sale-attribution-source-seams.json": "8862e81589a4857110f9caf917044a5e3a6dc7998f63ebfedb7bd105569862b7",
+    "tools/fixtures/c1-portfolio-action-placement/no-replacement-desktop.png": "12415e6e3778f5dae89d4d918d8bc0332d59763383a660fe13296d35d2f81a57",
+    "tools/fixtures/c1-portfolio-action-placement/no-replacement-mobile.png": "61efd5aa77e98c3d5ee966bec0bff206a6a96efa02cbd150a10d185dadb42858",
+    "tools/fixtures/c1-portfolio-action-placement/opportunities-desktop.png": "0620d575dc0fcabe8a0ecec2ef23b4a40c46374a515562a9f84a18db316d79df",
+    "tools/fixtures/c1-portfolio-action-placement/opportunities-mobile.png": "8a4fa773932ac1ac5aa0a6f757c675afff6b370cabd6a8809ece0370178fd673",
+    "tools/fixtures/c1-portfolio-action-placement/portfolio-desktop.png": "380f9957f7bd27dfdbe362d3435033769cc5d9a896ffa27deefd5aa27098f8d2",
+    "tools/fixtures/c1-portfolio-action-placement/portfolio-mobile.png": "b3ab764a3699dc19b9a2c31c462d5a60115e80295f47305161aec8c1e3d74765",
+    "tools/fixtures/c1-presentation-consistency/cash-desktop.png": "88d965362ceb8aa31a6fa972e753c7650c185bd421a18671556e7c5c25764a89",
+    "tools/fixtures/c1-presentation-consistency/cash-mobile.png": "f34163a02275e9bef801485f3414ac44ee83063dcecf4c966a36c091aef7479a",
+    "tools/fixtures/c1-presentation-consistency/opportunities-desktop.png": "f9c597c2bf3bd50b70bbcc4516ae559f69fa8a87909afc6bb6a6de81748023e3",
+    "tools/fixtures/c1-presentation-consistency/opportunities-mobile.png": "be19f7adc3432586996a9ab2e6851757a5a2456068ca9cd38d5e94f4324abe84",
+    "tools/fixtures/c1-presentation-consistency/portfolio-desktop.png": "0a8d90345631a47c005708e7b9c5027931624e46fc3c74ca40a7cfdcf74eb1b8",
+    "tools/fixtures/c1-presentation-consistency/portfolio-mobile.png": "3d58128cf546b76fdc8e6031b2a63000e1d0c141f7238e45450b01171acea89b",
+    "tools/fixtures/c1-presentation-consistency/render-verification.json": "ca68918f4f6d18e6e31ca21839942f18215fe81c3c0046a484af7124a393f396",
+    "tools/fixtures/c1-private-cash-review-source-seams.json": "6e0c48146f70410b0def040e230a488772bb44b09f30cc9486418aba9da7d41b",
+    "tools/fixtures/c1-publication-source-seams.json": "827969ad6215753084ea3901339a563c70854b583af17f9e2f8ce90f820a9e36",
+    "tools/fixtures/c1-qualified-selection-source-seams.json": "e87c5f8dd07b0de14dc9e68a8f07178b6cd1fca2b9d6bdd8638bf671195515a8",
+    "tools/fixtures/c1-recorder-ownership-source-seams.json": "1550b935b2fe8e685a8a75792dd80acf8aa8c08b86875a44322c716bbe720615",
+    "tools/fixtures/c1-recovery-form-mobile-source-seams.json": "ae56fdbd35f585f832afe20537db9fbe720fcc428391ede247c40cd608e91267",
+    "tools/fixtures/c1-reliability-source-seams.json": "96355993043c4a81d52db45afbcfe606e861a5356260772ee6e810485da6c22e",
+    "tools/fixtures/c1-sell-quantity-summary-source-seams.json": "c6bb8f8c572f2197a02e321111e45f5f7f3e430cdfe619016ed4212fb75d37df",
+    "tools/fixtures/c1-source-eligibility-seams.json": "23472338eeed2b2aebf4d2d16cfb2e97607bc8fd9e8150d76c33b32e9b88554a",
+    "tools/fixtures/c1-source-eligibility.cjs": "a1d1cf52a251030eff718760337a2ebd756c26936287d1a28f9984035d91f76b",
+    "tools/fixtures/c1-sp500-accounting.json.gz.base64": "06959bc52f6fb6f4ec664ff3f8aa3fa36a3778e76c993a619208ffd81dd039b5",
+    "tools/fixtures/c1-stock-momentum-exit-source-seams.json": "f22de344ef352b1b1c7ec059acb8526bfad7fc69a4539584fe1ff549398c8fa8",
+    "tools/fixtures/c1-stop-observer-bindings.cjs": "c0a9cbc8b74c8702bdc9a6e2365a1b4c36020bd60531260313cab4f9519b5b91",
+    "tools/fixtures/c1-stop-quote-source-seams.json": "0c3c20eb25c5e41a76e1bed444e667cf1b96627b191420262ebe536c9f3f8a08",
+    "tools/fixtures/c1-stop-verification-source-seams.json": "1fb7d9dd688102e038215812b8e0237b373ee5c9c8855f6e8c0e4d57d1933256",
+    "tools/fixtures/c1-trading-workflow-api.cjs": "cf5af7ce8bc511b9fe4809d0894a9f85d7bb88d47c139f6c170a5e1e2bda21ae",
+    "tools/fixtures/c1-trading-workflow-browser.jsx": "47b54902455c8eda2a305eef26276137150dffca9fa618149ebafa053580c4d2",
+    "tools/fixtures/c1-trading-workflow.cjs": "4f5006546f241455dd681bdbcc1af239f621335e7f31547acaee3bdb494fab74",
+    "tools/fixtures/c1-watch-clean-display-source-seams.json": "a1d570b64467fb1af15f49a927b217d3bd26f5e3a9ffcb9bce98224e566cf436",
+    "tools/fixtures/c1-watch-download-cleanup-source-seams.json": "35489d0c20a50c90930b040b46097bcc2d4550e6c3c9ac41385f32eb2483ad27",
+    "tools/fixtures/c1-watch-entry-blocker-source-seams.json": "24cd96b25f3232a7a769c4064fed04538e9f13697557f4669624bf98af7c1c61",
+    "tools/fixtures/c1-watch-exposure-copy-source-seams.json": "52fd053f023f426eb6cf34c30e4c81d43cc616c3f163358f38a67adc852d5fec",
+    "tools/fixtures/c1-watch-monitoring-source-seams.json": "a66be0201c92787016475727590517dbce8ea3bd9f05986d36e82313c9d75cbe",
+    "tools/fixtures/c1-watch-numbering-source-seams.json": "16b15d0fbe309ec79aee43170ddcfa36cc86a8b3315f2fee0a36b164e79d3154",
+    "tools/fixtures/c1-watch-wait-priority-source-seams.json": "46d34f1c5052ac780c7f16e0d64a9b806c0cd316ee234e95d844e2cc345812cb",
+    "tools/fixtures/c1-workflow-babel-loader.cjs": "9e2d46eef39d92ceb6f6c259d2eb2381a0897ae5fd2df134a82d50b24b83787c",
+    "tools/fixtures/event-risk-production-d386ae5.js": "9ef158af2db61c9eb6231bff27e17336cfd15b8f5d3e38e12dab5a0c079ad015",
+    "tools/fixtures/fmp-fundamentals-production-8b7b1c5.js": "2dc43241c04cbcd51bb4867a9399faa6e9d6e006fae80c6f4920da3632afca57",
+    "tools/fixtures/performance-store-production-21d5380.js": "489711f1d13fc0b212a9ca751e0f08fc1b704f31c47c2338bb1bb49a59be0063",
+    "tools/fixtures/portfolio-sector-label-source-seams.json": "fb74dc6874cbbf6c73915b6e7bf2deab3482c816051bf7f63b0344e1bcca5ace",
+    "tools/fixtures/portfolio-sync-production-d386ae5.js": "59257dd95bf34ee7199d41e337feec3c30e3c4ea68b2cd8870f2c0631222fbfc",
+    "tools/fixtures/public-api-production-7876a16.json": "6b88fdae6a53191f02e61b9d778a10aed1e4484ae719383faeb0fc56991deff8",
+    "tools/fixtures/top5-market-session-before-reuse.js": "6a78e700f6e86973419c705ea3db2f27b1362b2fee29c3d342849086d5f3cfc7",
+    "tools/fixtures/top5-production-ffdd79b.js": "075cd3b674599dfc39b5790dc6d0fc2d3927134e5ad837cf62422cd1bef44f27",
+    "tools/fixtures/top5-production-ffdd79b.json": "b708ad4433cb38c2db6bbe1c26929abdae8e5af6b35756ecabaa24af6f98dc59"
+  }
+}

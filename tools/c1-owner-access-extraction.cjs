@@ -19,4 +19,5 @@ function ownerAccessFixture(env={},logger=console){
  return new Function('process','createHash','timingSafeEqual','Buffer','console',source+';return {rejectUnauthorizedC1Owner};')(
   {env:{...env}},crypto.createHash,crypto.timingSafeEqual,Buffer,logger);
 }
-module.exports={originalAccountSource:source=>reverse(require('./c1-reliability-source-seams.cjs').restore('pages/api/c1-account.js',source),accountGuard),originalPortfolioSource:source=>reverse(source,portfolioGuard),ownerAccessFixture};
+module.exports={originalAccountSource:source=>reverse(require('./c1-reliability-source-seams.cjs').restore('pages/api/c1-account.js',source),accountGuard),
+ originalPortfolioSource:source=>reverse(require('./c1-core-cash-freshness-seams.cjs').restore('pages/api/portfolio-sync.js',source),portfolioGuard),ownerAccessFixture};

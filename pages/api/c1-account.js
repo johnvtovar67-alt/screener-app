@@ -27,6 +27,7 @@ import {c1AccountCashAvailability} from '../../lib/c1BrokerageCash';
 import {recordC1CompletedAddRecovery,recordC1IssuedBuy,c1CompletedAddRecordingSession} from '../../lib/c1CompletedAddRecovery';
 import {retainC1IssuedEntries,c1RetainedEntrySession,c1SessionWithIssuedTrades,c1RetainedTradeSessions} from '../../lib/c1IssuedTradeLog';
 import {easternMarketClock,marketSessionCloseMinutes} from '../../lib/marketSession';
+import {c1CoreCashChangeTimes} from '../../lib/c1AccountPortfolio';
 
 export const config={api:{bodyParser:{sizeLimit:'1mb'}},maxDuration:90};
 // Conditional writes require the strong ETag of the identity representation.
@@ -53,9 +54,8 @@ async function withCoreCashFreshness({account,key,readPortfolio}){
   if(!Array.isArray(record?.portfolio))throw new Error('Saved portfolio identity unavailable');
   return record;
  },'portfolio');
- const observed=Date.parse(account.brokerageCash?.observedAt),changes=portfolioRecord.portfolio
-  .filter(position=>position?.role==='Core').map(position=>Date.parse(position.lastTradeAt)).filter(at=>Number.isFinite(at)&&at>observed);
- return changes.length?{...account,coreCashObservationRequired:new Date(Math.max(...changes)).toISOString()}:account;
+ const changes=c1CoreCashChangeTimes(portfolioRecord);
+ return changes.length?{...account,coreCashObservationRequired:changes}:withoutCoreCashFreshness(account);
 }
 function withoutCoreCashFreshness(account,original){
  if(!Object.hasOwn(account,'coreCashObservationRequired'))return account;
@@ -66,6 +66,7 @@ function withoutCoreCashFreshness(account,original){
 function withCoreCashDecision(decision,account,now){
  if(!account.coreCashObservationRequired)return decision;
  const {brokerageCashCurrent,executableCash,brokerageCashStatus,brokerageCashReason}=c1AccountCashAvailability({account,strategyCash:decision.strategyCash,now});
+ if(brokerageCashStatus!=='Core-activity-review')return decision;
  return {...decision,brokerageCashCurrent,executableCash,brokerageCashStatus,brokerageCashReason};
 }
 
@@ -213,7 +214,18 @@ export function createC1AccountHandler({store=storage,readPortfolio=readAdoption
      const current=next.coreCashObservationRequired?{...account,coreCashObservationRequired:next.coreCashObservationRequired}:account;
      return res.status(200).json({...completedAnalysisView({account:current,book,now}),savedTradeTicket:account.intradayActivity?.tickets.find(row=>row.id===body.ticket.id)});
     }
-    const prepared=await prepareC1AccountExecution({account,book,now,collectOpening,...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})});
+    let opening;
+    const args={account,book,now,collectOpening:input=>(opening??=collectOpening(input)),...(operation==='record-intraday'?{recordTicket:body.ticket,expectedRevision:body.expectedRevision}:{includePurchaseDiagnostics:true,diagnosticCommit:commit})};
+    let prepared=await prepareC1AccountExecution(args);
+    if(operation==='prepare-execution'&&account.cashAccountingCorrections?.length&&prepared.manualRecommendations.orders.some(order=>order.side==='buy'&&!order.condition)){
+     // Provider work can outlast a Core save on another device. Recheck the
+     // private portfolio before issuing a buy. A new edit only blocks buying;
+     // reuse this request's verified opening inputs to retain protective exits.
+     const latest=await withCoreCashFreshness({account,key,readPortfolio});
+     if(c1AccountCashAvailability({account:latest,now:clock()}).brokerageCashStatus==='Core-activity-review'){
+      prepared=await prepareC1AccountExecution({...args,account:{...latest,coreCashObservationRequired:true}});
+     }
+    }
     prepared.decision=withCoreCashDecision(prepared.decision,prepared.account,now);
     if(operation==='prepare-execution'){
      const retained=prepared.manualRecommendations?.date>='2026-11-16'&&prepared.manualRecommendations.status==='ready'&&prepared.manualRecommendations.orders.some(order=>order.side==='buy'&&!order.condition)?retainC1IssuedEntries({account:prepared.account,view:prepared}):prepared.account;

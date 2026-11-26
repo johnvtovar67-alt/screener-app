@@ -354,6 +354,7 @@ async function main(){try{
    stopOwnershipCurrent:true,stopQuoteRow:s=>s,c1PortfolioMomentumEvidence:()=>evidence,pd:()=>({action:position.action,source:'c1-actual-account',reason:position.reason,openedAt:position.openedAt}),
    swingTimeReview:()=>({}),holdingReason:(s,decision)=>decision.reason,sym:s=>s.symbol,price:s=>s.price,cls:action=>/sell|exit|stop/i.test(action)?'red':'yellow',factorFor:()=> 'Sector',
    portfolioDateDisplay:()=> 'Oct 1, 2026',specialSituation:()=>null,money:n=>'$'+Number(n).toFixed(2),pct:n=>Number(n).toFixed(2)+'%'};
+  bindings.manualRecommendations=bindings.accountView.manualRecommendations;
   new Function('require','module','exports',...Object.keys(bindings),rowCode)(name=>require(name.startsWith('@babel/runtime/')?'next/dist/compiled/'+name:name),record,record.exports,...Object.values(bindings));
   const html=renderToStaticMarkup(React.createElement(record.exports.PortfolioRow,{s:stock,mobile}));
   same({position,stock,decision},before,'Real Portfolio rendering preserves original holdings, quotes, orders and cash');

@@ -27,7 +27,7 @@ const holding={symbol:'AAA',role:'Swing',shares:10,avgCost:100,price:105,value:1
 function render({evidence=unavailable,action='Hold',source='c1-actual-account',mobile=false,row=holding,accountMatches=true,accountHoldingMismatch=false,resolver,current=true,date='2026-09-11',positionData={}}={}){
  const calls=[],resolved=[],position={symbol:row.symbol,momentumEvidence:evidence,action,reason:why,
   exits:['Exit candidate','Sell'].includes(action)?[{reason:'rank-deterioration'}]:[],...positionData},accountView={decision:{contract:'c1-account-decision-v1',positions:[position],current,sourceSessionDate:date}},record={exports:{}};
- const bindings={...modules.load('lib/portfolioSectorLabel.js'),...modules.load('lib/c1HoldPill.js'),accountView,accountMatches,accountHoldingMismatch,CASH:['CASH'],displayedPortfolioValue:10000,
+ const bindings={...modules.load('lib/portfolioSectorLabel.js'),...modules.load('lib/c1HoldPill.js'),accountView,manualRecommendations:accountView.manualRecommendations,accountMatches,accountHoldingMismatch,CASH:['CASH'],displayedPortfolioValue:10000,
   stopOwnershipCurrent:accountMatches&&!accountHoldingMismatch,stopQuoteRow:s=>s,c1PositionPresentation,c1PlainDecisionReason,c1CompactMomentumEvidence,c1HoldingTiming,stocks:[row],portfolio:[row],
   c1PortfolioMomentumEvidence:args=>{calls.push(args);const result=resolver?resolver(args):args.position?.momentumEvidence||unavailable;resolved.push(result);return result;},
   pd:()=>({action,source,reason:why,openedAt:row.openedAt}),swingTimeReview:()=>({held:500,stage:'Long Swing Review'}),holdingReason:(s,d)=>d.reason,

@@ -16,6 +16,7 @@ const {createWorkflowApi}=require('./fixtures/c1-trading-workflow-api.cjs');
  if(!box.setPortfolio)box.setPortfolio=()=>{throw Error('Unexpected portfolio publication');};
  require('./fixtures/c1-stop-observer-bindings.cjs').bindC1StopOwnershipObserver(box,page);
  require('./c1-approved-repair-client-bindings.cjs').bindC1ApprovedRepairClientHelpers(box,page);
+ require('./c1-core-cash-client-bindings.cjs').bindC1CoreCashClient(box,page);
  vm.createContext(box);
  const region=(start,end)=>page.slice(page.indexOf(start),page.indexOf(end,page.indexOf(start)));
  vm.runInContext(region('  function publishC1AccountState(','  async function prepareC1Execution(')+region('  async function reviewMRNAAdoption(','  async function updateBrokerageCash(')+region('  async function pullCloudPortfolio(','  async function refreshEnteredPortfolio('),box);

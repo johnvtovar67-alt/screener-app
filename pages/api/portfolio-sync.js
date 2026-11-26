@@ -3,6 +3,7 @@ import {createHash,randomUUID} from 'crypto';
 import {cleanC1ControlState} from '../../lib/c1CapitalState';
 import {isBlobPreconditionFailed} from '../../lib/blobErrors';
 import {rejectUnauthorizedC1Owner} from '../../lib/c1OwnerAccess';
+import {c1CoreCashChangeTimes,c1CoreHoldingsSignature} from '../../lib/c1AccountPortfolio';
 
 // Redeployed after the project Blob store was connected so production picks up storage credentials.
 export const config={api:{bodyParser:{sizeLimit:'1mb'}}};
@@ -44,7 +45,17 @@ async function writePortfolio(key,portfolio,c1ControlState,expectedEtag){
   const saved=await readPortfolio(key);
   if(process.env.VERCEL_ENV==='production'&&!saved)throw Object.assign(new Error('New production accounts are disabled. Connect the existing saved account.'),{code:'PRODUCTION_ACCOUNT_CREATION_DISABLED'});
   if((saved?.etag||null)!==(expectedEtag||null))throw Object.assign(new Error('Portfolio changed on another device. Reload before applying this edit.'),{status:409});
-  const payload={version:2,updatedAt:new Date().toISOString(),portfolio:cleanPortfolio(portfolio),c1ControlState:cleanC1ControlState(c1ControlState)};
+  const updatedAt=new Date().toISOString(),rows=cleanPortfolio(portfolio);
+  const payload={version:2,updatedAt,portfolio:rows,c1ControlState:cleanC1ControlState(c1ControlState)};
+  if(saved){
+    // A deletion or role change can erase a row's legacy timestamp. Keep its
+    // freshness evidence in the same conditional write as the holdings edit.
+    const changes=new Set(Array.isArray(saved.coreCashChangeTimes)?saved.coreCashChangeTimes:[]);
+    const survivingTimes=new Set(c1CoreCashChangeTimes({portfolio:rows}));
+    for(const at of c1CoreCashChangeTimes(saved))if(!survivingTimes.has(at))changes.add(at);
+    if(c1CoreHoldingsSignature(rows)!==c1CoreHoldingsSignature(saved.portfolio))changes.add(updatedAt);
+    if(changes.size)payload.coreCashChangeTimes=[...changes];
+  }
   const result=await put(pathname(key),JSON.stringify(payload),{access:'private',allowOverwrite:Boolean(saved),...(saved?{ifMatch:saved.etag}:{}),addRandomSuffix:false,contentType:'application/json',cacheControlMaxAge:0});
   return {...payload,etag:result.etag};
 }
