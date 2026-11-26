@@ -1,5 +1,26 @@
 # C1 operating instructions
 
+## Observed financial-history replay failure — November 25, 2026
+The owner's normal reload of production b399563 passes the repair admission
+checks but returns HTTP 500 inside the financial review. Its bounded fingerprint
+matches an already recorded historical purchase left unused by actual replay.
+The detached cash correction privately marks the complete original account's
+reconciled fills, but the generated historical-fact consumer starts only at the
+prospective account-policy activation. Earlier executions can consequently be
+rejected when corrected cash changes the hypothetical historical queue.
+Repair that boundary only: recognize the existing nonserializable cash-journal
+capability, bound to the same allocation and original account units, when
+consuming previously reconciled historical execution facts. Retain the complete
+original saved-plan/funding/ownership validation, per-fill identity capability,
+accepted source classification, fixed/captured stop, all current purchase gates,
+policy activation dates, 12% protection and once-only reference resets.
+Do not globally change ordinary historical replay, alter original records, or
+treat a serialized flag or copied object as proof. Update the recent-momentum
+generator and its generated engine together; preserve the canonical simulator
+and canonical generator. Preserve all 89 prior fixtures through a new exact
+inverse from published b399563. Full release gates and real native recovery
+remain required; an incomplete accepted book is not permission to invent inputs.
+
 ## Observed automatic-repair rejection — November 25, 2026
 The owner's normal reload of production 877b25f returns HTTP 422 at
 approved-account-repair and prevents analysis. Continue the same authorized
