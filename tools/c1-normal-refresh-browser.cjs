@@ -13,6 +13,7 @@ async function main(){
  const accountPolicy=process.env.C1_NORMAL_BROWSER_ACCOUNT_POLICY==='1';
  const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1'||sourceGate||accountPolicy;
  const coreCash=process.env.C1_NORMAL_BROWSER_CORE_CASH==='1'?require('./c1-broker-cash-api-regression.cjs').harness():null;
+ const delayedRecord=process.env.C1_NORMAL_BROWSER_DELAYED_RECORD;
  const syncKey=coreCash?.key||'offline_workflow_fixture_key_000001';
  let coreApi;
  if(coreCash){
@@ -60,6 +61,14 @@ async function main(){
   const json=(data,status=200)=>{res.writeHead(status,{'content-type':'application/json','x-fixture-clock':api.fixture.now.toISOString()});res.end(JSON.stringify(data));};
   if(url.pathname==='/__control'){if(Object.hasOwn(body,'eventEvidenceUnavailable'))api.fixture.setEventEvidence(body.eventEvidenceUnavailable?[]:null);state.fail=body.fail;if(Object.hasOwn(body,'shadowOwnership'))state.shadowOwnership=body.shadowOwnership;if(body.now)api.fixture.now=new Date(body.now);if(body.publishNext){const session=api.fixture.sessions[221];assert.equal(session.date,'2026-10-30');api.fixture.book.model.sessions.push(session);api.fixture.book.captures.push({sessionDate:session.date,hash:'synthetic-workflow:'+session.date,observedAt:session.decisionAt});}if(body.versionCommit)state.versionCommit=body.versionCommit;if(body.advanceMs)api.fixture.now=new Date(api.fixture.now.getTime()+body.advanceMs);if(actualScreen){actualScreen.state.mode=['provider-outage','provider-invalid-json','quote-malformed'].includes(body.fail)?body.fail:null;if(body.resetScreen||body.expireScreen)actualScreen.expire();if(body.resetScreen)actualScreen.resetRuntime();}if(body.prices)for(const [symbol,value]of Object.entries(body.prices))api.fixture.setQuote(symbol,value);if(body.release)state.held.splice(0).forEach(release=>release());return json({ok:true});}
   if(url.pathname.startsWith('/api')){const record={path:url.pathname,method:req.method,operation:body?.operation||null,review:url.searchParams.get('review'),symbol:url.searchParams.get('symbol'),finished:false};requests.push(record);res.on('finish',()=>{record.finished=true;});}
+  if(delayedRecord&&url.pathname==='/api/c1-account'&&body?.operation==='record-intraday'){
+   const mode=state.fail,result=await api.request(req.method,body,req.headers.authorization==='Bearer '+syncKey);
+   assert.equal(result.status,200,JSON.stringify(result.body));
+   state.recordReceipt=result.body;
+   if(mode==='record-receipt-hold')await new Promise(resolve=>state.held.push(resolve));
+   for(const[name,value]of Object.entries(result.headers))res.setHeader(name,value);
+   return json(result.body,result.status);
+  }
   const target=state.fail&&!state.fail.startsWith('stop-quote-')&&(state.fail.startsWith('provider-')||state.fail==='quote-malformed'?false:['version-body-hold','version-unavailable'].includes(state.fail)?url.pathname==='/api/version':state.fail==='cash-response-lost'?url.pathname==='/api/c1-account'&&body?.operation==='update-brokerage-cash':state.fail.startsWith('screen')?url.pathname==='/api/top5':state.fail.startsWith('quote')?url.pathname==='/api':state.fail==='cloud-hold'?url.pathname==='/api/portfolio-sync'&&req.method==='GET':state.fail.startsWith('opening')?url.pathname==='/api/c1-account'&&body?.operation==='prepare-execution':state.fail.startsWith('account-inputs')?url.pathname==='/api/c1-account'&&body?.operation==='refresh-account-inputs':state.fail==='performance-body'?url.pathname==='/api/performance':url.pathname==='/api/c1-account'&&req.method==='GET');
   if(target){
    const mode=state.fail;
@@ -101,7 +110,13 @@ async function main(){
     assert.equal(req.headers.authorization,'Bearer '+syncKey);
     if(req.method==='PUT'&&state.fail==='core-save-hold')await new Promise(resolve=>state.held.push(resolve));
     coreCash.state.now=api.fixture.now;
-    const result=await coreCash.portfolioRequest(req.method,body);return json(result.body,result.statusCode);
+    const mode=state.fail,result=await coreCash.portfolioRequest(req.method,body);
+    if(delayedRecord&&req.method==='PUT'){
+     (state.recordPortfolioWrites??=[]).push({status:result.statusCode,expected:body.expectedEtag,etag:result.body.etag,
+      record:JSON.parse(JSON.stringify(coreCash.state.portfolioRecord))});
+     if(mode==='record-projection-hold')await new Promise(resolve=>state.held.push(resolve));
+    }
+    return json(result.body,result.statusCode);
    }
    assert.equal(req.method,'GET','Normal Reload must not write portfolio');return json({portfolio:api.fixture.portfolio,etag:'"fixture-portfolio-1"'});
   }
@@ -151,6 +166,90 @@ async function main(){
   await wait('document.querySelector("header button")?.textContent==="Reload"&&document.querySelector("[aria-label=\\"C1 account opportunities\\"]")','normal signed-in synthetic page');
   await wait('/Buy \\d+ shares/.test(document.body.innerText)','initial checked quantity');
   await wait('document.querySelector("header button")?.textContent==="Reload"','initial reload settled');
+  if(coreCash&&delayedRecord){
+   const original=JSON.parse(JSON.stringify(coreCash.state.account));
+   const originalPortfolio=JSON.parse(JSON.stringify(coreCash.state.portfolioRecord));
+   const analysis=await api.request('GET',null,true),before=analysis.body.decision;
+   assert.equal(analysis.status,200);
+   const swing=portfolio=>portfolio.find(row=>row.symbol==='LLL');
+   const hasCore=portfolio=>portfolio.some(row=>row.symbol==='CORC');
+   const receiptHeld=delayedRecord==='receipt';
+   assert(receiptHeld||delayedRecord==='projection');
+   const accountRefreshes=()=>requests.filter(row=>row.operation==='refresh-account-inputs').length;
+   await click('My Portfolio');await click('Account settings');
+   await wait('document.querySelector(".c1TradeRecorder")&&!document.querySelector(".c1TradeRecorder").closest("[hidden]")','native trade recorder');
+   await input('Completed trade','owner-exit:LLL');await input('Shares filled','1');
+   await input('Execution price','101');await input('Fee','0');await input('Execution time','2026-11-24T16:59:00');
+   await js('document.querySelector(".c1TradeRecorder form input[type=checkbox]").click()');
+   await control(receiptHeld?'record-receipt-hold':'record-projection-hold');
+   await click('Save trade and update C1');
+   for(let attempt=0;attempt<160&&state.held.length!==1;attempt++)await pause(50);
+   assert.equal(state.held.length,1,'Wait for the chosen real conditional-save acknowledgement');
+   const refreshesBeforeEdit=accountRefreshes();
+   assert(state.recordReceipt,'The real account API saved the confirmed Swing trade');
+   const [ticket]=coreCash.state.account.intradayActivity.tickets;
+   assert.equal(coreCash.state.account.intradayActivity.tickets.length,1);
+   assert.equal(ticket.shares,1);assert.equal(ticket.price,101);assert.equal(ticket.fee,0);
+   assert.equal(ticket.executedAt,'2026-11-24T16:59:00.000Z');
+   assert.equal((state.recordReceipt.savedTradeTicket||state.recordReceipt.intradaySession.tickets.find(row=>row.id===ticket.id)).id,ticket.id);
+   assert.equal(state.recordPortfolioWrites?.length||0,receiptHeld?0:1);
+   if(!receiptHeld)assert.equal(swing(coreCash.state.portfolioRecord.portfolio).shares,99);
+   await click('Back to My Portfolio');
+   await js(`[...document.querySelectorAll('.chips span')].find(chip=>chip.querySelector('b')?.textContent==='CORC').querySelector('button').click()`);
+   await wait('!JSON.parse(localStorage.getItem("stock_screener_portfolio_v1")).some(row=>row.symbol==="CORC")','newer removal entered in actual Portfolio');
+   if(receiptHeld){
+    for(let attempt=0;attempt<160&&state.recordPortfolioWrites?.length!==1;attempt++)await pause(50);
+    assert.equal(state.recordPortfolioWrites?.length,1);
+    assert.equal(hasCore(coreCash.state.portfolioRecord.portfolio),false,'The newer Core removal is conditionally saved before receipt delivery');
+    assert.equal(swing(coreCash.state.portfolioRecord.portfolio).shares,100);
+   }
+   await control(null,{release:true});
+   for(let attempt=0;attempt<160&&state.recordPortfolioWrites?.length!==2;attempt++)await pause(50);
+   const writes=state.recordPortfolioWrites;
+   assert.deepEqual(writes.map(write=>[write.status,hasCore(write.record.portfolio)]),receiptHeld?[[200,false],[200,false]]:[[200,true],[200,false]]);
+   assert.equal(writes[0].expected,originalPortfolio.etag);
+   assert.equal(writes[1].expected,writes[0].etag,'The last save uses the ETag for the rows it actually updates');
+   assert.equal(swing(coreCash.state.portfolioRecord.portfolio).shares,99);
+   assert.equal(swing(coreCash.state.portfolioRecord.portfolio).avgCost,swing(originalPortfolio.portfolio).avgCost);
+   assert.equal(Date.parse(swing(coreCash.state.portfolioRecord.portfolio).openedAt),Date.parse(swing(originalPortfolio.portfolio).openedAt));
+   const coreEdit=writes[receiptHeld?0:1].record.coreCashChangeTimes;
+   assert(coreEdit.includes(api.fixture.now.toISOString()));
+   assert.deepEqual(coreCash.state.portfolioRecord.coreCashChangeTimes,coreEdit,'The saved Core edit remains in the server freshness history');
+   const after=state.recordReceipt.decision;
+   assert.equal(swing(after.positions).shares,99);
+   assert.equal(swing(after.positions).openedAt,swing(before.positions).openedAt);
+   assert.equal(swing(after.positions).avgCost,swing(before.positions).avgCost);
+   const activity=coreCash.state.account.intradayActivity;
+   const fillsBySleeve=new Map();
+   for(const fill of activity.fills){
+    const order=activity.plan.orders.find(row=>row.id===fill.orderId);
+    assert(order?.sleeve,'The confirmed fill has a saved allocation owner');
+    fillsBySleeve.set(order.sleeve,(fillsBySleeve.get(order.sleeve)||0)+fill.shares);
+   }
+   const expectedStops=Array.from(swing(before.positions).stops,stop=>({...stop,shares:stop.shares-(fillsBySleeve.get(stop.sleeve)||0)}));
+   assert.deepEqual(Array.from(swing(after.positions).stops,stop=>({...stop})),expectedStops,'Stop prices and allocation owners are retained, with only filled quantities reduced');
+   const proceeds=activity.fills.reduce((total,fill)=>total+fill.shares*fill.price-fill.fee,0);
+   assert.equal(proceeds,101);
+   assert(Math.abs(after.recordedLedgerCash-before.recordedLedgerCash-proceeds)<1e-7,'Recorded ledger reflects exactly one confirmed sale');
+   assert(Date.parse(before.brokerageCashObservedAt)>Date.parse(ticket.executedAt));
+   assert.equal(after.actualCash,before.actualCash,'A later brokerage observation already includes the confirmed sale');
+   assert.equal(after.brokerageCash,before.brokerageCash);
+   assert.equal(swing(coreCash.state.portfolioRecord.portfolio).role,'Swing');
+   for(const field of ['adoption','records','sourceHashes','cashAccountingCorrections','brokerageCash'])assert.deepEqual(coreCash.state.account[field],original[field],field+' remains intact');
+   assert.deepEqual(coreCash.state.account.intradayActivity.tickets,[ticket]);
+   assert.equal(requests.filter(row=>row.operation==='record-intraday').length,1,'Recording is never retried to publish the portfolio');
+   assert.equal(requests.filter(row=>row.path==='/api/portfolio-sync'&&row.method==='PUT').length,2);
+   assert.equal(coreCash.state.providerCalls,0);
+   await wait('document.querySelector("header button")?.textContent==="Reload"','analysis settles without reviving the removed holding');
+   assert.equal(await js('JSON.parse(localStorage.getItem("stock_screener_portfolio_v1")).some(row=>row.symbol==="CORC")'),false);
+   await click('Account settings');await wait('document.querySelector(".syncStatus")?.textContent==="Synced"','actual final sync acknowledgement');
+   if(!receiptHeld)assert.equal(accountRefreshes(),refreshesBeforeEdit,'The delayed projection acknowledgement must not analyze the portfolio that preceded the queued Core edit');
+   assert.deepEqual(trace.browserErrors,[]);
+   trace.cases.push({case:'confirmed-swing-sale-and-concurrent-core-removal',heldAcknowledgement:delayedRecord,confirmedSwingFills:1,
+    coreRemoved:true,leftCoreFreshnessEvidence:true,strongEtagChain:true,originalRecordsPreserved:true,brokerageObservationUnchanged:true,visibleStatus:'Synced'});
+   trace.status='PASS';trace.browser=(await send('Browser.getVersion')).product;
+   console.log('PASS: actual Home/App and strict portfolio store retain one confirmed Swing sale and the newer Core removal ('+delayedRecord+').');return;
+  }
   if(coreCash){
    const buyText='/Buy \\d+ shares/.test(document.body.innerText)';
    const quantities=review=>review.orders.filter(order=>order.side==='buy'&&!order.condition).map(({symbol,sleeve,shares,estimatedPrice})=>({symbol,sleeve,shares,estimatedPrice}));
@@ -557,4 +656,6 @@ main().then(()=>{
   require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_QUALIFIED:'1',C1_NORMAL_BROWSER_ACTUAL_SCREEN:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'qualified-selection')},timeout:120000});
  if(!process.env.C1_NORMAL_BROWSER_SOURCE_GATE&&!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
   require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_CORE_CASH:'1',C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'core-cash')},timeout:120000});
+ if(!process.env.C1_NORMAL_BROWSER_SOURCE_GATE&&!process.env.C1_NORMAL_BROWSER_QUALIFIED&&!process.env.C1_NORMAL_BROWSER_ACTUAL_SCREEN&&!process.env.C1_NORMAL_BROWSER_RELIABILITY)
+  for(const order of ['receipt','projection'])require('node:child_process').execFileSync(process.execPath,[__filename],{cwd:root,stdio:'inherit',env:{...process.env,C1_NORMAL_BROWSER_CORE_CASH:'1',C1_NORMAL_BROWSER_DELAYED_RECORD:order,C1_NORMAL_BROWSER_EVIDENCE:path.join(out,'delayed-record-'+order)},timeout:120000});
 }).catch(error=>{trace.status='FAIL';trace.failure=error.message;fs.writeFileSync(path.join(out,'normal-journey.json'),JSON.stringify(trace,null,2)+'\n');console.error(error);process.exitCode=1;});

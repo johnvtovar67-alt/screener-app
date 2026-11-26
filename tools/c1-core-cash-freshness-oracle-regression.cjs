@@ -8,7 +8,7 @@ assert.deepEqual(Object.keys(fixture.files),['lib/c1AccountPortfolio.js','lib/c1
 assert.equal(Object.keys(fixture.preservedFixtures).length,90,'Every previously released fixture is retained');
 for(const [file,pin]of Object.entries(fixture.preservedFixtures))assert.equal(sha(file),pin,'Published fixture is byte-identical: '+file);
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),prior=inverse.restore(file,current);
+ const current=require('./c1-delayed-fill-portfolio-seams.cjs').restore(file,fs.readFileSync(file,'utf8')),prior=inverse.restore(file,current);
  assert.equal(inverse.blob(current),patch.afterHash,'Only reviewed source enters the inverse: '+file);
  assert.equal(inverse.blob(prior),patch.beforeHash,'Exact published source recovered: '+file);
  assert.equal(inverse.restore(file,prior),prior,'Inverse is idempotent: '+file);
