@@ -2,7 +2,9 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { createHash } = require('node:crypto');
 const { createWorkflowFixture } = require('./fixtures/c1-trading-workflow.cjs');
-const { createNormalRefreshScreen } = require('./fixtures/c1-normal-refresh-screen.cjs');
+const { createRequire } = require('node:module');
+const path = require('node:path');
+const vm = require('node:vm');
 const { restore, blob } = require('./c1-bounded-screen-continuation-seams.cjs');
 
 const bytes = readFileSync('tools/fixtures/c1-bounded-screen-continuation-source-seams.json');
@@ -18,6 +20,24 @@ for (const [file, patch] of Object.entries(inverse.files)) {
   const unknown = current + '\n// unreviewed\n';
   assert.equal(restore(file, unknown), unknown);
 }
+
+// Keep the published fixture unchanged. Expose only the synthetic request
+// headers and clock so this test can drive the actual handler's new boundary.
+const screenFixturePath = path.resolve('tools/fixtures/c1-normal-refresh-screen.cjs');
+let screenFixture = readFileSync(screenFixturePath, 'utf8');
+for (const [before, after] of [
+  ['function createNormalRefreshScreen(fixture){', 'function createNormalRefreshScreen(fixture,{monotonicClock=performance,onProviderRequest=()=>{}}={}){'],
+  ['  calls.push({endpoint,symbol:', '  onProviderRequest(endpoint);\n  calls.push({endpoint,symbol:'],
+  ['Response,Buffer,performance,fetch:fetcher', 'Response,Buffer,performance:monotonicClock,fetch:fetcher'],
+  ["async request(query={})", "async request(query={},requestHeaders={})"],
+  ["method:'GET',headers:{},query:{theme:", "method:'GET',headers:requestHeaders,query:{theme:"],
+]) {
+  assert.equal(screenFixture.split(before).length, 2, 'Unique synthetic screen-fixture boundary.');
+  screenFixture = screenFixture.replace(before, after);
+}
+const screenModule = { exports: {} };
+vm.runInThisContext('(function(require, module) { '+screenFixture+'\n})', { filename: screenFixturePath })(createRequire(screenFixturePath), screenModule);
+const { createNormalRefreshScreen } = screenModule.exports;
 
 const symbols = Array.from({ length: 279 }, (_, i) => 'X' + String(i).padStart(3, '0'));
 const workflow = createWorkflowFixture('buy', {
