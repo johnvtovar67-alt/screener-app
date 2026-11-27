@@ -42,7 +42,7 @@ function harness({now='2026-09-15T22:30:00.000Z',initial=seed}={}){
  // Optional source argument proves the same sequence fails against the deployed
  // predecessor. Normal CI always loads the application source at this commit.
  const lifecycle=load(process.argv[2]||'lib/c1IndexLifecycle.js',{...market,Date:Clock,
-  C1_SESSION_REVISION_REVIEW:loader.load('lib/c1SessionRevisionReview.js').C1_SESSION_REVISION_REVIEW},'refreshC1Index');
+  ...loader.load('lib/c1SessionRevisionReview.js')},'refreshC1Index');
  const dependencies={now:new Date(now),prepare:options=>stored.prepareStoredC1DatedBook({...options,store,path:'fixture/book.json.gz'}),
   connect:(value,options)=>stored.connectStoredC1DatedInput(value,{...options,store,path:'fixture/book.json.gz'}),
   readObservations:read,archive:(value,options)=>archive.archiveC1IndexObservation(value,{...options,store:observationStore,bookPath:'fixture/book.json.gz'}),

@@ -87,7 +87,29 @@ async function main() {
   });
   try {
     const result = instrumented.load('lib/c1DatedBook.js').acceptC1DatedInput(book, latest.payload, new Date(latest.observedAt), { observations: contemporaneous });
-    emit('acceptance', { status: 'accepted-in-memory', resultingSource: result.captures.at(-1).sessionDate });
+    const {isC1RecordedOpeningAudit} = instrumented.load('lib/c1RecordedOpeningRecovery.js');
+    emit('acceptance', { status: 'accepted-in-memory', resultingSource: result.captures.at(-1).sessionDate,
+      recordHash: result.recordHash, inputHash: result.captures.at(-1).hash,
+      receiptValid: isC1RecordedOpeningAudit(result.reconciliations.at(-1), result, digest),
+      historicalInputsPreserved: same(result.model.sessions.slice(0, -1), book.model.sessions),
+      originalLedgerPreserved: same(result.model.ledger, book.model.ledger),
+      originalRiskPreserved: same(forward.c1ForwardOperationalState(result.model), forward.c1ForwardOperationalState(runs[2])),
+      exactRetry: instrumented.load('lib/c1DatedBook.js').acceptC1DatedInput(result, latest.payload, new Date(latest.observedAt), {observations: contemporaneous}) === result });
+    try {
+      const service = instrumented.load('lib/c1AccountService.js');
+      const signing = instrumented.load('lib/portfolioGovernor.js');
+      const portfolio = [{symbol:'CASH', role:'Swing', shares:10000, avgCost:1}];
+      const capitalRecord = {version:2, highWater:10000, triggerDay:null,
+        reconciliationRequired:false, portfolioSignature:signing.portfolioCompositionSignature(portfolio)};
+      const account = service.adoptC1Account({portfolio, capitalRecord, book,
+        now:new Date(book.captures.at(-1).observedAt)});
+      const start = performance.now();
+      const {decision} = service.deriveC1AccountAnalysis({account, book:result, now:new Date(latest.observedAt)});
+      emit('synthetic-private-analysis', {status:'accepted', current:decision.current,
+        source:decision.sourceSessionDate, elapsedMs:Math.round(performance.now()-start)});
+    } catch (error) {
+      emit('synthetic-private-analysis', {status:'rejected', reason:error?.message?.slice(0,140)});
+    }
   } catch (error) {
     const diagnostic = error?.providerRevisionDiagnostic;
     emit('acceptance', { status: 'rejected', stage: diagnostic?.stage ?? null,
