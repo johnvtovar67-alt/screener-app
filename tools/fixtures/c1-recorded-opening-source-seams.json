@@ -1,0 +1,66 @@
+{
+  "lib/c1AccountInput.js": {
+    "baselineBlob": "069c401e9f9aa601c9768ce2d78666dde35b2f79",
+    "authorizedBlob": "3189382b97bbc6fc441f6c466763acbef5c20a13",
+    "chunks": [
+      {
+        "before": "import { C1_SESSION_REVISION_REVIEW } from './c1SessionRevisionReview';\n\n",
+        "after": "import { C1_SESSION_REVISION_REVIEW } from './c1SessionRevisionReview';\nimport {assertC1RecordedOpeningAccount} from './c1RecordedOpeningAccount';\n\n"
+      },
+      {
+        "before": " for(const audit of book.reconciliations||[]){\n  if(audit.contract==='c1-recorded-sale-revision-v1'){\n",
+        "after": " for(const audit of book.reconciliations||[]){\n  if(audit.recordedOpeningProof!==undefined||audit.privateAccountTreatment==='reviewed-recorded-opening-v1'){\n   assertC1RecordedOpeningAccount(audit,book,account,through);\n   continue;\n  }\n  if(audit.contract==='c1-recorded-sale-revision-v1'){\n"
+      }
+    ]
+  },
+  "lib/c1IndexLifecycle.js": {
+    "baselineBlob": "dc635e543b2bd8a73c1a3b4fbbf6a2fc741ccc40",
+    "authorizedBlob": "88e3452d81674045044f707d7631a72438139b69",
+    "chunks": [
+      {
+        "before": "import { archiveC1IndexObservation, readC1IndexObservations } from './c1IndexObservationStore';\nimport { C1_SESSION_REVISION_REVIEW } from './c1SessionRevisionReview';\n\n",
+        "after": "import { archiveC1IndexObservation, readC1IndexObservations } from './c1IndexObservationStore';\nimport { C1_SESSION_REVISION_REVIEW, C1_RECORDED_OPENING_REVIEW } from './c1SessionRevisionReview';\n\nfunction selectObservation(observations, prior, day) {\n  const review = C1_RECORDED_OPENING_REVIEW;\n  if (day === review.currentSessionDate && prior.recordHash === review.priorRecordHash)\n    return observations.find(row => row.observationHash === review.observationHash);\n  return observations.at(-1);\n}\n\n"
+      },
+      {
+        "before": "        const observations = await readObservations(date, { now });\n        // Deterministic latest contemporaneous observation, never a choice based\n        // on simulated return. All original observation times remain unchanged.\n        const selected = observations.at(-1);\n        if (!selected) throw new Error('Missing archived index session: ' + date + '; no historical membership backfill');\n        onStage('recover');\n        await connect(selected.payload, { now: new Date(selected.observedAt), observations });\n        recovered.push({ sessionDate: date, observationHash: selected.observationHash });\n",
+        "after": "        const observations = await readObservations(date, { now });\n        // A reviewed transition uses its pinned observation. All other dates\n        // use the latest contemporaneous observation and its original time.\n        const selected = selectObservation(observations, prior, date);\n        if (!selected) throw new Error('Missing archived index session: ' + date + '; no historical membership backfill');\n        onStage('recover');\n        await connect(selected.payload, { now: new Date(selected.observedAt),\n          observations: observations.filter(row => row.observedAt <= selected.observedAt) });\n        recovered.push({ sessionDate: date, observationHash: selected.observationHash });\n"
+      },
+      {
+        "before": "    if (observations) {\n      const selected = observations.at(-1);\n      if (selected) {\n",
+        "after": "    if (observations) {\n      const selected = selectObservation(observations, prior, required);\n      if (selected) {\n"
+      },
+      {
+        "before": "        try {\n          const view = await connect(selected.payload, { now: new Date(selected.observedAt), observations });\n          recovered.push({ sessionDate: required, observationHash: selected.observationHash });\n",
+        "after": "        try {\n          const view = await connect(selected.payload, { now: new Date(selected.observedAt),\n            observations: observations.filter(row => row.observedAt <= selected.observedAt) });\n          recovered.push({ sessionDate: required, observationHash: selected.observationHash });\n"
+      }
+    ]
+  },
+  "lib/c1ReviewedSessionRevision.js": {
+    "baselineBlob": "63a6beb32faaf520cf163d4cf6afaa8d52ca43d4",
+    "authorizedBlob": "e332b010ab15adc012949a8f3cb3fc353387efba",
+    "chunks": [
+      {
+        "before": "import {buildC1ModelParityDiagnostic} from './c1ModelParityDiagnostic';\n\n",
+        "after": "import {buildC1ModelParityDiagnostic} from './c1ModelParityDiagnostic';\nimport {C1_RECORDED_OPENING_TREATMENT,proveC1RecordedOpening} from './c1RecordedOpeningRecovery';\n\n"
+      },
+      {
+        "before": "  proveC1RecordedSaleRevision(prior,input,original,corrected,correctedPrices,digest);\n if(!economicParity&&!recordedSaleProof){\n  // Diagnostics never change acceptance, and a diagnostic failure cannot mask\n",
+        "after": "  proveC1RecordedSaleRevision(prior,input,original,corrected,correctedPrices,digest);\n const recordedOpeningProof=economicParity||recordedSaleProof?null:proveC1RecordedOpening({\n  prior,input,now,digest,advance,original,corrected,correctedPrices,archivedInput:current.o.payload,\n  observationHash:current.o.observationHash,confirmations});\n if(!economicParity&&!recordedSaleProof&&!recordedOpeningProof){\n  // Diagnostics never change acceptance, and a diagnostic failure cannot mask\n"
+      },
+      {
+        "before": "  mismatches:appliedMismatches,correctedPrices,deferredRevisionCount:mismatches.length-appliedMismatches.length,\n  privateAccountTreatment:'preserved-recorded-basis',originalInputsPreserved:true,identicalModelEconomics:economicParity,\n  ...(recordedSaleProof?{recordedSaleProof}:{}),\n  comparisonHash:digest(Object.fromEntries(economicFields.map(k=>[k,original[k]]))),\n",
+        "after": "  mismatches:appliedMismatches,correctedPrices,deferredRevisionCount:mismatches.length-appliedMismatches.length,\n  privateAccountTreatment:recordedOpeningProof?C1_RECORDED_OPENING_TREATMENT:'preserved-recorded-basis',originalInputsPreserved:true,identicalModelEconomics:economicParity,\n  ...(recordedSaleProof?{recordedSaleProof}:{}),\n  ...(recordedOpeningProof?{recordedOpeningProof}:{}),\n  comparisonHash:digest(Object.fromEntries(economicFields.map(k=>[k,original[k]]))),\n"
+      }
+    ]
+  },
+  "lib/c1SessionRevisionReview.js": {
+    "baselineBlob": "81b20c650c7daac35ffd2e18850bfd42923d1520",
+    "authorizedBlob": "e6ea25904c00af373c0d42d6242b7da0f78c208b",
+    "chunks": [
+      {
+        "before": "};\n",
+        "after": "};\n\n// Owner-reviewed November 27 recovery on the recorded November 25 model basis.\nexport const C1_RECORDED_OPENING_REVIEW = Object.freeze({\n  priorRecordHash: '51eab188dccaad51e397d0ec232a1b6b7d899b21dfc3f6d9000dbabfb22b3de8',\n  previousSessionDate: '2026-11-25',\n  currentSessionDate: '2026-11-27',\n  observedAt: '2026-11-27T21:33:36.385Z',\n  observationHash: '88bad65241c12542c103157707cfa611eaffa53d7b1988637af8018f763f9c72',\n  confirmingObservationHash: 'd6a623cbe8b65d6b086ac53fb6a82787a2409c0059abf4dd2d918085e2e9ec0d',\n  symbol: 'BBY',\n  recordedOpen: 101.84,\n  revisedOpen: 99.60,\n  correctedPricesHash: 'cf816bb4aeaebdde25d80ae51c66d74971a3b5e281db6d7798819ece137aa298',\n  recordedEconomicsHash: 'bb1b25f41ba263b4fa8a4153b20ca6eb0449049d9453e85198216afa4fe96ee2',\n  recordedRiskHash: '87afac2022c6839383137e3457e56d017f559b506bc4950e74d229a61c473c1c',\n  revisedEconomicsHash: 'a115099f51ab48792aa7808248c6d9224c23c1cd941beb625bc93d7b24449111',\n  revisedRiskHash: '2ae84a1972d8f66be27043707d1a629f5995224c0ed5e260161fbe4c8edc1df2'\n});\n"
+      }
+    ]
+  }
+}

@@ -3,8 +3,9 @@ const { timingSafeEqual } = require('node:crypto');
 const { createResearchModuleLoader } = require('./research-module-loader.cjs');
 const market = createResearchModuleLoader(process.cwd()).load('lib/marketSession.js');
 const source = file => fs.readFileSync(file, 'utf8').replace(/^import .*;\n/gm, '').replace(/export default /g, '').replace(/export /g, '');
-const review = createResearchModuleLoader(process.cwd()).load('lib/c1SessionRevisionReview.js').C1_SESSION_REVISION_REVIEW;
-const box = { ...market, Date, C1_SESSION_REVISION_REVIEW: review }; vm.createContext(box);
+const reviews = createResearchModuleLoader(process.cwd()).load('lib/c1SessionRevisionReview.js');
+const review = reviews.C1_SESSION_REVISION_REVIEW;
+const box = { ...market, Date, ...reviews }; vm.createContext(box);
 vm.runInContext(source('lib/c1IndexLifecycle.js') + '\nglobalThis.run=refreshC1Index;', box);
 (async () => {
   const now = new Date('2026-09-11T22:00:00Z');
