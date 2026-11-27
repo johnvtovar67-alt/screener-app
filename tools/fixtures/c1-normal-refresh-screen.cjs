@@ -5,7 +5,7 @@ const babel=require('next/dist/compiled/babel/core');
 const {createHash}=require('node:crypto');
 const compiled=new Map(),clone=value=>JSON.parse(JSON.stringify(value));
 const hash=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
-function createNormalRefreshScreen(fixture){
+function createNormalRefreshScreen(fixture,{monotonicClock=performance,onProviderRequest=()=>{}}={}){
  const root=fixture.root,modules=new Map(),sourceHashes=new Map(),calls=[],logs=[],objects=new Map(),writes=[];
  const state={mode:null},symbols=fixture.book.model.sessions.at(-1).signals.map(row=>row.symbol);
  class FixtureDate extends Date{constructor(...args){super(...(args.length?args:[fixture.now]));}static now(){return fixture.now.getTime();}}
@@ -28,6 +28,7 @@ function createNormalRefreshScreen(fixture){
  async function fetcher(raw,options={}){
   const url=new URL(raw);assert.equal(url.hostname,'financialmodelingprep.com','No live provider can be reached');assert.equal(url.searchParams.get('apikey'),'isolated-refresh-fixture');
   const endpoint=url.pathname.replace('/stable/',''),symbol=(url.searchParams.get('symbol')||'').replace('-','.');
+  onProviderRequest(endpoint);
   calls.push({endpoint,symbol:symbol||null,at:fixture.now.toISOString()});
   if(state.mode==='provider-outage')return new Response('{"error":"Synthetic provider unavailable"}',{status:503});
   if(state.mode==='provider-invalid-json'&&['batch-quote','quote'].includes(endpoint))return new Response('{"broken":');
@@ -53,7 +54,7 @@ function createNormalRefreshScreen(fixture){
   return new Response(JSON.stringify(body),{status:200,headers:{'content-type':'application/json'}});
  }
  const box={console:{log:(...args)=>logs.push(args),info:(...args)=>logs.push(args),warn:(...args)=>logs.push(args),error:(...args)=>logs.push(args)},
-  process:{env:{FMP_API_KEY:'isolated-refresh-fixture',VERCEL_ENV:'production',NODE_ENV:'test'}},Date:FixtureDate,Intl,Math,Number,String,Object,Array,Set,Map,WeakMap,Boolean,RegExp,Error,TypeError,JSON,URL,URLSearchParams,AbortController,AbortSignal,Response,Buffer,performance,fetch:fetcher,setTimeout,clearTimeout};
+  process:{env:{FMP_API_KEY:'isolated-refresh-fixture',VERCEL_ENV:'production',NODE_ENV:'test'}},Date:FixtureDate,Intl,Math,Number,String,Object,Array,Set,Map,WeakMap,Boolean,RegExp,Error,TypeError,JSON,URL,URLSearchParams,AbortController,AbortSignal,Response,Buffer,performance:monotonicClock,fetch:fetcher,setTimeout,clearTimeout};
  const context=vm.createContext(box);
  function load(file){
   file=path.resolve(file);if(modules.has(file))return modules.get(file).exports;const module={exports:{}};modules.set(file,module);
@@ -77,7 +78,7 @@ function createNormalRefreshScreen(fixture){
  }
  const handler=load(path.join(root,'pages/api/top5.js')).default;
  return{calls,logs,writes,state,quote,
-  async request(query={}){let status=200,body;const headers={};await handler({method:'GET',headers:{},query:{theme:'opportunities',...query}},{setHeader(name,value){headers[name]=value;},status(code){status=code;return this;},json(value){body=clone(value);return this;}});return{status,body,headers};},
+  async request(query={},requestHeaders={}){let status=200,body;const headers={};await handler({method:'GET',headers:requestHeaders,query:{theme:'opportunities',...query}},{setHeader(name,value){headers[name]=value;},status(code){status=code;return this;},json(value){body=clone(value);return this;}});return{status,body,headers};},
   ledger(){const body=objects.get('screener-performance-ledger.json')?.body;return body?JSON.parse(body):null;},
   storageHash(){return hash([...objects]);},
   sources(){return Object.fromEntries(sourceHashes);},

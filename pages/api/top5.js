@@ -14,7 +14,8 @@ export default async function handler(req, res) {
     res.setHeader("X-C1-Request-Id", top5RequestId());
     return await produceC1Screen(req.query, (production) => top5Phase("serialize-response", () => res
       .status(200)
-      .json(top5ObserveScreenResponse(readC1ScreenSnapshot(production)))));
+      .json(top5ObserveScreenResponse(readC1ScreenSnapshot(production)))),
+      {continueUniverse: req.headers?.["x-c1-scan-continue"] === "1"});
   } catch (err) {
     try { top5ObserveScreenFailure(err); } catch {}
     return res
