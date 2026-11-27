@@ -12,7 +12,7 @@ assert.equal(fixture.baselineCommit,'1597993bdc532c216153b2980751a1c4392195ee');
 assert.deepEqual(Object.keys(fixture.files),['pages/index.js']);
 assert.equal(Object.keys(fixture.preservedFixtures).length,92);
 for(const [file,pin] of Object.entries(fixture.preservedFixtures))assert.equal(sha(readFileSync(file)),pin,file);
-const file='pages/index.js',patch=fixture.files[file],current=readFileSync(file,'utf8');
+const file='pages/index.js',patch=fixture.files[file],current=require('./c1-bounded-screen-continuation-seams.cjs').readPrior(file);
 const original=restore(file,current);
 assert.equal(blob(current),patch.afterHash);
 assert.equal(blob(original),patch.beforeHash);

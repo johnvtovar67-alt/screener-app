@@ -16,7 +16,7 @@ const original=source.replace(', top5RequestId }',' }').replace(header,'').repla
  .replace(verifiedCache,'').replaceAll(guarded,'cache.set(symbol, { ts: Date.now(), data: row });');
 assert.equal(blob(original),'3268d660390187e9e991d815d8068a441304e077','Exact complete deployed PR333 route reversal; no policy/TTL/observation/retry changes');
 const getter='\n// Reuse the existing request timing identity for response/browser correlation.\nexport function top5RequestId() { return requests.getStore()?.id || null; }\n';
-const diagnostics=fs.readFileSync('lib/top5Diagnostics.js','utf8');
+const diagnostics=require('./c1-bounded-screen-continuation-seams.cjs').readPrior('lib/top5Diagnostics.js');
 assert.equal(diagnostics.split(getter).length,2);
 assert.equal(blob(diagnostics.replace(getter,'')),'d2510daec24a002ebd6d9729c14a082a264d0677','Existing request profiler/timing/deadline/diagnostics remain exact');
 const withoutHeader=response=>{const result=clone(response);delete result.headers['X-C1-Request-Id'];return result;};

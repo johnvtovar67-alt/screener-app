@@ -1,10 +1,11 @@
 // Reverse only the declared producer/reader extraction before running existing
 // source-shape checks. The complete pre-extraction blob is pinned independently.
 const fs=require('node:fs');
+const {readPrior}=require('./c1-bounded-screen-continuation-seams.cjs');
 function readLegacyTop5Source(){
- const producer=require('./c1-qualified-selection-seams.cjs').restore('lib/c1ScreenProducer.js',require('./c1-canonical-timing-seams.cjs').restore('lib/c1ScreenProducer.js',fs.readFileSync('lib/c1ScreenProducer.js','utf8')));
+ const producer=require('./c1-qualified-selection-seams.cjs').restore('lib/c1ScreenProducer.js',require('./c1-canonical-timing-seams.cjs').restore('lib/c1ScreenProducer.js',readPrior('lib/c1ScreenProducer.js')));
  const view=require('./c1-qualified-selection-seams.cjs').restore('lib/c1ScreenSnapshotView.js',fs.readFileSync('lib/c1ScreenSnapshotView.js','utf8'));
- const route=fs.readFileSync('pages/api/top5.js','utf8');
+ const route=readPrior('pages/api/top5.js');
  const producerMarker='// Complete the original acquisition and conditional performance observation before any read.\n';
  let core=producer.slice(0,producer.indexOf(producerMarker));
  core=core.replace('import {fetchFmpResponse, readFmpJsonResponse, fmpApiKey} from "./fmpTransport";\n','')

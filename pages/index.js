@@ -550,9 +550,9 @@ export default function Home(){
   function decorateSnapshot(rows,performance,meta={}){const clientSnapshotFallback=Boolean(meta?.clientSnapshotFallback),dataFeedSnapshotStale=Boolean(clientSnapshotFallback||meta?.quoteFeedStatus&&meta.quoteFeedStatus!=="live");return(rows||[]).map(s=>({...s,clientSnapshotFallback,dataFeedSnapshotStale:Boolean(s?.dataFeedSnapshotStale||dataFeedSnapshotStale),signalPersistence:{...signalPersistence(performance.records,sym(s)),historyAvailable:performance.available}}));}
   async function fetchScreen(t,verificationPass=0,{full=false,includeSymbol="",screenSymbols=accountView?.decision?.stockScreen?.candidates?.map(c=>c.symbol)||[],isCurrent=()=>true}={}){
     const requested=(includeSymbol?`&symbol=${encodeURIComponent(includeSymbol)}`:"")+(screenSymbols.length?`&screenSymbols=${encodeURIComponent(screenSymbols.join(","))}`:"");
-    const read=async pass=>{const response=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${pass}${full?"":"&compact=1"}${requested}`,{cache:"no-store"});return readTop5Response(response);};
+    const read=async(pass,continuation=false)=>{const response=await fetch(`/api/top5?theme=${encodeURIComponent(t)}&verificationPass=${pass}${full?"":"&compact=1"}${requested}`,{cache:"no-store",...(continuation?{headers:{"X-C1-Scan-Continue":"1"}}:{})});return readTop5Response(response);};
     const initial=await read(verificationPass);
-    const d=await continueC1ReadOnlyScan({initial,next:({pass})=>read(verificationPass+pass),scanOf:value=>value?.meta?.c1UniverseScan,isCurrent});
+    const d=await continueC1ReadOnlyScan({initial,next:({pass})=>read(verificationPass+pass,true),scanOf:value=>value?.meta?.c1UniverseScan,isCurrent});
     const performance=await performanceHistory();return{...d,stocks:decorateSnapshot(d.stocks||[],performance,d.meta),performance};
   }
 

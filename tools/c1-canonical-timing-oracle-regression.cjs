@@ -17,7 +17,7 @@ const released={
 };
 assert.deepEqual(Object.keys(fixture.files).sort(),Object.keys(released).sort());
 for(const [file,patch]of Object.entries(fixture.files)){
- const current=fs.readFileSync(file,'utf8'),previous=inverse.restore(file,current);
+ const current=require('./c1-bounded-screen-continuation-seams.cjs').readPrior(file),previous=inverse.restore(file,current);
  assert.equal(patch.beforeHash,released[file],'The released source identity is unchanged: '+file);
  assert.equal(inverse.blob(current),patch.afterHash,'Only exact reviewed source may enter the inverse');
  assert.equal(inverse.blob(previous),patch.beforeHash,'The released producer source is restored exactly');
