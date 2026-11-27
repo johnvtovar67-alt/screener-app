@@ -6,7 +6,8 @@ const digest=value=>crypto.createHash('sha256').update(canonical(value)).digest(
 const {buildC1ModelParityDiagnostic:build,safeC1ModelParityDiagnostic:safe}=loader.load('lib/c1ModelParityDiagnostic.js');
 function reconciliation(diagnosticOverride){
  if(!process.env.C1_PARITY_BASELINE_FILE&&!diagnosticOverride)return loader.load('lib/c1ReviewedSessionRevision.js').reconcileC1VerifiedProviderRevision;
- const box={...loader.load('lib/c1RecordedSaleFinalization.js'),...loader.load('lib/c1RecordedSaleRevision.js'),...loader.load('lib/c1SessionRevisionReview.js'),buildC1ModelParityDiagnostic:diagnosticOverride||build};
+ const box={...loader.load('lib/c1RecordedSaleFinalization.js'),...loader.load('lib/c1RecordedSaleRevision.js'),...loader.load('lib/c1SessionRevisionReview.js'),
+  ...loader.load('lib/c1RecordedOpeningRecovery.js'),buildC1ModelParityDiagnostic:diagnosticOverride||build};
  vm.createContext(box);vm.runInContext(fs.readFileSync(process.env.C1_PARITY_BASELINE_FILE||'lib/c1ReviewedSessionRevision.js','utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'')+';this.run=reconcileC1VerifiedProviderRevision;',box);return box.run;
 }
 const fields=['ledger','pendingBySleeve','paperExecution','paperExecutionStatus','summary'];

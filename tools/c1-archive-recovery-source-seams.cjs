@@ -5,6 +5,7 @@ const assert=require('node:assert/strict'),crypto=require('node:crypto');
 const seams=require('./fixtures/c1-archive-recovery-source-seams.json');
 const blob=source=>crypto.createHash('sha1').update('blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
 function restore(file,source){
+ source=require('./c1-recorded-opening-source-seams.cjs').restore(file,source);
  const record=seams[file];if(!record||blob(source)===record.baselineBlob)return source;
  assert.equal(blob(source),record.authorizedBlob,'Complete authorized archive-first recovery source: '+file);
  for(const {before,after}of [...record.chunks].reverse()){
