@@ -8,7 +8,16 @@ async function main(){
  const binary=process.env.C1_BROWSER_BIN||['/usr/bin/google-chrome','/opt/google/chrome/chrome','/usr/bin/chromium'].find(p=>fs.existsSync(p));assert(binary,'Set C1_BROWSER_BIN to an installed Chromium/Chrome executable');
  const reliability=process.env.C1_NORMAL_BROWSER_RELIABILITY==='1',clientCommit='a'.repeat(40),observationSecret='offline-browser-observation-secret';
  const w=require('next/dist/compiled/webpack/webpack');w.init();
- await new Promise((resolve,reject)=>w.webpack({mode:'development',target:'web',devtool:false,plugins:reliability?[new w.webpack.DefinePlugin({'process.env.NEXT_PUBLIC_C1_CLIENT_COMMIT':JSON.stringify(clientCommit),'process.env.NEXT_PUBLIC_C1_CLIENT_ENVIRONMENT':JSON.stringify('production')})]:[],entry:path.resolve('tools/fixtures/c1-normal-refresh-browser.jsx'),output:{path:out,filename:'client.js'},resolve:{modules:[path.join(root,'node_modules')],alias:{'@babel/runtime':path.join(path.dirname(require.resolve('next/package.json')),'dist/compiled/@babel/runtime')}},module:{rules:[{test:/\.jsx?$/,exclude:/node_modules/,use:{loader:path.join(root,'tools/fixtures/c1-normal-refresh-babel-loader.cjs')}},{test:/\.css$/,type:'asset/source'}]}}).run((error,stats)=>error?reject(error):stats.hasErrors()?reject(Error(stats.toString({all:false,errors:true}))):resolve()));
+ const plugins=reliability?[new w.webpack.DefinePlugin({'process.env.NEXT_PUBLIC_C1_CLIENT_COMMIT':JSON.stringify(clientCommit),'process.env.NEXT_PUBLIC_C1_CLIENT_ENVIRONMENT':JSON.stringify('production')})]:[];
+ if(process.env.C1_NORMAL_BROWSER_ADVANCED?.split(',').includes('frame-publication')){
+  const scanSource=fs.readFileSync(path.join(root,'lib/c1ScanContinuation.js'),'utf8');
+  const scanBudget=/\bbudgetMs\s*=\s*90000\b/;
+  assert.equal(scanSource.split(scanBudget).length,2,'Accelerate only the released continuation budget in this browser rehearsal');
+  const scanFixture=path.join(out,'scan-continuation-rehearsal.js');
+  fs.writeFileSync(scanFixture,scanSource.replace(scanBudget,'budgetMs = 750'));
+  plugins.push(new w.webpack.NormalModuleReplacementPlugin(/\/c1ScanContinuation$/,scanFixture));
+ }
+ await new Promise((resolve,reject)=>w.webpack({mode:'development',target:'web',devtool:false,plugins,entry:path.resolve('tools/fixtures/c1-normal-refresh-browser.jsx'),output:{path:out,filename:'client.js'},resolve:{modules:[path.join(root,'node_modules')],alias:{'@babel/runtime':path.join(path.dirname(require.resolve('next/package.json')),'dist/compiled/@babel/runtime')}},module:{rules:[{test:/\.jsx?$/,exclude:/node_modules/,use:{loader:path.join(root,'tools/fixtures/c1-normal-refresh-babel-loader.cjs')}},{test:/\.css$/,type:'asset/source'}]}}).run((error,stats)=>error?reject(error):stats.hasErrors()?reject(Error(stats.toString({all:false,errors:true}))):resolve()));
  const sourceGate=process.env.C1_NORMAL_BROWSER_SOURCE_GATE==='1';
  const accountPolicy=process.env.C1_NORMAL_BROWSER_ACCOUNT_POLICY==='1';
  const qualified=process.env.C1_NORMAL_BROWSER_QUALIFIED==='1'||sourceGate||accountPolicy;
@@ -74,6 +83,18 @@ async function main(){
    const mode=state.fail;
    if(mode==='version-body-hold'){const serialized=JSON.stringify(versionPayload());res.writeHead(200,{'content-type':'application/json','content-length':Buffer.byteLength(serialized)});res.write(serialized.slice(0,12));await new Promise(resolve=>state.held.push(resolve));res.end(serialized.slice(12));return;}
    if(mode==='screen-hold'){const captured=await readScreen(Object.fromEntries(url.searchParams));await new Promise(resolve=>state.held.push(resolve));return json(captured.body,captured.status);}
+   if(mode==='screen-continuation-body-hold'||mode==='screen-continuation-proof-missing'){
+    const continuation=req.headers['x-c1-scan-continue']==='1',payload=screenPayload();
+    if(continuation&&mode==='screen-continuation-proof-missing')return json(payload);
+    payload.meta.quoteFeedStatus=continuation?'live':'incomplete';
+    payload.meta.selectionScanStatus=continuation?'complete':'incomplete';
+    payload.meta.c1UniverseScan={sourceIdentity:'offline-scan-source',total:279,scanned:continuation?279:256,
+      complete:continuation,evidenceComplete:continuation};
+    if(!continuation)return json(payload);
+    const serialized=JSON.stringify(payload);
+    res.writeHead(200,{'content-type':'application/json','content-length':Buffer.byteLength(serialized)});
+    res.write(serialized.slice(0,12));await new Promise(resolve=>state.held.push(resolve));res.end(serialized.slice(12));return;
+   }
    if(mode==='cash-response-lost'){const captured=await api.request(req.method,body,true);assert.equal(captured.status,200,'Synthetic cash mutation genuinely committed through the real handler');for(const[name,value]of Object.entries(captured.headers))res.setHeader(name,value);res.writeHead(200,{'content-type':'application/json','content-length':100000});res.write('{"decision":');await pause(100);res.destroy();return;}
    if(['screen-body-after-handler','screen-interrupted-after-handler'].includes(mode)){const captured=await readScreen(Object.fromEntries(url.searchParams));assert.equal(captured.status,200);for(const[name,value]of Object.entries(captured.headers))res.setHeader(name,value);res.writeHead(200,{'content-type':'application/json',...(mode==='screen-interrupted-after-handler'?{'content-length':100000}:{})});res.write('{"stocks":');if(mode==='screen-interrupted-after-handler'){await pause(100);res.destroy();}else res.end();return;}
    if(mode==='opening-response-lost'){
@@ -597,6 +618,29 @@ async function main(){
    await control(null,{release:true});await wait('document.querySelector("header button")?.textContent==="Reload"','Complete frame settled');
    assert.equal(await js('document.querySelector(".mobilePortfolio .portfolioItem .mobileNumbers b")?.textContent'),'$107.00');assert.equal(JSON.stringify(api.fixture.account),baseline);
    trace.cases.push({failure:'frame-publication',priorViewUntilOpeningSettles:true,currentQuoteAfterSettlement:true,accountRecordIdentical:true});
+   trace.activeCase='screen-continuation-budget';await click('Opportunities');
+   await wait('document.querySelector("header button")?.textContent==="Reload"','Opportunities ready for the scan deadline');
+   await control('screen-continuation-body-hold');const scanCursor=requests.length;await click('Reload');
+   for(let i=0;i<200&&!state.held.length;i++)await pause(25);
+   assert(state.held.length,'The continuation returned HTTP headers while its final response body was held');
+   await wait('document.querySelector("header button")?.textContent==="Reload"&&document.body.innerText.includes("Verified 256 of 279 candidates")','The scan deadline settles the partial frame before the held response finishes',6000);
+   assert(!/Buy \d+ shares/.test(await js('document.body.innerText')),'A timed-out scan cannot publish fresh purchase quantities');
+   const heldScan=requests.slice(scanCursor).filter(request=>request.path==='/api/top5').at(-1);
+   assert(heldScan&&!heldScan.finished,'The partial frame settled while the request body was pending');
+   await control(null,{release:true});
+   await requestSeen(scanCursor,r=>r===heldScan&&r.finished,'Late continuation finished on the server');
+   await pause(100);
+   assert((await js('document.body.innerText')).includes('Verified 256 of 279 candidates'),'The late complete response cannot replace the finished partial frame');
+   await settledReload();
+   assert(!(await js('document.body.innerText')).includes('Verified 256 of 279 candidates'),'A later explicit refresh can publish the current screen');
+   assert.equal(JSON.stringify(api.fixture.account),baseline);
+   trace.cases.push({failure:'screen-continuation-budget',partialFrameSettled:true,lateCompletionIgnored:true,normalReloadRecovered:true,accountRecordIdentical:true});
+   trace.activeCase='screen-continuation-proof-missing';await control('screen-continuation-proof-missing');await settledReload();
+   assert((await js('document.body.innerText')).includes('Verified 256 of 279 candidates'),'A broad success response without the active scan receipt cannot clear its pending progress');
+   assert(!/Buy \d+ shares/.test(await js('document.body.innerText')),'Missing continuation evidence cannot authorize fresh purchases');
+   await control(null);await settledReload();
+   assert.equal(JSON.stringify(api.fixture.account),baseline);
+   trace.cases.push({failure:'screen-continuation-proof-missing',retainedPartial:true,quantitiesSuppressed:true,accountRecordIdentical:true});
   }
   if(advanced.includes('lifecycle-client')){
    assert(reliability);await click('Opportunities');await wait('document.querySelector("header button")?.textContent==="Reload"','Friday view ready');

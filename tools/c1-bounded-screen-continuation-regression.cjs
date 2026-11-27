@@ -6,6 +6,8 @@ const { createRequire } = require('node:module');
 const path = require('node:path');
 const vm = require('node:vm');
 const { restore, blob } = require('./c1-bounded-screen-continuation-seams.cjs');
+const { createResearchModuleLoader } = require('./research-module-loader.cjs');
+const { continueC1ReadOnlyScan } = createResearchModuleLoader(process.cwd()).load('lib/c1ScanContinuation.js');
 
 const bytes = readFileSync('tools/fixtures/c1-bounded-screen-continuation-source-seams.json');
 const inverse = JSON.parse(bytes);
@@ -94,6 +96,18 @@ async function main() {
   const short = await read(slow, 1, continuation);
   assert.equal(short.scan.scanned, 32, 'A first batch that leaves less than 42 seconds returns its partial receipt.');
   assert.deepEqual(short.batches.slice(1), [32]);
-  console.log('PASS: actual screen handler finishes 279 names in five requests, caps each event batch at 32 and reserves the existing request budget.');
+  // Independently loaded server modules have separate process-local caches.
+  const warm = createNormalRefreshScreen(workflow), cold = createNormalRefreshScreen(workflow);
+  await read(warm, 0);
+  const primed = await read(warm, 1, continuation), progress = [];
+  const recovered = await continueC1ReadOnlyScan({initial: primed, scanOf: result => result.scan,
+    async next({pass}) {
+      const result = await read(pass === 1 ? cold : warm, pass + 1, continuation);
+      progress.push(result.scan.scanned);
+      return result;
+    }});
+  assert.deepEqual(progress, [64, 160, 224, 279], 'A single lower-progress worker response can rejoin the existing warm scan.');
+  assert.equal(recovered.scan.evidenceComplete, true, 'A completed receipt still proves the full universe on one worker.');
+  console.log('PASS: actual screen handler finishes 279 names in five requests, caps each batch at 32, preserves the budget reserve and recovers from one worker change.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
