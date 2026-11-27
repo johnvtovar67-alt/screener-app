@@ -248,7 +248,7 @@ ${purchaseBody}
       operationalRiskState=operationalRiskForSession({policy:accountPolicy,
         state:operationalRiskState||{historicalHighWater:historicalPortfolioHighWatermark,operationalHighWater:portfolioHighWatermark,appliedEpochs:[],
           requiresLiquidationEpoch:activeSessionNumber<=portfolioRiskPausedThrough},
-        session,allocation:accountSeed.sleeve,openingEquity:beforeFacts,equityScale:accountSeed.actualDollarsPerModelDollar,hasOpenHoldings:positions.size>0});
+        session,allocation:accountSeed.sleeve,openingEquity:beforeFacts,equityScale:accountSeed.actualDollarsPerModelDollar,hasOpenHoldings:positions.size>0,cashFlowReplay:actualExecutions});
     }
     const facts=projection?actualReplay?.reconciledProjectionExecutions(session.date):actualReplay?.reconciledAccountExecutions(session.date);
     for (const fact of facts || []) {
@@ -354,7 +354,7 @@ replace('      if (activeSessionNumber === portfolioRiskPausedThrough + 1)\n    
         operationalRiskState = operationalRiskForSession({policy:accountPolicy,
           state:operationalRiskState || {historicalHighWater:historicalPortfolioHighWatermark,operationalHighWater:portfolioHighWatermark,appliedEpochs:[],
             requiresLiquidationEpoch:activeSessionNumber<=portfolioRiskPausedThrough},
-          session,allocation:accountSeed.sleeve,openingEquity:openEquity,equityScale:accountSeed.actualDollarsPerModelDollar,hasOpenHoldings:positions.size>0});
+          session,allocation:accountSeed.sleeve,openingEquity:openEquity,equityScale:accountSeed.actualDollarsPerModelDollar,hasOpenHoldings:positions.size>0,cashFlowReplay:actualExecutions});
         operationalRiskState.historicalHighWater=historicalPortfolioHighWatermark;
         if(!operationalRiskApproved)operationalRiskState.operationalHighWater=portfolioHighWatermark;
         else if(operationalRiskState.purchaseRiskReady)operationalRiskState.operationalHighWater=Math.max(operationalRiskState.operationalHighWater,openEquity);

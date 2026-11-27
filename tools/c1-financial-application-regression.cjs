@@ -190,4 +190,5 @@ async function main(){
  });
  console.log(`PASS: ${checks} fictional application flows; real service/planner/recorder paths, approved predecessor lineage, retained proof, strict tamper rejection and financial close continuity. No live data or writes.`);
 }
-main().catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={fixture,load};
+if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});
